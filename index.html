@@ -437,6 +437,46 @@ body{padding-bottom:0}
   white-space:pre;overflow:auto;-webkit-user-select:text;user-select:text}
 #repbox.show{display:block}
 #copyrep{margin-top:14px}
+/* ── каталог ── */
+.modal.wide .modalbox{max-height:92vh}
+.cathead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.cathead h3{margin:0}
+.xbtn{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;
+  padding:6px 8px;cursor:pointer}
+.catsearch{width:100%;padding:11px 13px;margin-bottom:12px;border-radius:11px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--text);
+  font:14px/1.3 inherit;-webkit-appearance:none}
+.catsearch::placeholder{color:var(--dim)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mchip{padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--muted);font-size:12px;cursor:pointer}
+.mchip s{text-decoration:none;color:var(--dim);font-size:10.5px;margin-left:2px}
+.mchip.on{border-color:var(--amber);color:var(--amber);background:var(--amber-ghost)}
+.mchip.on s{color:var(--amber-deep)}
+.catcount{margin:0 0 10px;font-family:'JetBrains Mono',monospace;font-size:10.5px;
+  letter-spacing:.06em;color:var(--dim)}
+.catlist{display:flex;flex-direction:column;gap:8px}
+.catitem{display:flex;align-items:center;gap:11px;padding:8px;border-radius:12px;
+  border:1px solid var(--line);background:var(--surface-2)}
+.catitem img{flex:0 0 62px;width:62px;height:48px;object-fit:cover;border-radius:8px;background:#fff}
+.cattx{flex:1;min-width:0}
+.cattx b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.cattx i{display:block;font-style:normal;font-size:11px;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.cattag{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;
+  letter-spacing:.05em;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.catpick{flex:0 0 auto;padding:8px 11px;border-radius:9px;border:1px solid var(--line);
+  background:none;color:var(--amber);font:inherit;font-size:12px;cursor:pointer;
+  text-decoration:none;white-space:nowrap}
+.catpick:active{background:var(--amber-ghost)}
+.btn.undo{margin-bottom:12px}
+/* ── кнопка замены на карточке ── */
+.swap{display:block;width:100%;margin-top:10px;padding:9px;border-radius:10px;
+  border:1px dashed var(--line);background:none;color:var(--dim);
+  font:inherit;font-size:12px;cursor:pointer}
+.swap:active{color:var(--amber);border-color:var(--amber-deep)}
+.exen{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--dim);
+  margin:-2px 0 6px;letter-spacing:.02em}
 /* два кадра движения, сменяются раз в 1,2 секунды */
 .fig2{flex:0 0 128px;width:128px;aspect-ratio:4/3;position:relative;overflow:hidden;
   border:1px solid var(--line-soft);border-radius:10px;background:#fff}
@@ -560,6 +600,12 @@ body{padding-bottom:0}
       </div>
     </section>
     <section class="page hide" id="p-ref">
+      <div class="sec" style="padding-top:18px">
+        <h2>Каталог упражнений</h2>
+        <p class="lede">501 упражнение по группам мышц. Любое из них можно поставить
+        вместо упражнения в своей программе — кнопка «заменить» под каждой карточкой на вкладке «Тренировка».</p>
+        <button class="btn" id="opencat">Открыть каталог</button>
+      </div>
       <div id="gym-ref">
     <div class="sec">
       <h2>Зачем эта программа существует</h2>
@@ -790,6 +836,17 @@ body{padding-bottom:0}
     <p class="mtext">Выбор сохранится — приложение спросит один раз. Журналы тренировок у вас и так разные: Telegram хранит данные каждого пользователя отдельно.</p>
     <button class="pbtn" data-prof="shp"><b>Шохрух</b><i>Похудение до 73 кг · 5 дней в неделю</i></button>
     <button class="pbtn" data-prof="wife"><b>Жена</b><i>Форма и осанка · 2 дня, среда и пятница</i></button>
+    <button class="pbtn" data-prof="friend"><b>Друг</b><i>База · 3 дня, вторник, четверг, воскресенье</i></button>
+  </div>
+</div>
+<div class="modal wide" id="catalog" role="dialog" aria-modal="true" aria-labelledby="cattitle">
+  <div class="modalbox">
+    <div class="cathead">
+      <h3 id="cattitle">Каталог упражнений</h3>
+      <button class="xbtn" id="catclose" aria-label="Закрыть">✕</button>
+    </div>
+    <input class="catsearch" id="catsearch" type="search" placeholder="Поиск по названию" autocomplete="off">
+    <div id="catbody"></div>
   </div>
 </div>
 <div class="modal" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
@@ -843,6 +900,12 @@ function figSvg(k){
 var FRAMES={abduction:1,calf:1,crunch:1,curl:1,fly:1,hipthrust:1,
             lat:1,lateral:1,legpress:1,rdl:1,triceps:1};
 function mediaFor(e){
+  if(e.cat){        /* упражнение из каталога — два кадра с CDN */
+    return '<div class="fig2" role="img" aria-label="'+e.n+'">'+
+           '<img src="'+CDN+encodeURI(e.cat)+'/0.jpg" alt="" loading="lazy">'+
+           '<img src="'+CDN+encodeURI(e.cat)+'/1.jpg" alt="" loading="lazy">'+
+           '</div>';
+  }
   var ph = e.ph && PHOTOS[e.ph];
   if(ph) return '<img class="fig ph" alt="'+e.n+' — рабочая фаза" src="data:image/webp;base64,'+ph+'">';
   if(e.ph && FRAMES[e.ph]){
@@ -1013,6 +1076,20 @@ var PROFILES = {
        d:'<p><b>4 × 8–12</b>, запас 2. С декабря добавляется четвёртый тяжёлый день, акцент смещается на плечи, широчайшие и верх груди.</p><p>Цель этапа: 80 → 76 кг, появление пресса.</p>'}
     ]
   },
+  friend: {
+    name:'Друг', sub:'База · 3 дня, вт/чт/вс',
+    heavy:['D1','D2','D3'], lightDays:[],
+    gymDays:{2:'D1', 4:'D2', 0:'D3'},
+    start:[2026,8,7],
+    phases:[
+      {id:'f1', s:'Ф1', t:'Фаза 1 · Вход', sets:3, reps:'10–12', rir:4, w:[1,4],
+       d:'<p><b>3 × 10–12</b>, запас 4 повтора. Первые недели — привыкнуть ходить, а не поднимать много.</p><p>Программа общая: любое упражнение можно заменить своим через каталог.</p>'},
+      {id:'f2', s:'Ф2', t:'Фаза 2 · Нагрузка', sets:3, reps:'8–12', rir:3, w:[5,8],
+       d:'<p><b>3 × 8–12</b>, запас 3 повтора. Двойная прогрессия: дошёл до 12 во всех подходах — добавляй вес.</p>'},
+      {id:'f3', s:'Ф3', t:'Фаза 3 · Уплотнение', sets:4, reps:'6–10', rir:2, w:[9,99],
+       d:'<p><b>4 × 6–10</b>, запас 2 повтора на последнем подходе.</p>'}
+    ]
+  },
   wife: {
     name:'Жена', sub:'Форма и осанка · 2 дня',
     heavy:['W1','W2'], lightDays:[],
@@ -1067,6 +1144,7 @@ function applyProfile(p, silent){
   week = weekNow();
   phaseId = get('phase', null);
   LAST = get('last', {});
+  SUBS = get('subs', {});
   lastDone = get('lastdone', null);
   var pick = get('pick_'+TODAY, null);
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
@@ -1079,6 +1157,120 @@ function applyProfile(p, silent){
   renderDayseg(); renderWeek(); renderPhase(); renderDayHead(); renderList();
   try{ renderTodaybar(); }catch(e){}
   paintNote('');
+}
+
+/* ══════════ КАТАЛОГ УПРАЖНЕНИЙ И ЗАМЕНЫ ══════════
+   Данные: free-exercise-db, лицензия Unlicense. 501 силовое упражнение,
+   названия переведены составным словарём (ядро движения + уточнения),
+   для 32 редких осталось английское — под каждым названием оно и так показано.
+   Файл catalog.json грузится один раз при первом открытии каталога, не при старте.
+   Картинки берём с CDN jsDelivr, в репозиторий их не тащим. */
+var CAT=null, catLoading=false, catCtx=null, catMuscle='', catQuery='';
+/* группы упражнений в программе названы по-своему — сопоставляем их с мышцами каталога,
+   чтобы окно замены открывалось сразу на нужной группе */
+var MUSCLEOF={'Присед':'quadriceps','Ноги':'quadriceps','Выпады':'quadriceps',
+ 'Горизонтальный жим':'chest','Грудь':'chest','Вертикальный жим':'shoulders',
+ 'Плечи':'shoulders','Средние дельты':'shoulders','Вертикальная тяга':'lats',
+ 'Широчайшие':'lats','Спина':'lats','Горизонтальная тяга':'middle back',
+ 'Наклон':'hamstrings','Задняя цепь':'hamstrings','Ягодицы':'glutes',
+ 'Бицепс':'biceps','Трицепс':'triceps','Икры':'calves',
+ 'Пресс':'abdominals','Корпус':'abdominals','Антиротация':'abdominals'};
+var CDN='https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
+
+function loadCatalog(){
+  if(CAT) return Promise.resolve(CAT);
+  if(catLoading) return catLoading;
+  catLoading = fetch('catalog.json').then(function(r){ return r.json(); })
+    .then(function(j){ CAT=j; catLoading=false; return j; })
+    .catch(function(e){ catLoading=false; throw e; });
+  return catLoading;
+}
+
+/* ── замены: {'D1:2': {...}} на профиль ── */
+var SUBS = {};
+function subKey(dk, di){ return dk+':'+di; }
+/* Действующий список упражнений дня: программа плюс сделанные замены.
+   Замена наследует схему подходов и отдых у того упражнения, которое заменила —
+   слот программы остаётся тем же, меняется только само движение. */
+function exList(dk){
+  var base=(DAYS[dk]||{}).ex||[];
+  return base.map(function(e,di){
+    var s=SUBS[subKey(dk,di)];
+    if(!s) return e;
+    return { p:e.p, n:s.n, en:s.e, sets:e.sets, reps:e.reps, rest:e.rest,
+             cat:s.i, sub:true, cues:s.cues||[], why:'', ph:null, fig:null };
+  });
+}
+function saveSubs(){
+  set('subs', SUBS);
+  if(DB) DB.doc('state/subs').set({s:SUBS, at:new Date().toISOString()}).catch(function(){});
+}
+function applySub(dk, di, item){
+  SUBS[subKey(dk,di)] = item ? {n:item.n, e:item.e, i:item.i} : undefined;
+  if(!item) delete SUBS[subKey(dk,di)];
+  saveSubs();
+  if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
+  renderList(); paintNote(''); haptic('medium');
+}
+
+/* ── окно каталога ── */
+function openCatalog(ctx){
+  catCtx = ctx || null;                    /* {dk, di, muscle} — режим замены */
+  catQuery='';
+  catMuscle = (ctx && ctx.muscle) || '';
+  var m=document.getElementById('catalog'); if(m) m.classList.add('show');
+  var t=document.getElementById('cattitle');
+  if(t) t.textContent = ctx ? 'Чем заменить' : 'Каталог упражнений';
+  var s=document.getElementById('catsearch'); if(s) s.value='';
+  document.getElementById('catbody').innerHTML='<p class="mtext">Загружаю каталог…</p>';
+  loadCatalog().then(function(){ renderCatalog(); })
+    .catch(function(){ document.getElementById('catbody').innerHTML=
+      '<p class="mtext">Не удалось загрузить каталог. Проверь интернет и попробуй ещё раз.</p>'; });
+}
+function closeCatalog(){ var m=document.getElementById('catalog'); if(m) m.classList.remove('show'); }
+
+function muscleChips(){
+  var counts={};
+  CAT.ex.forEach(function(x){ counts[x.m]=(counts[x.m]||0)+1; });
+  var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
+  var h='<button class="mchip'+(catMuscle?'':' on')+'" data-m="">Все</button>';
+  keys.forEach(function(k){
+    h+='<button class="mchip'+(catMuscle===k?' on':'')+'" data-m="'+k+'">'+
+       (CAT.muscles[k]||k)+' <s>'+counts[k]+'</s></button>';
+  });
+  return h;
+}
+function catFiltered(){
+  var q=catQuery.trim().toLowerCase();
+  return CAT.ex.filter(function(x){
+    if(catMuscle && x.m!==catMuscle) return false;
+    if(q && (x.n+' '+x.e).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  });
+}
+function renderCatalog(){
+  var box=document.getElementById('catbody'); if(!box||!CAT) return;
+  var list=catFiltered(), shown=list.slice(0,80);
+  var h='<div class="mchips">'+muscleChips()+'</div>';
+  if(catCtx){
+    var cur=SUBS[subKey(catCtx.dk,catCtx.di)];
+    if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
+  }
+  h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+
+     (list.length>80?' · показаны первые 80, уточни поиск':'')+'</p>';
+  h+='<div class="catlist">';
+  shown.forEach(function(x,i){
+    h+='<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
+       '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">'+
+       '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
+       '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+'</span></div>'+
+       (catCtx?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
+              :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
+                encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
+       '</div>';
+  });
+  h+='</div>';
+  box.innerHTML=h;
 }
 
 /* ── выбор профиля при первом запуске ── */
@@ -1254,7 +1446,7 @@ function baseReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 1
 function sKey(){ return 'sess_'+TODAY+'_'+day; }
 function blankSess(){
   var o={ex:[]};
-  DAYS[day].ex.forEach(function(e){
+  exList(day).forEach(function(e){
     var prev=LAST[e.n]||{}, arr=[];
     for(var i=0;i<nSets(e);i++){
       var ps = prev.s && prev.s[i];
@@ -1268,8 +1460,8 @@ function blankSess(){
 }
 function loadSess(){
   var x=get(sKey(),null);
-  if(!x || !x.ex || x.ex.length!==DAYS[day].ex.length) x=blankSess();
-  DAYS[day].ex.forEach(function(e,di){
+  if(!x || !x.ex || x.ex.length!==exList(day).length) x=blankSess();
+  exList(day).forEach(function(e,di){
     var n=nSets(e), rows=x.ex[di].sets;
     while(rows.length<n) rows.push({w:'',r:'',done:false});
     /* фаза уменьшила число подходов — лишние строки убираем, но только пустые */
@@ -1343,21 +1535,23 @@ function setGrid(e,di){
 
 function renderList(){
   var d = DAYS[day], box = document.getElementById('list'), h='';
-  d.ex.forEach(function(e,di){
+  exList(day).forEach(function(e,di){
     var all = sess.ex[di].sets.every(function(v){ return v.done; });
     var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
     h += '<article class="card'+(all?' full':'')+'">'+
            '<div class="eyebrow">'+e.p+'</div>'+
            '<div class="exname">'+e.n+'</div>'+
+           (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
            '<div class="spec"><span class="chip">'+nSets(e)+' × '+repsOf(e)+'</span>'+
              '<span class="chip">отдых '+rest+'</span></div>'+
            lastLine(e)+
            setGrid(e,di)+
            '<div class="exmedia">'+mediaFor(e)+
              '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-             '<li class="nb">'+ytLink(e.n)+'</li></ul>'+
+             '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
            '</div>'+
-           '<details class="why"><summary>зачем это здесь</summary><p>'+e.why+'</p></details>'+
+           (e.why ? '<details class="why"><summary>зачем это здесь</summary><p>'+e.why+'</p></details>' : '')+
+           '<button class="swap" data-swap="'+di+'">'+(e.sub?'заменено · выбрать другое':'заменить упражнение')+'</button>'+
          '</article>';
   });
   box.innerHTML=h;
@@ -1389,7 +1583,7 @@ document.getElementById('list').addEventListener('click', function(ev){
   }
   var row=ev.target.closest('.setrow'); if(!row) return;
   var di=+row.dataset.ex, si=+row.dataset.set;
-  var e=DAYS[day].ex[di], v=sess.ex[di].sets[si];
+  var e=exList(day)[di], v=sess.ex[di].sets[si];
 
   var st=ev.target.closest('button[data-d]');
   if(st){
@@ -1662,7 +1856,7 @@ function thaw(){ if(Object.isFrozen(LAST)) LAST=JSON.parse(JSON.stringify(LAST))
 function commit(){
   thaw();
   try{ harvestDom(); }catch(e){ reportErr('harvest',e); }
-  DAYS[day].ex.forEach(function(e,di){
+  exList(day).forEach(function(e,di){
     var rows=sess.ex[di].sets, done=rows.filter(function(v){return v.done;});
     if(!done.length) return;
     var lastv=done[done.length-1];
@@ -1677,7 +1871,7 @@ function commit(){
 function sessionBody(){
   var d=DAYS[day];
   var ex=[];
-  d.ex.forEach(function(e,di){
+  exList(day).forEach(function(e,di){
     var done=sess.ex[di].sets.filter(function(v){return v.done;});
     if(!done.length) return;
     ex.push({ n:e.n, unit:(isTime(e)?'sec':'reps'),
@@ -1728,6 +1922,16 @@ function initDb(){
     }
     var m=body.m;
     if(m && typeof m==='object' && Object.keys(m).length){ LAST=m; set('last',LAST); refillIfUntouched(); }
+    return DB.doc('state/subs').get();
+  }).then(function(sn){
+    if(sn && sn.exists){
+      var b=JSON.parse(JSON.stringify(sn.data()||{}));
+      if(b.s && typeof b.s==='object'){
+        SUBS=b.s; set('subs',SUBS);
+        if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
+        renderList();
+      }
+    }
   }).then(function(){
     /* день мог смениться после подтягивания lastDone из облака */
     var s=suggestedDay();
@@ -1807,7 +2011,7 @@ function finishSave(){
     try{ harvestDom(); markDone(); }catch(e){ reportErr('local',e); }
 
     var ex=[];
-    d.ex.forEach(function(e,di){ if(sc.byEx[di]) ex.push({n:e.n, unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
+    exList(day).forEach(function(e,di){ if(sc.byEx[di]) ex.push({n:e.n, unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
     var body={date:TODAY, day:day, name:d.name, sub:d.sub, week:week, updated:new Date().toISOString(), ex:ex};
     var label=sc.n+' '+plural(sc.n,['подход','подхода','подходов']);
 
@@ -1818,7 +2022,7 @@ function finishSave(){
       lastSavedAt=new Date(); dirty=false;
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       thaw();
-      d.ex.forEach(function(e,di){ if(sc.byEx[di]){ var arr=sc.byEx[di], l=arr[arr.length-1];
+      exList(day).forEach(function(e,di){ if(sc.byEx[di]){ var arr=sc.byEx[di], l=arr[arr.length-1];
         LAST[e.n]={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(x){return [x.w==null?'':x.w, x.r==null?'':x.r];})}; } });
       set('last',LAST);
       return DB.doc('state/last').set({m:LAST, lastDone:lastDone, updated:body.updated});
@@ -1964,6 +2168,30 @@ document.getElementById('picker').addEventListener('click', function(e){
 document.getElementById('sheet').addEventListener('click', function(e){
   if(e.target.id==='sheet') closeSheet();
 });
+/* ── каталог ── */
+document.getElementById('catclose').addEventListener('click', closeCatalog);
+document.getElementById('catalog').addEventListener('click', function(e){
+  if(e.target.id==='catalog'){ closeCatalog(); return; }
+  var m=e.target.closest('button[data-m]');
+  if(m){ catMuscle=m.dataset.m; renderCatalog(); haptic('light'); return; }
+  var p=e.target.closest('button[data-pick]');
+  if(p && catCtx && CAT){
+    applySub(catCtx.dk, catCtx.di, CAT.ex[+p.dataset.pick]);
+    closeCatalog(); return;
+  }
+  if(e.target.id==='catundo' && catCtx){ applySub(catCtx.dk, catCtx.di, null); closeCatalog(); }
+});
+var _cs=document.getElementById('catsearch');
+if(_cs) _cs.addEventListener('input', function(){ catQuery=this.value; if(CAT) renderCatalog(); });
+var _oc=document.getElementById('opencat');
+if(_oc) _oc.addEventListener('click', function(){ openCatalog(null); });
+/* кнопка «заменить» на карточке упражнения */
+document.getElementById('list').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-swap]'); if(!b) return;
+  var di=+b.dataset.swap, base=(DAYS[day].ex||[])[di]||{};
+  openCatalog({dk:day, di:di, muscle:MUSCLEOF[base.p]||''});
+});
+
 var _ps=document.getElementById('profswitch');
 if(_ps) _ps.addEventListener('click', function(){ showPicker(); });
 
