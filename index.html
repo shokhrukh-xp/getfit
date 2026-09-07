@@ -343,10 +343,6 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .empt{color:var(--dim);font-size:13px;text-align:center;padding:30px 12px;line-height:1.6}
 .l1-in.three{grid-template-columns:repeat(3,1fr)}
 /* ── v3: чистка и ритм ───────────────────── */
-.wkchip{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;
-  color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:5px 11px;white-space:nowrap}
-.wkchip b{color:var(--amber);font-weight:700}
-
 .todaybar{padding:20px 0 4px;gap:8px}
 .todaybar .ts.done{border-color:var(--done);color:var(--done);background:rgba(79,168,139,.10)}
 
@@ -513,15 +509,25 @@ body{padding-bottom:0}
 .chart .grid{stroke:var(--line-soft);stroke-width:1}
 .chart .ln{fill:none;stroke:var(--amber);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
 .chart .dot{fill:var(--amber);stroke:var(--surface-2);stroke-width:2}
-.chart .mbar{fill:var(--amber-deep);opacity:.75}
-.chart .mbar.low{fill:var(--amber-deep);opacity:.32}
-.chart .lbl{fill:var(--muted);font-family:inherit;font-size:11px}
-.chart .thr{stroke:var(--done);stroke-width:1;stroke-dasharray:3 3;opacity:.7}
-.chart .thrl{fill:var(--done);font-size:8.5px;opacity:.8}
 .chart .bar{fill:var(--amber-deep);opacity:.55}
 .chart .bar.now{fill:var(--amber);opacity:1}
 .chart text{fill:var(--dim);font-family:'JetBrains Mono',monospace;font-size:9px}
 .chart text.val{fill:var(--text);font-size:10px}
+.bodymap{width:100%;height:auto;display:block;margin:2px 0 0}
+.bodymap .bg{fill:#303845;stroke:none}
+.bodymap .lead{stroke:#39414F;stroke-width:.8}
+.bodymap .mz{fill:var(--amber);stroke:#161A21;stroke-width:.7;cursor:pointer}
+.bodymap .mz.hit{stroke:var(--done);stroke-width:1.4}
+.bodymap .num{fill:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.bodymap .cap{fill:var(--dim);font-family:inherit;font-size:9.5px}
+.muskey{display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;font-size:10.5px;color:var(--dim)}
+.muskey i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.muskey .sw{width:26px;height:9px;border-radius:3px;
+  background:linear-gradient(90deg,var(--amber),rgba(233,166,60,.10))}
+.muskey .sw2{width:12px;height:9px;border-radius:3px;background:var(--amber-ghost);border:1.4px solid var(--done)}
+.musdet{margin:9px 0 0;font-size:12px;color:var(--muted);line-height:1.5;min-height:34px}
+.musdet b{color:var(--text);font-weight:600}
+.musdet b.down{color:var(--warn)}
 .tgt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
   font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;
   text-transform:none;border:1px solid var(--line);color:var(--dim)}
@@ -2265,30 +2271,50 @@ window.addEventListener('error', function(ev){ reportErr('js', (ev.message||'')+
 window.addEventListener('unhandledrejection', function(ev){ reportErr('promise', ev.reason); });
 
 /* ── страница журнала ── */
-/* Группа мышц для диаграммы. Берём из записи (поле p), а если запись старая —
-   ищем упражнение по названию в текущей программе. Что не нашлось — «прочее». */
-var MGROUP={'Присед':'Ноги','Ноги':'Ноги','Выпады':'Ноги',
- 'Наклон':'Задняя цепь','Задняя цепь':'Задняя цепь','Ягодицы':'Ягодицы',
- 'Горизонтальный жим':'Грудь','Грудь':'Грудь',
- 'Вертикальный жим':'Плечи','Плечи':'Плечи','Средние дельты':'Плечи','Задние дельты':'Плечи',
- 'Вертикальная тяга':'Спина','Широчайшие':'Спина','Спина':'Спина','Горизонтальная тяга':'Спина',
- 'Бицепс':'Руки','Трицепс':'Руки','Икры':'Икры',
- 'Пресс':'Корпус','Корпус':'Корпус','Антиротация':'Корпус'};
+/* Мышцы для карты тела. Берём из записи (поле p), а если запись старая —
+   ищем упражнение по названию в текущей программе. Что не нашлось — пропускаем.
+   Косвенная работа идёт за половину подхода: жим лёжа — это грудь целиком и
+   трицепс наполовину. Так объём не завышается вдвое и не теряется совсем. */
+var MMAP={
+ 'Присед':[['quad',1],['glute',.5]],
+ 'Ноги':[['quad',1]],
+ 'Выпады':[['quad',1],['glute',.5]],
+ 'Наклон':[['ham',1],['lower',.5]],
+ 'Задняя цепь':[['ham',1],['lower',.5]],
+ 'Ягодицы':[['glute',1],['ham',.5]],
+ 'Икры':[['calf',1]],
+ 'Горизонтальный жим':[['chest',1],['tri',.5]],
+ 'Грудь':[['chest',1]],
+ 'Вертикальный жим':[['delt',1],['tri',.5]],
+ 'Плечи':[['delt',1]],
+ 'Средние дельты':[['delt',1]],
+ 'Задние дельты':[['rdelt',1]],
+ 'Вертикальная тяга':[['lat',1],['bic',.5]],
+ 'Широчайшие':[['lat',1]],
+ 'Спина':[['lat',1],['trap',.5]],
+ 'Горизонтальная тяга':[['trap',1],['lat',.5]],
+ 'Бицепс':[['bic',1]],
+ 'Трицепс':[['tri',1]],
+ 'Пресс':[['abs',1]],
+ 'Корпус':[['abs',1],['obl',.5]],
+ 'Антиротация':[['obl',1]]};
+var MNAME={delt:'Плечи',chest:'Грудь',bic:'Бицепс',obl:'Косые',abs:'Пресс',
+ quad:'Квадрицепс',trap:'Трапеции',rdelt:'Задние дельты',tri:'Трицепс',
+ lat:'Широчайшие',lower:'Поясница',glute:'Ягодицы',ham:'Бицепс бедра',calf:'Икры'};
 var NAME2P=null;
-function groupOf(x){
-  if(x.p && MGROUP[x.p]) return MGROUP[x.p];
+function patOf(x){
+  if(x.p) return x.p;
   if(!NAME2P){
-    /* упражнения, которые были в прошлых версиях программы: без них их подходы
-       свалились бы в «прочее» и диаграмма врала бы по объёму */
+    /* упражнения из прошлых версий программы: без них их подходы пропали бы с карты */
     NAME2P={'Дровосек на блоке':'Корпус','Становая тяга с гантелью в одну руку':'Наклон',
             'Жим лёжа':'Горизонтальный жим','Тяга гантели в упоре лёжа':'Горизонтальная тяга'};
     Object.keys(DAYS).forEach(function(k){
       (DAYS[k].ex||[]).forEach(function(e){ NAME2P[e.n]=e.p; });
     });
   }
-  var p=NAME2P[x.n];
-  return (p && MGROUP[p]) ? MGROUP[p] : 'Прочее';
+  return NAME2P[x.n]||null;
 }
+function musOf(x){ var p=patOf(x); return (p && MMAP[p]) ? MMAP[p] : null; }
 
 function fmtKg(v){ return (Math.round(v*10)/10).toString().replace('.',','); }
 function isoWeek(d){
@@ -2437,55 +2463,142 @@ function lineChart(pts, kg, unit){
          g+'<path class="ln" d="'+d+'"/>'+dots+lab+ax+'</svg>';
 }
 
-/* ── Подходы по мышцам ──
-   Единственная диаграмма, которая работает с первой же тренировки: линии
-   прогресса нужны две точки, а эта видна сразу. И она про то, на чём собрана
-   программа — недельный объём на мышечную группу. Порог 10 подходов в неделю
-   нарисован чертой, чтобы было видно, кто до него не дотягивает. */
+/* ── Карта тела ──
+   Три канала на одной картинке, и ни один не мешает другому:
+     заливка — свежесть: сегодня ярко, через 10 дней мышца почти сливается с телом;
+     обводка — недельная норма закрыта (10+ подходов);
+     цифра   — подходов за последние 7 дней.
+   Линии прогресса требуют двух точек, а это видно с первой же тренировки.
+   Фигура — мужская или женская, по полу из «Моих данных». */
+var MFADE=10, MWEEK=7, MPOROG=10;
+
+/* Геометрия фигуры. Всё считается от четырёх чисел — полуширины плеч, талии,
+   таза и ширины руки, — поэтому мужская и женская фигуры это одна и та же
+   схема с другими пропорциями, а не два набора путей. */
+function bodyGeom(sex){
+  var f=(sex==='f');
+  var SH=f?21:25, WA=f?13:15.5, HP=f?19:17;
+  var AO=f?-29.5:-34, AW=f?8.5:9.5, FO=f?-31:-36, FW=f?7.5:8.5;
+  var HX=f?11:11.5, HY=f?13:13.5, HC=f?15:15.5;
+  var TW=HP-2.4, SW=f?11:12;
+  var CX=f?-12.6:-17, CW=f?11:14.5, CH=f?15:18;
+  var R=function(x,y,w,h,r){ return '<rect x="'+r1(x)+'" y="'+r1(y)+'" width="'+r1(w)+'" height="'+r1(h)+'" rx="'+r1(r)+'"/>'; };
+  var P=function(x,y,rx,ry){ return '<ellipse cx="'+r1(x)+'" cy="'+r1(y)+'" rx="'+r1(rx)+'" ry="'+r1(ry)+'"/>'; };
+  var RR=function(x,y,w,h,r){ return R(x,y,w,h,r)+R(-x-w,y,w,h,r); };
+  var PP=function(x,y,rx,ry){ return P(x,y,rx,ry)+P(-x,y,rx,ry); };
+  var D=function(d){ return '<path d="'+d+'"/><path d="'+mirD(d)+'"/>'; };
+  var base=
+    P(0,HC,HX,HY)+
+    R(-5.6,HC+HY-3,11.2,10,3)+
+    '<path d="M '+r1(-SH)+',34 L '+r1(SH)+',34 L '+r1(WA+3)+',72 L '+r1(WA)+',90 L '+
+      r1(HP)+',108 L '+r1(-HP)+',108 L '+r1(-WA)+',90 L '+r1(-WA-3)+',72 Z"/>'+
+    RR(AO,36,AW,37,AW/2)+
+    RR(FO,72,FW,34,FW/2)+
+    PP(FO+FW/2,110,4.8,6.2)+
+    RR(-HP,106,TW,54,7)+
+    RR(-HP+1.6,158,SW,44,5.5)+
+    PP(-HP+1.6+SW/2,205,6.4,4.2);
+  var front={
+    delt:{s:PP(-(SH-3),40,7.8,8.8), a:[-(SH-3)-7.8,40], ly:40},
+    chest:{s:RR(CX,41,CW,CH,6), a:[CX,41+CH/2], ly:55},
+    bic:{s:RR(AO+1,51,AW-2,24,3.6), a:[AO+1,63], ly:70},
+    obl:{s:RR(-(WA+1.5),64,5.2,25,2.4), a:[-(WA+1.5),76], ly:85},
+    abs:{s:R(-(WA-7),62,2*(WA-7),30,4), a:[-(WA-7),88], ly:100},
+    quad:{s:RR(-HP+1.2,110,TW-3,44,6), a:[-HP+1.2,131], ly:134}
+  };
+  var back={
+    trap:{s:'<path d="M '+r1(-(SH-7))+',34 L '+r1(SH-7)+',34 L 6,53 L -6,53 Z"/>', a:[-(SH-7),40], ly:40},
+    rdelt:{s:PP(-(SH-3),40,7.8,8.8), a:[-(SH-3)-7.8,40], ly:55},
+    tri:{s:RR(AO+1,51,AW-2,24,3.6), a:[AO+1,63], ly:70},
+    lat:{s:D('M '+r1(-(SH-4))+',55 L -6,63 L -6,87 L '+r1(-(WA+1))+',77 Z'), a:[-(SH-4),63], ly:85},
+    lower:{s:R(-(WA-6),90,2*(WA-6),15,4), a:[-(WA-6),97], ly:100},
+    glute:{s:RR(-HP+1.2,102,TW-3,22,9), a:[-HP+1.2,113], ly:116},
+    ham:{s:RR(-HP+2,128,TW-4.5,30,6), a:[-HP+2,143], ly:146},
+    calf:{s:RR(-HP+2.6,160,SW-2,28,5), a:[-HP+2.6,174], ly:176}
+  };
+  return {base:base, front:front, back:back};
+}
+function r1(v){ return Math.round(v*10)/10; }
+function mirD(d){ return d.replace(/(-?[\d.]+),(-?[\d.]+)/g, function(_,a,b){ return r1(-parseFloat(a))+','+b; }); }
+
+function daysAgoRu(d){ return d===0?'сегодня':(d===1?'вчера':(d+' '+plural(d,['день','дня','дней'])+' назад')); }
+
 function renderMus(){
   var box=document.getElementById('logmus'); if(!box) return;
-  if(!HIST.length){ box.innerHTML=''; return; }
-  var НЕДЕЛЬ=4, гр={}, дней={};
-  var порог=new Date(TODAY); порог.setDate(порог.getDate()-НЕДЕЛЬ*7);
+  if(!HIST || !HIST.length){ box.innerHTML=''; return; }
+  var сет={}, посл={}, дней={}, сегодня=new Date(TODAY);
   HIST.forEach(function(w){
-    if(new Date(w.date) < порог) return;
-    дней[w.date]=1;
+    var d=Math.floor((сегодня-new Date(w.date))/864e5);
+    if(d<0 || d>MFADE) return;
+    if(d<MWEEK) дней[w.date]=1;
     (w.ex||[]).forEach(function(x){
-      var g=groupOf(x), n=(x.sets||[]).filter(function(v){ return v.r!=null; }).length;
-      if(n) гр[g]=(гр[g]||0)+n;
+      var mm=musOf(x); if(!mm) return;
+      var n=(x.sets||[]).filter(function(v){ return v.r!=null; }).length;
+      if(!n) return;
+      mm.forEach(function(pr){
+        var k=pr[0];
+        if(посл[k]==null || d<посл[k]) посл[k]=d;
+        if(d<MWEEK) сет[k]=(сет[k]||0)+n*pr[1];
+      });
     });
   });
-  var keys=Object.keys(гр); if(!keys.length){ box.innerHTML=''; return; }
+  if(!Object.keys(посл).length){ box.innerHTML=''; return; }
+
+  var me=myData()||{}, sex=(me.sex==='f')?'f':'m', G=bodyGeom(sex);
+  var W=320, HH=282, CY=14, FX=88, BX=232, LB=44, SC=1.12;
+  function figure(cx, set, side){
+    var s='<g transform="translate('+cx+','+CY+') scale('+SC+')">';
+    s+='<g class="bg">'+G.base+'</g>';
+    var leads='', zones='', nums='';
+    Object.keys(set).forEach(function(k){
+      var g=set[k], v=сет[k]||0, d=посл[k];
+      var op=(d==null)?0.05:Math.max(0.08, 1-d/MFADE);
+      var lx=side*LB, ax=g.a[0]*(side<0?1:-1), ay=g.a[1];
+      if(v>0){
+        leads+='<line class="lead" x1="'+(lx-side*3)+'" y1="'+g.ly+'" x2="'+r1(ax)+'" y2="'+ay+'"/>';
+        nums+='<text class="num" x="'+lx+'" y="'+(g.ly+3.4)+'" text-anchor="'+(side<0?'end':'start')+'">'+
+              fmtKg(v)+'</text>';
+      }
+      zones+='<g class="mz'+(v>=MPOROG?' hit':'')+'" data-m="'+k+'" fill-opacity="'+r1(op)+'">'+
+             '<title>'+MNAME[k]+' · '+(v>0?(fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за неделю'):'на этой неделе не работал')+
+             (d!=null?' · последний раз '+daysAgoRu(d):'')+'</title>'+g.s+'</g>';
+    });
+    return s+leads+zones+nums+'</g>';
+  }
+  var svg='<svg class="bodymap" viewBox="0 0 '+W+' '+HH+'" role="img" aria-label="Карта проработанных мышц">'+
+    figure(FX, G.front, -1)+figure(BX, G.back, 1)+
+    '<text class="cap" x="'+FX+'" y="'+(HH-6)+'" text-anchor="middle">спереди</text>'+
+    '<text class="cap" x="'+BX+'" y="'+(HH-6)+'" text-anchor="middle">сзади</text></svg>';
+
   var занятий=Object.keys(дней).length;
-  var первый=Object.keys(дней).sort()[0];
-  var недель=Math.max(1, Math.min(НЕДЕЛЬ, Math.ceil(((new Date(TODAY)-new Date(первый))/864e5+1)/7)));
-  /* Считаем ПОДХОДЫ В НЕДЕЛЮ, а не сумму за месяц: порог тоже недельный,
-     иначе черта уезжает за пределы шкалы и сравнивать не с чем. */
-  var внед={}; keys.forEach(function(k){ внед[k]=гр[k]/недель; });
-  keys.sort(function(a,b){ return внед[b]-внед[a]; });
-  var mx=Math.max(12, внед[keys[0]]*1.1);
-  var W=320, rowH=22, PT=6, PL=104, PR=30, H=PT+keys.length*rowH+16;
-  var scale=function(v){ return (W-PL-PR)*v/mx; };
-  var bars='';
-  keys.forEach(function(k,i){
-    var v=внед[k], y=PT+i*rowH, мало=v<10;
-    var подпись=(Math.round(v*10)/10).toString().replace('.',',');
-    bars+='<text class="lbl" x="'+(PL-8)+'" y="'+(y+13)+'" text-anchor="end">'+k+'</text>'+
-      '<rect class="mbar'+(мало?' low':'')+'" x="'+PL+'" y="'+(y+4)+'" width="'+
-      Math.max(2,scale(v)).toFixed(1)+'" height="12" rx="4"><title>'+k+' · '+подпись+
-      ' в неделю · всего '+гр[k]+' '+plural(гр[k],['подход','подхода','подходов'])+
-      ' за '+недель+' '+plural(недель,['неделю','недели','недель'])+'</title></rect>'+
-      '<text class="val" x="'+(PL+scale(v)+6).toFixed(1)+'" y="'+(y+14)+'">'+подпись+'</text>';
-  });
-  var xп=PL+scale(10);
-  var черта='<line class="thr" x1="'+xп.toFixed(1)+'" y1="'+PT+'" x2="'+xп.toFixed(1)+'" y2="'+(H-16)+'"/>'+
-    '<text class="thrl" x="'+xп.toFixed(1)+'" y="'+(H-4)+'" text-anchor="middle">порог 10</text>';
-  box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Подходов в неделю на мышцу</h4></div>'+
-    '<p class="chartsub">Среднее за '+недель+' '+plural(недель,['неделю','недели','недель'])+
-    ' · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+
-    '. Ниже порога в 10 подходов объём почти не работает — такие группы приглушены.</p>'+
-    '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Подходов в неделю на мышцу">'+
-    черта+bars+'</svg></div>';
+  var всего=Object.keys(MNAME);
+  var закрыто=всего.filter(function(k){ return (сет[k]||0)>=MPOROG; }).length;
+  var нет=всего.filter(function(k){ return !(сет[k]>0); }).map(function(k){ return MNAME[k].toLowerCase(); });
+  var хвост=нет.length>6 ? нет.slice(0,6).join(', ')+' и ещё '+(нет.length-6) : нет.join(', ');
+  var сводка='<b'+(закрыто?'':' class="down"')+'>'+закрыто+'</b> из '+всего.length+
+    ' групп закрыли норму.'+(нет.length?' Не трогал: '+хвост+'.':'')+
+    ' Нажми на мышцу — покажу подробности.';
+  box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Карта тела</h4></div>'+
+    '<p class="chartsub">Последние 7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+
+    '. Чем ярче мышца, тем свежее работа; через '+MFADE+' дней она гаснет совсем. '+
+    'Обводка — норма в '+MPOROG+' подходов за неделю закрыта.</p>'+
+    svg+
+    '<div class="muskey"><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
+    '<i><span class="sw2"></span>'+MPOROG+'+ подходов</i></div>'+
+    '<p class="musdet" id="musdet">'+сводка+'</p></div>';
+
+  if(!box.__wired){
+    box.__wired=1;
+    box.addEventListener('click', function(ev){
+      var g=ev.target.closest ? ev.target.closest('.mz') : null;
+      var det=document.getElementById('musdet'); if(!g || !det) return;
+      var k=g.getAttribute('data-m'), v=сет[k]||0, d=посл[k];
+      det.innerHTML='<b'+(v<MPOROG?' class="down"':'')+'>'+MNAME[k]+'</b> · '+
+        (v>0 ? fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за 7 дней' : 'за 7 дней ни одного подхода')+
+        (d!=null ? ' · последний раз '+daysAgoRu(d) : ' · дольше '+MFADE+' дней не трогал');
+      haptic('light');
+    });
+  }
 }
 
 /* ── Недельный объём: сколько подходов закрыто по неделям ── */
