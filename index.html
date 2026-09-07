@@ -487,6 +487,18 @@ body{padding-bottom:0}
 .tile b{display:block;font-family:'Unbounded',sans-serif;font-size:20px;font-weight:800;
   letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
 .tile i{font-style:normal;font-size:11px;color:var(--muted)}
+.lastw{margin:12px 0 0;padding:14px;border:1px solid var(--line);border-radius:14px;
+  background:var(--surface-2)}
+.lasth{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:3px}
+.lasth b{font-size:13.5px;color:var(--text)}
+.lasth span{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim)}
+.lastm{font-size:12px;color:var(--muted);margin-bottom:9px;line-height:1.45}
+.llx{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:5px 0;border-top:1px solid var(--line-soft);font-size:12px}
+.llx i{font-style:normal;color:var(--muted)}
+.llx em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11px;
+  color:var(--amber);white-space:nowrap}
 .lh{margin:26px 0 10px;font-family:'Unbounded',sans-serif;font-size:15px;color:var(--text)}
 .chartbox{margin:18px 0 0;padding:14px 12px 10px;border:1px solid var(--line);
   border-radius:14px;background:var(--surface-2)}
@@ -675,6 +687,7 @@ body{padding-bottom:0}
       <div class="sec" style="padding-top:18px">
         <h2>Журнал</h2>
         <div id="logsum" class="tiles"></div>
+        <div id="loglast"></div>
         <div id="logprog"></div>
         <div id="logvol"></div>
         <h3 class="lh">История</h3>
@@ -2286,6 +2299,30 @@ function renderLogSum(){
 }
 function tile(u,b,i){ return '<div class="tile"><u>'+u+'</u><b>'+b+'</b><i>'+i+'</i></div>'; }
 
+/* Плитки считают текущую неделю, и в понедельник они честно показывают нули.
+   Со стороны это выглядит как потеря данных, поэтому сразу под ними — что
+   именно лежит в последней тренировке. Вопрос «а она сохранилась?» снимается
+   до того, как человек успеет его задать. */
+function renderLastW(){
+  var box=document.getElementById('loglast'); if(!box) return;
+  if(!HIST.length){ box.innerHTML=''; return; }
+  var w=HIST[0], сет=0, тон=0, стр='';
+  (w.ex||[]).forEach(function(x){
+    var ч=(x.sets||[]).filter(function(v){ return v.r!=null; });
+    сет+=ч.length;
+    ч.forEach(function(v){ if(v.w!=null && x.unit!=='sec') тон+=v.w*v.r; });
+    if(ч.length) стр+='<div class="llx"><i>'+x.n+'</i><em>'+
+      ч.map(function(v){ return (v.w!=null? fmtKg(v.w)+'×':'')+v.r+(x.unit==='sec'?' с':''); }).join(' · ')+'</em></div>';
+  });
+  var дн = Math.round((new Date(TODAY) - new Date(w.date))/864e5);
+  box.innerHTML='<div class="lastw"><div class="lasth"><b>Последняя тренировка</b>'+
+    '<span>'+ruDate(w.date)+(дн===0?' · сегодня':(дн===1?' · вчера':' · '+дн+' '+plural(дн,['день','дня','дней'])+' назад'))+'</span></div>'+
+    '<div class="lastm">'+(w.name||'Тренировка')+(w.sub?' · '+w.sub:'')+' — '+
+    (w.ex||[]).length+' '+plural((w.ex||[]).length,['упражнение','упражнения','упражнений'])+' · '+
+    сет+' '+plural(сет,['подход','подхода','подходов'])+
+    (тон?' · тоннаж '+Math.round(тон)+' кг':'')+'</div>'+стр+'</div>';
+}
+
 /* ── График прогресса по упражнению ──
    По оси — занятия подряд, по значению — расчётный разовый максимум лучшего
    подхода (формула Эпли). Одна линия: так видно и рост веса, и рост повторов,
@@ -2397,7 +2434,7 @@ function renderHistory(){
       var parts=(x.sets||[]).map(function(v){
         cnt++;
         if(v.w!=null && v.r!=null && x.unit!=='sec') ton += v.w*v.r;
-        return (v.w!=null? fmtKg(v.w)+'×':'')+(v.r!=null? v.r : '—');
+        return (v.w!=null? fmtKg(v.w)+'×':'')+(v.r!=null? v.r : '—')+(x.unit==='sec'?' с':'');
       });
       if(parts.length) rows+='<div class="lex"><i>'+x.n+'</i><em>'+parts.join(' · ')+'</em></div>';
     });
@@ -2414,7 +2451,7 @@ function renderLog(){
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
-    renderLogSum(); renderProg(); renderVol(); renderHistory();
+    renderLogSum(); renderLastW(); renderProg(); renderVol(); renderHistory();
   }).catch(function(){ box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
 }
 document.addEventListener('change', function(ev){
