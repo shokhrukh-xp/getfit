@@ -357,14 +357,12 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
   padding:11px 8px 10px;text-align:left;min-height:66px;
   color:var(--muted);line-height:1.25;transition:border-color .18s,background .18s;
 }
-.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:12.5px;
-  letter-spacing:-.01em;color:var(--text);display:block;padding-right:14px}
+.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11.5px;
+  letter-spacing:-.02em;color:var(--text);display:block;padding-right:14px}
 .dayseg button i{font-style:normal;font-size:11px;color:var(--dim);display:block}
 .dayseg button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-ghost)}
 .dayseg button[aria-pressed="true"] b{color:var(--amber)}
 .dayseg button[aria-pressed="true"] i{color:var(--amber-deep)}
-.dayseg button i em{font-style:normal;color:var(--muted)}
-.dayseg button[aria-pressed="true"] i em{color:var(--amber-deep)}
 .dayseg button[data-next="1"]::after{
   content:"";position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;
   background:var(--amber);box-shadow:0 0 0 3px var(--amber-ghost)}
@@ -906,9 +904,20 @@ function figSvg(k){
    Два кадра: начало и рабочая фаза, показываются попеременно. */
 var FRAMES={abduction:1,calf:1,crunch:1,curl:1,fly:1,hipthrust:1,
             lat:1,lateral:1,legpress:1,rdl:1,triceps:1};
+/* Адрес папки с фотографиями собираем абсолютным. Telegram открывает Mini App
+   с параметрами в адресе, и относительный путь «img/…» в некоторых клиентах
+   разрешается не от папки приложения, а от корня сайта — картинки молча падают
+   в 404. Хвост ?v сбрасывает уже закешированные неудачные ответы. */
+var IMGDIR = (function(){
+  if(location.protocol==='file:') return 'img/';
+  var d=location.pathname;
+  if(!/\/$/.test(d)) d = /\.[a-z0-9]+$/i.test(d) ? d.replace(/[^/]*$/,'') : d+'/';
+  return location.origin + d + 'img/';
+})();
+var IMGV='?v=2';
 function mediaFor(e){
   if(e.cat){        /* упражнение из каталога — два кадра с CDN */
-    return '<div class="fig2" role="img" aria-label="'+e.n+'">'+
+    return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
            '<img src="'+CDN+encodeURI(e.cat)+'/0.jpg" alt="" loading="lazy">'+
            '<img src="'+CDN+encodeURI(e.cat)+'/1.jpg" alt="" loading="lazy">'+
            '</div>';
@@ -916,13 +925,31 @@ function mediaFor(e){
   var ph = e.ph && PHOTOS[e.ph];
   if(ph) return '<img class="fig ph" alt="'+e.n+' — рабочая фаза" src="data:image/webp;base64,'+ph+'">';
   if(e.ph && FRAMES[e.ph]){
-    return '<div class="fig2" role="img" aria-label="'+e.n+' — начальная и рабочая фаза">'+
-           '<img src="img/'+e.ph+'-0.jpg" alt="" loading="lazy">'+
-           '<img src="img/'+e.ph+'-1.jpg" alt="" loading="lazy">'+
+    return '<div class="fig2" role="img" aria-label="'+e.n+' — начальная и рабочая фаза" data-fig="'+(e.fig||'')+'">'+
+           '<img src="'+IMGDIR+e.ph+'-0.jpg'+IMGV+'" alt="" loading="lazy">'+
+           '<img src="'+IMGDIR+e.ph+'-1.jpg'+IMGV+'" alt="" loading="lazy">'+
            '</div>';
   }
   return figSvg(e.fig);
 }
+/* Не загрузилось фото — показываем рисованную схему движения, а не белый
+   прямоугольник с крестиком. Событие error не всплывает, поэтому слушаем
+   на перехвате. */
+document.addEventListener('error', function(ev){
+  var im=ev.target;
+  if(!im || im.tagName!=='IMG') return;
+  var box=im.parentNode;
+  if(box && box.className==='fig2'){
+    if(box.getAttribute('data-failed')) return;
+    box.setAttribute('data-failed','1');
+    var f=box.getAttribute('data-fig');
+    var svg=(f && FIG[f]) ? figSvg(f) : '';
+    if(svg) box.outerHTML=svg; else box.style.display='none';
+    return;
+  }
+  if(im.className==='fig ph' || (im.parentNode && im.parentNode.className==='catitem')) im.style.visibility='hidden';
+}, true);
+
 function ytLink(name){
   return '<a class="vid" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
     encodeURIComponent(name+' техника выполнения')+'">▶ Видео техники</a>';
@@ -1135,6 +1162,22 @@ function saveSched(){
 function weekdayOf(k){
   for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WD[i];
   return '';
+}
+/* Человек думает днями недели, а не «Днём 2». Название дня программы —
+   служебное, наружу показываем день недели. Если день никуда не поставлен,
+   деваться некуда: показываем служебное имя. */
+function dayLabel(k){
+  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WDFULL[i].charAt(0).toUpperCase()+WDFULL[i].slice(1);
+  return (DAYS[k]||{}).name || '';
+}
+/* кнопки идут по неделе, а не в порядке, в котором записана программа */
+function byWeek(list){
+  var pos={};
+  Object.keys(GYM_DAYS).forEach(function(w){ pos[GYM_DAYS[w]] = ((+w)+6)%7; });   /* пн=0 … вс=6 */
+  return list.slice().sort(function(a,b){
+    var pa=(a in pos)?pos[a]:99, pb=(b in pos)?pos[b]:99;
+    return (pa-pb) || (list.indexOf(a)-list.indexOf(b));
+  });
 }
 
 /* активная фаза: выбранная руками, иначе подсказанная по номеру недели */
@@ -1368,7 +1411,7 @@ function renderSched(){
     h+='<label class="schrow '+(cur?'on':'off')+'"><span class="schwd">'+WDFULL[wd]+'</span>'+
        '<select data-wd="'+wd+'"><option value=""'+(cur?'':' selected')+'>отдых</option>';
     keys.forEach(function(k){
-      h+='<option value="'+k+'"'+(k===cur?' selected':'')+'>'+DAYS[k].name+' — '+DAYS[k].sub.toLowerCase()+'</option>';
+      h+='<option value="'+k+'"'+(k===cur?' selected':'')+'>'+DAYS[k].sub.toLowerCase()+'</option>';
     });
     h+='</select></label>';
   }
@@ -1401,10 +1444,10 @@ function renderDayseg(){
   var seg=document.getElementById('dayseg'); if(!seg) return;
   seg.style.gridTemplateColumns='repeat('+PROF.heavy.length+',1fr)';
   var h='';
-  PROF.heavy.forEach(function(k){
-    var d=DAYS[k], w=weekdayOf(k);
-    h+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+
-       d.sub.toLowerCase()+(w?' · <em>'+w+'</em>':'')+'</i></button>';
+  byWeek(PROF.heavy).forEach(function(k){
+    var d=DAYS[k];
+    h+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+dayLabel(k)+'</b><i>'+
+       d.sub.toLowerCase()+'</i></button>';
   });
   seg.innerHTML=h;
   var lite=document.getElementById('liteseg'); if(!lite) return;
@@ -1412,10 +1455,10 @@ function renderDayseg(){
   lite.classList.add('show');
   lite.style.gridTemplateColumns='repeat('+PROF.lightDays.length+',1fr)';
   var l='';
-  PROF.lightDays.forEach(function(k){
-    var d=DAYS[k], w=weekdayOf(k);
-    l+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+
-       d.sub.toLowerCase()+(w?' · <em>'+w+'</em>':'')+'</i></button>';
+  byWeek(PROF.lightDays).forEach(function(k){
+    var d=DAYS[k];
+    l+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+dayLabel(k)+'</b><i>'+
+       d.sub.toLowerCase()+'</i></button>';
   });
   lite.innerHTML=l;
 }
@@ -1471,9 +1514,9 @@ function renderDayHead(){
   });
   var h=document.getElementById('nexthint');
   if(h){
-    if(doneToday) h.innerHTML='сегодня закрыт · следующий <b>'+DNAME[nextAfter(doneToday)]+'</b>';
-    else if(day!==nx) h.innerHTML='по очереди · <b>'+DNAME[nx]+'</b>, открыт '+DNAME[day];
-    else h.innerHTML='по очереди · <b>'+DNAME[nx]+'</b>';
+    if(doneToday) h.innerHTML='сегодня закрыт · следующая <b>'+dayLabel(nextAfter(doneToday))+'</b>';
+    else if(day!==nx) h.innerHTML='открыт не по очереди · следующая <b>'+dayLabel(nx)+'</b>';
+    else h.innerHTML='по очереди · <b>'+dayLabel(nx)+'</b>';
   }
 }
 function pickDay(e){
@@ -2204,9 +2247,9 @@ function renderTodaybar(){
   var n=new Date();
   var out='<span class="td">'+n.getDate()+' '+MN[n.getMonth()]+', '+DNL[n.getDay()]+'</span>';
   if(lastDone && lastDone.date===TODAY){
-    out+='<span class="ts done">сегодня закрыт · '+DNAME[lastDone.day].toLowerCase()+'</span>';
+    out+='<span class="ts done">сегодня закрыт · '+DAYS[lastDone.day].sub.toLowerCase()+'</span>';
   } else if(todayLetter()){
-    out+='<span class="ts gym">сегодня зал · '+DNAME[suggestedDay()].toLowerCase()+'</span>';
+    out+='<span class="ts gym">сегодня зал · '+DAYS[suggestedDay()].sub.toLowerCase()+'</span>';
   } else {
     var nx=nextGymDay();
     out+='<span class="ts">отдых'+(nx?' · зал '+(nx.in===1?'завтра':'в '+nx.d):' · дни не заданы')+'</span>';
