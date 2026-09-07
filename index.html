@@ -485,7 +485,8 @@ body{padding-bottom:0}
 @keyframes frameflip{0%,49.99%{opacity:0}50%,100%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.fig2 img:last-child{animation:none;opacity:1}}
 .profline{margin:18px 0 0;font-size:12px;color:var(--dim);text-align:center}
-.profline b{color:var(--muted);font-weight:600}
+.profline b{color:var(--text);font-weight:600}
+.profline #profname{color:var(--muted)}
 .profline button{background:none;border:none;padding:0;font:inherit;color:var(--amber);
   text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 /* ── переключатель фаз ── */
@@ -510,7 +511,8 @@ body{padding-bottom:0}
   font:inherit;cursor:pointer}
 .pbtn:active{border-color:var(--amber);background:var(--amber-ghost)}
 .pbtn b{display:block;font-family:'Unbounded',sans-serif;font-size:14.5px;margin-bottom:3px}
-.pbtn i{font-style:normal;font-size:12px;color:var(--dim)}
+.pbtn u{display:block;text-decoration:none;font-size:12.5px;color:var(--amber);margin-bottom:4px}
+.pbtn i{font-style:normal;font-size:11.5px;color:var(--dim);line-height:1.45}
 .phrow{display:block;width:100%;text-align:left;margin-bottom:8px;padding:12px 14px;
   border:1px solid var(--line);border-radius:12px;background:var(--surface-2);color:var(--text);
   font:inherit;cursor:pointer;position:relative}
@@ -596,7 +598,7 @@ body{padding-bottom:0}
           <p class="split-why">В зале нужен быстрый ввод между подходами. За едой нужен разбор.
           Это разные инструменты, и они намеренно разведены.</p>
         </div>
-        <p class="profline">Профиль: <b id="profname">—</b> · <button type="button" id="profswitch">сменить программу</button></p>
+        <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -832,11 +834,9 @@ body{padding-bottom:0}
 
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
-    <h3 id="picktitle">Чья программа?</h3>
-    <p class="mtext">Выбор сохранится — приложение спросит один раз. Журналы тренировок у вас и так разные: Telegram хранит данные каждого пользователя отдельно.</p>
-    <button class="pbtn" data-prof="shp"><b>Шохрух</b><i>Похудение до 73 кг · 5 дней в неделю</i></button>
-    <button class="pbtn" data-prof="wife"><b>Жена</b><i>Форма и осанка · 2 дня, среда и пятница</i></button>
-    <button class="pbtn" data-prof="friend"><b>Друг</b><i>База · 3 дня, вторник, четверг, воскресенье</i></button>
+    <h3 id="picktitle">С чего начнём?</h3>
+    <p class="mtext" id="pickhi">Выбери программу — приложение спросит об этом один раз. Журнал тренировок будет твой личный: Telegram хранит данные каждого пользователя отдельно, чужих подходов ты не увидишь.</p>
+    <div id="picklist"></div>
   </div>
 </div>
 <div class="modal wide" id="catalog" role="dialog" aria-modal="true" aria-labelledby="cattitle">
@@ -1057,7 +1057,8 @@ DAYS.W2={name:'День 2', when:'пятница', sub:'Задняя цепь и
    программу: профиль выбирается один раз при первом запуске и запоминается. */
 var PROFILES = {
   shp: {
-    name:'Шохрух', sub:'Похудение до 73 кг · 5 дней',
+    name:'Сушка · 5 дней', goal:'Снять жир и не потерять мышцы',
+    sub:'Три тяжёлых дня плюс два лёгких. Вт · Ср · Чт · Пт · Вс',
     heavy:['D1','D2','D3'], lightDays:['L1','L2'],
     gymDays:{2:'D1', 3:'L1', 4:'D2', 5:'L2', 0:'D3'},   /* вт ср чт пт вс */
     start:[2026,8,1],
@@ -1077,7 +1078,8 @@ var PROFILES = {
     ]
   },
   friend: {
-    name:'Друг', sub:'База · 3 дня, вт/чт/вс',
+    name:'База · 3 дня', goal:'Начать ходить и втянуться',
+    sub:'Всё тело за три дня, свободные веса. Вт · Чт · Вс',
     heavy:['D1','D2','D3'], lightDays:[],
     gymDays:{2:'D1', 4:'D2', 0:'D3'},
     start:[2026,8,7],
@@ -1091,7 +1093,8 @@ var PROFILES = {
     ]
   },
   wife: {
-    name:'Жена', sub:'Форма и осанка · 2 дня',
+    name:'Форма · 2 дня', goal:'Тонус, ягодицы и осанка',
+    sub:'Тренажёры и гантели, техника простая. Ср · Пт',
     heavy:['W1','W2'], lightDays:[],
     gymDays:{3:'W1', 5:'W2'},                           /* ср пт */
     start:[2026,8,7],
@@ -1150,7 +1153,8 @@ function applyProfile(p, silent){
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
   if(!DAYS[day]) day = CYCLE[0];
   gset('profile', p);
-  var pn=document.getElementById('profname'); if(pn) pn.textContent=PROF.name;
+  var pn=document.getElementById('profname'); if(pn) pn.textContent='программа «'+PROF.name+'»';
+  var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   if(silent) return;
   booted = true;
   loadSess();
@@ -1273,8 +1277,22 @@ function renderCatalog(){
   box.innerHTML=h;
 }
 
-/* ── выбор профиля при первом запуске ── */
+/* ── выбор программы при первом запуске ── */
+function renderPicker(){
+  var box=document.getElementById('picklist'); if(!box) return;
+  var h='';
+  Object.keys(PROFILES).forEach(function(k){
+    var P=PROFILES[k];
+    h+='<button class="pbtn" data-prof="'+k+'"><b>'+P.name+'</b>'+
+       '<u>'+P.goal+'</u><i>'+P.sub+'</i></button>';
+  });
+  box.innerHTML=h;
+  var hi=document.getElementById('pickhi'), t=document.getElementById('picktitle');
+  var nm=whoName();
+  if(nm && t) t.textContent = nm + ', с чего начнём?';
+}
 function showPicker(){
+  renderPicker();
   var el=document.getElementById('picker'); if(el) el.classList.add('show');
 }
 function hidePicker(){
@@ -1285,7 +1303,8 @@ function choose(p){
   applyProfile(p);
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
      иначе на новом устройстве его негде было бы искать */
-  if(DB){ csSet(PROFKEY, JSON.stringify({p:p, at:new Date().toISOString()})).catch(function(){}); }
+  if(DB){ csSet(PROFKEY, JSON.stringify({p:p, at:new Date().toISOString(),
+    tg: TGUSER ? {id:TGUSER.id, n:whoName(), u:TGUSER.username||''} : null})).catch(function(){}); }
   goPage('gym');
 }
 
@@ -1634,6 +1653,15 @@ document.getElementById('list').addEventListener('change', function(ev){
 var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 var CS = (TG && TG.CloudStorage && typeof TG.CloudStorage.setItem === 'function') ? TG.CloudStorage : null;
 var STORENAME = CS ? 'в Telegram' : 'на телефоне';
+/* Telegram сам говорит, кто открыл приложение — спрашивать имя не нужно.
+   initDataUnsafe нельзя доверять для авторизации (подпись проверяется только
+   на сервере, а его у нас нет), но для выбора программы это и не требуется:
+   подделывать тут нечего, данные у каждого свои. */
+var TGUSER = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
+function whoName(){
+  if(!TGUSER) return '';
+  return (TGUSER.first_name||'') + (TGUSER.last_name ? ' '+TGUSER.last_name : '');
+}
 
 var MAXVAL = 4000;                       /* запас до лимита 4096 */
 /* Ключи облака разделены по профилю. Профиль Шохруха оставлен без префикса —
@@ -2109,7 +2137,8 @@ function goPage(p){
   });
   gset('page',p);
   if(p==='log') renderLog();
-  var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent=PROF.name;
+  var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
+  var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   window.scrollTo({top:0,behavior:'auto'});
 }
 document.querySelector('.l1').addEventListener('click', function(e){
