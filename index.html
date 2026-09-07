@@ -519,6 +519,10 @@ body{padding-bottom:0}
 .adv.hold b{color:var(--amber)}
 .advhint{display:block;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);
   font-size:11.5px;color:var(--dim)}
+.advrir{display:block;margin-top:6px;padding-top:6px;border-top:1px solid var(--line-soft);
+  font-size:11.5px;color:var(--dim)}
+.advrir b{display:inline;font-family:inherit;font-size:inherit;letter-spacing:0;
+  text-transform:none;color:var(--muted);font-weight:600;margin:0}
 .me{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
 .me label{flex:1 1 70px;font-size:11px;color:var(--dim)}
 .me input,.me select{width:100%;margin-top:3px;padding:9px 10px;border-radius:9px;
@@ -582,6 +586,12 @@ body{padding-bottom:0}
   font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--done)}
 .phrow.reset{text-align:center;background:none;border-style:dashed;color:var(--muted);
   font-size:12.5px;margin-top:12px}
+.nowrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.nowrow:last-of-type{border-bottom:none}
+.nowrow u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.nowrow b{font-size:13.5px;color:var(--text);text-align:right}
 #sheetclose{margin-top:6px}
 /* предупреждение для случая, когда html открыли как файл с диска.
    Обычным блоком в потоке, а не поверх: фиксированная полоса перекрывала
@@ -732,10 +742,9 @@ body{padding-bottom:0}
 </div>
 <div class="modal" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
   <div class="modalbox">
-    <h3 id="sheettitle">Фаза программы</h3>
-    <p class="mtext">Фаза задаёт схему подходов и повторов. Обычно она переключается сама по номеру недели — здесь можно поставить вручную.</p>
+    <h3 id="sheettitle">Что сейчас</h3>
     <div id="sheetlist"></div>
-    <button class="btn" id="sheetclose">Закрыть</button>
+    <button class="btn wide" id="sheetclose">Закрыть</button>
   </div>
 </div>
 <script>
@@ -1035,7 +1044,7 @@ var PROFILES = {
   }
 };
 
-var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], phaseId=null, booted=false;
+var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], booted=false;
 /* Расписание — своё у каждого. По умолчанию берётся из программы, но человек
    переставляет дни как ему удобно: у одного зал во вторник, у другого в среду. */
 var WD=['вс','пн','вт','ср','чт','пт','сб'];
@@ -1081,18 +1090,34 @@ function phaseAuto(){
   for(var i=0;i<PHASES.length;i++){ var p=PHASES[i]; if(week>=p.w[0] && week<=p.w[1]) return p; }
   return PHASES[PHASES.length-1];
 }
-function phaseNow(){
-  if(phaseId){ for(var i=0;i<PHASES.length;i++) if(PHASES[i].id===phaseId) return PHASES[i]; }
-  return phaseAuto();
+/* Раньше фазу можно было выбрать руками. Смысла в этом не осталось: фаза
+   задаёт только число подходов и запас до отказа, а и то и другое приложение
+   знает само — по номеру недели. Выбирать было нечего, а лишний экран был.
+   Ручным остался один случай, который из данных не выводится: человек решил
+   взять лёгкую неделю. */
+function deloadOn(){
+  var d=get('deload', null);
+  if(!d) return false;
+  var days=Math.floor((new Date(TODAY) - new Date(d))/864e5);
+  if(days<0 || days>6){ if(days>6) set('deload', null); return false; }
+  return true;
 }
+function phaseNow(){ return phaseAuto(); }
 /* Подходы и повторы принадлежат упражнению, а не фазе: приседу нужны 4 подхода
    по 6–10, а махам гантелями 4 по 12–20, и одна общая схема на всё это неверна.
    Фаза сдвигает число подходов (ds) и задаёт запас до отказа. */
 function nSets(e, dk){
   if(isTime(e)) return e.sets;
+  if(deloadOn()) return Math.max(1, Math.round(e.sets/2));
   var p=phaseNow();
   var ds = (p && typeof p.ds==='number') ? p.ds : 0;
   return Math.max(1, e.sets + ds);
+}
+/* запас до отказа — то, чем этап отличается от этапа на самом деле */
+function rirNow(){
+  if(deloadOn()) return 4;
+  var p=phaseNow();
+  return (p && p.rir) ? p.rir : 2;
 }
 function repsOf(e, dk){ return e.reps; }
 function allDays(){ return PROF.heavy.concat(PROF.lightDays); }
@@ -1111,7 +1136,6 @@ function applyProfile(p, silent){
   if(sd){ var a=String(sd).split('-'); START = new Date(+a[0], +a[1]-1, +a[2]); }
   else   { START = new Date(PROF.start[0], PROF.start[1], PROF.start[2]); }
   week = weekNow();
-  phaseId = get('phase', null);
   LAST = get('last', {});
   SUBS = get('subs', {});
   lastDone = get('lastdone', null);
@@ -1330,23 +1354,21 @@ function choose(p){
 }
 
 /* ── переключатель фаз ── */
-/* короткая подпись фазы: чем она отличается, одной строкой */
-function phShort(p){
-  var a = (p.ds<0) ? 'на подход меньше' : (p.ds>0 ? 'на подход больше' : 'полный объём');
-  return a + ' · запас ' + p.rir + (p.rir===1?' повтор':' повтора');
-}
 function renderSheet(){
   var box=document.getElementById('sheetlist'); if(!box) return;
-  var cur=phaseNow(), auto=phaseAuto(), h='';
-  PHASES.forEach(function(p){
-    var isCur = p.id===cur.id;
-    h += '<button class="phrow'+(isCur?' on':'')+'" data-ph="'+p.id+'">'+
-         '<span class="phn">'+p.t+'</span>'+
-         '<span class="phs">'+phShort(p)+'</span>'+
-         (p.id===auto.id ? '<span class="phauto">по плану сейчас</span>' : '')+
-         '</button>';
-  });
-  h += '<button class="phrow reset" data-ph="auto">Вернуть автоматический выбор</button>';
+  var d=deloadOn(), p=phaseNow(), h='';
+  var сет = d ? 'половина подходов' : ((p.ds<0) ? 'на подход меньше в каждом упражнении' : 'полное число подходов');
+  var rir = rirNow();
+  h += '<div class="nowrow"><u>неделя</u><b>'+week+'</b></div>'+
+       '<div class="nowrow"><u>подходы</u><b>'+сет+'</b></div>'+
+       '<div class="nowrow"><u>запас до отказа</u><b>'+rir+' '+plural(rir,['повтор','повтора','повторов'])+'</b></div>';
+  h += '<p class="mtext" style="margin-top:14px">Больше выбирать нечего: сколько подходов и насколько близко к отказу работать — приложение считает по номеру недели, а когда добавить вес или повтор, скажет карточка упражнения по твоей же истории.</p>';
+  if(d){
+    h += '<button class="phrow reset" id="deloadoff">Отменить лёгкую неделю</button>';
+  } else {
+    h += '<p class="mtext"><b>Веса встали или поехали вниз?</b> Возьми неделю с половиной подходов на тех же весах. Это единственное, чего приложение за тебя не решит — как ты себя чувствуешь, знаешь только ты.</p>'+
+         '<button class="phrow reset" id="deloadon">Взять лёгкую неделю</button>';
+  }
   box.innerHTML=h;
 }
 /* ── «мои дни»: семь строк недели, в каждой — день программы или отдых ── */
@@ -1389,9 +1411,8 @@ function closeSched(){ var m=document.getElementById('schedm'); if(m) m.classLis
 
 function openSheet(){ renderSheet(); var s=document.getElementById('sheet'); if(s) s.classList.add('show'); }
 function closeSheet(){ var s=document.getElementById('sheet'); if(s) s.classList.remove('show'); }
-function setPhase(id){
-  phaseId = (id==='auto') ? null : id;
-  if(phaseId) set('phase', phaseId); else set('phase', null);
+function setDeload(on){
+  set('deload', on ? TODAY : null);
   closeSheet();
   /* схема подходов изменилась — пересобираем день, если человек ещё ничего не ввёл */
   if(!anyTouched()){ sess=blankSess(); saveSess(); }
@@ -1442,10 +1463,10 @@ function weekNow(){
 var week = 1;
 function renderWeek(){
   var el=document.getElementById('wkchip'); if(!el) return;
-  var p=phaseNow();
-  el.innerHTML='<b>'+p.s+'</b> · НЕД '+week+' <span class="cv">▾</span>';
-  el.setAttribute('aria-label','Фаза: '+p.t+'. Нажми, чтобы сменить');
-  el.classList.toggle('manual', !!phaseId);
+  var d=deloadOn();
+  el.innerHTML='НЕДЕЛЯ <b>'+week+'</b>'+(d?' · ЛЁГКАЯ':'')+' <span class="cv">▾</span>';
+  el.setAttribute('aria-label','Неделя '+week+'. Нажми, чтобы посмотреть, что сейчас');
+  el.classList.toggle('manual', d);
 }
 
 function phaseFor(w){
@@ -1453,10 +1474,15 @@ function phaseFor(w){
   return PHASES[0];
 }
 function renderPhase(){
-  var p = phaseNow();
-  var txt = p.d.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').replace(/\s+([,.:;])/g,'$1').trim();
-  var man = phaseId ? ' <i class="manual">выбрана вручную</i>' : '';
-  document.getElementById('phaseline').innerHTML = '<b>'+p.t+'</b>'+man+' · '+txt;
+  var el=document.getElementById('phaseline'); if(!el) return;
+  if(deloadOn()){
+    el.innerHTML='<b>Лёгкая неделя</b> · половина подходов, те же веса, запас 4 повтора. Это не отдых из слабости — так возвращается тяга к следующей неделе.';
+    return;
+  }
+  var p=phaseNow();
+  var сет = (p.ds<0) ? 'на подход меньше в каждом упражнении' : 'полное число подходов';
+  el.innerHTML='<b>Неделя '+week+'</b> · '+сет+', запас <b>'+p.rir+'</b> '+
+    plural(p.rir,['повтор','повтора','повторов'])+' до отказа. Приложение ведёт это само — веса и повторы подскажет каждая карточка.';
 }
 
 /* ── выбор дня ── */
@@ -1683,12 +1709,17 @@ function списокПервый(список, g){
 function adviceLine(e){
   var a;
   try{ a = advice(e); }catch(err){ return lastLine(e); }
+  var rir=rirNow();
+  var хвост = '<span class="advrir">На этой неделе оставляй <b>'+rir+' '+
+              plural(rir,['повтор','повтора','повторов'])+'</b> в запасе'+
+              (deloadOn()?' и делай половину подходов':'')+'.</span>';
   if(a.kind==='start'){
     var st=a.text;
     return '<div class="adv start"><b>что делать</b>'+st.t+
-           (st.hint?'<span class="advhint">'+st.hint+'</span>':'')+'</div>';
+           (st.hint?'<span class="advhint">'+st.hint+'</span>':'')+хвост+'</div>';
   }
-  return '<div class="adv '+a.kind+'"><b>что делать</b>'+a.text+'</div>';
+  if(a.kind==='wait') return '<div class="adv wait"><b>что делать</b>'+a.text+'</div>';
+  return '<div class="adv '+a.kind+'"><b>что делать</b>'+a.text+хвост+'</div>';
 }
 function syncRow(di,si){
   var row=document.querySelector('.setrow[data-ex="'+di+'"][data-set="'+si+'"]');
@@ -2468,7 +2499,7 @@ var BWK = {squat:0.50, bench:0.40, benchdb:0.30, ohp:0.22, row:0.35, rowcable:0.
            facepull:0.15, fly:0.12, calf:0.40, pallof:0.10, abduction:0.30};
 function myData(){ return gget('me', null); }
 function startHint(e){
-  var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся и остаётся 3 в запасе</b>. Смог больше — в следующем подходе добавь.';
+  var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся с нужным запасом</b> — сколько его оставлять, написано ниже. Смог больше — в следующем подходе добавь.';
   var me = myData();
   if(!me || !me.bw || !e.ph || BWK[e.ph]==null) return {t:base, hint:null};
   var k = BWK[e.ph], age = +me.age||30, sex = me.sex==='f' ? 0.65 : 1;
@@ -2595,7 +2626,8 @@ document.getElementById('todaybar').addEventListener('click', function(e){
 });
 document.getElementById('sheetclose').addEventListener('click', closeSheet);
 document.getElementById('sheetlist').addEventListener('click', function(e){
-  var b=e.target.closest('button[data-ph]'); if(b) setPhase(b.dataset.ph);
+  if(e.target.closest('#deloadon'))  setDeload(true);
+  if(e.target.closest('#deloadoff')) setDeload(false);
 });
 document.getElementById('picker').addEventListener('click', function(e){
   var b=e.target.closest('button[data-prof]'); if(b) choose(b.dataset.prof);
