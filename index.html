@@ -289,6 +289,10 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
   font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);
   border-radius:99px;padding:4px 10px;color:var(--muted)}
 .todaybar .ts.gym{border-color:var(--amber);color:var(--amber);background:var(--amber-ghost)}
+.todaybar .tsedit{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;border:1px dashed var(--line);border-radius:99px;padding:4px 10px;
+  background:none;color:var(--dim);cursor:pointer}
+.todaybar .tsedit:active{border-color:var(--amber);color:var(--amber)}
 
 .wraptbl table{min-width:0}
 .wraptbl td:first-child{white-space:normal;width:42%}
@@ -359,6 +363,8 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .dayseg button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-ghost)}
 .dayseg button[aria-pressed="true"] b{color:var(--amber)}
 .dayseg button[aria-pressed="true"] i{color:var(--amber-deep)}
+.dayseg button i em{font-style:normal;color:var(--muted)}
+.dayseg button[aria-pressed="true"] i em{color:var(--amber-deep)}
 .dayseg button[data-next="1"]::after{
   content:"";position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;
   background:var(--amber);box-shadow:0 0 0 3px var(--amber-ghost)}
@@ -525,6 +531,18 @@ body{padding-bottom:0}
 .phrow.reset{text-align:center;background:none;border-style:dashed;color:var(--muted);
   font-size:12.5px;margin-top:12px}
 #sheetclose{margin-top:6px}
+#schedclose{margin-top:4px}
+/* ── расписание: день недели → день программы ── */
+.schrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding:9px 12px;
+  border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.schrow.on{border-color:var(--amber)}
+.schrow .schwd{flex:0 0 42%;font-size:13px;color:var(--text)}
+.schrow.off .schwd{color:var(--dim)}
+.schrow select{flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;
+  border:none;background:transparent;color:var(--amber);font:inherit;font-size:12.5px;
+  text-align:right;padding:2px 0;cursor:pointer;text-overflow:ellipsis}
+.schrow.off select{color:var(--dim)}
+.schrow select option{color:var(--text);background:var(--surface)}
 /* ── полоса лёгких дней ── */
 .dayseg.lite{display:none;margin:7px 0 4px}
 .dayseg.lite.show{display:grid}
@@ -622,7 +640,7 @@ body{padding-bottom:0}
       <h2>Шесть паттернов</h2>
       <p class="lede">Так подбирались упражнения. Не по мышцам — по движениям.</p>
       <div class="panel">
-        <p>Всё тело покрывается шестью базовыми движениями. Каждый паттерн должен получать нагрузку 1–2 раза в неделю — это то, что удерживает мышцы в дефиците.</p><p><b>Три самых важных паттерна идут дважды, но разными упражнениями.</b> Присед — штанга во вторник и выпады в воскресенье. Наклон — гиперэкстензия в четверг и становая в одну руку в воскресенье. Так частота сохраняется, а одинаковых упражнений в разных днях нет ни одного.</p>
+        <p>Всё тело покрывается шестью базовыми движениями. Каждый паттерн должен получать нагрузку 1–2 раза в неделю — это то, что удерживает мышцы в дефиците.</p><p><b>Три самых важных паттерна идут дважды, но разными упражнениями.</b> Присед — штанга в первый день и выпады в третий. Наклон — гиперэкстензия во второй день и становая в одну руку в третий. Так частота сохраняется, а одинаковых упражнений в разных днях нет ни одного.</p>
         <div class="scroller">
           <table>
             <thead><tr><th>Паттерн</th><th>Что работает</th><th>Чем</th><th>Дни</th></tr></thead>
@@ -675,14 +693,15 @@ body{padding-bottom:0}
     <div class="sec">
       <h2>Неделя</h2>
       <div class="panel">
-        <p>Три тренировки, между ними минимум день отдыха. Дни закреплены жёстко: <b>вторник, четверг, воскресенье</b>.</p>
+        <p>Три тяжёлых дня, между ними минимум день отдыха. Какие именно это дни недели — решаешь ты: кнопка <b>«мои дни»</b> на главном экране, там семь строк недели и в каждой либо тренировка, либо отдых.</p>
         <div class="example">
-          вторник&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hit">День 1</span>&nbsp;&nbsp;присед · жим лёжа · подтягивания<br>
-          четверг&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="hit">День 2</span>&nbsp;&nbsp;гиперэкстензия · жим гантелей · тяга штанги<br>
-          воскресенье&nbsp;<span class="hit">День 3</span>&nbsp;&nbsp;выпады · становая в одну руку · тяга гантели
+          день&nbsp;1&nbsp;&nbsp;<span class="hit">присед</span>&nbsp;&nbsp;жим лёжа · подтягивания<br>
+          день&nbsp;2&nbsp;&nbsp;<span class="hit">наклон</span>&nbsp;&nbsp;жим гантелей · тяга штанги<br>
+          день&nbsp;3&nbsp;&nbsp;<span class="hit">выпады</span>&nbsp;&nbsp;становая в одну руку · тяга гантели
         </div>
-        <p style="margin-top:11px"><b>Никакого чередования по неделям.</b> Вторник — это всегда День 1, и так все 12 недель. Помнить нечего, приложение всё равно подставит нужный день само.</p>
-        <p><b>Пропустил тренировку?</b> Ничего не догоняй. Просто дождись следующего своего дня.</p><p><b>Сделал не тот день?</b> Тоже не страшно, но следующий раз возьми <b>тот день, который на этой неделе ещё не был</b>, а не тот, что стоит в календаре. Правило простое: за неделю важно закрыть все три дня, а не попасть в клетки. Со следующего вторника возвращайся к обычной сетке.</p>
+        <p style="margin-top:11px"><b>Одно правило при расстановке:</b> между двумя тяжёлыми днями хотя бы сутки. Два подряд — мышцы не успевают, и второй день выходит слабее, чем мог бы.</p>
+        <p><b>Никакого чередования по неделям.</b> Один и тот же день недели — это всегда один и тот же день программы, и так все 12 недель. Помнить нечего, приложение подставит нужный день само.</p>
+        <p><b>Пропустил тренировку?</b> Ничего не догоняй. Просто дождись следующего своего дня.</p><p><b>Сделал не тот день?</b> Тоже не страшно, но следующий раз возьми <b>тот день, который на этой неделе ещё не был</b>, а не тот, что стоит в расписании. Правило простое: за неделю важно закрыть все дни, а не попасть в клетки.</p>
       </div>
     </div>
     <div class="sec">
@@ -815,7 +834,7 @@ body{padding-bottom:0}
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <h3 id="picktitle">С чего начнём?</h3>
-    <p class="mtext" id="pickhi">Выбери программу — приложение спросит об этом один раз. Журнал тренировок будет твой личный: Telegram хранит данные каждого пользователя отдельно, чужих подходов ты не увидишь.</p>
+    <p class="mtext" id="pickhi">Выбери программу — приложение спросит об этом один раз. Дни недели потом назначишь свои, кнопка «мои дни» на главном экране. Журнал тренировок будет твой личный: Telegram хранит данные каждого пользователя отдельно, чужих подходов ты не увидишь.</p>
     <div id="picklist"></div>
   </div>
 </div>
@@ -827,6 +846,14 @@ body{padding-bottom:0}
     </div>
     <input class="catsearch" id="catsearch" type="search" placeholder="Поиск по названию" autocomplete="off">
     <div id="catbody"></div>
+  </div>
+</div>
+<div class="modal" id="schedm" role="dialog" aria-modal="true" aria-labelledby="schedtitle">
+  <div class="modalbox">
+    <h3 id="schedtitle">Мои дни</h3>
+    <p class="mtext">Поставь каждому дню недели свою тренировку. Приложение само откроет нужный день и подскажет, когда следующий. У всех расписание своё — эти настройки видишь только ты.</p>
+    <div id="schedlist"></div>
+    <button class="btn wide" id="schedclose">Готово</button>
   </div>
 </div>
 <div class="modal" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
@@ -902,7 +929,7 @@ function ytLink(name){
 }
 
 var DAYS={
-D1:{name:'День 1', when:'вторник', sub:'Присед и жим', ex:[
+D1:{name:'День 1', when:'', sub:'Присед и жим', ex:[
   {p:'Присед', n:'Приседания со штангой', ph:'squat', fig:'squat', sets:3, reps:'8–12', rest:120,
    cues:['Первые 3 недели — с одной гантелью у груди (гоблет), потом штанга','Колени идут в сторону носков, не заваливаются внутрь','Опускайся, пока бёдра не станут параллельны полу'],
    why:'Самое тяжёлое движение недели идёт первым, на свежую голову. Ноги — самая большая мышечная группа: держишь их под нагрузкой — держишь метаболизм и сухую массу.'},
@@ -919,7 +946,7 @@ D1:{name:'День 1', when:'вторник', sub:'Присед и жим', ex:[
    cues:['Таз подкручен, поясница не провисает','Ягодицы и пресс напряжены одновременно','Дышишь ровно, не задерживай дыхание'],
    why:'База анти-разгибания. Учит держать рёбра и таз в одной линии — тот навык, который потом переносится в присед и защищает поясницу.'}
 ]},
-D2:{name:'День 2', when:'четверг', sub:'Наклон и тяга', ex:[
+D2:{name:'День 2', when:'', sub:'Наклон и тяга', ex:[
   {p:'Наклон', n:'Гиперэкстензия с блином', ph:'hyper', fig:'hinge', sets:3, reps:'10–15', rest:90,
    cues:['Блин держи у груди, не за головой','Движение в тазобедренном, спина остаётся прямой','Вверху не переразгибайся — остановись в линию'],
    why:'Задняя цепь: ягодицы, бицепс бедра, разгибатели спины. Безопасная альтернатива становой при большом весе тела — нагрузка есть, компрессии позвоночника нет.'},
@@ -936,7 +963,7 @@ D2:{name:'День 2', when:'четверг', sub:'Наклон и тяга', ex
    cues:['Вращение идёт от бёдер и грудного отдела, поясница зафиксирована','Руки прямые, работает корпус, а не плечи','Вес умеренный — здесь важен контроль, а не тяжесть'],
    why:'То самое движение, которое ты просил. Важно: это не русский твист. Здесь поясница держится жёстко, а поворот идёт от таза и грудного отдела — так вращение тренируется без нагруженного скручивания дисков.'}
 ]},
-D3:{name:'День 3', when:'воскресенье', sub:'Гантели и корпус', ex:[
+D3:{name:'День 3', when:'', sub:'Гантели и корпус', ex:[
   {p:'Присед', n:'Выпады с гантелями', ph:'lunge', fig:'squat', sets:3, reps:'10–12 на ногу', rest:90,
    cues:['Шаг такой, чтобы колено задней ноги шло вниз, а не вперёд','Корпус вертикально, не наклоняйся к передней ноге','Начни без веса, гантели добавь со второй недели'],
    why:'Вторая работа на ноги за неделю, но односторонняя. Выравнивает разницу между ногами и грузит ягодицы сильнее, чем присед, при вчетверо меньшем весе на спине.'},
@@ -961,7 +988,7 @@ D3:{name:'День 3', when:'воскресенье', sub:'Гантели и к�
    Состав подобран так, чтобы не пересекаться с соседними днями:
    среда стоит между жимом (вт) и тягой (чт) — значит ни спины, ни груди, ни ног;
    пятница идёт после тяги — значит спину не трогаем, берём грудь и руки. */
-DAYS.L1={name:'Форма · Ср', when:'среда', sub:'Плечи и корпус', light:true, ex:[
+DAYS.L1={name:'Форма · 1', when:'', sub:'Плечи и корпус', light:true, ex:[
   {p:'Средние дельты', n:'Подъёмы гантелей через стороны', ph:'lateral', fig:'pressv', sets:3, reps:'15', rest:60,
    cues:['Гантели лёгкие — 5–8 кг здесь работают лучше, чем 15','Локоть чуть выше кисти, мизинец не задирай','Поднимаешь до уровня плеч, не выше'],
    why:'Средние дельты — главный вклад в ширину плеч. Именно они дают силуэт с тех фотографий, и вырастить их жимами нельзя: там работают передние.'},
@@ -975,7 +1002,7 @@ DAYS.L1={name:'Форма · Ср', when:'среда', sub:'Плечи и кор
    cues:['Таз подкручен, поясница не провисает','Ягодицы и пресс напряжены одновременно','Дышишь ровно'],
    why:'Дешёвая по восстановлению работа корпуса — в лёгкий день её можно делать без ущерба для тяжёлых.'}
 ]};
-DAYS.L2={name:'Форма · Пт', when:'пятница', sub:'Грудь и руки', light:true, ex:[
+DAYS.L2={name:'Форма · 2', when:'', sub:'Грудь и руки', light:true, ex:[
   {p:'Грудь', n:'Сведения в кроссовере', ph:'fly', fig:'pressh', sets:3, reps:'12–15', rest:60,
    cues:['Локти чуть согнуты и не меняют угол','Сводишь до касания кистей перед грудью','Возвращаешь медленно, до растяжения'],
    why:'Жим лёжа во вторник строит силу, но грудь в нём работает в короткой амплитуде. Сведения добирают растяжку — форму делает именно она.'},
@@ -994,7 +1021,7 @@ DAYS.L2={name:'Форма · Пт', when:'пятница', sub:'Грудь и р
    Два дня в неделю, оба полнотельные — так каждая мышца получает нагрузку дважды.
    Тренажёры и гантели: техника простая, ошибиться почти невозможно.
    Акцент на ягодицы, заднюю цепь и осанку. */
-DAYS.W1={name:'День 1', when:'среда', sub:'Ноги и спина', ex:[
+DAYS.W1={name:'День 1', when:'', sub:'Ноги и спина', ex:[
   {p:'Ноги', n:'Жим ногами в тренажёре', ph:'legpress', fig:'squat', sets:3, reps:'12–15', rest:90,
    cues:['Стопы на ширине таза, чуть выше середины платформы','Колени идут в сторону носков, не заваливаются внутрь','Внизу поясница остаётся прижатой к спинке — глубже не надо'],
    why:'Самая большая мышечная группа и самый безопасный способ её нагрузить в начале: спина лежит на опоре, ошибиться сложно.'},
@@ -1011,7 +1038,7 @@ DAYS.W1={name:'День 1', when:'среда', sub:'Ноги и спина', ex:
    cues:['Таз подкручен, поясница не провисает','Начинай с 20 секунд — три коротких подхода лучше одного долгого с провалом','Дышишь ровно'],
    why:'База для всего остального. Пока корпус не держит, любое упражнение стоя делается за счёт поясницы.'}
 ]};
-DAYS.W2={name:'День 2', when:'пятница', sub:'Задняя цепь и плечи', ex:[
+DAYS.W2={name:'День 2', when:'', sub:'Задняя цепь и плечи', ex:[
   {p:'Задняя цепь', n:'Румынская тяга с гантелями', ph:'rdl', fig:'hinge', sets:3, reps:'12', rest:90,
    cues:['Движение в тазобедренном: таз уходит назад, спина прямая','Гантели скользят вдоль бедра','Опускаешь до натяжения под коленом и возвращаешься — глубже не надо'],
    why:'Бицепс бедра и ягодицы. Главное упражнение на заднюю поверхность и лучшая профилактика болей в пояснице.'},
@@ -1038,7 +1065,7 @@ DAYS.W2={name:'День 2', when:'пятница', sub:'Задняя цепь и
 var PROFILES = {
   shp: {
     name:'Сушка · 5 дней', goal:'Снять жир и не потерять мышцы',
-    sub:'Три тяжёлых дня плюс два лёгких. Вт · Ср · Чт · Пт · Вс',
+    sub:'Три тяжёлых дня плюс два лёгких. Пять дней в неделю',
     heavy:['D1','D2','D3'], lightDays:['L1','L2'],
     gymDays:{2:'D1', 3:'L1', 4:'D2', 5:'L2', 0:'D3'},   /* вт ср чт пт вс */
     start:[2026,8,1],
@@ -1059,7 +1086,7 @@ var PROFILES = {
   },
   friend: {
     name:'База · 3 дня', goal:'Начать ходить и втянуться',
-    sub:'Всё тело за три дня, свободные веса. Вт · Чт · Вс',
+    sub:'Всё тело за три дня, свободные веса. Три дня в неделю',
     heavy:['D1','D2','D3'], lightDays:[],
     gymDays:{2:'D1', 4:'D2', 0:'D3'},
     start:[2026,8,7],
@@ -1074,7 +1101,7 @@ var PROFILES = {
   },
   wife: {
     name:'Форма · 2 дня', goal:'Тонус, ягодицы и осанка',
-    sub:'Тренажёры и гантели, техника простая. Ср · Пт',
+    sub:'Тренажёры и гантели, техника простая. Два дня в неделю',
     heavy:['W1','W2'], lightDays:[],
     gymDays:{3:'W1', 5:'W2'},                           /* ср пт */
     start:[2026,8,7],
@@ -1090,6 +1117,25 @@ var PROFILES = {
 };
 
 var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], phaseId=null, booted=false;
+/* Расписание — своё у каждого. По умолчанию берётся из программы, но человек
+   переставляет дни как ему удобно: у одного зал во вторник, у другого в среду. */
+var WD=['вс','пн','вт','ср','чт','пт','сб'];
+var WDFULL=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function loadSched(){
+  var s=get('sched', null);
+  GYM_DAYS = (s && typeof s==='object') ? s : JSON.parse(JSON.stringify(PROF.gymDays));
+  /* дни, которых нет в этой программе, из расписания выкидываем */
+  Object.keys(GYM_DAYS).forEach(function(k){ if(!DAYS[GYM_DAYS[k]]) delete GYM_DAYS[k]; });
+}
+function saveSched(){
+  set('sched', GYM_DAYS);
+  if(DB) DB.doc('state/sched').set({s:GYM_DAYS, at:new Date().toISOString()}).catch(function(){});
+}
+/* к какому дню недели привязан день программы */
+function weekdayOf(k){
+  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WD[i];
+  return '';
+}
 
 /* активная фаза: выбранная руками, иначе подсказанная по номеру недели */
 function phaseAuto(){
@@ -1120,7 +1166,7 @@ function applyProfile(p, silent){
   profile=p; PROF=PROFILES[p];
   PFX = p+'_';
   CYCLE = PROF.heavy.slice();
-  GYM_DAYS = PROF.gymDays;
+  loadSched();
   PHASES = PROF.phases;
   DNAME = {}; allDays().forEach(function(k){ DNAME[k]=DAYS[k].name; });
   /* Неделя считается от того дня, когда человек начал сам. Для тех, кто уже
@@ -1312,6 +1358,31 @@ function renderSheet(){
   h += '<button class="phrow reset" data-ph="auto">Вернуть автоматический выбор</button>';
   box.innerHTML=h;
 }
+/* ── «мои дни»: семь строк недели, в каждой — день программы или отдых ── */
+function renderSched(){
+  var box=document.getElementById('schedlist'); if(!box) return;
+  var keys=allDays(), h='';
+  for(var i=1;i<=7;i++){
+    var wd=i%7;                                   /* пн … вс, воскресенье последним */
+    var cur=GYM_DAYS[wd]||'';
+    h+='<label class="schrow '+(cur?'on':'off')+'"><span class="schwd">'+WDFULL[wd]+'</span>'+
+       '<select data-wd="'+wd+'"><option value=""'+(cur?'':' selected')+'>отдых</option>';
+    keys.forEach(function(k){
+      h+='<option value="'+k+'"'+(k===cur?' selected':'')+'>'+DAYS[k].name+' — '+DAYS[k].sub.toLowerCase()+'</option>';
+    });
+    h+='</select></label>';
+  }
+  h+='<button class="phrow reset" id="schedreset" type="button">вернуть дни программы</button>';
+  box.innerHTML=h;
+}
+function schedApplied(){
+  saveSched();
+  renderSched(); renderDayseg(); renderDayHead(); renderTodaybar();
+  haptic('light');
+}
+function openSched(){ renderSched(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
+function closeSched(){ var m=document.getElementById('schedm'); if(m) m.classList.remove('show'); }
+
 function openSheet(){ renderSheet(); var s=document.getElementById('sheet'); if(s) s.classList.add('show'); }
 function closeSheet(){ var s=document.getElementById('sheet'); if(s) s.classList.remove('show'); }
 function setPhase(id){
@@ -1331,8 +1402,9 @@ function renderDayseg(){
   seg.style.gridTemplateColumns='repeat('+PROF.heavy.length+',1fr)';
   var h='';
   PROF.heavy.forEach(function(k){
-    var d=DAYS[k];
-    h+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+d.sub.toLowerCase()+'</i></button>';
+    var d=DAYS[k], w=weekdayOf(k);
+    h+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+
+       d.sub.toLowerCase()+(w?' · <em>'+w+'</em>':'')+'</i></button>';
   });
   seg.innerHTML=h;
   var lite=document.getElementById('liteseg'); if(!lite) return;
@@ -1341,8 +1413,9 @@ function renderDayseg(){
   lite.style.gridTemplateColumns='repeat('+PROF.lightDays.length+',1fr)';
   var l='';
   PROF.lightDays.forEach(function(k){
-    var d=DAYS[k];
-    l+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+d.sub.toLowerCase()+'</i></button>';
+    var d=DAYS[k], w=weekdayOf(k);
+    l+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+d.name+'</b><i>'+
+       d.sub.toLowerCase()+(w?' · <em>'+w+'</em>':'')+'</i></button>';
   });
   lite.innerHTML=l;
 }
@@ -1903,16 +1976,29 @@ function initDb(){
     }
     return DB.doc('state/last').get();
   }).then(function(sn){
-    if(!sn || !sn.exists) return;
-    var body=JSON.parse(JSON.stringify(sn.data()||{}));
-    if(body.lastDone && body.lastDone.day && DAYS[body.lastDone.day]){
-      var cloud={day:body.lastDone.day, date:body.lastDone.date};
-      if(!lastDone || cloud.date > lastDone.date){
-        lastDone=cloud; set('lastdone',lastDone); renderDayHead(); renderTodaybar();
+    /* пустой state/last — это нормально: человек мог настроить приложение и ещё
+       ни разу не закрыть тренировку. Дальше по цепочке идём в любом случае. */
+    if(sn && sn.exists){
+      var body=JSON.parse(JSON.stringify(sn.data()||{}));
+      if(body.lastDone && body.lastDone.day && DAYS[body.lastDone.day]){
+        var cloud={day:body.lastDone.day, date:body.lastDone.date};
+        if(!lastDone || cloud.date > lastDone.date){
+          lastDone=cloud; set('lastdone',lastDone); renderDayHead(); renderTodaybar();
+        }
+      }
+      var m=body.m;
+      if(m && typeof m==='object' && Object.keys(m).length){ LAST=m; set('last',LAST); refillIfUntouched(); }
+    }
+    return DB.doc('state/sched').get();
+  }).then(function(sn){
+    if(sn && sn.exists){
+      var b=JSON.parse(JSON.stringify(sn.data()||{}));
+      if(b.s && typeof b.s==='object' && Object.keys(b.s).length){
+        GYM_DAYS=b.s; set('sched',GYM_DAYS);
+        Object.keys(GYM_DAYS).forEach(function(k){ if(!DAYS[GYM_DAYS[k]]) delete GYM_DAYS[k]; });
+        renderDayseg(); renderDayHead(); renderTodaybar();
       }
     }
-    var m=body.m;
-    if(m && typeof m==='object' && Object.keys(m).length){ LAST=m; set('last',LAST); refillIfUntouched(); }
     return DB.doc('state/subs').get();
   }).then(function(sn){
     if(sn && sn.exists){
@@ -2109,8 +2195,7 @@ document.querySelector('.l1').addEventListener('click', function(e){
 });
 
 /* ══════════ ДАШБОРД ══════════ */
-var GYM_DAYS={2:'D1', 4:'D2', 0:'D3'};   /* вт, чт, вс — жёстко, без чередования */
-var DN=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+var DN=WDFULL;
 
 function renderTodaybar(){
   var el=document.getElementById('todaybar'); if(!el) return;
@@ -2124,8 +2209,9 @@ function renderTodaybar(){
     out+='<span class="ts gym">сегодня зал · '+DNAME[suggestedDay()].toLowerCase()+'</span>';
   } else {
     var nx=nextGymDay();
-    out+='<span class="ts">отдых'+(nx?' · зал '+(nx.in===1?'завтра':'в '+nx.d):'')+'</span>';
+    out+='<span class="ts">отдых'+(nx?' · зал '+(nx.in===1?'завтра':'в '+nx.d):' · дни не заданы')+'</span>';
   }
+  out+='<button class="tsedit" id="schedbtn" type="button">мои дни</button>';
   el.innerHTML=out;
 }
 
@@ -2150,6 +2236,29 @@ if(TG){
 
 /* ── обработчики окон ── */
 document.getElementById('wkchip').addEventListener('click', openSheet);
+document.getElementById('schedclose').addEventListener('click', closeSched);
+document.getElementById('schedm').addEventListener('click', function(e){
+  if(e.target.id==='schedm') closeSched();
+});
+document.getElementById('schedlist').addEventListener('change', function(e){
+  var s=e.target.closest('select[data-wd]'); if(!s) return;
+  var wd=+s.dataset.wd, v=s.value;
+  if(v){
+    /* один день программы живёт на одном дне недели: если он уже где-то стоял — освобождаем */
+    Object.keys(GYM_DAYS).forEach(function(k){ if(GYM_DAYS[k]===v && +k!==wd) delete GYM_DAYS[k]; });
+    GYM_DAYS[wd]=v;
+  } else delete GYM_DAYS[wd];
+  schedApplied();
+});
+document.getElementById('schedlist').addEventListener('click', function(e){
+  if(!e.target.closest('#schedreset')) return;
+  GYM_DAYS = JSON.parse(JSON.stringify(PROF.gymDays));
+  schedApplied();
+});
+/* кнопка живёт внутри перерисовываемой строки — слушаем полосу целиком */
+document.getElementById('todaybar').addEventListener('click', function(e){
+  if(e.target.closest('#schedbtn')) openSched();
+});
 document.getElementById('sheetclose').addEventListener('click', closeSheet);
 document.getElementById('sheetlist').addEventListener('click', function(e){
   var b=e.target.closest('button[data-ph]'); if(b) setPhase(b.dataset.ph);
