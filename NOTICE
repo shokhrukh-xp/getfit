@@ -1,0 +1,8 @@
+GetFit
+
+Анатомия карты тела в index.html использует пути мышц из библиотеки
+body-muscles (Apache License 2.0), Copyright 2024 Ivan Vulovic.
+https://github.com/vulovix/body-muscles
+
+Пути переведены в абсолютные координаты, округлены и перегруппированы
+под 20 групп приложения. Лицензия Apache-2.0 сохраняется.
