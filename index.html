@@ -541,15 +541,11 @@ body{padding-bottom:0}
   text-align:right;padding:2px 0;cursor:pointer;text-overflow:ellipsis}
 .schrow.off select{color:var(--dim)}
 .schrow select option{color:var(--text);background:var(--surface)}
-/* ── полоса лёгких дней ── */
-.dayseg.lite{display:none;margin:7px 0 4px}
-.dayseg.lite.show{display:grid}
-.dayseg.lite button{padding:9px 8px}
-.dayseg.lite button b{font-size:11.5px}
-.dayseg.lite button i{font-size:10px}
-.dayseg.lite button[aria-pressed="true"]{border-color:var(--done);background:rgba(79,168,139,.12)}
-.dayseg.lite button[aria-pressed="true"] b{color:var(--done)}
-.dayseg.lite button[aria-pressed="true"] i{color:var(--done)}
+/* ── лёгкий день: то же место в сетке, другой цвет выделения ── */
+.dayseg.lite{display:none}
+.dayseg button[data-light="1"][aria-pressed="true"]{border-color:var(--done);background:rgba(79,168,139,.12)}
+.dayseg button[data-light="1"][aria-pressed="true"] b{color:var(--done)}
+.dayseg button[data-light="1"][aria-pressed="true"] i{color:var(--done)}
 .split{margin-top:26px;padding:16px 18px;border-radius:var(--r);
   border:1px solid var(--line);background:var(--surface-2)}
 .split h3{margin:0 0 10px;font-size:14px;letter-spacing:.02em;color:var(--amber)}
@@ -1439,28 +1435,30 @@ function setPhase(id){
   haptic('light');
 }
 
-/* ── ряды кнопок дней: тяжёлые сверху, лёгкие отдельной полосой ── */
+/* ── кнопки дней: одна сетка на всю неделю ──
+   Раньше тяжёлые дни шли отдельным рядом от лёгких. Человек читает это как
+   неделю подряд, и разбивка ломала и порядок (вт чт вс, потом ср пт), и ширину
+   кнопок (три колонки против двух). Теперь все дни в одной сетке по порядку
+   недели, колонки равные. Тяжёлый день от лёгкого отличается цветом выделения. */
+function segCols(n){
+  if(n<=3) return n;      /* влезают в один ряд */
+  if(n===4) return 2;     /* 2×2 ровнее, чем 3+1 */
+  if(n<=6) return 3;
+  return 4;
+}
 function renderDayseg(){
   var seg=document.getElementById('dayseg'); if(!seg) return;
-  seg.style.gridTemplateColumns='repeat('+PROF.heavy.length+',1fr)';
+  var lite=document.getElementById('liteseg');
+  if(lite){ lite.innerHTML=''; lite.classList.remove('show'); }
+  var all=byWeek(allDays());
+  seg.style.gridTemplateColumns='repeat('+segCols(all.length)+',1fr)';
   var h='';
-  byWeek(PROF.heavy).forEach(function(k){
+  all.forEach(function(k){
     var d=DAYS[k];
-    h+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+dayLabel(k)+'</b><i>'+
-       d.sub.toLowerCase()+'</i></button>';
+    h+='<button data-day="'+k+'"'+(d.light?' data-light="1"':'')+' aria-pressed="'+(k===day)+'"><b>'+
+       dayLabel(k)+'</b><i>'+d.sub.toLowerCase()+'</i></button>';
   });
   seg.innerHTML=h;
-  var lite=document.getElementById('liteseg'); if(!lite) return;
-  if(!PROF.lightDays.length){ lite.innerHTML=''; lite.classList.remove('show'); return; }
-  lite.classList.add('show');
-  lite.style.gridTemplateColumns='repeat('+PROF.lightDays.length+',1fr)';
-  var l='';
-  byWeek(PROF.lightDays).forEach(function(k){
-    var d=DAYS[k];
-    l+='<button data-day="'+k+'" aria-pressed="'+(k===day)+'"><b>'+dayLabel(k)+'</b><i>'+
-       d.sub.toLowerCase()+'</i></button>';
-  });
-  lite.innerHTML=l;
 }
 
 var LS = 'shp_v1_', PFX = '';
