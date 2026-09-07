@@ -94,7 +94,7 @@ select.week{
 }
 @media (max-width:430px){
   .exmedia{flex-direction:column}
-  .fig{flex:none;width:100%;max-width:180px;align-self:center}
+  .fig,.fig2{flex:none;width:100%;max-width:180px;align-self:center}
 }
 .dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:16px 0 4px;flex-wrap:wrap}
 .dayhead h2{font-size:21px}
@@ -437,6 +437,13 @@ body{padding-bottom:0}
   white-space:pre;overflow:auto;-webkit-user-select:text;user-select:text}
 #repbox.show{display:block}
 #copyrep{margin-top:14px}
+/* два кадра движения, сменяются раз в 1,2 секунды */
+.fig2{flex:0 0 128px;width:128px;aspect-ratio:4/3;position:relative;overflow:hidden;
+  border:1px solid var(--line-soft);border-radius:10px;background:#fff}
+.fig2 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.fig2 img:last-child{animation:frameflip 2.4s steps(1,end) infinite}
+@keyframes frameflip{0%,49.99%{opacity:0}50%,100%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.fig2 img:last-child{animation:none;opacity:1}}
 .profline{margin:18px 0 0;font-size:12px;color:var(--dim);text-align:center}
 .profline b{color:var(--muted);font-weight:600}
 .profline button{background:none;border:none;padding:0;font:inherit;color:var(--amber);
@@ -828,11 +835,23 @@ function figSvg(k){
   if(!FIG[k]) return '';
   return '<svg class="fig" viewBox="0 0 130 100" role="img" aria-label="Схема движения">'+FIG[k]+'</svg>';
 }
+/* Упражнения, добавленные 07.09: фотографии лежат файлами в папке img/ рядом с
+   приложением, а не в base64. Так страница остаётся лёгкой, а браузер грузит
+   только те снимки, которые реально видны. Источник — free-exercise-db,
+   лицензия Unlicense (общественное достояние).
+   Два кадра: начало и рабочая фаза, показываются попеременно. */
+var FRAMES={abduction:1,calf:1,crunch:1,curl:1,fly:1,hipthrust:1,
+            lat:1,lateral:1,legpress:1,rdl:1,triceps:1};
 function mediaFor(e){
   var ph = e.ph && PHOTOS[e.ph];
-  return ph
-    ? '<img class="fig ph" alt="'+e.n+' — рабочая фаза" src="data:image/webp;base64,'+ph+'">'
-    : figSvg(e.fig);
+  if(ph) return '<img class="fig ph" alt="'+e.n+' — рабочая фаза" src="data:image/webp;base64,'+ph+'">';
+  if(e.ph && FRAMES[e.ph]){
+    return '<div class="fig2" role="img" aria-label="'+e.n+' — начальная и рабочая фаза">'+
+           '<img src="img/'+e.ph+'-0.jpg" alt="" loading="lazy">'+
+           '<img src="img/'+e.ph+'-1.jpg" alt="" loading="lazy">'+
+           '</div>';
+  }
+  return figSvg(e.fig);
 }
 function ytLink(name){
   return '<a class="vid" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
