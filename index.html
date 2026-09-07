@@ -350,7 +350,9 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .todaybar{padding:20px 0 4px;gap:8px}
 .todaybar .ts.done{border-color:var(--done);color:var(--done);background:rgba(79,168,139,.10)}
 
-.dayseg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0 4px;align-items:stretch}
+.dayseg{display:grid;gap:7px;margin:14px 0 4px;align-items:stretch;
+  grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
+@media (min-width:420px){.dayseg{grid-template-columns:repeat(auto-fit,minmax(116px,1fr))}}
 .dayseg button{
   position:relative;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;
   border:1px solid var(--line);background:var(--surface);border-radius:12px;
@@ -1440,18 +1442,13 @@ function setPhase(id){
    неделю подряд, и разбивка ломала и порядок (вт чт вс, потом ср пт), и ширину
    кнопок (три колонки против двух). Теперь все дни в одной сетке по порядку
    недели, колонки равные. Тяжёлый день от лёгкого отличается цветом выделения. */
-function segCols(n){
-  if(n<=3) return n;      /* влезают в один ряд */
-  if(n===4) return 2;     /* 2×2 ровнее, чем 3+1 */
-  if(n<=6) return 3;
-  return 4;
-}
 function renderDayseg(){
   var seg=document.getElementById('dayseg'); if(!seg) return;
   var lite=document.getElementById('liteseg');
   if(lite){ lite.innerHTML=''; lite.classList.remove('show'); }
   var all=byWeek(allDays());
-  seg.style.gridTemplateColumns='repeat('+segCols(all.length)+',1fr)';
+  /* сколько колонок влезет — решает ширина экрана (auto-fit в CSS), а не код:
+     на телефоне это три, на большом окне Telegram вся неделя встаёт в один ряд */
   var h='';
   all.forEach(function(k){
     var d=DAYS[k];
