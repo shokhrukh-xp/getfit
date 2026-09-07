@@ -505,6 +505,19 @@ body{padding-bottom:0}
 .chart .bar.now{fill:var(--amber);opacity:1}
 .chart text{fill:var(--dim);font-family:'JetBrains Mono',monospace;font-size:9px}
 .chart text.val{fill:var(--text);font-size:10px}
+.tgt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
+  font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;
+  text-transform:none;border:1px solid var(--line);color:var(--dim)}
+.tgt.up{border-color:var(--done);color:var(--done)}
+.tgt.warn{border-color:var(--warn);color:var(--warn)}
+.setadd{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px;
+  padding-top:9px;border-top:1px solid var(--line-soft)}
+.setadd span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);
+  min-width:96px;text-align:center}
+.setadd button{width:38px;height:34px;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
+.setadd button:active{border-color:var(--amber);color:var(--amber)}
+.setadd button[disabled]{opacity:.3;cursor:default}
 .adv{margin:8px 0 12px;padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.5;
   background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
 .adv b{display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;
@@ -552,10 +565,6 @@ body{padding-bottom:0}
 .profline button{background:none;border:none;padding:0;font:inherit;color:var(--amber);
   text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 /* ── переключатель фаз ── */
-.wkchip{cursor:pointer;-webkit-tap-highlight-color:transparent}
-.wkchip .cv{color:var(--dim);font-size:9px;margin-left:1px}
-.wkchip.manual{border-color:var(--amber-deep)}
-.wkchip:active{background:var(--amber-ghost)}
 .phaseline i.manual{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.06em;color:var(--amber-deep);text-transform:uppercase}
 /* ── всплывающие окна ── */
@@ -592,7 +601,6 @@ body{padding-bottom:0}
 .nowrow u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;
   letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
 .nowrow b{font-size:13.5px;color:var(--text);text-align:right}
-#sheetclose{margin-top:6px}
 /* предупреждение для случая, когда html открыли как файл с диска.
    Обычным блоком в потоке, а не поверх: фиксированная полоса перекрывала
    кнопки в модальных окнах и ломала нажатия. */
@@ -634,9 +642,7 @@ body{padding-bottom:0}
 <header class="top">
   <div class="top-in">
     <div class="mark">GET<span>FIT</span></div>
-    <div class="phasebox">
-      <button class="wkchip" id="wkchip" type="button">НЕДЕЛЯ <b>1</b></button>
-    </div>
+
   </div>
 </header>
 
@@ -727,7 +733,12 @@ body{padding-bottom:0}
     <h3 id="schedtitle">Мои дни</h3>
     <p class="mtext">Поставь каждому дню недели свою тренировку. Приложение само откроет нужный день и подскажет, когда следующий. У всех расписание своё — эти настройки видишь только ты.</p>
     <div id="schedlist"></div>
-    <h3 style="margin-top:18px">Мои данные</h3>
+    <h3 style="margin-top:20px">Лёгкая неделя</h3>
+    <p class="mtext">Веса встали или поехали вниз? Возьми неделю с половиной подходов
+    на тех же весах. Это единственное, чего приложение за тебя не решит — как ты себя
+    чувствуешь, знаешь только ты. Через семь дней отключится само.</p>
+    <div id="deloadbox"></div>
+    <h3 style="margin-top:20px">Мои данные</h3>
     <p class="mtext">Нужны для одного: пока по упражнению нет истории, прикинуть,
     с какого веса начинать. Как только история появится, подсказки переходят на твои
     собственные цифры. Данные лежат только у тебя.</p>
@@ -738,13 +749,6 @@ body{padding-bottom:0}
       <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
     </div>
     <button class="btn wide" id="schedclose">Готово</button>
-  </div>
-</div>
-<div class="modal" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheettitle">
-  <div class="modalbox">
-    <h3 id="sheettitle">Что сейчас</h3>
-    <div id="sheetlist"></div>
-    <button class="btn wide" id="sheetclose">Закрыть</button>
   </div>
 </div>
 <script>
@@ -1138,6 +1142,7 @@ function applyProfile(p, silent){
   week = weekNow();
   LAST = get('last', {});
   SUBS = get('subs', {});
+  ADJ  = get('adj', {});
   lastDone = get('lastdone', null);
   var pick = get('pick_'+TODAY, null);
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
@@ -1195,9 +1200,22 @@ function exList(dk){
              cat:s.i, sub:true, cues:s.cues||[], why:'', ph:null, fig:null };
   });
 }
+/* Сколько подходов человек оставил себе в конкретном упражнении. Живёт рядом
+   с заменами и в том же облачном ключе: иначе пересборка дня затирала правку. */
+var ADJ = {};
 function saveSubs(){
-  set('subs', SUBS);
-  if(DB) DB.doc('state/subs').set({s:SUBS, at:new Date().toISOString()}).catch(function(){});
+  set('subs', SUBS); set('adj', ADJ);
+  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, at:new Date().toISOString()}).catch(function(){});
+}
+/* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
+   недели. Лёгкая неделя режет пополам то, что получилось. */
+function setsFor(e, di, dk){
+  var k = subKey(dk||day, di), base;
+  if(ADJ[k]!=null) base = ADJ[k];
+  else if(isTime(e)) base = e.sets;
+  else { var ph=phaseNow(); base = e.sets + ((ph && typeof ph.ds==='number') ? ph.ds : 0); }
+  if(deloadOn() && !isTime(e)) base = Math.round(base/2);
+  return Math.max(1, Math.min(8, base));
 }
 function applySub(dk, di, item){
   SUBS[subKey(dk,di)] = item ? {n:item.n, e:item.e, i:item.i} : undefined;
@@ -1354,23 +1372,6 @@ function choose(p){
 }
 
 /* ── переключатель фаз ── */
-function renderSheet(){
-  var box=document.getElementById('sheetlist'); if(!box) return;
-  var d=deloadOn(), p=phaseNow(), h='';
-  var сет = d ? 'половина подходов' : ((p.ds<0) ? 'на подход меньше в каждом упражнении' : 'полное число подходов');
-  var rir = rirNow();
-  h += '<div class="nowrow"><u>неделя</u><b>'+week+'</b></div>'+
-       '<div class="nowrow"><u>подходы</u><b>'+сет+'</b></div>'+
-       '<div class="nowrow"><u>запас до отказа</u><b>'+rir+' '+plural(rir,['повтор','повтора','повторов'])+'</b></div>';
-  h += '<p class="mtext" style="margin-top:14px">Больше выбирать нечего: сколько подходов и насколько близко к отказу работать — приложение считает по номеру недели, а когда добавить вес или повтор, скажет карточка упражнения по твоей же истории.</p>';
-  if(d){
-    h += '<button class="phrow reset" id="deloadoff">Отменить лёгкую неделю</button>';
-  } else {
-    h += '<p class="mtext"><b>Веса встали или поехали вниз?</b> Возьми неделю с половиной подходов на тех же весах. Это единственное, чего приложение за тебя не решит — как ты себя чувствуешь, знаешь только ты.</p>'+
-         '<button class="phrow reset" id="deloadon">Взять лёгкую неделю</button>';
-  }
-  box.innerHTML=h;
-}
 /* ── «мои дни»: семь строк недели, в каждой — день программы или отдых ── */
 function renderSched(){
   var box=document.getElementById('schedlist'); if(!box) return;
@@ -1406,14 +1407,19 @@ function saveMe(){
   gset('me', {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m')});
   if(!anyTouched()) renderList();
 }
-function openSched(){ renderSched(); fillMe(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
+function renderDeload(){
+  var b=document.getElementById('deloadbox'); if(!b) return;
+  b.innerHTML = deloadOn()
+    ? '<div class="nowrow"><u>сейчас</u><b>лёгкая неделя · половина подходов</b></div>'+
+      '<button class="phrow reset" id="deloadoff">Вернуть обычный объём</button>'
+    : '<button class="phrow reset" id="deloadon">Взять лёгкую неделю</button>';
+}
+function openSched(){ renderSched(); fillMe(); renderDeload(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
 function closeSched(){ var m=document.getElementById('schedm'); if(m) m.classList.remove('show'); }
 
-function openSheet(){ renderSheet(); var s=document.getElementById('sheet'); if(s) s.classList.add('show'); }
-function closeSheet(){ var s=document.getElementById('sheet'); if(s) s.classList.remove('show'); }
 function setDeload(on){
   set('deload', on ? TODAY : null);
-  closeSheet();
+  renderDeload();
   /* схема подходов изменилась — пересобираем день, если человек ещё ничего не ввёл */
   if(!anyTouched()){ sess=blankSess(); saveSess(); }
   else { loadSess(); }
@@ -1461,13 +1467,9 @@ function weekNow(){
   return Math.max(1, Math.min(99, w));
 }
 var week = 1;
-function renderWeek(){
-  var el=document.getElementById('wkchip'); if(!el) return;
-  var d=deloadOn();
-  el.innerHTML='НЕДЕЛЯ <b>'+week+'</b>'+(d?' · ЛЁГКАЯ':'')+' <span class="cv">▾</span>';
-  el.setAttribute('aria-label','Неделя '+week+'. Нажми, чтобы посмотреть, что сейчас');
-  el.classList.toggle('manual', d);
-}
+/* Номер недели человеку не нужен: что делать сегодня, говорит карточка
+   упражнения. Функция осталась пустой, чтобы не выкорчёвывать её вызовы. */
+function renderWeek(){}
 
 function phaseFor(w){
   for(var i=0;i<PHASES.length;i++){ if(w>=PHASES[i].w[0] && w<=PHASES[i].w[1]) return PHASES[i]; }
@@ -1578,12 +1580,15 @@ function sKey(){ return 'sess_'+TODAY+'_'+day; }
 function blankSess(){
   var o={ex:[]};
   exList(day).forEach(function(e){
-    var prev=LAST[e.n]||{}, arr=[];
-    for(var i=0;i<nSets(e);i++){
+    /* Ячейки заполняются тем, что приложение рекомендует на сегодня: вес с учётом
+       прибавки и целевые повторы. Прошлые цифры остаются запасным вариантом на
+       случай, когда рекомендации ещё нет (история не загрузилась). */
+    var prev=LAST[e.n]||{}, t=targetOf(e), arr=[];
+    for(var i=0;i<setsFor(e, o.ex.length);i++){
       var ps = prev.s && prev.s[i];
-      var w = ps && ps[0]!=null && ps[0]!=='' ? ps[0] : (prev.w!=null&&prev.w!==''?prev.w:'');
-      var r = ps && ps[1]!=null && ps[1]!=='' ? ps[1] : (prev.r!=null&&prev.r!==''?prev.r:baseReps(e));
-      arr.push({w:w, r:r, done:false});
+      var lw = ps && ps[0]!=null && ps[0]!=='' ? ps[0] : (prev.w!=null&&prev.w!==''?prev.w:'');
+      var lr = ps && ps[1]!=null && ps[1]!=='' ? ps[1] : (prev.r!=null&&prev.r!==''?prev.r:baseReps(e));
+      arr.push({ w: (t.tw!=null ? t.tw : lw), r: (t.tr!=null ? t.tr : lr), done:false });
     }
     o.ex.push({sets:arr});
   });
@@ -1644,24 +1649,55 @@ function lastLine(e){
 }
 
 function setGrid(e,di){
-  var st=sess.ex[di].sets, wt=hasW(e);
+  var st=sess.ex[di].sets, wt=hasW(e), t=targetOf(e);
+  /* Цель стоит серым прямо в пустой ячейке — так её видно там, где вводишь,
+     а не в отдельном тексте выше. Ввёл своё — цель уступает место. */
+  var pw = (wt && t.tw!=null) ? fmtKg(t.tw) : '—';
+  var pr = (t.tr!=null) ? String(t.tr) : '—';
+  var подпись = '';
+  if(wt && t.tw!=null && t.kind==='up') подпись='<span class="tgt up">+'+fmtKg(stepOf(e))+'</span>';
+  else if(wt && t.tw!=null && t.kind==='hold') подпись='<span class="tgt">тот же</span>';
+  else if(wt && t.tw!=null && t.kind==='warn') подпись='<span class="tgt warn">не поднимай</span>';
+  else if(t.kind==='start' && t.tw!=null) подпись='<span class="tgt">ориентир</span>';
   var h='<div class="sethead"><span class="sn"></span>'+
-        (wt?'<span class="hw">вес, кг</span>':'')+
-        '<span class="hr">'+unitR(e)+'</span>'+
+        (wt?'<span class="hw">вес, кг'+подпись+'</span>':'')+
+        '<span class="hr">'+unitR(e)+'<span class="tgt">цель '+pr+'</span></span>'+
         '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>';
   st.forEach(function(v,si){
     h+='<div class="setrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
        '<span class="sn">'+(si+1)+'</span>'+
        (wt?'<div class="stp"><button type="button" data-f="w" data-d="-1" aria-label="Убавить вес">−</button>'+
-           '<input data-f="w" inputmode="decimal" placeholder="—" aria-label="Вес, кг" value="'+(v.w==null?'':v.w)+'">'+
+           '<input data-f="w" inputmode="decimal" placeholder="'+pw+'" aria-label="Вес, кг" value="'+(v.w==null?'':v.w)+'">'+
            '<button type="button" data-f="w" data-d="1" aria-label="Прибавить вес">+</button></div>':'')+
        '<div class="stp"><button type="button" data-f="r" data-d="-1" aria-label="Убавить">−</button>'+
-       '<input data-f="r" inputmode="numeric" placeholder="—" aria-label="'+unitR(e)+'" value="'+(v.r==null?'':v.r)+'">'+
+       '<input data-f="r" inputmode="numeric" placeholder="'+pr+'" aria-label="'+unitR(e)+'" value="'+(v.r==null?'':v.r)+'">'+
        '<button type="button" data-f="r" data-d="1" aria-label="Прибавить">+</button></div>'+
        '<button type="button" class="ok" data-ok="1" aria-label="Подход сделан" aria-pressed="'+(!!v.done)+'">✓</button>'+
        '</div>';
   });
+  h+='<div class="setadd"><button type="button" data-sets="-1" data-ex="'+di+'"'+
+     (st.length<=1?' disabled':'')+' aria-label="Убрать подход">−</button>'+
+     '<span>'+st.length+' '+plural(st.length,['подход','подхода','подходов'])+'</span>'+
+     '<button type="button" data-sets="1" data-ex="'+di+'"'+
+     (st.length>=8?' disabled':'')+' aria-label="Добавить подход">+</button></div>';
   return '<div class="setgrid">'+h+'</div>';
+}
+/* Добавить или убрать подход в конкретном упражнении на сегодня.
+   Правка живёт в самой сессии дня и уезжает в журнал как есть — программа
+   не переписывается, меняется только сегодняшняя тренировка. */
+function bumpSets(di, d){
+  var arr = sess.ex[di] && sess.ex[di].sets; if(!arr) return;
+  var e = exList(day)[di];
+  if(d>0){
+    if(arr.length>=8) return;
+    var last = arr[arr.length-1] || {};
+    arr.push({w:last.w, r:last.r!=null?last.r:baseReps(e), done:false});
+  } else {
+    if(arr.length<=1) return;
+    arr.pop();
+  }
+  ADJ[subKey(day,di)] = arr.length;
+  saveSubs(); saveSess(); renderList(); haptic('light');
 }
 
 function renderList(){
@@ -1683,7 +1719,7 @@ function renderList(){
            '<div class="eyebrow">'+e.p+'</div>'+
            '<div class="exname">'+e.n+'</div>'+
            (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
-           '<div class="spec"><span class="chip">'+nSets(e)+' × '+repsOf(e)+'</span>'+
+           '<div class="spec"><span class="chip">'+setsFor(e,di)+' × '+repsOf(e)+'</span>'+
              '<span class="chip">отдых '+rest+'</span></div>'+
            adviceLine(e)+
            setGrid(e,di)+
@@ -1736,6 +1772,8 @@ function syncRow(di,si){
 }
 
 document.getElementById('list').addEventListener('click', function(ev){
+  var sb=ev.target.closest('[data-sets]');
+  if(sb && !sb.disabled){ bumpSets(+sb.dataset.ex, +sb.dataset.sets); return; }
   var ab=ev.target.closest('[data-allex]');
   if(ab){
     var adi=+ab.dataset.allex, rows=sess.ex[adi].sets;
@@ -2088,6 +2126,7 @@ function initDb(){
       var b=JSON.parse(JSON.stringify(sn.data()||{}));
       if(b.s && typeof b.s==='object'){
         SUBS=b.s; set('subs',SUBS);
+        if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
         if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
         renderList();
       }
@@ -2102,7 +2141,7 @@ function initDb(){
     /* галочки, поставленные до готовности хранилища, иначе никуда не уедут */
     if(countDone()>0) commit();
     /* подсказки на карточках считаются по истории — подтягиваем её сразу */
-    return loadHist().then(function(){ if(!anyTouched()) renderList(); else renderList(); });
+    return loadHist().then(function(){ refillIfUntouched(); renderList(); });
   }).catch(function(e){ reportErr('store', e); });
 }
 
@@ -2468,23 +2507,44 @@ function advice(e){
   var prevVol = prev ? prev.sets.reduce(function(a,v){ return a+(v.r||0); },0) : null;
   var was = (w!=null? fmtKg(w)+' кг × ':'') + done.map(function(v){return v.r;}).join('/');
 
+  var bot = botReps(e);
   if(tm){
-    var top2=top;
-    return { kind: allTop?'up':'hold',
-      text: allTop ? 'Прошлый раз держал по '+top2+' с во всех подходах — добавь 5–10 секунд.'
-                   : 'Прошлый раз: '+done.map(function(v){return v.r+' с';}).join(' · ')+'. Доведи все подходы до '+top2+' с, потом добавляй время.' };
+    return { kind: allTop?'up':'hold', tw:null, tr: allTop ? top+5 : top,
+      text: allTop ? 'Прошлый раз держал по '+top+' с во всех подходах — добавь 5–10 секунд.'
+                   : 'Прошлый раз: '+done.map(function(v){return v.r+' с';}).join(' · ')+'. Доведи все подходы до '+top+' с, потом добавляй время.' };
   }
   if(allTop && w!=null){
-    return {kind:'up', text:'Прошлый раз закрыл все подходы по '+top+' повторов ('+was+'). <b>Добавь '+stepText(e)+'</b> — повторы упадут, это нормально.'};
+    /* вес вырос — повторы падают к нижней границе, это и есть двойная прогрессия */
+    return {kind:'up', tw: w+stepOf(e), tr: bot, up:true,
+      text:'Прошлый раз закрыл все подходы по '+top+' повторов ('+was+'). <b>Добавь '+stepText(e)+'</b> — повторы упадут, это нормально.'};
   }
   if(allTop && w==null){
-    return {kind:'up', text:'Все подходы по '+top+' повторов на своём весе. Пора добавлять внешний вес или усложнять вариант.'};
+    return {kind:'up', tw:null, tr:top,
+      text:'Все подходы по '+top+' повторов на своём весе. Пора добавлять внешний вес или усложнять вариант.'};
   }
   if(prev && prevVol!=null && lastVol<prevVol && sameW){
-    return {kind:'warn', text:'Прошлый раз повторов стало меньше ('+prevVol+' → '+lastVol+' на том же весе). Вес не поднимай: не хватает восстановления, сна или еды.'};
+    return {kind:'warn', tw:w, tr:top,
+      text:'Прошлый раз повторов стало меньше ('+prevVol+' → '+lastVol+' на том же весе). Вес не поднимай: не хватает восстановления, сна или еды.'};
   }
   var need = done.filter(function(v){ return v.r<top; }).length;
-  return {kind:'hold', text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+' — осталось '+need+' '+plural(need,['подход','подхода','подходов'])+'.'};
+  return {kind:'hold', tw:w, tr:top,
+    text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+' — осталось '+need+' '+plural(need,['подход','подхода','подходов'])+'.'};
+}
+/* нижняя граница диапазона: '6–10' → 6 */
+function botReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 8; }
+/* цель для ячеек: что подставлять в вес и повторы. Считается один раз на
+   упражнение и кладётся в подсказку, чтобы сетка не пересчитывала её на каждый ряд. */
+function targetOf(e){
+  var a; try{ a=advice(e); }catch(err){ return {tw:null, tr:botReps(e), kind:''}; }
+  if(a.kind==='start'){
+    var me=myData(), k=(e.ph && BWK[e.ph]!=null && me && me.bw) ? BWK[e.ph] : null;
+    var kg=null;
+    if(k){ var af=(+me.age||30)<=30?1:((+me.age||30)<=40?.95:((+me.age||30)<=50?.88:.80));
+           kg=Math.max(2, Math.round(me.bw*k*af*(me.sex==='f'?0.65:1)/2.5)*2.5); }
+    return {tw:kg, tr:topReps(e), kind:'start'};
+  }
+  if(a.kind==='wait') return {tw:null, tr:botReps(e), kind:'wait'};
+  return {tw:a.tw, tr:a.tr, kind:a.kind, up:!!a.up};
 }
 
 /* ── Первый раз: подбор веса ──
@@ -2597,7 +2657,6 @@ if(TG){
 }
 
 /* ── обработчики окон ── */
-document.getElementById('wkchip').addEventListener('click', openSheet);
 ['me-bw','me-ht','me-age','me-sex'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('change', saveMe);
 });
@@ -2615,6 +2674,10 @@ document.getElementById('schedlist').addEventListener('change', function(e){
   } else delete GYM_DAYS[wd];
   schedApplied();
 });
+document.getElementById('deloadbox').addEventListener('click', function(e){
+  if(e.target.closest('#deloadon'))  setDeload(true);
+  if(e.target.closest('#deloadoff')) setDeload(false);
+});
 document.getElementById('schedlist').addEventListener('click', function(e){
   if(!e.target.closest('#schedreset')) return;
   GYM_DAYS = JSON.parse(JSON.stringify(PROF.gymDays));
@@ -2624,16 +2687,8 @@ document.getElementById('schedlist').addEventListener('click', function(e){
 document.getElementById('todaybar').addEventListener('click', function(e){
   if(e.target.closest('#schedbtn')) openSched();
 });
-document.getElementById('sheetclose').addEventListener('click', closeSheet);
-document.getElementById('sheetlist').addEventListener('click', function(e){
-  if(e.target.closest('#deloadon'))  setDeload(true);
-  if(e.target.closest('#deloadoff')) setDeload(false);
-});
 document.getElementById('picker').addEventListener('click', function(e){
   var b=e.target.closest('button[data-prof]'); if(b) choose(b.dataset.prof);
-});
-document.getElementById('sheet').addEventListener('click', function(e){
-  if(e.target.id==='sheet') closeSheet();
 });
 /* ── каталог ── */
 document.getElementById('catclose').addEventListener('click', closeCatalog);
