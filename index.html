@@ -3496,10 +3496,10 @@ function aiBuild(){
   var btn=document.getElementById('profai'); if(!btn || btn.disabled) return;
   var me=myData()||{};
   if(!me.goal){ aiState('Сначала выбери цель — от неё зависит вся схема.', true); return; }
-  btn.disabled=true; aiState('Собираю программу под тебя… обычно 20–40 секунд');
+  btn.disabled=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
   document.getElementById('aibox').innerHTML='';
   var ctl = ('AbortController' in window) ? new AbortController() : null;
-  var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 90000);
+  var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
   fetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }); })
