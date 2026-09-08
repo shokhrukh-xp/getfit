@@ -499,9 +499,6 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fnav button:disabled{opacity:.35}
 .fnav .fd{flex:1;text-align:center;font-size:13.5px;font-weight:600}
 .fnav .fd small{display:block;font-weight:400;font-size:11px;color:var(--dim);letter-spacing:.02em}
-.fadd{display:block;width:100%;margin-top:4px;padding:11px;border-radius:11px;border:.5px dashed var(--line);
-  background:none;color:var(--muted);font:inherit;font-size:13px}
-.fadd:active{color:var(--accent);border-color:var(--accent)}
 
 /* окно правки приёма */
 .mlab{display:block;margin:14px 0 0;font-size:11px;color:var(--dim)}
@@ -533,6 +530,9 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fask{display:flex;gap:8px;align-items:center;margin-top:10px}
 .fask input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:14px;-webkit-appearance:none}
+/* Подсказка яркостью почти не отличалась от введённого текста, и поле читалось
+   как уже заполненное — то есть как не предназначенное для ввода. */
+.fask input::placeholder,.mlab textarea::placeholder,.mnums input::placeholder{color:var(--dim);opacity:1}
 .fbtn{flex:0 0 44px;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);
   display:flex;align-items:center;justify-content:center;font:inherit;font-size:18px}
 .fbtn svg{width:22px;height:22px}
@@ -1089,7 +1089,6 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
-        <button type="button" class="fadd" id="fadd">+ записать приём руками</button>
         <div class="fask">
           <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
           <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -4474,18 +4473,16 @@ document.getElementById('ffile').addEventListener('change', function(e){
 var KINDS=[['завтрак','завтрак'],['обед','обед'],['ужин','ужин'],['перекус','перекус']];
 var MEAL=null;
 function openMeal(m){
-  MEAL = m || {id:null, kind:'', text:'', kcal:'', prot:'', fib:'', date:fDate()};
-  document.getElementById('mealtitle').textContent = MEAL.id ? 'Правка приёма' : 'Новый приём';
+  if(!m) return;
+  MEAL = m;
+  document.getElementById('mealtitle').textContent = 'Правка приёма';
   document.getElementById('ml-kind').innerHTML = segHtml('mlkind', KINDS, MEAL.kind||'');
   document.getElementById('ml-date').value = MEAL.date || fDate();
   document.getElementById('ml-text').value = MEAL.text || '';
   ['kcal','prot','fib'].forEach(function(k){
     document.getElementById('ml-'+k).value = (MEAL[k]==null||MEAL[k]==='') ? '' : Math.round(MEAL[k]);
   });
-  var h=document.getElementById('ml-hint');
-  h.textContent = MEAL.id ? 'Числа считал тренер по фото — если знаешь точнее, поправь здесь.'
-                          : 'Если знаешь только состав, но не числа, — проще написать его тренеру: посчитает сам.';
-  document.getElementById('ml-del').hidden = !MEAL.id;
+  document.getElementById('ml-hint').textContent='Числа считал тренер по фото — если знаешь точнее, поправь здесь.';
   document.getElementById('mealm').classList.add('show');
 }
 function closeMeal(){ document.getElementById('mealm').classList.remove('show'); }
@@ -4498,7 +4495,7 @@ function mealSave(){
     kcal:v('kcal'), prot:v('prot'), fib:v('fib') };
   if(!body.text){ document.getElementById('ml-hint').textContent='Без описания приём не сохранить.'; return; }
   var btn=document.getElementById('ml-save'); btn.disabled=true;
-  fPost(MEAL.id?'/meal/upd':'/meal/add', body).then(function(d){
+  fPost('/meal/upd', body).then(function(d){
     /* запись могла уехать в другой день — открываем тот, куда она легла */
     if(body.date!==fDate()){ FOOD.date = body.date===TODAY ? null : body.date; renderFoodNav(); }
     FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('ok');
@@ -4513,7 +4510,6 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
   if(m){ openMeal(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
 });
-document.getElementById('fadd').addEventListener('click', function(){ openMeal(null); haptic('light'); });
 document.getElementById('mealclose').addEventListener('click', closeMeal);
 document.getElementById('ml-save').addEventListener('click', mealSave);
 document.getElementById('ml-del').addEventListener('click', function(){
