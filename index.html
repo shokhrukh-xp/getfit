@@ -534,6 +534,9 @@ body{padding-bottom:0}
 .musdet{margin:9px 0 0;font-size:12px;color:var(--muted);line-height:1.5;min-height:34px}
 .musdet b{color:var(--text);font-weight:600}
 .musdet b.down{color:var(--warn)}
+.syncst{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
+.syncst.ok{color:var(--done)}
+.syncst.bad{color:var(--warn)}
 .tgt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
   font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;
   text-transform:none;border:1px solid var(--line);color:var(--dim)}
@@ -711,6 +714,7 @@ body{padding-bottom:0}
         <h3 class="lh">История</h3>
         <div id="logbox"></div>
         <button class="btn" id="copyrep">Скопировать отчёт для чата</button>
+        <p class="syncst" id="syncst"></p>
         <textarea id="repbox" readonly></textarea>
         <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
       </div>
@@ -1948,7 +1952,7 @@ function fit(obj){
 function mkDoc(path){
   var k=csKey(path);
   return {
-    set:function(body){ return csSet(k, fit(body)); },
+    set:function(body){ syncPush(path, body); return csSet(k, fit(body)); },
     get:function(){
       return csGet(k).then(function(v){
         var parsed=null; if(v){ try{ parsed=JSON.parse(v); }catch(e){} }
@@ -1985,6 +1989,74 @@ function mkCollection(name){
   };
   return q;
 }
+/* ══════════ СИНХРОНИЗАЦИЯ · Cloudflare Worker + D1 ══════════
+   CloudStorage Telegram виден только изнутри мини-аппа: тренер не может
+   заглянуть в журнал, не попросив скопировать отчёт руками. Это раздражало
+   и ломало смысл приложения, поэтому каждая запись зеркалится в свою базу.
+   Даёт две вещи: тренер читает журнал напрямую, и появляется настоящий
+   бэкап — слетит Telegram, история восстановится отсюда.
+   В облако уходит ПОЛНОЕ тело записи, без обрезки под лимит 4096. */
+var SYNCURL='https://getfit-sync.sh-pulatov.workers.dev';
+var SYNCOK=null;
+function syncUid(){
+  var b=(TGUSER && TGUSER.id) ? String(TGUSER.id) : (mGet('anon_uid') || (function(){
+    var v='a'+Math.random().toString(36).slice(2,10); mSet('anon_uid',v); return v; })());
+  return b + (profile==='wife' ? '_w' : '');
+}
+function syncPost(path, body){
+  return fetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)}).then(function(r){
+      SYNCOK = r.ok; paintSync(); return r.ok;
+    }).catch(function(){ SYNCOK=false; paintSync(); return false; });
+}
+function syncPush(path, body){
+  try{
+    var uid=syncUid(), p=String(path);
+    if(p.indexOf('workouts/')===0){
+      var id=p.slice(9);
+      return syncPost('/w', {uid:uid, id:id, date:body.date||id.slice(0,10),
+                             day:body.day, name:body.name, sub:body.sub, data:body});
+    }
+    if(p.indexOf('state/')===0) return syncPost('/s', {uid:uid, key:p.slice(6), data:body});
+  }catch(e){}
+  return Promise.resolve(false);
+}
+function paintSync(){
+  var el=document.getElementById('syncst'); if(!el) return;
+  el.textContent = SYNCOK===null ? '' :
+    (SYNCOK ? 'Журнал синхронизирован — тренер видит его сам, копировать не нужно.'
+            : 'Синхронизация недоступна, данные сохранены в Telegram. Попробую позже.');
+  el.className = 'syncst' + (SYNCOK ? ' ok' : SYNCOK===false ? ' bad' : '');
+}
+/* При запуске: выгружаем наверх всё, что уже лежит локально. Если локально
+   пусто, а в базе что-то есть — восстанавливаем. */
+function syncBoot(){
+  var pre=csKey('workouts')+'_';
+  csKeys().then(function(keys){
+    var mine=(keys||[]).filter(function(k){ return k.indexOf(pre)===0; });
+    if(mine.length){
+      return csGetMany(mine).then(function(vals){
+        mine.forEach(function(k){
+          var v=vals[k]; if(!v) return;
+          try{ syncPush('workouts/'+k.slice(pre.length), JSON.parse(v)); }catch(e){}
+        });
+        return csGet(csKey('state/last')).then(function(v){
+          if(v){ try{ syncPush('state/last', JSON.parse(v)); }catch(e){} }
+        });
+      });
+    }
+    return fetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid()))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d || !d.workouts || !d.workouts.length) return;
+        var jobs=d.workouts.map(function(w){ return csSet(csKey('workouts/'+w.id), fit(w.data)); });
+        (d.state||[]).forEach(function(st){ jobs.push(csSet(csKey('state/'+st.key), fit(st.data))); });
+        SYNCOK=true; paintSync();
+        return Promise.all(jobs).then(function(){ setTimeout(function(){ location.reload(); }, 1000); });
+      });
+  }).catch(function(){ SYNCOK=false; paintSync(); });
+}
+
 var STORE = { doc:mkDoc, collection:mkCollection };
 
 /* ── тренировка 06.09, перенесённая из старой версии ── */
@@ -2116,6 +2188,7 @@ function pushDb(){
 function initDb(){
   DB = STORE;
   paintNote('local');
+  setTimeout(syncBoot, 1500);   /* после того как профиль применён */
   csGet(PROFKEY).then(function(v){
     /* на новом устройстве профиль приезжает из облака — спрашивать второй раз незачем */
     var b=null; if(v){ try{ b=JSON.parse(v); }catch(e){} }
