@@ -662,6 +662,14 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .hhead[aria-expanded="true"] .hdate{color:var(--amber)}
 .hhead[aria-expanded="true"] .hsub{color:var(--text)}
 .hbody{padding:0 2px 14px}
+.mrow{display:grid;grid-template-columns:78px 1fr auto auto;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.mrow:first-child{border-top:0}
+.mrow u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.mrow b{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+.mrow b small{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:400;color:var(--dim);margin-left:3px}
+.mrow i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11px;font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;white-space:nowrap}
+.mrow i em{font-style:normal;color:var(--dim);margin-left:4px}
+.mrow i.up{color:var(--done)}.mrow i.down{color:var(--warn)}
 .hall{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:12px 2px;
   border:0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:none;color:var(--muted);font:inherit;font-size:13px;text-align:left}
 .hall span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)}
@@ -894,11 +902,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
         <div id="logmus"></div>
         <h3 class="lh">Прогресс</h3>
         <div id="logprog"></div>
-        <button type="button" class="hall" id="histtoggle" aria-expanded="false">Все тренировки <span id="histn"></span></button>
-        <div id="logbox" hidden></div>
-        <button class="btn" id="copyrep">Скопировать отчёт для чата</button>
-        <p class="syncst" id="syncst"></p>
-        <textarea id="repbox" readonly></textarea>
+        <h3 class="lh">Замеры</h3>
+        <div id="logmeas"></div>
         <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
       </div>
     </section>
@@ -3181,9 +3186,11 @@ function renderProgress(){
     var la=a.pts[a.pts.length-1].d, lb=b.pts[b.pts.length-1].d;
     return (b.pts.length-a.pts.length) || (la<lb?1:-1);
   });
-  /* строки с динамикой — все (до 10); «первый раз» только добивает список до шести */
-  var rows=all.filter(function(e){ return e.pts.length>=2; }).slice(0,10);
-  all.filter(function(e){ return e.pts.length<2; }).forEach(function(e){ if(rows.length<6) rows.push(e); });
+  /* строки с динамикой — все; «первый раз» — только свежие, за последние 10 дней:
+     новое упражнение появляется здесь сразу после первой тренировки */
+  var rows=all.filter(function(e){ return e.pts.length>=2; });
+  all.filter(function(e){ return e.pts.length<2 && (new Date(TODAY)-new Date(e.pts[0].d))/864e5<=10; }).forEach(function(e){ rows.push(e); });
+  rows=rows.slice(0,12);
   box.innerHTML=rows.map(function(e){
     var f=e.pts[0].b, l=e.pts[e.pts.length-1].b, n=e.pts.length;
     var delta='', cls='first';
@@ -3233,8 +3240,36 @@ function renderLog(){
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
-    renderLogSum(); renderMus(); renderProgress(); renderHistory();
+    renderLogSum(); renderMus(); renderProgress();
   }).catch(function(e){ console.error('journal', e); box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
+  renderMeasSummary();
+}
+/* ── Замеры: последний и как изменился ──
+   Три числа, по которым видно, туда ли идём: вес (шум ±0,5 в день, смотреть
+   к прошлой неделе), жир по весам (расчётный, верить с оговоркой) и белковая
+   масса — единственный прямой сигнал, что мышцы на месте. */
+function renderMeasSummary(){
+  var box=document.getElementById('logmeas'); if(!box) return;
+  var draw=function(ms){
+    ms=(ms||[]).filter(function(m){ return m.w; }).sort(function(a,b){ return a.date<b.date?1:-1; });
+    if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Пришли скриншот отчёта весов боту или тренеру.</p>'; return; }
+    var last=ms[0], first=ms[ms.length-1];
+    /* «неделю назад» — ближайший замер не позже семи дней до последнего */
+    var wk=null; for(var i=1;i<ms.length;i++){ if((new Date(last.date)-new Date(ms[i].date))/864e5>=6){ wk=ms[i]; break; } }
+    var row=function(label, key, unit, goodDown, dec){
+      var v=last[key]; if(v==null) return '';
+      var f=function(x){ return (x>0?'+':'')+(dec? x.toFixed(1).replace('.',',') : Math.round(x)); };
+      var cls=function(d){ if(Math.abs(d)<(dec?0.15:1)) return ''; return (d<0)===goodDown ? 'up' : 'down'; };
+      var dw = (wk && wk[key]!=null) ? v-wk[key] : null, d0 = (first!==last && first[key]!=null) ? v-first[key] : null;
+      return '<div class="mrow"><u>'+label+'</u><b>'+(dec? String(v).replace('.',',') : v)+'<small>'+unit+'</small></b>'+
+        '<i class="'+(dw!=null?cls(dw):'')+'">'+(dw!=null? f(dw)+'<em>за нед.</em>' : '')+'</i>'+
+        '<i class="'+(d0!=null?cls(d0):'')+'">'+(d0!=null? f(d0)+'<em>от '+ruDate(first.date)+'</em>' : '')+'</i></div>';
+    };
+    box.innerHTML = row('вес','w','кг',true,true) + row('жир','fat','%',true,true) + row('белок','prot','кг',false,true) +
+      '<p class="fline" style="margin-top:8px">Последний замер '+ruDate(last.date)+'. Белок — это белковая масса тела: пока она не падает, мышцы на месте.</p>';
+  };
+  if(FOOD.meas){ draw(FOOD.meas); }
+  else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
 }
 
 /* ══════════ ИСТОРИЯ И РЕКОМЕНДАЦИИ ══════════
@@ -3959,10 +3994,7 @@ function coachSend(text, image){
     .then(function(){ CHAT.busy=false; sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
-document.getElementById('histtoggle').addEventListener('click', function(){
-  var b=this, box=document.getElementById('logbox'), open=b.getAttribute('aria-expanded')==='true';
-  b.setAttribute('aria-expanded', String(!open)); box.hidden=open; haptic('light');
-});
+
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 document.getElementById('csend').addEventListener('click', function(){ var t=document.getElementById('ctext').value.trim(); if(t) coachSend(t); });
