@@ -418,6 +418,29 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .fweek .fd .fb.none{background:var(--line)}
 .fweek .fd .fb.ok{background:var(--done)}
 .fweek .fd u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim)}
+.fweek .fd i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.fweek{height:112px}
+.fchart{margin-top:8px}
+.fchart svg{display:block;width:100%;height:auto}
+.fchart .lg{display:flex;gap:14px;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+.fchart .lg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+/* ── тренер: плавающая кнопка и окно чата ── */
+.coachfab{position:fixed;right:16px;bottom:calc(84px + var(--pad-bottom,0px));z-index:60;width:52px;height:52px;border-radius:50%;
+  border:1px solid var(--amber);background:var(--amber);color:#1a1206;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(233,166,60,.28);padding:0}
+.coachfab svg{width:24px;height:24px}
+.coachfab.attn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid var(--ink)}
+#coachm .modalbox{display:flex;flex-direction:column;max-height:88vh;padding-bottom:calc(10px + var(--pad-bottom,0px))}
+.chatlog{flex:1 1 auto;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
+.msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
+.msg.me{align-self:flex-end;background:var(--amber-ghost);border:1px solid var(--amber-deep);color:var(--text);border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--surface-2);border:1px solid var(--line-soft);color:var(--text);border-bottom-left-radius:4px}
+.msg.intro{align-self:stretch;max-width:100%;background:none;border:1px dashed var(--line);color:var(--muted);font-size:12.5px}
+.msg.wait{color:var(--dim)}
+.msg.bad{border-color:var(--warn)}
+.chatask{display:flex;gap:8px;align-items:flex-end;padding-top:8px;border-top:1px solid var(--line-soft)}
+.chatask textarea{flex:1 1 auto;min-width:0;max-height:120px;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);font:inherit;font-size:14px;line-height:1.35;resize:none;-webkit-appearance:none}
 .fweekt{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
 .fmeas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:8px}
 .fmeas .fm{flex:0 0 auto;padding:8px 10px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-2);text-align:center}
@@ -519,7 +542,7 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 /* Нижняя панель фиксированная, поэтому странице нужен собственный отступ.
    Раньше его невольно давал длинный текст в подвале — убрал текст, и кнопка
    «Завершить» ушла под панель. Теперь отступ задан явно. */
-body{padding-bottom:calc(78px + var(--pad-bottom))}
+body{padding-bottom:calc(156px + var(--pad-bottom))}
 #repbox{display:none;width:100%;min-height:150px;margin-top:10px;padding:10px;
   border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
   color:var(--text);font:11px/1.5 'JetBrains Mono',ui-monospace,monospace;
@@ -858,7 +881,7 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
           <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
           <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
           <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
-          <input id="ffile" type="file" accept="image/*" capture="environment" hidden>
+          <input id="ffile" type="file" accept="image/*" hidden>
         </div>
         <p class="freply" id="freply" hidden></p>
         <p class="fhint">Фото еды и отчёты весов удобнее слать прямо боту в чат — считает и записывает сюда же.</p>
@@ -866,12 +889,15 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
         <div class="fweek" id="fweek"></div>
         <p class="fweekt" id="fweekt"></p>
         <h3 class="lh">Весы</h3>
-        <div class="fmeas" id="fmeas"></div>
+        <div class="fchart" id="fchart"></div>
         <div class="fask">
           <input id="fw" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="вес, кг">
           <input id="ffat" type="number" inputmode="decimal" step="0.1" min="3" max="60" placeholder="жир, %">
+          <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
+          <input id="fmfile" type="file" accept="image/*" hidden>
         </div>
+        <p class="freply" id="fmreply" hidden></p>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -926,6 +952,19 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
     чувствуешь, знаешь только ты. Через семь дней отключится само.</p>
     <div id="deloadbox"></div>
     <button class="btn wide" id="schedclose">Готово</button>
+  </div>
+</div>
+<button type="button" class="coachfab" id="coachfab" aria-label="Тренер"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4z"/><path d="M8 9h8M8 13h5"/></svg></button>
+<div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <div class="chatlog" id="chatlog"></div>
+    <div class="chatask">
+      <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
+      <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+      <button type="button" class="fbtn go" id="csend" aria-label="Отправить">→</button>
+      <input id="cfile" type="file" accept="image/*" hidden>
+    </div>
   </div>
 </div>
 <div class="modal" id="profm" role="dialog" aria-modal="true" aria-labelledby="proftitle">
@@ -3650,17 +3689,65 @@ function renderFoodWeek(){
   var tg=w.targets||{}, mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return d.kcal; })), 1);
   box.innerHTML = w.days.map(function(d){
     /* сегодняшний день ещё не закончен — красным его не красим */
-    var h=Math.round(d.kcal/mx*80), cls = !d.n ? 'none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'ok' : ''));
-    return '<div class="fd"><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px" title="'+d.kcal+'"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
+    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'ok' : ''));
+    return '<div class="fd"><i>'+(d.n?d.kcal:'')+'</i><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
-  t.textContent = w.text;
+  /* одна строка: среднее против нормы и сколько дней ниже пола; длинный разбор шлёт бот */
+  var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
+  var low=w.low ? w.low.filter(function(x){ return x!==ruDate(TODAY); }).length : logged.filter(function(d){ return tg.floor && d.kcal<tg.floor; }).length;
+  var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+d.prot; },0)/(logged.length||1))};
+  t.textContent = logged.length
+    ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(tg.kcal?' при норме '+tg.kcal+' / '+tg.prot:'')+(low?' · ниже пола '+low+' '+plural(low,['день','дня','дней']):'')
+    : 'За неделю записей нет.';
 }
+/* вес и % жира двумя линиями, каждая в своём масштабе; ИМТ — линейная функция
+   веса, отдельной линией он бы лёг ровно на вес, поэтому пишем его подписью
+   у последней точки. Подписаны первая и последняя точки — на телефоне
+   наводить нечем. */
 function renderMeas(){
-  var box=document.getElementById('fmeas'); if(!box) return;
-  var ms=(FOOD.meas||[]).slice(0,10).reverse();
-  box.innerHTML = ms.length ? ms.map(function(m){
-    return '<div class="fm"><u>'+ruDate(m.date)+'</u><b>'+m.w+'</b><i>'+(m.fat!=null?m.fat+'%':'—')+(m.prot!=null?' · б '+m.prot:'')+'</i></div>';
-  }).join('') : '<p class="fline">Замеров нет. Пришли боту скриншот отчёта весов или впиши вес ниже.</p>';
+  var box=document.getElementById('fchart'); if(!box) return;
+  var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice(0,21).reverse();
+  if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Пришли скриншот отчёта весов — кнопка справа — или впиши вес.</p>'; return; }
+  var ht=(myData()||{}).ht, W=360, H=160, L=10, R=10, T=30, B=24;
+  var bmi=function(m){ return ht ? m.w/((ht/100)*(ht/100)) : null; };
+  var series=[
+    {c:'var(--amber)', n:'вес', f:function(m){ return m.w; }, fmt:function(v,m,last){ return fmtKg(v)+(last&&bmi(m)?' · ИМТ '+bmi(m).toFixed(1):''); }, dy:-9, all:true},
+    {c:'#5AA9C9', n:'жир %', f:function(m){ return m.fat; }, fmt:function(v){ return v.toFixed(1)+'%'; }, dy:15, all:false}
+  ];
+  var xs=ms.map(function(_,i){ return ms.length>1 ? L+(W-L-R)*i/(ms.length-1) : W/2; });
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Вес и жир по дням">';
+  svg+='<line x1="'+L+'" y1="'+(H-B)+'" x2="'+(W-R)+'" y2="'+(H-B)+'" stroke="var(--line-soft)"/>';
+  var legend=[], ys=[];
+  series.forEach(function(sr, si){
+    var vals=ms.map(sr.f); if(vals.every(function(v){ return v==null; })){ ys.push(null); return; }
+    var vs=vals.filter(function(v){ return v!=null; }), mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs);
+    if(mx-mn<0.5){ mn-=0.5; mx+=0.5; }
+    var y=function(v){ return T + (H-T-B) * (1 - (v-mn)/(mx-mn)); };
+    ys.push(vals.map(function(v){ return v==null ? null : y(v); }));
+  });
+  series.forEach(function(sr, si){
+    var yv=ys[si]; if(!yv) return;
+    var other=ys[1-si];
+    var pts=[]; yv.forEach(function(yy,i){ if(yy!=null) pts.push([xs[i], yy, sr.f(ms[i]), i]); });
+    svg+='<polyline fill="none" stroke="'+sr.c+'" stroke-width="'+(si===0?2.2:1.4)+'" stroke-linejoin="round" stroke-linecap="round" points="'+pts.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' ')+'"/>';
+    pts.forEach(function(p,j){
+      var last=j===pts.length-1, first=j===0, show = first || last || (sr.all && ms.length<=8);
+      svg+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(si===0?3:2.4)+'" fill="'+sr.c+'"/>';
+      if(show){
+        /* подпись уходит от чужой точки: та выше — пишем снизу, ниже — сверху */
+        var oy = other ? other[p[3]] : null;
+        var dy = (oy!=null && oy < p[1]) ? 15 : (oy!=null && oy > p[1]) ? -9 : sr.dy;
+        if(p[1]+dy > H-B-3) dy=-9;            /* не наезжать на ось */
+        if(p[1]+dy < T-12) dy=15;             /* и не вылетать сверху */
+        var tx=first?'start':(last?'end':'middle');
+        svg+='<text x="'+p[0].toFixed(1)+'" y="'+(p[1]+dy).toFixed(1)+'" text-anchor="'+tx+'" font-family="JetBrains Mono,monospace" font-size="9.5" fill="'+sr.c+'">'+sr.fmt(p[2], ms[p[3]], last)+'</text>';
+      }
+    });
+    legend.push('<span><i style="background:'+sr.c+'"></i>'+sr.n+'</span>');
+  });
+  ms.forEach(function(m,i){ if(i===0 || i===ms.length-1 || ms.length<=8) svg+='<text x="'+xs[i].toFixed(1)+'" y="'+(H-7)+'" text-anchor="'+(i===0?'start':(i===ms.length-1?'end':'middle'))+'" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--dim)">'+ruDate(m.date)+'</text>'; });
+  svg+='</svg>';
+  box.innerHTML = svg + '<div class="lg">'+legend.join('')+'<span>'+(ht?'ИМТ — у последней точки':'ИМТ появится, когда в профиле будет рост')+'</span></div>';
 }
 function fReply(text, cls){ var el=document.getElementById('freply'); if(!el) return; el.hidden=!text; el.textContent=text||''; el.className='freply'+(cls?' '+cls:''); }
 function foodSend(text, image, mime){
@@ -3674,11 +3761,11 @@ function foodSend(text, image, mime){
     .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
 }
 /* фото ужимаем до 1280 px и JPEG — Worker и модель большего не ждут */
-function shrink(file){
+function shrink(file, max){
   return new Promise(function(res, rej){
     var img=new Image(), url=URL.createObjectURL(file);
     img.onload=function(){
-      var k=Math.min(1, 1280/Math.max(img.width,img.height));
+      var k=Math.min(1, (max||1280)/Math.max(img.width,img.height));
       var c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       URL.revokeObjectURL(url);
@@ -3701,12 +3788,80 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   var b=e.target.closest('[data-fdel]'); if(!b) return;
   fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
 });
+document.getElementById('fmphoto').addEventListener('click', function(){ document.getElementById('fmfile').click(); });
+document.getElementById('fmfile').addEventListener('change', function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var el=document.getElementById('fmreply'); el.hidden=false; el.className='freply wait'; el.textContent='Читаю отчёт…';
+  shrink(f, 1600).then(function(b64){ return fPost('/coach', {uid:syncUid(), text:'отчёт весов', image:b64, mime:'image/jpeg'}); })
+    .then(function(d){ el.className='freply'; el.textContent=d.reply||'Записал.'; haptic('ok');
+      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }); })
+    .catch(function(err){ el.className='freply bad'; el.textContent='Не вышло: '+err.message; haptic('err'); });
+  e.target.value='';
+});
 document.getElementById('fmsave').addEventListener('click', function(){
   var w=+document.getElementById('fw').value, f=+document.getElementById('ffat').value;
   if(!(w>20)) return;
   fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null}).then(function(d){ FOOD.meas=d.measures; renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; haptic('ok');
     fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
     .catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+});
+
+/* ══════════ ТРЕНЕР: ЧАТ ══════════
+   Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
+   цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
+var CHAT={items:null, busy:false};
+function openCoach(){
+  var m=document.getElementById('coachm'); if(m) m.classList.add('show');
+  renderChat();
+  fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(!d||!d.ok) return; CHAT.items=d.chat||[]; CHAT.intro=d.intro||''; renderChat(true);
+  }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(true); });
+  setTimeout(function(){ var t=document.getElementById('ctext'); if(t && window.innerWidth>700) t.focus(); }, 200);
+}
+function closeCoach(){ var m=document.getElementById('coachm'); if(m) m.classList.remove('show'); }
+function renderChat(scroll){
+  var box=document.getElementById('chatlog'); if(!box) return;
+  var h='';
+  if(CHAT.items===null) h='<div class="msg intro">Загружаю…</div>';
+  else {
+    if(CHAT.intro) h+='<div class="msg intro">'+CHAT.intro+'</div>';
+    h+=CHAT.items.map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
+    if(CHAT.pending) h+='<div class="msg me">'+esc(CHAT.pending)+'</div><div class="msg ai wait">'+(CHAT.pendingImg?'Смотрю фото…':'Думаю…')+'</div>';
+    if(CHAT.err) h+='<div class="msg ai bad">'+esc(CHAT.err)+'</div>';
+  }
+  box.innerHTML=h;
+  if(scroll!==false) box.scrollTop=box.scrollHeight;
+}
+function esc(t){ return String(t||'').replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+function coachSend(text, image){
+  if(CHAT.busy || (!text && !image)) return;
+  CHAT.busy=true; CHAT.err=''; CHAT.pending=text||'📷 фото'; CHAT.pendingImg=!!image; renderChat();
+  var sb=document.getElementById('csend'); sb.disabled=true;
+  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null})
+    .then(function(d){
+      CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
+      CHAT.pending=''; renderChat(); haptic('ok');
+      document.getElementById('ctext').value='';
+      if(d.meals && d.meals.length){ FOOD.day=d.day; renderFoodDay(); }
+      if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }).catch(function(){}); }
+    })
+    .catch(function(e){ CHAT.pending=''; CHAT.err='Не вышло: '+e.message; renderChat(); haptic('err'); })
+    .then(function(){ CHAT.busy=false; sb.disabled=false; });
+}
+document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
+document.getElementById('coachclose').addEventListener('click', closeCoach);
+document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
+document.getElementById('csend').addEventListener('click', function(){ var t=document.getElementById('ctext').value.trim(); if(t) coachSend(t); });
+document.getElementById('ctext').addEventListener('keydown', function(e){
+  if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); var t=e.target.value.trim(); if(t) coachSend(t); }
+});
+document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; });
+document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
+document.getElementById('cfile').addEventListener('change', function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var t=document.getElementById('ctext').value.trim();
+  shrink(f).then(function(b64){ coachSend(t, b64); }).catch(function(err){ CHAT.err='Не вышло: '+err.message; renderChat(); });
+  e.target.value='';
 });
 
 /* ── init ── */
