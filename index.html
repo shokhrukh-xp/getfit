@@ -3226,7 +3226,7 @@ function musOf(x){
 function volumeWeek(){
   var вНеделю = Object.keys(GYM_DAYS).length || CYCLE.length || 1;
   var коэф = CYCLE.length ? вНеделю/CYCLE.length : 1;
-  var план={}, факт={}, дни={};
+  var план={}, факт={}, дни={}, чем={};
   CYCLE.forEach(function(dk){
     exList(dk).forEach(function(e,di){
       var mus=musOf(e); if(!mus) return;
@@ -3234,6 +3234,9 @@ function volumeWeek(){
       mus.forEach(function(m){
         план[m[0]]=(план[m[0]]||0)+n*m[1]*коэф;
         (дни[m[0]]=дни[m[0]]||{})[dk]=1;
+        /* какими упражнениями группа набирается — чтобы тренер мог назвать
+           конкретное движение, а не «добавь что-нибудь на заднюю поверхность» */
+        if(m[1]===1) (чем[m[0]]=чем[m[0]]||[]).push({n:e.n, sets:n});
       });
     });
   });
@@ -3248,7 +3251,8 @@ function volumeWeek(){
   });
   var rows=Object.keys(план).map(function(k){
     return { k:k, name:MNAME[k]||k, plan:Math.round(план[k]*10)/10,
-             fact:Math.round((факт[k]||0)*10)/10, days:Object.keys(дни[k]||{}).length };
+             fact:Math.round((факт[k]||0)*10)/10, days:Object.keys(дни[k]||{}).length,
+             ex:(чем[k]||[]).slice(0,3) };
   }).sort(function(a,b){ return a.plan-b.plan; });
   return { prog:(PROF&&PROF.name)||'', days:вНеделю, cycle:CYCLE.length, rows:rows };
 }
