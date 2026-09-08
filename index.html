@@ -489,7 +489,12 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fmeal:first-child{border-top:0}
 .fmeal .fk{flex:0 0 58px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
-.fmeal .fn{flex:0 0 auto;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+/* «590 · 50 г» читалось как вес порции. Числа подписаны: калории крупно,
+   белок отдельной строкой — вес порции живёт в самом названии блюда. */
+.fmeal .fn{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;
+  font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;color:var(--dim);white-space:nowrap}
+.fmeal .fn b{font-size:12.5px;font-weight:600;color:var(--muted)}
+.fmeal .fn i{font-style:normal}
 .fmeal .fx{flex:0 0 36px;height:36px;border-radius:9px;border:1px solid var(--line);background:none;color:var(--dim);font-size:15px}
 .fask{display:flex;gap:8px;align-items:center;margin-top:10px}
 .fask input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
@@ -544,7 +549,12 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .msg.me{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
 .msg.intro{align-self:stretch;max-width:100%;background:var(--card-2);border:none;color:var(--muted);font-size:12.5px}
-.msg.wait{color:var(--dim)}
+/* Ожидание в чате нельзя красить бледным: человек решает, что ничего не
+   произошло, и отправляет то же фото второй раз. Тот же приём, что во
+   вкладке «Еда»: подсветка акцентом, миниатюра и бегущие точки. */
+.msg.wait{color:var(--text);background:var(--accent-ghost);border-color:transparent}
+.msg.sent{opacity:.85}
+.msg .fthumb{border-color:transparent}
 .msg.bad{border-color:var(--warn)}
 .chatask{display:flex;gap:8px;align-items:flex-end;padding-top:8px;border-top:1px solid var(--line-soft)}
 .chatask textarea{flex:1 1 auto;min-width:0;max-height:120px;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
@@ -4201,7 +4211,7 @@ function openFood(){
 function renderRecent(){
   var box=document.getElementById('frecent'); if(!box) return;
   box.innerHTML=(FOOD.recent||[]).map(function(m){
-    return '<button type="button" data-frep="'+m.id+'" title="'+esc(m.text)+'">↻ <b>'+esc(String(m.text).slice(0,28))+(String(m.text).length>28?'…':'')+'</b> · '+Math.round(m.kcal)+'</button>';
+    return '<button type="button" data-frep="'+m.id+'" title="'+esc(m.text)+'">↻ <b>'+esc(String(m.text).slice(0,28))+(String(m.text).length>28?'…':'')+'</b> · '+Math.round(m.kcal)+' ккал</button>';
   }).join('');
 }
 document.getElementById('frecent').addEventListener('click', function(e){
@@ -4224,7 +4234,7 @@ function renderFoodDay(){
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>';
   ml.innerHTML = (d.meals||[]).map(function(m){
     return '<div class="fmeal"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
-           '<span class="fn">'+Math.round(m.kcal)+' · '+Math.round(m.prot||0)+' г</span>'+
+           '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
 }
@@ -4370,11 +4380,23 @@ document.getElementById('fmsave').addEventListener('click', function(){
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
 var CHAT={items:null, busy:false};
+function coachAttn(on){
+  var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
+}
 function openCoach(){
   var m=document.getElementById('coachm'); if(m) m.classList.add('show');
+  coachAttn(false);
   renderChat();
-  fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
-    if(!d||!d.ok) return; CHAT.items=d.chat||[]; CHAT.intro=d.intro||''; renderChat(true);
+  /* пока ответ в пути, историю не перечитываем: она затрёт ждущий пузырь */
+  if(!CHAT.busy) fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(!d||!d.ok || CHAT.busy) return;
+    CHAT.intro=d.intro||'';
+    /* Свежий ответ уже лежит у нас; если сервер вернул историю короче — она
+       отстала, и подменять ею экран нельзя: человек потеряет только что
+       полученный ответ. */
+    var срв=d.chat||[];
+    if(!CHAT.items || срв.length>=CHAT.items.length) CHAT.items=срв;
+    renderChat(true);
   }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(true); });
   setTimeout(function(){ var t=document.getElementById('ctext'); if(t && window.innerWidth>700) t.focus(); }, 200);
 }
@@ -4386,8 +4408,9 @@ function renderChat(scroll){
   else {
     if(CHAT.intro) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     h+=CHAT.items.map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
-    if(CHAT.pending) h+='<div class="msg me">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
-      '<div class="msg ai wait">'+(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span></div>';
+    if(CHAT.pending || CHAT.pendingImg || CHAT.prep)
+      h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
+      '<div class="msg ai wait">'+(CHAT.prep?'Готовлю фото':(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю'))+'<span class="dots"><i></i><i></i><i></i></span></div>';
     if(CHAT.err) h+='<div class="msg ai bad">'+esc(CHAT.err)+'</div>';
   }
   box.innerHTML=h;
@@ -4448,18 +4471,24 @@ function takeChanges(d){
 
 function coachSend(text, image){
   if(CHAT.busy || (!text && !image)) return;
-  CHAT.busy=true; CHAT.err=''; CHAT.pending=text||''; CHAT.pendingImg=image||null; renderChat(); haptic('medium');
+  /* Пустая подпись при отправленном фото раньше стирала состояние ожидания:
+     весь блок «отправлено / смотрю» висел на непустом тексте. */
+  CHAT.busy=true; CHAT.err=''; CHAT.pending=text||''; CHAT.pendingImg=image||null;
+  CHAT.prep=false; renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); sb.disabled=true;
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null})
     .then(function(d){
       CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
-      CHAT.pending=''; renderChat(); haptic('ok');
+      CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; renderChat(); haptic('ok');
+      /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
+      var м=document.getElementById('coachm');
+      if(!м || !м.classList.contains('show')) coachAttn(true);
       document.getElementById('ctext').value='';
       if(d.meals && d.meals.length){ FOOD.day=d.day; renderFoodDay(); }
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
-    .catch(function(e){ CHAT.pending=''; CHAT.err='Не вышло: '+e.message; renderChat(); haptic('err'); })
+    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err='Не вышло: '+e.message; renderChat(); haptic('err'); })
     .then(function(){ CHAT.busy=false; sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
@@ -4475,7 +4504,12 @@ document.getElementById('cphoto').addEventListener('click', function(){ document
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files&&e.target.files[0]; if(!f) return;
   var t=document.getElementById('ctext').value.trim();
-  shrink(f).then(function(b64){ coachSend(t, b64); }).catch(function(err){ CHAT.err='Не вышло: '+err.message; renderChat(); });
+  /* Сжатие большого снимка занимает секунду-две. Без ответа на экране это
+     выглядит как «ничего не произошло» — показываем состояние сразу. */
+  CHAT.pending=t||''; CHAT.pendingImg=null; CHAT.prep=true; CHAT.err='';
+  renderChat(); haptic('medium');
+  shrink(f).then(function(b64){ CHAT.prep=false; coachSend(t, b64); })
+    .catch(function(err){ CHAT.prep=false; CHAT.pending=''; CHAT.err='Не вышло: '+err.message; renderChat(); });
   e.target.value='';
 });
 
