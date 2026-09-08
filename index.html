@@ -1019,6 +1019,18 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .wzin button{flex:0 0 auto;padding:0 18px;border-radius:11px;border:none;background:var(--accent);
   color:var(--on-accent);font:inherit;font-size:16px;line-height:1}
 #picker .aiprev{margin-top:14px}
+/* Первый запуск: за окном мастера раньше стояла чужая программа с пустыми
+   ячейками — человек видел «пустую главную страницу» и не понимал, чья она.
+   Пока знакомимся, приложения не видно вовсе. */
+body.onb .top, body.onb .l1, body.onb .wrap, body.onb .coachfab{visibility:hidden}
+body.onb #picker{align-items:stretch}
+body.onb #picker .modalbox{max-height:100%;border-radius:0;padding-top:calc(20px + var(--pad-top,0px))}
+body.onb #picker .modalbox::before{display:none}
+#wzme .mnums{margin-top:14px}
+#wz-me-err{margin:10px 0 0;color:var(--warn)}
+#wz-me-go{margin-top:16px}
+.wzstep{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
 .wzhave{display:block;width:100%;margin-top:18px;padding:10px;border:none;background:none;
   color:var(--dim);font:inherit;font-size:12px;text-align:center}
 .phrow{display:block;width:100%;text-align:left;margin-bottom:8px;padding:12px 14px;
@@ -1184,8 +1196,19 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
+    <p class="wzstep" id="wzstep" hidden></p>
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажи о себе — тренер задаст пару вопросов и соберёт программу.</p>
+    <div id="wzme" hidden>
+      <div class="pf"><span class="pfl">пол</span><div class="seg" id="wz-sex"></div></div>
+      <div class="mnums">
+        <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
+        <label>рост, см<input id="wz-ht" type="number" inputmode="numeric" min="120" max="230" placeholder="176"></label>
+        <label>вес, кг<input id="wz-bw" type="number" inputmode="decimal" min="35" max="250" placeholder="89"></label>
+      </div>
+      <p class="mtext" id="wz-me-err" hidden></p>
+      <button class="btn prim wide" id="wz-me-go">Дальше</button>
+    </div>
     <div id="wzform">
       <div class="pf"><span class="pfl">где</span><div class="seg" id="wz-place"></div></div>
       <div class="pf"><span class="pfl">дни</span><div class="seg wd" id="wz-wd"></div></div>
@@ -1909,8 +1932,14 @@ function openCatPage(){
    Готовые остаются запасным путём: показываем их, только если тренер
    недоступен — нет сети или кончился дневной лимит. */
 var WIZ={place:'gym', wd:null, min:45, text:'', qa:[], ask:null, opts:[], hint:'', goal:null,
-         likes:[], dislikes:[], prog:null, stage:'form', busy:false, err:'', fallback:false,
-         show:false, touched:false};
+         likes:[], dislikes:[], prog:null, stage:'form', step:'form', meErr:'',
+         busy:false, err:'', fallback:false, show:false, touched:false};
+var SEXES=[['m','мужской'],['f','женский']];
+/* Без веса, роста, возраста и пола нет ни стартовых весов, ни норм по еде —
+   раньше их выпрашивала полоска «заполни профиль» уже после старта, и человек
+   попадал на главную, где вместо чисел стояли прочерки. Теперь спрашиваем
+   сразу, первым шагом, и без них дальше не пускаем. */
+function meFull(){ var m=myData()||{}; return !!(m.sex && m.age && m.ht && m.bw); }
 var MINS=[['30','30'],['45','45'],['60','60'],['90','90+']];
 var WEEK=[1,2,3,4,5,6,0];                    /* неделя начинается с понедельника */
 function wizPattern(n){ return {1:[3],2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],
@@ -1923,8 +1952,11 @@ function wizInit(){
   if(me.about && !WIZ.text) WIZ.text=me.about;
   if(!WIZ.wd){
     WIZ.wd={};
-    var src = (GYM_DAYS && Object.keys(GYM_DAYS).length) ? Object.keys(GYM_DAYS).map(Number) : wizPattern(3);
-    src.forEach(function(d){ WIZ.wd[d]=1; });
+    /* свои дни подставляем только тому, кто их уже задавал; новому человеку —
+       нейтральные пн/ср/пт, а не расписание чужой программы (applyProfile
+       пишет ключ 'profile' даже при молчаливом старте, поэтому смотрим firstRun) */
+    var свои = !firstRun && GYM_DAYS && Object.keys(GYM_DAYS).length;
+    (свои ? Object.keys(GYM_DAYS).map(Number) : wizPattern(3)).forEach(function(d){ WIZ.wd[d]=1; });
   }
 }
 function wizSummary(){
@@ -1932,6 +1964,39 @@ function wizSummary(){
   return (WIZ.place==='home'?'дома':'зал')+' · '+
          (d.length ? d.map(function(x){ return WD[x]; }).join(' ') : 'дни не выбраны')+
          ' · до '+WIZ.min+' мин';
+}
+function renderWzMe(){
+  var me=myData()||{};
+  document.getElementById('wz-sex').innerHTML=segHtml('sex',SEXES,me.sex||'m');
+  [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
+    var el=document.getElementById(x[0]);
+    if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=me[x[1]];
+  });
+  var e=document.getElementById('wz-me-err');
+  if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
+}
+function readWzMe(){
+  var num=function(id){ var el=document.getElementById(id); var v=el&&el.value!=='' ? +el.value : null;
+    return (v!=null && isFinite(v)) ? v : null; };
+  var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
+  return { sex:(sb?sb.dataset.v:'m'), age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
+}
+function wzMeNext(){
+  var v=readWzMe(), нет=[];
+  if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
+  if(!v.ht || v.ht<120 || v.ht>230) нет.push('рост');
+  if(!v.bw || v.bw<35 || v.bw>250) нет.push('вес');
+  if(нет.length){
+    WIZ.meErr='Заполни '+нет.join(', ')+' — без этого не подскажу ни стартовые веса, ни норму еды.';
+    renderPicker(); haptic('err'); return;
+  }
+  WIZ.meErr='';
+  var me=myData()||{};
+  me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw;
+  gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  renderNudge();
+  WIZ.step='form'; renderPicker(); haptic('light');
 }
 function renderWzForm(){
   document.getElementById('wz-place').innerHTML=segHtml('place',PLACES,WIZ.place);
@@ -2029,6 +2094,8 @@ function renderWzList(){
       h+='<button class="pbtn" data-prof="'+x.k+'"><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
     });
   } else if(WIZ.stage==='form'){
+    /* запасной выход должен быть с самого начала: у кого программа уже есть,
+       того незачем сначала гонять через анкету о себе */
     h+='<button type="button" class="wzhave" id="wzhave">у меня уже есть программа</button>';
   }
   box.innerHTML=h;
@@ -2036,17 +2103,30 @@ function renderWzList(){
 function renderPicker(){
   if(!document.getElementById('wzform')) return;
   wizInit();
-  var form=document.getElementById('wzform'), chat=document.getElementById('wzchat');
-  form.hidden = WIZ.stage!=='form';
-  chat.hidden = WIZ.stage==='form';
-  if(WIZ.stage==='form') renderWzForm(); else renderWzChat();
+  var знакомство = WIZ.stage==='form' && WIZ.step==='me';
+  var анкета     = WIZ.stage==='form' && WIZ.step!=='me';
+  var mebox=document.getElementById('wzme'), form=document.getElementById('wzform'), chat=document.getElementById('wzchat');
+  mebox.hidden = !знакомство;
+  form.hidden  = !анкета;
+  chat.hidden  = WIZ.stage==='form';
+  if(знакомство) renderWzMe(); else if(анкета) renderWzForm(); else renderWzChat();
   renderWzList();
+  var шаг=document.getElementById('wzstep');
+  if(шаг){
+    var n = знакомство ? 1 : (анкета ? 2 : 3);
+    шаг.hidden = !firstRun;
+    шаг.textContent = 'шаг '+n+' из 3';
+  }
   var t=document.getElementById('picktitle'), nm=whoName();
-  if(t) t.textContent = WIZ.stage==='form' ? (nm ? nm+', с чего начнём?' : 'С чего начнём?') : 'Собираем программу';
+  if(t) t.textContent = знакомство ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
+      : анкета ? (nm ? nm+', когда занимаешься?' : 'Когда занимаешься?')
+      : 'Собираем программу';
   var hi=document.getElementById('pickhi');
   if(hi){
     hi.hidden = WIZ.stage!=='form';
-    hi.textContent='Скажи, где и когда можешь заниматься, — и своими словами, чего хочешь. Остальное тренер спросит сам.';
+    hi.textContent = знакомство
+      ? 'От этого зависят стартовые веса на каждый подход и норма еды на день. Данные остаются у тебя.'
+      : 'Скажи, где и когда можешь заниматься, — и своими словами, чего хочешь. Остальное тренер спросит сам.';
   }
 }
 /* ── ход разговора ── */
@@ -2119,18 +2199,23 @@ function wzApply(){
   }
 }
 function wzReset(){
-  WIZ.stage='form'; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint=''; WIZ.prog=null; WIZ.err='';
+  WIZ.stage='form'; WIZ.step='form'; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
+  WIZ.prog=null; WIZ.err='';
   renderPicker();
 }
 var firstRun=false;
 function showPicker(first){
   firstRun = !!first;
-  WIZ.stage='form'; WIZ.err=''; WIZ.show=false;
+  WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.show=false;
+  /* профиль уже заполнен — второй раз про рост и возраст не спрашиваем */
+  WIZ.step = meFull() ? 'form' : 'me';
   renderPicker();
   var el=document.getElementById('picker'); if(el) el.classList.add('show');
+  if(firstRun) document.body.classList.add('onb');
 }
 function hidePicker(){
   var el=document.getElementById('picker'); if(el) el.classList.remove('show');
+  document.body.classList.remove('onb');
 }
 function choose(p){
   hidePicker();
@@ -4329,10 +4414,16 @@ document.getElementById('todaybar').addEventListener('click', function(e){
 document.getElementById('picker').addEventListener('click', function(e){
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
-    var id=sb.parentNode.id; WIZ.touched=true;
+    var seg=sb.parentNode, id=seg.id;
+    if(id==='wz-sex'){
+      Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
+      haptic('light'); return;
+    }
+    WIZ.touched=true;
     if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-min') WIZ.min=+sb.dataset.v;
     renderPicker(); haptic('light'); return;
   }
+  if(e.target.closest('#wz-me-go')){ wzMeNext(); return; }
   var wd=e.target.closest('#wz-wd button[data-wd]');
   if(wd){
     var d=+wd.dataset.wd; WIZ.touched=true;
@@ -4357,6 +4448,10 @@ document.getElementById('picker').addEventListener('click', function(e){
   var b=e.target.closest('button[data-prof]'); if(b) choose(b.dataset.prof);
 });
 document.getElementById('wz-text').addEventListener('input', function(e){ WIZ.text=e.target.value; });
+/* Enter в числовом поле = «Дальше»: на телефоне это ожидаемо */
+document.getElementById('wzme').addEventListener('keydown', function(e){
+  if(e.key==='Enter'){ e.preventDefault(); wzMeNext(); }
+});
 document.getElementById('wzchat').addEventListener('keydown', function(e){
   if(e.key==='Enter' && e.target.id==='wz-ans'){ e.preventDefault(); wzAnswer(e.target.value); }
 });
@@ -5044,7 +5139,11 @@ document.getElementById('cfile').addEventListener('change', function(e){
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
 var _saved = gget('profile', null);
 if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
-else { applyProfile('shp', true); showPicker(true); }
+else {
+  /* Программу применяем молча, чтобы приложению было что рисовать, когда из
+     облака приедет профиль, но за окном знакомства её не видно (body.onb). */
+  applyProfile('shp', true); showPicker(true);
+}
 initDb();
 goPage(gget('page','gym'));
 
