@@ -1033,6 +1033,17 @@ body.onb #picker .modalbox::before{display:none}
   letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
 .wzhave{display:block;width:100%;margin-top:18px;padding:10px;border:none;background:none;
   color:var(--dim);font:inherit;font-size:12px;text-align:center}
+.btn.danger{margin-top:10px;border-color:var(--line);color:var(--warn);background:none}
+.rsopts{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.rsbtn{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:14px;
+  border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit}
+.rsbtn b{display:block;font-size:14.5px;font-weight:600;margin-bottom:4px}
+.rsbtn i{display:block;font-style:normal;font-size:12px;color:var(--dim);line-height:1.5}
+.rsbtn:active{border-color:var(--accent)}
+.rsbtn.bad{border-color:var(--warn)}
+.rsbtn.bad b{color:var(--warn)}
+.rsbtn.bad:active{border-color:var(--warn)}
+#resetstate{margin:0 0 12px}
 .phrow{display:block;width:100%;text-align:left;margin-bottom:8px;padding:12px 14px;
   border:1px solid var(--line);border-radius:12px;background:var(--card-2);color:var(--text);
   font:inherit;cursor:pointer;position:relative}
@@ -1298,6 +1309,19 @@ body.onb #picker .modalbox::before{display:none}
     <button class="btn wide" id="profai">Собрать программу под меня</button>
     <p class="aistate" id="aistate" hidden></p>
     <div id="aibox"></div>
+    <button class="btn wide danger" id="profreset">Начать заново</button>
+  </div>
+</div>
+<div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
+  <div class="modalbox">
+    <h3 id="resettitle">Начать заново</h3>
+    <p class="mtext">Знакомство пройдёт с самого начала: тренер снова спросит о тебе и соберёт программу. Выбери, что делать с записями.</p>
+    <div class="rsopts">
+      <button type="button" class="rsbtn" data-reset="prog"><b>Пересобрать программу</b><i>Профиль и программа сбросятся, знакомство начнётся заново. Тренировки, еда и замеры останутся — веса подхватятся в новой программе.</i></button>
+      <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть всё</b><i>Профиль, программа, журнал тренировок, еда, замеры и переписка с тренером. Вернуть это будет нельзя.</i></button>
+    </div>
+    <p class="mtext" id="resetstate" hidden></p>
+    <button class="btn wide" id="resetclose">Отмена</button>
   </div>
 </div>
 <script>
@@ -3088,6 +3112,15 @@ function csGet(k){
     setTimeout(function(){ if(!done){ done=true; res(mGet(k)); } },8000);
   });
 }
+function csDel(k){
+  try{ localStorage.removeItem('tgcs_'+k); }catch(e){}
+  if(!CS || !CS.removeItem) return Promise.resolve();
+  return new Promise(function(res){
+    var done=false;
+    CS.removeItem(k, function(){ if(!done){ done=true; res(); } });
+    setTimeout(function(){ if(!done){ done=true; res(); } },8000);
+  });
+}
 function csKeys(){
   if(!CS) return Promise.resolve(mKeys());
   return new Promise(function(res){
@@ -4689,6 +4722,87 @@ document.getElementById('profai').addEventListener('click', function(){ aiBuild(
 document.getElementById('aibox').addEventListener('click', function(e){
   if(e.target.closest('#aiapply')) aiApply();
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
+});
+
+/* ══════════ НАЧАТЬ ЗАНОВО ══════════
+   Удаление бота из Telegram не стирает ничего: указатель на программу и сама
+   программа лежат в CloudStorage аккаунта, настройки — в localStorage страницы,
+   дневник — в D1 под uid. Жена Шохруха удалила бота, зашла заново и снова
+   попала в старую программу, знакомства не увидела. Отсюда кнопка.
+   'prog' — сбросить профиль и программу, дневник не трогать;
+   'all'  — стереть весь след человека. Оба варианта необратимы. */
+function openReset(){ resetState(''); var m=document.getElementById('resetm'); if(m) m.classList.add('show'); }
+function closeReset(){ var m=document.getElementById('resetm'); if(m) m.classList.remove('show'); }
+function resetState(t, плохо){
+  var el=document.getElementById('resetstate'); if(!el) return;
+  el.hidden=!t; el.textContent=t||''; el.style.color = плохо ? 'var(--warn)' : '';
+}
+/* Общие ключи (gset) и ключи с префиксом программы (set). При «пересобрать»
+   стираем только то, что задаёт человека и его программу; журнал тренировок
+   в облаке и в D1 не трогаем, чтобы веса подхватились в новой программе. */
+var RESET_G=['me','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
+var RESET_P=['sched','subs','adj','last','lastdone','day','extra','deload','ai_sched'];
+function wipeLocal(всё){
+  try{
+    var убрать=[];
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i); if(!k) continue;
+      /* зеркало облака: при «стереть всё» — целиком, иначе его чистит csDel
+         ровно по тем ключам, что удаляются и в самом облаке */
+      if(k.indexOf('tgcs_')===0){ if(всё) убрать.push(k); continue; }
+      if(k.indexOf(LS)!==0) continue;
+      if(всё){ убрать.push(k); continue; }
+      var хвост=k.slice(LS.length);
+      if(RESET_G.indexOf(хвост)>=0){ убрать.push(k); continue; }
+      var м=хвост.match(/^[a-z]+_(.+)$/);        /* <программа>_<ключ> */
+      if(м && (RESET_P.indexOf(м[1])>=0 || м[1].indexOf('pick_')===0)) убрать.push(k);
+    }
+    убрать.forEach(function(k){ localStorage.removeItem(k); });
+  }catch(e){}
+}
+function wipeCloud(всё){
+  return csKeys().then(function(keys){
+    var список=(keys||[]).filter(function(k){
+      if(всё) return true;
+      return k===PROFKEY || k.indexOf(AIKEY)===0 || /^state_/.test(k);
+    });
+    return Promise.all(список.map(function(k){ return csDel(k).catch(function(){}); }));
+  }).catch(function(){});
+}
+function wipeServer(всё){
+  return fetch(SYNCURL+'/forget', { method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({uid:syncUid(), scope: всё ? 'all' : 'prog'}) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if(!d || !d.ok) throw new Error((d&&d.error)||'сервер'); return d; });
+}
+var resetBusy=false;
+function doReset(scope){
+  if(resetBusy) return;
+  var всё = scope==='all';
+  resetBusy=true; resetState(всё ? 'Стираю всё…' : 'Сбрасываю профиль и программу…');
+  haptic('medium');
+  wipeServer(всё)
+    .catch(function(e){
+      /* сервер не ответил — локально всё равно чистим, иначе человек снова
+         упрётся в старую программу; скажем честно, что в облаке могло остаться */
+      resetState('Сервер не ответил, чищу на устройстве. '+humanErr(e), true);
+    })
+    .then(function(){ return wipeCloud(всё); })
+    .then(function(){
+      wipeLocal(всё);
+      resetBusy=false;
+      closeReset();
+      /* перезагрузка — самый честный способ вернуться к первому запуску:
+         в памяти страницы иначе остаются HIST, SUBS, PROFILES.ai и прочее */
+      location.reload();
+    })
+    .catch(function(e){ resetBusy=false; resetState(humanErr(e), true); });
+}
+document.getElementById('profreset').addEventListener('click', function(){ closeProf(); openReset(); haptic('light'); });
+document.getElementById('resetclose').addEventListener('click', closeReset);
+document.getElementById('resetm').addEventListener('click', function(e){
+  if(e.target.id==='resetm'){ closeReset(); return; }
+  var b=e.target.closest('button[data-reset]'); if(b) doReset(b.dataset.reset);
 });
 
 /* ══════════ ЕДА ══════════
