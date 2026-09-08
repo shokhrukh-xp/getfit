@@ -2003,7 +2003,7 @@ function renderNudge(){
   el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
 }
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
-function closeProf(){ var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
+function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
 function renderProfProg(){
   var el=document.getElementById('pfprog'); if(!el||!PROF) return;
   el.innerHTML='<span>программа <b>'+PROF.name+'</b></span><button type="button" id="pfswitch">сменить</button>';
@@ -4188,8 +4188,10 @@ function aiPayload(){
 }
 var AIPROG=null;
 function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
-function aiBuild(){
-  var btn=document.getElementById('profai'); if(!btn || btn.disabled) return;
+var aiWait=null;
+function aiBuild(снова){
+  var btn=document.getElementById('profai'); if(!btn || (btn.disabled && !снова)) return;
+  clearInterval(aiWait); aiWait=null;
   var me=myData()||{};
   if(!me.goal){ aiState('Сначала выбери цель — от неё зависит вся схема.', true); return; }
   btn.disabled=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
@@ -4198,11 +4200,28 @@ function aiBuild(){
   var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
   fetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
-    .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }); })
+    .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
     .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog); haptic('ok'); })
-    .catch(function(e){ aiState('Не вышло: '+(e.name==='AbortError'?'слишком долго, попробуй ещё раз':e.message), true); haptic('err'); })
-    .then(function(){ clearTimeout(tm); btn.disabled=false; });
+    .catch(function(e){
+      haptic('err');
+      /* «Занят» — не тупик: пробуем сами через минуту, а человеку говорим,
+         что готовая программа у него уже подобрана и ждать необязательно. */
+      if(!снова && ((e&&e.code)==='busy' || /\b429\b|quota|rate.?limit/i.test(String(e&&e.message)))){
+        var сек=60;
+        var шаг=function(){
+          if(сек<=0){ clearInterval(aiWait); aiWait=null; aiBuild(true); return; }
+          aiState('Тренер сейчас занят. Попробую сам через '+сек+' с — ждать необязательно, программа «'+((PROF&&PROF.name)||'')+'» тебе уже подобрана.');
+          сек--;
+        };
+        шаг(); aiWait=setInterval(шаг, 1000);
+        return;
+      }
+      aiState(humanErr(e), true);
+    })
+    .then(function(){ clearTimeout(tm); if(!aiWait) btn.disabled=false; });
 }
+/* закрыли профиль — отменяем отложенную попытку, иначе она заговорит в пустоту */
+function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); var b=document.getElementById('profai'); if(b) b.disabled=false; } }
 function renderAiPreview(prog){
   var box=document.getElementById('aibox'); if(!box) return;
   var h='<div class="aiprev"><h4>'+prog.name+'</h4><p class="aisub">'+prog.note+'</p>';
@@ -4241,7 +4260,8 @@ function aiApply(){
   document.getElementById('aibox').innerHTML='';
   closeProf(); haptic('ok');
 }
-document.getElementById('profai').addEventListener('click', aiBuild);
+/* обработчик передал бы в аргумент событие клика, а там ждут флаг «повтор» */
+document.getElementById('profai').addEventListener('click', function(){ aiBuild(false); });
 document.getElementById('aibox').addEventListener('click', function(e){
   if(e.target.closest('#aiapply')) aiApply();
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
@@ -4280,7 +4300,21 @@ document.getElementById('fnav').addEventListener('click', function(e){
   fShift(+b.dataset.fnav); haptic('light');
 });
 function fGet(path){ return fetch(SYNCURL+path).then(function(r){ return r.json(); }); }
-function fPost(path, body){ return fetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }); }
+function fPost(path, body){ return fetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
+  return d; }); }); }
+/* Человек не должен видеть текст Google про квоты и биллинг: у жены Шохруха
+   такой абзац вылез прямо в профиле, когда она просто заполняла анкету.
+   Наружу — одна понятная фраза, техника уходит в консоль. */
+function humanErr(e){
+  var t=String((e&&e.message)||e||'');
+  if(e&&e.detail) try{ console.log('getfit:', e.detail); }catch(_){}
+  if(e && e.name==='AbortError') return 'Слишком долго — попробуй ещё раз.';
+  if((e&&e.code)==='busy' || /\b429\b|quota|rate.?limit/i.test(t)) return 'Тренер сейчас занят — слишком много запросов подряд. Подожди минуту.';
+  if(/Failed to fetch|NetworkError|network/i.test(t)) return 'Нет связи с сервером. Проверь интернет.';
+  if(/API |HTTP \d|Error:|undefined|null|^[\x00-\x7F\s]+$/.test(t)) return 'Не получилось. Попробуй ещё раз.';
+  return t;
+}
 function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
   loadDay();
@@ -4310,7 +4344,7 @@ function renderRecent(){
 document.getElementById('frecent').addEventListener('click', function(e){
   var b=e.target.closest('[data-frep],[data-ffood]'); if(!b) return;
   var готово=function(d, имя){ FOOD.day=d.day; renderFoodDay(); fReply('Записал: '+имя+'. '+(d.day.line||'')); haptic('ok'); };
-  var беда=function(err){ fReply('Не вышло: '+err.message,'bad'); };
+  var беда=function(err){ fReply(humanErr(err),'bad'); };
   if(b.dataset.ffood!=null){
     var f=(FOOD.often||[])[+b.dataset.ffood]; if(!f) return;
     fPost('/meal/add', {uid:syncUid(), date:fDate(), kind:kindNow(), text:f.name+(f.g?' '+f.g+' г':''),
@@ -4438,7 +4472,7 @@ function foodSend(text, image, mime){
   fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null, date:fDate()})
     .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.', '', image); document.getElementById('ftext').value=''; haptic('ok'); takeChanges(d);
       fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
-    .catch(function(e){ fReply('Не вышло: '+e.message, 'bad'); haptic('err'); })
+    .catch(function(e){ fReply(humanErr(e),'bad'); haptic('err'); })
     .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
 }
 /* фото ужимаем до 1280 px и JPEG — Worker и модель большего не ждут */
@@ -4463,7 +4497,7 @@ document.getElementById('ffile').addEventListener('change', function(e){
   var f=e.target.files&&e.target.files[0]; if(!f) return;
   var t=document.getElementById('ftext').value.trim();
   fReply('Читаю фото', 'wait');
-  shrink(f).then(function(b64){ foodSend(t, b64, 'image/jpeg'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+  shrink(f).then(function(b64){ foodSend(t, b64, 'image/jpeg'); }).catch(function(err){ fReply(humanErr(err),'bad'); });
   e.target.value='';
 });
 /* ── Правка приёма ──
@@ -4500,12 +4534,12 @@ function mealSave(){
     if(body.date!==fDate()){ FOOD.date = body.date===TODAY ? null : body.date; renderFoodNav(); }
     FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('ok');
     fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){});
-  }).catch(function(err){ document.getElementById('ml-hint').textContent='Не вышло: '+err.message; })
+  }).catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); })
     .then(function(){ btn.disabled=false; });
 }
 document.getElementById('fmeals').addEventListener('click', function(e){
   var b=e.target.closest('[data-fdel]');
-  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); }); return; }
+  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
   if(m){ openMeal(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
@@ -4515,7 +4549,7 @@ document.getElementById('ml-save').addEventListener('click', mealSave);
 document.getElementById('ml-del').addEventListener('click', function(){
   if(!MEAL||!MEAL.id) return;
   fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('light'); })
-    .catch(function(err){ document.getElementById('ml-hint').textContent='Не вышло: '+err.message; });
+    .catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); });
 });
 document.getElementById('mealm').addEventListener('click', function(e){
   if(e.target.id==='mealm'){ closeMeal(); return; }
@@ -4529,7 +4563,7 @@ document.getElementById('fmfile').addEventListener('change', function(e){
   shrink(f, 1600).then(function(b64){ return fPost('/coach', {uid:syncUid(), text:'отчёт весов', image:b64, mime:'image/jpeg'}); })
     .then(function(d){ el.className='freply'; el.textContent=d.reply||'Записал.'; haptic('ok');
       return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }); })
-    .catch(function(err){ el.className='freply bad'; el.textContent='Не вышло: '+err.message; haptic('err'); });
+    .catch(function(err){ el.className='freply bad'; el.textContent=humanErr(err); haptic('err'); });
   e.target.value='';
 });
 document.getElementById('fmsave').addEventListener('click', function(){
@@ -4537,7 +4571,7 @@ document.getElementById('fmsave').addEventListener('click', function(){
   if(!(w>20)) return;
   fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=d.measures; renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
     fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
-    .catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+    .catch(function(err){ fReply(humanErr(err),'bad'); });
 });
 
 /* ══════════ ТРЕНЕР: ЧАТ ══════════
@@ -4652,7 +4686,7 @@ function coachSend(text, image){
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
-    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err='Не вышло: '+e.message; renderChat(); haptic('err'); })
+    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
     .then(function(){ CHAT.busy=false; sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
@@ -4673,7 +4707,7 @@ document.getElementById('cfile').addEventListener('change', function(e){
   CHAT.pending=t||''; CHAT.pendingImg=null; CHAT.prep=true; CHAT.err='';
   renderChat(); haptic('medium');
   shrink(f).then(function(b64){ CHAT.prep=false; coachSend(t, b64); })
-    .catch(function(err){ CHAT.prep=false; CHAT.pending=''; CHAT.err='Не вышло: '+err.message; renderChat(); });
+    .catch(function(err){ CHAT.prep=false; CHAT.pending=''; CHAT.err=humanErr(err); renderChat(); });
   e.target.value='';
 });
 
