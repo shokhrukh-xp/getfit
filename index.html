@@ -346,28 +346,29 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .todaybar{padding:20px 0 4px;gap:8px}
 .todaybar .ts.done{border-color:var(--done);color:var(--done);background:rgba(79,168,139,.10)}
 
-.dayseg{display:grid;gap:7px;margin:14px 0 4px;align-items:stretch;
-  grid-template-columns:repeat(auto-fit,minmax(104px,1fr))}
-@media (min-width:420px){.dayseg{grid-template-columns:repeat(auto-fit,minmax(116px,1fr))}}
+/* Дни — маленькие квадраты в один ряд. Названия мышц раньше стояли на каждой
+   кнопке и съедали пол-экрана; теперь они в строке под рядом, для выбранного дня. */
+.dayseg{display:grid;gap:6px;margin:14px 0 6px;align-items:stretch;
+  grid-template-columns:repeat(5,1fr)}
 .dayseg button{
-  position:relative;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;
+  position:relative;display:flex;align-items:center;justify-content:center;
   border:1px solid var(--line);background:var(--surface);border-radius:12px;
-  padding:11px 8px 10px;text-align:left;min-height:66px;
-  color:var(--muted);line-height:1.25;transition:border-color .18s,background .18s;
+  padding:0;height:46px;min-height:0;
+  color:var(--muted);transition:border-color .18s,background .18s;
 }
-.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11.5px;
-  letter-spacing:-.02em;color:var(--text);display:block;padding-right:14px}
-.dayseg button i{font-style:normal;font-size:11px;color:var(--dim);display:block}
+.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:-.02em;color:var(--text)}
+.dayseg button i{display:none}
 .dayseg button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-ghost)}
 .dayseg button[aria-pressed="true"] b{color:var(--amber)}
 .dayseg button[aria-pressed="true"] i{color:var(--amber-deep)}
 .dayseg button[data-next="1"]::after{
-  content:"";position:absolute;top:9px;right:9px;width:6px;height:6px;border-radius:50%;
+  content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;
   background:var(--amber);box-shadow:0 0 0 3px var(--amber-ghost)}
-.dayseg button[data-done="1"]::after{content:"✓";position:absolute;top:6px;right:8px;
+.dayseg button[data-done="1"]::after{content:"✓";position:absolute;top:3px;right:6px;
   font-size:11px;color:var(--done);background:none;width:auto;height:auto;box-shadow:none}
-.nexthint{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--dim);margin:8px 0 0}
+.nexthint{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.4}
+.nexthint b{color:var(--text);font-weight:600}
 .nexthint b{color:var(--amber);font-weight:400}
 
 .phaseline{margin:12px 0 18px}
@@ -432,7 +433,10 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .top-in{padding-top:calc(12px + var(--pad-top))}
 .l1{padding-bottom:var(--pad-bottom)}
 .timer{bottom:calc(54px + var(--pad-bottom))}
-body{padding-bottom:0}
+/* Нижняя панель фиксированная, поэтому странице нужен собственный отступ.
+   Раньше его невольно давал длинный текст в подвале — убрал текст, и кнопка
+   «Завершить» ушла под панель. Теперь отступ задан явно. */
+body{padding-bottom:calc(78px + var(--pad-bottom))}
 #repbox{display:none;width:100%;min-height:150px;margin-top:10px;padding:10px;
   border-radius:10px;border:1px solid var(--line);background:var(--surface-2);
   color:var(--text);font:11px/1.5 'JetBrains Mono',ui-monospace,monospace;
@@ -534,6 +538,32 @@ body{padding-bottom:0}
 .musdet{margin:9px 0 0;font-size:12px;color:var(--muted);line-height:1.5;min-height:34px}
 .musdet b{color:var(--text);font-weight:600}
 .musdet b.down{color:var(--warn)}
+.hitem{border-bottom:1px solid var(--line-soft)}
+.hhead{display:flex;align-items:center;gap:10px;width:100%;padding:13px 2px;text-align:left}
+.hdate{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);min-width:74px}
+.hsub{flex:1;font-size:13px;color:var(--muted)}
+.hcnt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);
+  border:1px solid var(--line);border-radius:20px;padding:2px 9px}
+.hhead[aria-expanded="true"] .hdate{color:var(--amber)}
+.hhead[aria-expanded="true"] .hsub{color:var(--text)}
+.hbody{padding:0 2px 14px}
+.rec{font-size:13px;line-height:1.4;color:var(--muted);margin:2px 0 12px;
+  padding:8px 11px;border-radius:10px;background:var(--surface-2);
+  border-left:3px solid var(--line)}
+.rec b{color:var(--text);font-weight:600}
+.rec.up{border-left-color:var(--done)}
+.rec.up b{color:var(--done)}
+.rec.warn{border-left-color:var(--warn)}
+.rec.warn b{color:var(--warn)}
+.rec.start{border-left-color:var(--amber)}
+.rec.wait{opacity:.6}
+.exfoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.ebtn{border:1px solid var(--line);background:var(--surface-2);border-radius:11px;
+  padding:11px 8px;font-size:13.5px;color:var(--muted);transition:border-color .18s,color .18s}
+.ebtn:active,.ebtn[aria-expanded="true"]{border-color:var(--amber);color:var(--amber)}
+.ebtn.on{color:var(--amber);border-color:var(--amber-deep)}
+.exinfo{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px}
+.whytext{font-size:13px;color:var(--muted);line-height:1.55;margin:10px 0 0}
 .syncst{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
 .syncst.ok{color:var(--done)}
 .syncst.bad{color:var(--warn)}
@@ -707,10 +737,7 @@ body{padding-bottom:0}
       <div class="sec" style="padding-top:18px">
         <h2>Журнал</h2>
         <div id="logsum" class="tiles"></div>
-        <div id="loglast"></div>
         <div id="logmus"></div>
-        <div id="logprog"></div>
-        <div id="logvol"></div>
         <h3 class="lh">История</h3>
         <div id="logbox"></div>
         <button class="btn" id="copyrep">Скопировать отчёт для чата</button>
@@ -731,10 +758,7 @@ body{padding-bottom:0}
     </section>
     
 
-    <p class="foot">
-      Программа общая: подходы и повторы задаёт фаза, упражнения меняются через каталог.<br>
-      Это не медицинская рекомендация. При болях в спине, шее или после травм — сначала к врачу.
-    </p>
+    <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
 </main>
 
 <div class="timer" id="timer">
@@ -1110,6 +1134,11 @@ function weekdayOf(k){
 /* Человек думает днями недели, а не «Днём 2». Название дня программы —
    служебное, наружу показываем день недели. Если день никуда не поставлен,
    деваться некуда: показываем служебное имя. */
+function dayShort(k){
+  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WD[i].charAt(0).toUpperCase()+WD[i].slice(1);
+  var nm=(DAYS[k]||{}).name||'', ц=nm.match(/\d+/);
+  return ц ? 'Д'+ц[0] : nm.slice(0,2);
+}
 function dayLabel(k){
   for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WDFULL[i].charAt(0).toUpperCase()+WDFULL[i].slice(1);
   return (DAYS[k]||{}).name || '';
@@ -1478,7 +1507,7 @@ function renderDayseg(){
   all.forEach(function(k){
     var d=DAYS[k];
     h+='<button data-day="'+k+'"'+(d.light?' data-light="1"':'')+' aria-pressed="'+(k===day)+'"><b>'+
-       dayLabel(k)+'</b><i>'+d.sub.toLowerCase()+'</i></button>';
+       dayShort(k)+'</b></button>';
   });
   seg.innerHTML=h;
 }
@@ -1517,11 +1546,19 @@ function renderPhase(){
     return;
   }
   var p=phaseNow();
-  var сет = (p.ds<0) ? 'на подход меньше в каждом упражнении' : 'полное число подходов';
-  el.innerHTML='<b>Неделя '+week+'</b> · '+сет+', запас <b>'+p.rir+'</b> '+
-    plural(p.rir,['повтор','повтора','повторов'])+' до отказа. Приложение ведёт это само — веса и повторы подскажет каждая карточка.';
+  /* «запас 3 повтора до отказа» — жаргон. Пишем то же самое действием. */
+  el.innerHTML='Заканчивай подход, когда мог бы сделать ещё <b>'+p.rir+'</b> '+
+    plural(p.rir,['повтор','повтора','повторов'])+'.'+
+    (p.ds<0 ? ' На этой неделе — на один подход меньше.' : '');
 }
 
+/* Подпись выбранного дня: раньше мышцы были написаны на каждой кнопке и
+   съедали место. Теперь кнопки — квадраты, а название дня и мышцы
+   показываются здесь, для того дня, на который нажали. */
+function шапкаДня(){
+  var d=DAYS[day]||{};
+  return '<b>'+dayLabel(day)+'</b> · '+String(d.sub||'').toLowerCase();
+}
 /* ── выбор дня ── */
 function renderDayHead(){
   var nx = suggestedDay();
@@ -1539,13 +1576,11 @@ function renderDayHead(){
     var nsk = nextSchedKey();
     if(doneToday){
       var af = nsk || nextAfter(doneToday);
-      h.innerHTML='сегодня закрыт · следующая <b>'+dayLabel(af)+'</b>';
+      h.innerHTML=шапкаДня()+' · сегодня закрыт, следующая <b>'+dayLabel(af)+'</b>';
     } else if(today && DAYS[today]){
-      h.innerHTML = (day===today) ? 'сегодня · <b>'+dayLabel(today)+'</b>'
-                                  : 'открыт другой день · сегодня <b>'+dayLabel(today)+'</b>';
+      h.innerHTML = шапкаДня() + (day===today ? ' · сегодня' : ' · сегодня <b>'+dayLabel(today)+'</b>');
     } else {
-      h.innerHTML = (day===nx) ? 'следующая тренировка · <b>'+dayLabel(nx)+'</b>'
-                               : 'открыт другой день · следующая <b>'+dayLabel(nx)+'</b>';
+      h.innerHTML = шапкаДня() + (day===nx ? ' · следующая' : ' · следующая <b>'+dayLabel(nx)+'</b>');
     }
   }
 }
@@ -1563,6 +1598,7 @@ function hasW(e){ return !NOWT[e.n]; }
 function isTime(e){ return / с$/.test(e.reps); }
 function stepR(e){ return isTime(e)?5:1; }
 function unitR(e){ return isTime(e)?'секунды':'повторы'; }
+function unitR2(e){ return isTime(e)?'секунд':'повторов'; }
 function pad2(n){ return ('0'+n).slice(-2); }
 function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function ruDate(x){ var a=(x||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : (x||''); }
@@ -1689,14 +1725,14 @@ function setGrid(e,di){
      а не в отдельном тексте выше. Ввёл своё — цель уступает место. */
   var pw = (wt && t.tw!=null) ? fmtKg(t.tw) : '—';
   var pr = (t.tr!=null) ? String(t.tr) : '—';
-  var подпись = '';
-  if(wt && t.tw!=null && t.kind==='up') подпись='<span class="tgt up">+'+fmtKg(stepOf(e))+'</span>';
-  else if(wt && t.tw!=null && t.kind==='hold') подпись='<span class="tgt">тот же</span>';
-  else if(wt && t.tw!=null && t.kind==='warn') подпись='<span class="tgt warn">не поднимай</span>';
-  else if(t.kind==='start' && t.tw!=null) подпись='<span class="tgt">ориентир</span>';
+  /* Подпись «+2,5» рядом с уже подставленным весом читалась как «прибавь ещё
+     2,5 к тому, что в ячейке», а «цель 6» — как «шесть подходов». Теперь в шапке
+     стоит факт (что было в прошлый раз) и диапазон повторов, а не приказ. */
+  var подпись = (wt && t.lw!=null) ? '<span class="tgt">было '+fmtKg(t.lw)+'</span>'
+              : (t.kind==='start' && wt) ? '<span class="tgt">ориентир</span>' : '';
   var h='<div class="sethead"><span class="sn"></span>'+
         (wt?'<span class="hw">вес, кг'+подпись+'</span>':'')+
-        '<span class="hr">'+unitR(e)+'<span class="tgt">цель '+pr+'</span></span>'+
+        '<span class="hr">'+unitR(e)+'<span class="tgt">'+repsOf(e)+'</span></span>'+
         '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>';
   st.forEach(function(v,si){
     h+='<div class="setrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
@@ -1758,12 +1794,17 @@ function renderList(){
              '<span class="chip">отдых '+rest+'</span></div>'+
            adviceLine(e)+
            setGrid(e,di)+
-           '<div class="exmedia">'+mediaFor(e)+
-             '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-             '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
+           '<div class="exfoot">'+
+             '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">Описание</button>'+
+             '<button type="button" class="ebtn'+(e.sub?' on':'')+'" data-swap="'+di+'">'+(e.sub?'Заменено':'Заменить')+'</button>'+
            '</div>'+
-           (e.why ? '<details class="why"><summary>зачем это здесь</summary><p>'+e.why+'</p></details>' : '')+
-           '<button class="swap" data-swap="'+di+'">'+(e.sub?'заменено · выбрать другое':'заменить упражнение')+'</button>'+
+           '<div class="exinfo" id="exinfo'+di+'" hidden>'+
+             '<div class="exmedia">'+mediaFor(e)+
+               '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
+               '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
+             '</div>'+
+             (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+           '</div>'+
          '</article>';
   });
   box.innerHTML=h;
@@ -1777,20 +1818,13 @@ function списокПервый(список, g){
 /* Подсказка на карточке: что делать именно сегодня с этим упражнением.
    Пока истории нет — правило подбора веса по запасу до отказа. Появилась —
    двойная прогрессия по своим же цифрам. */
+/* Раньше здесь был блок на пять строк перед каждым упражнением — он занимал
+   больше места, чем сама сетка подходов. Рекомендация и так стоит числами
+   в ячейках, поэтому текстом остаётся одна строка: что изменить и почему. */
 function adviceLine(e){
   var a;
-  try{ a = advice(e); }catch(err){ return lastLine(e); }
-  var rir=rirNow();
-  var хвост = '<span class="advrir">На этой неделе оставляй <b>'+rir+' '+
-              plural(rir,['повтор','повтора','повторов'])+'</b> в запасе'+
-              (deloadOn()?' и делай половину подходов':'')+'.</span>';
-  if(a.kind==='start'){
-    var st=a.text;
-    return '<div class="adv start"><b>что делать</b>'+st.t+
-           (st.hint?'<span class="advhint">'+st.hint+'</span>':'')+хвост+'</div>';
-  }
-  if(a.kind==='wait') return '<div class="adv wait"><b>что делать</b>'+a.text+'</div>';
-  return '<div class="adv '+a.kind+'"><b>что делать</b>'+a.text+хвост+'</div>';
+  try{ a = advice(e); }catch(err){ return ''; }
+  return '<div class="rec '+a.kind+'">'+(a.short||'')+'</div>';
 }
 function syncRow(di,si){
   var row=document.querySelector('.setrow[data-ex="'+di+'"][data-set="'+si+'"]');
@@ -2442,108 +2476,6 @@ function tile(u,b,i){ return '<div class="tile"><u>'+u+'</u><b>'+b+'</b><i>'+i+'
    Со стороны это выглядит как потеря данных, поэтому сразу под ними — что
    именно лежит в последней тренировке. Вопрос «а она сохранилась?» снимается
    до того, как человек успеет его задать. */
-function renderLastW(){
-  var box=document.getElementById('loglast'); if(!box) return;
-  if(!HIST.length){ box.innerHTML=''; return; }
-  var w=HIST[0], сет=0, тон=0, стр='';
-  (w.ex||[]).forEach(function(x){
-    var ч=(x.sets||[]).filter(function(v){ return v.r!=null; });
-    сет+=ч.length;
-    ч.forEach(function(v){ if(v.w!=null && x.unit!=='sec') тон+=v.w*v.r; });
-    if(ч.length) стр+='<div class="llx"><i>'+x.n+'</i><em>'+
-      ч.map(function(v){ return (v.w!=null? fmtKg(v.w)+'×':'')+v.r+(x.unit==='sec'?' с':''); }).join(' · ')+'</em></div>';
-  });
-  var дн = Math.round((new Date(TODAY) - new Date(w.date))/864e5);
-  box.innerHTML='<div class="lastw"><div class="lasth"><b>Последняя тренировка</b>'+
-    '<span>'+ruDate(w.date)+(дн===0?' · сегодня':(дн===1?' · вчера':' · '+дн+' '+plural(дн,['день','дня','дней'])+' назад'))+'</span></div>'+
-    '<div class="lastm">'+(w.name||'Тренировка')+(w.sub?' · '+w.sub:'')+' — '+
-    (w.ex||[]).length+' '+plural((w.ex||[]).length,['упражнение','упражнения','упражнений'])+' · '+
-    сет+' '+plural(сет,['подход','подхода','подходов'])+
-    (тон?' · тоннаж '+Math.round(тон)+' кг':'')+'</div>'+стр+'</div>';
-}
-
-/* ── График прогресса по упражнению ──
-   По оси — занятия подряд, по значению — расчётный разовый максимум лучшего
-   подхода (формула Эпли). Одна линия: так видно и рост веса, и рост повторов,
-   а две шкалы на одном графике читать нельзя. */
-var progEx=null;
-function exNames(){
-  var seen={};
-  HIST.forEach(function(w){ (w.ex||[]).forEach(function(x){
-    if(!x.sets || !x.sets.length) return;
-    seen[x.n]=(seen[x.n]||0)+1;
-  }); });
-  return Object.keys(seen).filter(function(n){ return seen[n]>=1; })
-    .sort(function(a,b){ return seen[b]-seen[a] || a.localeCompare(b); });
-}
-function renderProg(){
-  var box=document.getElementById('logprog'); if(!box) return;
-  var names=exNames();
-  if(!names.length){ box.innerHTML=''; return; }
-  if(!progEx || names.indexOf(progEx)<0){
-    var last=HIST[0] && HIST[0].ex && HIST[0].ex[0];
-    progEx = (last && names.indexOf(last.n)>=0) ? last.n : names[0];
-  }
-  var h=exHistory(progEx).slice().reverse();       /* по возрастанию даты */
-  var pts=h.map(function(s){
-    var b=bestSet(s.sets);
-    return {date:s.date, v: (b.w!=null? e1rm(b.w,b.r) : b.r), raw:b, unit:s.unit};
-  }).filter(function(p){ return p.v>0; });
-  var kg = h.length && h[0].sets.some(function(v){ return v.w!=null; });
-  var сек = h.length && h[0].unit==='sec';
-  var ед = kg ? ' кг' : (сек ? ' с' : ' повт.');
-  var sel='<select id="progsel">'+names.map(function(n){
-      return '<option'+(n===progEx?' selected':'')+'>'+n+'</option>'; }).join('')+'</select>';
-  var sub;
-  if(pts.length<2){
-    var b0=pts.length?pts[0].raw:null;
-    sub = b0 ? ('Пока одно занятие: <b>'+(b0.w!=null ? fmtKg(b0.w)+' кг × '+b0.r
-                 : b0.r+(сек?' секунд':' повторов'))+
-                '</b>. Линия появится со второго — тогда будет видно направление.')
-             : 'Пока нет закрытых подходов.';
-  } else {
-    var d=pts[pts.length-1].v-pts[0].v, pc=pts[0].v? Math.round(d/pts[0].v*100):0;
-    var зн = Math.abs(d)<0.05
-      ? '<b>без изменений</b>'
-      : '<b'+(d<0?' class="down"':'')+'>'+(d>0?'+':'')+fmtKg(d)+ед+
-        ' ('+(pc>0?'+':'')+pc+'%)</b>';
-    sub='За '+pts.length+' '+plural(pts.length,['занятие','занятия','занятий'])+': '+зн+
-        (kg ? ' по расчётному максимуму — он учитывает и вес, и повторы сразу.'
-            : (сек ? ' по лучшему подходу.' : ' по лучшему подходу.'));
-  }
-  box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Прогресс</h4>'+sel+'</div>'+
-    '<p class="chartsub">'+sub+'</p>'+ (pts.length>1 ? lineChart(pts, kg, сек?'sec':'reps') : '') +'</div>';
-}
-function lineChart(pts, kg, unit){
-  if(!pts.length) return '';
-  var W=320, H=120, PL=34, PR=8, PT=10, PB=18;
-  var vs=pts.map(function(p){ return p.v; });
-  var lo=Math.min.apply(null,vs), hi=Math.max.apply(null,vs);
-  if(hi===lo){ hi=lo+1; lo=Math.max(0,lo-1); }
-  var pad=(hi-lo)*0.15; lo=Math.max(0,lo-pad); hi=hi+pad;
-  var x=function(i){ return PL + (pts.length===1?0:(W-PL-PR)*i/(pts.length-1)); };
-  var y=function(v){ return PT + (H-PT-PB)*(1-(v-lo)/(hi-lo)); };
-  var g='';
-  [0,0.5,1].forEach(function(t){
-    var v=lo+(hi-lo)*t, yy=y(v);
-    g+='<line class="grid" x1="'+PL+'" y1="'+yy.toFixed(1)+'" x2="'+(W-PR)+'" y2="'+yy.toFixed(1)+'"/>'+
-       '<text x="'+(PL-6)+'" y="'+(yy+3).toFixed(1)+'" text-anchor="end">'+fmtKg(v)+'</text>';
-  });
-  var d=pts.map(function(p,i){ return (i?'L':'M')+x(i).toFixed(1)+' '+y(p.v).toFixed(1); }).join(' ');
-  var dots=pts.map(function(p,i){
-    return '<circle class="dot" cx="'+x(i).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="4"><title>'+
-      ruDate(p.date)+' · '+(p.raw.w!=null? fmtKg(p.raw.w)+' кг × '+p.raw.r
-        : p.raw.r+(unit==='sec'?' с':' повт.'))+'</title></circle>';
-  }).join('');
-  var lastV=pts[pts.length-1];
-  var lab='<text class="val" x="'+(x(pts.length-1)-4).toFixed(1)+'" y="'+(y(lastV.v)-9).toFixed(1)+
-          '" text-anchor="end">'+fmtKg(lastV.v)+(kg?' кг':(unit==='sec'?' с':''))+'</text>';
-  var ax='<text x="'+PL+'" y="'+(H-4)+'">'+ruDate(pts[0].date)+'</text>'+
-    (pts.length>1?'<text x="'+(W-PR)+'" y="'+(H-4)+'" text-anchor="end">'+ruDate(lastV.date)+'</text>':'');
-  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Прогресс по упражнению">'+
-         g+'<path class="ln" d="'+d+'"/>'+dots+lab+ax+'</svg>';
-}
-
 /* ── Карта тела ──
    Три канала на одной картинке, и ни один не мешает другому:
      заливка — свежесть: сегодня ярко, через 10 дней мышца почти сливается с телом;
@@ -2683,35 +2615,14 @@ function renderMus(){
   }
 }
 
-/* ── Недельный объём: сколько подходов закрыто по неделям ── */
-function renderVol(){
-  var box=document.getElementById('logvol'); if(!box) return;
-  var st=logStats(), keys=Object.keys(st.wk).sort().slice(-8);
-  if(keys.length<2){ box.innerHTML=''; return; }
-  var W=320,H=104,PL=26,PR=6,PT=16,PB=18, n=keys.length;
-  var mx=Math.max.apply(null,keys.map(function(k){ return st.wk[k].sets; }));
-  var slot=(W-PL-PR)/n, bw=Math.min(30, slot-8);
-  var bars='', now=isoWeek(TODAY);
-  keys.forEach(function(k,i){
-    var v=st.wk[k].sets, hh=(H-PT-PB)*(v/mx);
-    var xx=PL+i*slot+(slot-bw)/2, yy=H-PB-hh;
-    bars+='<rect class="bar'+(k===now?' now':'')+'" x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+
-          '" width="'+bw.toFixed(1)+'" height="'+Math.max(2,hh).toFixed(1)+'" rx="4"><title>неделя с '+
-          ruDate(k)+' · '+v+' '+plural(v,['подход','подхода','подходов'])+'</title></rect>'+
-          '<text class="val" x="'+(xx+bw/2).toFixed(1)+'" y="'+(yy-5).toFixed(1)+'" text-anchor="middle">'+v+'</text>'+
-          '<text x="'+(xx+bw/2).toFixed(1)+'" y="'+(H-5)+'" text-anchor="middle">'+ruDate(k).slice(0,5)+'</text>';
-  });
-  var g='<line class="grid" x1="'+PL+'" y1="'+(H-PB)+'" x2="'+(W-PR)+'" y2="'+(H-PB)+'"/>';
-  box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Подходов по неделям</h4></div>'+
-    '<p class="chartsub">Последние '+n+' недель. Объём — то, что двигает рост, поэтому столбики должны держаться или расти.</p>'+
-    '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Подходов по неделям">'+g+bars+'</svg></div>';
-}
-
+/* История — список дат. Раскрывается по нажатию, и всегда открыта только одна:
+   карточки на весь экран занимали столько места, что до нужной даты
+   приходилось листать полминуты. */
 function renderHistory(){
   var box=document.getElementById('logbox'); if(!box) return;
   if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметь подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
   var h='';
-  HIST.forEach(function(w){
+  HIST.forEach(function(w,i){
     var ton=0, cnt=0, rows='';
     (w.ex||[]).forEach(function(x){
       var parts=(x.sets||[]).map(function(v){
@@ -2721,10 +2632,14 @@ function renderHistory(){
       });
       if(parts.length) rows+='<div class="lex"><i>'+x.n+'</i><em>'+parts.join(' · ')+'</em></div>';
     });
-    h+='<div class="logitem"><h4>'+(w.name||'Тренировка')+(w.sub?' · '+w.sub:'')+'</h4>'+
-       '<div class="lmeta">'+ruDate(w.date)+(w.week?' · неделя '+w.week:'')+'</div>'+rows+
-       '<div class="logtot"><span>'+cnt+' '+plural(cnt,['подход','подхода','подходов'])+'</span>'+
-       (ton?'<span>тоннаж '+Math.round(ton)+' кг</span>':'<span></span>')+'</div></div>';
+    h+='<div class="hitem'+(i===0?' open':'')+'">'+
+       '<button type="button" class="hhead" data-hist="'+i+'" aria-expanded="'+(i===0)+'">'+
+         '<span class="hdate">'+ruDate(w.date)+'</span>'+
+         '<span class="hsub">'+(w.sub||w.name||'тренировка').toLowerCase()+'</span>'+
+         '<span class="hcnt">'+cnt+'</span></button>'+
+       '<div class="hbody"'+(i===0?'':' hidden')+'>'+rows+
+         '<div class="logtot"><span>'+cnt+' '+plural(cnt,['подход','подхода','подходов'])+'</span>'+
+         (ton?'<span>тоннаж '+Math.round(ton)+' кг</span>':'<span></span>')+'</div></div></div>';
   });
   box.innerHTML=h;
 }
@@ -2734,12 +2649,9 @@ function renderLog(){
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
-    renderLogSum(); renderLastW(); renderMus(); renderProg(); renderVol(); renderHistory();
+    renderLogSum(); renderMus(); renderHistory();
   }).catch(function(){ box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
 }
-document.addEventListener('change', function(ev){
-  if(ev.target && ev.target.id==='progsel'){ progEx=ev.target.value; renderProg(); }
-});
 
 /* ══════════ ИСТОРИЯ И РЕКОМЕНДАЦИИ ══════════
    Один загруженный список тренировок обслуживает и журнал, и подсказки
@@ -2811,14 +2723,20 @@ function stepText(e){
    Это операционализация прогрессивной перегрузки: без неё объём и близость
    к отказу работать не начнут. */
 function advice(e){
-  if(!HIST) return {kind:'wait', text:'Смотрю твою историю по этому упражнению…'};
+  if(!HIST) return {kind:'wait', lw:null, short:'смотрю историю…', text:'Смотрю твою историю по этому упражнению…'};
   var h = exHistory(e.n);
   var top = topReps(e), st = stepOf(e), tm = isTime(e);
-  if(!h.length) return {kind:'start', text:startHint(e)};
+  if(!h.length){ var sh=startHint(e);
+    return {kind:'start', text:sh, lw:null,
+      short: sh.kg!=null ? 'Начни с <b>'+fmtKg(sh.kg)+' кг</b> · цель '+repsOf(e)
+                         : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
 
   var last = h[0], prev = h[1] || null;
   var done = last.sets.filter(function(v){ return v.r!=null; });
-  if(!done.length) return {kind:'start', text:startHint(e)};
+  if(!done.length){ var sh2=startHint(e);
+    return {kind:'start', text:sh2, lw:null,
+      short: sh2.kg!=null ? 'Начни с <b>'+fmtKg(sh2.kg)+' кг</b> · цель '+repsOf(e)
+                          : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
 
   var allTop = done.every(function(v){ return v.r>=top; });
   var w = done[0].w;
@@ -2829,25 +2747,43 @@ function advice(e){
 
   var bot = botReps(e);
   if(tm){
-    return { kind: allTop?'up':'hold', tw:null, tr: allTop ? top+5 : top,
+    return { kind: allTop?'up':'hold', tw:null, tr: allTop ? top+5 : top, lw:null,
+      short: allTop ? 'Держал по '+top+' с — <b>добавь 5–10 секунд</b>'
+                    : 'Доведи все подходы до <b>'+top+' с</b>',
       text: allTop ? 'Прошлый раз держал по '+top+' с во всех подходах — добавь 5–10 секунд.'
                    : 'Прошлый раз: '+done.map(function(v){return v.r+' с';}).join(' · ')+'. Доведи все подходы до '+top+' с, потом добавляй время.' };
   }
   if(allTop && w!=null){
-    /* вес вырос — повторы падают к нижней границе, это и есть двойная прогрессия */
-    return {kind:'up', tw: w+stepOf(e), tr: bot, up:true,
+    /* Двойная прогрессия работает, пока человек останавливается у верхней границы.
+       Если повторов заметно больше — вес просто лёгкий, и шаг в 2,5 кг ничего
+       не меняет: 60 кг на 15 повторов при цели 6–10 надо поднимать сразу
+       к 67,5, иначе догонять придётся месяц. Считаем по расчётному максимуму
+       (Эпли), куда встанет верхняя граница, и не прыгаем больше чем на четверть. */
+    var maxR = Math.max.apply(null, done.map(function(v){ return v.r||0; }));
+    var сильно = maxR >= top+3, tw;
+    if(сильно){
+      tw = Math.min(e1rm(w, maxR)/(1+top/30), w*1.25);
+      tw = Math.max(w+st, Math.round(tw/st)*st);
+    } else tw = w+st;
+    return {kind:'up', tw:tw, tr: сильно?top:bot, up:true, lw:w,
+      short: fmtKg(w)+' → <b>'+fmtKg(tw)+' кг</b>' +
+             (сильно ? ' · '+maxR+' повторов при цели '+repsOf(e)+' — вес лёгкий'
+                     : ' · повторы упадут, это нормально'),
       text:'Прошлый раз закрыл все подходы по '+top+' повторов ('+was+'). <b>Добавь '+stepText(e)+'</b> — повторы упадут, это нормально.'};
   }
   if(allTop && w==null){
-    return {kind:'up', tw:null, tr:top,
+    return {kind:'up', tw:null, tr:top, lw:null,
+      short:'Все подходы по '+top+' — <b>пора усложнить вариант</b> или взять вес',
       text:'Все подходы по '+top+' повторов на своём весе. Пора добавлять внешний вес или усложнять вариант.'};
   }
   if(prev && prevVol!=null && lastVol<prevVol && sameW){
-    return {kind:'warn', tw:w, tr:top,
+    return {kind:'warn', tw:w, tr:top, lw:w,
+      short:'Оставь <b>'+fmtKg(w)+' кг</b> · повторов стало меньше, вес не поднимай',
       text:'Прошлый раз повторов стало меньше ('+prevVol+' → '+lastVol+' на том же весе). Вес не поднимай: не хватает восстановления, сна или еды.'};
   }
   var need = done.filter(function(v){ return v.r<top; }).length;
-  return {kind:'hold', tw:w, tr:top,
+  return {kind:'hold', tw:w, tr:top, lw:w,
+    short:(w!=null?'<b>'+fmtKg(w)+' кг</b> · ':'')+'добери до '+top+' повторов, осталось '+need+' '+plural(need,['подход','подхода','подходов']),
     text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+' — осталось '+need+' '+plural(need,['подход','подхода','подходов'])+'.'};
 }
 /* нижняя граница диапазона: '6–10' → 6 */
@@ -2855,16 +2791,16 @@ function botReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 8;
 /* цель для ячеек: что подставлять в вес и повторы. Считается один раз на
    упражнение и кладётся в подсказку, чтобы сетка не пересчитывала её на каждый ряд. */
 function targetOf(e){
-  var a; try{ a=advice(e); }catch(err){ return {tw:null, tr:botReps(e), kind:''}; }
+  var a; try{ a=advice(e); }catch(err){ return {tw:null, tr:botReps(e), kind:'', lw:null}; }
   if(a.kind==='start'){
     var me=myData(), k=(e.ph && BWK[e.ph]!=null && me && me.bw) ? BWK[e.ph] : null;
     var kg=null;
     if(k){ var af=(+me.age||30)<=30?1:((+me.age||30)<=40?.95:((+me.age||30)<=50?.88:.80));
            kg=Math.max(2, Math.round(me.bw*k*af*(me.sex==='f'?0.65:1)/2.5)*2.5); }
-    return {tw:kg, tr:topReps(e), kind:'start'};
+    return {tw:kg, tr:topReps(e), kind:'start', lw:null};
   }
-  if(a.kind==='wait') return {tw:null, tr:botReps(e), kind:'wait'};
-  return {tw:a.tw, tr:a.tr, kind:a.kind, up:!!a.up};
+  if(a.kind==='wait') return {tw:null, tr:botReps(e), kind:'wait', lw:null};
+  return {tw:a.tw, tr:a.tr, kind:a.kind, up:!!a.up, lw:(a.lw==null?null:a.lw)};
 }
 
 /* ── Первый раз: подбор веса ──
@@ -2881,12 +2817,12 @@ function myData(){ return gget('me', null); }
 function startHint(e){
   var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся с нужным запасом</b> — сколько его оставлять, написано ниже. Смог больше — в следующем подходе добавь.';
   var me = myData();
-  if(!me || !me.bw || !e.ph || BWK[e.ph]==null) return {t:base, hint:null};
+  if(!me || !me.bw || !e.ph || BWK[e.ph]==null) return {t:base, hint:null, kg:null};
   var k = BWK[e.ph], age = +me.age||30, sex = me.sex==='f' ? 0.65 : 1;
   var af = age<=30 ? 1 : (age<=40 ? 0.95 : (age<=50 ? 0.88 : 0.80));
   var kg = me.bw * k * af * sex;
   kg = Math.max(2, Math.round(kg/2.5)*2.5);
-  return {t:base, hint:'Грубый ориентир для старта: <b>около '+fmtKg(kg)+' кг</b>. Это прикидка от массы тела и возраста, а не расчёт — проверь первым подходом.'};
+  return {t:base, kg:kg, hint:'Грубый ориентир для старта: <b>около '+fmtKg(kg)+' кг</b>. Это прикидка от массы тела и возраста, а не расчёт — проверь первым подходом.'};
 }
 
 /* ── rest timer ── */
@@ -3043,6 +2979,27 @@ if(_pcb) _pcb.addEventListener('click', function(e){
 });
 /* кнопка «заменить» на карточке упражнения */
 document.getElementById('list').addEventListener('click', function(e){
+  var ib=e.target.closest('button[data-info]');
+  if(ib){
+    var box=document.getElementById('exinfo'+ib.dataset.info);
+    var open=ib.getAttribute('aria-expanded')==='true';
+    if(box){ box.hidden=open; ib.setAttribute('aria-expanded', String(!open)); haptic('light'); }
+    return;
+  }
+  var hb=e.target.closest('button[data-hist]');
+  if(hb){
+    var item=hb.parentNode, было=hb.getAttribute('aria-expanded')==='true';
+    /* открыта всегда одна дата: нажал другую — предыдущая закрылась */
+    Array.prototype.forEach.call(document.querySelectorAll('#logbox .hitem'), function(it){
+      var hh=it.querySelector('.hhead'), bd=it.querySelector('.hbody');
+      it.classList.remove('open'); if(hh) hh.setAttribute('aria-expanded','false');
+      if(bd) bd.hidden=true;
+    });
+    if(!было){ item.classList.add('open'); hb.setAttribute('aria-expanded','true');
+               var bd=item.querySelector('.hbody'); if(bd) bd.hidden=false; }
+    haptic('light');
+    return;
+  }
   var b=e.target.closest('button[data-swap]'); if(!b) return;
   var di=+b.dataset.swap, base=(DAYS[day].ex||[])[di]||{};
   openCatalog({dk:day, di:di, muscle:MUSCLEOF[base.p]||''});
