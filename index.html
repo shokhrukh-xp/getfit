@@ -422,9 +422,10 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 .fweek{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px;margin-top:8px}
 .fweek .fd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .fweek .fd .fb{width:100%;max-width:34px;border-radius:6px 6px 2px 2px;background:var(--amber);opacity:.85;min-height:2px}
-.fweek .fd .fb.low{background:var(--warn)}
-.fweek .fd .fb.none{background:var(--line)}
-.fweek .fd .fb.ok{background:var(--done)}
+.fweek .fd .fb.fb-low{background:var(--warn)}
+.fweek .fd .fb.fb-none{background:var(--line)}
+.fweek .fd .fb.fb-hi{background:var(--done)}
+.fweek .fd .fb{flex:0 0 auto}
 .fweek .fd u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim)}
 .fweek .fd i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .fweek{height:112px}
@@ -661,6 +662,20 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .hhead[aria-expanded="true"] .hdate{color:var(--amber)}
 .hhead[aria-expanded="true"] .hsub{color:var(--text)}
 .hbody{padding:0 2px 14px}
+.hall{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:12px 2px;
+  border:0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:none;color:var(--muted);font:inherit;font-size:13px;text-align:left}
+.hall span{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)}
+.hall::after{content:"›";font-size:18px;color:var(--dim);transform:rotate(90deg);transition:transform .18s}
+.hall[aria-expanded="true"]::after{transform:rotate(-90deg)}
+.prow{display:grid;grid-template-columns:1fr 64px auto;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line-soft)}
+.prow:first-child{border-top:0}
+.prow .pn{font-size:13px;color:var(--text);line-height:1.3;min-width:0}
+.prow .pw{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.prow .pw b{color:var(--text);font-weight:500}
+.prow svg{display:block;width:64px;height:22px}
+.prow .pd{font-family:'JetBrains Mono',monospace;font-size:12px;font-variant-numeric:tabular-nums;text-align:right;min-width:52px}
+.prow .pd.up{color:var(--done)}.prow .pd.down{color:var(--warn)}.prow .pd.flat{color:var(--dim)}
+.prow .pd.first{color:var(--dim);font-size:10.5px}
 .hbody .lex{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .hbody .lex:first-child{border-top:0;padding-top:2px}
 .hbody .lex i{font-style:normal;color:var(--text);flex:1 1 auto;min-width:0;line-height:1.35}
@@ -877,8 +892,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
         <h2>Журнал</h2>
         <div id="logsum" class="tiles"></div>
         <div id="logmus"></div>
-        <h3 class="lh">История</h3>
-        <div id="logbox"></div>
+        <h3 class="lh">Прогресс</h3>
+        <div id="logprog"></div>
+        <button type="button" class="hall" id="histtoggle" aria-expanded="false">Все тренировки <span id="histn"></span></button>
+        <div id="logbox" hidden></div>
         <button class="btn" id="copyrep">Скопировать отчёт для чата</button>
         <p class="syncst" id="syncst"></p>
         <textarea id="repbox" readonly></textarea>
@@ -3132,9 +3149,64 @@ function fmtSets(sets, time){
   });
   return groups.map(function(g){ return (g.w!=null? fmtKg(g.w)+'×':'')+g.r.join('/'); }).join(' · ')+(time?' с':'');
 }
+/* ── Прогресс по упражнениям ──
+   То, ради чего вообще ведут журнал: растёт ли нагрузка. Для каждого
+   упражнения — лучший подход первой и последней тренировки, дельта по
+   расчётному максимуму (Эпли) и линия по всем занятиям. Сырой список
+   тренировок остался, но свёрнут: смотреть его каждый день незачем. */
+function bestOf(x){
+  var b=null;
+  (x.sets||[]).forEach(function(v){
+    if(v.r==null || v.r==='') return;
+    var w=(v.w==null||v.w==='')?null:+v.w, r=+v.r;
+    var sc = w!=null ? e1rm(w,r) : r;
+    if(!b || sc>b.sc) b={sc:sc, w:w, r:r};
+  });
+  return b;
+}
+function fmtBest(b, time){ return b ? ((b.w!=null? fmtKg(b.w)+'×':'')+b.r+(time?' с':'')) : '—'; }
+function renderProgress(){
+  var box=document.getElementById('logprog'); if(!box) return;
+  if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметь подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
+  var by={}, order=[];
+  HIST.slice().reverse().forEach(function(w){            /* от старых к новым */
+    (w.ex||[]).forEach(function(x){
+      var b=bestOf(x); if(!b) return;
+      if(!by[x.n]){ by[x.n]={n:x.n, time:x.unit==='sec', pts:[]}; order.push(x.n); }
+      by[x.n].pts.push({d:w.date, b:b});
+    });
+  });
+  /* сначала те, что делались чаще и недавно */
+  var all=order.map(function(n){ return by[n]; }).sort(function(a,b){
+    var la=a.pts[a.pts.length-1].d, lb=b.pts[b.pts.length-1].d;
+    return (b.pts.length-a.pts.length) || (la<lb?1:-1);
+  });
+  /* строки с динамикой — все (до 10); «первый раз» только добивает список до шести */
+  var rows=all.filter(function(e){ return e.pts.length>=2; }).slice(0,10);
+  all.filter(function(e){ return e.pts.length<2; }).forEach(function(e){ if(rows.length<6) rows.push(e); });
+  box.innerHTML=rows.map(function(e){
+    var f=e.pts[0].b, l=e.pts[e.pts.length-1].b, n=e.pts.length;
+    var delta='', cls='first';
+    if(n>=2 && f.sc>0){
+      var d=Math.round((l.sc-f.sc)/f.sc*100);
+      cls = d>=3?'up':(d<=-3?'down':'flat');
+      delta = (d>=3?'▲ +':(d<=-3?'▼ ':''))+(d<=-3?d:(d>=3?d:'='))+(cls==='flat'?'':'%');
+    } else delta='первый раз';
+    var spark='';
+    if(n>=2){
+      var vs=e.pts.map(function(p){ return p.b.sc; }), mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs); if(mx-mn<1e-6){ mn-=1; mx+=1; }
+      var pts=vs.map(function(v,i){ return [(2+60*i/(vs.length-1)).toFixed(1), (19-16*(v-mn)/(mx-mn)).toFixed(1)]; });
+      spark='<svg viewBox="0 0 64 22" aria-hidden="true"><polyline fill="none" stroke="var(--amber)" stroke-width="1.6" stroke-linejoin="round" points="'+pts.map(function(p){ return p.join(','); }).join(' ')+'"/>'+
+            '<circle cx="'+pts[pts.length-1][0]+'" cy="'+pts[pts.length-1][1]+'" r="2.2" fill="var(--amber)"/></svg>';
+    }
+    return '<div class="prow"><div><div class="pn">'+e.n+'</div><div class="pw">'+(n>=2? fmtBest(f,e.time)+' → <b>'+fmtBest(l,e.time)+'</b> · '+n+' '+plural(n,['раз','раза','раз']) : '<b>'+fmtBest(l,e.time)+'</b> · '+ruDate(e.pts[0].d))+'</div></div>'+
+           '<div>'+spark+'</div><div class="pd '+cls+'">'+delta+'</div></div>';
+  }).join('');
+}
 function renderHistory(){
   var box=document.getElementById('logbox'); if(!box) return;
-  if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметь подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
+  var hn=document.getElementById('histn'); if(hn) hn.textContent=HIST.length? '· '+HIST.length : '';
+  if(!HIST.length){ box.innerHTML=''; return; }
   var h='';
   HIST.forEach(function(w,i){
     var ton=0, cnt=0, rows='';
@@ -3157,12 +3229,12 @@ function renderHistory(){
 }
 
 function renderLog(){
-  var box=document.getElementById('logbox'); if(!box) return;
+  var box=document.getElementById('logprog'); if(!box) return;
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
-    renderLogSum(); renderMus(); renderHistory();
-  }).catch(function(){ box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
+    renderLogSum(); renderMus(); renderProgress(); renderHistory();
+  }).catch(function(e){ console.error('journal', e); box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
 }
 
 /* ══════════ ИСТОРИЯ И РЕКОМЕНДАЦИИ ══════════
@@ -3711,7 +3783,7 @@ function renderFoodWeek(){
   var tg=w.targets||{}, mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return d.kcal; })), 1);
   box.innerHTML = w.days.map(function(d){
     /* сегодняшний день ещё не закончен — красным его не красим */
-    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'ok' : ''));
+    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'fb-none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'fb-low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'fb-hi' : ''));
     return '<div class="fd"><i>'+(d.n?d.kcal:'')+'</i><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
   /* одна строка: среднее против нормы и сколько дней ниже пола; длинный разбор шлёт бот */
@@ -3887,6 +3959,10 @@ function coachSend(text, image){
     .then(function(){ CHAT.busy=false; sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
+document.getElementById('histtoggle').addEventListener('click', function(){
+  var b=this, box=document.getElementById('logbox'), open=b.getAttribute('aria-expanded')==='true';
+  b.setAttribute('aria-expanded', String(!open)); box.hidden=open; haptic('light');
+});
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 document.getElementById('csend').addEventListener('click', function(){ var t=document.getElementById('ctext').value.trim(); if(t) coachSend(t); });
