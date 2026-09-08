@@ -517,6 +517,9 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 
 /* окно правки приёма */
 .mlab{display:block;margin:14px 0 0;font-size:11px;color:var(--dim)}
+.mlab input[type="text"]{display:block;width:100%;margin-top:6px;padding:11px 12px;border-radius:11px;
+  border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:13.5px;-webkit-appearance:none}
+.mlab input[type="text"]::placeholder{color:var(--dim);opacity:1}
 .mlab textarea{display:block;width:100%;margin-top:6px;padding:11px 12px;border-radius:11px;
   border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:14px;resize:vertical}
 .mnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -1264,7 +1267,9 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
     <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
     <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
     <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
-    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Всё лежит только у тебя.</p>
+    <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
+    <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
     <div class="pfprog" id="pfprog"></div>
     <div id="recobox"></div>
     <button class="btn wide" id="profai">Собрать программу под меня</button>
@@ -1904,7 +1909,8 @@ function openCatPage(){
    Готовые остаются запасным путём: показываем их, только если тренер
    недоступен — нет сети или кончился дневной лимит. */
 var WIZ={place:'gym', wd:null, min:45, text:'', qa:[], ask:null, opts:[], hint:'', goal:null,
-         prog:null, stage:'form', busy:false, err:'', fallback:false, show:false, touched:false};
+         likes:[], dislikes:[], prog:null, stage:'form', busy:false, err:'', fallback:false,
+         show:false, touched:false};
 var MINS=[['30','30'],['45','45'],['60','60'],['90','90+']];
 var WEEK=[1,2,3,4,5,6,0];                    /* неделя начинается с понедельника */
 function wizPattern(n){ return {1:[3],2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],
@@ -2051,7 +2057,8 @@ function wzSend(){
   var me=myData()||{};
   var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
     me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
-         place:WIZ.place, level:me.level||null, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[] } };
+         place:WIZ.place, level:me.level||null, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
+         likes:me.likes||[], dislikes:me.dislikes||[] } };
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
   var tm=setTimeout(function(){ if(wzCtl) wzCtl.abort(); }, 150000);
@@ -2063,7 +2070,9 @@ function wzSend(){
     .then(function(d){
       WIZ.busy=false;
       if(d.prog && d.prog.days && d.prog.days.length){
-        WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.hint=d.hint||''; WIZ.stage='prog'; haptic('ok');
+        WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.hint=d.hint||'';
+        WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[];
+        WIZ.stage='prog'; haptic('ok');
       } else {
         WIZ.ask=d.ask||null; WIZ.opts=d.options||[]; WIZ.hint=d.hint||'';
         if(!WIZ.ask){ WIZ.err='Тренер не понял вопроса. Расскажи о себе чуть подробнее.'; WIZ.stage='form'; }
@@ -2090,6 +2099,10 @@ function wzSaveMe(){
   /* цель человек больше не выбирает из списка — её понял тренер по его словам,
      а без цели не посчитать ни стартовые веса, ни норму еды */
   if(WIZ.goal && !me.goal){ me.goal=WIZ.goal; ch=true; }
+  /* что человек любит и чего не хочет — тренер вытащил это в разговоре;
+     дальше это учитывается при каждой сборке и замене, поэтому храним */
+  if((WIZ.likes||[]).length && !(me.likes||[]).length){ me.likes=WIZ.likes; ch=true; }
+  if((WIZ.dislikes||[]).length && !(me.dislikes||[]).length){ me.dislikes=WIZ.dislikes; ch=true; }
   if(ch){ gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
 }
 function wzApply(){
@@ -2194,7 +2207,13 @@ function fillMe(){
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
+  var lk=document.getElementById('me-likes'); if(lk) lk.value=(me.likes||[]).join(', ');
+  var ds=document.getElementById('me-dis');   if(ds) ds.value=(me.dislikes||[]).join(', ');
 }
+/* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
+   строкой, модели — списком */
+function csv(v){ return String(v||'').split(',').map(function(x){ return x.trim(); })
+  .filter(Boolean).slice(0,5).map(function(x){ return x.slice(0,60); }); }
 function readMeForm(){
   var v=function(id){ var el=document.getElementById(id); return el&&el.value!=='' ? +el.value : null; };
   var sx=document.getElementById('me-sex'), g=document.getElementById('me-goal');
@@ -2205,10 +2224,12 @@ function readMeForm(){
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           goal:(g&&g.value)||old.goal||null, level:pick('me-level')||old.level||null,
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq,
-          min:old.min||null, about:old.about||''};
+          min:old.min||null, about:old.about||'',
+          likes:csv((document.getElementById('me-likes')||{}).value),
+          dislikes:csv((document.getElementById('me-dis')||{}).value)};
 }
 /* подпись профиля: что из него влияет на подсказки */
-function meSig(me){ me=me||{}; return [me.goal||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),Object.keys(GYM_DAYS).length].join('|'); }
+function meSig(me){ me=me||{}; return [me.goal||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),Object.keys(GYM_DAYS).length].join('|'); }
 function saveMe(){
   if(!document.getElementById('me-goal')) return;
   var prev=myData()||{}, me=readMeForm();
@@ -4252,7 +4273,7 @@ if(TG){
 }
 
 /* ── обработчики окон ── */
-['me-bw','me-ht','me-age','me-sex','me-goal'].forEach(function(id){
+['me-bw','me-ht','me-age','me-sex','me-goal','me-likes','me-dis'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('change', saveMe);
 });
 document.getElementById('profbtn').addEventListener('click', function(){ openProf(); haptic('light'); });
