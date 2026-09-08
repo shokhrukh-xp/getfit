@@ -54,6 +54,42 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .top-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;max-width:640px;margin:0 auto}
 .mark{font-family:'Unbounded',sans-serif;font-weight:800;font-size:16px;letter-spacing:.02em}
 .mark span{color:var(--amber)}
+.profbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+  color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0}
+.profbtn svg{width:20px;height:20px}
+.profbtn.attn{border-color:var(--amber);color:var(--amber)}
+.pf{display:flex;align-items:center;gap:10px;margin-top:10px}
+.pfl{flex:0 0 58px;font-size:11px;color:var(--dim)}
+.pf select{flex:1 1 auto;min-width:0;padding:9px 10px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);font:inherit;font-size:13px;-webkit-appearance:none;appearance:none}
+.seg{display:flex;gap:6px;flex:1 1 auto;min-width:0}
+.seg button{flex:1 1 0;min-width:0;padding:9px 6px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:var(--amber-ghost)}
+.pfnote{margin-top:14px!important;margin-bottom:10px!important}
+.pfprog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;margin-bottom:10px;
+  border:1px solid var(--line-soft);border-radius:10px;font-size:12.5px;color:var(--muted)}
+.pfprog b{color:var(--text);font-weight:600}
+.pfprog button{background:none;border:none;color:var(--amber);font:inherit;font-size:12.5px;padding:0}
+.reco{border:1px solid var(--amber-deep);border-radius:12px;padding:12px 13px;margin-bottom:10px;background:var(--amber-ghost)}
+.reco h4{margin:0 0 4px;font-size:13.5px;font-weight:600;color:var(--text)}
+.reco p{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.reco ul{margin:6px 0 0;padding:0;list-style:none;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.reco li b{color:var(--text);font-weight:500}
+.reco .rbtns{display:flex;gap:8px;margin-top:10px}
+.reco .rbtns .btn{flex:1 1 0;padding:9px;font-size:13px}
+.reco .rbtns .btn.go{border-color:var(--amber);color:var(--amber)}
+.aistate{margin:8px 0 0;font-size:12px;color:var(--dim);line-height:1.5}
+.aistate.bad{color:var(--warn)}
+.aiprev{border:1px solid var(--line-soft);border-radius:12px;padding:12px 13px;margin-top:10px}
+.aiprev h4{margin:0 0 2px;font-size:14px;font-weight:600}
+.aiprev .aisub{font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.5}
+.aiprev .aiday{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+.aiprev ul{margin:3px 0 0;padding:0;list-style:none;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.aiprev li b{color:var(--text);font-weight:500}
+.aiprev .rbtns{display:flex;gap:8px;margin-top:12px}
+.aiprev .rbtns .btn{flex:1 1 0;padding:9px;font-size:13px}
+.aiprev .rbtns .btn.go{border-color:var(--amber);color:var(--amber)}
 .phasebox{display:flex;align-items:center;gap:6px}
 .phasebox label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 select.week{
@@ -349,16 +385,17 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
 /* Дни — маленькие квадраты в один ряд. Названия мышц раньше стояли на каждой
    кнопке и съедали пол-экрана; теперь они в строке под рядом, для выбранного дня. */
 .dayseg{display:grid;gap:6px;margin:14px 0 6px;align-items:stretch;
-  grid-template-columns:repeat(5,1fr)}
+  grid-template-columns:repeat(5,minmax(0,110px))}
 .dayseg button{
-  position:relative;display:flex;align-items:center;justify-content:center;
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);background:var(--surface);border-radius:12px;
-  padding:0;height:46px;min-height:0;
+  padding:0 4px;height:52px;min-height:0;
   color:var(--muted);transition:border-color .18s,background .18s;
 }
-.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:13px;
-  letter-spacing:-.02em;color:var(--text)}
-.dayseg button i{display:none}
+.dayseg button b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11.5px;
+  letter-spacing:-.02em;color:var(--text);max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dayseg button i{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;letter-spacing:.03em;color:var(--dim)}
 .dayseg button[aria-pressed="true"]{border-color:var(--amber);background:var(--amber-ghost)}
 .dayseg button[aria-pressed="true"] b{color:var(--amber)}
 .dayseg button[aria-pressed="true"] i{color:var(--amber-deep)}
@@ -586,6 +623,11 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 .ebtn:active,.ebtn[aria-expanded="true"]{border-color:var(--amber);color:var(--amber)}
 .ebtn.on{color:var(--amber);border-color:var(--amber-deep)}
 .exinfo{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px}
+.sschoice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.sschoice .ebtn{display:flex;align-items:center;gap:8px;text-align:left;padding:9px 10px;
+  border-color:var(--amber-deep);color:var(--text)}
+.sschoice .ssnm{font-size:12.5px;line-height:1.25;overflow:hidden;display:-webkit-box;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical}
 .whytext{font-size:13px;color:var(--muted);line-height:1.55;margin:10px 0 0}
 .syncst{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
 .syncst.ok{color:var(--done)}
@@ -688,16 +730,13 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
   color:var(--amber);font-size:12px;line-height:1.5}
 #schedclose{margin-top:4px}
 /* ── расписание: день недели → день программы ── */
-.schrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding:9px 12px;
-  border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.schrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding:11px 12px;width:100%;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface-2);text-align:left}
 .schrow.on{border-color:var(--amber)}
-.schrow .schwd{flex:0 0 42%;font-size:13px;color:var(--text)}
+.schrow .schwd{flex:1 1 auto;font-size:13px;color:var(--text)}
 .schrow.off .schwd{color:var(--dim)}
-.schrow select{flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;
-  border:none;background:transparent;color:var(--amber);font:inherit;font-size:12.5px;
-  text-align:right;padding:2px 0;cursor:pointer;text-overflow:ellipsis}
-.schrow.off select{color:var(--dim)}
-.schrow select option{color:var(--text);background:var(--surface)}
+.schrow .schst{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.schrow.on .schst{color:var(--amber)}
 /* ── лёгкий день: то же место в сетке, другой цвет выделения ── */
 .dayseg.lite{display:none}
 .dayseg button[data-light="1"][aria-pressed="true"]{border-color:var(--done);background:rgba(79,168,139,.12)}
@@ -721,7 +760,7 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 <header class="top">
   <div class="top-in">
     <div class="mark">GET<span>FIT</span></div>
-
+    <button type="button" class="profbtn" id="profbtn" aria-label="Профиль"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"/></svg></button>
   </div>
 </header>
 
@@ -807,24 +846,35 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 <div class="modal" id="schedm" role="dialog" aria-modal="true" aria-labelledby="schedtitle">
   <div class="modalbox">
     <h3 id="schedtitle">Мои дни</h3>
-    <p class="mtext">Поставь каждому дню недели свою тренировку. Приложение само откроет нужный день и подскажет, когда следующий. У всех расписание своё — эти настройки видишь только ты.</p>
+    <p class="mtext">Отметь дни, когда ходишь в зал. Что делать в каждый из них, решать не нужно: дни программы идут по кругу, следующий — за последним сделанным. Пропустил или пришёл в другой день — очередь просто продолжается.</p>
     <div id="schedlist"></div>
     <h3 style="margin-top:20px">Лёгкая неделя</h3>
     <p class="mtext">Веса встали или поехали вниз? Возьми неделю с половиной подходов
     на тех же весах. Это единственное, чего приложение за тебя не решит — как ты себя
     чувствуешь, знаешь только ты. Через семь дней отключится само.</p>
     <div id="deloadbox"></div>
-    <h3 style="margin-top:20px">Мои данные</h3>
-    <p class="mtext">Нужны для одного: пока по упражнению нет истории, прикинуть,
-    с какого веса начинать. Как только история появится, подсказки переходят на твои
-    собственные цифры. Данные лежат только у тебя.</p>
-    <div class="me">
-      <label>вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
-      <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
-      <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
-      <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
-    </div>
     <button class="btn wide" id="schedclose">Готово</button>
+  </div>
+</div>
+<div class="modal" id="profm" role="dialog" aria-modal="true" aria-labelledby="proftitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="proftitle">Профиль</h3><button class="xbtn" id="profclose" aria-label="Закрыть">✕</button></div>
+    <div class="me">
+      <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
+      <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
+      <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
+      <label>вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
+    </div>
+    <div class="pf"><span class="pfl">цель</span><select id="me-goal"></select></div>
+    <div class="pf"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
+    <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
+    <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
+    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Всё лежит только у тебя.</p>
+    <div class="pfprog" id="pfprog"></div>
+    <div id="recobox"></div>
+    <button class="btn wide" id="profai">Собрать программу под меня</button>
+    <p class="aistate" id="aistate" hidden></p>
+    <div id="aibox"></div>
   </div>
 </div>
 <script>
@@ -924,7 +974,7 @@ var DAYS={
    свои полторы-две минуты между своими подходами, а тренировка укладывается
    в 40 минут. Главное упражнение дня в пару НЕ ставится: на базовых
    движениях суперсет ухудшает прирост силы. */
-D1:{name:'День 1', when:'', sub:'Ноги', ex:[
+D1:{name:'День 1', s:'Ноги', when:'', sub:'Ноги', ex:[
   {p:'Присед', n:'Приседания со штангой', ph:'squat', eq:'штанга', inc:2.5, fig:'squat', sets:4, reps:'6–10', rest:150,
    cues:['Первые 3 недели — с одной гантелью у груди (гоблет), потом штанга','Колени идут в сторону носков, не заваливаются внутрь','Опускайся, пока бёдра не станут параллельны полу'],
    why:'Главное упражнение дня и самое дорогое по нагрузке — поэтому идёт первым, с полным отдыхом и без пары.'},
@@ -941,7 +991,7 @@ D1:{name:'День 1', when:'', sub:'Ноги', ex:[
    cues:['Только с колен — стоя это уровень другого человека','Катись ровно настолько, насколько держится поясница','Таз подкручен всё время, поясница не проваливается'],
    why:'Самая тяжёлая работа на кор в программе и единственная, которая прогрессирует: растёт не вес, а глубина.'}
 ]},
-D2:{name:'День 2', when:'', sub:'Жим', ex:[
+D2:{name:'День 2', s:'Жим', when:'', sub:'Жим', ex:[
   {p:'Горизонтальный жим', n:'Жим лёжа', ph:'bench', eq:'штанга', inc:2.5, fig:'pressh', sets:4, reps:'6–10', rest:150,
    cues:['Лопатки сведены и прижаты к скамье','Гриф опускается к низу груди, а не к горлу','Локти под углом 45 градусов, не в стороны'],
    why:'Главное движение на грудь и переднюю дельту. Идёт первым и без пары.'},
@@ -961,7 +1011,7 @@ D2:{name:'День 2', when:'', sub:'Жим', ex:[
    cues:['Гантели лёгкие — 5–8 кг здесь работают лучше, чем 15','Локоть чуть выше кисти, мизинец не задирай','Поднимаешь до уровня плеч, не выше'],
    why:'Средние дельты дают ширину плеч. Жимами их не вырастить — там работают передние.'}
 ]},
-D3:{name:'День 3', when:'', sub:'Тяга', ex:[
+D3:{name:'День 3', s:'Тяга', when:'', sub:'Тяга', ex:[
   {p:'Вертикальная тяга', n:'Подтягивания', ph:'pullup', eq:'свой вес', inc:0, fig:'pullv', sets:4, reps:'6–12', rest:150,
    cues:['Не можешь — гравитрон или резина, но не заменяй тягой блока','Грудь к перекладине, локти вниз','Внизу руки полностью прямые'],
    why:'Главное движение на широчайшие. Первым и без пары, потому что здесь важна свежесть.'},
@@ -981,7 +1031,7 @@ D3:{name:'День 3', when:'', sub:'Тяга', ex:[
    cues:['Корпус наклонён, спина прямая','Разводишь в стороны, а не назад','Вес совсем лёгкий, иначе включится спина'],
    why:'Второй заход на заднюю дельту за неделю — она мелкая и восстанавливается быстро.'}
 ]},
-D4:{name:'День 4', when:'', sub:'Ноги и ягодицы', ex:[
+D4:{name:'День 4', s:'Ягодицы', when:'', sub:'Ноги и ягодицы', ex:[
   {p:'Присед', n:'Выпады с гантелями', ph:'lunge', eq:'гантели', inc:2, fig:'squat', sets:3, reps:'10–12 на ногу', rest:120,
    cues:['Шаг такой, чтобы колено задней ноги шло вниз, а не вперёд','Корпус вертикально, не наклоняйся к передней ноге','Начни без веса, гантели добавь со второй недели'],
    why:'Односторонняя работа: выравнивает разницу между ногами и грузит ягодицы сильнее приседа при вчетверо меньшем весе на спине.'},
@@ -1001,7 +1051,7 @@ D4:{name:'День 4', when:'', sub:'Ноги и ягодицы', ex:[
    cues:['Полная амплитуда: внизу пятка ниже уровня носка','Вверху задержись на секунду','Без рывков, темп ровный'],
    why:'Второй заход за неделю. Икры упрямые, им нужен объём и частота.'}
 ]},
-D5:{name:'День 5', when:'', sub:'Верх', ex:[
+D5:{name:'День 5', s:'Верх', when:'', sub:'Верх', ex:[
   {p:'Грудь', n:'Жим гантелей лёжа', ph:'benchdb', eq:'гантели', inc:2, fig:'pressh', sets:3, reps:'8–12', rest:120,
    cues:['Гантели опускаются глубже, чем гриф — в этом весь смысл','Лопатки сведены','Вверху не стукай гантели друг о друга'],
    why:'Второй день на грудь за неделю, но гантелями: больше амплитуда, меньше нагрузка на плечевой сустав.'},
@@ -1030,7 +1080,7 @@ D5:{name:'День 5', when:'', sub:'Верх', ex:[
    Два дня в неделю, оба полнотельные — так каждая мышца получает нагрузку дважды.
    Тренажёры и гантели: техника простая, ошибиться почти невозможно.
    Акцент на ягодицы, заднюю цепь и осанку. */
-DAYS.W1={name:'День 1', when:'', sub:'Ноги и спина', ex:[
+DAYS.W1={name:'День 1', s:'Ноги', when:'', sub:'Ноги и спина', ex:[
   {p:'Ноги', n:'Жим ногами в тренажёре', ph:'legpress', eq:'тренажёр', inc:5, fig:'squat', sets:3, reps:'12–15', rest:90,
    cues:['Стопы на ширине таза, чуть выше середины платформы','Колени идут в сторону носков, не заваливаются внутрь','Внизу поясница остаётся прижатой к спинке — глубже не надо'],
    why:'Самая большая мышечная группа и самый безопасный способ её нагрузить в начале: спина лежит на опоре, ошибиться сложно.'},
@@ -1047,7 +1097,7 @@ DAYS.W1={name:'День 1', when:'', sub:'Ноги и спина', ex:[
    cues:['Таз подкручен, поясница не провисает','Начинай с 20 секунд — три коротких подхода лучше одного долгого с провалом','Дышишь ровно'],
    why:'База для всего остального. Пока корпус не держит, любое упражнение стоя делается за счёт поясницы.'}
 ]};
-DAYS.W2={name:'День 2', when:'', sub:'Задняя цепь и плечи', ex:[
+DAYS.W2={name:'День 2', s:'Спина', when:'', sub:'Задняя цепь и плечи', ex:[
   {p:'Задняя цепь', n:'Румынская тяга с гантелями', ph:'rdl', eq:'гантели', inc:2, fig:'hinge', sets:3, reps:'12', rest:90,
    cues:['Движение в тазобедренном: таз уходит назад, спина прямая','Гантели скользят вдоль бедра','Опускаешь до натяжения под коленом и возвращаешься — глубже не надо'],
    why:'Бицепс бедра и ягодицы. Главное упражнение на заднюю поверхность и лучшая профилактика болей в пояснице.'},
@@ -1074,6 +1124,7 @@ DAYS.W2={name:'День 2', when:'', sub:'Задняя цепь и плечи', 
 var PROFILES = {
   shp: {
     name:'Набор формы · 5 дней', goal:'Снять жир и построить фигуру',
+    fit:{goals:{fat:3,tone:3,muscle:3,strength:1,health:1,endur:0,mobil:0}, level:{new:0,mid:2,exp:3}, days:5, place:{gym:2,home:0}},
     sub:'Каждая мышца дважды в неделю. Пять дней по 35–40 минут',
     heavy:['D1','D2','D3','D4','D5'], lightDays:[],
     gymDays:{2:'D1', 3:'D2', 4:'D3', 5:'D4', 0:'D5'},
@@ -1094,6 +1145,7 @@ var PROFILES = {
   },
   friend: {
     name:'База · 3 дня', goal:'Начать ходить и втянуться',
+    fit:{goals:{fat:2,tone:2,muscle:2,strength:3,health:3,endur:1,mobil:1}, level:{new:3,mid:2,exp:1}, days:3, place:{gym:2,home:0}},
     sub:'Всё тело за три дня, свободные веса. Три дня в неделю',
     heavy:['D1','D2','D3'], lightDays:[],
     gymDays:{2:'D1', 4:'D2', 0:'D3'},
@@ -1109,6 +1161,7 @@ var PROFILES = {
   },
   wife: {
     name:'Форма · 2 дня', goal:'Тонус, ягодицы и осанка',
+    fit:{goals:{fat:2,tone:3,muscle:1,strength:0,health:2,endur:1,mobil:2}, level:{new:3,mid:1,exp:0}, days:2, place:{gym:2,home:0}},
     sub:'Тренажёры и гантели, техника простая. Два дня в неделю',
     heavy:['W1','W2'], lightDays:[],
     gymDays:{3:'W1', 5:'W2'},                           /* ср пт */
@@ -1125,49 +1178,57 @@ var PROFILES = {
 };
 
 var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], booted=false;
-/* Расписание — своё у каждого. По умолчанию берётся из программы, но человек
-   переставляет дни как ему удобно: у одного зал во вторник, у другого в среду. */
+/* ── расписание и очередь дней ──
+   Раньше день программы был привязан к дню недели: «вторник — ноги». Это
+   ломалось, как только дней программы больше, чем дней в зале (пять на три):
+   два дня висели без имени как «Д4» и «Д5», а пропуск сдвигал всю неделю.
+   Теперь две независимые вещи:
+     GYM_DAYS — в какие дни недели человек ходит (только для «сегодня зал /
+                отдых» и подсказки «зал завтра»);
+     очередь  — дни программы идут по кругу: следующий = за последним
+                сделанным. Пришёл в другой день или пропустил — ничего
+                править не надо, очередь просто продолжается. */
 var WD=['вс','пн','вт','ср','чт','пт','сб'];
 var WDFULL=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function schedNorm(o){
+  var out={};
+  if(o && typeof o==='object') Object.keys(o).forEach(function(k){ if(o[k] && k>=0 && k<=6) out[+k]=1; });
+  return out;
+}
 function loadSched(){
   var s=get('sched', null);
-  GYM_DAYS = (s && typeof s==='object') ? s : JSON.parse(JSON.stringify(PROF.gymDays));
-  /* Программа переписана 07.09: лёгкие дни L1/L2 исчезли, вместо трёх тяжёлых
-     и двух лёгких стало пять равных. Если в сохранённом расписании остались
-     старые ключи, оно уже не про эту программу — берём дни программы заново,
-     иначе человек потеряет два дня недели и не поймёт почему. */
-  var стар = Object.keys(GYM_DAYS).some(function(k){ return !DAYS[GYM_DAYS[k]]; });
-  if(стар) GYM_DAYS = JSON.parse(JSON.stringify(PROF.gymDays));
+  if(!(s && typeof s==='object' && Object.keys(s).length)) s=PROF.gymDays;
+  /* у собранной программы своих дней нет — берём те, что человек уже задал */
+  if(!(s && Object.keys(s).length)) s=gget('sched_any', null);
+  GYM_DAYS = schedNorm(s);
 }
 function saveSched(){
-  set('sched', GYM_DAYS);
+  set('sched', GYM_DAYS); gset('sched_any', GYM_DAYS);
   if(DB) DB.doc('state/sched').set({s:GYM_DAYS, at:new Date().toISOString()}).catch(function(){});
 }
-/* к какому дню недели привязан день программы */
-function weekdayOf(k){
-  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WD[i];
-  return '';
-}
-/* Человек думает днями недели, а не «Днём 2». Название дня программы —
-   служебное, наружу показываем день недели. Если день никуда не поставлен,
-   деваться некуда: показываем служебное имя. */
+/* На кнопке — короткое имя дня программы, в подписи — полное */
 function dayShort(k){
-  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WD[i].charAt(0).toUpperCase()+WD[i].slice(1);
-  var nm=(DAYS[k]||{}).name||'', ц=nm.match(/\d+/);
-  return ц ? 'Д'+ц[0] : nm.slice(0,2);
+  var d=DAYS[k]||{};
+  return d.s || String(d.sub||'').split(/[ ,]/)[0] || (d.name||'');
 }
-function dayLabel(k){
-  for(var i=0;i<7;i++) if(GYM_DAYS[i]===k) return WDFULL[i].charAt(0).toUpperCase()+WDFULL[i].slice(1);
-  return (DAYS[k]||{}).name || '';
+function dayLabel(k){ return (DAYS[k]||{}).name || ''; }
+/* кнопки идут в порядке программы — это и есть очередь */
+function byWeek(list){ return list.slice(); }
+/* когда этот день программы делали в последний раз: ГГГГ-ММ-ДД или null */
+function lastDateOf(k){
+  var best=null;
+  if(lastDone && lastDone.day===k) best=lastDone.date;
+  if(HIST) for(var i=0;i<HIST.length;i++){ if(HIST[i].day===k){ if(!best || HIST[i].date>best) best=HIST[i].date; break; } }
+  return best;
 }
-/* кнопки идут по неделе, а не в порядке, в котором записана программа */
-function byWeek(list){
-  var pos={};
-  Object.keys(GYM_DAYS).forEach(function(w){ pos[GYM_DAYS[w]] = ((+w)+6)%7; });   /* пн=0 … вс=6 */
-  return list.slice().sort(function(a,b){
-    var pa=(a in pos)?pos[a]:99, pb=(b in pos)?pos[b]:99;
-    return (pa-pb) || (list.indexOf(a)-list.indexOf(b));
-  });
+function agoLabel(d){
+  if(!d) return '—';
+  var n=Math.round((new Date(TODAY)-new Date(d))/864e5);
+  if(n<=0) return 'сегодня';
+  if(n===1) return 'вчера';
+  if(n<7) return n+' дн';
+  if(n<28) return Math.round(n/7)+' нед';
+  return 'давно';
 }
 
 /* активная фаза: выбранная руками, иначе подсказанная по номеру недели */
@@ -1209,6 +1270,7 @@ function allDays(){ return PROF.heavy.concat(PROF.lightDays); }
 
 function applyProfile(p, silent){
   if(!PROFILES[p]) p='shp';
+  if(profile && profile!==p){ HIST=null; histLoading=null; }   /* история другой программы */
   profile=p; PROF=PROFILES[p];
   PFX = p+'_';
   CYCLE = PROF.heavy.slice();
@@ -1456,37 +1518,202 @@ function choose(p){
 /* ── «мои дни»: семь строк недели, в каждой — день программы или отдых ── */
 function renderSched(){
   var box=document.getElementById('schedlist'); if(!box) return;
-  var keys=allDays(), h='';
+  var h='';
   for(var i=1;i<=7;i++){
-    var wd=i%7;                                   /* пн … вс, воскресенье последним */
-    var cur=GYM_DAYS[wd]||'';
-    h+='<label class="schrow '+(cur?'on':'off')+'"><span class="schwd">'+WDFULL[wd]+'</span>'+
-       '<select data-wd="'+wd+'"><option value=""'+(cur?'':' selected')+'>отдых</option>';
-    keys.forEach(function(k){
-      h+='<option value="'+k+'"'+(k===cur?' selected':'')+'>'+DAYS[k].sub.toLowerCase()+'</option>';
-    });
-    h+='</select></label>';
+    var wd=i%7, on=!!GYM_DAYS[wd];
+    h+='<button type="button" class="schrow '+(on?'on':'off')+'" data-wd="'+wd+'" aria-pressed="'+on+'">'+
+       '<span class="schwd">'+WDFULL[wd]+'</span><span class="schst">'+(on?'зал':'отдых')+'</span></button>';
   }
-  h+='<button class="phrow reset" id="schedreset" type="button">вернуть дни программы</button>';
+  h+='<button class="phrow reset" id="schedreset" type="button">как в программе</button>';
   box.innerHTML=h;
 }
 function schedApplied(){
   saveSched();
   renderSched(); renderDayseg(); renderDayHead(); renderTodaybar();
+  renderReco();
   haptic('light');
+}
+/* ══════════ ПРОФИЛЬ ══════════
+   Кто занимается и зачем. Вес, рост, возраст и пол — для стартовых весов и
+   фигуры на карте тела. Цель, опыт, место и что беречь — для подсказок:
+   как только они меняются, приложение проверяет, подходит ли программа.
+   Списки целей — семь самых частых по опросам: сила и мышцы, похудение,
+   здоровье и долголетие, выносливость, подвижность. */
+var GOALS=[
+  ['fat',      'Похудеть, сохранив мышцы'],
+  ['tone',     'Подтянуться'],
+  ['muscle',   'Набрать мышцы'],
+  ['strength', 'Стать сильнее'],
+  ['health',   'Форма и здоровье'],
+  ['endur',    'Выносливость'],
+  ['mobil',    'Подвижность и осанка']
+];
+var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опытный']];
+var PLACES=[['gym','зал'],['home','дом']];
+var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
+function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
+function segHtml(id, list, val, multi){
+  return list.map(function(x){
+    var on = multi ? (val||[]).indexOf(x[0])>=0 : val===x[0];
+    return '<button type="button" data-v="'+x[0]+'" aria-pressed="'+on+'">'+x[1]+'</button>';
+  }).join('');
 }
 function fillMe(){
   var me=myData()||{};
   var b=document.getElementById('me-bw'), h=document.getElementById('me-ht'),
-      a=document.getElementById('me-age'), x=document.getElementById('me-sex');
+      a=document.getElementById('me-age'), x=document.getElementById('me-sex'), g=document.getElementById('me-goal');
   if(b) b.value=me.bw||''; if(h) h.value=me.ht||'';
   if(a) a.value=me.age||''; if(x) x.value=me.sex||'m';
+  if(g){ g.innerHTML='<option value="">— не выбрана —</option>'+GOALS.map(function(o){ return '<option value="'+o[0]+'"'+(me.goal===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join(''); }
+  var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
+  var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
+  var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
 }
-function saveMe(){
+function readMeForm(){
   var v=function(id){ var el=document.getElementById(id); return el&&el.value!=='' ? +el.value : null; };
-  var sx=document.getElementById('me-sex');
-  gset('me', {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m')});
+  var sx=document.getElementById('me-sex'), g=document.getElementById('me-goal');
+  var pick=function(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; };
+  var lim=Array.prototype.map.call(document.querySelectorAll('#me-lim button[aria-pressed="true"]'),function(b){ return b.dataset.v; });
+  var old=myData()||{};
+  return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
+          goal:(g&&g.value)||old.goal||null, level:pick('me-level')||old.level||null,
+          place:pick('me-place')||old.place||'gym', lim:lim};
+}
+/* подпись профиля: что из него влияет на подсказки */
+function meSig(me){ me=me||{}; return [me.goal||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),Object.keys(GYM_DAYS).length].join('|'); }
+function saveMe(){
+  if(!document.getElementById('me-goal')) return;
+  var prev=myData()||{}, me=readMeForm();
+  gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   if(!anyTouched()) renderList();
+  if(meSig(prev)!==meSig(me)){ gset('reco_seen', null); }
+  renderReco(); renderProfProg(); paintProfBtn();
+}
+function openProf(){ fillMe(); renderProfProg(); renderReco(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+function closeProf(){ var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
+function renderProfProg(){
+  var el=document.getElementById('pfprog'); if(!el||!PROF) return;
+  el.innerHTML='<span>программа <b>'+PROF.name+'</b></span><button type="button" id="pfswitch">сменить</button>';
+}
+
+/* ══════════ ПРАВИЛА: ПОДХОДИТ ЛИ ПРОГРАММА ══════════
+   Считаем по очкам: цель, опыт, место и сколько дней в неделю человек ходит.
+   Программу советуем менять, только если разрыв заметный — иначе будем
+   дёргать человека из-за одного очка. */
+function fitScore(k, me){
+  var f=PROFILES[k].fit; if(!f) return -99;
+  var days=Object.keys(GYM_DAYS).length || f.days;
+  return (f.goals[me.goal]||0) + (f.level[me.level]||0) + (f.place[me.place||'gym']||0) - Math.abs(f.days-days);
+}
+function recoProgram(me){
+  if(!me || !me.goal) return null;
+  var best=null, bs=-99;
+  Object.keys(PROFILES).forEach(function(k){ var sc=fitScore(k,me); if(sc>bs){ bs=sc; best=k; } });
+  if(!best || best===profile) return null;
+  if(bs - fitScore(profile,me) < 2) return null;
+  return {k:best, name:PROFILES[best].name, why:PROFILES[best].sub};
+}
+/* Что беречь → какие движения убрать и чем заменить. Замены — из каталога,
+   по английскому имени, первая из списка, которой ещё нет в этом дне. */
+var LIMS={
+  knee:{t:'колени', ph:{
+    squat:['Leg Press','Barbell Hip Thrust','Lying Leg Curls'],
+    lunge:['Barbell Hip Thrust','One-Legged Cable Kickback','Seated Leg Curl'],
+    legext:['Seated Leg Curl','Lying Leg Curls']}},
+  back:{t:'спину', ph:{
+    squat:['Leg Press','Hack Squat'],
+    rdl:['Lying Leg Curls','Seated Leg Curl','Barbell Hip Thrust'],
+    row:['Seated Cable Rows','Leverage Iso Row'],
+    hyper:['Plank','Barbell Glute Bridge'],
+    ohp:['Seated Dumbbell Press'],
+    abwheel:['Plank','Dead Bug'],
+    legraise:['Dead Bug','Plank']}},
+  shoulder:{t:'плечи', ph:{
+    ohp:['Dumbbell Floor Press','Face Pull'],
+    bench:['Dumbbell Bench Press with Neutral Grip','Dumbbell Floor Press'],
+    benchdb:['Dumbbell Bench Press with Neutral Grip','Dumbbell Floor Press'],
+    fly:['Low Cable Crossover','Dumbbell Floor Press'],
+    pullup:['Close-Grip Front Lat Pulldown','Seated Cable Rows'],
+    lat:['Close-Grip Front Lat Pulldown']}}
+};
+/* тот же смысл движения, что и в программе: чтобы не поставить в день второй
+   жим ногами рядом с уже стоящим. Имена в каталоге и в программе разные. */
+var CAT_PH={'Leg Press':'legpress','Barbell Hip Thrust':'hipthrust','Barbell Glute Bridge':'hipthrust',
+  'Lying Leg Curls':'legcurl','Seated Leg Curl':'legcurl','Hack Squat':'hack','Seated Cable Rows':'rowcable',
+  'Leverage Iso Row':'rowmachine','Plank':'plank','Dead Bug':'deadbug','Seated Dumbbell Press':'ohpseated',
+  'Dumbbell Floor Press':'floorpress','Dumbbell Bench Press with Neutral Grip':'benchdb',
+  'Low Cable Crossover':'fly','Close-Grip Front Lat Pulldown':'lat','Face Pull':'facepull',
+  'One-Legged Cable Kickback':'kickback'};
+function catByEn(en){
+  if(!CAT||!CAT.ex) return null;
+  for(var i=0;i<CAT.ex.length;i++) if(CAT.ex[i].e===en) return CAT.ex[i];
+  return null;
+}
+function recoSwaps(me){
+  var out=[]; if(!me || !me.lim || !me.lim.length || !CAT) return out;
+  allDays().forEach(function(dk){
+    var list=exList(dk), base=(DAYS[dk]||{}).ex||[];
+    /* что уже есть в дне — по смыслу движения и по имени */
+    var занято={};
+    list.forEach(function(e,i){ занято[e.n]=1; if(base[i] && base[i].ph) занято['ph:'+base[i].ph]=1; if(e.en && CAT_PH[e.en]) занято['ph:'+CAT_PH[e.en]]=1; });
+    base.forEach(function(e,di){
+      if(list[di].sub) return;                      /* уже заменено рукой — не трогаем */
+      for(var j=0;j<me.lim.length;j++){
+        var rule=(LIMS[me.lim[j]]||{}).ph||{}, cands=rule[e.ph]; if(!cands) continue;
+        var item=null;
+        for(var c=0;c<cands.length;c++){
+          var it=catByEn(cands[c]), ph=CAT_PH[cands[c]];
+          if(!it || занято[it.n]) continue;
+          if(ph && ph!==e.ph && занято['ph:'+ph]) continue;   /* своё же движение можно заменить его вариантом */
+          item=it; break;
+        }
+        if(item){ out.push({dk:dk, di:di, from:e.n, to:item, lim:me.lim[j]}); занято[item.n]=1; if(CAT_PH[item.e]) занято['ph:'+CAT_PH[item.e]]=1; }
+        break;
+      }
+    });
+  });
+  return out;
+}
+var RECO={prog:null, swaps:[]};
+function renderReco(){
+  var box=document.getElementById('recobox'); if(!box) return;
+  var me=myData()||{};
+  var seen=gget('reco_seen',null), sig=meSig(me);
+  RECO.prog = recoProgram(me);
+  RECO.swaps = recoSwaps(me);
+  if(seen===sig || (!RECO.prog && !RECO.swaps.length)){ box.innerHTML=''; paintProfBtn(); return; }
+  var h='';
+  if(RECO.prog){
+    h+='<div class="reco"><h4>Под цель «'+goalName(me.goal).toLowerCase()+'» лучше подходит «'+RECO.prog.name+'»</h4>'+
+       '<p>'+RECO.prog.why+'</p>'+
+       '<div class="rbtns"><button type="button" class="btn go" data-reco="prog">Перейти</button>'+
+       '<button type="button" class="btn" data-reco="skip">Оставить мою</button></div></div>';
+  }
+  if(RECO.swaps.length){
+    var byLim={}; RECO.swaps.forEach(function(x){ (byLim[x.lim]=byLim[x.lim]||[]).push(x); });
+    Object.keys(byLim).forEach(function(l){
+      var arr=byLim[l];
+      h+='<div class="reco"><h4>Беречь '+LIMS[l].t+': '+arr.length+' '+plural(arr.length,['замена','замены','замен'])+'</h4><ul>'+
+         arr.map(function(x){ return '<li>'+x.from+' → <b>'+x.to.n+'</b></li>'; }).join('')+'</ul>'+
+         '<div class="rbtns"><button type="button" class="btn go" data-reco="swap" data-lim="'+l+'">Заменить</button>'+
+         '<button type="button" class="btn" data-reco="skip">Не надо</button></div></div>';
+    });
+  }
+  box.innerHTML=h; paintProfBtn();
+}
+/* точка на кнопке профиля, пока есть непросмотренный совет */
+function paintProfBtn(){
+  var b=document.getElementById('profbtn'); if(!b) return;
+  var me=myData()||{}, seen=gget('reco_seen',null);
+  var есть = seen!==meSig(me) && (RECO.prog || RECO.swaps.length);
+  b.classList.toggle('attn', !!есть);
+}
+/* каталог нужен для замен — подтягиваем, когда в профиле есть что беречь */
+function recoBoot(){
+  var me=myData()||{};
+  if(me.lim && me.lim.length && !CAT){ loadCatalog().then(function(){ renderReco(); }).catch(function(){}); }
+  else renderReco();
 }
 function renderDeload(){
   var b=document.getElementById('deloadbox'); if(!b) return;
@@ -1495,7 +1722,7 @@ function renderDeload(){
       '<button class="phrow reset" id="deloadoff">Вернуть обычный объём</button>'
     : '<button class="phrow reset" id="deloadon">Взять лёгкую неделю</button>';
 }
-function openSched(){ renderSched(); fillMe(); renderDeload(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
+function openSched(){ renderSched(); renderDeload(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
 function closeSched(){ var m=document.getElementById('schedm'); if(m) m.classList.remove('show'); }
 
 function setDeload(on){
@@ -1520,11 +1747,14 @@ function renderDayseg(){
   var all=byWeek(allDays());
   /* сколько колонок влезет — решает ширина экрана (auto-fit в CSS), а не код:
      на телефоне это три, на большом окне Telegram вся неделя встаёт в один ряд */
+  /* столько колонок, сколько дней: на телефоне они ужимаются в один ряд,
+     на широком окне не растягиваются шире 110px */
+  seg.style.gridTemplateColumns='repeat('+all.length+',minmax(0,110px))';
   var h='';
   all.forEach(function(k){
     var d=DAYS[k];
     h+='<button data-day="'+k+'"'+(d.light?' data-light="1"':'')+' aria-pressed="'+(k===day)+'"><b>'+
-       dayShort(k)+'</b></button>';
+       dayShort(k)+'</b><i>'+agoLabel(lastDateOf(k))+'</i></button>';
   });
   seg.innerHTML=h;
 }
@@ -1579,25 +1809,25 @@ function шапкаДня(){
 /* ── выбор дня ── */
 function renderDayHead(){
   var nx = suggestedDay();
-  var doneToday = lastDone && lastDone.date===TODAY ? lastDone.day : null;
+  var lw = lastWorkout();
+  var doneToday = (lw && lw.date===TODAY) ? lw.day : null;
   Array.prototype.forEach.call(document.querySelectorAll('#dayseg button, #liteseg button'),function(b){
     var k=b.dataset.day;
     b.setAttribute('aria-pressed', String(k===day));
+    var i=b.querySelector('i'); if(i) i.textContent=agoLabel(lastDateOf(k));
     if(k===doneToday){ b.setAttribute('data-done','1'); b.removeAttribute('data-next'); }
     else { b.removeAttribute('data-done');
            if(k===nx && k!==day) b.setAttribute('data-next','1'); else b.removeAttribute('data-next'); }
   });
   var h=document.getElementById('nexthint');
   if(h){
-    var today = GYM_DAYS[new Date().getDay()];
-    var nsk = nextSchedKey();
     if(doneToday){
-      var af = nsk || nextAfter(doneToday);
-      h.innerHTML=шапкаДня()+' · сегодня закрыт, следующая <b>'+dayLabel(af)+'</b>';
-    } else if(today && DAYS[today]){
-      h.innerHTML = шапкаДня() + (day===today ? ' · сегодня' : ' · сегодня <b>'+dayLabel(today)+'</b>');
+      var af = nextAfter(doneToday);
+      h.innerHTML = шапкаДня() + (day===doneToday ? ' · сегодня закрыт, дальше <b>'+dayShort(af).toLowerCase()+'</b>' : '');
+    } else if(day===nx){
+      h.innerHTML = шапкаДня() + ' · следующий по очереди';
     } else {
-      h.innerHTML = шапкаДня() + (day===nx ? ' · следующая' : ' · следующая <b>'+dayLabel(nx)+'</b>');
+      h.innerHTML = шапкаДня() + ' · по очереди <b>'+dayShort(nx).toLowerCase()+'</b>';
     }
   }
 }
@@ -1611,7 +1841,7 @@ var _lite=document.getElementById('liteseg'); if(_lite) _lite.addEventListener('
 
 /* ══════════ ЖУРНАЛ ПОДХОДОВ ══════════ */
 var NOWT={'Планка':1,'Боковая планка':1,'Ролик для пресса':1,'Подъём ног в висе':1};
-function hasW(e){ return !NOWT[e.n]; }
+function hasW(e){ return !NOWT[e.n] && !e.nw; }
 function isTime(e){ return / с$/.test(e.reps); }
 function stepR(e){ return isTime(e)?5:1; }
 function unitR(e){ return isTime(e)?'секунды':'повторы'; }
@@ -1632,27 +1862,21 @@ function nextAfter(d){
   if(i<0) return CYCLE[0];                 /* лёгкий день круг не сдвигает */
   return CYCLE[(i+1)%CYCLE.length];
 }
-/* Ближайший день недели с тренировкой: начиная с завтра и до конца круга. */
-function nextSchedKey(){
-  var wd=new Date().getDay();
-  for(var i=1;i<=7;i++){
-    var n=(wd+i)%7, k=GYM_DAYS[n];
-    if(k && DAYS[k]) return k;
-  }
-  return null;
+/* Последняя тренировка: свежее из отметки на этом устройстве и истории из облака */
+function lastWorkout(){
+  /* только дни этой программы: DAYS общий на все программы, а очередь — своя */
+  var a = (lastDone && CYCLE.indexOf(lastDone.day)>=0) ? lastDone : null;
+  var b = (HIST && HIST[0] && CYCLE.indexOf(HIST[0].day)>=0) ? {day:HIST[0].day, date:HIST[0].date} : null;
+  if(a && b) return a.date>=b.date ? a : b;
+  return a||b;
 }
-/* Какой день открывать. Расписание человека — главный источник: если сегодня зал,
-   это сегодняшний день, если отдых — ближайший следующий по календарю.
-   Круг по CYCLE остался запасным вариантом на случай пустого расписания:
-   раньше он был главным, и в понедельник приложение предлагало воскресенье,
-   потому что считало от последней тренировки, а не от календаря. */
+/* Какой день открывать: сегодня уже начат — его; иначе следующий за последним
+   сделанным. Календарь тут ни при чём: очередь одна, в какой бы день недели
+   человек ни пришёл. */
 function suggestedDay(){
-  var t = GYM_DAYS[new Date().getDay()];
-  if(t && DAYS[t]) return t;
-  if(lastDone && lastDone.date===TODAY && DAYS[lastDone.day]) return lastDone.day;
-  var n = nextSchedKey();
-  if(n) return n;
-  if(lastDone && DAYS[lastDone.day]) return nextAfter(lastDone.day);
+  var l=lastWorkout();
+  if(l && l.date===TODAY) return l.day;
+  if(l) return nextAfter(l.day);
   return CYCLE[0];
 }
 function markDone(){
@@ -1863,8 +2087,47 @@ function ssCard(a,dia,b,dib){
      '<span>'+кругов+' '+plural(кругов,['круг','круга','кругов'])+'</span>'+
      '<button type="button" data-cyc="1" data-a="'+dia+'" data-b="'+dib+'"'+
      (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div></div>';
-  h+=низКарточки(a,dia,'А')+низКарточки(b,dib,'Б')+'</article>';
+  h+=ssFoot(a,dia,b,dib)+'</article>';
   return h;
+}
+/* Подвал суперсета: те же две кнопки, что у обычной карточки. Четыре кнопки
+   «А · Описание / Б · Описание …» читались как каша. Нажал «Описание» —
+   спрашиваем, про какое из двух, и уже потом раскрываем. */
+function ssFoot(a,dia,b,dib){
+  function блок(e,di){
+    return '<div class="exinfo" id="exinfo'+di+'" hidden>'+
+      '<div class="exmedia">'+mediaFor(e)+
+        '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
+        '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
+      '</div>'+
+      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+    '</div>';
+  }
+  var заменено = a.sub || b.sub;
+  return '<div class="exfoot">'+
+      '<button type="button" class="ebtn" data-sspick="info" data-a="'+dia+'" data-b="'+dib+'" aria-expanded="false">Описание</button>'+
+      '<button type="button" class="ebtn'+(заменено?' on':'')+'" data-sspick="swap" data-a="'+dia+'" data-b="'+dib+'" aria-expanded="false">'+(заменено?'Заменено':'Заменить')+'</button>'+
+    '</div>'+
+    '<div class="sschoice" id="sschoice'+dia+'" hidden></div>'+
+    блок(a,dia)+блок(b,dib);
+}
+/* какое из двух: рисуем две кнопки с именами, действие берём из data-sspick */
+function ssChoice(btn){
+  var dia=+btn.dataset.a, dib=+btn.dataset.b, mode=btn.dataset.sspick;
+  var box=document.getElementById('sschoice'+dia); if(!box) return;
+  var список=exList(day), a=список[dia], b=список[dib];
+  var open=btn.getAttribute('aria-expanded')==='true';
+  /* закрываем всё, что было открыто в этом подвале */
+  Array.prototype.forEach.call(btn.parentNode.querySelectorAll('[data-sspick]'),function(x){ x.setAttribute('aria-expanded','false'); });
+  [dia,dib].forEach(function(di){ var x=document.getElementById('exinfo'+di); if(x) x.hidden=true; });
+  if(open){ box.hidden=true; box.innerHTML=''; return; }
+  var attr = mode==='info' ? 'data-info' : 'data-swap';
+  box.innerHTML=[[a,dia,'А'],[b,dib,'Б']].map(function(x){
+    return '<button type="button" class="ebtn sspick" '+attr+'="'+x[1]+'" data-inss="'+dia+'">'+
+           '<span class="sstag">'+x[2]+'</span><span class="ssnm">'+x[0].n+'</span></button>';
+  }).join('');
+  box.hidden=false;
+  btn.setAttribute('aria-expanded','true');
 }
 function ssRow(e,di,si,tag){
   var v=sess.ex[di].sets[si]; if(!v) return '';
@@ -2323,7 +2586,11 @@ function initDb(){
   DB = STORE;
   paintNote('local');
   setTimeout(syncBoot, 1500);   /* после того как профиль применён */
-  csGet(PROFKEY).then(function(v){
+  csGetBig(AIKEY).then(function(str){
+    /* своя программа приезжает из облака раньше указателя на неё */
+    if(str){ try{ var pr=JSON.parse(str); if(pr && pr.days){ gset('ai_prog', pr); installAiProg(pr); if(profile==='ai') applyProfile('ai'); } }catch(e){} }
+    return csGet(PROFKEY);
+  }).then(function(v){
     /* на новом устройстве профиль приезжает из облака — спрашивать второй раз незачем */
     var b=null; if(v){ try{ b=JSON.parse(v); }catch(e){} }
     if(b && b.start && !gget('startdate', null)) gset('startdate', b.start);
@@ -2353,10 +2620,16 @@ function initDb(){
     if(sn && sn.exists){
       var b=JSON.parse(JSON.stringify(sn.data()||{}));
       if(b.s && typeof b.s==='object' && Object.keys(b.s).length){
-        GYM_DAYS=b.s; set('sched',GYM_DAYS);
-        Object.keys(GYM_DAYS).forEach(function(k){ if(!DAYS[GYM_DAYS[k]]) delete GYM_DAYS[k]; });
+        GYM_DAYS=schedNorm(b.s); set('sched',GYM_DAYS);
         renderDayseg(); renderDayHead(); renderTodaybar();
       }
+    }
+    return DB.doc('state/me').get();
+  }).then(function(sn){
+    if(sn && sn.exists){
+      var b=JSON.parse(JSON.stringify(sn.data()||{}));
+      /* профиль общий на все программы: облако главнее пустого локального */
+      if(b.me && typeof b.me==='object' && !(myData()||{}).goal){ gset('me', b.me); }
     }
     return DB.doc('state/subs').get();
   }).then(function(sn){
@@ -2379,7 +2652,13 @@ function initDb(){
     /* галочки, поставленные до готовности хранилища, иначе никуда не уедут */
     if(countDone()>0) commit();
     /* подсказки на карточках считаются по истории — подтягиваем её сразу */
-    return loadHist().then(function(){ refillIfUntouched(); renderList(); });
+    return loadHist().then(function(){
+      /* очередь считается по истории: с её приходом следующий день может смениться */
+      var s2=suggestedDay();
+      if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
+      refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
+      recoBoot();
+    });
   }).catch(function(e){ reportErr('store', e); });
 }
 
@@ -2993,7 +3272,7 @@ function renderTodaybar(){
   el.innerHTML=out;
 }
 
-function todayLetter(){ return GYM_DAYS[new Date().getDay()] || null; }
+function todayLetter(){ return GYM_DAYS[new Date().getDay()] ? 1 : null; }
 function nextGymDay(){
   var wd=new Date().getDay();
   for(var i=1;i<=7;i++){ var n=(wd+i)%7; if(n in GYM_DAYS) return {d:DN[n], in:i}; }
@@ -3013,21 +3292,43 @@ if(TG){
 }
 
 /* ── обработчики окон ── */
-['me-bw','me-ht','me-age','me-sex'].forEach(function(id){
+['me-bw','me-ht','me-age','me-sex','me-goal'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('change', saveMe);
 });
-document.getElementById('schedclose').addEventListener('click', function(){ saveMe(); closeSched(); });
+document.getElementById('profbtn').addEventListener('click', function(){ openProf(); haptic('light'); });
+document.getElementById('profclose').addEventListener('click', closeProf);
+document.getElementById('profm').addEventListener('click', function(e){
+  if(e.target.id==='profm'){ closeProf(); return; }
+  var sb=e.target.closest('.seg button[data-v]');
+  if(sb){
+    var seg=sb.parentNode, multi=seg.classList.contains('multi');
+    if(multi){ sb.setAttribute('aria-pressed', String(sb.getAttribute('aria-pressed')!=='true')); }
+    else Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
+    haptic('light');
+    if(multi && !CAT){ loadCatalog().then(saveMe).catch(saveMe); } else saveMe();
+    return;
+  }
+  if(e.target.closest('#pfswitch')){ closeProf(); showPicker(); return; }
+  var rb=e.target.closest('button[data-reco]');
+  if(rb){
+    var what=rb.dataset.reco;
+    if(what==='prog' && RECO.prog){ gset('reco_seen', null); choose(RECO.prog.k); closeProf(); haptic('medium'); return; }
+    if(what==='swap'){
+      RECO.swaps.filter(function(x){ return x.lim===rb.dataset.lim; }).forEach(function(x){ applySub(x.dk, x.di, x.to); });
+      haptic('medium');
+    }
+    gset('reco_seen', meSig(myData()||{}));
+    renderReco();
+  }
+});
+document.getElementById('schedclose').addEventListener('click', function(){ closeSched(); });
 document.getElementById('schedm').addEventListener('click', function(e){
   if(e.target.id==='schedm') closeSched();
 });
-document.getElementById('schedlist').addEventListener('change', function(e){
-  var s=e.target.closest('select[data-wd]'); if(!s) return;
-  var wd=+s.dataset.wd, v=s.value;
-  if(v){
-    /* один день программы живёт на одном дне недели: если он уже где-то стоял — освобождаем */
-    Object.keys(GYM_DAYS).forEach(function(k){ if(GYM_DAYS[k]===v && +k!==wd) delete GYM_DAYS[k]; });
-    GYM_DAYS[wd]=v;
-  } else delete GYM_DAYS[wd];
+document.getElementById('schedlist').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-wd]'); if(!b) return;
+  var wd=+b.dataset.wd;
+  if(GYM_DAYS[wd]) delete GYM_DAYS[wd]; else GYM_DAYS[wd]=1;
   schedApplied();
 });
 document.getElementById('deloadbox').addEventListener('click', function(e){
@@ -3036,7 +3337,7 @@ document.getElementById('deloadbox').addEventListener('click', function(e){
 });
 document.getElementById('schedlist').addEventListener('click', function(e){
   if(!e.target.closest('#schedreset')) return;
-  GYM_DAYS = JSON.parse(JSON.stringify(PROF.gymDays));
+  GYM_DAYS = schedNorm(PROF.gymDays);
   schedApplied();
 });
 /* кнопка живёт внутри перерисовываемой строки — слушаем полосу целиком */
@@ -3079,9 +3380,18 @@ if(_pcb) _pcb.addEventListener('click', function(e){
 });
 /* кнопка «заменить» на карточке упражнения */
 document.getElementById('list').addEventListener('click', function(e){
+  var sp=e.target.closest('button[data-sspick]');
+  if(sp){ ssChoice(sp); haptic('light'); return; }
   var ib=e.target.closest('button[data-info]');
   if(ib){
     var box=document.getElementById('exinfo'+ib.dataset.info);
+    if(ib.dataset.inss!=null){
+      /* выбор внутри суперсета: прячем вопрос «какое из двух», открываем одно */
+      var ch=document.getElementById('sschoice'+ib.dataset.inss);
+      if(ch){ ch.hidden=true; ch.innerHTML=''; }
+      if(box){ box.hidden=false; haptic('light'); }
+      return;
+    }
     var open=ib.getAttribute('aria-expanded')==='true';
     if(box){ box.hidden=open; ib.setAttribute('aria-expanded', String(!open)); haptic('light'); }
     return;
@@ -3108,7 +3418,130 @@ document.getElementById('list').addEventListener('click', function(e){
 var _ps=document.getElementById('profswitch');
 if(_ps) _ps.addEventListener('click', function(){ showPicker(); });
 
+/* ══════════ ИИ: ПРОГРАММА ПОД ПРОФИЛЬ ══════════
+   Правила выше выбирают из трёх готовых программ. Когда ни одна не подходит —
+   дом, редкие дни, свои ограничения, — программу собирает модель через наш
+   Worker (ключ API лежит там секретом, приложение его не видит). Результат
+   становится четвёртой программой «ai» с теми же карточками, кругами и
+   прогрессией, что и остальные. */
+var AIKEY='app_aiprog';
+function csSetBig(k, str){
+  /* CloudStorage: значение до 4096 символов — режем на куски */
+  var parts=[]; for(var i=0;i<str.length;i+=3800) parts.push(str.slice(i,i+3800));
+  var jobs=parts.map(function(pt,i){ return csSet(k+'_'+i, pt); });
+  jobs.push(csSet(k, String(parts.length)));
+  return Promise.all(jobs);
+}
+function csGetBig(k){
+  return csGet(k).then(function(n){
+    n=parseInt(n,10); if(!n) return null;
+    var ks=[]; for(var i=0;i<n;i++) ks.push(k+'_'+i);
+    return csGetMany(ks).then(function(o){
+      var out=''; for(var i=0;i<n;i++){ if(!o[ks[i]]) return null; out+=o[ks[i]]; }
+      return out;
+    });
+  });
+}
+function incFor(q){ return {barbell:2.5, dumbbell:2, kettlebells:4, machine:5, cable:2.5, 'e-z curl bar':2.5}[q] || 2.5; }
+/* имя из истории, если это то же движение под другим именем: так прогрессия
+   не обнуляется при переходе на новую программу */
+function normName(n){
+  return String(n||'').toLowerCase().replace(/\([^)]*\)/g,' ')
+    .replace(/\b(в|на|с|со|из|к|тренажёре|тренажёр|блоке|блок|гантели|гантелями|штанга|штангой|штанги|сидя|лёжа|стоя)\b/g,' ')
+    .replace(/[^а-яё0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+}
+function histName(n){
+  if(!HIST) return n;
+  var want=normName(n), hit=null;
+  for(var i=0;i<HIST.length;i++){
+    var ex=HIST[i].ex||[];
+    for(var j=0;j<ex.length;j++){ if(normName(ex[j].n)===want){ if(hit && hit!==ex[j].n) return n; hit=ex[j].n; } }
+  }
+  return hit||n;
+}
+function installAiProg(prog){
+  if(!prog || !prog.days || !prog.days.length) return null;
+  var keys=[];
+  prog.days.forEach(function(d,i){
+    var k='A'+(i+1); keys.push(k);
+    DAYS[k]={ name:'День '+(i+1), s:d.s||('День '+(i+1)), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
+      var time=/ с$/.test(x.reps||'');
+      return { p:x.p||'', n:histName(x.n), en:x.en||'', cat:x.id, sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
+               ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'', ph:null, fig:null, ai:true,
+               nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
+    }) };
+  });
+  var me=myData()||{}, fit={goals:{},level:{},place:{},days:keys.length};
+  if(me.goal) fit.goals[me.goal]=3; if(me.level) fit.level[me.level]=3; fit.place[me.place||'gym']=3;
+  var t=new Date();
+  PROFILES.ai={ name:prog.name||'Моя программа', goal:'Собрана под твой профиль',
+    sub:(prog.note||'').slice(0,160), heavy:keys, lightDays:[], gymDays:schedNorm(GYM_DAYS),
+    start:[t.getFullYear(),t.getMonth(),t.getDate()], phases:PROFILES.friend.phases, fit:fit, custom:true };
+  return 'ai';
+}
+function aiPayload(){
+  var me=myData()||{};
+  var program={ name:PROF.name, days: allDays().map(function(dk){ return { sub:(DAYS[dk]||{}).sub||'', ex: exList(dk).map(function(e){ return e.n; }) }; }) };
+  var history=(HIST||[]).slice(0,8).map(function(w){
+    return { date:ruDate(w.date), ex:(w.ex||[]).map(function(x){
+      var best=null; (x.sets||[]).forEach(function(v){ if(v.r==null) return; var sc=(v.w||0)*1000+v.r; if(!best||sc>best.sc) best={sc:sc,w:v.w,r:v.r}; });
+      return { n:x.n, top: best ? ((best.w!=null?best.w+'×':'')+best.r) : '—' };
+    }) };
+  });
+  return { uid:syncUid(), me:me, days:Object.keys(GYM_DAYS).length||3, program:program, history:history };
+}
+var AIPROG=null;
+function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
+function aiBuild(){
+  var btn=document.getElementById('profai'); if(!btn || btn.disabled) return;
+  var me=myData()||{};
+  if(!me.goal){ aiState('Сначала выбери цель — от неё зависит вся схема.', true); return; }
+  btn.disabled=true; aiState('Собираю программу под тебя… обычно 20–40 секунд');
+  document.getElementById('aibox').innerHTML='';
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 90000);
+  fetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
+    .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok) throw new Error(d.error||('HTTP '+r.status)); return d; }); })
+    .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog); haptic('ok'); })
+    .catch(function(e){ aiState('Не вышло: '+(e.name==='AbortError'?'слишком долго, попробуй ещё раз':e.message), true); haptic('err'); })
+    .then(function(){ clearTimeout(tm); btn.disabled=false; });
+}
+function renderAiPreview(prog){
+  var box=document.getElementById('aibox'); if(!box) return;
+  var h='<div class="aiprev"><h4>'+prog.name+'</h4><p class="aisub">'+prog.note+'</p>';
+  prog.days.forEach(function(d,i){
+    h+='<div class="aiday">День '+(i+1)+' · '+d.s+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
+       d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+'<b>'+x.n+'</b> · '+x.sets+' × '+x.reps+'</li>'; }).join('')+'</ul>';
+  });
+  h+='<div class="rbtns"><button type="button" class="btn go" id="aiapply">Перейти на эту программу</button>'+
+     '<button type="button" class="btn" id="aidrop">Не надо</button></div></div>';
+  box.innerHTML=h;
+}
+function aiApply(){
+  if(!AIPROG) return;
+  /* имена из истории фиксируем в самой программе — иначе при следующем
+     запуске, когда история ещё не подгружена, они бы вернулись к каталожным */
+  AIPROG.days.forEach(function(d){ d.ex.forEach(function(x){ x.n=histName(x.n); }); });
+  gset('sched_any', GYM_DAYS);
+  var k=installAiProg(AIPROG); if(!k) return;
+  gset('ai_prog', AIPROG);
+  var str=JSON.stringify(AIPROG);
+  csSetBig(AIKEY, str).catch(function(){});
+  try{ syncPost('/s', {uid:syncUid(), key:'aiprog', data:AIPROG}); }catch(e){}
+  gset('reco_seen', null);
+  choose('ai');
+  document.getElementById('aibox').innerHTML='';
+  closeProf(); haptic('ok');
+}
+document.getElementById('profai').addEventListener('click', aiBuild);
+document.getElementById('aibox').addEventListener('click', function(e){
+  if(e.target.closest('#aiapply')) aiApply();
+  else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
+});
+
 /* ── init ── */
+var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
 var _saved = gget('profile', null);
 if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
 else { applyProfile('shp', true); showPicker(true); }
