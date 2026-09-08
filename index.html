@@ -4286,19 +4286,39 @@ function openFood(){
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; renderMeas(); } }).catch(function(){});
-  fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; renderRecent(); } }).catch(function(){});
+  fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
 }
 /* «повторить» — то, что ел в прошлые дни, одним нажатием и без модели */
+/* Кому и когда приписать приём, добавленный одним нажатием: первое за день
+   в своё время — это завтрак/обед/ужин, всё, что сверх, — перекус. */
+function kindNow(){
+  var h=new Date().getHours();
+  var осн = h<11 ? 'завтрак' : (h<16 ? 'обед' : (h<22 ? 'ужин' : 'перекус'));
+  var есть=(FOOD.day&&FOOD.day.meals||[]).some(function(m){ return m.kind===осн; });
+  return есть ? 'перекус' : осн;
+}
 function renderRecent(){
   var box=document.getElementById('frecent'); if(!box) return;
-  box.innerHTML=(FOOD.recent||[]).map(function(m){
-    return '<button type="button" data-frep="'+m.id+'" title="'+esc(m.text)+'">↻ <b>'+esc(String(m.text).slice(0,28))+(String(m.text).length>28?'…':'')+'</b> · '+Math.round(m.kcal)+' ккал</button>';
+  var чип=function(a){ return '<button type="button" '+a.attr+' title="'+esc(a.t)+'">'+a.ic+' <b>'+
+    esc(String(a.t).slice(0,26))+(String(a.t).length>26?'…':'')+'</b> · '+Math.round(a.k)+' ккал</button>'; };
+  var h=(FOOD.often||[]).map(function(f,i){
+    return чип({attr:'data-ffood="'+i+'"', ic:'+', t:f.name+(f.g?' '+f.g+' г':''), k:f.kcal});
   }).join('');
+  h+=(FOOD.recent||[]).map(function(m){ return чип({attr:'data-frep="'+m.id+'"', ic:'↻', t:m.text, k:m.kcal}); }).join('');
+  box.innerHTML=h;
 }
 document.getElementById('frecent').addEventListener('click', function(e){
-  var b=e.target.closest('[data-frep]'); if(!b) return;
-  fPost('/meal/repeat', {uid:syncUid(), id:b.dataset.frep, date:fDate()}).then(function(d){ FOOD.day=d.day; renderFoodDay(); fReply('Повторил: '+b.textContent.replace('↻','').trim()+'. '+(d.day.line||'')); haptic('ok'); })
-    .catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+  var b=e.target.closest('[data-frep],[data-ffood]'); if(!b) return;
+  var готово=function(d, имя){ FOOD.day=d.day; renderFoodDay(); fReply('Записал: '+имя+'. '+(d.day.line||'')); haptic('ok'); };
+  var беда=function(err){ fReply('Не вышло: '+err.message,'bad'); };
+  if(b.dataset.ffood!=null){
+    var f=(FOOD.often||[])[+b.dataset.ffood]; if(!f) return;
+    fPost('/meal/add', {uid:syncUid(), date:fDate(), kind:kindNow(), text:f.name+(f.g?' '+f.g+' г':''),
+      kcal:f.kcal, prot:f.prot, fib:f.fib}).then(function(d){ готово(d, f.name); }).catch(беда);
+    return;
+  }
+  fPost('/meal/repeat', {uid:syncUid(), id:b.dataset.frep, date:fDate()})
+    .then(function(d){ готово(d, b.textContent.replace('↻','').trim()); }).catch(беда);
 });
 /* mode:'range' — перебор плохой (калории); 'min' — перебор нормален (белок,
    клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя. */
