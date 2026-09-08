@@ -378,6 +378,52 @@ td:first-child{color:var(--amber);font-weight:500;white-space:nowrap}
   font-size:11px;color:var(--muted);border-top:1px solid var(--line);margin-top:8px;padding-top:8px}
 .empt{color:var(--dim);font-size:13px;text-align:center;padding:30px 12px;line-height:1.6}
 .l1-in.three{grid-template-columns:repeat(3,1fr)}
+/* ── еда ── */
+.fday{display:grid;gap:10px;margin:12px 0 4px}
+.fbar{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px;font-size:13px}
+.fbar u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.fbar .tr{height:8px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line-soft);overflow:hidden;position:relative}
+.fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--amber);border-radius:99px}
+.fbar .tr i.ok{background:var(--done)}
+.fbar .tr i.over{background:var(--warn)}
+.fbar .tr s{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--dim)}
+.fbar b{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fbar b em{font-style:normal;color:var(--dim);font-weight:400;font-family:'JetBrains Mono',monospace;font-size:11px}
+.fline{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0}
+.fline b{color:var(--text);font-weight:500}
+.fmeals{margin:12px 0 10px}
+.fmeal{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.fmeal:first-child{border-top:0}
+.fmeal .fk{flex:0 0 58px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
+.fmeal .fn{flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+.fmeal .fx{flex:0 0 28px;height:28px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--dim);font-size:14px}
+.fask{display:flex;gap:8px;align-items:center;margin-top:10px}
+.fask input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text);font:inherit;font-size:14px;-webkit-appearance:none}
+.fbtn{flex:0 0 44px;height:44px;border-radius:11px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
+  display:flex;align-items:center;justify-content:center;font:inherit;font-size:18px}
+.fbtn svg{width:22px;height:22px}
+.fbtn.go{border-color:var(--amber);color:var(--amber)}
+.fbtn:disabled{opacity:.5}
+.freply{margin:12px 0 0;padding:12px 13px;border-left:2px solid var(--amber);background:var(--surface-2);border-radius:0 12px 12px 0;
+  font-size:13px;line-height:1.55;color:var(--text);white-space:pre-line}
+.freply.wait{color:var(--dim);border-left-color:var(--line)}
+.freply.bad{border-left-color:var(--warn)}
+.fhint{margin:10px 0 0;font-size:11.5px;color:var(--dim);line-height:1.5}
+.fweek{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px;margin-top:8px}
+.fweek .fd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.fweek .fd .fb{width:100%;max-width:34px;border-radius:6px 6px 2px 2px;background:var(--amber);opacity:.85;min-height:2px}
+.fweek .fd .fb.low{background:var(--warn)}
+.fweek .fd .fb.none{background:var(--line)}
+.fweek .fd .fb.ok{background:var(--done)}
+.fweek .fd u{text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim)}
+.fweekt{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.5}
+.fmeas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:8px}
+.fmeas .fm{flex:0 0 auto;padding:8px 10px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-2);text-align:center}
+.fmeas .fm u{display:block;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--dim);margin-bottom:2px}
+.fmeas .fm b{display:block;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.fmeas .fm i{font-style:normal;font-size:10.5px;color:var(--muted)}
 /* ── v3: чистка и ритм ───────────────────── */
 .todaybar{padding:20px 0 4px;gap:8px}
 .todaybar .ts.done{border-color:var(--done);color:var(--done);background:rgba(79,168,139,.10)}
@@ -765,9 +811,10 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 </header>
 
 <nav class="l1" id="l1" role="tablist" aria-label="Разделы">
-  <div class="l1-in three">
+  <div class="l1-in">
     <button role="tab" data-page="gym" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="log" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V6a2 2 0 0 1 2-2h11a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2z"/><path d="M8 8h7M8 12h7M8 16h4"/></svg><span>Журнал</span></button>
+    <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2"/></svg><span>Еда</span></button>
     <button role="tab" data-page="ref" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg><span>Каталог</span></button>
   </div>
 </nav>
@@ -800,6 +847,31 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
         <p class="syncst" id="syncst"></p>
         <textarea id="repbox" readonly></textarea>
         <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
+      </div>
+    </section>
+    <section class="page hide" id="p-food">
+      <div class="sec" style="padding-top:18px">
+        <h2>Еда</h2>
+        <div class="fday" id="fday"></div>
+        <div class="fmeals" id="fmeals"></div>
+        <div class="fask">
+          <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
+          <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+          <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
+          <input id="ffile" type="file" accept="image/*" capture="environment" hidden>
+        </div>
+        <p class="freply" id="freply" hidden></p>
+        <p class="fhint">Фото еды и отчёты весов удобнее слать прямо боту в чат — считает и записывает сюда же.</p>
+        <h3 class="lh">Неделя</h3>
+        <div class="fweek" id="fweek"></div>
+        <p class="fweekt" id="fweekt"></p>
+        <h3 class="lh">Весы</h3>
+        <div class="fmeas" id="fmeas"></div>
+        <div class="fask">
+          <input id="fw" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="вес, кг">
+          <input id="ffat" type="number" inputmode="decimal" step="0.1" min="3" max="60" placeholder="жир, %">
+          <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
+        </div>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -3224,7 +3296,7 @@ document.getElementById('tskip').addEventListener('click', stopTimer);
 document.getElementById('tplus').addEventListener('click', function(){ left+=30; paint(); });
 
 /* ══════════ НАВИГАЦИЯ ══════════ */
-var PAGES=['gym','log','ref'];
+var PAGES=['gym','log','food','ref'];
 function plural(n,forms){
   var a=Math.abs(n)%100, b=a%10;
   if(a>10&&a<20) return forms[2];
@@ -3242,6 +3314,7 @@ function goPage(p){
   });
   gset('page',p);
   if(p==='log') renderLog();
+  if(p==='food') openFood();
   if(p==='ref') openCatPage();
   var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
@@ -3538,6 +3611,102 @@ document.getElementById('profai').addEventListener('click', aiBuild);
 document.getElementById('aibox').addEventListener('click', function(e){
   if(e.target.closest('#aiapply')) aiApply();
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
+});
+
+/* ══════════ ЕДА ══════════
+   Считает и хранит Worker (тот же uid, что у тренировок). Здесь — сегодня
+   против нормы, список приёмов, ввод текстом или фото, неделя и весы. */
+var FOOD={day:null, week:null, meas:null, busy:false};
+function fGet(path){ return fetch(SYNCURL+path).then(function(r){ return r.json(); }); }
+function fPost(path, body){ return fetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }); }
+function openFood(){
+  renderFoodDay(); renderFoodWeek(); renderMeas();
+  fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
+  fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
+  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; renderMeas(); } }).catch(function(){});
+}
+function fbar(label, v, t, unit){
+  var pct = t ? Math.min(100, Math.round(v/t*100)) : 0;
+  var cls = t ? (v>t*1.15 ? 'over' : (v>=t*0.9 ? 'ok' : '')) : '';
+  return '<div class="fbar"><u>'+label+'</u><div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i>'+(t?'<s style="left:100%"></s>':'')+'</div>'+
+         '<b>'+v+(t?' <em>/ '+t+'</em>':'')+' <em>'+unit+'</em></b></div>';
+}
+function renderFoodDay(){
+  var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
+  var d=FOOD.day;
+  if(!d){ box.innerHTML='<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
+  var t=d.targets||{};
+  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') + fbar('белок', d.prot, t.prot, 'г') +
+    '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>';
+  ml.innerHTML = (d.meals||[]).map(function(m){
+    return '<div class="fmeal"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
+           '<span class="fn">'+Math.round(m.kcal)+' · '+Math.round(m.prot||0)+' г</span>'+
+           '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
+  }).join('');
+}
+function renderFoodWeek(){
+  var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
+  var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
+  var tg=w.targets||{}, mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return d.kcal; })), 1);
+  box.innerHTML = w.days.map(function(d){
+    /* сегодняшний день ещё не закончен — красным его не красим */
+    var h=Math.round(d.kcal/mx*80), cls = !d.n ? 'none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'ok' : ''));
+    return '<div class="fd"><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px" title="'+d.kcal+'"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
+  }).join('');
+  t.textContent = w.text;
+}
+function renderMeas(){
+  var box=document.getElementById('fmeas'); if(!box) return;
+  var ms=(FOOD.meas||[]).slice(0,10).reverse();
+  box.innerHTML = ms.length ? ms.map(function(m){
+    return '<div class="fm"><u>'+ruDate(m.date)+'</u><b>'+m.w+'</b><i>'+(m.fat!=null?m.fat+'%':'—')+(m.prot!=null?' · б '+m.prot:'')+'</i></div>';
+  }).join('') : '<p class="fline">Замеров нет. Пришли боту скриншот отчёта весов или впиши вес ниже.</p>';
+}
+function fReply(text, cls){ var el=document.getElementById('freply'); if(!el) return; el.hidden=!text; el.textContent=text||''; el.className='freply'+(cls?' '+cls:''); }
+function foodSend(text, image, mime){
+  if(FOOD.busy) return; FOOD.busy=true;
+  var sb=document.getElementById('fsend'), pb=document.getElementById('fphoto'); sb.disabled=true; pb.disabled=true;
+  fReply(image ? 'Смотрю фото…' : 'Считаю…', 'wait');
+  fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null})
+    .then(function(d){ FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.'); document.getElementById('ftext').value=''; haptic('ok');
+      fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
+    .catch(function(e){ fReply('Не вышло: '+e.message, 'bad'); haptic('err'); })
+    .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
+}
+/* фото ужимаем до 1280 px и JPEG — Worker и модель большего не ждут */
+function shrink(file){
+  return new Promise(function(res, rej){
+    var img=new Image(), url=URL.createObjectURL(file);
+    img.onload=function(){
+      var k=Math.min(1, 1280/Math.max(img.width,img.height));
+      var c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.82).split(',')[1]);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('не смог прочитать фото')); };
+    img.src=url;
+  });
+}
+document.getElementById('fsend').addEventListener('click', function(){ var t=document.getElementById('ftext').value.trim(); if(t) foodSend(t); });
+document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); var t=e.target.value.trim(); if(t) foodSend(t); } });
+document.getElementById('fphoto').addEventListener('click', function(){ document.getElementById('ffile').click(); });
+document.getElementById('ffile').addEventListener('change', function(e){
+  var f=e.target.files&&e.target.files[0]; if(!f) return;
+  var t=document.getElementById('ftext').value.trim();
+  shrink(f).then(function(b64){ foodSend(t, b64, 'image/jpeg'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+  e.target.value='';
+});
+document.getElementById('fmeals').addEventListener('click', function(e){
+  var b=e.target.closest('[data-fdel]'); if(!b) return;
+  fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+});
+document.getElementById('fmsave').addEventListener('click', function(){
+  var w=+document.getElementById('fw').value, f=+document.getElementById('ffat').value;
+  if(!(w>20)) return;
+  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null}).then(function(d){ FOOD.meas=d.measures; renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; haptic('ok');
+    fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
+    .catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
 });
 
 /* ── init ── */
