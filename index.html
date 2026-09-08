@@ -229,16 +229,30 @@ select.week{
   padding:14px;margin-bottom:10px;
 }
 .card.full{border-color:var(--done)}
+/* Шапка карточки: миниатюра + текст в один ряд. Три отдельные строки
+   (надкласс, название, два чипа) занимали втрое больше места, а движение —
+   главное, что нужно увидеть перед подходом, — было спрятано в «Описание». */
+.exhead{display:flex;align-items:center;gap:12px}
+.exttl{flex:1;min-width:0}
+.exthumb{flex:0 0 76px;width:76px;padding:0;border:none;background:none;border-radius:10px;
+  -webkit-tap-highlight-color:transparent}
+.exthumb .fig2{flex:none;width:76px;border-radius:10px}
+.exthumb .fig{width:76px;height:57px;flex:none}
+.exthumb:active{opacity:.6}
+.exthumb.sm{flex:0 0 52px;width:52px}
+.exthumb.sm .fig2,.exthumb.sm .fig{width:52px}
+.exthumb.sm .fig{height:39px}
 .eyebrow{
   font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--accent);margin-bottom:5px;
+  color:var(--accent);margin-bottom:3px;display:flex;align-items:center;gap:6px;
 }
 .card.full .eyebrow{color:var(--done)}
-.exname{font-size:17px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
+.exname{font-size:16.5px;font-weight:600;line-height:1.22;letter-spacing:-.01em}
 .spec{
-  display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;
+  margin-top:5px;
   font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--muted);
 }
+.spec span{color:var(--dim);margin:0 2px}
 .chip{background:var(--card-2);border:1px solid var(--line-soft);border-radius:6px;padding:3px 7px}
 .row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
 .wt{display:flex;align-items:center;gap:5px;background:var(--card-2);border:1px solid var(--line);border-radius:9px;padding:4px 9px}
@@ -420,8 +434,9 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 /* ── журнал подходов ─────────────────────── */
 .lastline{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--dim);margin:10px 0 0;letter-spacing:.02em;line-height:1.45}
 .lastline b{color:var(--muted);font-weight:400}
-.setgrid{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.sethead{display:flex;align-items:center;gap:6px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;
+.setgrid{margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.sethead{display:flex;align-items:center;gap:6px;margin-bottom:-1px;
+  font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;
   letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .sethead .sn{flex:0 0 16px}
 /* что вешать на гриф — считать блины между подходами человек не должен */
@@ -648,8 +663,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .reco2 .rb button:active{opacity:.6}
 
 /* карточка упражнения */
-.card{padding:15px 15px 13px;margin-bottom:11px}
-.spec{margin-top:8px}
+.card{padding:13px 13px 11px;margin-bottom:9px}
 .cues li.nb{padding-left:0;margin-bottom:0}
 .cues li.nb::before{display:none}
 
@@ -665,7 +679,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .stp input::placeholder{color:var(--dim);font-weight:300;font-size:14px}
 .setrow.done .stp input{background:rgba(var(--done-rgb),.09);box-shadow:none}
 .sethead{margin-bottom:1px}
-.setgrid{gap:7px;margin-top:10px}
+.setgrid{gap:6px;margin-top:7px}
 .setrow .sn{font-size:11.5px;color:var(--dim)}
 .setrow.done .sn{color:var(--done)}
 .exmedia{margin-top:14px}
@@ -690,7 +704,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
   border:none;background:none;padding:0 2px;line-height:1.5}
 .dbnote.ok{color:var(--done)}
 .dbnote.warn{color:var(--accent)}
-.allb{flex:0 0 48px;min-height:40px;background:none;border:none;padding:0;
+.allb{flex:0 0 48px;min-height:32px;background:none;border:none;padding:0;
   font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--dim);text-align:center;line-height:1}
 .allb:active{color:var(--accent)}
@@ -862,7 +876,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   text-transform:uppercase;color:var(--done);font-weight:400}
 .sslead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
 .sslead-t{flex:1;min-width:0}
-.sslead-t b{display:block;font-size:14.5px;font-weight:600;color:var(--text);line-height:1.25}
+.sslead-t b{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:600;color:var(--text);line-height:1.25}
 .sslead-t i{font-style:normal;font-size:11.5px;color:var(--dim)}
 .sstag{display:inline-flex;align-items:center;justify-content:center;
   width:22px;height:22px;border-radius:7px;flex:0 0 22px;
@@ -877,8 +891,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .ssrow .sn{opacity:1}
 .stp.ghost{visibility:hidden}
 .sscard .exfoot{margin-top:10px}
-.rec{font-size:13px;line-height:1.4;color:var(--muted);margin:2px 0 12px;
-  padding:8px 11px;border-radius:10px;background:var(--card-2);
+.rec{font-size:13px;line-height:1.38;color:var(--muted);margin:9px 0 9px;
+  padding:7px 10px;border-radius:10px;background:var(--card-2);
   border-left:3px solid var(--line)}
 .rec b{color:var(--text);font-weight:600}
 .rec.up{border-left-color:var(--done)}
@@ -887,12 +901,12 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .rec.warn b{color:var(--warn)}
 .rec.start{border-left-color:var(--accent)}
 .rec.wait{opacity:.6}
-.exfoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.ebtn{border:1px solid var(--line);background:var(--card-2);border-radius:11px;
-  padding:11px 8px;font-size:13.5px;color:var(--muted);transition:border-color .18s,color .18s}
+.exfoot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.ebtn{border:.5px solid var(--line);background:var(--card-2);border-radius:10px;
+  padding:9px 8px;font-size:13px;color:var(--muted);transition:border-color .18s,color .18s}
 .ebtn:active,.ebtn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .ebtn.on{color:var(--accent);border-color:var(--accent-2)}
-.exinfo{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:12px}
+.exinfo{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
 .sschoice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .sschoice .ebtn{display:flex;align-items:center;gap:8px;text-align:left;padding:9px 10px;
   border-color:var(--accent-2);color:var(--text)}
@@ -902,16 +916,16 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .syncst{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
 .syncst.ok{color:var(--done)}
 .syncst.bad{color:var(--warn)}
-.tgt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:99px;
-  font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.05em;
-  text-transform:none;border:1px solid var(--line);color:var(--dim)}
+.tgt{display:inline;margin-left:5px;padding:0;border-radius:0;
+  font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;letter-spacing:.05em;
+  text-transform:none;border:none;color:var(--dim)}
 .tgt.up{border-color:var(--done);color:var(--done)}
 .tgt.warn{border-color:var(--warn);color:var(--warn)}
-.setadd{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px;
-  padding-top:9px;border-top:1px solid var(--line-soft)}
+.setadd{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:4px;
+  padding-top:6px;border-top:.5px solid var(--line-soft)}
 .setadd span{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--dim);
   min-width:96px;text-align:center}
-.setadd button{width:38px;height:34px;border-radius:10px;border:1px solid var(--line);
+.setadd button{width:40px;height:32px;border-radius:9px;border:.5px solid var(--line);
   background:var(--card-2);color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
 .setadd button:active{border-color:var(--accent);color:var(--accent)}
 .setadd button[disabled]{opacity:.3;cursor:default}
@@ -942,7 +956,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   font:inherit;font-size:12px;cursor:pointer}
 .swap:active{color:var(--accent);border-color:var(--accent-2)}
 .exen{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--dim);
-  margin:-2px 0 6px;letter-spacing:.02em}
+  margin:0 0 8px;letter-spacing:.02em}
 /* два кадра движения, сменяются раз в 1,2 секунды */
 .fig2{flex:0 0 128px;width:128px;aspect-ratio:4/3;position:relative;overflow:hidden;
   border:1px solid var(--line-soft);border-radius:10px;background:var(--card-solid)}
@@ -2466,22 +2480,30 @@ function низКарточки(e,di,метка){
       '<button type="button" class="ebtn'+(e.sub?' on':'')+'" data-swap="'+di+'">'+(метка?метка+' · ':'')+(e.sub?'Заменено':'Заменить')+'</button>'+
     '</div>'+
     '<div class="exinfo" id="exinfo'+di+'" hidden>'+
-      '<div class="exmedia">'+mediaFor(e)+
-        '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-        '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-      '</div>'+
+      (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
+      '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
+      '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
       (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
     '</div>';
 }
+/* Шапка карточки: слева движущаяся миниатюра (два кадра), справа название и
+   схема одной строкой. Раньше картинка пряталась в «Описание», и человек её
+   не видел вовсе; заодно три отдельные строки — надкласс, название, чипы —
+   ужались в один блок рядом с картинкой. */
+function шапка(e, di, метка){
+  var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
+  return '<div class="exhead">'+
+    '<button type="button" class="exthumb" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
+    '<div class="exttl">'+
+      '<div class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</div>'+
+      '<div class="exname">'+e.n+'</div>'+
+      '<div class="spec">'+setsFor(e,di)+' × '+repsOf(e)+' <span>·</span> отдых '+rest+'</div>'+
+    '</div></div>';
+}
 function одна(e,di){
   var all = sess.ex[di].sets.every(function(v){ return v.done; });
-  var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
   return '<article class="card'+(all?' full':'')+'">'+
-     '<div class="eyebrow">'+e.p+'</div>'+
-     '<div class="exname">'+e.n+'</div>'+
-     (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
-     '<div class="spec"><span class="chip">'+setsFor(e,di)+' × '+repsOf(e)+'</span>'+
-       '<span class="chip">отдых '+rest+'</span></div>'+
+     шапка(e,di,'')+
      adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di,'')+
    '</article>';
 }
@@ -2496,8 +2518,9 @@ function ssCard(a,dia,b,dib){
       Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга</div>';
   [[a,dia,'А'],[b,dib,'Б']].forEach(function(x){
     var e=x[0], di=x[1], t=x[2], tg=targetOf(e);
-    h+='<div class="sslead"><span class="sstag">'+t+'</span>'+
-       '<div class="sslead-t"><b>'+e.n+'</b>'+
+    h+='<div class="sslead">'+
+       '<button type="button" class="exthumb sm" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
+       '<div class="sslead-t"><b><span class="sstag">'+t+'</span>'+e.n+'</b>'+
          '<i>'+repsOf(e)+' '+unitR2(e)+(tg.lw!=null?' · было '+fmtKg(tg.lw)+' кг':'')+'</i></div>'+
        '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
        adviceLine(e);
@@ -2527,10 +2550,9 @@ function ssCard(a,dia,b,dib){
 function ssFoot(a,dia,b,dib){
   function блок(e,di){
     return '<div class="exinfo" id="exinfo'+di+'" hidden>'+
-      '<div class="exmedia">'+mediaFor(e)+
-        '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-        '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-      '</div>'+
+      (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
+      '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
+      '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
       (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
     '</div>';
   }
