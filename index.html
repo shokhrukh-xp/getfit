@@ -664,6 +664,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
   background:none;color:var(--text);font:inherit;font-size:13px;padding:0 10px}
 .reco2 .rb button.go{border-color:var(--accent-2);color:var(--accent)}
 .reco2 .rb button:active{opacity:.6}
+.reco2.inchat{align-self:stretch;max-width:100%;margin:6px 0 0;background:var(--accent-ghost);border-color:transparent}
 
 /* карточка упражнения */
 .card{padding:13px 13px 11px;margin-bottom:9px}
@@ -1121,7 +1122,7 @@ body.onb #picker .modalbox::before{display:none}
         <div class="dayseg lite" id="liteseg"></div>
         <p class="nexthint" id="nexthint"></p>
         <button type="button" class="nudge" id="nudge" hidden></button>
-        <div class="reco2" id="coachreco" hidden></div>
+        <div id="coachreco" hidden></div>
         <p class="phaseline" id="phaseline"></p>
         <div id="list"></div>
         <p class="dbnote" id="dbnote"></p>
@@ -5148,6 +5149,7 @@ function renderChat(scroll){
       h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
       '<div class="msg ai wait">'+(CHAT.prep?'Готовлю фото':(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю'))+'<span class="dots"><i></i><i></i><i></i></span></div>';
     if(CHAT.err) h+='<div class="msg ai bad">'+esc(CHAT.err)+'</div>';
+    h+=recoCard('chat');
   }
   box.innerHTML=h;
   if(scroll!==false) box.scrollTop=box.scrollHeight;
@@ -5169,38 +5171,104 @@ function pushVolume(){
     syncPost('/s', {uid:syncUid(), key:'volume', data:v});
   }catch(e){}
 }
-function renderReco2(){
-  var el=document.getElementById('coachreco'); if(!el) return;
+/* Что из предложенного приложение умеет сделать само. Если не умеет — кнопки
+   не будет: обещать «применить» и не применить хуже, чем не обещать. */
+function recoCan(c){
+  if(!c || !c.text) return null;
+  var hit=findEx(c.ex);
+  if(!hit) return null;
+  if(c.what==='sets' && +c.sets>0) return {kind:'sets', hit:hit};
+  if(c.what==='swap') return {kind:'swap', hit:hit};
+  return null;
+}
+function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
-  if(!c || !c.text || gget('reco2_seen',null)===c.id){ el.hidden=true; el.innerHTML=''; return; }
-  var поправимо = c.what==='sets' && findEx(c.ex) && +c.sets>0;
-  el.hidden=false;
-  el.innerHTML='<u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+
+  if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
+  var can=recoCan(c);
+  var подпись = c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить');
+  return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+
     (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
-    '<div class="rb">'+(поправимо?'<button type="button" class="go" data-reco2="do">'+esc(c.btn||'Применить')+'</button>':'')+
-    '<button type="button" data-reco2="no">'+(поправимо?'Не сейчас':'Понятно')+'</button></div>';
+    '<div class="rb">'+(can?'<button type="button" class="go" data-reco2="do">'+esc(подпись)+'</button>':'')+
+    '<button type="button" data-reco2="no">'+(can?'Не сейчас':'Понятно')+'</button></div></div>';
+}
+function renderReco2(){
+  var el=document.getElementById('coachreco');
+  if(el){
+    var h=recoCard('gym');
+    el.hidden=!h; el.innerHTML=h;
+  }
+  /* карточка живёт в двух местах сразу — чат перерисовываем, если он открыт */
+  var m=document.getElementById('coachm');
+  if(m && m.classList.contains('show') && !reco2Rendering){
+    reco2Rendering=true; try{ renderChat(false); } finally { reco2Rendering=false; }
+  }
+}
+var reco2Rendering=false;
+/* Замену тренер называет словами («жим гантелей на наклонной скамье»), а не
+   идентификатором каталога: держать каталог в контексте каждого сообщения
+   дорого. Ищем сами — по русскому и английскому названию, на ту же мышцу и
+   того же типа, чтобы вместо приседа не встал велотренажёр. */
+function findInCat(наз, мышца, тип){
+  if(!CAT || !CAT.ex) return null;
+  var q=String(наз||'').toLowerCase().replace(/[«»"(),.]/g,' ').replace(/\s+/g,' ').trim();
+  if(!q) return null;
+  var слова=q.split(' ').filter(function(w){ return w.length>2; });
+  if(!слова.length) return null;
+  var лучший=null, лучшийСчёт=0;
+  CAT.ex.forEach(function(x){
+    if(мышца && x.m!==мышца) return;
+    if(тип && (x.c||'strength')!==тип) return;
+    var hay=(x.n+' '+x.e).toLowerCase();
+    var n=0; слова.forEach(function(w){ if(hay.indexOf(w)>=0) n++; });
+    if(n>лучшийСчёт){ лучшийСчёт=n; лучший=x; }
+  });
+  return лучшийСчёт>=Math.max(1, Math.ceil(слова.length/2)) ? лучший : null;
 }
 function applyReco2(){
   var c=RECO2 || gget('coach_reco', null); if(!c) return;
-  var hit=findEx(c.ex);
-  if(hit && c.what==='sets' && +c.sets>0){
+  var can=recoCan(c);
+  if(!can) return;
+  var hit=can.hit;
+  if(can.kind==='sets'){
     ADJ[subKey(hit.dk, hit.di)]=Math.max(1, Math.min(8, Math.round(+c.sets)));
     saveSubs();
     if(hit.dk===day){ sess=blankSess(); saveSess(); }
     renderList(); paintNote('');
+    gset('reco2_seen', c.id); renderReco2(); haptic('ok');
+    return;
   }
-  gset('reco2_seen', c.id); renderReco2(); haptic('ok');
+  /* замена: каталог мог ещё не загрузиться — тогда ждём и пробуем снова */
+  var сделать=function(){
+    var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
+    var найдено=findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength');
+    if(найдено){
+      applySub(hit.dk, hit.di, найдено);
+      gset('reco2_seen', c.id); renderReco2(); haptic('ok');
+      /* показываем результат: замену человек просил, чтобы её увидеть */
+      closeCoach(); goPage('gym');
+      if(hit.dk!==day){ day=hit.dk; set('day', day); renderDayseg(); renderDayHead(); renderList(); }
+      return;
+    }
+    /* не нашли — не притворяемся: открываем каталог на нужной мышце,
+       человек выберет сам, и замена встанет тем же путём */
+    gset('reco2_seen', c.id); renderReco2();
+    closeCoach();
+    openCatalog({dk:hit.dk, di:hit.di, muscle:hit.e.m||(вкат&&вкат.m)||'', c:(вкат&&вкат.c)||'strength'});
+  };
+  if(CAT) сделать(); else loadCatalog().then(сделать).catch(сделать);
 }
-document.getElementById('coachreco').addEventListener('click', function(e){
+function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
   if(b.dataset.reco2==='do') applyReco2();
   else { var c=RECO2 || gget('coach_reco', null); if(c) gset('reco2_seen', c.id); renderReco2(); haptic('light'); }
-});
+}
+document.getElementById('coachreco').addEventListener('click', recoClick);
+document.getElementById('chatlog').addEventListener('click', recoClick);
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
   if(!d || !d.changes || !d.changes.length) return;
   var c=d.changes[0]; if(!c || !c.text) return;
-  c.id = String(c.text).slice(0,60)+'|'+(c.ex||'')+'|'+(c.sets||'');
+  c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
   RECO2=c; gset('coach_reco', c);
   if(gget('reco2_seen',null)!==c.id) renderReco2();
 }
