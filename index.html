@@ -996,6 +996,28 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .pbtn em{display:block;font-style:normal;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
 #picker .pf{margin-top:8px}
 #picker #picklist{margin-top:14px}
+#picker .seg.wd button{padding:9px 1px;font-size:11.5px}
+#wz-err{margin:10px 0 0;color:var(--warn)}
+#wz-go{margin-top:16px}
+.wzsum{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.wzline{display:flex;flex-direction:column;gap:8px}
+.wzb{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
+.wzb.c{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
+.wzb.u{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
+.wzb.wait{background:var(--accent-ghost);border-color:transparent}
+.wzb.bad{border-color:var(--warn)}
+.wzhint{align-self:flex-start;font-size:11.5px;line-height:1.5;color:var(--dim);padding:0 2px}
+.wzopts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.wzin{display:flex;gap:8px;margin-top:10px}
+.wzin input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:.5px solid var(--line);
+  background:var(--field);color:var(--text);font:inherit;font-size:13.5px;-webkit-appearance:none}
+.wzin input::placeholder{color:var(--dim);opacity:1}
+.wzin button{flex:0 0 auto;padding:0 18px;border-radius:11px;border:none;background:var(--accent);
+  color:var(--on-accent);font:inherit;font-size:16px;line-height:1}
+#picker .aiprev{margin-top:14px}
+.wzhave{display:block;width:100%;margin-top:18px;padding:10px;border:none;background:none;
+  color:var(--dim);font:inherit;font-size:12px;text-align:center}
 .phrow{display:block;width:100%;text-align:left;margin-bottom:8px;padding:12px 14px;
   border:1px solid var(--line);border-radius:12px;background:var(--card-2);color:var(--text);
   font:inherit;cursor:pointer;position:relative}
@@ -1160,10 +1182,17 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <h3 id="picktitle">С чего начнём?</h3>
-    <p class="mtext" id="pickhi">Три вопроса — и подберу программу. Всё можно поменять потом в профиле.</p>
-    <div class="pf"><span class="pfl">где</span><div class="seg" id="wz-place"></div></div>
-    <div class="pf"><span class="pfl">дней</span><div class="seg" id="wz-days"></div></div>
-    <div class="pf"><span class="pfl">цель</span><select id="wz-goal"></select></div>
+    <p class="mtext" id="pickhi">Расскажи о себе — тренер задаст пару вопросов и соберёт программу.</p>
+    <div id="wzform">
+      <div class="pf"><span class="pfl">где</span><div class="seg" id="wz-place"></div></div>
+      <div class="pf"><span class="pfl">дни</span><div class="seg wd" id="wz-wd"></div></div>
+      <div class="pf"><span class="pfl">минут</span><div class="seg" id="wz-min"></div></div>
+      <label class="mlab">о себе и цели
+        <textarea id="wz-text" rows="3" placeholder="хочу убрать живот и не сорвать спину, сижу за компом, в зале был давно"></textarea></label>
+      <p class="mtext" id="wz-err" hidden></p>
+      <button class="btn prim wide" id="wz-go">Дальше</button>
+    </div>
+    <div id="wzchat" hidden></div>
     <div id="picklist"></div>
   </div>
 </div>
@@ -1750,6 +1779,9 @@ function applySub(dk, di, item){
 function openCatalog(ctx){
   catCtx = ctx || null;                    /* {dk, di, muscle} — режим замены */
   catQuery=''; catEquip=''; catLevel='';
+  /* заменяем силовое — предлагаем силовое: велотренажёр вместо приседа
+     формально та же мышца, но это не замена */
+  catType = (ctx && ctx.c) || '';
   catMuscle = (ctx && ctx.muscle) || '';
   var m=document.getElementById('catalog'); if(m) m.classList.add('show');
   var t=document.getElementById('cattitle');
@@ -1762,7 +1794,7 @@ function openCatalog(ctx){
 }
 function closeCatalog(){
   var m=document.getElementById('catalog'); if(m) m.classList.remove('show');
-  catCtx=null; catQuery=''; catMuscle=''; catEquip=''; catLevel=''; catShown=40;
+  catCtx=null; catQuery=''; catMuscle=''; catEquip=''; catLevel=''; catType=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
 }
 
@@ -1777,7 +1809,7 @@ function muscleChips(){
   });
   return h;
 }
-var catEquip='', catLevel='', catShown=40;
+var catEquip='', catLevel='', catType='', catShown=40;
 function catFiltered(){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
@@ -1785,6 +1817,7 @@ function catFiltered(){
     if(catMuscle && x.m!==catMuscle) return false;
     if(catEquip && x.q!==catEquip) return false;
     if(catLevel && x.l!==catLevel) return false;
+    if(catType && (x.c||'strength')!==catType) return false;
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
        отдельно: «жим гантели» находит «Жим гантелей лёжа» */
@@ -1800,7 +1833,9 @@ function chipRow(field, cur, dict, label){
     if(field!=='m' && catMuscle && x.m!==catMuscle) return;
     if(field!=='q' && catEquip && x.q!==catEquip) return;
     if(field!=='l' && catLevel && x.l!==catLevel) return;
-    counts[x[field]]=(counts[x[field]]||0)+1;
+    if(field!=='c' && catType && (x.c||'strength')!==catType) return;
+    var v = field==='c' ? (x.c||'strength') : x[field];
+    counts[v]=(counts[v]||0)+1;
   });
   var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
   if(keys.length<2) return '';
@@ -1818,6 +1853,7 @@ function renderCatalog(){
   var fbox=document.getElementById('pcatfilters');
   if(onPage && fbox){
     fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
+                     chipRow('c',catType,CAT.cats||{},'тип')+
                      chipRow('q',catEquip,CAT.equip,'снаряд')+
                      chipRow('l',catLevel,CAT.level,'уровень');
   }
@@ -1834,7 +1870,8 @@ function renderCatalog(){
     h+='<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
        '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">'+
        '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-       '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+'</span></div>'+
+       '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+
+       (x.c && x.c!=='strength' && x.c!=='powerlifting' ? ' · '+(((CAT.cats||{})[x.c])||x.c) : '')+'</span></div>'+
        (catCtx?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
               :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
                 encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
@@ -1856,48 +1893,226 @@ function openCatPage(){
     .catch(function(){ if(b) b.innerHTML='<p class="empt">Не удалось загрузить каталог. Проверь интернет и попробуй ещё раз.</p>'; });
 }
 
-/* ── выбор программы при первом запуске ── */
-/* ── первый запуск: три вопроса вместо списка программ ──
-   Новичок не знает, чем «База · 3 дня» отличается от «Набора формы», а
-   человеку без зала выбирать вообще не из чего. Спрашиваем где, сколько дней
-   и зачем — дальше считает та же fitScore, что и в профиле. */
-var WIZ={place:'gym', days:3, goal:null};
-function wizPattern(n){ return {2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5]}[n]||[1,3,5]; }
-function renderPicker(){
-  var box=document.getElementById('picklist'); if(!box) return;
+/* ── первый запуск: разговор вместо витрины программ ──
+   Готовые программы человеку ничего не говорят: чем «База · 3 дня» отличается
+   от «Набора формы», видно только тому, кто и так всё знает. Цели из списка
+   различаются так же плохо — «подтянуться» против «формы и здоровья».
+   Поэтому спрашиваем то, что человек про себя точно знает: где занимается,
+   в какие дни недели может, сколько минут готов потратить, — и своими
+   словами, зачем ему это. Дальше тренер сам доспрашивает, чего ему не
+   хватает, и собирает программу под ответы.
+   Готовые остаются запасным путём: показываем их, только если тренер
+   недоступен — нет сети или кончился дневной лимит. */
+var WIZ={place:'gym', wd:null, min:45, text:'', qa:[], ask:null, opts:[], hint:'', goal:null,
+         prog:null, stage:'form', busy:false, err:'', fallback:false, show:false, touched:false};
+var MINS=[['30','30'],['45','45'],['60','60'],['90','90+']];
+var WEEK=[1,2,3,4,5,6,0];                    /* неделя начинается с понедельника */
+function wizPattern(n){ return {1:[3],2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],
+  6:[1,2,3,4,5,6],7:[0,1,2,3,4,5,6]}[n]||[1,3,5]; }
+function wizDays(){ var o=WIZ.wd||{}; return WEEK.filter(function(d){ return o[d]; }); }
+function wizInit(){
   var me=myData()||{};
-  if(me.place && !WIZ.touched) WIZ.place=me.place; if(me.goal && !WIZ.goal) WIZ.goal=me.goal;
-  if(GYM_DAYS && Object.keys(GYM_DAYS).length && !WIZ.touched) WIZ.days=Math.max(2,Math.min(5,Object.keys(GYM_DAYS).length));
+  if(me.place && !WIZ.touched) WIZ.place=me.place;
+  if(me.min && !WIZ.touched) WIZ.min=me.min;
+  if(me.about && !WIZ.text) WIZ.text=me.about;
+  if(!WIZ.wd){
+    WIZ.wd={};
+    var src = (GYM_DAYS && Object.keys(GYM_DAYS).length) ? Object.keys(GYM_DAYS).map(Number) : wizPattern(3);
+    src.forEach(function(d){ WIZ.wd[d]=1; });
+  }
+}
+function wizSummary(){
+  var d=wizDays();
+  return (WIZ.place==='home'?'дома':'зал')+' · '+
+         (d.length ? d.map(function(x){ return WD[x]; }).join(' ') : 'дни не выбраны')+
+         ' · до '+WIZ.min+' мин';
+}
+function renderWzForm(){
   document.getElementById('wz-place').innerHTML=segHtml('place',PLACES,WIZ.place);
-  document.getElementById('wz-days').innerHTML=segHtml('days',[['2','2'],['3','3'],['4','4'],['5','5']],String(WIZ.days));
-  var g=document.getElementById('wz-goal');
-  g.innerHTML='<option value="">— выбери —</option>'+GOALS.map(function(o){ return '<option value="'+o[0]+'"'+(WIZ.goal===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('');
-  var h='';
-  if(WIZ.place==='home'){
-    h+='<div class="reco"><h4>Готовых домашних программ нет — соберу под тебя</h4>'+
-       '<p>Скажешь, что есть дома, — гантели, гиря, турник, — и через минуту будет программа на '+WIZ.days+' '+plural(WIZ.days,['день','дня','дней'])+' в неделю.</p>'+
-       '<div class="rbtns"><button type="button" class="btn go" data-wz="home"'+(WIZ.goal?'':' disabled')+'>'+(WIZ.goal?'Собрать программу':'Сначала выбери цель')+'</button></div></div>';
-  } else {
-    /* своя собранная программа — первой, готовые — по очкам */
-    Object.keys(PROFILES).filter(function(k){ return PROFILES[k].custom; }).forEach(function(k){
-      var P=PROFILES[k];
-      h+='<button class="pbtn best" data-prof="'+k+'"><em>своя</em><b>'+P.name+'</b><u>'+P.goal+'</u><i>'+P.sub+'</i></button>';
+  document.getElementById('wz-wd').innerHTML=WEEK.map(function(d){
+    var on=!!WIZ.wd[d];
+    return '<button type="button" data-wd="'+d+'" aria-pressed="'+on+'">'+WD[d]+'</button>';
+  }).join('');
+  document.getElementById('wz-min').innerHTML=segHtml('min',MINS,String(WIZ.min));
+  var ta=document.getElementById('wz-text');
+  if(ta && document.activeElement!==ta && ta.value!==WIZ.text) ta.value=WIZ.text;
+  var n=wizDays().length;
+  var e=document.getElementById('wz-err');
+  /* «оставить дни не выбранными нельзя» — говорим об этом до нажатия, а не после */
+  var msg = WIZ.err || (n ? '' : 'Отметь хотя бы один день — по ним и построю неделю.');
+  if(e){ e.hidden=!msg; e.textContent=msg; }
+  var go=document.getElementById('wz-go');
+  if(go){ go.disabled = !n || WIZ.busy; go.textContent = WIZ.busy ? 'Думаю…' : 'Дальше'; }
+}
+function renderWzChat(){
+  var box=document.getElementById('wzchat'); if(!box) return;
+  var h='<div class="wzsum">'+wizSummary()+'</div><div class="wzline">';
+  if(WIZ.text) h+='<div class="wzb u">'+esc(WIZ.text)+'</div>';
+  WIZ.qa.forEach(function(x){
+    h+='<div class="wzb c">'+esc(x.q)+'</div><div class="wzb u">'+esc(x.a)+'</div>';
+  });
+  if(WIZ.busy){
+    h+='<div class="wzb c wait">'+(WIZ.qa.length||WIZ.ask?'Думаю':'Читаю, что ты написал')+
+       '<span class="dots"><i></i><i></i><i></i></span></div>';
+  } else if(WIZ.err){
+    h+='<div class="wzb c bad">'+esc(WIZ.err)+'</div>'+
+       '<div class="wzopts"><button type="button" class="mchip" id="wzretry">Попробовать ещё раз</button>'+
+       '<button type="button" class="mchip" id="wzback">Изменить ответы</button></div>';
+  } else if(WIZ.stage==='prog' && WIZ.prog){
+    var p=WIZ.prog;
+    if(WIZ.hint) h+='<div class="wzb c">'+esc(WIZ.hint)+'</div>';
+    h+='</div><div class="aiprev"><h4>'+esc(p.name)+'</h4><p class="aisub">'+esc(p.note)+'</p>';
+    p.days.forEach(function(d,i){
+      var lbl=(d.s && !/^день/i.test(d.s.trim())) ? ' · '+d.s : '';
+      h+='<div class="aiday">День '+(i+1)+lbl+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
+         d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+
+           '<b>'+esc(x.n)+'</b> · '+x.sets+' × '+esc(x.reps)+'</li>'; }).join('')+'</ul>';
     });
+    h+='<div class="rbtns"><button type="button" class="btn go" id="wzapply">Начать по ней</button>'+
+       '<button type="button" class="btn" id="wzagain">Переделать</button></div></div>';
+    box.innerHTML=h; wzScroll('top'); return;
+  } else if(WIZ.ask){
+    if(WIZ.hint) h+='<div class="wzhint">'+esc(WIZ.hint)+'</div>';
+    h+='<div class="wzb c">'+esc(WIZ.ask)+'</div>';
+    h+='</div>';
+    if(WIZ.opts.length) h+='<div class="wzopts">'+WIZ.opts.map(function(o){
+      return '<button type="button" class="mchip" data-opt="'+esc(o)+'">'+esc(o)+'</button>'; }).join('')+'</div>';
+    h+='<div class="wzin"><input id="wz-ans" type="text" autocomplete="off" placeholder="'+
+       (WIZ.opts.length?'или своими словами':'ответь своими словами')+'"><button type="button" id="wz-send" aria-label="Ответить">→</button></div>';
+    box.innerHTML=h; wzScroll('end');
+    var inp=document.getElementById('wz-ans'); if(inp) inp.focus();
+    return;
+  }
+  h+='</div>';
+  box.innerHTML=h; wzScroll('end');
+}
+/* Разговор растёт вниз, а окно короткое: без прокрутки новый вопрос и кнопки
+   ответа оказываются за краем и выглядят так, будто ничего не произошло.
+   Готовую программу, наоборот, показываем с начала — с названия. */
+function wzScroll(куда){
+  var m=document.querySelector('#picker .modalbox'); if(!m) return;
+  requestAnimationFrame(function(){
+    if(куда==='top'){
+      var a=document.querySelector('#wzchat .aiprev');
+      if(a){ m.scrollTop=Math.max(0, a.offsetTop-12); return; }
+    }
+    m.scrollTop=m.scrollHeight;
+  });
+}
+/* Готовые программы новичку ничего не говорят, поэтому на входе их не
+   предлагаем. Но совсем убирать нельзя: по ним уже занимаются, и через это
+   же окно в семье переключаются между людьми. Поэтому показываем их, когда
+   окно открыто кнопкой «сменить программу», когда тренер недоступен и когда
+   человек сам сказал, что программа у него уже есть. Свою собранную —
+   всегда: иначе к ней не вернуться. */
+function renderWzList(){
+  var box=document.getElementById('picklist'); if(!box) return;
+  var h='', me=myData()||{};
+  var готовые = WIZ.fallback || WIZ.show || !firstRun;
+  Object.keys(PROFILES).filter(function(k){ return PROFILES[k].custom; }).forEach(function(k){
+    var P=PROFILES[k];
+    h+='<button class="pbtn best" data-prof="'+k+'"><em>твоя программа</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
+  });
+  if(готовые){
+    if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
     var scored=Object.keys(PROFILES).filter(function(k){ return !PROFILES[k].custom; }).map(function(k){
-      return {k:k, s:fitScore(k, {goal:WIZ.goal, level:'new', place:WIZ.place}, WIZ.days)}; }).sort(function(a,b){ return b.s-a.s; });
-    scored.forEach(function(x,i){
+      return {k:k, s:fitScore(k, {goal:me.goal, level:me.level||'new', place:WIZ.place}, wizDays().length)};
+    }).sort(function(a,b){ return b.s-a.s; });
+    scored.forEach(function(x){
       var P=PROFILES[x.k];
-      h+='<button class="pbtn'+(i===0?' best':'')+'" data-prof="'+x.k+'">'+(i===0?'<em>подходит тебе</em>':'')+'<b>'+P.name+'</b>'+
-         '<u>'+P.goal+'</u><i>'+P.sub+'</i></button>';
+      h+='<button class="pbtn" data-prof="'+x.k+'"><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
     });
+  } else if(WIZ.stage==='form'){
+    h+='<button type="button" class="wzhave" id="wzhave">у меня уже есть программа</button>';
   }
   box.innerHTML=h;
+}
+function renderPicker(){
+  if(!document.getElementById('wzform')) return;
+  wizInit();
+  var form=document.getElementById('wzform'), chat=document.getElementById('wzchat');
+  form.hidden = WIZ.stage!=='form';
+  chat.hidden = WIZ.stage==='form';
+  if(WIZ.stage==='form') renderWzForm(); else renderWzChat();
+  renderWzList();
   var t=document.getElementById('picktitle'), nm=whoName();
-  if(nm && t) t.textContent = nm + ', с чего начнём?';
+  if(t) t.textContent = WIZ.stage==='form' ? (nm ? nm+', с чего начнём?' : 'С чего начнём?') : 'Собираем программу';
+  var hi=document.getElementById('pickhi');
+  if(hi){
+    hi.hidden = WIZ.stage!=='form';
+    hi.textContent='Скажи, где и когда можешь заниматься, — и своими словами, чего хочешь. Остальное тренер спросит сам.';
+  }
+}
+/* ── ход разговора ── */
+var wzCtl=null;
+function wzSend(){
+  WIZ.busy=true; WIZ.err=''; WIZ.stage = WIZ.stage==='form' ? 'chat' : WIZ.stage;
+  renderPicker();
+  var me=myData()||{};
+  var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
+    me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
+         place:WIZ.place, level:me.level||null, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[] } };
+  if(wzCtl) try{ wzCtl.abort(); }catch(e){}
+  wzCtl = ('AbortController' in window) ? new AbortController() : null;
+  var tm=setTimeout(function(){ if(wzCtl) wzCtl.abort(); }, 150000);
+  fetch(SYNCURL+'/onboard', { method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body), signal: wzCtl?wzCtl.signal:undefined })
+    .then(function(r){ return r.json().then(function(d){
+      if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
+      return d; }); })
+    .then(function(d){
+      WIZ.busy=false;
+      if(d.prog && d.prog.days && d.prog.days.length){
+        WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.hint=d.hint||''; WIZ.stage='prog'; haptic('ok');
+      } else {
+        WIZ.ask=d.ask||null; WIZ.opts=d.options||[]; WIZ.hint=d.hint||'';
+        if(!WIZ.ask){ WIZ.err='Тренер не понял вопроса. Расскажи о себе чуть подробнее.'; WIZ.stage='form'; }
+        haptic('light');
+      }
+      renderPicker();
+    })
+    .catch(function(e){
+      WIZ.busy=false; WIZ.err=humanErr(e); WIZ.fallback=true; haptic('err');
+      renderPicker();
+    })
+    .then(function(){ clearTimeout(tm); });
+}
+function wzAnswer(a){
+  a=String(a||'').trim(); if(!a || !WIZ.ask || WIZ.busy) return;
+  WIZ.qa.push({q:WIZ.ask, a:a}); WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
+  wzSend();
+}
+function wzSaveMe(){
+  var me=myData()||{}, ch=false;
+  if(WIZ.place && me.place!==WIZ.place){ me.place=WIZ.place; ch=true; }
+  if(WIZ.min && me.min!==WIZ.min){ me.min=WIZ.min; ch=true; }
+  if(WIZ.text && me.about!==WIZ.text){ me.about=WIZ.text; ch=true; }
+  /* цель человек больше не выбирает из списка — её понял тренер по его словам,
+     а без цели не посчитать ни стартовые веса, ни норму еды */
+  if(WIZ.goal && !me.goal){ me.goal=WIZ.goal; ch=true; }
+  if(ch){ gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
+}
+function wzApply(){
+  if(!WIZ.prog) return;
+  wzSaveMe();
+  var дни=wizDays();
+  AIPROG=WIZ.prog; WIZ.prog=null; WIZ.stage='form'; WIZ.qa=[]; WIZ.ask=null;
+  aiApply();
+  /* расписание пишется под ключ профиля, а профиль меняется внутри aiApply —
+     поэтому дни сохраняем после него, иначе они уйдут в чужой ключ */
+  if(дни.length){
+    GYM_DAYS=schedNorm(дни.reduce(function(o,d){ o[d]=1; return o; },{}));
+    saveSched(); renderDayseg(); renderDayHead(); renderTodaybar();
+  }
+}
+function wzReset(){
+  WIZ.stage='form'; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint=''; WIZ.prog=null; WIZ.err='';
+  renderPicker();
 }
 var firstRun=false;
 function showPicker(first){
   firstRun = !!first;
+  WIZ.stage='form'; WIZ.err=''; WIZ.show=false;
   renderPicker();
   var el=document.getElementById('picker'); if(el) el.classList.add('show');
 }
@@ -1907,15 +2122,12 @@ function hidePicker(){
 function choose(p){
   hidePicker();
   if(firstRun && !gget('startdate', null)) gset('startdate', TODAY);
-  var wasFirst=firstRun; firstRun=false;
-  /* ответы мастера — в профиль: цель и место, дни недели по числу дней */
-  var me=myData()||{}, changed=false;
-  if(WIZ.goal && me.goal!==WIZ.goal){ me.goal=WIZ.goal; changed=true; }
-  if(WIZ.place && me.place!==WIZ.place){ me.place=WIZ.place; changed=true; }
-  if(changed){ gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
+  firstRun=false;
+  wzSaveMe();
   applyProfile(p);
-  /* дни недели: если человек в мастере менял число дней — его схема, иначе дни программы */
-  if(WIZ.touched){ GYM_DAYS=schedNorm(wizPattern(WIZ.days).reduce(function(o,d){ o[d]=1; return o; },{})); saveSched(); renderDayseg(); renderDayHead(); renderTodaybar(); }
+  /* дни недели человек отметил сам — они важнее дней, зашитых в программу */
+  if(WIZ.touched){ GYM_DAYS=schedNorm(wizDays().reduce(function(o,d){ o[d]=1; return o; },{}));
+    saveSched(); renderDayseg(); renderDayHead(); renderTodaybar(); }
   WIZ.touched=false;
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
      иначе на новом устройстве его негде было бы искать */
@@ -1992,7 +2204,8 @@ function readMeForm(){
   var old=myData()||{};
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           goal:(g&&g.value)||old.goal||null, level:pick('me-level')||old.level||null,
-          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq};
+          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq,
+          min:old.min||null, about:old.about||''};
 }
 /* подпись профиля: что из него влияет на подсказки */
 function meSig(me){ me=me||{}; return [me.goal||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),Object.keys(GYM_DAYS).length].join('|'); }
@@ -3868,7 +4081,54 @@ function targetOf(e){
 var BWK = {squat:0.50, bench:0.40, benchdb:0.30, ohp:0.22, row:0.35, rowcable:0.35,
            lat:0.45, rdl:0.35, legpress:0.90, hipthrust:0.45, lunge:0.20, hyper:0.10,
            legext:0.30, curl:0.10, triceps:0.20, lateral:0.05, reardelt:0.05,
-           facepull:0.15, fly:0.12, calf:0.40, pallof:0.10, abduction:0.30};
+           facepull:0.15, fly:0.12, calf:0.40, pallof:0.10, abduction:0.30,
+           /* движения, которые встречаются только в собранных программах */
+           gobletsquat:0.22, dead:0.60, legcurl:0.22, chestpress:0.35, ohpm:0.25,
+           dbrow:0.18, shrug:0.50, pullover:0.15, upright:0.15, adduction:0.30};
+/* Стартовый вес подсказывается по шаблону движения (ph). В готовых программах
+   он проставлен руками; в собранной тренером его нет — а первый раз человеку
+   как раз важнее всего, с чего начать. Угадываем по английскому названию:
+   оно есть у каждого упражнения каталога и не зависит от перевода. Там, где
+   уверенности нет, шаблон не ставим — пустая подсказка лучше вранья. */
+var PHNAME=[
+  [/leg press/i,'legpress'], [/hack squat/i,'legpress'],
+  [/goblet|dumbbell squat|split squat|bulgarian|box squat/i,'gobletsquat'],
+  [/squat/i,'squat'],
+  [/lunge|step-?up|zerchers/i,'lunge'],
+  [/hip thrust|glute bridge|pelvic/i,'hipthrust'],
+  [/romanian|stiff.?leg|good morning|straight.?leg deadlift/i,'rdl'],
+  [/deadlift|rack pull|clean|snatch/i,'dead'],
+  [/leg curl|lying leg curl|seated leg curl/i,'legcurl'],
+  [/leg extension/i,'legext'],
+  [/hyperextension|back extension/i,'hyper'],
+  [/calf|toe press/i,'calf'],
+  [/chest press|machine bench/i,'chestpress'],
+  [/(bench press|chest fly|dumbbell press)/i,null],   /* уточняем по снаряду ниже */
+  [/pulldown|pull-?down/i,'lat'],
+  [/face pull/i,'facepull'],
+  [/upright row/i,'upright'],
+  [/shrug/i,'shrug'],
+  [/pullover/i,'pullover'],
+  [/(seated cable row|cable row|t-?bar row|machine row)/i,'rowcable'],
+  [/one-?arm dumbbell row|dumbbell row/i,'dbrow'],
+  [/(barbell row|bent over row|pendlay)/i,'row'],
+  [/(military press|overhead press|shoulder press|arnold|push press)/i,'ohp'],
+  [/lateral raise|side lateral/i,'lateral'],
+  [/(rear delt|reverse fly|bent.?over lateral)/i,'reardelt'],
+  [/(fly|flye|pec deck|crossover)/i,'fly'],
+  [/(curl)/i,'curl'],
+  [/(triceps|pushdown|skullcrusher|kickback|dip machine|french press)/i,'triceps'],
+  [/pallof/i,'pallof'],
+  [/(hip abduction|abductor)/i,'abduction'],
+  [/(hip adduction|adductor)/i,'adduction']
+];
+function phGuess(en, q, m){
+  var s=String(en||'');
+  if(/bench press/i.test(s)) return /dumbbell/i.test(s) || q==='dumbbell' ? 'benchdb' : 'bench';
+  for(var i=0;i<PHNAME.length;i++){ var r=PHNAME[i];
+    if(r[1] && r[0].test(s)) return r[1]; }
+  return null;
+}
 function myData(){ return gget('me', null); }
 function startHint(e){
   var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся с нужным запасом</b> — сколько его оставлять, написано ниже. Смог больше — в следующем подходе добавь.';
@@ -4049,14 +4309,36 @@ document.getElementById('picker').addEventListener('click', function(e){
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
     var id=sb.parentNode.id; WIZ.touched=true;
-    if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-days') WIZ.days=+sb.dataset.v;
+    if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-min') WIZ.min=+sb.dataset.v;
     renderPicker(); haptic('light'); return;
   }
-  var hb=e.target.closest('button[data-wz="home"]');
-  if(hb){ choose('friend'); openProf(); setTimeout(function(){ aiBuild(); }, 400); return; }
+  var wd=e.target.closest('#wz-wd button[data-wd]');
+  if(wd){
+    var d=+wd.dataset.wd; WIZ.touched=true;
+    if(WIZ.wd[d]) delete WIZ.wd[d]; else WIZ.wd[d]=1;
+    renderPicker(); haptic('light'); return;
+  }
+  if(e.target.closest('#wz-go')){
+    var ta=document.getElementById('wz-text'); if(ta) WIZ.text=ta.value.trim();
+    if(!wizDays().length){ renderPicker(); haptic('err'); return; }
+    wzSend(); haptic('medium'); return;
+  }
+  var op=e.target.closest('[data-opt]');
+  if(op){ wzAnswer(op.dataset.opt); haptic('light'); return; }
+  if(e.target.closest('#wz-send')){
+    var inp=document.getElementById('wz-ans'); if(inp) wzAnswer(inp.value); return;
+  }
+  if(e.target.closest('#wzretry')){ WIZ.err=''; wzSend(); return; }
+  if(e.target.closest('#wzback')){ wzReset(); return; }
+  if(e.target.closest('#wzapply')){ wzApply(); return; }
+  if(e.target.closest('#wzagain')){ wzReset(); return; }
+  if(e.target.closest('#wzhave')){ WIZ.show=true; renderPicker(); haptic('light'); return; }
   var b=e.target.closest('button[data-prof]'); if(b) choose(b.dataset.prof);
 });
-document.getElementById('wz-goal').addEventListener('change', function(e){ WIZ.goal=e.target.value||null; WIZ.touched=true; renderPicker(); });
+document.getElementById('wz-text').addEventListener('input', function(e){ WIZ.text=e.target.value; });
+document.getElementById('wzchat').addEventListener('keydown', function(e){
+  if(e.key==='Enter' && e.target.id==='wz-ans'){ e.preventDefault(); wzAnswer(e.target.value); }
+});
 /* ── каталог ── */
 document.getElementById('catclose').addEventListener('click', closeCatalog);
 document.getElementById('catalog').addEventListener('click', function(e){
@@ -4081,7 +4363,7 @@ var _pcf=document.getElementById('pcatfilters');
 if(_pcf) _pcf.addEventListener('click', function(e){
   var b=e.target.closest('.mchip'); if(!b) return;
   var f=b.parentNode.dataset.f, v=b.dataset.v||'';
-  if(f==='m') catMuscle=v; else if(f==='q') catEquip=v; else if(f==='l') catLevel=v;
+  if(f==='m') catMuscle=v; else if(f==='q') catEquip=v; else if(f==='l') catLevel=v; else if(f==='c') catType=v;
   catShown=40; renderCatalog();
 });
 var _pcb=document.getElementById('pcatbody');
@@ -4122,7 +4404,9 @@ document.getElementById('list').addEventListener('click', function(e){
   }
   var b=e.target.closest('button[data-swap]'); if(!b) return;
   var di=+b.dataset.swap, base=(DAYS[day].ex||[])[di]||{};
-  openCatalog({dk:day, di:di, muscle:base.m||MUSCLEOF[base.p]||''});   /* у своей программы мышца известна из каталога */
+  var вкат=(CAT&&base.cat)?(CAT.ex||[]).filter(function(x){ return x.i===base.cat; })[0]:null;
+  openCatalog({dk:day, di:di, muscle:base.m||MUSCLEOF[base.p]||'',
+               c:(вкат&&вкат.c)||'strength'});   /* у своей программы мышца известна из каталога */
 });
 
 var _ps=document.getElementById('profswitch');
@@ -4178,7 +4462,8 @@ function installAiProg(prog){
     DAYS[k]={ name:'День '+(i+1), s:sLabel.slice(0,10), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
       var time=/ с$/.test(x.reps||'');
       return { p:x.p||'', n:histName(x.n), en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
-               ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'', ph:null, fig:null, ai:true,
+               ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'',
+               ph:(x.q==='body only'?null:phGuess(x.en, x.q, x.m)), fig:null, ai:true,
                nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
     }) };
   });
@@ -4206,7 +4491,8 @@ function aiPayload(){
       return { n:x.n, top: best ? ((best.w!=null?best.w+'×':'')+best.r) : '—' };
     }) };
   });
-  return { uid:syncUid(), me:me, days:Object.keys(GYM_DAYS).length||3, program:program, history:history, eq:me.eq||[] };
+  return { uid:syncUid(), me:me, days:Object.keys(GYM_DAYS).length||3, min:me.min||null,
+           program:program, history:history, eq:me.eq||[] };
 }
 var AIPROG=null;
 function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
