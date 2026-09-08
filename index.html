@@ -472,20 +472,53 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .empt{color:var(--dim);font-size:13px;text-align:center;padding:30px 12px;line-height:1.6}
 .l1-in.three{grid-template-columns:repeat(3,1fr)}
 /* ── еда ── */
-.fday{display:grid;gap:10px;margin:12px 0 4px}
-.fbar{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:10px;font-size:13px}
-.fbar u{text-decoration:none;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
-.fbar .tr{height:8px;border-radius:99px;background:var(--card-2);border:1px solid var(--line-soft);overflow:hidden;position:relative}
-.fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px}
+/* Шкалы дня. Раньше подпись и число стояли в одной строке с полосой, и
+   ширина полосы зависела от длины числа: «1640 / 2050 ккал» ужимало полосу
+   калорий до 121 px, а «162 / 155 г» оставляло белку 156 px. Две шкалы разной
+   длины рядом читаются как сбой. Теперь число над полосой, полоса всегда во
+   всю ширину, и шкалы сравнимы между собой. */
+.fday{display:grid;gap:12px;margin:12px 0 4px}
+.fbar{display:grid;gap:5px}
+.fbar .fh{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.fbar u{text-decoration:none;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fbar b{font-family:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fbar b em{font-style:normal;color:var(--dim);font-weight:400;font-size:12px}
+.fbar .tr{height:8px;border-radius:99px;background:var(--card-2);position:relative;overflow:hidden}
+.fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px;transition:width .25s ease}
 .fbar .tr i.ok{background:var(--done)}
 .fbar .tr i.over{background:var(--warn)}
-.fbar .tr s{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--dim)}
-.fbar b{font-family:inherit;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.fbar b em{font-style:normal;color:var(--dim);font-weight:400;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px}
+/* перебор: полоса полная, а за нормой — штриховка, чтобы «сверх плана» было видно */
+.fbar .tr u.plus{position:absolute;top:0;bottom:0;right:0;border-radius:0 99px 99px 0;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.35) 0 2px,transparent 2px 6px)}
+
+/* переключатель дня: вчерашний ужин записывается во вчера */
+.fnav{display:flex;align-items:center;gap:8px;margin:2px 0 0}
+.fnav button{min-width:40px;min-height:36px;border-radius:10px;border:.5px solid var(--line);
+  background:var(--card-2);color:var(--text);font-size:16px;line-height:1}
+.fnav button:disabled{opacity:.35}
+.fnav .fd{flex:1;text-align:center;font-size:13.5px;font-weight:600}
+.fnav .fd small{display:block;font-weight:400;font-size:11px;color:var(--dim);letter-spacing:.02em}
+.fadd{display:block;width:100%;margin-top:4px;padding:11px;border-radius:11px;border:.5px dashed var(--line);
+  background:none;color:var(--muted);font:inherit;font-size:13px}
+.fadd:active{color:var(--accent);border-color:var(--accent)}
+
+/* окно правки приёма */
+.mlab{display:block;margin:14px 0 0;font-size:11px;color:var(--dim)}
+.mlab textarea{display:block;width:100%;margin-top:6px;padding:11px 12px;border-radius:11px;
+  border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:14px;resize:vertical}
+.mnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mnums label{font-size:11px;color:var(--dim)}
+.mnums input{display:block;width:100%;margin-top:6px;padding:11px 10px;border-radius:11px;
+  border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:15px;
+  font-variant-numeric:tabular-nums;text-align:center}
+#mealm .btnrow{margin-top:16px}
+#ml-date{flex:1;padding:9px 10px;border-radius:9px;border:.5px solid var(--line);
+  background:var(--card-2);color:var(--text);font:inherit;font-size:13px}
 .fline{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0}
 .fline b{color:var(--text);font-weight:500}
 .fmeals{margin:12px 0 10px}
-.fmeal{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.fmeal{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px;cursor:pointer}
+.fmeal:active{opacity:.6}
 .fmeal:first-child{border-top:0}
 .fmeal .fk{flex:0 0 58px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
@@ -1051,9 +1084,11 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
     <section class="page hide" id="p-food">
       <div class="sec" style="padding-top:18px">
         <h2>Еда</h2>
+        <div class="fnav" id="fnav"></div>
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
+        <button type="button" class="fadd" id="fadd">+ записать приём руками</button>
         <div class="fask">
           <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
           <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -1151,6 +1186,24 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
       <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       <button type="button" class="fbtn go" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
+    </div>
+  </div>
+</div>
+<div class="modal" id="mealm" role="dialog" aria-modal="true" aria-labelledby="mealtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="mealtitle">Приём</h3><button class="xbtn" id="mealclose" aria-label="Закрыть">✕</button></div>
+    <div class="pf"><span class="pfl">когда</span><div class="seg" id="ml-kind"></div></div>
+    <div class="pf"><span class="pfl">день</span><input id="ml-date" type="date"></div>
+    <label class="mlab">что съел<textarea id="ml-text" rows="2" placeholder="творог 200 г и 2 яйца"></textarea></label>
+    <div class="mnums">
+      <label>ккал<input id="ml-kcal" type="number" inputmode="numeric" min="0" max="9000" step="10"></label>
+      <label>белок, г<input id="ml-prot" type="number" inputmode="numeric" min="0" max="400" step="1"></label>
+      <label>клетчатка, г<input id="ml-fib" type="number" inputmode="numeric" min="0" max="200" step="1"></label>
+    </div>
+    <p class="mtext" id="ml-hint"></p>
+    <div class="btnrow">
+      <button class="btn prim" id="ml-save">Сохранить</button>
+      <button class="btn" id="ml-del">Удалить</button>
     </div>
   </div>
 </div>
@@ -1489,6 +1542,7 @@ var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], booted=
                 править не надо, очередь просто продолжается. */
 var WD=['вс','пн','вт','ср','чт','пт','сб'];
 var WDFULL=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+var MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 function schedNorm(o){
   var out={};
   if(o && typeof o==='object') Object.keys(o).forEach(function(k){ if(o[k] && k>=0 && k<=6) out[+k]=1; });
@@ -3859,10 +3913,9 @@ var DN=WDFULL;
 
 function renderTodaybar(){
   var el=document.getElementById('todaybar'); if(!el) return;
-  var DNL=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
-  var MN=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var DNL=WDFULL;
   var n=new Date();
-  var out='<span class="td">'+n.getDate()+' '+MN[n.getMonth()]+', '+DNL[n.getDay()]+'</span>';
+  var out='<span class="td">'+n.getDate()+' '+MONTHS[n.getMonth()]+', '+DNL[n.getDay()]+'</span>';
   if(lastDone && lastDone.date===TODAY){
     out+='<span class="ts done">сегодня закрыт · '+DAYS[lastDone.day].sub.toLowerCase()+'</span>';
   } else if(todayLetter()){
@@ -4197,12 +4250,40 @@ document.getElementById('aibox').addEventListener('click', function(e){
 /* ══════════ ЕДА ══════════
    Считает и хранит Worker (тот же uid, что у тренировок). Здесь — сегодня
    против нормы, список приёмов, ввод текстом или фото, неделя и весы. */
-var FOOD={day:null, week:null, meas:null, busy:false};
+var FOOD={day:null, week:null, meas:null, busy:false, date:null};
+/* Какой день открыт во вкладке «Еда». Вчерашний ужин, вспомненный утром,
+   должен лечь во вчера, иначе и дневник, и сверка с весами врут. */
+function fDate(){ return FOOD.date || TODAY; }
+function fShift(n){
+  var d=new Date(fDate()+'T12:00:00'); d.setDate(d.getDate()+n);
+  var iso=ymd(d); if(iso>TODAY) return;
+  FOOD.date = (iso===TODAY) ? null : iso;
+  FOOD.day=null; renderFoodNav(); renderFoodDay(); loadDay();
+}
+function loadDay(){
+  fGet('/day?uid='+encodeURIComponent(syncUid())+'&date='+fDate())
+    .then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
+}
+function renderFoodNav(){
+  var el=document.getElementById('fnav'); if(!el) return;
+  var d=fDate(), сегодня=d===TODAY;
+  var вчера=ymd(new Date(new Date(TODAY+'T12:00:00').getTime()-864e5));
+  var дата=new Date(d+'T12:00:00');
+  var имя = сегодня ? 'Сегодня' : (d===вчера ? 'Вчера' : (дата.getDate()+' '+MONTHS[дата.getMonth()]));
+  var низ = сегодня || d===вчера ? (дата.getDate()+' '+MONTHS[дата.getMonth()]+' · '+WDFULL[дата.getDay()]) : WDFULL[дата.getDay()];
+  el.innerHTML='<button type="button" data-fnav="-1" aria-label="Предыдущий день">‹</button>'+
+    '<span class="fd">'+имя+'<small>'+низ+'</small></span>'+
+    '<button type="button" data-fnav="1" aria-label="Следующий день"'+(сегодня?' disabled':'')+'>›</button>';
+}
+document.getElementById('fnav').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-fnav]'); if(!b||b.disabled) return;
+  fShift(+b.dataset.fnav); haptic('light');
+});
 function fGet(path){ return fetch(SYNCURL+path).then(function(r){ return r.json(); }); }
 function fPost(path, body){ return fetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){ if(!r.ok||d.error) throw new Error(d.error||('HTTP '+r.status)); return d; }); }); }
 function openFood(){
-  renderFoodDay(); renderFoodWeek(); renderMeas();
-  fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
+  renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
+  loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; renderMeas(); } }).catch(function(){});
   fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; renderRecent(); } }).catch(function(){});
@@ -4216,24 +4297,36 @@ function renderRecent(){
 }
 document.getElementById('frecent').addEventListener('click', function(e){
   var b=e.target.closest('[data-frep]'); if(!b) return;
-  fPost('/meal/repeat', {uid:syncUid(), id:b.dataset.frep}).then(function(d){ FOOD.day=d.day; renderFoodDay(); fReply('Повторил: '+b.textContent.replace('↻','').trim()+'. '+(d.day.line||'')); haptic('ok'); })
+  fPost('/meal/repeat', {uid:syncUid(), id:b.dataset.frep, date:fDate()}).then(function(d){ FOOD.day=d.day; renderFoodDay(); fReply('Повторил: '+b.textContent.replace('↻','').trim()+'. '+(d.day.line||'')); haptic('ok'); })
     .catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
 });
-function fbar(label, v, t, unit){
+/* mode:'range' — перебор плохой (калории); 'min' — перебор нормален (белок,
+   клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя. */
+function fbar(label, v, t, unit, mode){
   var pct = t ? Math.min(100, Math.round(v/t*100)) : 0;
-  var cls = t ? (v>t*1.15 ? 'over' : (v>=t*0.9 ? 'ok' : '')) : '';
-  return '<div class="fbar"><u>'+label+'</u><div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i>'+(t?'<s style="left:100%"></s>':'')+'</div>'+
-         '<b>'+v+(t?' <em>/ '+t+'</em>':'')+' <em>'+unit+'</em></b></div>';
+  var cls = '';
+  if(t){
+    if(mode==='min') cls = v>=t ? 'ok' : '';
+    else cls = v>t*1.15 ? 'over' : (v>=t*0.9 ? 'ok' : '');
+  }
+  /* сколько процентов ширины полосы занимает перебор — но не больше трети */
+  var over = (t && v>t) ? Math.min(33, Math.round((v-t)/t*100)) : 0;
+  return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
+         '<b>'+v+(t?' <em>/ '+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
+         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i>'+
+         (over?'<u class="plus" style="width:'+over+'%"></u>':'')+'</div></div>';
 }
 function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
   var d=FOOD.day;
   if(!d){ box.innerHTML='<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{};
-  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') + fbar('белок', d.prot, t.prot, 'г') +
+  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
+    fbar('белок', d.prot, t.prot, 'г', 'min') +
+    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>';
   ml.innerHTML = (d.meals||[]).map(function(m){
-    return '<div class="fmeal"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
+    return '<div class="fmeal" data-mid="'+m.id+'"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
@@ -4323,7 +4416,7 @@ function foodSend(text, image, mime){
   var sb=document.getElementById('fsend'), pb=document.getElementById('fphoto'); sb.disabled=true; pb.disabled=true;
   fReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
   haptic('medium');
-  fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null})
+  fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null, date:fDate()})
     .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.', '', image); document.getElementById('ftext').value=''; haptic('ok'); takeChanges(d);
       fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
     .catch(function(e){ fReply('Не вышло: '+e.message, 'bad'); haptic('err'); })
@@ -4354,9 +4447,64 @@ document.getElementById('ffile').addEventListener('change', function(e){
   shrink(f).then(function(b64){ foodSend(t, b64, 'image/jpeg'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
   e.target.value='';
 });
+/* ── Правка приёма ──
+   Модель ошибается в весе, человек помнит его лучше — значит запись должна
+   открываться и правиться, а не только удаляться. Здесь же заводится приём
+   руками, в том числе за прошлый день. */
+var KINDS=[['завтрак','завтрак'],['обед','обед'],['ужин','ужин'],['перекус','перекус']];
+var MEAL=null;
+function openMeal(m){
+  MEAL = m || {id:null, kind:'', text:'', kcal:'', prot:'', fib:'', date:fDate()};
+  document.getElementById('mealtitle').textContent = MEAL.id ? 'Правка приёма' : 'Новый приём';
+  document.getElementById('ml-kind').innerHTML = segHtml('mlkind', KINDS, MEAL.kind||'');
+  document.getElementById('ml-date').value = MEAL.date || fDate();
+  document.getElementById('ml-text').value = MEAL.text || '';
+  ['kcal','prot','fib'].forEach(function(k){
+    document.getElementById('ml-'+k).value = (MEAL[k]==null||MEAL[k]==='') ? '' : Math.round(MEAL[k]);
+  });
+  var h=document.getElementById('ml-hint');
+  h.textContent = MEAL.id ? 'Числа считал тренер по фото — если знаешь точнее, поправь здесь.'
+                          : 'Если знаешь только состав, но не числа, — проще написать его тренеру: посчитает сам.';
+  document.getElementById('ml-del').hidden = !MEAL.id;
+  document.getElementById('mealm').classList.add('show');
+}
+function closeMeal(){ document.getElementById('mealm').classList.remove('show'); }
+function mealSave(){
+  if(!MEAL) return;
+  var v=function(id){ var x=document.getElementById('ml-'+id).value.trim(); return x===''?null:+x; };
+  var сег=document.querySelector('#ml-kind button[aria-pressed="true"]');
+  var body={ uid:syncUid(), id:MEAL.id, date:document.getElementById('ml-date').value||fDate(),
+    kind:сег?сег.dataset.v:'', text:document.getElementById('ml-text').value.trim(),
+    kcal:v('kcal'), prot:v('prot'), fib:v('fib') };
+  if(!body.text){ document.getElementById('ml-hint').textContent='Без описания приём не сохранить.'; return; }
+  var btn=document.getElementById('ml-save'); btn.disabled=true;
+  fPost(MEAL.id?'/meal/upd':'/meal/add', body).then(function(d){
+    /* запись могла уехать в другой день — открываем тот, куда она легла */
+    if(body.date!==fDate()){ FOOD.date = body.date===TODAY ? null : body.date; renderFoodNav(); }
+    FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('ok');
+    fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){});
+  }).catch(function(err){ document.getElementById('ml-hint').textContent='Не вышло: '+err.message; })
+    .then(function(){ btn.disabled=false; });
+}
 document.getElementById('fmeals').addEventListener('click', function(e){
-  var b=e.target.closest('[data-fdel]'); if(!b) return;
-  fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); });
+  var b=e.target.closest('[data-fdel]');
+  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply('Не вышло: '+err.message,'bad'); }); return; }
+  var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
+  var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
+  if(m){ openMeal(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
+});
+document.getElementById('fadd').addEventListener('click', function(){ openMeal(null); haptic('light'); });
+document.getElementById('mealclose').addEventListener('click', closeMeal);
+document.getElementById('ml-save').addEventListener('click', mealSave);
+document.getElementById('ml-del').addEventListener('click', function(){
+  if(!MEAL||!MEAL.id) return;
+  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('light'); })
+    .catch(function(err){ document.getElementById('ml-hint').textContent='Не вышло: '+err.message; });
+});
+document.getElementById('mealm').addEventListener('click', function(e){
+  if(e.target.id==='mealm'){ closeMeal(); return; }
+  var sb=e.target.closest('#ml-kind button[data-v]');
+  if(sb){ Array.prototype.forEach.call(sb.parentNode.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x===sb)); }); haptic('light'); }
 });
 document.getElementById('fmphoto').addEventListener('click', function(){ document.getElementById('fmfile').click(); });
 document.getElementById('fmfile').addEventListener('change', function(e){
