@@ -547,6 +547,29 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 .hhead[aria-expanded="true"] .hdate{color:var(--amber)}
 .hhead[aria-expanded="true"] .hsub{color:var(--text)}
 .hbody{padding:0 2px 14px}
+/* ── суперсет одной карточкой ── */
+.sscard{border-color:rgba(79,168,139,.35)}
+.sshead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:-2px 0 12px;
+  font-size:12px;color:var(--dim);line-height:1.4}
+.sshead b{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--done);font-weight:400}
+.sslead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+.sslead-t{flex:1;min-width:0}
+.sslead-t b{display:block;font-size:14.5px;font-weight:600;color:var(--text);line-height:1.25}
+.sslead-t i{font-style:normal;font-size:11.5px;color:var(--dim)}
+.sstag{display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:7px;flex:0 0 22px;
+  background:rgba(79,168,139,.14);color:var(--done);
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700}
+.sscard .rec{margin:2px 0 12px}
+.cyc{border:1px solid var(--line-soft);border-radius:12px;padding:8px 8px 6px;margin-bottom:8px}
+.sscard .sethead{margin-bottom:4px}
+.sscard .hend{width:34px}
+.cychead{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--dim);margin:0 0 6px 2px}
+.ssrow .sn{opacity:1}
+.stp.ghost{visibility:hidden}
+.sscard .exfoot{margin-top:10px}
 .rec{font-size:13px;line-height:1.4;color:var(--muted);margin:2px 0 12px;
   padding:8px 11px;border-radius:10px;background:var(--surface-2);
   border-left:3px solid var(--line)}
@@ -602,12 +625,6 @@ body{padding-bottom:calc(78px + var(--pad-bottom))}
 .me label{flex:1 1 70px;font-size:11px;color:var(--dim)}
 .me input,.me select{width:100%;margin-top:3px;padding:9px 10px;border-radius:9px;
   border:1px solid var(--line);background:var(--surface-2);color:var(--text);font:inherit;font-size:13px}
-.ssline{margin:-2px 0 10px;padding:6px 10px;border-radius:8px;
-  background:rgba(79,168,139,.10);border:1px solid rgba(79,168,139,.35);
-  font-size:11.5px;line-height:1.45;color:var(--done)}
-.ssline b{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.09em;
-  text-transform:uppercase;color:var(--done)}
-.card.inss{border-left:2px solid rgba(79,168,139,.45)}
 .swap{display:block;width:100%;margin-top:10px;padding:9px;border-radius:10px;
   border:1px dashed var(--line);background:none;color:var(--dim);
   font:inherit;font-size:12px;cursor:pointer}
@@ -1772,49 +1789,114 @@ function bumpSets(di, d){
 }
 
 function renderList(){
-  var d = DAYS[day], box = document.getElementById('list'), h='';
+  var box = document.getElementById('list'), h='';
   var список = exList(day);
-  /* партнёр по суперсету — соседнее упражнение с тем же номером ss */
-  function партнёр(di){
-    var g=список[di].ss; if(!g) return null;
-    for(var i=0;i<список.length;i++) if(i!==di && список[i].ss===g) return список[i];
-    return null;
-  }
+  /* Суперсет — это один снаряд времени, а не два упражнения подряд. Раньше
+     пара жила в двух отдельных карточках с текстовой пометкой: было непонятно,
+     что с чем связано, и приходилось прыгать между карточками, чтобы вписать
+     подход. Теперь пара рисуется одной карточкой кругами: А, Б, отдых. */
+  var занято={};
   список.forEach(function(e,di){
-    var all = sess.ex[di].sets.every(function(v){ return v.done; });
-    var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
-    var pr = партнёр(di), первый = pr && (!списокПервый(список,e.ss) || списокПервый(список,e.ss)===e);
-    h += '<article class="card'+(all?' full':'')+(e.ss?' inss':'')+'">'+
-           (pr ? '<div class="ssline"><b>суперсет</b> с «'+pr.n.toLowerCase()+'»'+
-                 (первый ? ' — сделал подход, сразу переходи ко второму' : ' — вернись к первому')+'</div>' : '')+
-           '<div class="eyebrow">'+e.p+'</div>'+
-           '<div class="exname">'+e.n+'</div>'+
-           (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
-           '<div class="spec"><span class="chip">'+setsFor(e,di)+' × '+repsOf(e)+'</span>'+
-             '<span class="chip">отдых '+rest+'</span></div>'+
-           adviceLine(e)+
-           setGrid(e,di)+
-           '<div class="exfoot">'+
-             '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">Описание</button>'+
-             '<button type="button" class="ebtn'+(e.sub?' on':'')+'" data-swap="'+di+'">'+(e.sub?'Заменено':'Заменить')+'</button>'+
-           '</div>'+
-           '<div class="exinfo" id="exinfo'+di+'" hidden>'+
-             '<div class="exmedia">'+mediaFor(e)+
-               '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-               '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-             '</div>'+
-             (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
-           '</div>'+
-         '</article>';
+    if(занято[di]) return;
+    var pdi=-1;
+    if(e.ss) for(var i=0;i<список.length;i++) if(i!==di && список[i].ss===e.ss){ pdi=i; break; }
+    if(pdi>=0){ занято[pdi]=1; h+=ssCard(e,di,список[pdi],pdi); return; }
+    h += одна(e,di);
   });
   box.innerHTML=h;
 }
-
-function списокПервый(список, g){
-  if(!g) return null;
-  for(var i=0;i<список.length;i++) if(список[i].ss===g) return список[i];
-  return null;
+function низКарточки(e,di,метка){
+  return '<div class="exfoot">'+
+      '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">'+(метка?метка+' · ':'')+'Описание</button>'+
+      '<button type="button" class="ebtn'+(e.sub?' on':'')+'" data-swap="'+di+'">'+(метка?метка+' · ':'')+(e.sub?'Заменено':'Заменить')+'</button>'+
+    '</div>'+
+    '<div class="exinfo" id="exinfo'+di+'" hidden>'+
+      '<div class="exmedia">'+mediaFor(e)+
+        '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
+        '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
+      '</div>'+
+      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+    '</div>';
 }
+function одна(e,di){
+  var all = sess.ex[di].sets.every(function(v){ return v.done; });
+  var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
+  return '<article class="card'+(all?' full':'')+'">'+
+     '<div class="eyebrow">'+e.p+'</div>'+
+     '<div class="exname">'+e.n+'</div>'+
+     (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
+     '<div class="spec"><span class="chip">'+setsFor(e,di)+' × '+repsOf(e)+'</span>'+
+       '<span class="chip">отдых '+rest+'</span></div>'+
+     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di,'')+
+   '</article>';
+}
+/* ── суперсет: одна карточка, круги ── */
+function ssCard(a,dia,b,dib){
+  var na=setsFor(a,dia), nb=setsFor(b,dib), кругов=Math.max(na,nb);
+  var готово = sess.ex[dia].sets.every(function(v){return v.done;}) &&
+               sess.ex[dib].sets.every(function(v){return v.done;});
+  var отдых = Math.max(a.rest,b.rest);
+  var h='<article class="card sscard'+(готово?' full':'')+'">'+
+    '<div class="sshead"><b>суперсет</b>между А и Б не отдыхаешь, отдых '+
+      Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга</div>';
+  [[a,dia,'А'],[b,dib,'Б']].forEach(function(x){
+    var e=x[0], di=x[1], t=x[2], tg=targetOf(e);
+    h+='<div class="sslead"><span class="sstag">'+t+'</span>'+
+       '<div class="sslead-t"><b>'+e.n+'</b>'+
+         '<i>'+repsOf(e)+' '+unitR2(e)+(tg.lw!=null?' · было '+fmtKg(tg.lw)+' кг':'')+'</i></div>'+
+       '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
+       adviceLine(e);
+  });
+  h+='<div class="setgrid"><div class="sethead"><span class="sn"></span>'+
+     '<span class="hw">вес, кг</span><span class="hr">повторы</span>'+
+     '<span class="hend"></span></div>';
+  for(var c=0;c<кругов;c++){
+    h+='<div class="cyc"><div class="cychead">круг '+(c+1)+'</div>';
+    [[a,dia,'А',na],[b,dib,'Б',nb]].forEach(function(x){
+      if(c>=x[3]) return;
+      h+=ssRow(x[0],x[1],c,x[2]);
+    });
+    h+='</div>';
+  }
+  h+='<div class="setadd"><button type="button" data-cyc="-1" data-a="'+dia+'" data-b="'+dib+'"'+
+     (кругов<=1?' disabled':'')+' aria-label="Убрать круг">−</button>'+
+     '<span>'+кругов+' '+plural(кругов,['круг','круга','кругов'])+'</span>'+
+     '<button type="button" data-cyc="1" data-a="'+dia+'" data-b="'+dib+'"'+
+     (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div></div>';
+  h+=низКарточки(a,dia,'А')+низКарточки(b,dib,'Б')+'</article>';
+  return h;
+}
+function ssRow(e,di,si,tag){
+  var v=sess.ex[di].sets[si]; if(!v) return '';
+  var t=targetOf(e), wt=hasW(e);
+  var pw=(wt && t.tw!=null) ? fmtKg(t.tw) : '—', pr=(t.tr!=null) ? String(t.tr) : '—';
+  return '<div class="setrow ssrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
+    '<span class="sn sstag">'+tag+'</span>'+
+    (wt?'<div class="stp"><button type="button" data-f="w" data-d="-1" aria-label="Убавить вес">−</button>'+
+        '<input data-f="w" inputmode="decimal" placeholder="'+pw+'" aria-label="Вес, кг" value="'+(v.w==null?'':v.w)+'">'+
+        '<button type="button" data-f="w" data-d="1" aria-label="Прибавить вес">+</button></div>'
+       :'<div class="stp ghost"></div>')+
+    '<div class="stp"><button type="button" data-f="r" data-d="-1" aria-label="Убавить">−</button>'+
+    '<input data-f="r" inputmode="numeric" placeholder="'+pr+'" aria-label="'+unitR(e)+'" value="'+(v.r==null?'':v.r)+'">'+
+    '<button type="button" data-f="r" data-d="1" aria-label="Прибавить">+</button></div>'+
+    '<button type="button" class="ok" data-ok="1" aria-label="Подход сделан" aria-pressed="'+(!!v.done)+'">✓</button>'+
+    '</div>';
+}
+/* круги меняются сразу у обоих упражнений — на то они и круги */
+function bumpCycles(dia,dib,d){
+  var la=sess.ex[dia].sets.length, lb=sess.ex[dib].sets.length, n=Math.max(la,lb)+d;
+  if(n<1 || n>8) return;
+  [dia,dib].forEach(function(di){
+    var arr=sess.ex[di].sets, e=exList(day)[di];
+    while(arr.length<n){ var last=arr[arr.length-1]||{};
+      arr.push({w:last.w, r:last.r!=null?last.r:baseReps(e), done:false}); }
+    while(arr.length>n) arr.pop();
+    ADJ[subKey(day,di)]=arr.length;
+  });
+  saveSubs(); saveSess(); renderList(); haptic('light');
+}
+
+
 /* Подсказка на карточке: что делать именно сегодня с этим упражнением.
    Пока истории нет — правило подбора веса по запасу до отказа. Появилась —
    двойная прогрессия по своим же цифрам. */
@@ -1837,10 +1919,24 @@ function syncRow(di,si){
     if(inp && document.activeElement!==inp) inp.value=(v[f]==null?'':v[f]);
   });
   var card=row.closest('.card');
-  if(card) card.classList.toggle('full', sess.ex[di].sets.every(function(x){return x.done;}));
+  if(card){
+    var все=true;
+    Array.prototype.forEach.call(card.querySelectorAll('.setrow'), function(r){
+      var vv=sess.ex[+r.dataset.ex].sets[+r.dataset.set];
+      if(!vv || !vv.done) все=false;
+    });
+    card.classList.toggle('full', все);
+  }
 }
 
+function партнёрDi(di){
+  var сп=exList(day), g=сп[di] && сп[di].ss; if(!g) return -1;
+  for(var i=0;i<сп.length;i++) if(i!==di && сп[i].ss===g) return i;
+  return -1;
+}
 document.getElementById('list').addEventListener('click', function(ev){
+  var cb=ev.target.closest('[data-cyc]');
+  if(cb && !cb.disabled){ bumpCycles(+cb.dataset.a, +cb.dataset.b, +cb.dataset.cyc); return; }
   var sb=ev.target.closest('[data-sets]');
   if(sb && !sb.disabled){ bumpSets(+sb.dataset.ex, +sb.dataset.sets); return; }
   var ab=ev.target.closest('[data-allex]');
@@ -1877,7 +1973,11 @@ document.getElementById('list').addEventListener('click', function(ev){
         if(nx.r===''||nx.r==null) nx.r=v.r;
         syncRow(di,si+1);
       }
-      startTimer(e.rest);
+      /* В суперсете отдых только после второго упражнения круга: между А и Б
+         человек переходит сразу, иначе весь смысл экономии времени теряется. */
+      var пара = e.ss ? партнёрDi(di) : -1;
+      var первыйВПаре = пара>=0 && di<пара;
+      if(!первыйВПаре) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
       markDone();
     }
     saveSess(); syncRow(di,si); commit();
