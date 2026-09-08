@@ -484,12 +484,13 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fbar b{font-family:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .fbar b em{font-style:normal;color:var(--dim);font-weight:400;font-size:12px}
 .fbar .tr{height:8px;border-radius:99px;background:var(--card-2);position:relative;overflow:hidden}
+/* Классы состояния — с префиксом. Голое «ok» уже занято кнопкой «подход
+   сделан» (44 px, рамка, display:flex), и заливка шкалы наследовала её
+   размеры: зелёная полоса выезжала трапецией и выглядела незаполненной.
+   Второй раз одни и те же грабли — короткие имена классов уже заняты. */
 .fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px;transition:width .25s ease}
-.fbar .tr i.ok{background:var(--done)}
-.fbar .tr i.over{background:var(--warn)}
-/* перебор: полоса полная, а за нормой — штриховка, чтобы «сверх плана» было видно */
-.fbar .tr u.plus{position:absolute;top:0;bottom:0;right:0;border-radius:0 99px 99px 0;
-  background:repeating-linear-gradient(115deg,rgba(255,255,255,.35) 0 2px,transparent 2px 6px)}
+.fbar .tr i.fb-done{background:var(--done)}
+.fbar .tr i.fb-over{background:var(--warn)}
 
 /* переключатель дня: вчерашний ужин записывается во вчера */
 .fnav{display:flex;align-items:center;gap:8px;margin:2px 0 0}
@@ -4321,20 +4322,19 @@ document.getElementById('frecent').addEventListener('click', function(e){
     .then(function(d){ готово(d, b.textContent.replace('↻','').trim()); }).catch(беда);
 });
 /* mode:'range' — перебор плохой (калории); 'min' — перебор нормален (белок,
-   клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя. */
+   клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя.
+   Норма набрана — полоса заполнена целиком и покрашена; никакой штриховки:
+   любая фактура на конце читается как «не дозаполнено». */
 function fbar(label, v, t, unit, mode){
   var pct = t ? Math.min(100, Math.round(v/t*100)) : 0;
   var cls = '';
   if(t){
-    if(mode==='min') cls = v>=t ? 'ok' : '';
-    else cls = v>t*1.15 ? 'over' : (v>=t*0.9 ? 'ok' : '');
+    if(mode==='min') cls = v>=t ? 'fb-done' : '';
+    else cls = v>t*1.15 ? 'fb-over' : (v>=t*0.9 ? 'fb-done' : '');
   }
-  /* сколько процентов ширины полосы занимает перебор — но не больше трети */
-  var over = (t && v>t) ? Math.min(33, Math.round((v-t)/t*100)) : 0;
   return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
          '<b>'+v+(t?' <em>/ '+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
-         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i>'+
-         (over?'<u class="plus" style="width:'+over+'%"></u>':'')+'</div></div>';
+         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';
 }
 function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
