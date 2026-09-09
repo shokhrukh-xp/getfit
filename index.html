@@ -562,6 +562,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .planc .rb button{flex:1 1 0;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font-size:13px}
 .planc .rb button.go{border-color:transparent;background:var(--accent);color:var(--on-accent);font-weight:500}
 .pf.pfcol{display:block}
+.pf.pfcol + .seghint{margin-left:0}
 .plan{margin-top:8px;display:flex;flex-direction:column;gap:8px}
 .plrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .plrow select{flex:1 1 120px;min-width:110px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font-size:13px;padding:0 6px}
@@ -5268,7 +5269,7 @@ function renderPlanBox(){
   if(!pl.length){ el.hidden=true; el.innerHTML=''; return; }
   el.hidden=false;
   el.innerHTML=pl.map(function(p){
-    return '<div class="planc"><b>'+esc(p.kind)+' сегодня</b><i>'+p.min+' мин по плану · +'+Math.round(p.kcal)+' ккал к норме еды</i>'+
+    return '<div class="planc"><b>'+esc(p.kind.charAt(0).toUpperCase()+p.kind.slice(1))+' сегодня</b><i>'+p.min+' мин по плану · +'+Math.round(p.kcal)+' ккал к норме еды</i>'+
       '<div class="rb"><button type="button" class="go" data-plan="do" data-k="'+esc(p.kind)+'" data-m="'+p.min+'" data-i="'+esc(p.intensity||'mod')+'">Было</button>'+
       '<button type="button" data-plan="no" data-k="'+esc(p.kind)+'">Не было</button></div></div>';
   }).join('');
