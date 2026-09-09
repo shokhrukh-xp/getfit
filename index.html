@@ -2375,6 +2375,12 @@ function goalPull(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.ok) return;
+      /* лёгкую неделю включил тренер по разбору — веса падали два занятия
+         подряд. Один раз на каждый такой разбор, и с объяснением на экране. */
+      if(d.deload && d.deload.on && d.deload.from && gget('deload_srv',null)!==d.deload.from){
+        gset('deload_srv', d.deload.from);
+        if(!deloadOn()){ setDeload(true); paintNote(''); try{ TG && TG.showAlert && TG.showAlert('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
+      }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
       renderGoalCard();
