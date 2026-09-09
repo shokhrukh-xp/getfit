@@ -5394,7 +5394,7 @@ function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
   if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
   var can=recoCan(c);
-  var подпись = c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить');
+  var подпись = (can && can.kind==='swap' && c.nocat) ? 'Выбрать в каталоге' : (c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить'));
   return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+
     (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
     '<div class="rb">'+(can?'<button type="button" class="go" data-reco2="do">'+esc(подпись)+'</button>':'')+
@@ -5417,21 +5417,39 @@ var reco2Rendering=false;
    идентификатором каталога: держать каталог в контексте каждого сообщения
    дорого. Ищем сами — по русскому и английскому названию, на ту же мышцу и
    того же типа, чтобы вместо приседа не встал велотренажёр. */
-function findInCat(наз, мышца, тип){
+var RESIST_C={strength:1,powerlifting:1,'olympic weightlifting':1,strongman:1,plyometrics:1};
+function catFam(c){ return RESIST_C[c||'strength'] ? 'resist' : (c||'strength'); }
+function noYo(s){ return String(s||'').toLowerCase().replace(/ё/g,'е'); }
+/* «кроме» — то, что заменяем: раньше «ягодичный мостик в тренажёре» находил
+   тот же ягодичный мостик со штангой (два слова из трёх), кнопка «срабатывала»,
+   а программа не менялась. Слова сравниваем по основе, чтобы «гантелями»
+   находило «гантели». Тип — семейство: силовое на силовое, а не строго
+   powerlifting на powerlifting. */
+function findInCat(наз, мышца, тип, кроме){
   if(!CAT || !CAT.ex) return null;
-  var q=String(наз||'').toLowerCase().replace(/[«»"(),.]/g,' ').replace(/\s+/g,' ').trim();
+  var q=noYo(наз).replace(/[«»"(),.\-\/]/g,' ').replace(/\s+/g,' ').trim();
   if(!q) return null;
   var слова=q.split(' ').filter(function(w){ return w.length>2; });
   if(!слова.length) return null;
-  var лучший=null, лучшийСчёт=0;
+  var фам=catFam(тип), лучший=null, лучшийСчёт=0;
   CAT.ex.forEach(function(x){
     if(мышца && x.m!==мышца) return;
-    if(тип && (x.c||'strength')!==тип) return;
-    var hay=(x.n+' '+x.e).toLowerCase();
-    var n=0; слова.forEach(function(w){ if(hay.indexOf(w)>=0) n++; });
+    if(catFam(x.c)!==фам) return;
+    if(кроме && (x.i===кроме.i || noYo(x.n)===noYo(кроме.n))) return;
+    var hay=noYo(x.n+' '+x.e);
+    var n=0; слова.forEach(function(w){ if(hay.indexOf(w.length>5?w.slice(0,5):w)>=0) n++; });
     if(n>лучшийСчёт){ лучшийСчёт=n; лучший=x; }
   });
   return лучшийСчёт>=Math.max(1, Math.ceil(слова.length/2)) ? лучший : null;
+}
+/* строка каталога для замены: сервер уже подобрал id — берём его,
+   иначе ищем по словам, не считая то, что заменяем */
+function recoTarget(c, hit){
+  if(!CAT || !CAT.ex || c.nocat) return null;   /* сервер уже искал, и моделью тоже: нечего ставить — каталог */
+  var вкат=hit.e.cat ? (CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0] : null;
+  var поId=c.toId ? (CAT.ex||[]).filter(function(x){ return x.i===c.toId; })[0] : null;
+  if(поId && поId.i!==hit.e.cat && noYo(поId.n)!==noYo(hit.e.n)) return поId;
+  return findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength', {i:hit.e.cat, n:hit.e.n});
 }
 function applyReco2(){
   var c=RECO2 || gget('coach_reco', null); if(!c) return;
@@ -5449,7 +5467,7 @@ function applyReco2(){
   /* замена: каталог мог ещё не загрузиться — тогда ждём и пробуем снова */
   var сделать=function(){
     var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
-    var найдено=findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength');
+    var найдено=recoTarget(c, hit);
     if(найдено){
       applySub(hit.dk, hit.di, найдено);
       gset('reco2_seen', c.id); recoDone(); renderReco2(); haptic('ok');
@@ -5487,8 +5505,7 @@ function applyAuto(list){
         ADJ[subKey(hit.dk, hit.di)]=Math.max(1, Math.min(8, Math.round(+c.sets)));
         done.push(hit.e.n+' — '+Math.round(+c.sets)+' '+plural(Math.round(+c.sets),['подход','подхода','подходов'])); ids.push(c.id); return;
       }
-      var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
-      var найдено=findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength');
+      var найдено=recoTarget(c, hit);
       if(найдено){ SUBS[subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i}; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
       else notFound.push(c);
     });
@@ -5540,8 +5557,11 @@ function takeChanges(d){
   if(!d || !d.changes || !d.changes.length) return;
   var c=d.changes[0]; if(!c || !c.text) return;
   c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
+  /* человек попросил сейчас — показываем, даже если такое же предложение
+     раньше отклонял: «Понятно» на прошлой неделе не должно прятать кнопку сегодня */
+  gset('reco2_seen', null);
   RECO2=c; gset('coach_reco', c);
-  if(gget('reco2_seen',null)!==c.id) renderReco2();
+  renderReco2();
 }
 
 function coachSend(text, image){
