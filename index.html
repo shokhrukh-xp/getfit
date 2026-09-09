@@ -1323,6 +1323,8 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
     <div class="pf" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
     <p class="seghint">самый маленький блин в зале — от него шаг прибавки на штанге</p>
+    <div class="pf" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
+    <p class="seghint">«сам меняет» — правки из недельного разбора и чата встают без подтверждения, ты получаешь объяснение; «спрашивает» — каждая под кнопкой</p>
     <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
     <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
@@ -2381,6 +2383,8 @@ function goalPull(){
         gset('deload_srv', d.deload.from);
         if(!deloadOn()){ setDeload(true); paintNote(''); try{ TG && TG.showAlert && TG.showAlert('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
       }
+      /* режим правок, выбранный на сервере (через тренера), — пока человек сам не переключил в профиле */
+      if(d.auto && !(myData()||{}).auto){ var meA=myData()||{}; meA.auto=d.auto; gset('me', meA); }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
       renderGoalCard();
@@ -2424,6 +2428,7 @@ var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опы
 var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var PLATEKEYS=[['1.25','1,25 кг'],['2.5','2,5 кг'],['5','5 кг']];
+var AUTOKEYS=[['all','сам меняет'],['ask','спрашивает']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
 function segHtml(id, list, val, multi){
@@ -2443,6 +2448,7 @@ function fillMe(){
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
   var PL=document.getElementById('me-plate'); if(PL) PL.innerHTML=segHtml('plate',PLATEKEYS,String(me.plate||'1.25'));
+  var AU=document.getElementById('me-auto');  if(AU) AU.innerHTML=segHtml('auto',AUTOKEYS,me.auto||'ask');
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
   var lk=document.getElementById('me-likes'); if(lk) lk.value=(me.likes||[]).join(', ');
@@ -2462,7 +2468,7 @@ function readMeForm(){
   var op=goalPair(old), wt=pick('me-wt')||op.wt||null, gym=pick('me-gym')||op.gym||null;
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
-          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25),
+          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25), auto:pick('me-auto')||old.auto||'ask',
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
           dislikes:csv((document.getElementById('me-dis')||{}).value)};
@@ -5466,11 +5472,53 @@ function applyReco2(){
 function recoDone(){
   try{ fPost('/reco', {uid:syncUid(), done:1}).catch(function(){}); }catch(e){}
 }
+/* ── правки тренера в режиме «всё само» ──
+   Очередь с сервера применяется при запуске без кнопки: подходы — сразу,
+   замена — через каталог на ту же мышцу. Что не нашлось, остаётся человеку.
+   Каждая применённая правка снимается с сервера и показывается одной строкой. */
+function applyAuto(list){
+  if(!list || !list.length) return Promise.resolve([]);
+  var done=[], ids=[], notFound=[];
+  var run=function(){
+    list.forEach(function(c){
+      var can=recoCan(c); if(!can){ ids.push(c.id); return; }   /* упражнения уже нет в программе — снимаем */
+      var hit=can.hit;
+      if(can.kind==='sets'){
+        ADJ[subKey(hit.dk, hit.di)]=Math.max(1, Math.min(8, Math.round(+c.sets)));
+        done.push(hit.e.n+' — '+Math.round(+c.sets)+' '+plural(Math.round(+c.sets),['подход','подхода','подходов'])); ids.push(c.id); return;
+      }
+      var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
+      var найдено=findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength');
+      if(найдено){ SUBS[subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i}; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
+      else notFound.push(c);
+    });
+    if(ids.length){
+      saveSubs(); if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
+      renderList(); paintNote('');
+      try{ fPost('/reco', {uid:syncUid(), ids:ids}).catch(function(){}); }catch(e){}
+    }
+    if(done.length){ try{ if(TG && TG.showAlert) TG.showAlert('Тренер поменял программу:\n'+done.join('\n')); }catch(e){} }
+    /* не нашли замену — оставляем как предложение с кнопкой, пусть выберет сам */
+    if(notFound.length && !RECO2){ RECO2=notFound[0]; gset('coach_reco', notFound[0]); renderReco2(); }
+    return done;
+  };
+  return (CAT ? Promise.resolve() : loadCatalog().catch(function(){})).then(run);
+}
+/* перестроенная тренером программа: ставится сама, история весов переезжает */
+function applyRebuild(rb){
+  if(!rb || !rb.prog || !rb.prog.days || gget('rebuilt_at',null)===rb.at) return;
+  gset('rebuilt_at', rb.at);
+  AIPROG=rb.prog; aiApply();
+  try{ fPost('/reco', {uid:syncUid(), rebuilt:1}).catch(function(){}); }catch(e){}
+  try{ if(TG && TG.showAlert) TG.showAlert('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.'); }catch(e){}
+}
 function recoPull(){
   var сразу = /[?&]r=1(&|$)/.test(location.search||'');
   return fetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
     .then(function(r){ return r.json(); })
     .then(function(d){
+      if(d && d.rebuild) applyRebuild(d.rebuild);
+      if(d && d.auto && d.auto.length) applyAuto(d.auto);
       var c = d && d.reco; if(!c || !c.text) return;
       if(!c.id) c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
       if(!сразу && gget('reco2_seen',null)===c.id) return;
