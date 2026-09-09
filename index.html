@@ -551,6 +551,9 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fmeal{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px;cursor:pointer}
 .fmeal:active{opacity:.6}
 .fmeal:first-child{border-top:0}
+.fmeal.fact{cursor:default}
+.fmeal.fact .fk{color:var(--accent)}
+.fparts{margin:6px 0 0;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
 .fmeal .fk{flex:0 0 58px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
 /* «590 · 50 г» читалось как вес порции. Числа подписаны: калории крупно,
@@ -1327,6 +1330,8 @@ body.onb #picker .modalbox::before{display:none}
     <p class="seghint">«сам меняет» — правки из недельного разбора и чата встают без подтверждения, ты получаешь объяснение; «спрашивает» — каждая под кнопкой</p>
     <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
     <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    <label class="mlab">спорт вне зала<input id="me-sports" type="text" autocomplete="off" maxlength="120" placeholder="теннис вт и чт по 1,5 ч"></label>
+    <p class="seghint">регулярное — чтобы тренер не ставил тяжёлые ноги накануне матча; разовое пиши тренеру в чат («сегодня теннис полтора часа») — оно войдёт в норму еды того дня</p>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
     <div class="pfprog" id="pfprog"></div>
     <div id="recobox"></div>
@@ -2220,7 +2225,7 @@ function wzSend(){
   var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
     me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
          place:WIZ.place, level:me.level||null, wt:goalPair(me).wt, gym:goalPair(me).gym, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
-         likes:me.likes||[], dislikes:me.dislikes||[] } };
+         likes:me.likes||[], dislikes:me.dislikes||[], sports:me.sports||'' } };
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
   var tm=setTimeout(function(){ if(wzCtl) wzCtl.abort(); }, 150000);
@@ -2234,7 +2239,7 @@ function wzSend(){
       if(d.prog && d.prog.days && d.prog.days.length){
         WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.wt=d.wt||null; WIZ.gym=d.gym||null; WIZ.hint=d.hint||'';
         WIZ.goalObj=d.goalObj||null;
-        WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[];
+        WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[]; WIZ.sports=d.sports||'';
         WIZ.stage='prog'; haptic('ok');
       } else {
         WIZ.ask=d.ask||null; WIZ.opts=d.options||[]; WIZ.hint=d.hint||'';
@@ -2268,6 +2273,7 @@ function wzSaveMe(){
      дальше это учитывается при каждой сборке и замене, поэтому храним */
   if((WIZ.likes||[]).length && !(me.likes||[]).length){ me.likes=WIZ.likes; ch=true; }
   if((WIZ.dislikes||[]).length && !(me.dislikes||[]).length){ me.dislikes=WIZ.dislikes; ch=true; }
+  if(WIZ.sports && !me.sports){ me.sports=String(WIZ.sports).slice(0,120); ch=true; }
   if(ch){ gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
 }
 function wzApply(){
@@ -2453,6 +2459,7 @@ function fillMe(){
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
   var lk=document.getElementById('me-likes'); if(lk) lk.value=(me.likes||[]).join(', ');
   var ds=document.getElementById('me-dis');   if(ds) ds.value=(me.dislikes||[]).join(', ');
+  var sp=document.getElementById('me-sports'); if(sp) sp.value=me.sports||'';
 }
 /* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
    строкой, модели — списком */
@@ -2471,10 +2478,11 @@ function readMeForm(){
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25), auto:pick('me-auto')||old.auto||'ask',
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
-          dislikes:csv((document.getElementById('me-dis')||{}).value)};
+          dislikes:csv((document.getElementById('me-dis')||{}).value),
+          sports:String((document.getElementById('me-sports')||{}).value||'').trim().slice(0,120)};
 }
 /* подпись профиля: что из него влияет на подсказки */
-function meSig(me){ me=me||{}; var gp=goalPair(me); return [gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),Object.keys(GYM_DAYS).length].join('|'); }
+function meSig(me){ me=me||{}; var gp=goalPair(me); return [gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),me.sports||'',Object.keys(GYM_DAYS).length].join('|'); }
 function saveMe(){
   if(!document.getElementById('me-bw')) return;
   var prev=myData()||{}, me=readMeForm();
@@ -4587,7 +4595,7 @@ function guardClose(on){
 }
 
 /* ── обработчики окон ── */
-['me-bw','me-ht','me-age','me-sex','me-likes','me-dis'].forEach(function(id){
+['me-bw','me-ht','me-age','me-sex','me-likes','me-dis','me-sports'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('change', saveMe);
 });
 document.getElementById('profbtn').addEventListener('click', function(){ openProf(); haptic('light'); });
@@ -5121,12 +5129,26 @@ function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
   var d=FOOD.day;
   if(!d){ box.innerHTML='<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
-  var t=d.targets||{};
+  var t=d.targets||{}, pr=t.parts||null;
+  /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
+     когда есть что показывать (иначе это просто число) */
+  var состав='';
+  if(pr && (pr.gym||pr.acts)){
+    var части=['база '+Math.round(pr.base)];
+    if(pr.gym) части.push('зал +'+pr.gym);
+    if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' +'+pr.acts : 'спорт +'+pr.acts);
+    состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' · ')+(pr.k&&pr.k!==1?' · ×'+String(pr.k).replace('.',','):'')+(pr.delta?' '+(pr.delta>0?'+':'−')+Math.abs(pr.delta)+' по цели':'')+'</p>';
+  }
   box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
     fbar('белок', d.prot, t.prot, 'г', 'min') +
-    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') +
+    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>';
-  ml.innerHTML = (d.meals||[]).map(function(m){
+  ml.innerHTML = (d.acts||[]).map(function(a){
+    return '<div class="fmeal fact" data-aid="'+a.id+'"><span class="fk">спорт</span><span class="ft">'+esc(a.kind)+' · '+a.min+' мин'+
+           (a.intensity==='hard'?' · тяжело':a.intensity==='light'?' · легко':'')+(a.hr?' · пульс '+a.hr:'')+(a.note?'<i class="dim"> — '+esc(String(a.note).slice(0,60))+'</i>':'')+'</span>'+
+           '<span class="fn"><b>+'+Math.round(a.kcal)+'</b> ккал<i>к норме</i></span>'+
+           '<button type="button" class="fx" data-adel="'+a.id+'" aria-label="Убрать">×</button></div>';
+  }).join('') + (d.meals||[]).map(function(m){
     return '<div class="fmeal" data-mid="'+m.id+'"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
@@ -5288,6 +5310,9 @@ function mealSave(){
 document.getElementById('fmeals').addEventListener('click', function(e){
   var b=e.target.closest('[data-fdel]');
   if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  var ab=e.target.closest('[data-adel]');
+  if(ab){ fPost('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  if(e.target.closest('.fact')) return;
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
   if(m){ openMeal(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
@@ -5579,7 +5604,7 @@ function coachSend(text, image){
       var м=document.getElementById('coachm');
       if(!м || !м.classList.contains('show')) coachAttn(true);
       document.getElementById('ctext').value='';
-      if(d.day && ((d.meals && d.meals.length) || d.fixed)){ FOOD.day=d.day; renderFoodDay(); }
+      if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length))){ FOOD.day=d.day; renderFoodDay(); }
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
