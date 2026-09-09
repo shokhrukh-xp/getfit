@@ -140,8 +140,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:var(--card-2);color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--accent)}
 /* четыре ответа про зал в одну строку не влезают на телефоне — два на два */
-#me-gym{flex-wrap:wrap}
-#me-gym button{flex:1 1 calc(50% - 3px)}
 /* «что есть дома» — пять коротких слов, которые не влезают поровну */
 .seg.multi{flex-wrap:wrap}
 .seg.multi button{flex:0 1 auto;padding:9px 12px;overflow:visible;text-overflow:clip}
@@ -151,6 +149,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pfprog b{color:var(--text);font-weight:600}
 .pfprog i{display:block;font-style:normal;margin-top:2px;color:var(--muted)}
 .seghint{margin:4px 0 0 68px;font-size:12px;line-height:1.4;color:var(--muted)}
+/* цель — результат + число + срок, как договорились с тренером; кнопок нет,
+   потому что цель без числа и срока — не цель, а её меняют разговором */
+.goalcard{margin-top:12px;padding:12px 13px;border-radius:12px;border:1px solid var(--accent-2);background:var(--accent-ghost)}
+.goalcard .gl{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.goalcard .gt{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.35}
+.goalcard .gp{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.goalcard .gp b{color:var(--text);font-weight:600}
+.goalcard button{margin-top:10px;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:9px;padding:8px 12px;font:inherit;font-size:13px}
 .pfprog button{background:none;border:none;color:var(--accent);font:inherit;font-size:12.5px;padding:0}
 .reco{border:1px solid var(--accent-2);border-radius:12px;padding:12px 13px;margin-bottom:10px;background:var(--accent-ghost)}
 .reco h4{margin:0 0 4px;font-size:13.5px;font-weight:600;color:var(--text)}
@@ -1310,10 +1316,7 @@ body.onb #picker .modalbox::before{display:none}
       <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
       <label>вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
     </div>
-    <div class="pf"><span class="pfl">вес</span><div class="seg" id="me-wt"></div></div>
-    <p class="seghint" id="me-wt-hint"></p>
-    <div class="pf"><span class="pfl">зал</span><div class="seg" id="me-gym"></div></div>
-    <p class="seghint" id="me-gym-hint"></p>
+    <div class="goalcard" id="goalcard"></div>
     <div class="pf"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
     <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
     <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
@@ -2226,6 +2229,7 @@ function wzSend(){
       WIZ.busy=false;
       if(d.prog && d.prog.days && d.prog.days.length){
         WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.wt=d.wt||null; WIZ.gym=d.gym||null; WIZ.hint=d.hint||'';
+        WIZ.goalObj=d.goalObj||null;
         WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[];
         WIZ.stage='prog'; haptic('ok');
       } else {
@@ -2253,7 +2257,8 @@ function wzSaveMe(){
   if(WIZ.text && me.about!==WIZ.text){ me.about=WIZ.text; ch=true; }
   /* цель человек больше не выбирает из списка — её понял тренер по его словам,
      а без цели не посчитать ни стартовые веса, ни норму еды */
-  if(WIZ.wt && WIZ.gym && !hasGoal(me)){ me.wt=WIZ.wt; me.gym=WIZ.gym; me.goal=legacyOf(WIZ.wt,WIZ.gym); ch=true; }
+  if(WIZ.wt && WIZ.gym && (!hasGoal(me) || WIZ.goalObj)){ me.wt=WIZ.wt; me.gym=WIZ.gym; me.goal=legacyOf(WIZ.wt,WIZ.gym); ch=true; }
+  if(WIZ.goalObj) gset('goal', {goal:WIZ.goalObj, progress:null, at:new Date().toISOString()});
   else if(WIZ.goal && !hasGoal(me)){ me.goal=WIZ.goal; ch=true; }
   /* что человек любит и чего не хочет — тренер вытащил это в разговоре;
      дальше это учитывается при каждой сборке и замене, поэтому храним */
@@ -2342,13 +2347,6 @@ function schedApplied(){
    обоих: «Мышцы · вес вниз · 5 дней». */
 var WTS=[['down','Снизить'],['keep','Оставить'],['up','Набрать']];
 var GYMS=[['muscle','Мышцы'],['strength','Сила'],['endur','Выносливость'],['health','Здоровье']];
-var WT_HINT={ down:'дефицит 300–500 ккал, не глубже потолка по жировой массе; белка больше — мышцы остаются',
-              keep:'калории на поддержание — вес стоит, меняется состав тела',
-              up:'небольшой профицит, +250 ккал; белка больше' };
-var GYM_HINT={ muscle:'объём: 10–20 подходов на мышцу в неделю, 6–12 повторов',
-               strength:'тяжёлые базовые 3–6 повторов, первыми в тренировке, каждое дважды в неделю',
-               endur:'кардио и интервалы, силовая два раза — чтобы не терять мышцы',
-               health:'силовая 2–3 раза умеренно, плюс подвижность, баланс и осанка' };
 var WT_WORD={down:'вес вниз',keep:'вес на месте',up:'вес вверх'};
 /* старые значения goal переводятся в пару — они остались в телефонах и в облаке */
 var LEGACY_GOAL={fat:['down','muscle'],tone:['down','muscle'],muscle:['up','muscle'],strength:['keep','strength'],
@@ -2358,7 +2356,53 @@ function goalPair(me){
   if(me.wt && me.gym) return {wt:me.wt, gym:me.gym};
   var l=LEGACY_GOAL[me.goal]; return l ? {wt:l[0], gym:l[1]} : {wt:null, gym:null};
 }
-function hasGoal(me){ var g=goalPair(me); return !!(g.wt && g.gym); }
+function goalObj(){ var g=gget('goal',null); return (g && g.goal && g.goal.text) ? g.goal : null; }
+function hasGoal(me){ if(goalObj()) return true; var g=goalPair(me); return !!(g.wt && g.gym); }
+/* согласованная цель важнее пары в профиле: она и есть источник пары */
+function takeGoal(gobj, progress){
+  if(!gobj || !gobj.text) return;
+  gset('goal', {goal:gobj, progress:progress||null, at:new Date().toISOString()});
+  var me=myData()||{}; var ch=false;
+  if(gobj.wt && me.wt!==gobj.wt){ me.wt=gobj.wt; ch=true; }
+  if(gobj.gym && me.gym!==gobj.gym){ me.gym=gobj.gym; ch=true; }
+  if(ch){ me.goal=legacyOf(me.wt, me.gym); gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
+  renderGoalCard(); renderNudge(); renderProfProg();
+}
+function goalPull(){
+  return fetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.ok) return;
+      if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
+      else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
+      renderGoalCard();
+    }).catch(function(){});
+}
+function renderGoalCard(){
+  var el=document.getElementById('goalcard'); if(!el) return;
+  var g=gget('goal',null), gobj=goalObj(), me=myData()||{}, pr=g&&g.progress;
+  var h='<div class="gl">цель</div>';
+  if(gobj){
+    h+='<div class="gt">'+esc(gobj.text)+'</div>';
+    if(pr && pr.w0 && pr.now && pr.rate){
+      var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',','); };
+      h+='<p class="gp">Старт '+esc(String(pr.w0).replace('.',','))+' кг → сейчас <b>'+esc(String(pr.now).replace('.',','))+' кг</b> ('+f(pr.fact)+')'+
+         (pr.plan!=null ? ' · по плану '+f(pr.plan) : '')+
+         (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? (Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем' : ' · отстаём на '+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
+         (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p>';
+    } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
+    h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
+  } else if(hasGoal(me)){
+    h+='<div class="gt">'+esc(goalText(me))+'</div>'+
+       '<p class="gp">Числа и срока пока нет. Скажи тренеру, сколько и к какому сроку, — он проверит, реально ли это, и посчитает норму еды под темп.</p>'+
+       '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
+  } else {
+    h+='<div class="gt">Цель не задана</div>'+
+       '<p class="gp">Без неё не посчитать ни норму еды, ни стартовые веса. Расскажи тренеру, чего хочешь, — он доспросит и предложит, что реально.</p>'+
+       '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
+  }
+  el.innerHTML=h;
+}
 function legacyOf(wt,gym){
   if(wt==='down') return 'fat'; if(wt==='up') return 'muscle';
   return {muscle:'health',strength:'strength',endur:'endur',health:'health'}[gym]||'health';
@@ -2372,12 +2416,6 @@ var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
-function paintGoalHints(){
-  var w=document.querySelector('#me-wt button[aria-pressed="true"]'), g=document.querySelector('#me-gym button[aria-pressed="true"]');
-  var hw=document.getElementById('me-wt-hint'), hg=document.getElementById('me-gym-hint');
-  if(hw) hw.textContent = w ? WT_HINT[w.dataset.v]||'' : 'что делать с весом — от этого считается норма еды';
-  if(hg) hg.textContent = g ? GYM_HINT[g.dataset.v]||'' : 'ради чего зал — от этого схема подходов и повторов';
-}
 function segHtml(id, list, val, multi){
   return list.map(function(x){
     var on = multi ? (val||[]).indexOf(x[0])>=0 : val===x[0];
@@ -2390,10 +2428,7 @@ function fillMe(){
       a=document.getElementById('me-age'), x=document.getElementById('me-sex');
   if(b) b.value=me.bw||''; if(h) h.value=me.ht||'';
   if(a) a.value=me.age||''; if(x) x.value=me.sex||'m';
-  var gp=goalPair(me);
-  var W=document.getElementById('me-wt');  if(W) W.innerHTML=segHtml('wt',WTS,gp.wt);
-  var G=document.getElementById('me-gym'); if(G) G.innerHTML=segHtml('gym',GYMS,gp.gym);
-  paintGoalHints();
+  renderGoalCard();
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
@@ -2424,8 +2459,7 @@ function readMeForm(){
 /* подпись профиля: что из него влияет на подсказки */
 function meSig(me){ me=me||{}; var gp=goalPair(me); return [gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),Object.keys(GYM_DAYS).length].join('|'); }
 function saveMe(){
-  if(!document.getElementById('me-wt')) return;
-  paintGoalHints();
+  if(!document.getElementById('me-bw')) return;
   var prev=myData()||{}, me=readMeForm();
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
@@ -3563,7 +3597,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2(); recoPull();
+      recoBoot(); pushVolume(); renderReco2(); recoPull(); goalPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -4520,6 +4554,12 @@ document.getElementById('profm').addEventListener('click', function(e){
     return;
   }
   if(e.target.closest('#pfswitch')){ closeProf(); showPicker(); return; }
+  if(e.target.closest('#goaltalk')){
+    closeProf(); openCoach();
+    var ct=document.getElementById('ctext');
+    if(ct && !ct.value){ ct.value = goalObj() ? 'Хочу обсудить цель: ' : 'Моя цель: '; try{ ct.focus(); ct.setSelectionRange(ct.value.length, ct.value.length); }catch(_){} }
+    haptic('light'); return;
+  }
   var rb=e.target.closest('button[data-reco]');
   if(rb){
     var what=rb.dataset.reco;
@@ -4852,7 +4892,7 @@ function resetState(t, плохо){
 /* Общие ключи (gset) и ключи с префиксом программы (set). При «пересобрать»
    стираем только то, что задаёт человека и его программу; журнал тренировок
    в облаке и в D1 не трогаем, чтобы веса подхватились в новой программе. */
-var RESET_G=['me','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
+var RESET_G=['me','goal','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
 var RESET_P=['sched','subs','adj','last','lastdone','day','extra','deload','ai_sched'];
 function wipeLocal(всё){
   try{
@@ -5396,6 +5436,7 @@ document.getElementById('coachreco').addEventListener('click', recoClick);
 document.getElementById('chatlog').addEventListener('click', recoClick);
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
+  if(d && d.goal && d.goal.text) takeGoal(d.goal, null);
   if(!d || !d.changes || !d.changes.length) return;
   var c=d.changes[0]; if(!c || !c.text) return;
   c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
