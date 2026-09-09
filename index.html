@@ -638,8 +638,9 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
 .coachfab:active{transform:scale(.94)}
 .coachfab svg{width:24px;height:24px}
 .coachfab.attn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
-#coachm .modalbox{display:flex;flex-direction:column;max-height:88vh;padding-bottom:calc(10px + var(--pad-bottom,0px))}
-.chatlog{flex:1 1 auto;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
+#coachm .modalbox{display:flex;flex-direction:column;max-height:88vh;overflow:hidden;padding-bottom:calc(10px + var(--pad-bottom,0px))}
+.chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
 .msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
 .msg.me{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
@@ -684,8 +685,13 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
 .dayseg button[data-next="1"]::after{
   content:"";position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;
   background:var(--accent);box-shadow:0 0 0 3px var(--accent-ghost)}
-.dayseg button[data-done="1"]::after{content:"✓";position:absolute;top:3px;right:6px;
-  font-size:11px;color:var(--done);background:none;width:auto;height:auto;box-shadow:none}
+/* «кривая галочка» в углу кнопки читалась как дефект вёрстки: закрытый день
+   показываем цветом самой кнопки — так же, как плашка «сегодня закрыт» */
+.dayseg button[data-done="1"]{border-color:rgba(var(--done-rgb),.55);background:rgba(var(--done-rgb),.10)}
+.dayseg button[data-done="1"] b{color:var(--done)}
+.dayseg button[data-done="1"][aria-pressed="true"]{border-color:transparent;background:var(--done)}
+.dayseg button[data-done="1"][aria-pressed="true"] b{color:var(--on-accent)}
+.dayseg button[data-done="1"][aria-pressed="true"] i{color:rgba(255,255,255,.75)}
 .nexthint{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.4}
 .nexthint b{color:var(--text);font-weight:600}
 .nexthint b{color:var(--accent);font-weight:400}
@@ -5297,13 +5303,18 @@ function renderFoodDay(){
   var t=d.targets||{}, pr=t.parts||null;
   /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
      когда есть что показывать (иначе это просто число) */
+  /* Раскладка нормы должна сходиться в уме: слагаемые уже округлены так, что
+     их сумма плюс дефицит даёт ровно норму. Личная поправка сидит внутри
+     слагаемых — отдельным множителем в строке она бы ломала сложение. */
   var состав='';
   if(pr && (pr.gym||pr.acts||pr.plan)){
     var части=['база '+Math.round(pr.base)];
     if(pr.gym) части.push('зал +'+pr.gym);
     if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' +'+pr.acts : 'спорт +'+pr.acts);
     if(pr.plan) части.push(((d.plan||[]).length===1 ? d.plan[0].kind : 'спорт')+' по плану +'+pr.plan);
-    состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' · ')+(pr.k&&pr.k!==1?' · ×'+String(pr.k).replace('.',','):'')+(pr.delta?' '+(pr.delta>0?'+':'−')+Math.abs(pr.delta)+' по цели':'')+'</p>';
+    состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' · ')+
+      (pr.delta?' '+(pr.delta>0?'+':'−')+Math.abs(pr.delta)+(pr.floor?' — ниже нельзя, это пол по жиру':' по цели'):'')+
+      (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }
   box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
     fbar('белок', d.prot, t.prot, 'г', 'min') +
@@ -5561,7 +5572,17 @@ function renderChat(scroll){
     h+=recoCard('chat');
   }
   box.innerHTML=h;
-  if(scroll!==false) box.scrollTop=box.scrollHeight;
+  if(scroll!==false) chatScroll();
+}
+/* Лист чата открывается анимацией, а высоты внутри считаются позже, поэтому
+   один scrollTop в том же кадре не срабатывал: человек видел старые сообщения
+   и листал руками. Догоняем на следующих кадрах и после раскладки. */
+function chatScroll(){
+  var box=document.getElementById('chatlog'); if(!box) return;
+  var вниз=function(){ box.scrollTop=box.scrollHeight; };
+  вниз();
+  if(window.requestAnimationFrame) requestAnimationFrame(function(){ вниз(); requestAnimationFrame(вниз); });
+  setTimeout(вниз,120); setTimeout(вниз,320);
 }
 function esc(t){ return String(t||'').replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
 /* ══════════ РАЗБОР ОБЪЁМА: ЧТО ПРЕДЛАГАЕТ ТРЕНЕР ══════════
@@ -5771,7 +5792,12 @@ function coachSend(text, image){
   /* Пустая подпись при отправленном фото раньше стирала состояние ожидания:
      весь блок «отправлено / смотрю» висел на непустом тексте. */
   CHAT.busy=true; CHAT.err=''; CHAT.pending=text||''; CHAT.pendingImg=image||null;
-  CHAT.prep=false; renderChat(); haptic('medium');
+  CHAT.prep=false;
+  /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
+     значит показывать человеку, что сообщение никуда не ушло */
+  var ta=document.getElementById('ctext');
+  if(ta){ ta.value=''; ta.style.height='auto'; }
+  renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); sb.disabled=true;
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null})
     .then(function(d){
@@ -5780,7 +5806,6 @@ function coachSend(text, image){
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
       var м=document.getElementById('coachm');
       if(!м || !м.classList.contains('show')) coachAttn(true);
-      document.getElementById('ctext').value='';
       if(d.plan) takePlan(d.plan);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
