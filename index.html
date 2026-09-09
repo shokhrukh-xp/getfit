@@ -1321,6 +1321,8 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
     <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
     <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
+    <div class="pf" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
+    <p class="seghint">самый маленький блин в зале — от него шаг прибавки на штанге</p>
     <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
     <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
@@ -2391,6 +2393,7 @@ function renderGoalCard(){
          (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? (Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем' : ' · отстаём на '+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
          (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p>';
     } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
+    h+='<p class="gp">Программу из-за цели пересобирать не нужно: цель меняет норму еды, зал остаётся тем же.</p>';
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
     h+='<div class="gt">'+esc(goalText(me))+'</div>'+
@@ -2414,6 +2417,7 @@ var GOALS=[['fat','Похудеть, сохранив мышцы'],['tone','По
 var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опытный']];
 var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
+var PLATEKEYS=[['1.25','1,25 кг'],['2.5','2,5 кг'],['5','5 кг']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
 function segHtml(id, list, val, multi){
@@ -2432,6 +2436,7 @@ function fillMe(){
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
+  var PL=document.getElementById('me-plate'); if(PL) PL.innerHTML=segHtml('plate',PLATEKEYS,String(me.plate||'1.25'));
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
   var lk=document.getElementById('me-likes'); if(lk) lk.value=(me.likes||[]).join(', ');
@@ -2451,7 +2456,7 @@ function readMeForm(){
   var op=goalPair(old), wt=pick('me-wt')||op.wt||null, gym=pick('me-gym')||op.gym||null;
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
-          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq,
+          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25),
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
           dislikes:csv((document.getElementById('me-dis')||{}).value)};
@@ -2806,7 +2811,7 @@ function blankSess(){
     /* Ячейки заполняются тем, что приложение рекомендует на сегодня: вес с учётом
        прибавки и целевые повторы. Прошлые цифры остаются запасным вариантом на
        случай, когда рекомендации ещё нет (история не загрузилась). */
-    var prev=LAST[e.n]||{}, t=targetOf(e), arr=[];
+    var prev=lastFor(e)||{}, t=targetOf(e), arr=[];
     for(var i=0;i<setsFor(e, o.ex.length);i++){
       var ps = prev.s && prev.s[i];
       var lw = ps && ps[0]!=null && ps[0]!=='' ? ps[0] : (prev.w!=null&&prev.w!==''?prev.w:'');
@@ -2864,7 +2869,7 @@ function harvestDom(){
 }
 
 function lastLine(e){
-  var p=LAST[e.n];
+  var p=lastFor(e);
   if(!p) return '';
   var src = (p.s&&p.s.length) ? p.s : [[p.w,p.r]];
   var parts=[];
@@ -3653,7 +3658,8 @@ function renderFinSum(body){
     (body.ex||[]).forEach(function(x){
       var cur=bestOf(x); if(!cur || cur.w==null) return;
       var prev=null;
-      HIST.forEach(function(w){ if(w.date===TODAY) return; (w.ex||[]).forEach(function(y){ if(y.n!==x.n) return; var b=bestOf(y); if(b && b.w!=null && (!prev || b.sc>prev.sc)) prev=b; }); });
+      var xo={n:x.n, ph:phOfName(x.n)};
+      HIST.forEach(function(w){ if(w.date===TODAY) return; (w.ex||[]).forEach(function(y){ if(!sameMove(y.n, xo)) return; var b=bestOf(y); if(b && b.w!=null && (!prev || b.sc>prev.sc)) prev=b; }); });
       if(prev && cur.sc>prev.sc+0.5) prs.push({n:x.n, cur:cur, prev:prev});
     });
   }
@@ -4201,12 +4207,35 @@ function loadHist(force){
 }
 
 /* все подходы одного упражнения по датам, свежие первыми */
-function exHistory(name){
+/* Какое движение стоит за именем: собирается по всем программам, что есть в
+   памяти (готовые и своя). Нужно, чтобы «Присед (штанга)» из каталога и
+   «Приседания со штангой» из старой программы считались одним упражнением —
+   иначе смена программы обнуляет прогрессию весов. */
+function phOfName(n){
+  var ks=Object.keys(DAYS);
+  for(var i=0;i<ks.length;i++){ var ex=(DAYS[ks[i]]||{}).ex||[];
+    for(var j=0;j<ex.length;j++){ if(ex[j].n===n && ex[j].ph) return ex[j].ph; } }
+  return null;
+}
+function sameMove(name, e){
+  if(name===e.n) return true;
+  if(!e.ph) return false;
+  return phOfName(name)===e.ph;
+}
+/* последний вес по упражнению — по имени, а если имя новое, то по движению */
+function lastFor(e){
+  if(LAST[e.n]) return LAST[e.n];
+  if(!e.ph) return null;
+  var ks=Object.keys(LAST), best=null;
+  ks.forEach(function(k){ var v=LAST[k]; if(v && phOfName(k)===e.ph && (!best || String(v.d||'')>String(best.d||''))) best=v; });
+  return best;
+}
+function exHistory(e){
   if(!HIST) return [];
-  var out=[];
+  var out=[], eo = (typeof e==='string') ? {n:e, ph:phOfName(e)} : e;
   HIST.forEach(function(w){
     (w.ex||[]).forEach(function(x){
-      if(x.n!==name) return;
+      if(!sameMove(x.n, eo)) return;
       var sets=(x.sets||[]).filter(function(v){ return v.r!=null; });
       if(sets.length) out.push({date:w.date, unit:x.unit, sets:sets});
     });
@@ -4234,18 +4263,25 @@ function bestSet(sets){
 /* Шаг прибавки зависит от снаряда: на штанге минимальная пара блинов 2,5 кг,
    гантели в зале идут через 2 кг, стек блока — через 5. Поэтому шаг лежит
    в самом упражнении, а не угадывается по названию. */
-function stepOf(e){ return (typeof e.inc==='number') ? e.inc : 2.5; }
+/* Самый маленький блин в зале: шаг штанги — два таких блина. Нет 1,25 —
+   шаг 5 кг, и раскладка на гриф считается без них. */
+function plateMin(){ var me=myData()||{}; return {1.25:1.25, 2.5:2.5, 5:5}[+me.plate]||1.25; }
+function stepOf(e){
+  var st=(typeof e.inc==='number') ? e.inc : 2.5;
+  if(e.eq==='штанга'){ var mn=2*plateMin(); if(st<mn) st=mn; }
+  return st;
+}
 /* ── Что вешать на гриф ──
    Считать блины в уме между подходами — лишняя работа, которую приложение
    делает лучше. Гриф 20 кг, блины ходовые: 25/20/15/10/5/2,5/1,25 на сторону.
    Показываем только для штанги и только когда вес реально набирается. */
 var PLATES=[25,20,15,10,5,2.5,1.25], BARW=20;
 function plateText(kg){
-  var side=(kg-BARW)/2;
+  var side=(kg-BARW)/2, mn=plateMin();
   if(!(side>0)) return kg===BARW ? 'пустой гриф' : null;
   var out=[], left=Math.round(side*100)/100;
   var имя=function(v){ return String(v).replace('.',','); };   /* 1,25 не округляем до 1,3 */
-  PLATES.forEach(function(pl){
+  PLATES.filter(function(pl){ return pl>=mn; }).forEach(function(pl){
     var n=Math.floor((left+0.001)/pl);
     if(n>0){ out.push((n>1?n+'×':'')+имя(pl)); left=Math.round((left-n*pl)*100)/100; }
   });
@@ -4270,7 +4306,7 @@ function stepText(e){
    к отказу работать не начнут. */
 function advice(e){
   if(!HIST) return {kind:'wait', lw:null, short:'смотрю историю…', text:'Смотрю твою историю по этому упражнению…'};
-  var h = exHistory(e.n);
+  var h = exHistory(e);
   var top = topReps(e), st = stepOf(e), tm = isTime(e);
   if(!h.length){ var sh=startHint(e);
     return {kind:'start', text:sh, lw:null,
@@ -4339,11 +4375,9 @@ function botReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 8;
 function targetOf(e){
   var a; try{ a=advice(e); }catch(err){ return {tw:null, tr:botReps(e), kind:'', lw:null}; }
   if(a.kind==='start'){
-    var me=myData(), k=(e.ph && BWK[e.ph]!=null && me && me.bw) ? BWK[e.ph] : null;
-    var kg=null;
-    if(k){ var af=(+me.age||30)<=30?1:((+me.age||30)<=40?.95:((+me.age||30)<=50?.88:.80));
-           kg=Math.max(2, Math.round(me.bw*k*af*(me.sex==='f'?0.65:1)/2.5)*2.5); }
-    return {tw:kg, tr:topReps(e), kind:'start', lw:null};
+    /* та же формула, что в подсказке «Начни с …»: раньше ячейки считались без
+       поправки на стаж и показывали 42,5 при подсказке 52,5 */
+    return {tw:startKg(e), tr:topReps(e), kind:'start', lw:null};
   }
   if(a.kind==='wait') return {tw:null, tr:botReps(e), kind:'wait', lw:null};
   return {tw:a.tw, tr:a.tr, kind:a.kind, up:!!a.up, lw:(a.lw==null?null:a.lw)};
@@ -4407,15 +4441,19 @@ function phGuess(en, q, m){
   return null;
 }
 function myData(){ return gget('me', null); }
-function startHint(e){
-  var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся с нужным запасом</b> — сколько его оставлять, написано ниже. Смог больше — в следующем подходе добавь.';
+function startKg(e){
   var me = myData();
-  if(!me || !me.bw || !e.ph || BWK[e.ph]==null) return {t:base, hint:null, kg:null};
+  if(!me || !me.bw || !e.ph || BWK[e.ph]==null) return null;
   var k = BWK[e.ph], age = +me.age||30, sex = me.sex==='f' ? 0.65 : 1;
   var af = age<=30 ? 1 : (age<=40 ? 0.95 : (age<=50 ? 0.88 : 0.80));
   var lv = {new:1, mid:1.25, exp:1.5}[me.level]||1;      /* стаж: коэффициенты BWK считаны под новичка */
-  var kg = me.bw * k * af * sex * lv;
-  kg = Math.max(2, Math.round(kg/2.5)*2.5);
+  var st = stepOf(e)||2.5;
+  return Math.max(2, Math.round(me.bw * k * af * sex * lv / st) * st);
+}
+function startHint(e){
+  var base = 'Первый раз. Возьми вес, с которым <b>верхняя граница повторов даётся с нужным запасом</b> — сколько его оставлять, написано ниже. Смог больше — в следующем подходе добавь.';
+  var kg = startKg(e);
+  if(kg==null) return {t:base, hint:null, kg:null};
   return {t:base, kg:kg, hint:'Грубый ориентир для старта: <b>около '+fmtKg(kg)+' кг</b>. Это прикидка от массы тела и возраста, а не расчёт — проверь первым подходом.'};
 }
 
@@ -4745,14 +4783,20 @@ function normName(n){
     .replace(/\b(в|на|с|со|из|к|тренажёре|тренажёр|блоке|блок|гантели|гантелями|штанга|штангой|штанги|сидя|лёжа|стоя)\b/g,' ')
     .replace(/[^а-яё0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 }
-function histName(n){
+function histName(n, ph){
   if(!HIST) return n;
   var want=normName(n), hit=null;
   for(var i=0;i<HIST.length;i++){
     var ex=HIST[i].ex||[];
     for(var j=0;j<ex.length;j++){ if(normName(ex[j].n)===want){ if(hit && hit!==ex[j].n) return n; hit=ex[j].n; } }
   }
-  return hit||n;
+  if(hit) return hit;
+  /* по словам не совпало — ищем то же движение: самое свежее имя из истории с тем же ph */
+  if(ph){
+    for(var a=0;a<HIST.length;a++){ var ex2=HIST[a].ex||[];
+      for(var b=0;b<ex2.length;b++){ if(phOfName(ex2[b].n)===ph) return ex2[b].n; } }
+  }
+  return n;
 }
 function installAiProg(prog){
   if(!prog || !prog.days || !prog.days.length) return null;
@@ -4762,9 +4806,11 @@ function installAiProg(prog){
     var sLabel=(d.s && !/^день/i.test(d.s.trim())) ? d.s : (String(d.sub||'').split(/[:·,]/)[0].split(' ').slice(0,2).join(' ') || 'День '+(i+1));
     DAYS[k]={ name:'День '+(i+1), s:sLabel.slice(0,10), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
       var time=/ с$/.test(x.reps||'');
-      return { p:x.p||'', n:histName(x.n), en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
+      var ph0 = (x.q==='body only'?null:phGuess(x.en, x.q, x.m));
+      return { p:x.p||'', n:histName(x.n, ph0), en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
                ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'',
-               ph:(x.q==='body only'?null:phGuess(x.en, x.q, x.m)), fig:null, ai:true,
+               eq:({barbell:'штанга', dumbbell:'гантели', kettlebells:'гиря', machine:'тренажёр', cable:'блок'})[x.q]||'',
+               ph:ph0, fig:null, ai:true,
                nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
     }) };
   });
