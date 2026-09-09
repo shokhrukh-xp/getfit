@@ -2366,9 +2366,12 @@ function choose(p){
   WIZ.touched=false;
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
      иначе на новом устройстве его негде было бы искать */
-  if(DB){ csSet(PROFKEY, JSON.stringify({p:p, at:new Date().toISOString(),
-    start: gget('startdate', null),
-    tg: TGUSER ? {id:TGUSER.id, n:whoName(), u:TGUSER.username||''} : null})).catch(function(){}); }
+  var ук={p:p, at:new Date().toISOString(), start: gget('startdate', null),
+          tg: TGUSER ? {id:TGUSER.id, n:whoName(), u:TGUSER.username||''} : null};
+  if(DB){ csSet(PROFKEY, JSON.stringify(ук)).catch(function(){});
+    /* и в базу: CloudStorage на части устройств глухой, а знать, какая
+       программа выбрана, второму устройству обязательно */
+    try{ syncPush('state/prof', ук); }catch(e){} }
   goPage('gym');
 }
 
@@ -3411,8 +3414,9 @@ function syncUid(){
 function syncPost(path, body){
   return fetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)}).then(function(r){
-      SYNCOK = r.ok; paintSync(); return r.ok;
-    }).catch(function(){ SYNCOK=false; paintSync(); return false; });
+      SYNCOK = r.ok; paintSync();
+      return r.json().then(function(d){ return r.ok ? (d||{ok:true}) : null; }).catch(function(){ return r.ok?{ok:true}:null; });
+    }).catch(function(){ SYNCOK=false; paintSync(); return null; });
 }
 function syncPush(path, body){
   try{
@@ -3422,7 +3426,16 @@ function syncPush(path, body){
       return syncPost('/w', {uid:uid, id:id, date:body.date||id.slice(0,10),
                              day:body.day, name:body.name, sub:body.sub, data:body});
     }
-    if(p.indexOf('state/')===0) return syncPost('/s', {uid:uid, key:p.slice(6), data:body});
+    if(p.indexOf('state/')===0){
+      var key=p.slice(6);
+      return syncPost('/s', {uid:uid, key:key, data:body}).then(function(res){
+        /* отмечаем ровно то время, что поставил сервер: иначе на следующем
+           запуске мы бы приняли собственную запись как чужую и перерисовали всё */
+        if(res && res.ok){ markSet(key, +res.updated||Date.now()); dirtySet(key, false); }
+        else dirtySet(key, true);
+        return res;
+      });
+    }
   }catch(e){}
   return Promise.resolve(false);
 }
@@ -3435,32 +3448,162 @@ function paintSync(){
 }
 /* При запуске: выгружаем наверх всё, что уже лежит локально. Если локально
    пусто, а в базе что-то есть — восстанавливаем. */
-function syncBoot(){
-  var pre=csKey('workouts')+'_';
-  csKeys().then(function(keys){
-    var mine=(keys||[]).filter(function(k){ return k.indexOf(pre)===0; });
-    if(mine.length){
-      return csGetMany(mine).then(function(vals){
-        mine.forEach(function(k){
-          var v=vals[k]; if(!v) return;
-          try{ syncPush('workouts/'+k.slice(pre.length), JSON.parse(v)); }catch(e){}
-        });
-        return csGet(csKey('state/last')).then(function(v){
-          if(v){ try{ syncPush('state/last', JSON.parse(v)); }catch(e){} }
-        });
-      });
+/* ══════════ СИНХРОНИЗАЦИЯ МЕЖДУ УСТРОЙСТВАМИ ══════════
+   Дважды всплывало одно и то же: на телефоне программа новая, на маке старая,
+   и никакие перезапуски это не лечили. Причина — CloudStorage Telegram был
+   единственным каналом между устройствами, а он молча отдаёт локальную копию
+   при любой ошибке или таймауте: устройство, у которого он «глухой», живёт со
+   своим снимком вечно и об этом никто не узнаёт.
+   Теперь общая правда — база на сервере, где у каждой записи есть время. На
+   каждом запуске (и при возврате в приложение) забираем оттуда всё, что новее
+   того, что мы уже видели: `sync_marks` хранит время последней принятой версии
+   по каждому ключу. Своё уходит наверх при каждой записи; что не ушло —
+   помечается в `sync_dirty` и досылается перед следующим забором, иначе
+   свежая офлайн-правка была бы затёрта старой копией с сервера. */
+var MARKS = gget('sync_marks', {}) || {};
+var DIRTY = gget('sync_dirty', {}) || {};
+function markSet(k, v){ if(!(v>0)) return; MARKS[k]=v; gset('sync_marks', MARKS); }
+function dirtySet(k, on){ if(on) DIRTY[k]=1; else delete DIRTY[k]; gset('sync_dirty', DIRTY); }
+/* Порядок важен: сначала программа (без неё профиль «ai» некуда применять),
+   потом указатель на программу, и только потом всё, что читается с её
+   префиксом. Ключи, которых тут нет, забирают свои владельцы (goal, reco). */
+var PULLKEYS = ['aiprog','prof','me','sched','subs','last'];
+function adoptState(key, b){
+  if(!b || typeof b!=='object') return false;
+  /* человек стоит в зале с введёнными подходами — программу под ним не меняем:
+     примем, когда день будет сохранён или очищен */
+  if(anyTouched() && (key==='aiprog' || key==='prof' || key==='subs')) return 'retry';
+  try{
+    if(key==='aiprog'){
+      if(!b.days || !b.days.length) return false;
+      AIPROG=b; gset('ai_prog', b); installAiProg(b);
+      if(profile==='ai') applyProfile('ai');
+      return true;
     }
-    return fetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid()))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if(!d || !d.workouts || !d.workouts.length) return;
-        var jobs=d.workouts.map(function(w){ return csSet(csKey('workouts/'+w.id), fit(w.data)); });
-        (d.state||[]).forEach(function(st){ jobs.push(csSet(csKey('state/'+st.key), fit(st.data))); });
-        SYNCOK=true; paintSync();
-        return Promise.all(jobs).then(function(){ setTimeout(function(){ location.reload(); }, 1000); });
-      });
-  }).catch(function(){ SYNCOK=false; paintSync(); });
+    if(key==='prof'){
+      if(b.p==='ai' && !PROFILES.ai) return 'retry';   /* программа ещё не доехала */
+      /* какую программу выбрали позже, та и верна: время выбора пишет то
+         устройство, где нажали, а не сервер в момент доставки */
+      var свой=null; try{ свой=JSON.parse(mGet(PROFKEY)||'null'); }catch(e){}
+      if(свой && свой.p && свой.at && b.at && String(b.at) <= String(свой.at)) return false;
+      if(b.p) csSet(PROFKEY, JSON.stringify(b)).catch(function(){});
+      /* дата старта — самая ранняя из известных: с неё считаются недели и фаза,
+         и устройство, где она сбилась на сегодня, иначе навсегда в первой */
+      var сд=gget('startdate', null);
+      if(b.start && (!сд || String(b.start) < String(сд))) gset('startdate', b.start);
+      if(b.p && PROFILES[b.p]){ hidePicker(); if(b.p!==profile) applyProfile(b.p); return true; }
+      return !!b.start;
+    }
+    if(key==='me'){
+      if(!b.me || typeof b.me!=='object') return false;
+      gset('me', b.me); fillMe(); renderGoalCard(); renderNudge(); renderProfProg();
+      if(!anyTouched()) renderList();
+      return true;
+    }
+    if(key==='sched'){
+      if(!b.s || (b.p && b.p!==profile)) return false;
+      GYM_DAYS=schedNorm(b.s); set('sched', GYM_DAYS); gset('sched_any', GYM_DAYS);
+      renderDayseg(); renderDayHead(); renderTodaybar();
+      return true;
+    }
+    if(key==='subs'){
+      if(!b.s || typeof b.s!=='object') return false;
+      SUBS=b.s; set('subs',SUBS);
+      if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
+      if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
+      if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
+      renderList(); paintNote('');
+      return true;
+    }
+    if(key==='last'){
+      var было=false;
+      if(b.m && typeof b.m==='object' && Object.keys(b.m).length){ LAST=b.m; set('last',LAST); refillIfUntouched(); было=true; }
+      /* день другой программы в эту не переносим: там свои ключи дней */
+      if(b.lastDone && b.lastDone.day && DAYS[b.lastDone.day] &&
+         (!lastDone || String(b.lastDone.date) > String(lastDone.date))){
+        lastDone={day:b.lastDone.day, date:b.lastDone.date}; set('lastdone', lastDone);
+        renderDayseg(); renderDayHead(); renderTodaybar(); было=true;
+      }
+      return было;
+    }
+  }catch(e){ reportErr('adopt '+key, e); }
+  return false;
 }
+/* дослать то, что не уехало: локальная копия важнее старой серверной */
+function pushDirty(){
+  var ks=Object.keys(DIRTY); if(!ks.length) return Promise.resolve();
+  var jobs=ks.map(function(k){
+    return csGet(csKey('state/'+k)).then(function(v){
+      var b=null; if(v){ try{ b=JSON.parse(v); }catch(e){} }
+      if(!b) { dirtySet(k,false); return; }
+      return syncPush('state/'+k, b);
+    });
+  });
+  return Promise.all(jobs).catch(function(){});
+}
+var pulling=false, lastPull=0;
+function cloudPull(force){
+  if(pulling) return Promise.resolve();
+  if(!force && Date.now()-lastPull < 20000) return Promise.resolve();
+  pulling=true; lastPull=Date.now();
+  return pushDirty().then(function(){
+    return fetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.json(); });
+  }).then(function(d){
+    if(!d) return;
+    SYNCOK=true; paintSync();
+    var сост={}; (d.state||[]).forEach(function(st){ сост[st.key]=st; });
+    /* указатель на программу до сегодняшнего дня жил только в CloudStorage —
+       если в базе его нет или он старее нашего, отправляем свой */
+    try{
+      var свой=JSON.parse(mGet(PROFKEY)||'null'), сп=сост['prof'];
+      if(свой && свой.p && (!сп || !сп.data || !сп.data.at || String(сп.data.at) < String(свой.at||'')))
+        syncPush('state/prof', свой);
+    }catch(e){}
+    /* чего в базе нет вовсе (расписание, замены, профиль) — отдаём своё:
+       иначе второе устройство никогда о них не узнает */
+    ['sched','subs','me','last'].forEach(function(k){
+      if(сост[k]) return;
+      var v=mGet(csKey('state/'+k)); if(!v) return;
+      try{ syncPush('state/'+k, JSON.parse(v)); }catch(e){}
+    });
+    var взято=[];
+    PULLKEYS.forEach(function(k){
+      var st=сост[k]; if(!st || DIRTY[k]) return;
+      if(!(+st.updated > (+MARKS[k]||0))) return;
+      var r=adoptState(k, st.data);
+      if(r==='retry') return;              /* примем, когда приедет то, чего не хватает */
+      if(r){ взято.push(k); }
+      markSet(k, +st.updated);             /* не подошло нам — но версию видели */
+    });
+    /* тренировки: чего нет у этого устройства — дописываем в локальный журнал */
+    var pre=csKey('workouts')+'_';
+    return csKeys().then(function(keys){
+      var есть={}; (keys||[]).forEach(function(k){ if(k.indexOf(pre)===0) есть[k.slice(pre.length)]=1; });
+      var новых=(d.workouts||[]).filter(function(w){ return !есть[w.id]; });
+      var чужих=Object.keys(есть).filter(function(id){
+        return !(d.workouts||[]).some(function(w){ return w.id===id; }); });
+      /* и наоборот: что есть только здесь — отправляем наверх */
+      if(чужих.length) csGetMany(чужих.map(function(id){ return pre+id; })).then(function(vals){
+        чужих.forEach(function(id){ var v=vals[pre+id]; if(!v) return;
+          try{ syncPush('workouts/'+id, JSON.parse(v)); }catch(e){} });
+      });
+      if(!новых.length) return взято.length;
+      return Promise.all(новых.map(function(w){ return csSet(pre+w.id, fit(w.data)).catch(function(){}); }))
+        .then(function(){ return loadHist(true); })
+        .then(function(){
+          var s2=suggestedDay();
+          if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
+          refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
+          return взято.length+новых.length;
+        });
+    });
+  }).catch(function(){ SYNCOK=false; paintSync(); })
+    .then(function(n){ pulling=false; return n; });
+}
+/* приложение открыто сутками — забираем свежее ещё и при возврате к нему */
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) cloudPull(); });
+window.addEventListener('focus', function(){ cloudPull(); });
+function syncBoot(){ cloudPull(true); }
 
 var STORE = { doc:mkDoc, collection:mkCollection };
 
@@ -4970,7 +5113,7 @@ function aiApply(){
   gset('ai_prog', AIPROG);
   var str=JSON.stringify(AIPROG);
   csSetBig(AIKEY, str).catch(function(){});
-  try{ syncPost('/s', {uid:syncUid(), key:'aiprog', data:AIPROG}); }catch(e){}
+  try{ syncPush('state/aiprog', AIPROG); }catch(e){}
   gset('reco_seen', null);
   /* у собранной программы своё число дней — ответ мастера («сколько раз в
      неделю») уже учтён при сборке, второй раз его накладывать нельзя */
