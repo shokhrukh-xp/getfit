@@ -595,7 +595,10 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 /* ── тренер: плавающая кнопка и окно чата ── */
 .coachfab{position:fixed;right:16px;bottom:calc(84px + var(--pad-bottom,0px));z-index:60;width:50px;height:50px;border-radius:50%;
   border:none;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 20px rgba(var(--accent-rgb),.34);padding:0;transition:transform .15s ease}
+  box-shadow:0 6px 20px rgba(var(--accent-rgb),.34);padding:0;transition:transform .15s ease,bottom .3s cubic-bezier(.2,.8,.3,1)}
+/* пока идёт отдых, внизу плашка таймера — кнопка тренера поднимается над ней,
+   иначе она закрывает «+30с» */
+body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))}
 .coachfab:active{transform:scale(.94)}
 .coachfab svg{width:24px;height:24px}
 .coachfab.attn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
@@ -2662,8 +2665,15 @@ function suggestedDay(){
   if(l) return nextAfter(l.day);
   return CYCLE[0];
 }
+/* Начало тренировки — первое касание любого подхода: вес, повторы или галочка.
+   Хранится отдельно от сессии: сессию пересобирают замены, лёгкая неделя и
+   синхронизация с облаком, а время старта от этого сдвигаться не должно.
+   Сбрасывает его только «Очистить день». */
+function wt0Key(){ return 'wt0_'+TODAY+'_'+day; }
+function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0; return t||null; }
+function wTouch(){ if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); }
 function markDone(){
-  if(sess && !sess.t0){ sess.t0=Date.now(); saveSess(); }   /* начало тренировки — первая галочка */
+  wTouch();
   if(lastDone && lastDone.day===day && lastDone.date===TODAY) return;
   lastDone = {day:day, date:TODAY};
   set('lastdone', lastDone);
@@ -3023,7 +3033,7 @@ document.getElementById('list').addEventListener('click', function(ev){
     if(isNaN(cur)) cur = (f==='w') ? (dir>0?2.5:0) : (isTime(e)?30:8);
     else cur = cur + dir*step;
     if(cur<0) cur=0;
-    v[f]=Math.round(cur*10)/10; v.t=true;
+    v[f]=Math.round(cur*10)/10; v.t=true; wTouch();
     haptic('light');
     saveSess(); syncRow(di,si); commit(); return;
   }
@@ -3051,7 +3061,7 @@ document.getElementById('list').addEventListener('input', function(ev){
   var inp=ev.target.closest('.stp input'); if(!inp) return;
   var row=inp.closest('.setrow'); if(!row) return;
   var vv=sess.ex[+row.dataset.ex].sets[+row.dataset.set];
-  vv[inp.dataset.f]=inp.value.trim().replace(',','.'); vv.t=true;
+  vv[inp.dataset.f]=inp.value.trim().replace(',','.'); vv.t=true; wTouch();
   saveSess();
 });
 document.getElementById('list').addEventListener('change', function(ev){
@@ -3350,7 +3360,7 @@ function paintNote(k){
 }
 function thaw(){ if(Object.isFrozen(LAST)) LAST=JSON.parse(JSON.stringify(LAST)); }
 function commit(){
-  thaw();
+  thaw(); guardClose(true);
   try{ harvestDom(); }catch(e){ reportErr('harvest',e); }
   exList(day).forEach(function(e,di){
     var rows=sess.ex[di].sets, done=rows.filter(function(v){return v.done;});
@@ -3382,15 +3392,15 @@ function sessionBody(){
 var lastSavedAt=null, dirty=false;
 function pushDb(){
   harvestDom();
-  if(countDone()===0){ paintNote('empty'); return; }
+  if(countDone()===0){ paintNote('empty'); guardClose(false); return; }
   if(!DB){ dirty=true; paintNote('local'); return; }
   var body=sessionBody();
-  if(!body.ex.length){ paintNote('empty'); return; }
+  if(!body.ex.length){ paintNote('empty'); guardClose(false); return; }
   paintNote('saving');
   DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
-    lastSavedAt=new Date(); dirty=false; paintNote('saved');
+    lastSavedAt=new Date(); dirty=false; paintNote('saved'); guardClose(false);
     return DB.doc('state/last').set({ m:LAST, lastDone:lastDone, updated:body.updated });
-  }).catch(function(){ dirty=true; paintNote('err'); });
+  }).catch(function(){ dirty=true; paintNote('err'); guardClose(true); });
 }
 function initDb(){
   DB = STORE;
@@ -3485,6 +3495,7 @@ document.getElementById('reset').addEventListener('click', function(){
     return;
   }
   clearTimeout(resetT); resetArmed=false; b.textContent='Очистить день';
+  set(wt0Key(), null);
   sess=blankSess(); saveSess(); renderList(); paintNote('');
 });
 /* ── «Завершить и сохранить»: собственный путь, без общих состояний ──
@@ -3519,7 +3530,7 @@ function renderFinSum(body){
   var el=document.getElementById('finsum'); if(!el) return;
   var sets=0, ton=0;
   (body.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r==null) return; sets++; if(v.w!=null && x.unit!=='sec') ton+=v.w*v.r; }); });
-  var мин = sess && sess.t0 ? Math.max(1, Math.round((Date.now()-sess.t0)/60000)) : null;
+  var мин = body.dur || null;
   var prs=[];
   if(HIST){
     (body.ex||[]).forEach(function(x){
@@ -3566,14 +3577,19 @@ function finishSave(){
     var ex=[];
     exList(day).forEach(function(e,di){ if(sc.byEx[di])
       ex.push({n:e.n, p:e.p, unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
-    var body={date:TODAY, day:day, name:d.name, sub:d.sub, week:week, updated:new Date().toISOString(), ex:ex};
+    /* время тренировки — от первого касания подхода до этого нажатия, не до
+       ответа облака; едет в запись, чтобы журнал и тренер его видели */
+    var fin=Date.now(), t0=wStart();
+    var dur=t0 ? Math.max(1, Math.round((fin-t0)/60000)) : null;
+    var body={date:TODAY, day:day, name:d.name, sub:d.sub, week:week, updated:new Date().toISOString(), ex:ex,
+              t0:t0?new Date(t0).toISOString():null, dur:dur};
     var label=sc.n+' '+plural(sc.n,['подход','подхода','подходов']);
 
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
     finSay('Сохраняю…','busy');
     var t0=Date.now();
     DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
-      lastSavedAt=new Date(); dirty=false;
+      lastSavedAt=new Date(); dirty=false; guardClose(false);
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       try{ renderFinSum(body); }catch(e){}
       /* тренировка ушла в историю — недельный объём стал другим */
@@ -3588,7 +3604,7 @@ function finishSave(){
       setTimeout(function(){ if(finBtn.classList.contains('ok')) finReset(); }, 4000);
     }).catch(function(err){
       if(finBtn.classList.contains('ok')){ reportErr('cloud/last',err); }   /* тренировка уже сохранена */
-      else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); }
+      else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); guardClose(true); }
     });
     setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Telegram не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
   }catch(err){ finSay('Ошибка','bad'); reportErr('finish',err); }
@@ -4298,10 +4314,11 @@ function paint(){
 }
 function startTimer(sec){
   left = sec; tEl.classList.add('show'); paint();
+  try{ document.documentElement.style.setProperty('--tmr-h', (tEl.offsetHeight||70)+'px'); document.body.classList.add('tmr'); }catch(e){}
   clearInterval(tick);
   tick = setInterval(function(){ left--; paint(); if(left<=-60){ stopTimer(); } }, 1000);
 }
-function stopTimer(){ clearInterval(tick); tick=null; tEl.classList.remove('show'); }
+function stopTimer(){ clearInterval(tick); tick=null; tEl.classList.remove('show'); document.body.classList.remove('tmr'); }
 document.getElementById('tskip').addEventListener('click', stopTimer);
 document.getElementById('tplus').addEventListener('click', function(){ left+=30; paint(); });
 
@@ -4391,8 +4408,15 @@ if(TG){
     TG.ready();
     TG.expand();
     if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();   /* иначе скролл списка закрывает окно */
-    if(TG.enableClosingConfirmation) TG.enableClosingConfirmation();
+    /* «Изменения могут не сохраниться» — только пока они правда не сохранены:
+       включается при первом касании, выключается, как только запись ушла */
+    if(TG.disableClosingConfirmation) TG.disableClosingConfirmation();
   }catch(e){}
+}
+function guardClose(on){
+  try{ if(!TG) return;
+    if(on){ if(TG.enableClosingConfirmation) TG.enableClosingConfirmation(); }
+    else if(TG.disableClosingConfirmation) TG.disableClosingConfirmation(); }catch(e){}
 }
 
 /* ── обработчики окон ── */
