@@ -144,6 +144,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .seg.multi{flex-wrap:wrap}
 .seg.multi button{flex:0 1 auto;padding:9px 12px;overflow:visible;text-overflow:clip}
 .pfnote{margin-top:14px!important;margin-bottom:10px!important}
+.bline{margin:0 0 10px!important;font-size:11.5px;color:var(--dim)}
+.bline b{color:var(--done);font-weight:500}
+.bline button{border:none;background:none;color:var(--accent);font:inherit;font-size:11.5px;padding:0;text-decoration:underline}
 .pfprog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;margin-bottom:10px;
   border:1px solid var(--line-soft);border-radius:10px;font-size:12.5px;color:var(--muted)}
 .pfprog b{color:var(--text);font-weight:600}
@@ -1172,6 +1175,7 @@ body.onb #picker .modalbox::before{display:none}
         <div class="dayseg lite" id="liteseg"></div>
         <p class="nexthint" id="nexthint"></p>
         <button type="button" class="nudge" id="nudge" hidden></button>
+        <button type="button" class="nudge" id="newver" hidden></button>
         <div id="planbox" hidden></div>
         <div id="coachreco" hidden></div>
         <p class="phaseline" id="phaseline"></p>
@@ -1362,6 +1366,7 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
     <p class="seghint">регулярные занятия приложение само добавит к норме еды в эти дни — останется нажать «Было». Разовое пиши тренеру в чат</p>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
+    <p class="mtext bline" id="buildline"></p>
     <div class="pfprog" id="pfprog"></div>
     <div id="recobox"></div>
     <button class="btn wide" id="profai">Собрать программу под меня</button>
@@ -2542,7 +2547,7 @@ function saveMe(){
   var pe=document.getElementById('pf-eq'); if(pe) pe.hidden=(me.place||'gym')!=='home';
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
 }
-function openProf(){ fillMe(); renderProfProg(); renderReco(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
    нет ни стартовых весов, ни норм по еде */
 function renderNudge(){
@@ -2732,6 +2737,11 @@ function renderDayseg(){
   seg.innerHTML=h;
 }
 
+/* Версия сборки. Он смотрит приложение с двух устройств и не может понять,
+   свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
+   Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
+   если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
+var BUILD = '09.09 22:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -2840,10 +2850,21 @@ function nextAfter(d){
   return CYCLE[(i+1)%CYCLE.length];
 }
 /* Последняя тренировка: свежее из отметки на этом устройстве и истории из облака */
+/* Тренировка могла быть сделана по прошлой программе: ключи дней там свои
+   (D2, A2, W2). Номер дня в очереди при этом тот же, поэтому переносим по
+   номеру — иначе плашка говорит «сегодня закрыт», а ни одна кнопка дня не
+   отмечена, и очередь начинается заново. */
+function dayHere(k){
+  if(!k) return null;
+  if(CYCLE.indexOf(k)>=0) return k;
+  var m=String(k).match(/(\d+)\s*$/); if(!m) return null;
+  return CYCLE[+m[1]-1] || null;
+}
 function lastWorkout(){
-  /* только дни этой программы: DAYS общий на все программы, а очередь — своя */
-  var a = (lastDone && CYCLE.indexOf(lastDone.day)>=0) ? lastDone : null;
-  var b = (HIST && HIST[0] && CYCLE.indexOf(HIST[0].day)>=0) ? {day:HIST[0].day, date:HIST[0].date} : null;
+  var ak = lastDone ? dayHere(lastDone.day) : null;
+  var a = ak ? {day:ak, date:lastDone.date} : null;
+  var bk = (HIST && HIST[0]) ? dayHere(HIST[0].day) : null;
+  var b = bk ? {day:bk, date:HIST[0].date} : null;
   if(a && b) return a.date>=b.date ? a : b;
   return a||b;
 }
@@ -4728,8 +4749,9 @@ function renderTodaybar(){
   var DNL=WDFULL;
   var n=new Date();
   var out='<span class="td">'+n.getDate()+' '+MONTHS[n.getMonth()]+', '+DNL[n.getDay()]+'</span>';
-  if(lastDone && lastDone.date===TODAY){
-    out+='<span class="ts done">сегодня закрыт · '+DAYS[lastDone.day].sub.toLowerCase()+'</span>';
+  var lw=lastWorkout();
+  if(lw && lw.date===TODAY && DAYS[lw.day]){
+    out+='<span class="ts done">сегодня закрыт · '+DAYS[lw.day].sub.toLowerCase()+'</span>';
   } else if(todayLetter()){
     out+='<span class="ts gym">сегодня зал · '+DAYS[suggestedDay()].sub.toLowerCase()+'</span>';
   } else {
@@ -5367,6 +5389,26 @@ function takePlan(sp){
   if(me.plan_at && sp.at<=me.plan_at) return;
   planSave(sp.plan, sp.at); renderPlanEditor();
 }
+var SRVBUILD=null;
+function renderBuild(){
+  var el=document.getElementById('buildline');
+  var свежая = !SRVBUILD || SRVBUILD===BUILD;
+  if(el) el.innerHTML = 'версия '+esc(BUILD)+' · '+
+    (свежая ? '<b>последняя</b>' : 'на сервере уже '+esc(SRVBUILD)+' — <button type="button" id="bupd">обновить</button>');
+  var b=document.getElementById('newver');
+  if(b){ b.hidden=свежая;
+    if(!свежая) b.innerHTML='Вышла новая версия приложения — <b>обновить →</b>'; }
+}
+/* Кэш WebView живёт своей жизнью: перезагружаем с новым адресом, иначе
+   Telegram отдаёт ту же страницу, что и была. */
+function updApp(){
+  try{
+    var u=location.pathname+'?v='+encodeURIComponent(SRVBUILD||Date.now());
+    location.replace(u);
+  }catch(e){ location.reload(); }
+}
+document.getElementById('newver').addEventListener('click', updApp);
+document.getElementById('profm').addEventListener('click', function(e){ if(e.target.closest('#bupd')) updApp(); });
 function renderPlanEditor(){
   var el=document.getElementById('me-plan'); if(!el) return;
   var list=planList();
@@ -5898,6 +5940,7 @@ function recoPull(){
   return fetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
     .then(function(r){ return r.json(); })
     .then(function(d){
+      if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); }
       if(d && d.plan) takePlan(d.plan);
       TODAYPLAN=(d && d.today && d.today.plan)||[]; renderPlanBox();
       if(d && d.rebuild) applyRebuild(d.rebuild);
