@@ -3470,7 +3470,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2();
+      recoBoot(); pushVolume(); renderReco2(); recoPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -5238,7 +5238,7 @@ function applyReco2(){
     saveSubs();
     if(hit.dk===day){ sess=blankSess(); saveSess(); }
     renderList(); paintNote('');
-    gset('reco2_seen', c.id); renderReco2(); haptic('ok');
+    gset('reco2_seen', c.id); recoDone(); renderReco2(); haptic('ok');
     return;
   }
   /* замена: каталог мог ещё не загрузиться — тогда ждём и пробуем снова */
@@ -5247,7 +5247,7 @@ function applyReco2(){
     var найдено=findInCat(c.to, hit.e.m||(вкат&&вкат.m)||'', (вкат&&вкат.c)||'strength');
     if(найдено){
       applySub(hit.dk, hit.di, найдено);
-      gset('reco2_seen', c.id); renderReco2(); haptic('ok');
+      gset('reco2_seen', c.id); recoDone(); renderReco2(); haptic('ok');
       /* показываем результат: замену человек просил, чтобы её увидеть */
       closeCoach(); goPage('gym');
       if(hit.dk!==day){ day=hit.dk; set('day', day); renderDayseg(); renderDayHead(); renderList(); }
@@ -5255,16 +5255,35 @@ function applyReco2(){
     }
     /* не нашли — не притворяемся: открываем каталог на нужной мышце,
        человек выберет сам, и замена встанет тем же путём */
-    gset('reco2_seen', c.id); renderReco2();
+    gset('reco2_seen', c.id); recoDone(); renderReco2();
     closeCoach();
     openCatalog({dk:hit.dk, di:hit.di, muscle:hit.e.m||(вкат&&вкат.m)||'', c:(вкат&&вкат.c)||'strength'});
   };
   if(CAT) сделать(); else loadCatalog().then(сделать).catch(сделать);
 }
+/* Правка, предложенная в чате Telegram, живёт на сервере: CloudStorage
+   виден только приложению, поэтому бот кладёт её в state и вешает под
+   сообщением кнопку, открывающую приложение с ?r=1. */
+function recoDone(){
+  try{ fPost('/reco', {uid:syncUid(), done:1}).catch(function(){}); }catch(e){}
+}
+function recoPull(){
+  var сразу = /[?&]r=1(&|$)/.test(location.search||'');
+  return fetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var c = d && d.reco; if(!c || !c.text) return;
+      if(!c.id) c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
+      if(!сразу && gget('reco2_seen',null)===c.id) return;
+      RECO2=c; gset('coach_reco', c);
+      if(сразу && recoCan(c)) applyReco2();
+      else renderReco2();
+    }).catch(function(){});
+}
 function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
   if(b.dataset.reco2==='do') applyReco2();
-  else { var c=RECO2 || gget('coach_reco', null); if(c) gset('reco2_seen', c.id); renderReco2(); haptic('light'); }
+  else { var c=RECO2 || gget('coach_reco', null); if(c){ gset('reco2_seen', c.id); recoDone(); } renderReco2(); haptic('light'); }
 }
 document.getElementById('coachreco').addEventListener('click', recoClick);
 document.getElementById('chatlog').addEventListener('click', recoClick);
