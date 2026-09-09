@@ -524,6 +524,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px;transition:width .25s ease}
 .fbar .tr i.fb-done{background:var(--done)}
 .fbar .tr i.fb-over{background:var(--warn)}
+.fbar .tr s{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--bg-2);opacity:.9}
 
 /* переключатель дня: вчерашний ужин записывается во вчера */
 .fnav{display:flex;align-items:center;gap:8px;margin:2px 0 0}
@@ -555,6 +556,10 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fmeal:active{opacity:.6}
 .fmeal:first-child{border-top:0}
 .fmeal.fact{cursor:default}
+.attbox{display:flex;align-items:center;gap:9px;padding:8px 0 0;font-size:12px;color:var(--muted)}
+.attbox img{width:40px;height:40px;object-fit:cover;border-radius:9px;flex:none}
+.attbox span{flex:1 1 auto;min-width:0}
+.attbox button{flex:none;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:15px}
 .fmeal.fplan{opacity:.72}
 .fmeal.fplan .fk{color:var(--dim)}
 .fok{flex:none;width:30px;height:30px;border-radius:9px;border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent);font-size:15px;line-height:1}
@@ -1207,6 +1212,7 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
+        <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
           <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
           <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -1215,7 +1221,7 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <div class="fchips" id="frecent"></div>
         <p class="freply" id="freply" hidden></p>
-        <p class="fhint">Фото еды и отчёты весов удобнее слать прямо боту в чат — считает и записывает сюда же.</p>
+
         </div>
         <h3 class="lh">Неделя</h3>
         <div class="group">
@@ -1317,6 +1323,7 @@ body.onb #picker .modalbox::before{display:none}
   <div class="modalbox">
     <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
     <div class="chatlog" id="chatlog"></div>
+    <div class="attbox" id="cattach" hidden></div>
     <div class="chatask">
       <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
       <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -2741,7 +2748,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '09.09 22:10';
+var BUILD = '09.09 23:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5242,7 +5249,7 @@ document.getElementById('resetm').addEventListener('click', function(e){
 /* ══════════ ЕДА ══════════
    Считает и хранит Worker (тот же uid, что у тренировок). Здесь — сегодня
    против нормы, список приёмов, ввод текстом или фото, неделя и весы. */
-var FOOD={day:null, week:null, meas:null, busy:false, date:null};
+var FOOD={day:null, week:null, meas:null, busy:false, date:null, att:null};
 /* Какой день открыт во вкладке «Еда». Вчерашний ужин, вспомненный утром,
    должен лечь во вчера, иначе и дневник, и сверка с весами врут. */
 function fDate(){ return FOOD.date || TODAY; }
@@ -5335,11 +5342,23 @@ function fbar(label, v, t, unit, mode){
   var cls = '';
   if(t){
     if(mode==='min') cls = v>=t ? 'fb-done' : '';
+    else if(mode==='max') cls = v>t ? 'fb-over' : '';      /* потолок: важно только «перебрал» */
     else cls = v>t*1.15 ? 'fb-over' : (v>=t*0.9 ? 'fb-done' : '');
   }
   return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
-         '<b>'+v+(t?' <em>/ '+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
+         '<b>'+v+(t?' <em>'+(mode==='max'?'/ до ':'/ ')+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
          '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';
+}
+/* Жир — не потолок и не цель, а полоса: ниже нижней границы страдают гормоны,
+   выше верхней он просто вытесняет углеводы. Засечка показывает, где начинается
+   «достаточно». */
+function fband(label, v, lo, hi, unit){
+  if(!hi) return fbar(label, v, 0, unit);
+  var pct=Math.min(100, Math.round(v/hi*100)), мет=Math.min(98, Math.round(lo/hi*100));
+  var cls = v>hi ? 'fb-over' : (v>=lo ? 'fb-done' : '');
+  return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
+         '<b>'+v+' <em>/ '+lo+'–'+hi+' '+unit+'</em></b></div>'+
+         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i><s style="left:'+мет+'%"></s></div></div>';
 }
 /* ══ регулярный спорт вне зала ══
    Жена: «Я добавила в профиль про теннис, но ты его не учёл, мне пришлось
@@ -5503,7 +5522,9 @@ function renderFoodDay(){
   }
   box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
     fbar('белок', d.prot, t.prot, 'г', 'min') +
-    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') + состав +
+    (t.fat ? fband('жир', d.fat||0, t.fat.min, t.fat.max, 'г') : '') +
+    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') +
+    (t.sug ? fbar('сахар', d.sug||0, t.sug, 'г', 'max') : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>';
   ml.innerHTML = (d.plan||[]).map(function(pp){
     return '<div class="fmeal fact fplan"><span class="fk">план</span><span class="ft">'+esc(planLine(pp))+'</span>'+
@@ -5607,7 +5628,7 @@ function foodSend(text, image, mime){
   fReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
   haptic('medium');
   fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null, date:fDate()})
-    .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.', '', image); document.getElementById('ftext').value=''; haptic('ok'); takeChanges(d);
+    .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.', '', image); haptic('ok'); takeChanges(d);
       fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
     .catch(function(e){ fReply(humanErr(e),'bad'); haptic('err'); })
     .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
@@ -5627,14 +5648,32 @@ function shrink(file, max){
     img.src=url;
   });
 }
-document.getElementById('fsend').addEventListener('click', function(){ var t=document.getElementById('ftext').value.trim(); if(t) foodSend(t); });
-document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); var t=e.target.value.trim(); if(t) foodSend(t); } });
+/* Фото сначала ПРИКРЕПЛЯЕТСЯ, отправляет его кнопка «→» вместе с подписью.
+   Раньше снимок улетал сразу из окна выбора: «я каждый раз думаю дописать
+   комментарий, а фотка уже ушла». */
+function renderAtt(box, b64, hint){
+  var el=document.getElementById(box); if(!el) return;
+  el.hidden=!b64;
+  el.innerHTML = b64 ? '<img src="data:image/jpeg;base64,'+b64+'" alt=""><span>'+esc(hint)+'</span>'+
+    '<button type="button" data-att="off" aria-label="Убрать фото">×</button>' : '';
+}
+function fAttSet(b64){ FOOD.att=b64||null; renderAtt('fattach', FOOD.att, 'фото прикреплено — допиши, что это, и отправь'); }
+document.getElementById('fattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ fAttSet(null); haptic('light'); } });
+function fGo(){
+  var el=document.getElementById('ftext'), t=el.value.trim();
+  if(!t && !FOOD.att) return;
+  var img=FOOD.att; fAttSet(null); el.value='';
+  foodSend(t, img, img?'image/jpeg':null);
+}
+document.getElementById('fsend').addEventListener('click', fGo);
+document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); fGo(); } });
 document.getElementById('fphoto').addEventListener('click', function(){ document.getElementById('ffile').click(); });
 document.getElementById('ffile').addEventListener('change', function(e){
   var f=e.target.files&&e.target.files[0]; if(!f) return;
-  var t=document.getElementById('ftext').value.trim();
   fReply('Читаю фото', 'wait');
-  shrink(f).then(function(b64){ foodSend(t, b64, 'image/jpeg'); }).catch(function(err){ fReply(humanErr(err),'bad'); });
+  shrink(f).then(function(b64){ fAttSet(b64); fReply(''); haptic('light');
+    var el=document.getElementById('ftext'); if(el && window.innerWidth>700) el.focus();
+  }).catch(function(err){ fReply(humanErr(err),'bad'); });
   e.target.value='';
 });
 /* ── Правка приёма ──
@@ -5721,7 +5760,7 @@ document.getElementById('fmsave').addEventListener('click', function(){
 /* ══════════ ТРЕНЕР: ЧАТ ══════════
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
-var CHAT={items:null, busy:false};
+var CHAT={items:null, busy:false, att:null};
 function coachAttn(on){
   var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
 }
@@ -5750,9 +5789,10 @@ function renderChat(scroll){
   else {
     if(CHAT.intro) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     h+=CHAT.items.map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
-    if(CHAT.pending || CHAT.pendingImg || CHAT.prep)
+    if(CHAT.prep) h+='<div class="msg ai wait">Готовлю фото<span class="dots"><i></i><i></i><i></i></span></div>';
+    else if(CHAT.pending || CHAT.pendingImg)
       h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
-      '<div class="msg ai wait">'+(CHAT.prep?'Готовлю фото':(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю'))+'<span class="dots"><i></i><i></i><i></i></span></div>';
+      '<div class="msg ai wait">'+(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span></div>';
     if(CHAT.err) h+='<div class="msg ai bad">'+esc(CHAT.err)+'</div>';
     h+=recoCard('chat');
   }
@@ -6006,23 +6046,30 @@ document.getElementById('coachfab').addEventListener('click', function(){ openCo
 
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
-document.getElementById('csend').addEventListener('click', function(){ var t=document.getElementById('ctext').value.trim(); if(t) coachSend(t); });
+function cGo(){
+  var t=document.getElementById('ctext').value.trim();
+  if(!t && !CHAT.att) return;
+  var img=CHAT.att; cAttSet(null);
+  coachSend(t, img);
+}
+document.getElementById('csend').addEventListener('click', cGo);
 document.getElementById('ctext').addEventListener('keydown', function(e){
-  if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); var t=e.target.value.trim(); if(t) coachSend(t); }
+  if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); cGo(); }
 });
 document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files&&e.target.files[0]; if(!f) return;
-  var t=document.getElementById('ctext').value.trim();
-  /* Сжатие большого снимка занимает секунду-две. Без ответа на экране это
-     выглядит как «ничего не произошло» — показываем состояние сразу. */
-  CHAT.pending=t||''; CHAT.pendingImg=null; CHAT.prep=true; CHAT.err='';
-  renderChat(); haptic('medium');
-  shrink(f).then(function(b64){ CHAT.prep=false; coachSend(t, b64); })
-    .catch(function(err){ CHAT.prep=false; CHAT.pending=''; CHAT.err=humanErr(err); renderChat(); });
+  /* Снимок сначала прикрепляется — отправляет его кнопка, вместе с подписью.
+     Сжатие занимает секунду-две, поэтому состояние показываем сразу. */
+  CHAT.prep=true; CHAT.err=''; renderChat(); haptic('light');
+  shrink(f).then(function(b64){ CHAT.prep=false; cAttSet(b64); renderChat();
+    var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
+  }).catch(function(err){ CHAT.prep=false; CHAT.err=humanErr(err); renderChat(); });
   e.target.value='';
 });
+function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); }
+document.getElementById('cattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 /* ── init ── */
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
