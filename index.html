@@ -1666,9 +1666,11 @@ function saveSched(){
   if(DB) DB.doc('state/sched').set({s:GYM_DAYS, p:profile, at:new Date().toISOString()}).catch(function(){});
 }
 /* На кнопке — короткое имя дня программы, в подписи — полное */
+/* Одно имя у дня — «День N». Ярлыки «Верх А / Низ Б / Жим» путали: на экране
+   стояли сразу три имени одного дня. Содержание несёт sub, время — whenLabel. */
 function dayShort(k){
   var d=DAYS[k]||{};
-  return d.s || String(d.sub||'').split(/[ ,]/)[0] || (d.name||'');
+  return d.name || ('День '+(CYCLE.indexOf(k)+1 || 1));
 }
 function dayLabel(k){ return (DAYS[k]||{}).name || ''; }
 /* кнопки идут в порядке программы — это и есть очередь */
@@ -1679,6 +1681,36 @@ function lastDateOf(k){
   if(lastDone && lastDone.day===k) best=lastDone.date;
   if(HIST) for(var i=0;i<HIST.length;i++){ if(HIST[i].day===k){ if(!best || HIST[i].date>best) best=HIST[i].date; break; } }
   return best;
+}
+/* Когда каждый день программы случится в следующий раз: очередь идёт по
+   кругу, даты — по дням зала из расписания. Прогноз, а не обещание: пропустил
+   среду — всё сдвинется, и подписи сдвинутся вместе с ним. */
+function dLocal(iso){ var p=String(iso).split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+function isoOf(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function forecastMap(){
+  var gd=GYM_DAYS||{}, out={};
+  if(!Object.keys(gd).length || !CYCLE.length) return out;
+  var lw=lastWorkout(), doneToday=!!(lw && lw.date===TODAY);
+  var start=doneToday ? nextAfter(lw.day) : suggestedDay();
+  var i=CYCLE.indexOf(start); if(i<0) i=0;
+  var d=dLocal(TODAY); if(doneToday) d.setDate(d.getDate()+1);
+  for(var n=0, guard=0; n<CYCLE.length && guard<28; guard++){
+    if(gd[d.getDay()]){ var k=CYCLE[(i+n)%CYCLE.length]; if(!out[k]) out[k]=isoOf(d); n++; }
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+function whenLabel(k, fc){
+  var last=lastDateOf(k);
+  if(last===TODAY) return 'сегодня';
+  var f=(fc||forecastMap())[k];
+  var ago=last ? Math.round((dLocal(TODAY)-dLocal(last))/864e5) : null;
+  if(ago===1) return 'вчера';
+  if(f){
+    var dn=Math.round((dLocal(f)-dLocal(TODAY))/864e5);
+    return dn===0 ? 'сегодня' : dn===1 ? 'завтра' : WD[dLocal(f).getDay()];
+  }
+  return agoLabel(last);
 }
 function agoLabel(d){
   if(!d) return '—';
@@ -2535,11 +2567,11 @@ function renderDayseg(){
   /* столько колонок, сколько дней: на телефоне они ужимаются в один ряд,
      на широком окне не растягиваются шире 110px */
   seg.style.gridTemplateColumns='repeat('+all.length+',minmax(0,110px))';
-  var h='';
+  var h='', fc=forecastMap();
   all.forEach(function(k){
     var d=DAYS[k];
     h+='<button data-day="'+k+'"'+(d.light?' data-light="1"':'')+' aria-pressed="'+(k===day)+'"><b>'+
-       dayShort(k)+'</b><i>'+agoLabel(lastDateOf(k))+'</i></button>';
+       dayShort(k)+'</b><i>'+whenLabel(k, fc)+'</i></button>';
   });
   seg.innerHTML=h;
 }
@@ -2596,10 +2628,11 @@ function renderDayHead(){
   var nx = suggestedDay();
   var lw = lastWorkout();
   var doneToday = (lw && lw.date===TODAY) ? lw.day : null;
+  var fc=forecastMap();
   Array.prototype.forEach.call(document.querySelectorAll('#dayseg button, #liteseg button'),function(b){
     var k=b.dataset.day;
     b.setAttribute('aria-pressed', String(k===day));
-    var i=b.querySelector('i'); if(i) i.textContent=agoLabel(lastDateOf(k));
+    var i=b.querySelector('i'); if(i) i.textContent=whenLabel(k, fc);
     if(k===doneToday){ b.setAttribute('data-done','1'); b.removeAttribute('data-next'); }
     else { b.removeAttribute('data-done');
            if(k===nx && k!==day) b.setAttribute('data-next','1'); else b.removeAttribute('data-next'); }
@@ -2608,11 +2641,13 @@ function renderDayHead(){
   if(h){
     if(doneToday){
       var af = nextAfter(doneToday);
-      h.innerHTML = шапкаДня() + (day===doneToday ? ' · сегодня закрыт, дальше <b>'+dayShort(af).toLowerCase()+'</b>' : '');
+      var кw=whenLabel(af);
+      h.innerHTML = шапкаДня() + (day===doneToday ? ' · сегодня закрыт, дальше <b>'+dayShort(af).toLowerCase()+'</b>'+(кw && кw!=='—' ? ' · '+кw : '') : '');
     } else if(day===nx){
       h.innerHTML = шапкаДня() + ' · следующий по очереди';
     } else {
-      h.innerHTML = шапкаДня() + ' · по очереди <b>'+dayShort(nx).toLowerCase()+'</b>';
+      var нw=whenLabel(nx);
+      h.innerHTML = шапкаДня() + ' · по очереди <b>'+dayShort(nx).toLowerCase()+'</b>'+(нw && нw!=='—' ? ' · '+нw : '');
     }
   }
 }
