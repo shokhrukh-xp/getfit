@@ -139,6 +139,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .seg button{flex:1 1 0;min-width:0;padding:9px 6px;border-radius:9px;border:.5px solid var(--line);
   background:var(--card-2);color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--accent)}
+/* четыре ответа про зал в одну строку не влезают на телефоне — два на два */
+#me-gym{flex-wrap:wrap}
+#me-gym button{flex:1 1 calc(50% - 3px)}
 /* «что есть дома» — пять коротких слов, которые не влезают поровну */
 .seg.multi{flex-wrap:wrap}
 .seg.multi button{flex:0 1 auto;padding:9px 12px;overflow:visible;text-overflow:clip}
@@ -147,6 +150,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border:1px solid var(--line-soft);border-radius:10px;font-size:12.5px;color:var(--muted)}
 .pfprog b{color:var(--text);font-weight:600}
 .pfprog i{display:block;font-style:normal;margin-top:2px;color:var(--muted)}
+.seghint{margin:4px 0 0 68px;font-size:12px;line-height:1.4;color:var(--muted)}
 .pfprog button{background:none;border:none;color:var(--accent);font:inherit;font-size:12.5px;padding:0}
 .reco{border:1px solid var(--accent-2);border-radius:12px;padding:12px 13px;margin-bottom:10px;background:var(--accent-ghost)}
 .reco h4{margin:0 0 4px;font-size:13.5px;font-weight:600;color:var(--text)}
@@ -1006,6 +1010,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .pbtn i{font-style:normal;font-size:11.5px;color:var(--dim);line-height:1.45}
 .pbtn.best{border-color:var(--accent)}
 .pbtn em{display:block;font-style:normal;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.pbtn em.dim{color:var(--dim)}
 #picker .pf{margin-top:8px}
 #picker #picklist{margin-top:14px}
 #picker .seg.wd button{padding:9px 1px;font-size:11.5px}
@@ -1305,7 +1310,10 @@ body.onb #picker .modalbox::before{display:none}
       <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
       <label>вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
     </div>
-    <div class="pf"><span class="pfl">цель</span><select id="me-goal"></select></div>
+    <div class="pf"><span class="pfl">вес</span><div class="seg" id="me-wt"></div></div>
+    <p class="seghint" id="me-wt-hint"></p>
+    <div class="pf"><span class="pfl">зал</span><div class="seg" id="me-gym"></div></div>
+    <p class="seghint" id="me-gym-hint"></p>
     <div class="pf"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
     <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
     <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
@@ -1579,8 +1587,8 @@ DAYS.W2={name:'День 2', s:'Тело Б', when:'', sub:'Задняя цепь
    программу: профиль выбирается один раз при первом запуске и запоминается. */
 var PROFILES = {
   shp: {
-    name:'Рекомпозиция · 5 дней', goal:'Жир вниз, мышцы на месте',
-    fit:{goals:{fat:3,tone:3,muscle:3,strength:1,health:1,endur:0,mobil:0}, level:{new:0,mid:2,exp:3}, days:5, place:{gym:2,home:0}},
+    name:'Мышцы · вес вниз · 5 дней', goal:'вес снизить, в зале — мышцы',
+    fit:{wt:{down:3,keep:2,up:2}, gym:{muscle:3,strength:1,endur:0,health:0}, level:{new:0,mid:2,exp:3}, days:5, place:{gym:2,home:0}},
     sub:'Каждая мышца дважды в неделю. Пять дней по 35–40 минут',
     heavy:['D1','D2','D3','D4','D5'], lightDays:[],
     gymDays:{2:'D1', 3:'D2', 4:'D3', 5:'D4', 0:'D5'},
@@ -1600,8 +1608,8 @@ var PROFILES = {
     ]
   },
   friend: {
-    name:'База · 3 дня', goal:'Начать ходить и втянуться',
-    fit:{goals:{fat:2,tone:2,muscle:2,strength:3,health:3,endur:1,mobil:1}, level:{new:3,mid:2,exp:1}, days:3, place:{gym:2,home:0}},
+    name:'Сила · вес на месте · 3 дня', goal:'вес оставить, в зале — сила',
+    fit:{wt:{down:2,keep:3,up:2}, gym:{muscle:2,strength:3,endur:1,health:2}, level:{new:3,mid:2,exp:1}, days:3, place:{gym:2,home:0}},
     sub:'Всё тело за три дня, свободные веса. Три дня в неделю',
     heavy:['D1','D2','D3'], lightDays:[],
     gymDays:{2:'D1', 4:'D2', 0:'D3'},
@@ -1616,8 +1624,8 @@ var PROFILES = {
     ]
   },
   wife: {
-    name:'Форма · 2 дня', goal:'Тонус, ягодицы и осанка',
-    fit:{goals:{fat:2,tone:3,muscle:1,strength:0,health:2,endur:1,mobil:2}, level:{new:3,mid:1,exp:0}, days:2, place:{gym:2,home:0}},
+    name:'Здоровье · вес вниз · 2 дня', goal:'вес снизить, в зале — здоровье',
+    fit:{wt:{down:3,keep:2,up:0}, gym:{muscle:1,strength:0,endur:1,health:3}, level:{new:3,mid:1,exp:0}, days:2, place:{gym:2,home:0}},
     sub:'Тренажёры и гантели, техника простая. Два дня в неделю',
     heavy:['W1','W2'], lightDays:[],
     gymDays:{3:'W1', 5:'W2'},                           /* ср пт */
@@ -2152,11 +2160,13 @@ function renderWzList(){
   if(готовые){
     if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
     var scored=Object.keys(PROFILES).filter(function(k){ return !PROFILES[k].custom; }).map(function(k){
-      return {k:k, s:fitScore(k, {goal:me.goal, level:me.level||'new', place:WIZ.place}, wizDays().length)};
+      return {k:k, s:fitScore(k, {wt:goalPair(me).wt, gym:goalPair(me).gym, level:me.level||'new', place:WIZ.place}, wizDays().length)};
     }).sort(function(a,b){ return b.s-a.s; });
     scored.forEach(function(x){
       var P=PROFILES[x.k];
-      h+='<button class="pbtn" data-prof="'+x.k+'"><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
+      /* имя строится по правилу и может совпасть с именем своей программы —
+         подпись «готовая» их различает */
+      h+='<button class="pbtn" data-prof="'+x.k+'"><em class="dim">готовая</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
     });
   } else if(WIZ.stage==='form'){
     /* запасной выход должен быть с самого начала: у кого программа уже есть,
@@ -2202,7 +2212,7 @@ function wzSend(){
   var me=myData()||{};
   var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
     me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
-         place:WIZ.place, level:me.level||null, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
+         place:WIZ.place, level:me.level||null, wt:goalPair(me).wt, gym:goalPair(me).gym, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
          likes:me.likes||[], dislikes:me.dislikes||[] } };
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
@@ -2215,7 +2225,7 @@ function wzSend(){
     .then(function(d){
       WIZ.busy=false;
       if(d.prog && d.prog.days && d.prog.days.length){
-        WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.hint=d.hint||'';
+        WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.wt=d.wt||null; WIZ.gym=d.gym||null; WIZ.hint=d.hint||'';
         WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[];
         WIZ.stage='prog'; haptic('ok');
       } else {
@@ -2243,7 +2253,8 @@ function wzSaveMe(){
   if(WIZ.text && me.about!==WIZ.text){ me.about=WIZ.text; ch=true; }
   /* цель человек больше не выбирает из списка — её понял тренер по его словам,
      а без цели не посчитать ни стартовые веса, ни норму еды */
-  if(WIZ.goal && !me.goal){ me.goal=WIZ.goal; ch=true; }
+  if(WIZ.wt && WIZ.gym && !hasGoal(me)){ me.wt=WIZ.wt; me.gym=WIZ.gym; me.goal=legacyOf(WIZ.wt,WIZ.gym); ch=true; }
+  else if(WIZ.goal && !hasGoal(me)){ me.goal=WIZ.goal; ch=true; }
   /* что человек любит и чего не хочет — тренер вытащил это в разговоре;
      дальше это учитывается при каждой сборке и замене, поэтому храним */
   if((WIZ.likes||[]).length && !(me.likes||[]).length){ me.likes=WIZ.likes; ch=true; }
@@ -2325,20 +2336,48 @@ function schedApplied(){
    как только они меняются, приложение проверяет, подходит ли программа.
    Списки целей — семь самых частых по опросам: сила и мышцы, похудение,
    здоровье и долголетие, выносливость, подвижность. */
-var GOALS=[
-  ['fat',      'Похудеть, сохранив мышцы'],
-  ['tone',     'Подтянуться'],
-  ['muscle',   'Набрать мышцы'],
-  ['strength', 'Стать сильнее'],
-  ['health',   'Форма и здоровье'],
-  ['endur',    'Выносливость'],
-  ['mobil',    'Подвижность и осанка']
-];
+/* Цель — два ответа, а не один пункт из семи. Семь целей путали, потому что
+   смешивали две оси в одном слове: «подтянуться» — это и про вес, и про зал.
+   Вес управляет едой, зал — схемой подходов. Имя программы складывается из
+   обоих: «Мышцы · вес вниз · 5 дней». */
+var WTS=[['down','Снизить'],['keep','Оставить'],['up','Набрать']];
+var GYMS=[['muscle','Мышцы'],['strength','Сила'],['endur','Выносливость'],['health','Здоровье']];
+var WT_HINT={ down:'дефицит 300–500 ккал, не глубже потолка по жировой массе; белка больше — мышцы остаются',
+              keep:'калории на поддержание — вес стоит, меняется состав тела',
+              up:'небольшой профицит, +250 ккал; белка больше' };
+var GYM_HINT={ muscle:'объём: 10–20 подходов на мышцу в неделю, 6–12 повторов',
+               strength:'тяжёлые базовые 3–6 повторов, первыми в тренировке, каждое дважды в неделю',
+               endur:'кардио и интервалы, силовая два раза — чтобы не терять мышцы',
+               health:'силовая 2–3 раза умеренно, плюс подвижность, баланс и осанка' };
+var WT_WORD={down:'вес вниз',keep:'вес на месте',up:'вес вверх'};
+/* старые значения goal переводятся в пару — они остались в телефонах и в облаке */
+var LEGACY_GOAL={fat:['down','muscle'],tone:['down','muscle'],muscle:['up','muscle'],strength:['keep','strength'],
+                 health:['keep','health'],endur:['keep','endur'],mobil:['keep','health']};
+function goalPair(me){
+  me=me||{};
+  if(me.wt && me.gym) return {wt:me.wt, gym:me.gym};
+  var l=LEGACY_GOAL[me.goal]; return l ? {wt:l[0], gym:l[1]} : {wt:null, gym:null};
+}
+function hasGoal(me){ var g=goalPair(me); return !!(g.wt && g.gym); }
+function legacyOf(wt,gym){
+  if(wt==='down') return 'fat'; if(wt==='up') return 'muscle';
+  return {muscle:'health',strength:'strength',endur:'endur',health:'health'}[gym]||'health';
+}
+function lbl(list,id){ for(var i=0;i<list.length;i++) if(list[i][0]===id) return list[i][1]; return ''; }
+function goalText(me){ var g=goalPair(me); if(!g.wt) return ''; return 'вес '+lbl(WTS,g.wt).toLowerCase()+', в зале — '+lbl(GYMS,g.gym).toLowerCase(); }
+function progName(gym,wt,n){ n=+n||0; return (lbl(GYMS,gym)||'Программа')+' · '+(WT_WORD[wt]||'вес на месте')+' · '+n+' '+plural(n,['день','дня','дней']); }
+var GOALS=[['fat','Похудеть, сохранив мышцы'],['tone','Подтянуться'],['muscle','Набрать мышцы'],['strength','Стать сильнее'],['health','Форма и здоровье'],['endur','Выносливость'],['mobil','Подвижность и осанка']];
 var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опытный']];
 var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
+function paintGoalHints(){
+  var w=document.querySelector('#me-wt button[aria-pressed="true"]'), g=document.querySelector('#me-gym button[aria-pressed="true"]');
+  var hw=document.getElementById('me-wt-hint'), hg=document.getElementById('me-gym-hint');
+  if(hw) hw.textContent = w ? WT_HINT[w.dataset.v]||'' : 'что делать с весом — от этого считается норма еды';
+  if(hg) hg.textContent = g ? GYM_HINT[g.dataset.v]||'' : 'ради чего зал — от этого схема подходов и повторов';
+}
 function segHtml(id, list, val, multi){
   return list.map(function(x){
     var on = multi ? (val||[]).indexOf(x[0])>=0 : val===x[0];
@@ -2348,10 +2387,13 @@ function segHtml(id, list, val, multi){
 function fillMe(){
   var me=myData()||{};
   var b=document.getElementById('me-bw'), h=document.getElementById('me-ht'),
-      a=document.getElementById('me-age'), x=document.getElementById('me-sex'), g=document.getElementById('me-goal');
+      a=document.getElementById('me-age'), x=document.getElementById('me-sex');
   if(b) b.value=me.bw||''; if(h) h.value=me.ht||'';
   if(a) a.value=me.age||''; if(x) x.value=me.sex||'m';
-  if(g){ g.innerHTML='<option value="">— не выбрана —</option>'+GOALS.map(function(o){ return '<option value="'+o[0]+'"'+(me.goal===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join(''); }
+  var gp=goalPair(me);
+  var W=document.getElementById('me-wt');  if(W) W.innerHTML=segHtml('wt',WTS,gp.wt);
+  var G=document.getElementById('me-gym'); if(G) G.innerHTML=segHtml('gym',GYMS,gp.gym);
+  paintGoalHints();
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
@@ -2366,22 +2408,24 @@ function csv(v){ return String(v||'').split(',').map(function(x){ return x.trim(
   .filter(Boolean).slice(0,5).map(function(x){ return x.slice(0,60); }); }
 function readMeForm(){
   var v=function(id){ var el=document.getElementById(id); return el&&el.value!=='' ? +el.value : null; };
-  var sx=document.getElementById('me-sex'), g=document.getElementById('me-goal');
+  var sx=document.getElementById('me-sex');
   var pick=function(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; };
   var lim=Array.prototype.map.call(document.querySelectorAll('#me-lim button[aria-pressed="true"]'),function(b){ return b.dataset.v; });
   var eq=Array.prototype.map.call(document.querySelectorAll('#me-eq button[aria-pressed="true"]'),function(b){ return b.dataset.v; });
   var old=myData()||{};
+  var op=goalPair(old), wt=pick('me-wt')||op.wt||null, gym=pick('me-gym')||op.gym||null;
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
-          goal:(g&&g.value)||old.goal||null, level:pick('me-level')||old.level||null,
+          wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq,
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
           dislikes:csv((document.getElementById('me-dis')||{}).value)};
 }
 /* подпись профиля: что из него влияет на подсказки */
-function meSig(me){ me=me||{}; return [me.goal||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),Object.keys(GYM_DAYS).length].join('|'); }
+function meSig(me){ me=me||{}; var gp=goalPair(me); return [gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),Object.keys(GYM_DAYS).length].join('|'); }
 function saveMe(){
-  if(!document.getElementById('me-goal')) return;
+  if(!document.getElementById('me-wt')) return;
+  paintGoalHints();
   var prev=myData()||{}, me=readMeForm();
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
@@ -2396,7 +2440,7 @@ function openProf(){ fillMe(); renderProfProg(); renderReco(); var m=document.ge
 function renderNudge(){
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
-  var нет=[]; if(!me.bw) нет.push('вес'); if(!me.goal) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
+  var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
   if(!нет.length){ el.hidden=true; return; }
   el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
 }
@@ -2416,13 +2460,14 @@ function renderProfProg(){
 function fitScore(k, me, daysOverride){
   var f=PROFILES[k].fit; if(!f) return -99;
   var days=daysOverride || Object.keys(GYM_DAYS).length || f.days;
-  return (f.goals[me.goal]||0) + (f.level[me.level]||0) + (f.place[me.place||'gym']||0) - Math.abs(f.days-days);
+  var gp=goalPair(me);
+  return ((f.wt||{})[gp.wt]||0) + ((f.gym||{})[gp.gym]||0) + (f.level[me.level]||0) + (f.place[me.place||'gym']||0) - Math.abs(f.days-days);
 }
 function recoProgram(me){
   if(!me) return null;
   /* дома готовых программ нет: единственный путь — собрать под себя */
   if(me.place==='home' && !(PROFILES[profile]||{}).custom) return {home:true};
-  if(!me.goal) return null;
+  if(!hasGoal(me)) return null;
   var best=null, bs=-99;
   Object.keys(PROFILES).forEach(function(k){ var sc=fitScore(k,me); if(sc>bs){ bs=sc; best=k; } });
   if(!best || best===profile) return null;
@@ -2505,7 +2550,7 @@ function renderReco(){
        '<div class="rbtns"><button type="button" class="btn go" data-reco="ai">Собрать под меня</button>'+
        '<button type="button" class="btn" data-reco="skip">Оставить</button></div></div>';
   } else if(RECO.prog){
-    h+='<div class="reco"><h4>Под цель «'+goalName(me.goal).toLowerCase()+'» лучше подходит «'+RECO.prog.name+'»</h4>'+
+    h+='<div class="reco"><h4>Под цель «'+goalText(me)+'» лучше подходит «'+RECO.prog.name+'»</h4>'+
        '<p>'+RECO.prog.why+'</p>'+
        '<div class="rbtns"><button type="button" class="btn go" data-reco="prog">Перейти</button>'+
        '<button type="button" class="btn" data-reco="skip">Оставить мою</button></div></div>';
@@ -3489,7 +3534,7 @@ function initDb(){
     if(sn && sn.exists){
       var b=JSON.parse(JSON.stringify(sn.data()||{}));
       /* профиль общий на все программы: облако главнее пустого локального */
-      if(b.me && typeof b.me==='object' && !(myData()||{}).goal){ gset('me', b.me); }
+      if(b.me && typeof b.me==='object' && !hasGoal(myData()||{})){ gset('me', b.me); }
     }
     return DB.doc('state/subs').get();
   }).then(function(sn){
@@ -4458,7 +4503,7 @@ function guardClose(on){
 }
 
 /* ── обработчики окон ── */
-['me-bw','me-ht','me-age','me-sex','me-goal','me-likes','me-dis'].forEach(function(id){
+['me-bw','me-ht','me-age','me-sex','me-likes','me-dis'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('change', saveMe);
 });
 document.getElementById('profbtn').addEventListener('click', function(){ openProf(); haptic('light'); });
@@ -4683,8 +4728,8 @@ function installAiProg(prog){
                nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
     }) };
   });
-  var me=myData()||{}, fit={goals:{},level:{},place:{},days:keys.length};
-  if(me.goal) fit.goals[me.goal]=3; if(me.level) fit.level[me.level]=3; fit.place[me.place||'gym']=3;
+  var me=myData()||{}, gp=goalPair(me), fit={wt:{},gym:{},level:{},place:{},days:keys.length};
+  if(gp.wt) fit.wt[gp.wt]=3; if(gp.gym) fit.gym[gp.gym]=3; if(me.level) fit.level[me.level]=3; fit.place[me.place||'gym']=3;
   var t=new Date();
   /* Дней в программе может оказаться не столько, сколько стоит в расписании
      (модель иногда отвечает своим числом). Тогда раскладываем дни недели
@@ -4693,7 +4738,7 @@ function installAiProg(prog){
   if(Object.keys(gd).length!==keys.length){
     gd=schedNorm(wizPattern(keys.length).reduce(function(o,d){ o[d]=1; return o; },{}));
   }
-  PROFILES.ai={ name:prog.name||'Моя программа', goal:'Собрана под твой профиль',
+  PROFILES.ai={ name:(gp.wt&&gp.gym) ? progName(gp.gym,gp.wt,keys.length) : (prog.name||'Моя программа'), goal:goalText(me)||'Собрана под твой профиль',
     sub:(prog.note||'').slice(0,160), heavy:keys, lightDays:[], gymDays:gd,
     start:[t.getFullYear(),t.getMonth(),t.getDate()], phases:PROFILES.friend.phases, fit:fit, custom:true };
   return 'ai';
@@ -4717,7 +4762,7 @@ function aiBuild(снова){
   var btn=document.getElementById('profai'); if(!btn || (btn.disabled && !снова)) return;
   clearInterval(aiWait); aiWait=null;
   var me=myData()||{};
-  if(!me.goal){ aiState('Сначала выбери цель — от неё зависит вся схема.', true); return; }
+  if(!hasGoal(me)){ aiState('Сначала выбери цель — вес и зал: от этого зависит вся схема.', true); return; }
   btn.disabled=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
   document.getElementById('aibox').innerHTML='';
   var ctl = ('AbortController' in window) ? new AbortController() : null;
