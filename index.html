@@ -146,6 +146,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pfprog{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;margin-bottom:10px;
   border:1px solid var(--line-soft);border-radius:10px;font-size:12.5px;color:var(--muted)}
 .pfprog b{color:var(--text);font-weight:600}
+.pfprog i{display:block;font-style:normal;margin-top:2px;color:var(--muted)}
 .pfprog button{background:none;border:none;color:var(--accent);font:inherit;font-size:12.5px;padding:0}
 .reco{border:1px solid var(--accent-2);border-radius:12px;padding:12px 13px;margin-bottom:10px;background:var(--accent-ghost)}
 .reco h4{margin:0 0 4px;font-size:13.5px;font-weight:600;color:var(--text)}
@@ -1578,7 +1579,7 @@ DAYS.W2={name:'День 2', s:'Тело Б', when:'', sub:'Задняя цепь
    программу: профиль выбирается один раз при первом запуске и запоминается. */
 var PROFILES = {
   shp: {
-    name:'Набор формы · 5 дней', goal:'Снять жир и построить фигуру',
+    name:'Рекомпозиция · 5 дней', goal:'Жир вниз, мышцы на месте',
     fit:{goals:{fat:3,tone:3,muscle:3,strength:1,health:1,endur:0,mobil:0}, level:{new:0,mid:2,exp:3}, days:5, place:{gym:2,home:0}},
     sub:'Каждая мышца дважды в неделю. Пять дней по 35–40 минут',
     heavy:['D1','D2','D3','D4','D5'], lightDays:[],
@@ -2403,7 +2404,9 @@ document.getElementById('nudge').addEventListener('click', function(){ openProf(
 function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
 function renderProfProg(){
   var el=document.getElementById('pfprog'); if(!el||!PROF) return;
-  el.innerHTML='<span>программа <b>'+PROF.name+'</b></span><button type="button" id="pfswitch">сменить</button>';
+  /* имя программы само по себе путало («Набор формы» читалось как набор
+     массы при цели похудеть) — рядом всегда стоит, на что она нацелена */
+  el.innerHTML='<span>программа <b>'+PROF.name+'</b>'+(PROF.goal?'<i>'+PROF.goal.toLowerCase()+'</i>':'')+'</span><button type="button" id="pfswitch">сменить</button>';
 }
 
 /* ══════════ ПРАВИЛА: ПОДХОДИТ ЛИ ПРОГРАММА ══════════
