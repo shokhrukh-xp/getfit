@@ -41,6 +41,9 @@
   --r:16px;
   --knurl:none;
   --field:rgba(118,118,128,.08);
+  /* Дорожка шкалы: --card-2 в светлой теме — белый на белой карточке, и пустая
+     часть полосы исчезала. Отдельный токен с контрастом в обеих темах. */
+  --track:rgba(60,60,67,.13);
   --scrim:rgba(0,0,0,.28);
   --map-bg:#E4E5EA; --map-line:#FFFFFF; --map-line2:#C7C8CE; --map-det:#9A9BA2;
 }
@@ -67,6 +70,7 @@
   --shadow:0 1px 1px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);
   --shadow-sm:0 1px 2px rgba(0,0,0,.4);
   --field:rgba(118,118,128,.24);
+  --track:rgba(235,235,245,.16);
   --scrim:rgba(0,0,0,.55);
   --map-bg:#2C2C2E; --map-line:#000000; --map-line2:#48484A; --map-det:#8E8E93;
 }
@@ -87,6 +91,7 @@
     --shadow:0 1px 1px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);
     --shadow-sm:0 1px 2px rgba(0,0,0,.4);
     --field:rgba(118,118,128,.24);
+    --track:rgba(235,235,245,.16);
     --scrim:rgba(0,0,0,.55);
   --scrim:rgba(0,0,0,.55);
     --map-bg:#2C2C2E; --map-line:#000000; --map-line2:#48484A; --map-det:#8E8E93;
@@ -516,7 +521,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fbar u{text-decoration:none;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .fbar b{font-family:inherit;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .fbar b em{font-style:normal;color:var(--dim);font-weight:400;font-size:12px}
-.fbar .tr{height:8px;border-radius:99px;background:var(--card-2);position:relative;overflow:hidden}
+.fbar .tr{height:8px;border-radius:99px;background:var(--track);position:relative;overflow:hidden}
 /* Классы состояния — с префиксом. Голое «ok» уже занято кнопкой «подход
    сделан» (44 px, рамка, display:flex), и заливка шкалы наследовала её
    размеры: зелёная полоса выезжала трапецией и выглядела незаполненной.
@@ -524,7 +529,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fbar .tr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:99px;transition:width .25s ease}
 .fbar .tr i.fb-done{background:var(--done)}
 .fbar .tr i.fb-over{background:var(--warn)}
-.fbar .tr s{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--bg-2);opacity:.9}
+.fbar .tr s{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--card-solid);opacity:.95}
 
 /* переключатель дня: вчерашний ужин записывается во вчера */
 .fnav{display:flex;align-items:center;gap:8px;margin:2px 0 0}
@@ -626,7 +631,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fweek .fd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .fweek .fd .fb{width:100%;max-width:34px;border-radius:6px 6px 2px 2px;background:var(--accent);opacity:.85;min-height:2px}
 .fweek .fd .fb.fb-low{background:var(--warn)}
-.fweek .fd .fb.fb-none{background:var(--line)}
+.fweek .fd .fb.fb-none{background:var(--track)}
 .fweek .fd .fb.fb-hi{background:var(--done)}
 .fweek .fd .fb{flex:0 0 auto}
 .fweek .fd u{text-decoration:none;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;color:var(--dim)}
@@ -2748,7 +2753,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '09.09 23:30';
+var BUILD = '09.09 23:45';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
