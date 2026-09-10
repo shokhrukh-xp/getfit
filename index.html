@@ -980,7 +980,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbrow.lbme{background:var(--accent-ghost);box-shadow:0 0 0 8px var(--accent-ghost);border-radius:4px;border-top-color:transparent}
 .lbrow.lbme + .lbrow{border-top-color:transparent}
 .lbrow.lbme .who b,.lbrow.lbme .sc{color:var(--accent)}
-.lbhead{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;padding:8px 0 4px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.lbhead{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;padding:8px 0 16px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
 .lbhead span:last-child{text-align:right;min-width:30px}
 .lbkey{display:flex;flex-wrap:wrap;gap:12px;margin:10px 2px 0;font-size:11px;color:var(--dim)}
 .lbkey i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
@@ -1003,12 +1003,12 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .fclose .fdone{flex:1 1 100%;padding:12px 14px;border-radius:12px;border:1px solid var(--done);background:rgba(var(--done-rgb),.10);font-size:13px;color:var(--text);line-height:1.45}
 .fclose .fdone b{font-size:18px;font-weight:800}
 .fclose .fhint{flex:1 1 100%;font-size:11.5px;color:var(--dim)}
-.segrow{display:flex;gap:6px;margin:14px 0 10px}
-.segrow button{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px}
-.segrow button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
-.plfilt{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 -16px 10px;padding:0 16px 2px;scrollbar-width:none}
-.plfilt::-webkit-scrollbar{display:none}
-.plfilt .mchip{flex:0 0 auto;white-space:nowrap}
+.udhead{display:flex;align-items:baseline;gap:12px;margin:0 0 12px}
+.udhead .udback{background:none;border:none;padding:6px 0;color:var(--accent);font:inherit;font-size:14px;font-weight:600;cursor:pointer;flex:0 0 auto}
+.udhead b{font-size:19px;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.udnav{margin:0 0 4px}
+.udkind{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:18px 0 8px;font-weight:700;text-transform:capitalize}
+.udkind s{text-decoration:none;font-weight:400;font-size:11px;color:var(--dim);text-transform:none;white-space:nowrap}
 .plate{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:8px;cursor:pointer}
 .plate .plph{flex:0 0 92px;width:92px;height:92px;border-radius:10px;background:var(--accent-ghost);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
 .plate .plph img{width:100%;height:100%;object-fit:cover;display:block}
@@ -3029,7 +3029,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 21:40';
+var BUILD = '10.09 22:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5231,7 +5231,7 @@ function goPage(p){
   if(p==='log') renderLog();
   if(p==='food') openFood();
   if(p==='ref') openCatPage();
-  if(p==='circle') openCircle();
+  if(p==='circle') openCircle(); else udayLeave();
   var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   window.scrollTo({top:0,behavior:'auto'});
@@ -5779,7 +5779,7 @@ function circlePull(id){
     .then(function(d){ if(d&&d.ok){ CIRC=d; if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); } renderStreak(); renderCircle(); } return d; })
     .catch(function(){ return null; });
 }
-function openCircle(){ renderCircle(); circlePull().then(function(){ if(CIRSEG==='feed') feedPull(); }); }
+function openCircle(){ udayLeave(); renderCircle(); circlePull(); }
 function renderStreak(){
   var b=document.getElementById('stk'); if(!b) return;
   var n=CIRC && CIRC.me ? (CIRC.me.streak||0) : 0;
@@ -5788,6 +5788,8 @@ function renderStreak(){
 document.getElementById('stk').addEventListener('click', function(){ goPage('circle'); haptic('light'); });
 function renderCircle(){
   var box=document.getElementById('cirbody'); if(!box) return;
+  var h2=box.parentNode.querySelector('h2'); if(h2) h2.hidden=!!UDAY;
+  if(UDAY){ box.innerHTML=udayHtml(); return; }
   if(!CIRC){ box.innerHTML='<p class="empt">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; return; }
   var me=CIRC.me||{}, list=CIRC.circles||[], cur=null;
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
@@ -5800,22 +5802,19 @@ function renderCircle(){
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
-  h+='<div class="segrow"><button type="button" data-seg="food" aria-pressed="'+(CIRSEG!=='feed')+'">Питание</button><button type="button" data-seg="feed" aria-pressed="'+(CIRSEG==='feed')+'">Лента</button></div>';
-  if(CIRSEG==='feed'){ h+='<div id="feedbox">'+feedHtml()+'</div>'; box.innerHTML=h; if(!FEED || FEED.circle!==CIRC.circle) feedPull(); return; }
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b><button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button></div>';
   } else {
     h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+b.map(function(r,i){
       var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
-      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg)+' · ':'')+'серия '+(r.streak||0)+'</i></span>'+
-             '<span class="lbdots">'+dots+'</span><span class="sc'+(has?(t.closed?'':' live'):' dim')+'">'+(has?fmtR(t.r):'—')+'</span>'+
-             (has&&LBOPEN===r.uid?'<span class="lbwhy">'+esc(t.closed?'итог · ':'пока · ')+esc(whyText(t.why))+'</span>':'')+'</div>';
+      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg)+' · ':'')+'серия '+(r.streak||0)+'</i></span>'+
+             '<span class="lbdots">'+dots+'</span><span class="sc'+(has?(t.closed?'':' live'):' dim')+'">'+(has?fmtR(t.r):'—')+'</span></div>';
     }).join('')+'</div>'+
     '<p class="lbkey"><i><s class="lbd-ok"></s>от 7</i><i><s class="lbd-low"></s>ниже 7</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>не закрыт</i></p>';
   }
-  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар. Нажми на строку — увидишь, за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
-  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (коридор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
+  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
+  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
     'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
     'Очки недели копятся: каждый день приносит свою оценку, максимум 70. От 50 за неделю — уровень выше, меньше 25 — ниже.<br>'+
@@ -5826,56 +5825,85 @@ function renderCircle(){
     (L.grow?'<div class="tile"><u>рост</u><b>'+esc(L.grow.name)+'</b><i>+'+fmtR(L.grow.v)+' к своей прошлой неделе</i></div>':'')+'</div>';
   box.innerHTML=h;
 }
-/* ── лента тарелок круга ── */
-var FEED=null, CIRSEG=gget('cirseg','food')||'food', FEEDF={kind:'',norm:false}, FEEDOPEN=null, FEEDBUSY=false, LBOPEN=null;
-function feedPull(){
-  FEEDBUSY=true;
-  return fGet('/feed?uid='+encodeURIComponent(syncUid())+(CIRCID?'&id='+encodeURIComponent(CIRCID):''))
-    .then(function(d){ FEEDBUSY=false; if(d&&d.ok){ FEED=d; } feedRender(); return d; })
-    .catch(function(){ FEEDBUSY=false; feedRender(); return null; });
+/* ── страница человека: его еда за день с фото, по приёмам (вместо ленты) ── */
+var UDAY=null, UDOPEN=null;
+function tgBack(on){
+  try{ var bb=TG&&TG.BackButton; if(!bb) return; bb.offClick(closeUserDay); if(on){ bb.onClick(closeUserDay); bb.show(); } else bb.hide(); }catch(e){}
 }
-function feedRender(){ var b=document.getElementById('feedbox'); if(b) b.innerHTML=feedHtml(); }
+function openUserDay(who, name, date){
+  UDAY={who:who, name:name||'', date:date||TODAY, d:null, busy:true, err:''}; UDOPEN=null;
+  renderCircle(); window.scrollTo({top:0,behavior:'auto'}); tgBack(true); udayPull();
+}
+function closeUserDay(){ if(!UDAY) return; UDAY=null; tgBack(false); renderCircle(); }
+function udayLeave(){ if(UDAY){ UDAY=null; tgBack(false); } }
+function udayShift(n){
+  var u=UDAY; if(!u) return;
+  var d=ymd(new Date(new Date(u.date+'T12:00:00').getTime()+n*864e5)); if(d>TODAY) return;
+  u.date=d; u.d=null; u.busy=true; u.err=''; UDOPEN=null; renderCircle(); udayPull();
+}
+function udayPull(){
+  var u=UDAY; if(!u) return Promise.resolve(null);
+  var date=u.date;
+  return fGet('/feed?uid='+encodeURIComponent(syncUid())+(CIRCID?'&id='+encodeURIComponent(CIRCID):'')+'&who='+encodeURIComponent(u.who)+'&date='+date)
+    .then(function(d){ if(UDAY!==u || u.date!==date) return d; u.busy=false; if(d&&d.ok){ u.d=d; if(d.name) u.name=d.name; } else u.err=(d&&d.error)||'Сервер не отвечает.'; renderCircle(); return d; })
+    .catch(function(){ if(UDAY!==u || u.date!==date) return null; u.busy=false; u.err='Сервер не отвечает.'; renderCircle(); return null; });
+}
+function udDayName(d){
+  var вчера=ymd(new Date(new Date(TODAY+'T12:00:00').getTime()-864e5)), дата=new Date(d+'T12:00:00');
+  var имя = d===TODAY ? 'Сегодня' : (d===вчера ? 'Вчера' : (дата.getDate()+' '+MONTHS[дата.getMonth()]));
+  var низ = d===TODAY || d===вчера ? (дата.getDate()+' '+MONTHS[дата.getMonth()]+' · '+WDFULL[дата.getDay()]) : WDFULL[дата.getDay()];
+  return {top:имя, sub:низ};
+}
+function udayHtml(){
+  var u=UDAY, d=u.d, nm=udDayName(u.date);
+  var h='<div class="udhead"><button type="button" class="udback" data-udback="1">‹ Круг</button><b>'+esc(u.name||'…')+'</b></div>'+
+    '<div class="fnav udnav"><button type="button" data-udnav="-1" aria-label="Предыдущий день">‹</button>'+
+    '<span class="fd">'+nm.top+'<small>'+nm.sub+'</small></span>'+
+    '<button type="button" data-udnav="1" aria-label="Следующий день"'+(u.date>=TODAY?' disabled':'')+'>›</button></div>';
+  if(!d) return h+'<p class="plempty">'+(u.busy?'Загружаю…':esc(u.err||'Сервер не отвечает.'))+'</p>';
+  var day=d.day, fin=!!(day && (day.closed || u.date<TODAY));
+  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · серия '+d.streak:'')+
+    '<br><small>'+esc(whyText(day.why))+(!fin && day.counts===false ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
+  var meals=d.meals||[];
+  if(!meals.length) return h+'<p class="plempty">'+(u.date===TODAY?'Сегодня ещё ничего не записано.':'В этот день ничего не записано.')+'</p>';
+  var order=['завтрак','обед','ужин','перекус'], groups={};
+  meals.forEach(function(m){ var k=order.indexOf(m.kind)>=0?m.kind:'другое'; (groups[k]=groups[k]||[]).push(m); });
+  order.concat(['другое']).forEach(function(k){
+    var g=groups[k]; if(!g) return;
+    var kc=g.reduce(function(s,m){ return s+(+m.kcal||0); },0), pr=g.reduce(function(s,m){ return s+(+m.prot||0); },0);
+    h+='<h3 class="lh udkind"><span>'+esc(k==='перекус'&&g.length>1?'перекусы':k)+'</span><s>'+Math.round(kc)+' ккал · белок '+Math.round(pr)+' г</s></h3>'+g.map(plateHtml).join('');
+  });
+  return h;
+}
 function starsHtml(st){ if(!st) return ''; return '<em title="'+esc(st.why)+'">'+'★'.repeat(st.n)+'☆'.repeat(5-st.n)+'</em>'; }
-function feedDate(d){ return d===TODAY ? 'сегодня' : d===ymd(new Date(Date.now()-864e5)) ? 'вчера' : d.slice(8,10)+'.'+d.slice(5,7); }
-function feedHtml(){
-  var h='<div class="plfilt">'+
-    [['','все'],['завтрак','завтрак'],['обед','обед'],['ужин','ужин'],['перекус','перекус']].map(function(k){
-      return '<button type="button" class="mchip'+(FEEDF.kind===k[0]?' on':'')+'" data-fk="'+k[0]+'">'+k[1]+'</button>'; }).join('')+
-    '<button type="button" class="mchip'+(FEEDF.norm?' on':'')+'" data-fnorm="1">только в норме</button></div>';
-  if(!FEED){ return h+'<p class="plempty">'+(FEEDBUSY?'Загружаю…':(SYNCOK===false?'Сервер не отвечает.':'Загружаю…'))+'</p>'; }
-  var list=(FEED.feed||[]).filter(function(m){ return (!FEEDF.kind || m.kind===FEEDF.kind) && (!FEEDF.norm || m.norm); });
-  if(!list.length) return h+'<p class="plempty">'+((FEED.feed||[]).length?'По этому фильтру тарелок нет.':'Пока пусто: тарелки появятся, как только кто-то в круге запишет еду с фото или текстом.')+'</p>';
-  return h+list.map(function(m){
-    var open = FEEDOPEN===m.ref;
-    var who = '<b class="plwho">'+esc(m.me?'Ты':m.name)+' · '+esc(m.kind||'приём')+' · '+esc(feedDate(m.date))+(m.t?' '+esc(m.t):'')+(m.streak?' · <em>серия '+m.streak+'</em>':'')+'</b>';
-    var nums = '<i class="plnum">'+m.kcal+' ккал · белок '+m.prot+' г'+(m.stars?' · '+starsHtml(m.stars):'')+'</i>';
-    var items = (m.items||[]).map(function(x){ return esc(x.name)+(x.g?' '+Math.round(x.g)+' г':''); });
-    var ph = m.img ? '<img loading="lazy" src="'+esc(m.img)+'" alt="">' : 'без фото';
-    if(!open) return '<div class="plate" data-pl="'+esc(m.ref)+'"><div class="plph">'+ph+'</div><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+
-      (items.length?'<u>'+items.slice(0,4).join(' · ')+(items.length>4?' · …':'')+'</u>':'')+
-      (m.likes?'<span class="pllk">👍 '+m.likes+'</span>':'')+'</div></div>';
-    return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
-      (m.img?'<div class="plph">'+ph+'</div>':'')+
-      (items.length?'<u>'+items.join('<br>')+'</u>':'<u>состав не разобран</u>')+
-      '<u>жир '+m.fat+' г · углеводы '+m.carb+' г · клетчатка '+m.fib+' г · сахар '+m.sug+' г</u>'+
-      (m.note?'<p class="plnote"><b>Как готовить:</b> '+esc(m.note)+'</p>':'')+
-      '<div class="plact">'+
-        (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'">👍'+(m.likes?' '+m.likes:'')+'</button>')+
-        '<button type="button" class="btn" data-recipe="'+esc(m.ref)+'">Отправить себе в чат</button>'+
-        (m.stars?'<span class="plwhy">'+starsHtml(m.stars)+' — '+esc(m.stars.why)+'</span>':'')+
-        (m.likers&&m.likers.length?'<span class="plwhy">👍 '+esc(m.likers.join(', '))+(m.liked?' и ты':'')+'</span>':(m.me&&m.likes?'<span class="plwhy">👍 '+m.likes+'</span>':''))+
-      '</div></div>';
-  }).join('');
+function plateHtml(m){
+  var open = UDOPEN===m.ref;
+  var who = '<b class="plwho">'+(m.t?esc(m.t):esc(m.kind||'приём'))+(m.likes?' · 👍 '+m.likes:'')+'</b>';
+  var nums = '<i class="plnum">'+m.kcal+' ккал · белок '+m.prot+' г'+(m.stars?' · '+starsHtml(m.stars):'')+'</i>';
+  var items = (m.items||[]).map(function(x){ return esc(x.name)+(x.g?' '+Math.round(x.g)+' г':''); });
+  var ph = m.img ? '<img loading="lazy" src="'+esc(m.img)+'" alt="">' : 'без фото';
+  if(!open) return '<div class="plate" data-pl="'+esc(m.ref)+'"><div class="plph">'+ph+'</div><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+
+    (items.length?'<u>'+items.slice(0,4).join(' · ')+(items.length>4?' · …':'')+'</u>':'')+'</div></div>';
+  return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
+    (m.img?'<div class="plph">'+ph+'</div>':'')+
+    (items.length?'<u>'+items.join('<br>')+'</u>':'<u>состав не разобран</u>')+
+    '<u>жир '+(m.fat==null?'—':m.fat)+' г · углеводы '+(m.carb==null?'—':m.carb)+' г · клетчатка '+(m.fib==null?'—':m.fib)+' г · сахар '+(m.sug==null?'—':m.sug)+' г</u>'+
+    (m.note?'<p class="plnote"><b>Как готовить:</b> '+esc(m.note)+'</p>':'')+
+    '<div class="plact">'+
+      (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'">👍'+(m.likes?' '+m.likes:'')+'</button>')+
+      '<button type="button" class="btn" data-recipe="'+esc(m.ref)+'">Отправить себе в чат</button>'+
+      (m.stars?'<span class="plwhy">'+starsHtml(m.stars)+' — '+esc(m.stars.why)+'</span>':'')+
+      (m.likers&&m.likers.length?'<span class="plwhy">👍 '+esc(m.likers.join(', '))+(m.liked?' и ты':'')+'</span>':(m.me&&m.likes?'<span class="plwhy">👍 '+m.likes+'</span>':''))+
+    '</div></div>';
 }
 document.getElementById('cirbody').addEventListener('click', function(e){
-  var c=e.target.closest('[data-cir]'); if(c){ FEED=null; circlePull(c.dataset.cir); haptic('light'); return; }
-  var sg=e.target.closest('[data-seg]'); if(sg){ CIRSEG=sg.dataset.seg; gset('cirseg',CIRSEG); renderCircle(); haptic('light'); return; }
-  var fk=e.target.closest('[data-fk]'); if(fk){ FEEDF.kind=fk.dataset.fk; feedRender(); haptic('light'); return; }
-  if(e.target.closest('[data-fnorm]')){ FEEDF.norm=!FEEDF.norm; feedRender(); haptic('light'); return; }
+  var c=e.target.closest('[data-cir]'); if(c){ circlePull(c.dataset.cir); haptic('light'); return; }
+  if(e.target.closest('[data-udback]')){ closeUserDay(); haptic('light'); return; }
+  var nv=e.target.closest('[data-udnav]'); if(nv){ if(nv.disabled) return; udayShift(+nv.dataset.udnav); haptic('light'); return; }
   var lk=e.target.closest('[data-like]'); if(lk){
-    var ref=lk.dataset.like, m=(FEED&&FEED.feed||[]).filter(function(x){ return x.ref===ref; })[0]; if(!m) return;
-    var on=!m.liked; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); feedRender(); haptic('light');
-    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){ if(d&&d.ok){ m.likes=d.likes; m.liked=d.liked; feedRender(); } }).catch(function(){});
+    var ref=lk.dataset.like, m=(UDAY&&UDAY.d&&UDAY.d.meals||[]).filter(function(x){ return x.ref===ref; })[0]; if(!m) return;
+    var on=!m.liked; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); renderCircle(); haptic('light');
+    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){ if(d&&d.ok){ m.likes=d.likes; m.liked=d.liked; renderCircle(); } }).catch(function(){});
     return;
   }
   var rc=e.target.closest('[data-recipe]'); if(rc){
@@ -5886,8 +5914,8 @@ document.getElementById('cirbody').addEventListener('click', function(e){
     }).catch(function(){ rc.disabled=false; rc.textContent='Отправить себе в чат'; haptic('err'); });
     return;
   }
-  var pl=e.target.closest('[data-pl]'); if(pl){ FEEDOPEN = FEEDOPEN===pl.dataset.pl ? null : pl.dataset.pl; feedRender(); haptic('light'); return; }
-  var lw=e.target.closest('[data-lbwho]'); if(lw){ LBOPEN = LBOPEN===lw.dataset.lbwho ? null : lw.dataset.lbwho; renderCircle(); haptic('light'); return; }
+  var pl=e.target.closest('[data-pl]'); if(pl){ UDOPEN = UDOPEN===pl.dataset.pl ? null : pl.dataset.pl; renderCircle(); haptic('light'); return; }
+  var lw=e.target.closest('[data-lbwho]'); if(lw){ openUserDay(lw.dataset.lbwho, lw.dataset.lbname||''); haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
 });
