@@ -1022,6 +1022,23 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .ebtn:active,.ebtn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .ebtn.on{color:var(--accent);border-color:var(--accent-2)}
 .exinfo{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
+/* «мешает»: дискомфорт в суставе — сигнал тренеру, который числа не видят */
+.hurt{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:.5px solid var(--line-soft)}
+.hurt .hurtbtn{flex:0 0 auto;border:.5px solid var(--line);background:var(--card-2);border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--muted)}
+.hurt .hurtbtn[aria-pressed="true"]{border-color:var(--warn);color:var(--warn)}
+.hurt .hurthint{flex:1 1 auto;font-size:11.5px;color:var(--dim);line-height:1.35}
+/* итог блока в журнале */
+.blk{padding:4px 0}
+.blk .blkh{font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.45}
+.blkrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.blkrow:first-of-type{border-top:0}
+.blkrow .bn{flex:1 1 auto;min-width:0;line-height:1.3}
+.blkrow .bn i{display:block;font-style:normal;color:var(--dim);font-size:11.5px;line-height:1.35;margin-top:2px}
+.blkrow .bd{flex:0 0 auto;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.blkrow .bv{flex:0 0 auto;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.blkrow .bv.grow{color:var(--done);border-color:rgba(var(--done-rgb),.5)}
+.blkrow .bv.stall,.blkrow .bv.fall,.blkrow .bv.hurt{color:var(--warn);border-color:var(--warn)}
+.blk .blkask{margin-top:10px;width:100%}
 .sschoice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .sschoice .ebtn{display:flex;align-items:center;gap:8px;text-align:left;padding:9px 10px;
   border-color:var(--accent-2);color:var(--text)}
@@ -1255,6 +1272,8 @@ body.onb #picker .modalbox::before{display:none}
         <div id="logmusbox"><div id="logmus"></div></div>
         <h3 class="lh">Прогресс</h3>
         <div class="group"><div id="logprog"></div></div>
+        <h3 class="lh" id="blkh" hidden>Итог блока</h3>
+        <div class="group" id="blkg" hidden><div id="logblk" class="blk"></div></div>
         <h3 class="lh">Замеры</h3>
         <div class="group"><div id="logmeas"></div></div>
         <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
@@ -2874,7 +2893,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 11:40';
+var BUILD = '10.09 13:50';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -3186,8 +3205,24 @@ function низКарточки(e,di,метка){
       (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
       '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
       '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+hurtHtml(e)+
     '</div>';
+}
+/* «Мешает» — дискомфорт в суставе, а не в мышце. Числа прогрессии этого не
+   видят, а для замены это важнее чисел. Копится по имени упражнения, уходит
+   тренеру в чат и в разбор, красит строку в итоге блока. */
+function hurtAll(){ var h=gget('hurt',null); return (h && typeof h==='object') ? h : {}; }
+function hurtOn(n){ var h=hurtAll()[n]; return !!(h && h.last); }
+function hurtHtml(e){
+  var on=hurtOn(e.n);
+  return '<div class="hurt"><button type="button" class="hurtbtn" data-hurt="'+esc(e.n)+'" aria-pressed="'+(on?'true':'false')+'">'+(on?'Мешает · отмечено':'Мешает суставу')+'</button>'+
+         '<span class="hurthint">'+(on?'тренер учтёт при замене и в разборе; нажми ещё раз, если прошло':'если неудобно в суставе, а не тяжело мышце')+'</span></div>';
+}
+function hurtToggle(n){
+  var h=hurtAll();
+  if(h[n]) delete h[n]; else h[n]={last:TODAY, n:((h[n]&&h[n].n)||0)+1};
+  gset('hurt', h); try{ syncPush('state/hurt', h); }catch(e){}
+  renderList(); haptic(h[n]?'medium':'light');
 }
 /* Шапка карточки: слева движущаяся миниатюра (два кадра), справа название и
    схема одной строкой. Раньше картинка пряталась в «Описание», и человек её
@@ -3256,7 +3291,7 @@ function ssFoot(a,dia,b,dib){
       (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
       '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
       '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+hurtHtml(e)+
     '</div>';
   }
   var заменено = a.sub || b.sub;
@@ -3727,7 +3762,7 @@ function dirtySet(k, on){ if(on) DIRTY[k]=1; else delete DIRTY[k]; gset('sync_di
 /* Порядок важен: сначала программа (без неё профиль «ai» некуда применять),
    потом указатель на программу, и только потом всё, что читается с её
    префиксом. Ключи, которых тут нет, забирают свои владельцы (goal, reco). */
-var PULLKEYS = ['aiprog','prof','me','sched','subs','last'];
+var PULLKEYS = ['aiprog','prof','me','sched','subs','last','hurt'];
 function adoptState(key, b){
   if(!b || typeof b!=='object') return false;
   /* человек стоит в зале с введёнными подходами — программу под ним не меняем:
@@ -3774,6 +3809,10 @@ function adoptState(key, b){
       if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
       renderList(); paintNote('');
       return true;
+    }
+    if(key==='hurt'){
+      if(!b || typeof b!=='object') return false;
+      gset('hurt', b); renderList(); return true;
     }
     if(key==='last'){
       var было=false;
@@ -4621,8 +4660,41 @@ function renderHistory(){
   box.innerHTML=h;
 }
 
+/* ══════════ ИТОГ БЛОКА ══════════
+   «Как понять, что росло, а что нет?» Сервер считает по расчётному максимуму
+   лучшего подхода (первые два занятия против последних двух) и отдаёт пять
+   вердиктов; здесь — таблица и кнопка «спросить тренера, что оставить». */
+var BLK=null;
+function renderBlock(){
+  var h3=document.getElementById('blkh'), g=document.getElementById('blkg'), box=document.getElementById('logblk'); if(!box) return;
+  var b=BLK; var rows=(b&&b.rows||[]).filter(function(r){ return r.sessions>0 || r.hurt; });
+  if(!b || !rows.length || profile!=='ai'){ h3.hidden=true; g.hidden=true; return; }
+  h3.hidden=false; g.hidden=false;
+  var f=function(x){ return x ? ((x.w?x.w+'×':'')+x.r) : '—'; };
+  var c=b.counts||{};
+  var head='<p class="blkh">'+(b.weeks||0)+' нед с '+ruDate(b.since)+' · '+(c.grow||0)+' растёт · '+(c.hold||0)+' держится · '+((c.stall||0)+(c.fall||0))+' стоит или падает · '+(c.hurt||0)+' мешает</p>';
+  var list=rows.map(function(r){
+    return '<div class="blkrow"><span class="bn">'+esc(r.n)+(r.note?'<br><i>'+esc(r.note)+'</i>':'')+'</span>'+
+      '<span class="bd">'+(r.first?f(r.first)+' → '+f(r.last):'')+(r.pct!=null?' '+(r.pct>0?'+':'')+r.pct+'%':'')+'</span>'+
+      '<span class="bv '+r.v+'">'+esc(r.vru)+'</span></div>';
+  }).join('');
+  var ask=(c.stall||c.fall||c.hurt) ? '<button type="button" class="btn blkask" id="blkask">Спросить тренера, что оставить</button>' : '';
+  box.innerHTML=head+list+ask;
+}
+function loadBlock(){
+  return tgFetch(SYNCURL+'/block?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.ok?r.json():null; })
+    .then(function(d){ BLK=(d&&d.ok&&d.block)||null; renderBlock(); }).catch(function(){ BLK=null; renderBlock(); });
+}
+document.getElementById('logblk').addEventListener('click', function(e){
+  if(!e.target.closest('#blkask') || !BLK) return;
+  var by={}; BLK.rows.forEach(function(r){ (by[r.vru]=by[r.vru]||[]).push(r.n); });
+  var parts=Object.keys(by).map(function(k){ return k+': '+by[k].join(', '); });
+  var msg='Итог блока ('+BLK.weeks+' нед): '+parts.join('; ')+'. Что оставить, а что заменить? Предлагай по одному, я буду нажимать кнопку.';
+  openCoach(); coachSend(msg); haptic('medium');
+});
 function renderLog(){
   var box=document.getElementById('logprog'); if(!box) return;
+  loadBlock();
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
@@ -5223,6 +5295,7 @@ document.getElementById('list').addEventListener('click', function(e){
     haptic('light');
     return;
   }
+  var hb2=e.target.closest('button[data-hurt]'); if(hb2){ hurtToggle(hb2.dataset.hurt); return; }
   var b=e.target.closest('button[data-swap]'); if(!b) return;
   var di=+b.dataset.swap, base=(DAYS[day].ex||[])[di]||{};
   var вкат=(CAT&&base.cat)?(CAT.ex||[]).filter(function(x){ return x.i===base.cat; })[0]:null;
