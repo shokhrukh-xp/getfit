@@ -2913,7 +2913,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 14:50';
+var BUILD = '10.09 15:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6432,7 +6432,7 @@ function applyRebuild(rb){
 }
 function recoPull(){
   var сразу = /[?&]r=1(&|$)/.test(location.search||'');
-  return tgFetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
+  return tgFetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid())+'&b='+encodeURIComponent(BUILD))
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); }
