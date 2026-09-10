@@ -546,6 +546,30 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .mlab input[type="text"]::placeholder{color:var(--dim);opacity:1}
 .mlab textarea{display:block;width:100%;margin-top:6px;padding:11px 12px;border-radius:11px;
   border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:14px;resize:vertical}
+/* экран «по приглашению»: поверх всего, пока сервер не пустил */
+#gate{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:28px 24px;background:var(--bg)}
+#gate.show{display:flex}
+.gatebox{width:100%;max-width:340px;text-align:center}
+.gatebox .glogo{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.gatebox .glogo b{color:var(--accent)}
+.gatebox h2{margin:0 0 8px;font-size:19px;font-weight:700}
+.gatebox p{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
+.gatebox input{display:block;width:100%;padding:13px 12px;border-radius:12px;border:.5px solid var(--line);background:var(--card-solid);
+  color:var(--text);font:inherit;font-size:19px;text-align:center;letter-spacing:.1em;margin-bottom:10px}
+.gatebox .gerr{min-height:18px;color:var(--warn);font-size:12.5px;margin:10px 0 0}
+/* приглашение в профиле */
+.invbox{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
+.invbox .invl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.invbox .invcode{display:flex;align-items:center;gap:10px}
+.invbox .invcode b{flex:1 1 auto;font-size:20px;letter-spacing:.12em;font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.invbox .invcode input{flex:1 1 auto;min-width:0;padding:9px 10px;border-radius:10px;border:.5px solid var(--line);background:var(--card-solid);
+  color:var(--text);font:inherit;font-size:16px;letter-spacing:.08em}
+.invbox .btn.small{padding:9px 12px;font-size:13px;flex:0 0 auto}
+.invbox .invnote{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+.mem{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.mem .memn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem .memn i{font-style:normal;color:var(--dim)}
+.mem .memx{flex:0 0 30px;height:30px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--dim);font-size:14px}
 .mnums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
 .mnums input[readonly]{background:var(--track);color:var(--muted);border-color:transparent}
 .mlist{margin-top:14px}
@@ -1283,6 +1307,19 @@ body.onb #picker .modalbox::before{display:none}
   </div>
 </div>
 
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gatetitle">
+  <div class="gatebox">
+    <div class="glogo">GET<b>FIT</b></div>
+    <h2 id="gatetitle">По приглашению</h2>
+    <p id="gatetext">Введи код, который тебе дали.</p>
+    <div id="gatecode">
+      <input id="gcode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="код" maxlength="24">
+      <button class="btn prim wide" id="gjoin">Войти</button>
+    </div>
+    <a class="btn wide" id="gtg" href="https://t.me/GetFit_MyBot" hidden>Открыть в Telegram</a>
+    <p class="gerr" id="gerr"></p>
+  </div>
+</div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <p class="wzstep" id="wzstep" hidden></p>
@@ -1391,6 +1428,13 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
     <p class="seghint">регулярные занятия приложение само добавит к норме еды в эти дни — останется нажать «Было». Разовое пиши тренеру в чат</p>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
+    <div class="invbox" id="invbox" hidden>
+      <div class="invl">приглашение</div>
+      <div class="invcode" id="invview"><b id="invcodev">…</b><button type="button" class="btn small" id="invshare">Поделиться</button></div>
+      <div class="invcode" id="invedit" hidden><input id="invcodei" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код"><button type="button" class="btn small prim" id="invsave">Сохранить</button></div>
+      <p class="invnote" id="invnote">Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам.</p>
+      <div id="memlist"></div>
+    </div>
     <p class="mtext bline" id="buildline"></p>
     <div class="pfprog" id="pfprog"></div>
     <div id="recobox"></div>
@@ -2304,7 +2348,7 @@ function wzSend(){
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
   var tm=setTimeout(function(){ if(wzCtl) wzCtl.abort(); }, 150000);
-  fetch(SYNCURL+'/onboard', { method:'POST', headers:{'Content-Type':'application/json'},
+  tgFetch(SYNCURL+'/onboard', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body), signal: wzCtl?wzCtl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){
       if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
@@ -2458,7 +2502,7 @@ function takeGoal(gobj, progress){
   renderGoalCard(); renderNudge(); renderProfProg();
 }
 function goalPull(){
-  return fetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()))
+  return tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()))
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.ok) return;
@@ -2572,7 +2616,7 @@ function saveMe(){
   var pe=document.getElementById('pf-eq'); if(pe) pe.hidden=(me.place||'gym')!=='home';
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
 }
-function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
    нет ни стартовых весов, ни норм по еде */
 function renderNudge(){
@@ -2766,7 +2810,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 09:30';
+var BUILD = '10.09 10:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -3457,8 +3501,107 @@ function syncUid(){
     var v='a'+Math.random().toString(36).slice(2,10); mSet('anon_uid',v); return v; })());
   return b + (profile==='wife' ? '_w' : '');
 }
+/* ══════════ ДОСТУП ══════════
+   Каждый запрос к серверу несёт подписанные данные Telegram (initData): сервер
+   проверяет подпись токеном бота и берёт uid из неё, а не из тела. Если
+   сервер не пустил — показываем экран: код приглашения, «открой через
+   Telegram» или «переоткрой». Всё остальное приложение об этом не знает. */
+var GATE = { shown:false };
+function tgFetch(url, opts){
+  opts = opts || {};
+  var h = Object.assign({}, opts.headers || {});
+  var init = (TG && TG.initData) ? TG.initData : '';
+  if (init) h['x-tg-init'] = init;
+  opts.headers = h;
+  return fetch(url, opts).then(function(r){
+    if ((r.status === 401 || r.status === 403) && !GATE.shown) {
+      r.clone().json().then(function(d){ if (d && (d.code === 'invite' || d.code === 'auth' || d.code === 'stale')) gateShow(d.code, d.error); }).catch(function(){});
+    }
+    return r;
+  });
+}
+function gateShow(code, msg){
+  var g = document.getElementById('gate'); if (!g) return;
+  GATE.shown = true; GATE.code = code;
+  var inTg = !!(TG && TG.initData);
+  document.getElementById('gatecode').hidden = code !== 'invite';
+  document.getElementById('gtg').hidden = !(code === 'auth' && !inTg);
+  document.getElementById('gatetitle').textContent = code === 'invite' ? 'По приглашению' : code === 'stale' ? 'Переоткрой приложение' : 'Только через Telegram';
+  document.getElementById('gatetext').textContent = code === 'invite' ? 'Введи код, который тебе дали.'
+    : code === 'stale' ? 'Сессия Telegram устарела — закрой приложение и открой снова.'
+    : (inTg ? (msg || 'Не удалось подтвердить аккаунт. Закрой приложение и открой снова.') : 'Приложение работает внутри Telegram: открой бота и нажми кнопку внизу.');
+  document.getElementById('gerr').textContent = '';
+  g.classList.add('show');
+  if (code === 'invite') setTimeout(function(){ var i = document.getElementById('gcode'); if (i) i.focus(); }, 150);
+}
+function gateJoin(){
+  var inp = document.getElementById('gcode'), btn = document.getElementById('gjoin'), err = document.getElementById('gerr');
+  var code = (inp.value || '').trim();
+  if (code.length < 4) { err.textContent = 'Код короче четырёх знаков.'; return; }
+  btn.disabled = true; err.textContent = '';
+  tgFetch(SYNCURL + '/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), code: code }) })
+    .then(function(r){ return r.json().then(function(d){ return { ok: r.ok && d && d.ok, d: d }; }); })
+    .then(function(x){
+      if (x.ok) { haptic('ok'); location.reload(); return; }
+      haptic('err'); err.textContent = (x.d && x.d.code === 'invite') ? 'Такого кода нет. Проверь, не перепутаны ли буквы.' : ((x.d && x.d.error) || 'Не получилось — попробуй ещё раз.');
+    })
+    .catch(function(){ err.textContent = 'Нет связи с сервером.'; })
+    .then(function(){ btn.disabled = false; });
+}
+document.getElementById('gjoin').addEventListener('click', gateJoin);
+document.getElementById('gcode').addEventListener('keydown', function(e){ if (e.key === 'Enter') gateJoin(); });
+/* приглашение в профиле: код видит любой участник, меняет — владелец */
+var INV = null;
+function renderInvite(){
+  var box = document.getElementById('invbox'); if (!box) return;
+  tgFetch(SYNCURL + '/invite?uid=' + encodeURIComponent(syncUid())).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if (!d || !d.ok) { box.hidden = true; return; }
+    INV = d; box.hidden = false;
+    document.getElementById('invcodev').textContent = d.code || '— код не задан —';
+    document.getElementById('invshare').hidden = !d.code;
+    document.getElementById('invedit').hidden = !d.owner;
+    document.getElementById('invnote').textContent = d.owner
+      ? 'Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам. Сменишь код — те, кто уже внутри, останутся.'
+      : 'Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам.';
+    if (d.owner) renderMembers(); else document.getElementById('memlist').innerHTML = '';
+  }).catch(function(){ box.hidden = true; });
+}
+function renderMembers(){
+  var ml = document.getElementById('memlist');
+  tgFetch(SYNCURL + '/members?uid=' + encodeURIComponent(syncUid())).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if (!d || !d.ok) { ml.innerHTML = ''; return; }
+    var a = d.members || [];
+    ml.innerHTML = '<div class="invl" style="margin-top:12px">кто внутри · ' + (a.length + 1) + '</div>' +
+      '<div class="mem"><span class="memn">ты <i>· владелец</i></span></div>' +
+      a.map(function(m){
+        var when = m.created ? new Date(m.created).toLocaleDateString('ru-RU', { day:'numeric', month:'short' }) : '';
+        return '<div class="mem"><span class="memn">' + esc(m.name || m.uname || m.uid) + (m.uname ? ' <i>@' + esc(m.uname) + '</i>' : '') + (when ? ' <i>· с ' + when + '</i>' : '') + '</span>' +
+               '<button type="button" class="memx" data-mdel="' + esc(m.uid) + '" aria-label="Убрать">×</button></div>';
+      }).join('');
+  }).catch(function(){ ml.innerHTML = ''; });
+}
+document.getElementById('invshare').addEventListener('click', function(){
+  if (!INV || !INV.code) return;
+  var text = 'Приглашаю в GetFit — тренер в Telegram. Код: ' + INV.code;
+  var u = 'https://t.me/share/url?url=' + encodeURIComponent(INV.link || 'https://t.me/GetFit_MyBot') + '&text=' + encodeURIComponent(text);
+  if (TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u, '_blank');
+  haptic('light');
+});
+document.getElementById('invsave').addEventListener('click', function(){
+  var inp = document.getElementById('invcodei'), code = (inp.value || '').trim();
+  if (code.length < 4) { inp.focus(); return; }
+  tgFetch(SYNCURL + '/invite/code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), code: code }) })
+    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.ok) { inp.value = ''; haptic('ok'); renderInvite(); } else haptic('err'); })
+    .catch(function(){ haptic('err'); });
+});
+document.getElementById('memlist').addEventListener('click', function(e){
+  var b = e.target.closest('[data-mdel]'); if (!b) return;
+  tgFetch(SYNCURL + '/members/del', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), who: b.dataset.mdel }) })
+    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.ok) { haptic('light'); renderMembers(); } })
+    .catch(function(){});
+});
 function syncPost(path, body){
-  return fetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
+  return tgFetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)}).then(function(r){
       SYNCOK = r.ok; paintSync();
       return r.json().then(function(d){ return r.ok ? (d||{ok:true}) : null; }).catch(function(){ return r.ok?{ok:true}:null; });
@@ -3593,7 +3736,7 @@ function cloudPull(force){
   if(!force && Date.now()-lastPull < 20000) return Promise.resolve();
   pulling=true; lastPull=Date.now();
   return pushDirty().then(function(){
-    return fetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.json(); });
+    return tgFetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.json(); });
   }).then(function(d){
     if(!d) return;
     SYNCOK=true; paintSync();
@@ -5114,7 +5257,7 @@ function aiBuild(снова){
   document.getElementById('aibox').innerHTML='';
   var ctl = ('AbortController' in window) ? new AbortController() : null;
   var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
-  fetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
+  tgFetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
     .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog); haptic('ok'); })
@@ -5229,7 +5372,7 @@ function wipeCloud(всё){
   }).catch(function(){});
 }
 function wipeServer(всё){
-  return fetch(SYNCURL+'/forget', { method:'POST', headers:{'Content-Type':'application/json'},
+  return tgFetch(SYNCURL+'/forget', { method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({uid:syncUid(), scope: всё ? 'all' : 'prog'}) })
     .then(function(r){ return r.json(); })
     .then(function(d){ if(!d || !d.ok) throw new Error((d&&d.error)||'сервер'); return d; });
@@ -5296,8 +5439,8 @@ document.getElementById('fnav').addEventListener('click', function(e){
   var b=e.target.closest('button[data-fnav]'); if(!b||b.disabled) return;
   fShift(+b.dataset.fnav); haptic('light');
 });
-function fGet(path){ return fetch(SYNCURL+path).then(function(r){ return r.json(); }); }
-function fPost(path, body){ return fetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
+function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.json(); }); }
+function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
   if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
   return d; }); }); }
 /* Человек не должен видеть текст Google про квоты и биллинг: у жены Шохруха
@@ -5440,7 +5583,8 @@ function renderBuild(){
    Telegram отдаёт ту же страницу, что и была. */
 function updApp(){
   try{
-    var u=location.pathname+'?v='+encodeURIComponent(SRVBUILD||Date.now());
+    /* хэш несёт initData Telegram — без него сервер после обновления не узнает, кто это */
+    var u=location.pathname+'?v='+encodeURIComponent(SRVBUILD||Date.now())+(location.hash||'');
     location.replace(u);
   }catch(e){ location.reload(); }
 }
@@ -6059,7 +6203,7 @@ function applyRebuild(rb){
 }
 function recoPull(){
   var сразу = /[?&]r=1(&|$)/.test(location.search||'');
-  return fetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
+  return tgFetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid()))
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); }
