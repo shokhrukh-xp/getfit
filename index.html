@@ -989,6 +989,36 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .fclose .fdone{flex:1 1 100%;padding:12px 14px;border-radius:12px;border:1px solid var(--done);background:rgba(var(--done-rgb),.10);font-size:13px;color:var(--text);line-height:1.45}
 .fclose .fdone b{font-size:18px;font-weight:800}
 .fclose .fhint{flex:1 1 100%;font-size:11.5px;color:var(--dim)}
+.segrow{display:flex;gap:6px;margin:14px 0 10px}
+.segrow button{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px}
+.segrow button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
+.plfilt{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;margin:0 -16px 10px;padding:0 16px 2px;scrollbar-width:none}
+.plfilt::-webkit-scrollbar{display:none}
+.plfilt .mchip{flex:0 0 auto;white-space:nowrap}
+.plate{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:8px;cursor:pointer}
+.plate .plph{flex:0 0 92px;width:92px;height:92px;border-radius:10px;background:var(--accent-ghost);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
+.plate .plph img{width:100%;height:100%;object-fit:cover;display:block}
+.plate .pltx{min-width:0;flex:1}
+.plate b.plwho{display:block;font-size:11px;color:var(--dim);font-weight:500;margin-bottom:3px}
+.plate b.plwho em{font-style:normal;color:var(--done)}
+.plate i{display:block;font-style:normal;font-size:14px;color:var(--text);font-weight:600;line-height:1.3}
+.plate i.plnum{font-weight:400;font-size:12px;color:var(--muted);margin-top:3px}
+.plate i.plnum em{font-style:normal;color:var(--accent);letter-spacing:.04em}
+.plate u{display:block;text-decoration:none;font-size:11px;color:var(--dim);margin-top:5px;line-height:1.4}
+.plate.open{flex-direction:column;gap:10px;cursor:default}
+.plate.open .plph{width:100%;height:auto;aspect-ratio:4/3;flex:none}
+.plate.open u{font-size:12.5px;color:var(--muted);line-height:1.5}
+.plate .plnote{margin:6px 0 0;font-size:12.5px;color:var(--text);line-height:1.45}
+.plate .plnote b{font-weight:600}
+.plact{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.plact .btn{min-height:40px;padding:0 14px;font-size:13px}
+.plact .btn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-ghost)}
+.plact .plwhy{flex:1 1 100%;font-size:11.5px;color:var(--dim)}
+.plate .pllk{font-size:11px;color:var(--dim);margin-top:4px}
+.plempty{padding:18px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
+.mlab textarea{display:block;width:100%;margin-top:6px;padding:11px 12px;border-radius:11px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:14px;resize:vertical}
+.mlchk{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:12.5px;color:var(--muted)}
+.mlchk input{width:18px;height:18px}
 .invrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft)}
 .invrow:first-child{border-top:none}
 .invrow .invn{flex:1;min-width:0;font-size:13px;color:var(--text)}
@@ -1502,6 +1532,8 @@ body.onb #picker .modalbox::before{display:none}
       <label>клетчатка, г<input id="ml-fib" type="number" inputmode="numeric" min="0" max="200" step="1"></label>
     </div>
     <p class="mtext" id="ml-hint"></p>
+    <label class="mlab">как готовил — для круга, необязательно<textarea id="ml-note" rows="2" maxlength="500" placeholder="творог смешать с йогуртом, сверху ягоды"></textarea></label>
+    <label class="mlchk"><input type="checkbox" id="ml-hide"> не показывать эту тарелку в круге</label>
     <div class="btnrow">
       <button class="btn prim" id="ml-save">Сохранить</button>
       <button class="btn" id="ml-del">Удалить</button>
@@ -2983,7 +3015,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 19:50';
+var BUILD = '10.09 20:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5731,7 +5763,7 @@ function circlePull(id){
     .then(function(d){ if(d&&d.ok){ CIRC=d; if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); } renderStreak(); renderCircle(); } return d; })
     .catch(function(){ return null; });
 }
-function openCircle(){ renderCircle(); circlePull(); }
+function openCircle(){ renderCircle(); circlePull().then(function(){ if(CIRSEG==='feed') feedPull(); }); }
 function renderStreak(){
   var b=document.getElementById('stk'); if(!b) return;
   var n=CIRC && CIRC.me ? (CIRC.me.streak||0) : 0;
@@ -5750,6 +5782,8 @@ function renderCircle(){
      '<div class="tile"><u>эта неделя</u><b>'+(me.pts==null?'—':me.pts)+' <small>/ 70</small></b><i>уровень '+(me.level||3)+' из 5'+(me.avg!=null?' · балл '+me.avg:'')+'</i></div></div>';
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
+  h+='<div class="segrow"><button type="button" data-seg="food" aria-pressed="'+(CIRSEG!=='feed')+'">Питание</button><button type="button" data-seg="feed" aria-pressed="'+(CIRSEG==='feed')+'">Лента</button></div>';
+  if(CIRSEG==='feed'){ h+='<div id="feedbox">'+feedHtml()+'</div>'; box.innerHTML=h; if(!FEED || FEED.circle!==CIRC.circle) feedPull(); return; }
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b><button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button></div>';
   } else {
@@ -5771,8 +5805,67 @@ function renderCircle(){
     (L.grow?'<div class="tile"><u>рост</u><b>'+esc(L.grow.name)+'</b><i>+'+L.grow.v+' к своей прошлой неделе</i></div>':'')+'</div>';
   box.innerHTML=h;
 }
+/* ── лента тарелок круга ── */
+var FEED=null, CIRSEG=gget('cirseg','food')||'food', FEEDF={kind:'',norm:false}, FEEDOPEN=null, FEEDBUSY=false;
+function feedPull(){
+  FEEDBUSY=true;
+  return fGet('/feed?uid='+encodeURIComponent(syncUid())+(CIRCID?'&id='+encodeURIComponent(CIRCID):''))
+    .then(function(d){ FEEDBUSY=false; if(d&&d.ok){ FEED=d; } feedRender(); return d; })
+    .catch(function(){ FEEDBUSY=false; feedRender(); return null; });
+}
+function feedRender(){ var b=document.getElementById('feedbox'); if(b) b.innerHTML=feedHtml(); }
+function starsHtml(st){ if(!st) return ''; return '<em title="'+esc(st.why)+'">'+'★'.repeat(st.n)+'☆'.repeat(5-st.n)+'</em>'; }
+function feedDate(d){ return d===TODAY ? 'сегодня' : d===ymd(new Date(Date.now()-864e5)) ? 'вчера' : d.slice(8,10)+'.'+d.slice(5,7); }
+function feedHtml(){
+  var h='<div class="plfilt">'+
+    [['','все'],['завтрак','завтрак'],['обед','обед'],['ужин','ужин'],['перекус','перекус']].map(function(k){
+      return '<button type="button" class="mchip'+(FEEDF.kind===k[0]?' on':'')+'" data-fk="'+k[0]+'">'+k[1]+'</button>'; }).join('')+
+    '<button type="button" class="mchip'+(FEEDF.norm?' on':'')+'" data-fnorm="1">только в норме</button></div>';
+  if(!FEED){ return h+'<p class="plempty">'+(FEEDBUSY?'Загружаю…':(SYNCOK===false?'Сервер не отвечает.':'Загружаю…'))+'</p>'; }
+  var list=(FEED.feed||[]).filter(function(m){ return (!FEEDF.kind || m.kind===FEEDF.kind) && (!FEEDF.norm || m.norm); });
+  if(!list.length) return h+'<p class="plempty">'+((FEED.feed||[]).length?'По этому фильтру тарелок нет.':'Пока пусто: тарелки появятся, как только кто-то в круге запишет еду с фото или текстом.')+'</p>';
+  return h+list.map(function(m){
+    var open = FEEDOPEN===m.ref;
+    var who = '<b class="plwho">'+esc(m.me?'Ты':m.name)+' · '+esc(m.kind||'приём')+' · '+esc(feedDate(m.date))+(m.t?' '+esc(m.t):'')+(m.streak?' · <em>серия '+m.streak+'</em>':'')+'</b>';
+    var nums = '<i class="plnum">'+m.kcal+' ккал · белок '+m.prot+' г'+(m.stars?' · '+starsHtml(m.stars):'')+'</i>';
+    var items = (m.items||[]).map(function(x){ return esc(x.name)+(x.g?' '+Math.round(x.g)+' г':''); });
+    var ph = m.img ? '<img loading="lazy" src="'+esc(m.img)+'" alt="">' : 'без фото';
+    if(!open) return '<div class="plate" data-pl="'+esc(m.ref)+'"><div class="plph">'+ph+'</div><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+
+      (items.length?'<u>'+items.slice(0,4).join(' · ')+(items.length>4?' · …':'')+'</u>':'')+
+      (m.likes?'<span class="pllk">👍 '+m.likes+'</span>':'')+'</div></div>';
+    return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
+      (m.img?'<div class="plph">'+ph+'</div>':'')+
+      (items.length?'<u>'+items.join('<br>')+'</u>':'<u>состав не разобран</u>')+
+      '<u>жир '+m.fat+' г · углеводы '+m.carb+' г · клетчатка '+m.fib+' г · сахар '+m.sug+' г</u>'+
+      (m.note?'<p class="plnote"><b>Как готовить:</b> '+esc(m.note)+'</p>':'')+
+      '<div class="plact">'+
+        (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'">👍'+(m.likes?' '+m.likes:'')+'</button>')+
+        '<button type="button" class="btn" data-recipe="'+esc(m.ref)+'">Отправить себе в чат</button>'+
+        (m.stars?'<span class="plwhy">'+starsHtml(m.stars)+' — '+esc(m.stars.why)+'</span>':'')+
+        (m.likers&&m.likers.length?'<span class="plwhy">👍 '+esc(m.likers.join(', '))+(m.liked?' и ты':'')+'</span>':(m.me&&m.likes?'<span class="plwhy">👍 '+m.likes+'</span>':''))+
+      '</div></div>';
+  }).join('');
+}
 document.getElementById('cirbody').addEventListener('click', function(e){
-  var c=e.target.closest('[data-cir]'); if(c){ circlePull(c.dataset.cir); haptic('light'); return; }
+  var c=e.target.closest('[data-cir]'); if(c){ FEED=null; circlePull(c.dataset.cir); haptic('light'); return; }
+  var sg=e.target.closest('[data-seg]'); if(sg){ CIRSEG=sg.dataset.seg; gset('cirseg',CIRSEG); renderCircle(); haptic('light'); return; }
+  var fk=e.target.closest('[data-fk]'); if(fk){ FEEDF.kind=fk.dataset.fk; feedRender(); haptic('light'); return; }
+  if(e.target.closest('[data-fnorm]')){ FEEDF.norm=!FEEDF.norm; feedRender(); haptic('light'); return; }
+  var lk=e.target.closest('[data-like]'); if(lk){
+    var ref=lk.dataset.like, m=(FEED&&FEED.feed||[]).filter(function(x){ return x.ref===ref; })[0]; if(!m) return;
+    var on=!m.liked; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); feedRender(); haptic('light');
+    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){ if(d&&d.ok){ m.likes=d.likes; m.liked=d.liked; feedRender(); } }).catch(function(){});
+    return;
+  }
+  var rc=e.target.closest('[data-recipe]'); if(rc){
+    var ref2=rc.dataset.recipe, owner=ref2.split(':')[0], id=ref2.slice(owner.length+1);
+    rc.disabled=true; rc.textContent='Отправляю…';
+    fPost('/recipe',{uid:syncUid(), owner:owner, id:id}).then(function(d){
+      if(d&&d.ok){ rc.textContent='Отправлено в чат ✓'; haptic('ok'); } else { rc.disabled=false; rc.textContent='Отправить себе в чат'; haptic('err'); if(d&&d.error) say(d.error); }
+    }).catch(function(){ rc.disabled=false; rc.textContent='Отправить себе в чат'; haptic('err'); });
+    return;
+  }
+  var pl=e.target.closest('[data-pl]'); if(pl){ FEEDOPEN = FEEDOPEN===pl.dataset.pl ? null : pl.dataset.pl; feedRender(); haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
 });
@@ -6286,6 +6379,8 @@ function openMeal(m){
     document.getElementById('ml-'+k).value = (MEAL[k]==null||MEAL[k]==='') ? '' : Math.round(MEAL[k]);
   });
   renderMealItems(); mealNums();
+  document.getElementById('ml-note').value = MEAL.note || '';
+  document.getElementById('ml-hide').checked = !!MEAL.hide;
   document.getElementById('mealm').classList.add('show');
 }
 function closeMeal(){ document.getElementById('mealm').classList.remove('show'); }
@@ -6295,7 +6390,8 @@ function mealSave(){
   var сег=document.querySelector('#ml-kind button[aria-pressed="true"]');
   var body={ uid:syncUid(), id:MEAL.id, date:document.getElementById('ml-date').value||fDate(),
     kind:сег?сег.dataset.v:'', text:document.getElementById('ml-text').value.trim(),
-    kcal:v('kcal'), prot:v('prot'), fat:v('fat'), fib:v('fib') };
+    kcal:v('kcal'), prot:v('prot'), fat:v('fat'), fib:v('fib'),
+    note:document.getElementById('ml-note').value.trim(), hide:document.getElementById('ml-hide').checked?1:0 };
   /* состав уходит на сервер: там он пересчитается по справочнику и сложится
      в итог — чтобы одна и та же еда у двоих давала одни и те же числа */
   if((MEAL.its||[]).length) body.items = MEAL.its.map(function(x){
