@@ -2092,7 +2092,7 @@ function closeCatalog(){
 
 function muscleChips(){
   var counts={};
-  CAT.ex.forEach(function(x){ counts[x.m]=(counts[x.m]||0)+1; });
+  CAT.ex.forEach(function(x){ counts[x.m]=(counts[x.m]||0)+1; if(x.m2) counts[x.m2]=(counts[x.m2]||0)+1; });
   var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
   var h='<button class="mchip'+(catMuscle?'':' on')+'" data-m="">Все</button>';
   keys.forEach(function(k){
@@ -2108,14 +2108,14 @@ function catFiltered(){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
   return CAT.ex.filter(function(x){
-    if(catMuscle && x.m!==catMuscle) return false;
+    if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
     if(catEquip && x.q!==catEquip) return false;
     if(catLevel && x.l!==catLevel) return false;
     if(catType && catKind(x)!==catType) return false;
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
        отдельно: «жим гантели» находит «Жим гантелей лёжа» */
-    var hay=(x.n+' '+x.e+' '+(CAT.muscles[x.m]||'')).toLowerCase();
+    var hay=(x.n+' '+x.e+' '+(CAT.muscles[x.m]||'')+' '+(x.m2?(CAT.muscles[x.m2]||''):'')).toLowerCase();
     return words.every(function(w){ return hay.indexOf(w)>=0; });
   });
 }
@@ -2124,12 +2124,14 @@ function catFiltered(){
 function chipRow(field, cur, dict, label){
   var counts={};
   CAT.ex.forEach(function(x){
-    if(field!=='m' && catMuscle && x.m!==catMuscle) return;
+    if(field!=='m' && catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return;
     if(field!=='q' && catEquip && x.q!==catEquip) return;
     if(field!=='l' && catLevel && x.l!==catLevel) return;
     if(field!=='c' && catType && catKind(x)!==catType) return;
     var v = field==='c' ? catKind(x) : x[field];
     counts[v]=(counts[v]||0)+1;
+    /* подгруппа считается и в своей группе, и отдельным чипом */
+    if(field==='m' && x.m2) counts[x.m2]=(counts[x.m2]||0)+1;
   });
   var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
   if(keys.length<2) return '';
@@ -2929,7 +2931,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 16:15';
+var BUILD = '10.09 16:35';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4511,11 +4513,12 @@ function r1(v){ return Math.round(v*10)/10; }
 function mirD(d){ return d.replace(/(-?[\d.]+),(-?[\d.]+)/g, function(_,a,b){ return r1(-parseFloat(a))+','+b; }); }
 
 function daysAgoRu(d){ return d===0?'сегодня':(d===1?'вчера':(d+' '+plural(d,['день','дня','дней'])+' назад')); }
-/* группа на карте → мышца каталога (у каталога 17 групп, у карты 20:
-   задние дельты живут в «плечах», косые — в «прессе», голень — в «икрах») */
-var MUS2CAT={neck:'neck',trap:'traps',mid:'middle back',delt:'shoulders',rdelt:'shoulders',chest:'chest',
-  bic:'biceps',tri:'triceps',fore:'forearms',abs:'abdominals',obl:'abdominals',lat:'lats',lower:'lower back',
-  glute:'glutes',abd:'abductors',ham:'hamstrings',quad:'quadriceps',add:'adductors',calf:'calves',tib:'calves'};
+/* группа на карте → мышца каталога. У базы 17 групп, у карты 20: задние
+   дельты, косые и голень в каталоге помечены подгруппой m2 (свои упражнения
+   на голень добавлены, в базе на неё была только растяжка) */
+var MUS2CAT={neck:'neck',trap:'traps',mid:'middle back',delt:'shoulders',rdelt:'rear delts',chest:'chest',
+  bic:'biceps',tri:'triceps',fore:'forearms',abs:'abdominals',obl:'obliques',lat:'lats',lower:'lower back',
+  glute:'glutes',abd:'abductors',ham:'hamstrings',quad:'quadriceps',add:'adductors',calf:'calves',tib:'tibialis'};
 /* открыть страницу каталога с фильтром по мышце (с карты тела) */
 function openCatFor(m){
   catCtx=null; catQuery=''; catEquip=''; catLevel=''; catType='strength'; catShown=40; catMuscle=m||'';
