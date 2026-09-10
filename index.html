@@ -972,13 +972,22 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbrow .who i{font-style:normal;font-size:11px;color:var(--dim)}
 .lbdots{display:flex;gap:3px;margin:0}
 .lbdots s{flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:var(--track);text-decoration:none;display:block}
-.lbdots s.ok{background:var(--done)}
-.lbdots s.low{background:var(--warn)}
-.lbdots s.today{background:var(--accent)}
+.lbdots s.lbd-ok{background:var(--done)}
+.lbdots s.lbd-low{background:var(--warn)}
+.lbdots s.lbd-today{background:var(--accent)}
 .lbrow .sc{font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:15px;font-weight:700;color:var(--text);min-width:30px;text-align:right}
 .lbrow .sc.dim{color:var(--dim);font-weight:400}
-.lbrow.me{background:var(--accent-ghost);margin:0 -14px;padding-left:14px;padding-right:14px;border-radius:10px;border-top:none}
-.lbrow.me + .lbrow{border-top:none}
+.lbrow.lbme{background:var(--accent-ghost);box-shadow:0 0 0 8px var(--accent-ghost);border-radius:4px;border-top-color:transparent}
+.lbrow.lbme + .lbrow{border-top-color:transparent}
+.lbrow.lbme .who b,.lbrow.lbme .sc{color:var(--accent)}
+.lbhead{display:grid;grid-template-columns:22px 1fr auto auto;gap:10px;padding:8px 0 4px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.lbhead span:last-child{text-align:right;min-width:30px}
+.lbkey{display:flex;flex-wrap:wrap;gap:12px;margin:10px 2px 0;font-size:11px;color:var(--dim)}
+.lbkey i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+.lbkey s{flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:var(--track);text-decoration:none;display:inline-block}
+.lbkey s.lbd-ok{background:var(--done)}.lbkey s.lbd-low{background:var(--warn)}.lbkey s.lbd-today{background:var(--accent)}
+.cirtiles .tile{display:flex;flex-direction:column}
+.cirtiles .tile i{margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cirnote{margin:10px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
 .cirnote button{background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:11.5px;cursor:pointer}
 .cirrules{margin:8px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);font-size:12px;color:var(--muted);line-height:1.5}
@@ -3015,7 +3024,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 20:10';
+var BUILD = '10.09 20:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5777,9 +5786,9 @@ function renderCircle(){
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
   var h='';
   if(list.length>1) h+='<div class="cirsw">'+list.map(function(c){ return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>'; }).join('')+'</div>';
-  h+='<div class="tiles" style="margin-top:0">'+
-     '<div class="tile"><u>серия</u><b>'+(me.streak||0)+' <small>'+plural(me.streak||0,['день','дня','дней'])+'</small></b><i>'+(me.closed?'сегодня закрыт':'закрой день — и серия вырастет')+'</i></div>'+
-     '<div class="tile"><u>эта неделя</u><b>'+(me.pts==null?'—':me.pts)+' <small>/ 70</small></b><i>уровень '+(me.level||3)+' из 5'+(me.avg!=null?' · балл '+me.avg:'')+'</i></div></div>';
+  h+='<div class="tiles cirtiles" style="margin-top:0">'+
+     '<div class="tile"><u>серия дней</u><b>'+(me.streak||0)+' <small>'+plural(me.streak||0,['день','дня','дней'])+'</small></b><i>'+(me.closed?'сегодня закрыт':(me.streak?'сегодня ещё не закрыт':'закрой первый день'))+'</i></div>'+
+     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':me.pts)+' <small>/ 70</small></b><i>уровень '+(me.level||3)+' из 5</i></div></div>';
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
   h+='<div class="segrow"><button type="button" data-seg="food" aria-pressed="'+(CIRSEG!=='feed')+'">Питание</button><button type="button" data-seg="feed" aria-pressed="'+(CIRSEG==='feed')+'">Лента</button></div>';
@@ -5787,13 +5796,14 @@ function renderCircle(){
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b><button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button></div>';
   } else {
-    h+='<div class="group lb">'+b.map(function(r,i){
-      var dots=(r.days||[]).map(function(st){ return '<s class="'+(st||'')+'"></s>'; }).join('');
-      return '<div class="lbrow'+(r.me?' me':'')+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>серия '+(r.streak||0)+' · уровень '+(r.level||3)+'</i></span>'+
+    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>балл</span></div>'+b.map(function(r,i){
+      var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
+      return '<div class="lbrow'+(r.me?' lbme':'')+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>серия '+(r.streak||0)+' · уровень '+(r.level||3)+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+(r.avg==null?' dim':'')+'">'+(r.avg==null?'—':r.avg)+'</span></div>';
-    }).join('')+'</div>';
+    }).join('')+'</div>'+
+    '<p class="lbkey"><i><s class="lbd-ok"></s>в норме</i><i><s class="lbd-low"></s>ниже 70</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>не закрыт</i></p>';
   }
-  h+='<p class="cirnote">Балл дня — попадание в свою норму: калории ±10 %, белок, клетчатка, сахар. Считаются только закрытые дни, неделя с понедельника. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть':'Как считается →')+'</button></p>';
+  h+='<p class="cirnote">Балл — среднее за закрытые дни недели: калории ±10 % от своей нормы, белок, клетчатка, сахар. Незакрытый день тянет вниз. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
   if(CIRCRULES) h+='<div class="cirrules">За день до 100 баллов: калории 45 (полные при ±10 % от нормы, к ±30 % — ноль, недоесть так же плохо, как переесть), белок 35 (полные от 90 % нормы), клетчатка 10, сахар 10 (полные, если не выше нормы).<br>'+
     'День закрыт — кнопкой на «Еде» или сам в полночь, если записано минимум два приёма. Незакрытый день — ноль.<br>'+
     'Балл недели — сумма баллов закрытых дней, делённая на прошедшие дни: пропуск тянет вниз.<br>'+
