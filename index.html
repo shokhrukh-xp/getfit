@@ -869,6 +869,13 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .mchip s{text-decoration:none;color:var(--dim);font-size:10.5px;margin-left:2px}
 .mchip.on{border-color:var(--accent);color:var(--accent);background:var(--accent-ghost)}
 .mchip.on s{color:var(--accent-2)}
+/* страница каталога: четыре ряда фильтров занимали полтора экрана до первого
+   упражнения — теперь каждый ряд одной строкой с прокруткой вбок */
+#pcatfilters .mchips{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  margin:0 -16px 8px;padding:0 16px 2px}
+#pcatfilters .mchips::-webkit-scrollbar{display:none}
+#pcatfilters .chlab{flex:0 0 auto;margin:0 4px 0 0}
+#pcatfilters .mchip{flex:0 0 auto;white-space:nowrap}
 .catcount{margin:0 0 10px;font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:10.5px;
   letter-spacing:.06em;color:var(--dim)}
 .catlist{display:flex;flex-direction:column;gap:8px}
@@ -1027,6 +1034,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .hurt .hurtbtn{flex:0 0 auto;border:.5px solid var(--line);background:var(--card-2);border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--muted)}
 .hurt .hurtbtn[aria-pressed="true"]{border-color:var(--warn);color:var(--warn)}
 .hurt .hurthint{flex:1 1 auto;font-size:11.5px;color:var(--dim);line-height:1.35}
+.btnrow.one .btn{flex:1 1 auto}
+.resetline{margin:8px 0 0;text-align:center}
+.linkbtn{background:none;border:0;padding:8px 12px;font:inherit;font-size:13px;color:var(--dim);text-decoration:underline;text-underline-offset:3px}
+.linkbtn.armed{color:var(--warn)}
 /* итог блока в журнале */
 .blk{padding:4px 0}
 .blk .blkh{font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.45}
@@ -1259,10 +1270,10 @@ body.onb #picker .modalbox::before{display:none}
         <div id="list"></div>
         <p class="dbnote" id="dbnote"></p>
         <div class="finsum" id="finsum" hidden></div>
-        <div class="btnrow">
+        <div class="btnrow one">
           <button class="btn" id="finish">Завершить и сохранить</button>
-          <button class="btn" id="reset">Очистить день</button>
         </div>
+        <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button></p>
       </div>
       </section>
     <section class="page hide" id="p-log">
@@ -1276,7 +1287,7 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group" id="blkg" hidden><div id="logblk" class="blk"></div></div>
         <h3 class="lh">Замеры</h3>
         <div class="group"><div id="logmeas"></div></div>
-        <p class="profline"><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
+        <p class="profline" hidden><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
       </div>
     </section>
     <section class="page hide" id="p-food">
@@ -1320,8 +1331,7 @@ body.onb #picker .modalbox::before{display:none}
     <section class="page hide" id="p-ref">
       <div class="sec" style="padding-top:18px">
         <h2>Каталог</h2>
-        <p class="lede"><span id="catn"></span>Любое можно поставить вместо своего —
-        кнопка «Заменить» под карточкой на вкладке «Тренировка».</p>
+        <p class="lede" id="catn"></p>
         <input class="catsearch" id="pcatsearch" type="search" placeholder="Поиск по названию" autocomplete="off">
         <div id="pcatfilters"></div>
         <div id="pcatbody"></div>
@@ -1329,7 +1339,7 @@ body.onb #picker .modalbox::before{display:none}
     </section>
     
 
-    <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
+
 </main>
 
 <div class="timer" id="timer">
@@ -1395,10 +1405,10 @@ body.onb #picker .modalbox::before{display:none}
 <div class="modal" id="schedm" role="dialog" aria-modal="true" aria-labelledby="schedtitle">
   <div class="modalbox">
     <h3 id="schedtitle">Мои дни</h3>
-    <p class="mtext">Отметь дни, когда ходишь в зал. Что делать в каждый из них, решать не нужно: дни программы идут по кругу, следующий — за последним сделанным. Пропустил или пришёл в другой день — очередь просто продолжается.</p>
+    <p class="mtext">Дни зала. Программа идёт по кругу: следующий день — за последним сделанным, в любой день недели.</p>
     <div id="schedlist"></div>
     <h3 style="margin-top:20px">Лёгкая неделя</h3>
-    <p class="mtext">Веса встали или поехали вниз? Возьми неделю с половиной подходов на тех же весах. Тренер включит её сам, если веса падают два занятия подряд, но как ты себя чувствуешь, знаешь только ты — можно и раньше. Через семь дней отключится сама.</p>
+    <p class="mtext">Веса встали или падают — семь дней по половине подходов на тех же весах. Тренер включит сам, если веса падают два занятия подряд.</p>
     <div id="deloadbox"></div>
     <button class="btn wide" id="schedclose">Готово</button>
   </div>
@@ -1452,14 +1462,13 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
     <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
     <div class="pf" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
-    <p class="seghint">самый маленький блин в зале — от него шаг прибавки на штанге</p>
+    <p class="seghint">самый маленький блин в зале — шаг прибавки</p>
     <div class="pf" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
-    <p class="seghint">«сам меняет» — правки из недельного разбора и чата встают без подтверждения, ты получаешь объяснение; «спрашивает» — каждая под кнопкой</p>
+    <p class="seghint">«сам меняет» — правки встают сразу, ты видишь карточку; «спрашивает» — каждая под кнопкой</p>
     <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
     <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
-    <p class="seghint">регулярные занятия приложение само добавит к норме еды в эти дни — останется нажать «Было». Разовое пиши тренеру в чат</p>
-    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Хранится в твоём аккаунте, вход — только через Telegram.</p>
+    <p class="seghint">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
     <div class="invbox" id="invbox" hidden>
       <button type="button" class="invhead" id="invtoggle" aria-expanded="false"><span class="invl">приглашение</span><span class="invsum" id="invsum"></span><i class="invchev">›</i></button>
       <div class="invbody" id="invbody" hidden>
@@ -1476,6 +1485,7 @@ body.onb #picker .modalbox::before{display:none}
     <p class="aistate" id="aistate" hidden></p>
     <div id="aibox"></div>
     <button class="btn wide danger" id="profreset">Начать заново</button>
+    <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -2120,11 +2130,16 @@ function renderCatalog(){
   var box=document.getElementById(onPage?'pcatbody':'catbody'); if(!box||!CAT) return;
   var fbox=document.getElementById('pcatfilters');
   if(onPage && fbox){
-    var cn=document.getElementById('catn'); if(cn && CAT.ex) cn.textContent=CAT.ex.length+' '+plural(CAT.ex.length,['упражнение','упражнения','упражнений'])+'. ';
+    var cn=document.getElementById('catn'); if(cn && CAT.ex) cn.textContent=CAT.ex.length+' '+plural(CAT.ex.length,['упражнение','упражнения','упражнений']);
     fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
                      chipRow('c',catType,CAT.cats||{},'тип')+
                      chipRow('q',catEquip,CAT.equip,'снаряд')+
                      chipRow('l',catLevel,CAT.level,'уровень');
+    /* выбранный чип в прокручиваемом ряду должен быть виден */
+    fbox.querySelectorAll('.mchips').forEach(function(r){
+      var on=r.querySelector('.mchip.on'); if(!on) return;
+      if(on.offsetLeft+on.offsetWidth>r.clientWidth) r.scrollLeft=on.offsetLeft-40;
+    });
   }
   var list=catFiltered(), lim=onPage?catShown:80, shown=list.slice(0,lim);
   var h = onPage ? '' : '<div class="mchips">'+muscleChips()+'</div>';
@@ -2371,8 +2386,8 @@ function renderPicker(){
   if(hi){
     hi.hidden = WIZ.stage!=='form';
     hi.textContent = знакомство
-      ? 'От этого зависят стартовые веса на каждый подход и норма еды на день. Видит только тренер.'
-      : 'Скажи, где и когда можешь заниматься, — и своими словами, чего хочешь. Остальное тренер спросит сам.';
+      ? 'Отсюда считаются стартовые веса и норма еды.'
+      : 'Где и когда — и своими словами, чего хочешь. Остальное тренер спросит.';
   }
 }
 /* ── ход разговора ── */
@@ -2572,9 +2587,7 @@ function renderGoalCard(){
          (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? (Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем' : ' · отстаём на '+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
          (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p>';
     } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
-    h+='<p class="gp">'+(rbCard()
-        ? 'Число и срок меняют норму еды. Направление, фаза и долгая цель меняют программу — сейчас она собрана под старую цель, предложение пересобрать ниже.'
-        : 'Число и срок меняют норму еды. Направление, фаза и долгая цель меняют программу — тренер сам предложит пересобрать, когда что-то из этого изменится.')+'</p>';
+    if(rbCard()) h+='<p class="gp">Программа собрана под старую цель — предложение пересобрать ниже.</p>';
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
     h+='<div class="gt">'+esc(goalText(me))+'</div>'+
@@ -2674,7 +2687,10 @@ function renderProfProg(){
   var el=document.getElementById('pfprog'); if(!el||!PROF) return;
   /* имя программы само по себе путало («Набор формы» читалось как набор
      массы при цели похудеть) — рядом всегда стоит, на что она нацелена */
-  el.innerHTML='<span>программа <b>'+PROF.name+'</b>'+(PROF.goal?'<i>'+PROF.goal.toLowerCase()+'</i>':'')+'</span><button type="button" id="pfswitch">сменить</button>';
+  /* 10.09: «сменить» (готовые программы) убрано — вторая дорога рядом с «Собрать под меня» путала; готовые остались внутри «Начать заново» */
+  el.innerHTML='<span>программа <b>'+PROF.name+'</b>'+(PROF.goal?'<i>'+PROF.goal.toLowerCase()+'</i>':'')+'</span>';
+  /* кнопка под карточкой: когда программа уже есть, «собрать» читалось как «а моя куда денется?» */
+  var b=document.getElementById('profai'); if(b && !b.disabled) b.textContent = PROF.custom ? 'Собрать заново под меня' : 'Собрать программу под меня';
 }
 
 /* ══════════ ПРАВИЛА: ПОДХОДИТ ЛИ ПРОГРАММА ══════════
@@ -2897,7 +2913,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 14:30';
+var BUILD = '10.09 15:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -2932,10 +2948,12 @@ function renderPhase(){
     return;
   }
   var p=phaseNow();
-  /* «запас 3 повтора до отказа» — жаргон. Пишем то же самое действием. */
-  el.innerHTML='Заканчивай подход, когда мог бы сделать ещё <b>'+p.rir+'</b> '+
-    plural(p.rir,['повтор','повтора','повторов'])+'.'+
-    (p.ds<0 ? ' Первые недели — на подход меньше: втягиваемся.' : '');
+  /* «запас 3 повтора до отказа» — жаргон. Пишем то же самое действием.
+     10.09: строка висела каждый день — оставлена только на время втягивания
+     (первые недели, когда подходов меньше); дальше правило уже выучено. */
+  el.innerHTML = p.ds<0
+    ? 'Заканчивай подход, когда мог бы сделать ещё <b>'+p.rir+'</b> '+plural(p.rir,['повтор','повтора','повторов'])+'. Первые недели — на подход меньше.'
+    : '';
 }
 
 /* Подпись выбранного дня: раньше мышцы были написаны на каждой кнопке и
@@ -3220,7 +3238,7 @@ function hurtOn(n){ var h=hurtAll()[n]; return !!(h && h.last); }
 function hurtHtml(e){
   var on=hurtOn(e.n);
   return '<div class="hurt"><button type="button" class="hurtbtn" data-hurt="'+esc(e.n)+'" aria-pressed="'+(on?'true':'false')+'">'+(on?'Мешает · отмечено':'Мешает суставу')+'</button>'+
-         '<span class="hurthint">'+(on?'тренер учтёт при замене и в разборе; нажми ещё раз, если прошло':'если неудобно в суставе, а не тяжело мышце')+'</span></div>';
+         (on?'<span class="hurthint">тренер учтёт при замене; нажми ещё раз, если прошло</span>':'')+'</div>';
 }
 function hurtToggle(n){
   var h=hurtAll();
@@ -3364,7 +3382,8 @@ function bumpCycles(dia,dib,d){
 function adviceLine(e){
   var a;
   try{ a = advice(e); }catch(err){ return ''; }
-  return '<div class="rec '+a.kind+'">'+(a.short||'')+'</div>';
+  if(!a.short) return '';
+  return '<div class="rec '+a.kind+'">'+a.short+'</div>';
 }
 function syncRow(di,si){
   var row=document.querySelector('.setrow[data-ex="'+di+'"][data-set="'+si+'"]');
@@ -4124,11 +4143,11 @@ var resetArmed=false, resetT=null;
 document.getElementById('reset').addEventListener('click', function(){
   var b=this;
   if(!resetArmed){
-    resetArmed=true; b.textContent='Точно очистить?';
-    clearTimeout(resetT); resetT=setTimeout(function(){ resetArmed=false; b.textContent='Очистить день'; },4000);
+    resetArmed=true; b.textContent='Точно очистить?'; b.classList.add('armed');
+    clearTimeout(resetT); resetT=setTimeout(function(){ resetArmed=false; b.textContent='Очистить день'; b.classList.remove('armed'); },4000);
     return;
   }
-  clearTimeout(resetT); resetArmed=false; b.textContent='Очистить день';
+  clearTimeout(resetT); resetArmed=false; b.textContent='Очистить день'; b.classList.remove('armed');
   set(wt0Key(), null);
   sess=blankSess(); saveSess(); renderList(); paintNote('');
 });
@@ -4407,9 +4426,9 @@ function renderLogSum(){
   HIST.forEach(function(w){ if((new Date(TODAY)-new Date(w.date))/864e5<7){ (w.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r!=null){ семьПод++; if(v.w!=null && x.unit!=='sec') семь+=v.w*v.r; } }); }); } });
   box.innerHTML =
     tile('эта неделя', c.sess+(план?' <small>/ '+план+'</small>':''), lastD==null ? 'занятий' : (lastD===0?'последняя сегодня':'последняя '+lastD+' '+plural(lastD,['день','дня','дней'])+' назад')) +
-    tile('подряд', сер, plural(сер,['неделя','недели','недель'])+' без пропуска') +
-    tile('7 дней', Math.round(семь), 'кг тоннаж · '+семьПод+' '+plural(семьПод,['подход','подхода','подходов'])) +
-    tile('всего', st.tot.sess, plural(st.tot.sess,['тренировка','тренировки','тренировок']));
+    tile('подряд', сер, plural(сер,['неделя','недели','недель'])+' без пропуска');
+  /* 10.09: тоннаж и «всего тренировок» убраны — цифры ради цифр; объём виден
+     на карте мышц ниже, прогрессия — в «Прогрессе». */
 }
 function tile(u,b,i){ return '<div class="tile"><u>'+u+'</u><b>'+b+'</b><i>'+i+'</i></div>'; }
 /* сколько недель подряд (считая текущую, если в ней уже есть занятие) была хоть одна тренировка */
@@ -4728,7 +4747,8 @@ function renderMeasSummary(){
         '<i class="'+(d0!=null?cls(d0):'')+'">'+(d0!=null? f(d0)+'<em>от '+ruDate(first.date)+'</em>' : '')+'</i></div>';
     };
     box.innerHTML = row('вес','w','кг',true,true) + row('жир','fat','%',true,true) + row('белок','prot','кг',false,true) + row('талия','waist','см',true,true) +
-      '<p class="fline" style="margin-top:8px">Последний замер '+ruDate(last.date)+'. Белок — это белковая масса тела: пока она не падает, мышцы на месте.</p>';
+      /* пояснение — только когда есть что сказать: белковая масса упала */
+      ((last.prot!=null && first!==last && first.prot!=null && last.prot-first.prot<-0.3) ? '<p class="fline" style="margin-top:8px">Белковая масса ниже старта — мышцы уходят: сначала еда и сон, не программа.</p>' : '');
   };
   if(FOOD.meas){ draw(FOOD.meas); }
   else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
@@ -4859,16 +4879,15 @@ function advice(e){
   var h = exHistory(e);
   var top = topReps(e), st = stepOf(e), tm = isTime(e);
   if(!h.length){ var sh=startHint(e);
+    /* вес уже стоит в ячейках с подписью «ориентир», диапазон — в шапке: строка нужна только когда веса нет */
     return {kind:'start', text:sh, lw:null,
-      short: sh.kg!=null ? 'Начни с <b>'+fmtKg(sh.kg)+' кг</b> · цель '+repsOf(e)
-                         : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
+      short: sh.kg!=null ? '' : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
 
   var last = h[0], prev = h[1] || null;
   var done = last.sets.filter(function(v){ return v.r!=null; });
   if(!done.length){ var sh2=startHint(e);
     return {kind:'start', text:sh2, lw:null,
-      short: sh2.kg!=null ? 'Начни с <b>'+fmtKg(sh2.kg)+' кг</b> · цель '+repsOf(e)
-                          : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
+      short: sh2.kg!=null ? '' : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом' }; }
 
   var allTop = done.every(function(v){ return v.r>=top; });
   var w = done[0].w;
