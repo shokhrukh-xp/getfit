@@ -1237,6 +1237,7 @@ body.onb #picker .modalbox::before{display:none}
         <button type="button" class="nudge" id="newver" hidden></button>
         <div id="planbox" hidden></div>
         <div id="coachreco" hidden></div>
+        <div id="rbbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
         <div id="list"></div>
         <p class="dbnote" id="dbnote"></p>
@@ -2548,7 +2549,9 @@ function renderGoalCard(){
          (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? (Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем' : ' · отстаём на '+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
          (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p>';
     } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
-    h+='<p class="gp">Программу из-за цели пересобирать не нужно: цель меняет норму еды, зал остаётся тем же.</p>';
+    h+='<p class="gp">'+(rbCard()
+        ? 'Число и срок меняют норму еды. Направление, фаза и долгая цель меняют программу — сейчас она собрана под старую цель, предложение пересобрать ниже.'
+        : 'Число и срок меняют норму еды. Направление, фаза и долгая цель меняют программу — тренер сам предложит пересобрать, когда что-то из этого изменится.')+'</p>';
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
     h+='<div class="gt">'+esc(goalText(me))+'</div>'+
@@ -2775,8 +2778,9 @@ function renderReco(){
   RECO.prog = recoProgram(me);
   RECO.swaps = recoSwaps(me);
   RECO.dis = recoDislikes(me);
-  if(seen===sig || (!RECO.prog && !RECO.swaps.length && !RECO.dis.length)){ box.innerHTML=''; paintProfBtn(); return; }
-  var h='';
+  var rb=rbCard();
+  if(seen===sig || (!RECO.prog && !RECO.swaps.length && !RECO.dis.length)){ box.innerHTML=rb; paintProfBtn(); return; }
+  var h=rb;
   if(RECO.prog && RECO.prog.home){
     h+='<div class="reco"><h4>Ты занимаешься дома, а программа — для зала</h4>'+
        '<p>Готовых домашних нет. Отметь, что есть дома, и собери свою — ниже кнопка.</p>'+
@@ -2813,7 +2817,7 @@ function renderReco(){
 function paintProfBtn(){
   var b=document.getElementById('profbtn'); if(!b) return;
   var me=myData()||{}, seen=gget('reco_seen',null);
-  var есть = seen!==meSig(me) && (RECO.prog || RECO.swaps.length || RECO.dis.length);
+  var есть = (seen!==meSig(me) && (RECO.prog || RECO.swaps.length || RECO.dis.length)) || !!rbCard();
   b.classList.toggle('attn', !!есть);
 }
 /* каталог нужен для замен — подтягиваем, когда в профиле есть что беречь */
@@ -2870,7 +2874,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 11:00';
+var BUILD = '10.09 11:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5375,6 +5379,7 @@ function aiApply(){
   gset('sched_any', GYM_DAYS);
   var k=installAiProg(AIPROG); if(!k) return;
   gset('ai_prog', AIPROG);
+  if(AIPROG.stamp){ RBO=null; gset('rb_seen', AIPROG.stamp); renderRb(); }
   var str=JSON.stringify(AIPROG);
   csSetBig(AIKEY, str).catch(function(){});
   try{ syncPush('state/aiprog', AIPROG); }catch(e){}
@@ -6170,6 +6175,34 @@ function recoCard(где){
     '<div class="rb">'+(can?'<button type="button" class="go" data-reco2="do">'+esc(подпись)+'</button>':'')+другое+
     '<button type="button" data-reco2="no">'+(can?'Не сейчас':'Понятно')+'</button></div></div>';
 }
+/* ══════════ ПРОГРАММА ПОД ЦЕЛЬ ══════════
+   «Почему цель меняет только еду?» Сервер сравнивает штамп, под который
+   собрана программа (направление · зал · фаза · долгая цель), со штампом
+   сегодняшней цели. Разошлись — карточка: тренер соберёт новую и покажет,
+   человек решит. Число и срок цели программу не трогают — это еда. */
+var RBO=null;
+function rbCard(){
+  if(!RBO || !RBO.stamp || profile!=='ai' || gget('rb_seen',null)===RBO.stamp) return '';
+  return '<div class="reco2 rbc"><u>программа и цель</u><p>Программа собрана не под ту цель, что сейчас. '+esc(RBO.why||'')+'</p>'+
+    (RBO.phase?'<p><i>Фаза сейчас: '+esc(RBO.phase)+'. Тренер соберёт программу под цель целиком и покажет — ты решишь, ставить ли. Веса и история останутся.</i></p>':'')+
+    '<div class="rb"><button type="button" class="go" data-rb="go">Собрать и показать</button><button type="button" data-rb="no">Не сейчас</button></div></div>';
+}
+function renderRb(){
+  var h=rbCard(), el=document.getElementById('rbbox');
+  if(el){ el.hidden=!h; el.innerHTML=h; }
+  paintProfBtn(); renderGoalCard();
+}
+function rbClick(e){
+  var b=e.target.closest('button[data-rb]'); if(!b) return;
+  if(b.dataset.rb==='go'){
+    var m=document.getElementById('profm'); if(!m || !m.classList.contains('show')) openProf();
+    aiBuild(); haptic('medium');
+    setTimeout(function(){ var a=document.getElementById('aistate'); if(a && a.scrollIntoView) a.scrollIntoView({block:'center', behavior:'smooth'}); }, 300);
+    return;
+  }
+  if(RBO) gset('rb_seen', RBO.stamp);
+  renderRb(); renderReco(); haptic('light');
+}
 function renderReco2(){
   var el=document.getElementById('coachreco');
   if(el){
@@ -6309,6 +6342,7 @@ function recoPull(){
       if(d && d.plan) takePlan(d.plan);
       TODAYPLAN=(d && d.today && d.today.plan)||[]; renderPlanBox();
       if(d && d.rebuild) applyRebuild(d.rebuild);
+      RBO = (d && d.rebuild_offer) || null; renderRb();
       if(d && d.auto && d.auto.length) applyAuto(d.auto);
       var c = d && d.reco; if(!c || !c.text) return;
       if(!c.id) c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
@@ -6332,6 +6366,8 @@ function recoClick(e){
   if(c){ gset('reco2_seen', c.id); recoDone(); } renderReco2(); haptic('light');
 }
 document.getElementById('coachreco').addEventListener('click', recoClick);
+document.getElementById('rbbox').addEventListener('click', rbClick);
+document.getElementById('recobox').addEventListener('click', rbClick);
 document.getElementById('chatlog').addEventListener('click', recoClick);
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
