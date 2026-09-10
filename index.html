@@ -989,6 +989,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .cirtiles .tile{display:flex;flex-direction:column}
 .cirtiles .tile i{margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cirnote{margin:10px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
+.cirwhy{margin:6px 2px 0;font-size:12px;color:var(--muted);line-height:1.45}
+.lbrow .sc.live{color:var(--muted);font-weight:600}
+.lbrow .lbwhy{grid-column:1 / -1;font-size:11.5px;color:var(--muted);line-height:1.4;padding-top:2px}
+.fclose .fdone small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
 .cirnote button{background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:11.5px;cursor:pointer}
 .cirrules{margin:8px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);font-size:12px;color:var(--muted);line-height:1.5}
 .cirempty{padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
@@ -3024,7 +3028,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 20:40';
+var BUILD = '10.09 21:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5765,6 +5769,8 @@ function loadDay(){
    Всё социальное живёт на одной вкладке; на остальных — чип серии в шапке и
    кнопка «Закрыть день» на «Еде». Считает сервер (/circle, /day/close). */
 var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
+function fmtR(x){ return x==null ? '—' : (Math.round(x*10)/10).toFixed(1).replace('.',','); }
+function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
 function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
 function circlePull(id){
   if(id!=null) CIRCID=id;
@@ -5786,9 +5792,11 @@ function renderCircle(){
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
   var h='';
   if(list.length>1) h+='<div class="cirsw">'+list.map(function(c){ return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>'; }).join('')+'</div>';
+  var td=me.today||null;
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
-     '<div class="tile"><u>серия дней</u><b>'+(me.streak||0)+' <small>'+plural(me.streak||0,['день','дня','дней'])+'</small></b><i>'+(me.closed?'сегодня закрыт':(me.streak?'сегодня ещё не закрыт':'закрой первый день'))+'</i></div>'+
-     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':me.pts)+' <small>/ 70</small></b><i>уровень '+(me.level||3)+' из 5</i></div></div>';
+     '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'день закрыт':'пока — день не закрыт') : 'ещё ничего не записано')+'</i></div>'+
+     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':fmtR(me.pts))+' <small>/ 70</small></b><i>серия '+(me.streak||0)+' · уровень '+(me.level||3)+'</i></div></div>'+
+     (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
   h+='<div class="segrow"><button type="button" data-seg="food" aria-pressed="'+(CIRSEG!=='feed')+'">Питание</button><button type="button" data-seg="feed" aria-pressed="'+(CIRSEG==='feed')+'">Лента</button></div>';
@@ -5796,27 +5804,29 @@ function renderCircle(){
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b><button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button></div>';
   } else {
-    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>балл</span></div>'+b.map(function(r,i){
+    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+b.map(function(r,i){
       var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
-      return '<div class="lbrow'+(r.me?' lbme':'')+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>серия '+(r.streak||0)+' · уровень '+(r.level||3)+'</i></span>'+
-             '<span class="lbdots">'+dots+'</span><span class="sc'+(r.avg==null?' dim':'')+'">'+(r.avg==null?'—':r.avg)+'</span></div>';
+      var t=r.today||null, has=t&&t.r!=null;
+      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg)+' · ':'')+'серия '+(r.streak||0)+'</i></span>'+
+             '<span class="lbdots">'+dots+'</span><span class="sc'+(has?(t.closed?'':' live'):' dim')+'">'+(has?fmtR(t.r):'—')+'</span>'+
+             (has&&LBOPEN===r.uid?'<span class="lbwhy">'+esc(t.closed?'':'пока · ')+esc(whyText(t.why))+'</span>':'')+'</div>';
     }).join('')+'</div>'+
-    '<p class="lbkey"><i><s class="lbd-ok"></s>в норме</i><i><s class="lbd-low"></s>ниже 70</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>не закрыт</i></p>';
+    '<p class="lbkey"><i><s class="lbd-ok"></s>от 7</i><i><s class="lbd-low"></s>ниже 7</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>не закрыт</i></p>';
   }
-  h+='<p class="cirnote">Балл — среднее за закрытые дни недели: калории ±10 % от своей нормы, белок, клетчатка, сахар. Незакрытый день тянет вниз. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
-  if(CIRCRULES) h+='<div class="cirrules">За день до 100 баллов: калории 45 (полные при ±10 % от нормы, к ±30 % — ноль, недоесть так же плохо, как переесть), белок 35 (полные от 90 % нормы), клетчатка 10, сахар 10 (полные, если не выше нормы).<br>'+
-    'День закрыт — кнопкой на «Еде» или сам в полночь, если записано минимум два приёма. Незакрытый день — ноль.<br>'+
-    'Балл недели — сумма баллов закрытых дней, делённая на прошедшие дни: пропуск тянет вниз.<br>'+
-    'Очки недели: 70 в понедельник, минус 10 за незакрытый день, минус 5 за день ниже 70. От 60 — уровень выше, ниже 40 — ниже.<br>'+
+  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар. Нажми на строку — увидишь, за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
+  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (коридор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
+    'Пока день идёт, недобор не считается — только перебор; полная оценка ставится при закрытии.<br>'+
+    'День закрыт — кнопкой на «Еде» или сам в полночь, если записано минимум два приёма.<br>'+
+    'Очки недели копятся: каждый закрытый день приносит свою оценку, максимум 70. От 50 за неделю — уровень выше, меньше 25 — ниже.<br>'+
     'Серия — закрытые дни подряд.</div>';
   var L=CIRC.last;
   if(L && (L.best||L.grow)) h+='<h3 class="lh">Прошлая неделя</h3><div class="tiles" style="margin-top:0">'+
-    (L.best?'<div class="tile"><u>точность</u><b>'+esc(L.best.name)+'</b><i>'+L.best.v+' в среднем</i></div>':'')+
-    (L.grow?'<div class="tile"><u>рост</u><b>'+esc(L.grow.name)+'</b><i>+'+L.grow.v+' к своей прошлой неделе</i></div>':'')+'</div>';
+    (L.best?'<div class="tile"><u>точность</u><b>'+esc(L.best.name)+'</b><i>'+fmtR(L.best.v)+' из 10 в среднем</i></div>':'')+
+    (L.grow?'<div class="tile"><u>рост</u><b>'+esc(L.grow.name)+'</b><i>+'+fmtR(L.grow.v)+' к своей прошлой неделе</i></div>':'')+'</div>';
   box.innerHTML=h;
 }
 /* ── лента тарелок круга ── */
-var FEED=null, CIRSEG=gget('cirseg','food')||'food', FEEDF={kind:'',norm:false}, FEEDOPEN=null, FEEDBUSY=false;
+var FEED=null, CIRSEG=gget('cirseg','food')||'food', FEEDF={kind:'',norm:false}, FEEDOPEN=null, FEEDBUSY=false, LBOPEN=null;
 function feedPull(){
   FEEDBUSY=true;
   return fGet('/feed?uid='+encodeURIComponent(syncUid())+(CIRCID?'&id='+encodeURIComponent(CIRCID):''))
@@ -5876,6 +5886,7 @@ document.getElementById('cirbody').addEventListener('click', function(e){
     return;
   }
   var pl=e.target.closest('[data-pl]'); if(pl){ FEEDOPEN = FEEDOPEN===pl.dataset.pl ? null : pl.dataset.pl; feedRender(); haptic('light'); return; }
+  var lw=e.target.closest('[data-lbwho]'); if(lw){ LBOPEN = LBOPEN===lw.dataset.lbwho ? null : lw.dataset.lbwho; renderCircle(); haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
 });
@@ -5889,9 +5900,9 @@ function circleShare(id){
 /* «Закрыть день» на «Еде»: балл, серия и место — тот самый момент, ради которого механика работает */
 function closeHtml(){
   var d=DAYSC; if(!d || d.date!==fDate()) return '';
-  if(d.closed) return '<div class="fclose"><div class="fdone"><b>'+d.score+'</b> · день закрыт'+(d.streak?' · серия '+d.streak:'')+(d.place?' · '+d.place+'-е место из '+d.of+(d.circle?' в кругу «'+esc(d.circle)+'»':''):'')+'</div></div>';
-  if(d.can) return '<div class="fclose"><button type="button" class="btn prim" id="fcloseb">Закрыть день'+(d.score!=null?' · '+d.score:'')+'</button><span class="fhint">Доел на сегодня — закрой день: балл пойдёт в круг, серия вырастет. Иначе закроется сам в полночь.</span></div>';
-  if(d.n===1) return '<div class="fclose"><span class="fhint">Чтобы закрыть день, запиши минимум два приёма.</span></div>';
+  if(d.closed) return '<div class="fclose"><div class="fdone"><b>'+fmtR(d.r)+' / 10</b> · день закрыт'+(d.streak?' · серия '+d.streak:'')+(d.place?' · '+d.place+'-е место из '+d.of+(d.circle?' в кругу «'+esc(d.circle)+'»':''):'')+'<br><small>'+esc(whyText(d.why))+'</small></div></div>';
+  if(d.can) return '<div class="fclose"><button type="button" class="btn prim" id="fcloseb">Закрыть день'+(d.final&&d.final.r!=null?' · '+fmtR(d.final.r)+' / 10':'')+'</button><span class="fhint">'+(d.final?esc(whyText(d.final.why))+'. ':'')+'Доел на сегодня — закрой день: оценка пойдёт в круг, серия вырастет. Иначе закроется сам в полночь.</span></div>';
+  if(d.n===1) return '<div class="fclose"><span class="fhint">'+(d.r!=null?'Пока '+fmtR(d.r)+' из 10. ':'')+'Чтобы закрыть день, запиши минимум два приёма.</span></div>';
   return '';
 }
 function loadDayScore(){
@@ -5905,7 +5916,7 @@ document.getElementById('fday').addEventListener('click', function(e){
   b.disabled=true; b.textContent='Закрываю…';
   fPost('/day/close',{uid:syncUid(), date:fDate()}).then(function(d){
     if(!d||!d.ok){ haptic('err'); b.disabled=false; b.textContent='Закрыть день'; if(d&&d.why) say(d.why); return; }
-    haptic('ok'); DAYSC={date:fDate(), closed:true, score:d.score, streak:d.streak, place:d.place, of:d.of, circle:d.circle};
+    haptic('ok'); DAYSC={date:fDate(), closed:true, score:d.score, r:d.r, why:d.why||[], streak:d.streak, place:d.place, of:d.of, circle:d.circle};
     renderFoodDay(); circlePull();
   }).catch(function(){ haptic('err'); b.disabled=false; b.textContent='Закрыть день'; });
 });
