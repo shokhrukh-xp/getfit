@@ -940,6 +940,16 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .bodymap .ins{fill:none;stroke:#12161C;stroke-width:1.5;stroke-linecap:round}
 .bodymap .mz{fill:var(--accent);stroke:var(--map-line);stroke-width:.22;stroke-linejoin:round;cursor:pointer}
 .bodymap .mz.hit{stroke:var(--done);stroke-width:.32}
+/* нажатая мышца: сама ярче с обводкой, остальное приглушено, подпись и цифра жирнее */
+.bodymap .mz,.bodymap .num,.bodymap .mnm,.bodymap .lead{transition:opacity .2s,fill-opacity .2s}
+.bodymap .mz.sel{stroke:var(--text);stroke-width:.5;fill-opacity:1;filter:drop-shadow(0 0 1.4px var(--accent))}
+.bodymap.has .mz:not(.sel){opacity:.3}
+.bodymap.has .num:not(.sel),.bodymap.has .mnm:not(.sel),.bodymap.has .lead:not(.sel){opacity:.4}
+.bodymap .mnm.sel{fill:var(--text);font-weight:600}
+.bodymap .num.sel{fill:var(--accent)}
+.bodymap .lead.sel{stroke:var(--text)}
+.bodymap .cap.sel{fill:var(--text)}
+.bodymap .cap.sel tspan{font-weight:600}
 .bodymap .num{fill:var(--text);font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:600}
 .bodymap .mnm{fill:var(--muted);font-family:inherit;font-size:8.4px}
 .bodymap .mnm.off{fill:var(--dim)}
@@ -2913,7 +2923,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 15:05';
+var BUILD = '10.09 16:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4530,30 +4540,32 @@ function renderMus(){
      Подписи разведены на две стороны — иначе двадцать выносок наезжают друг на друга. */
   var W=320, CX=160, SC=3.16, FY=8, BY=334, HH=658;
   var NX=58, TX=86;                     /* отступ цифры и названия от центра */
-  function figure(top, set, body){
+  /* подпись, выноска и цифра несут ту же data-m, что и зона: по нажатию
+     подсвечивается всё вместе, а не только контур на фигуре */
+  function figure(top, set, body, side){
     var leads='', zones='', txt='';
     Object.keys(set).forEach(function(k){
       var g=set[k], v=сет[k]||0, d=посл[k], sd=g.sd;
       var op=(d==null)?0.05:Math.max(0.08, 1-d/MFADE);
       var ax=r1(g.a[0]*SC), ay=r1(g.a[1]*SC), an=(sd<0?'end':'start');
       var ly=r1(g.ly*SC);
-      leads+='<line class="lead'+(v>0?'':' off')+'" x1="'+(sd*(NX+4))+'" y1="'+ly+
+      leads+='<line class="lead'+(v>0?'':' off')+'" data-m="'+k+'" x1="'+(sd*(NX+4))+'" y1="'+ly+
              '" x2="'+ax+'" y2="'+ay+'"/>';
-      if(v>0) txt+='<text class="num" x="'+(sd*NX)+'" y="'+r1(ly+3.8)+'" text-anchor="'+an+'">'+
+      if(v>0) txt+='<text class="num" data-m="'+k+'" x="'+(sd*NX)+'" y="'+r1(ly+3.8)+'" text-anchor="'+an+'">'+
                    fmtKg(v)+'</text>';
-      txt+='<text class="mnm'+(v>0?'':' off')+'" x="'+(sd*TX)+'" y="'+r1(ly+3.4)+
+      txt+='<text class="mnm'+(v>0?'':' off')+'" data-m="'+k+'" x="'+(sd*TX)+'" y="'+r1(ly+3.4)+
            '" text-anchor="'+an+'">'+MNAME[k]+'</text>';
       zones+='<g class="mz'+(v>=MPOROG?' hit':'')+'" data-m="'+k+'" fill-opacity="'+r1(op)+'">'+
              '<title>'+MNAME[k]+' · '+(v>0?(fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за неделю'):'на этой неделе не работал')+
              (d!=null?' · последний раз '+daysAgoRu(d):'')+'</title>'+g.s+'</g>';
     });
-    return '<g transform="translate('+CX+','+top+')">'+leads+
+    return '<g transform="translate('+CX+','+top+')" data-side="'+side+'">'+leads+
            '<g transform="scale('+SC+')"><g class="bg">'+body+'</g>'+zones+'</g>'+txt+'</g>';
   }
   var svg='<svg class="bodymap" viewBox="0 0 '+W+' '+HH+'" role="img" aria-label="Карта проработанных мышц">'+
-    figure(FY, G.front, G.base.f)+figure(BY, G.back, G.base.b)+
-    '<text class="cap" x="'+CX+'" y="'+(FY+306)+'" text-anchor="middle">спереди</text>'+
-    '<text class="cap" x="'+CX+'" y="'+(BY+306)+'" text-anchor="middle">сзади</text></svg>';
+    figure(FY, G.front, G.base.f, 'f')+figure(BY, G.back, G.base.b, 'b')+
+    '<text class="cap" data-cap="f" x="'+CX+'" y="'+(FY+306)+'" text-anchor="middle">спереди</text>'+
+    '<text class="cap" data-cap="b" x="'+CX+'" y="'+(BY+306)+'" text-anchor="middle">сзади</text></svg>';
 
   var занятий=Object.keys(дней).length;
   var всего=Object.keys(MNAME);
@@ -4573,15 +4585,38 @@ function renderMus(){
     '<i class="attr">анатомия — body-muscles, Apache-2.0</i></div>'+
     '<p class="musdet" id="musdet">'+сводка+'</p></div>';
 
+  /* данные нажатия берём с последней отрисовки, а не из замыкания первой:
+     обработчик вешается один раз, а карта перерисовывается после каждой тренировки */
+  box.__mus={сет:сет, посл:посл, сводка:сводка};
   if(!box.__wired){
     box.__wired=1;
     box.addEventListener('click', function(ev){
-      var g=ev.target.closest ? ev.target.closest('.mz') : null;
-      var det=document.getElementById('musdet'); if(!g || !det) return;
-      var k=g.getAttribute('data-m'), v=сет[k]||0, d=посл[k];
-      det.innerHTML='<b'+(v<MPOROG?' class="down"':'')+'>'+MNAME[k]+'</b> · '+
-        (v>0 ? fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за 7 дней' : 'за 7 дней ни одного подхода')+
-        (d!=null ? ' · последний раз '+daysAgoRu(d) : ' · дольше '+MFADE+' дней не трогал');
+      var svgEl=box.querySelector('.bodymap'), det=document.getElementById('musdet');
+      if(!svgEl || !det) return;
+      var g=ev.target.closest ? ev.target.closest('[data-m]') : null;
+      var M=box.__mus||{сет:{},посл:{},сводка:''};
+      function clear(){
+        svgEl.classList.remove('has');
+        svgEl.querySelectorAll('.sel').forEach(function(el){ el.classList.remove('sel'); });
+        svgEl.querySelectorAll('.cap').forEach(function(c){ c.textContent = c.getAttribute('data-cap')==='f' ? 'спереди' : 'сзади'; });
+        det.innerHTML=M.сводка;
+      }
+      /* нажатие мимо мышцы или повторно по той же — снимаем выделение */
+      if(!g){ if(svgEl.classList.contains('has') && ev.target.closest('.bodymap')){ clear(); haptic('light'); } return; }
+      var k=g.getAttribute('data-m');
+      var same = svgEl.classList.contains('has') && g.classList.contains('sel');
+      clear();
+      if(same){ haptic('light'); return; }
+      var v=M.сет[k]||0, d=M.посл[k];
+      svgEl.classList.add('has');
+      svgEl.querySelectorAll('[data-m="'+k+'"]').forEach(function(el){ el.classList.add('sel'); });
+      var подх = v>0 ? fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за 7 дней' : 'за 7 дней ни одного подхода';
+      var когда = d!=null ? 'последний раз '+daysAgoRu(d) : 'дольше '+MFADE+' дней не трогал';
+      det.innerHTML='<b'+(v<MPOROG?' class="down"':'')+'>'+MNAME[k]+'</b> · '+подх+' · '+когда;
+      /* та же строка коротко — в подписи под фигурой, где нажали: низ карты может быть за экраном */
+      var fig=g.closest('[data-side]'), side=fig?fig.getAttribute('data-side'):'';
+      var cap=svgEl.querySelector('.cap[data-cap="'+side+'"]');
+      if(cap){ cap.classList.add('sel'); cap.innerHTML='<tspan>'+MNAME[k]+'</tspan> · '+(v>0?fmtKg(v)+' подх. за 7 дней':'0 за 7 дней')+' · '+(d!=null?daysAgoRu(d):'дольше '+MFADE+' дней'); }
       haptic('light');
     });
   }
