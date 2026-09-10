@@ -3025,7 +3025,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 23:40';
+var BUILD = '11.09 00:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5795,6 +5795,13 @@ function openCircle(){ udayLeave(); renderCircle(); circlePull(); }
 /* серия (дни подряд с записанной едой) живёт только на «Рейтинге» и в карточке
    оценки на «Еде»: огонёк в шапке на всех экранах путал — «что он означает?» (его слова 10.09) */
 function streakText(n){ n=+n||0; return n ? n+' '+plural(n,['день','дня','дней'])+' подряд' : ''; }
+/* «21,0 / 70» он прочитал как «за 8 дней» (серия рядом) — теперь неделя в той же
+   шкале, что и день: средняя оценка и из скольких дней она сложилась */
+function weekSub(me){
+  var n=+(me&&me.elapsed)||0;
+  if(me && me.ravg!=null) return n<=1 ? 'за '+n+' '+plural(n,['день','дня','дней'])+' недели' : 'в среднем за '+n+' '+plural(n,['день','дня','дней']);
+  return 'неделя только началась';
+}
 function renderCircle(){
   var box=document.getElementById('cirbody'); if(!box) return;
   var h2=box.parentNode.querySelector('h2'); if(h2) h2.hidden=!!UDAY;
@@ -5807,7 +5814,7 @@ function renderCircle(){
   var td=me.today||null;
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
      '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'пока — день идёт') : 'ещё ничего не записано')+'</i></div>'+
-     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':fmtR(me.pts))+' <small>/ 70</small></b><i>'+(me.streak?'серия: '+streakText(me.streak):'серии пока нет')+'</i></div></div>'+
+     '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+weekSub(me)+'</i></div></div>'+
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
@@ -5827,7 +5834,7 @@ function renderCircle(){
   if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
     'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
-    'Очки недели копятся: каждый день приносит свою оценку, максимум 70.<br>'+
+    'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
     'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
   var L=CIRC.last;
   if(L && (L.best||L.grow)) h+='<h3 class="lh">Прошлая неделя</h3><div class="tiles" style="margin-top:0">'+
