@@ -993,6 +993,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbrow .sc.live{color:var(--muted);font-weight:600}
 .lbrow .lbwhy{grid-column:1 / -1;font-size:11.5px;color:var(--muted);line-height:1.4;padding-top:2px}
 .fclose .fdone small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.fclose .fdone.fpend{border-color:var(--line);background:var(--card-2)}
 .cirnote button{background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:11.5px;cursor:pointer}
 .cirrules{margin:8px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);font-size:12px;color:var(--muted);line-height:1.5}
 .cirempty{padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
@@ -3028,7 +3029,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 21:30';
+var BUILD = '10.09 21:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5767,7 +5768,7 @@ function loadDay(){
 }
 /* ══════════ КРУГ: серия, балл дня, таблица недели ══════════
    Всё социальное живёт на одной вкладке; на остальных — чип серии в шапке и
-   кнопка «Закрыть день» на «Еде». Считает сервер (/circle, /day/close). */
+   оценка дня на «Еде». Считает сервер (/circle, /day/score). */
 var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
 function fmtR(x){ return x==null ? '—' : (Math.round(x*10)/10).toFixed(1).replace('.',','); }
 function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
@@ -5794,7 +5795,7 @@ function renderCircle(){
   if(list.length>1) h+='<div class="cirsw">'+list.map(function(c){ return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>'; }).join('')+'</div>';
   var td=me.today||null;
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
-     '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'день закрыт':'пока — день не закрыт') : 'ещё ничего не записано')+'</i></div>'+
+     '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'пока — день идёт') : 'ещё ничего не записано')+'</i></div>'+
      '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':fmtR(me.pts))+' <small>/ 70</small></b><i>серия '+(me.streak||0)+' · уровень '+(me.level||3)+'</i></div></div>'+
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
@@ -5809,16 +5810,16 @@ function renderCircle(){
       var t=r.today||null, has=t&&t.r!=null;
       return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg)+' · ':'')+'серия '+(r.streak||0)+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+(has?(t.closed?'':' live'):' dim')+'">'+(has?fmtR(t.r):'—')+'</span>'+
-             (has&&LBOPEN===r.uid?'<span class="lbwhy">'+esc(t.closed?'':'пока · ')+esc(whyText(t.why))+'</span>':'')+'</div>';
+             (has&&LBOPEN===r.uid?'<span class="lbwhy">'+esc(t.closed?'итог · ':'пока · ')+esc(whyText(t.why))+'</span>':'')+'</div>';
     }).join('')+'</div>'+
     '<p class="lbkey"><i><s class="lbd-ok"></s>от 7</i><i><s class="lbd-low"></s>ниже 7</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>не закрыт</i></p>';
   }
   h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар. Нажми на строку — увидишь, за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
   if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (коридор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
-    'Пока день идёт, недобор не считается — только перебор; полная оценка ставится при закрытии.<br>'+
-    'День закрыт — кнопкой на «Еде» или сам в полночь, если записано минимум два приёма.<br>'+
-    'Очки недели копятся: каждый закрытый день приносит свою оценку, максимум 70. От 50 за неделю — уровень выше, меньше 25 — ниже.<br>'+
-    'Серия — закрытые дни подряд.</div>';
+    'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
+    'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
+    'Очки недели копятся: каждый день приносит свою оценку, максимум 70. От 50 за неделю — уровень выше, меньше 25 — ниже.<br>'+
+    'Серия — дни с записанной едой подряд.</div>';
   var L=CIRC.last;
   if(L && (L.best||L.grow)) h+='<h3 class="lh">Прошлая неделя</h3><div class="tiles" style="margin-top:0">'+
     (L.best?'<div class="tile"><u>точность</u><b>'+esc(L.best.name)+'</b><i>'+fmtR(L.best.v)+' из 10 в среднем</i></div>':'')+
@@ -5897,13 +5898,13 @@ function circleShare(id){
   if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
   haptic('light');
 }
-/* «Закрыть день» на «Еде»: балл, серия и место — тот самый момент, ради которого механика работает */
+/* оценка дня на «Еде» — всегда, без закрытия (его правило: «не нужно закрывать
+   день, чтобы получить оценку»); итог фиксируется в полночь сам */
 function closeHtml(){
-  var d=DAYSC; if(!d || d.date!==fDate()) return '';
-  if(d.closed) return '<div class="fclose"><div class="fdone"><b>'+fmtR(d.r)+' / 10</b> · день закрыт'+(d.streak?' · серия '+d.streak:'')+(d.place?' · '+d.place+'-е место из '+d.of+(d.circle?' в кругу «'+esc(d.circle)+'»':''):'')+'<br><small>'+esc(whyText(d.why))+'</small></div></div>';
-  if(d.can) return '<div class="fclose"><button type="button" class="btn prim" id="fcloseb">Закрыть день'+(d.final&&d.final.r!=null?' · '+fmtR(d.final.r)+' / 10':'')+'</button><span class="fhint">'+(d.final?esc(whyText(d.final.why))+'. ':'')+'Доел на сегодня — закрой день: оценка пойдёт в круг, серия вырастет. Иначе закроется сам в полночь.</span></div>';
-  if(d.n===1) return '<div class="fclose"><span class="fhint">'+(d.r!=null?'Пока '+fmtR(d.r)+' из 10. ':'')+'Чтобы закрыть день, запиши минимум два приёма.</span></div>';
-  return '';
+  var d=DAYSC; if(!d || d.date!==fDate() || d.r==null) return '';
+  var fin = d.closed || d.date<TODAY;
+  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · серия '+d.streak:'')+
+    '<br><small>'+esc(whyText(d.why))+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
 }
 function loadDayScore(){
   var date=fDate();
@@ -5911,15 +5912,6 @@ function loadDayScore(){
     if(!d||!d.ok) return; d.date=date; DAYSC=d; renderFoodDay();
   }).catch(function(){});
 }
-document.getElementById('fday').addEventListener('click', function(e){
-  var b=e.target.closest('#fcloseb'); if(!b) return;
-  b.disabled=true; b.textContent='Закрываю…';
-  fPost('/day/close',{uid:syncUid(), date:fDate()}).then(function(d){
-    if(!d||!d.ok){ haptic('err'); b.disabled=false; b.textContent='Закрыть день'; if(d&&d.why) say(d.why); return; }
-    haptic('ok'); DAYSC={date:fDate(), closed:true, score:d.score, r:d.r, why:d.why||[], streak:d.streak, place:d.place, of:d.of, circle:d.circle};
-    renderFoodDay(); circlePull();
-  }).catch(function(){ haptic('err'); b.disabled=false; b.textContent='Закрыть день'; });
-});
 function renderFoodNav(){
   var el=document.getElementById('fnav'); if(!el) return;
   var d=fDate(), сегодня=d===TODAY;
