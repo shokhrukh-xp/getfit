@@ -768,6 +768,14 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
 .reco2 .rb button.go{border-color:var(--accent-2);color:var(--accent)}
 .reco2 .rb button:active{opacity:.6}
 .reco2.inchat{align-self:stretch;max-width:100%;margin:6px 0 0;background:var(--accent-ghost);border-color:transparent}
+/* что именно встанет: два кадра из каталога и имя — чтобы решать глазами, а не по названию */
+.reco2 .rtarget{display:flex;align-items:center;gap:12px;margin:8px 0 6px;padding:10px;border-radius:12px;background:var(--card-solid);border:.5px solid var(--line-soft)}
+.reco2 .rtarget .fig2{flex:0 0 112px;width:112px;border-radius:9px}
+.reco2 .rtarget .fig{flex:0 0 112px;width:112px;max-width:112px}
+.reco2 .rtarget .rtx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.reco2 .rtarget .rtx b{font-size:13.5px;line-height:1.3;color:var(--text)}
+.reco2 .rtarget .rtx i{font-style:normal;font-size:12px;color:var(--dim);line-height:1.35}
+.reco2 .rtarget .rtx s{text-decoration:none;font-size:11px;color:var(--muted)}
 
 /* карточка упражнения */
 .card{padding:13px 13px 11px;margin-bottom:9px}
@@ -2862,7 +2870,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 10:40';
+var BUILD = '10.09 11:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6128,14 +6136,38 @@ function recoCan(c){
   if(c.what==='swap') return {kind:'swap', hit:hit};
   return null;
 }
+/* Что встанет вместо — картинками. «Тренер называет новое упражнение, но мне
+   не понять, что это, пока не посмотрю картинками» — теперь два кадра из
+   каталога прямо в карточке, и «Другое», если не то. */
+function catById(id){ return (CAT && CAT.ex && id) ? (CAT.ex.filter(function(x){ return x.i===id; })[0] || null) : null; }
+function recoPick(c, hit){
+  if(!CAT || !CAT.ex || !hit || c.what!=='swap' || c.nocat) return null;
+  return catById(c.toId) || recoTarget(c, hit);
+}
+function recoTargetHtml(c, can){
+  if(!can || can.kind!=='swap') return '';
+  var x=recoPick(c, can.hit); if(!x) return '';
+  var base=((DAYS[can.hit.dk]||{}).ex||[])[can.hit.di], было=(base&&base.n)||can.hit.e.n;
+  var mus=x.m && MUS_EN[x.m] && MNAME[MUS_EN[x.m]] ? MNAME[MUS_EN[x.m]] : '';
+  return '<div class="rtarget">'+mediaFor({cat:x.i, n:x.n, fig:''})+
+    '<div class="rtx"><b>'+esc(x.n)+'</b><i>вместо: '+esc(было)+'</i>'+(mus?'<s>'+esc(mus)+'</s>':'')+'</div></div>';
+}
 function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
   if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
   var can=recoCan(c);
+  var цель=recoTargetHtml(c, can);
   var подпись = (can && can.kind==='swap' && c.nocat) ? 'Выбрать в каталоге' : (c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить'));
-  return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+
+  var другое = (can && can.kind==='swap' && !c.nocat) ? '<button type="button" data-reco2="else">Другое</button>' : '';
+  if(c.applied){
+    /* режим «всё само»: уже встало — показываем что, и даём переиграть */
+    return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер заменил</u><p>'+esc(c.text)+'</p>'+цель+
+      (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
+      '<div class="rb">'+другое+'<button type="button" data-reco2="no">Понятно</button></div></div>';
+  }
+  return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+цель+
     (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
-    '<div class="rb">'+(can?'<button type="button" class="go" data-reco2="do">'+esc(подпись)+'</button>':'')+
+    '<div class="rb">'+(can?'<button type="button" class="go" data-reco2="do">'+esc(подпись)+'</button>':'')+другое+
     '<button type="button" data-reco2="no">'+(can?'Не сейчас':'Понятно')+'</button></div></div>';
 }
 function renderReco2(){
@@ -6232,7 +6264,8 @@ function recoDone(){
    Очередь с сервера применяется при запуске без кнопки: подходы — сразу,
    замена — через каталог на ту же мышцу. Что не нашлось, остаётся человеку.
    Каждая применённая правка снимается с сервера и показывается одной строкой. */
-function applyAuto(list){
+function applyAuto(list, opts){
+  opts=opts||{};
   if(!list || !list.length) return Promise.resolve([]);
   var done=[], ids=[], notFound=[];
   var run=function(){
@@ -6252,7 +6285,7 @@ function applyAuto(list){
       renderList(); paintNote('');
       try{ fPost('/reco', {uid:syncUid(), ids:ids}).catch(function(){}); }catch(e){}
     }
-    if(done.length){ try{ if(TG && TG.showAlert) TG.showAlert('Тренер поменял программу:\n'+done.join('\n')); }catch(e){} }
+    if(done.length && !opts.quiet){ try{ if(TG && TG.showAlert) TG.showAlert('Тренер поменял программу:\n'+done.join('\n')); }catch(e){} }
     /* не нашли замену — оставляем как предложение с кнопкой, пусть выберет сам */
     if(notFound.length && !RECO2){ RECO2=notFound[0]; gset('coach_reco', notFound[0]); renderReco2(); }
     return done;
@@ -6287,8 +6320,16 @@ function recoPull(){
 }
 function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
-  if(b.dataset.reco2==='do') applyReco2();
-  else { var c=RECO2 || gget('coach_reco', null); if(c){ gset('reco2_seen', c.id); recoDone(); } renderReco2(); haptic('light'); }
+  if(b.dataset.reco2==='do'){ applyReco2(); return; }
+  var c=RECO2 || gget('coach_reco', null);
+  if(b.dataset.reco2==='else' && c){
+    /* не то — просим другую замену на тот же слот; старое предложение снимаем */
+    var can=recoCan(c), x=can?recoPick(c, can.hit):null;
+    var msg='Не подходит'+(x?' «'+x.n+'»':'')+' — предложи другую замену для «'+(c.ex||'')+'» на те же мышцы.';
+    gset('reco2_seen', c.id); recoDone(); renderReco2();
+    openCoach(); coachSend(msg); haptic('medium'); return;
+  }
+  if(c){ gset('reco2_seen', c.id); recoDone(); } renderReco2(); haptic('light');
 }
 document.getElementById('coachreco').addEventListener('click', recoClick);
 document.getElementById('chatlog').addEventListener('click', recoClick);
@@ -6301,8 +6342,17 @@ function takeChanges(d){
   /* человек попросил сейчас — показываем, даже если такое же предложение
      раньше отклонял: «Понятно» на прошлой неделе не должно прятать кнопку сегодня */
   gset('reco2_seen', null);
-  RECO2=c; gset('coach_reco', c);
-  renderReco2();
+  var показать=function(){
+    /* режим «всё само»: тренер сказал «встанет само» — значит, встаёт сейчас,
+       а карточка показывает картинками, что именно встало. Раньше здесь была
+       кнопка при словах «кнопка не нужна» — два места спорили. */
+    if((myData()||{}).auto==='all' && (c.what==='swap'||c.what==='sets') && recoCan(c) && (c.what!=='swap' || recoPick(c, recoCan(c).hit))){
+      applyAuto([c], {quiet:true});
+      c.applied=true;
+    }
+    RECO2=c; gset('coach_reco', c); renderReco2();
+  };
+  if(c.what==='swap' && !CAT){ loadCatalog().then(показать).catch(показать); } else показать();
 }
 
 function coachSend(text, image){
