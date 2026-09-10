@@ -943,13 +943,19 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 /* нажатая мышца: сама ярче с обводкой, остальное приглушено, подпись и цифра жирнее */
 .bodymap .mz,.bodymap .num,.bodymap .mnm,.bodymap .lead{transition:opacity .2s,fill-opacity .2s}
 .bodymap .mz.sel{stroke:var(--text);stroke-width:.5;fill-opacity:1;filter:drop-shadow(0 0 1.4px var(--accent))}
-.bodymap.has .mz:not(.sel){opacity:.3}
-.bodymap.has .num:not(.sel),.bodymap.has .mnm:not(.sel),.bodymap.has .lead:not(.sel){opacity:.4}
+.bmwrap.has .mz:not(.sel){opacity:.3}
+.bmwrap.has .num:not(.sel),.bmwrap.has .mnm:not(.sel),.bmwrap.has .lead:not(.sel){opacity:.4}
 .bodymap .mnm.sel{fill:var(--text);font-weight:600}
 .bodymap .num.sel{fill:var(--accent)}
 .bodymap .lead.sel{stroke:var(--text)}
-.bodymap .cap.sel{fill:var(--text)}
-.bodymap .cap.sel tspan{font-weight:600}
+/* две фигуры — два блока: подпись под фигурой обычным текстом, там же кнопка в каталог */
+.bmfig{margin:0 0 6px}
+.bmcap{margin:0;text-align:center;font-size:11px;color:var(--dim);line-height:1.4;min-height:16px}
+.bmcap.sel{color:var(--muted)}
+.bmcap.sel b{color:var(--text);font-weight:600}
+.bmpick{display:inline-flex;align-items:center;gap:6px;margin:8px auto 2px;padding:9px 14px;border-radius:999px;
+  border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent);font:inherit;font-size:13px;cursor:pointer}
+.bmpick:active{background:var(--accent);color:var(--on-accent)}
 .bodymap .num{fill:var(--text);font-family:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:600}
 .bodymap .mnm{fill:var(--muted);font-family:inherit;font-size:8.4px}
 .bodymap .mnm.off{fill:var(--dim)}
@@ -2923,7 +2929,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 16:00';
+var BUILD = '10.09 16:15';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4505,6 +4511,17 @@ function r1(v){ return Math.round(v*10)/10; }
 function mirD(d){ return d.replace(/(-?[\d.]+),(-?[\d.]+)/g, function(_,a,b){ return r1(-parseFloat(a))+','+b; }); }
 
 function daysAgoRu(d){ return d===0?'сегодня':(d===1?'вчера':(d+' '+plural(d,['день','дня','дней'])+' назад')); }
+/* группа на карте → мышца каталога (у каталога 17 групп, у карты 20:
+   задние дельты живут в «плечах», косые — в «прессе», голень — в «икрах») */
+var MUS2CAT={neck:'neck',trap:'traps',mid:'middle back',delt:'shoulders',rdelt:'shoulders',chest:'chest',
+  bic:'biceps',tri:'triceps',fore:'forearms',abs:'abdominals',obl:'abdominals',lat:'lats',lower:'lower back',
+  glute:'glutes',abd:'abductors',ham:'hamstrings',quad:'quadriceps',add:'adductors',calf:'calves',tib:'calves'};
+/* открыть страницу каталога с фильтром по мышце (с карты тела) */
+function openCatFor(m){
+  catCtx=null; catQuery=''; catEquip=''; catLevel=''; catType='strength'; catShown=40; catMuscle=m||'';
+  var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
+  goPage('ref');
+}
 
 function renderMus(){
   var box=document.getElementById('logmus'); if(!box) return;
@@ -4538,7 +4555,7 @@ function renderMus(){
   /* Фигуры одна под другой во всю ширину: так на каждую приходится втрое больше
      места, и рядом с мышцей помещается название, а не только цифра.
      Подписи разведены на две стороны — иначе двадцать выносок наезжают друг на друга. */
-  var W=320, CX=160, SC=3.16, FY=8, BY=334, HH=658;
+  var W=320, CX=160, SC=3.16, FY=8, HH=304;   /* одна фигура на svg: 8 + 92,5·3,16 */
   var NX=58, TX=86;                     /* отступ цифры и названия от центра */
   /* подпись, выноска и цифра несут ту же data-m, что и зона: по нажатию
      подсвечивается всё вместе, а не только контур на фигуре */
@@ -4562,10 +4579,11 @@ function renderMus(){
     return '<g transform="translate('+CX+','+top+')" data-side="'+side+'">'+leads+
            '<g transform="scale('+SC+')"><g class="bg">'+body+'</g>'+zones+'</g>'+txt+'</g>';
   }
-  var svg='<svg class="bodymap" viewBox="0 0 '+W+' '+HH+'" role="img" aria-label="Карта проработанных мышц">'+
-    figure(FY, G.front, G.base.f, 'f')+figure(BY, G.back, G.base.b, 'b')+
-    '<text class="cap" data-cap="f" x="'+CX+'" y="'+(FY+306)+'" text-anchor="middle">спереди</text>'+
-    '<text class="cap" data-cap="b" x="'+CX+'" y="'+(BY+306)+'" text-anchor="middle">сзади</text></svg>';
+  function block(side, set, body, cap){
+    return '<div class="bmfig"><svg class="bodymap" viewBox="0 0 '+W+' '+HH+'" role="img" aria-label="Карта проработанных мышц, '+cap+'">'+
+           figure(FY, set, body, side)+'</svg><p class="bmcap" data-cap="'+side+'">'+cap+'</p></div>';
+  }
+  var svg='<div class="bmwrap">'+block('f', G.front, G.base.f, 'спереди')+block('b', G.back, G.base.b, 'сзади')+'</div>';
 
   var занятий=Object.keys(дней).length;
   var всего=Object.keys(MNAME);
@@ -4591,32 +4609,39 @@ function renderMus(){
   if(!box.__wired){
     box.__wired=1;
     box.addEventListener('click', function(ev){
-      var svgEl=box.querySelector('.bodymap'), det=document.getElementById('musdet');
-      if(!svgEl || !det) return;
+      var wrap=box.querySelector('.bmwrap'), det=document.getElementById('musdet');
+      if(!wrap || !det) return;
+      /* кнопка под фигурой — в каталог с фильтром по этой мышце */
+      var pk=ev.target.closest ? ev.target.closest('[data-catmus]') : null;
+      if(pk){ openCatFor(pk.getAttribute('data-catmus')); haptic('medium'); return; }
       var g=ev.target.closest ? ev.target.closest('[data-m]') : null;
       var M=box.__mus||{сет:{},посл:{},сводка:''};
       function clear(){
-        svgEl.classList.remove('has');
-        svgEl.querySelectorAll('.sel').forEach(function(el){ el.classList.remove('sel'); });
-        svgEl.querySelectorAll('.cap').forEach(function(c){ c.textContent = c.getAttribute('data-cap')==='f' ? 'спереди' : 'сзади'; });
+        wrap.classList.remove('has');
+        wrap.querySelectorAll('.sel').forEach(function(el){ el.classList.remove('sel'); });
+        wrap.querySelectorAll('.bmcap').forEach(function(c){ c.textContent = c.getAttribute('data-cap')==='f' ? 'спереди' : 'сзади'; });
         det.innerHTML=M.сводка;
       }
       /* нажатие мимо мышцы или повторно по той же — снимаем выделение */
-      if(!g){ if(svgEl.classList.contains('has') && ev.target.closest('.bodymap')){ clear(); haptic('light'); } return; }
+      if(!g){ if(wrap.classList.contains('has') && ev.target.closest('.bodymap')){ clear(); haptic('light'); } return; }
       var k=g.getAttribute('data-m');
-      var same = svgEl.classList.contains('has') && g.classList.contains('sel');
+      var same = wrap.classList.contains('has') && g.classList.contains('sel');
       clear();
       if(same){ haptic('light'); return; }
       var v=M.сет[k]||0, d=M.посл[k];
-      svgEl.classList.add('has');
-      svgEl.querySelectorAll('[data-m="'+k+'"]').forEach(function(el){ el.classList.add('sel'); });
+      wrap.classList.add('has');
+      wrap.querySelectorAll('[data-m="'+k+'"]').forEach(function(el){ el.classList.add('sel'); });
       var подх = v>0 ? fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за 7 дней' : 'за 7 дней ни одного подхода';
       var когда = d!=null ? 'последний раз '+daysAgoRu(d) : 'дольше '+MFADE+' дней не трогал';
       det.innerHTML='<b'+(v<MPOROG?' class="down"':'')+'>'+MNAME[k]+'</b> · '+подх+' · '+когда;
-      /* та же строка коротко — в подписи под фигурой, где нажали: низ карты может быть за экраном */
+      /* та же строка коротко и кнопка — под фигурой, где нажали: низ карты может быть за экраном */
       var fig=g.closest('[data-side]'), side=fig?fig.getAttribute('data-side'):'';
-      var cap=svgEl.querySelector('.cap[data-cap="'+side+'"]');
-      if(cap){ cap.classList.add('sel'); cap.innerHTML='<tspan>'+MNAME[k]+'</tspan> · '+(v>0?fmtKg(v)+' подх. за 7 дней':'0 за 7 дней')+' · '+(d!=null?daysAgoRu(d):'дольше '+MFADE+' дней'); }
+      var cap=wrap.querySelector('.bmcap[data-cap="'+side+'"]');
+      if(cap){
+        cap.classList.add('sel');
+        cap.innerHTML='<b>'+MNAME[k]+'</b> · '+(v>0?fmtKg(v)+' подх. за 7 дней':'0 за 7 дней')+' · '+(d!=null?daysAgoRu(d):'дольше '+MFADE+' дней')+
+          (MUS2CAT[k] ? '<br><button type="button" class="bmpick" data-catmus="'+MUS2CAT[k]+'">Подобрать упражнение →</button>' : '');
+      }
       haptic('light');
     });
   }
