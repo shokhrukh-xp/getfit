@@ -957,10 +957,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .bmpick{display:inline-flex;align-items:center;gap:6px;margin:8px auto 2px;padding:9px 14px;border-radius:999px;
   border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent);font:inherit;font-size:13px;cursor:pointer}
 .bmpick:active{background:var(--accent);color:var(--on-accent)}
-/* ── круг: серия в шапке, таблица недели, закрытие дня ── */
-.stk{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;margin-right:8px;border-radius:999px;border:1px solid var(--line);
-  background:var(--card-2);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
-.stk:active{background:var(--accent-ghost)}
+/* ── рейтинг: плитки, таблица недели, страница человека ── */
 .cirsw{display:flex;gap:6px;margin:4px 0 12px}
 .cirsw .mchip{font-size:13px;padding:8px 14px}
 .lb{padding:2px 14px}
@@ -1337,7 +1334,6 @@ body.onb #picker .modalbox::before{display:none}
 <header class="top">
   <div class="top-in">
     <div class="mark"><img src="img/logo-64.png" alt="" width="26" height="26"><b>GET<span>FIT</span></b></div>
-    <button type="button" class="stk" id="stk" hidden aria-label="Серия дней">🔥 <b id="stkn">0</b></button>
     <button type="button" class="profbtn" id="profbtn" aria-label="Профиль"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"/></svg></button>
   </div>
 </header>
@@ -3029,7 +3025,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 22:45';
+var BUILD = '10.09 23:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5783,7 +5779,7 @@ function circlePull(id){
       if(d&&d.ok){
         if(d.circle) CIRCACHE[d.circle]=d;
         /* ответ про другой круг (человек уже переключился) — не показываем */
-        if(!want || !d.circle || d.circle===CIRCID){ CIRC=d; if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); } renderStreak(); renderCircle(); }
+        if(!want || !d.circle || d.circle===CIRCID){ CIRC=d; if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); } renderCircle(); }
       }
       return d; })
     .catch(function(){ return null; });
@@ -5796,12 +5792,9 @@ function circleSwitch(id){
   renderCircle(); circlePull(id);
 }
 function openCircle(){ udayLeave(); renderCircle(); circlePull(); }
-function renderStreak(){
-  var b=document.getElementById('stk'); if(!b) return;
-  var n=CIRC && CIRC.me ? (CIRC.me.streak||0) : 0;
-  b.hidden = !n; document.getElementById('stkn').textContent=n;
-}
-document.getElementById('stk').addEventListener('click', function(){ goPage('circle'); haptic('light'); });
+/* серия (дни подряд с записанной едой) живёт только на «Рейтинге» и в карточке
+   оценки на «Еде»: огонёк в шапке на всех экранах путал — «что он означает?» (его слова 10.09) */
+function streakText(n){ n=+n||0; return n ? n+' '+plural(n,['день','дня','дней'])+' подряд' : ''; }
 function renderCircle(){
   var box=document.getElementById('cirbody'); if(!box) return;
   var h2=box.parentNode.querySelector('h2'); if(h2) h2.hidden=!!UDAY;
@@ -5814,7 +5807,7 @@ function renderCircle(){
   var td=me.today||null;
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
      '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'пока — день идёт') : 'ещё ничего не записано')+'</i></div>'+
-     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':fmtR(me.pts))+' <small>/ 70</small></b><i>серия '+(me.streak||0)+(me.ravg!=null?' · в среднем '+fmtR(me.ravg):'')+'</i></div></div>'+
+     '<div class="tile"><u>очки недели</u><b>'+(me.pts==null?'—':fmtR(me.pts))+' <small>/ 70</small></b><i>'+(me.streak?'серия: '+streakText(me.streak):'серии пока нет')+'</i></div></div>'+
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
   if(!cur){ h+='<div class="group cirempty">Ты пока не в круге. Введи код круга в профиле.</div>'; box.innerHTML=h; return; }
@@ -5825,7 +5818,7 @@ function renderCircle(){
     h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+b.map(function(r,i){
       var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
-      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg)+' · ':'')+'серия '+(r.streak||0)+'</i></span>'+
+      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+(r.ravg!=null?'неделя '+fmtR(r.ravg):'')+(r.streak?(r.ravg!=null?' · ':'')+streakText(r.streak):'')+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+(has?(t.closed?'':' live'):' dim')+'">'+(has?fmtR(t.r):'—')+'</span></div>';
     }).join('')+'</div>'+
     '<p class="lbkey">Точки — дни недели, с понедельника: <i><s class="lbd-ok"></s>оценка 7 и выше</i>, <i><s class="lbd-low"></s>ниже 7</i>, <i><s class="lbd-today"></s>сегодня</i>, <i><s></s>не в зачёте</i> — еды не записано или только один приём.</p>';
@@ -5835,7 +5828,7 @@ function renderCircle(){
     'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
     'Очки недели копятся: каждый день приносит свою оценку, максимум 70.<br>'+
-    'Серия — дни с записанной едой подряд.</div>';
+    'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
   var L=CIRC.last;
   if(L && (L.best||L.grow)) h+='<h3 class="lh">Прошлая неделя</h3><div class="tiles" style="margin-top:0">'+
     (L.best?'<div class="tile"><u>точность</u><b>'+esc(cirName(L.best))+'</b><i>'+fmtR(L.best.v)+' из 10 в среднем</i></div>':'')+
@@ -5879,7 +5872,7 @@ function udayHtml(){
     '<button type="button" data-udnav="1" aria-label="Следующий день"'+(u.date>=TODAY?' disabled':'')+'>›</button></div>';
   if(!d) return h+'<p class="plempty">'+(u.busy?'Загружаю…':esc(u.err||'Сервер не отвечает.'))+'</p>';
   var day=d.day, fin=!!(day && (day.closed || u.date<TODAY));
-  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · серия '+d.streak:'')+
+  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(day.why))+(!fin && day.counts===false ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
   var meals=d.meals||[];
   if(!meals.length) return h+'<p class="plempty">'+(u.date===TODAY?'Сегодня ещё ничего не записано.':'В этот день ничего не записано.')+'</p>';
@@ -5948,7 +5941,7 @@ function circleShare(id){
 function closeHtml(){
   var d=DAYSC; if(!d || d.date!==fDate() || d.r==null) return '';
   var fin = d.closed || d.date<TODAY;
-  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · серия '+d.streak:'')+
+  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(d.why))+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
 }
 function loadDayScore(){
@@ -6920,8 +6913,6 @@ else {
 initDb();
 /* ссылка из утреннего сообщения бота ведёт сразу в круг */
 goPage(/[?&]p=circle(&|$)/.test(location.search||'') ? 'circle' : gget('page','gym'));
-/* серия в шапке нужна на любой странице — подтягиваем круг после старта */
-setTimeout(function(){ if(!CIRC) circlePull(); }, 1800);
 
 })();
 </script>
