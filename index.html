@@ -640,7 +640,7 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fmeal .fn i{font-style:normal}
 .fmeal .fx{flex:0 0 36px;height:36px;border-radius:9px;border:1px solid var(--line);background:none;color:var(--dim);font-size:15px}
 .fask{display:flex;gap:8px;align-items:center;margin-top:10px}
-.fask input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
+.fask input{flex:1 1 auto;min-width:0;padding:11px 8px;border-radius:11px;border:1px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:14px;-webkit-appearance:none}
 /* Подсказка яркостью почти не отличалась от введённого текста, и поле читалось
    как уже заполненное — то есть как не предназначенное для ввода. */
@@ -1320,8 +1320,8 @@ body.onb #picker .modalbox::before{display:none}
     <section class="page hide" id="p-ref">
       <div class="sec" style="padding-top:18px">
         <h2>Каталог</h2>
-        <p class="lede">501 упражнение. Любое можно поставить вместо своего —
-        кнопка «заменить упражнение» под карточкой на вкладке «Тренировка».</p>
+        <p class="lede"><span id="catn"></span>Любое можно поставить вместо своего —
+        кнопка «Заменить» под карточкой на вкладке «Тренировка».</p>
         <input class="catsearch" id="pcatsearch" type="search" placeholder="Поиск по названию" autocomplete="off">
         <div id="pcatfilters"></div>
         <div id="pcatbody"></div>
@@ -1398,9 +1398,7 @@ body.onb #picker .modalbox::before{display:none}
     <p class="mtext">Отметь дни, когда ходишь в зал. Что делать в каждый из них, решать не нужно: дни программы идут по кругу, следующий — за последним сделанным. Пропустил или пришёл в другой день — очередь просто продолжается.</p>
     <div id="schedlist"></div>
     <h3 style="margin-top:20px">Лёгкая неделя</h3>
-    <p class="mtext">Веса встали или поехали вниз? Возьми неделю с половиной подходов
-    на тех же весах. Это единственное, чего приложение за тебя не решит — как ты себя
-    чувствуешь, знаешь только ты. Через семь дней отключится само.</p>
+    <p class="mtext">Веса встали или поехали вниз? Возьми неделю с половиной подходов на тех же весах. Тренер включит её сам, если веса падают два занятия подряд, но как ты себя чувствуешь, знаешь только ты — можно и раньше. Через семь дней отключится сама.</p>
     <div id="deloadbox"></div>
     <button class="btn wide" id="schedclose">Готово</button>
   </div>
@@ -1461,7 +1459,7 @@ body.onb #picker .modalbox::before{display:none}
     <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
     <p class="seghint">регулярные занятия приложение само добавит к норме еды в эти дни — останется нажать «Было». Разовое пиши тренеру в чат</p>
-    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
+    <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Хранится в твоём аккаунте, вход — только через Telegram.</p>
     <div class="invbox" id="invbox" hidden>
       <button type="button" class="invhead" id="invtoggle" aria-expanded="false"><span class="invl">приглашение</span><span class="invsum" id="invsum"></span><i class="invchev">›</i></button>
       <div class="invbody" id="invbody" hidden>
@@ -1968,9 +1966,10 @@ function applyProfile(p, silent){
 }
 
 /* ══════════ КАТАЛОГ УПРАЖНЕНИЙ И ЗАМЕНЫ ══════════
-   Данные: free-exercise-db, лицензия Unlicense. 501 силовое упражнение,
-   названия переведены составным словарём (ядро движения + уточнения),
-   для 32 редких осталось английское — под каждым названием оно и так показано.
+   Данные: free-exercise-db, лицензия Unlicense, 873 упражнения всех типов +
+   8 своих строк (v3: базовое/изоляция, вторичные мышцы, растянутое положение).
+   Названия переведены составным словарём (ядро движения + уточнения); число в
+   заголовке страницы считается из файла, а не зашито.
    Файл catalog.json грузится один раз при первом открытии каталога, не при старте.
    Картинки берём с CDN jsDelivr, в репозиторий их не тащим. */
 var CAT=null, catLoading=false, catCtx=null, catMuscle='', catQuery='';
@@ -2048,7 +2047,7 @@ function openCatalog(ctx){
   catQuery=''; catEquip=''; catLevel='';
   /* заменяем силовое — предлагаем силовое: велотренажёр вместо приседа
      формально та же мышца, но это не замена */
-  catType = (ctx && ctx.c) || '';
+  catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
   catMuscle = (ctx && ctx.muscle) || '';
   var m=document.getElementById('catalog'); if(m) m.classList.add('show');
   var t=document.getElementById('cattitle');
@@ -2077,6 +2076,8 @@ function muscleChips(){
   return h;
 }
 var catEquip='', catLevel='', catType='', catShown=40;
+/* в базе базовые штанговые движения помечены «powerlifting» — для человека это та же сила, два чипа «сила» читались как ошибка */
+function catKind(x){ var c=x.c||'strength'; return c==='powerlifting' ? 'strength' : c; }
 function catFiltered(){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
@@ -2084,7 +2085,7 @@ function catFiltered(){
     if(catMuscle && x.m!==catMuscle) return false;
     if(catEquip && x.q!==catEquip) return false;
     if(catLevel && x.l!==catLevel) return false;
-    if(catType && (x.c||'strength')!==catType) return false;
+    if(catType && catKind(x)!==catType) return false;
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
        отдельно: «жим гантели» находит «Жим гантелей лёжа» */
@@ -2100,8 +2101,8 @@ function chipRow(field, cur, dict, label){
     if(field!=='m' && catMuscle && x.m!==catMuscle) return;
     if(field!=='q' && catEquip && x.q!==catEquip) return;
     if(field!=='l' && catLevel && x.l!==catLevel) return;
-    if(field!=='c' && catType && (x.c||'strength')!==catType) return;
-    var v = field==='c' ? (x.c||'strength') : x[field];
+    if(field!=='c' && catType && catKind(x)!==catType) return;
+    var v = field==='c' ? catKind(x) : x[field];
     counts[v]=(counts[v]||0)+1;
   });
   var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
@@ -2119,6 +2120,7 @@ function renderCatalog(){
   var box=document.getElementById(onPage?'pcatbody':'catbody'); if(!box||!CAT) return;
   var fbox=document.getElementById('pcatfilters');
   if(onPage && fbox){
+    var cn=document.getElementById('catn'); if(cn && CAT.ex) cn.textContent=CAT.ex.length+' '+plural(CAT.ex.length,['упражнение','упражнения','упражнений'])+'. ';
     fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
                      chipRow('c',catType,CAT.cats||{},'тип')+
                      chipRow('q',catEquip,CAT.equip,'снаряд')+
@@ -2154,6 +2156,8 @@ function renderCatalog(){
 /* страница каталога: своя строка поиска и свои фильтры */
 function openCatPage(){
   catCtx=null;
+  /* на странице по умолчанию силовые: растяжка и кардио — по чипу «все» */
+  if(!catType) catType='strength';
   var b=document.getElementById('pcatbody');
   if(CAT){ renderCatalog(); return; }
   if(b) b.innerHTML='<p class="empt">Загружаю каталог…</p>';
@@ -2367,7 +2371,7 @@ function renderPicker(){
   if(hi){
     hi.hidden = WIZ.stage!=='form';
     hi.textContent = знакомство
-      ? 'От этого зависят стартовые веса на каждый подход и норма еды на день. Данные остаются у тебя.'
+      ? 'От этого зависят стартовые веса на каждый подход и норма еды на день. Видит только тренер.'
       : 'Скажи, где и когда можешь заниматься, — и своими словами, чего хочешь. Остальное тренер спросит сам.';
   }
 }
@@ -2893,7 +2897,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 13:50';
+var BUILD = '10.09 14:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4710,7 +4714,7 @@ function renderMeasSummary(){
   var box=document.getElementById('logmeas'); if(!box) return;
   var draw=function(ms){
     ms=(ms||[]).filter(function(m){ return m.w; }).sort(function(a,b){ return a.date<b.date?1:-1; });
-    if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Пришли скриншот отчёта весов боту или тренеру.</p>'; return; }
+    if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Вкладка «Еда» → «Весы»: скриншот отчёта или вес руками.</p>'; return; }
     var last=ms[0], first=ms[ms.length-1];
     /* «неделю назад» — ближайший замер не позже семи дней до последнего */
     var wk=null; for(var i=1;i<ms.length;i++){ if((new Date(last.date)-new Date(ms[i].date))/864e5>=6){ wk=ms[i]; break; } }
@@ -4727,7 +4731,7 @@ function renderMeasSummary(){
       '<p class="fline" style="margin-top:8px">Последний замер '+ruDate(last.date)+'. Белок — это белковая масса тела: пока она не падает, мышцы на месте.</p>';
   };
   if(FOOD.meas){ draw(FOOD.meas); }
-  else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
+  else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
 }
 
 /* ══════════ ИСТОРИЯ И РЕКОМЕНДАЦИИ ══════════
@@ -5611,7 +5615,7 @@ function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
-  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=d.measures; renderMeas(); } }).catch(function(){});
+  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); renderMeas(); } }).catch(function(){});
   fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
 }
 /* «повторить» — то, что ел в прошлые дни, одним нажатием и без модели */
@@ -5827,11 +5831,11 @@ function renderFoodDay(){
   var состав='';
   if(pr && (pr.gym||pr.acts||pr.plan)){
     var части=['база '+Math.round(pr.base)];
-    if(pr.gym) части.push('зал +'+pr.gym);
-    if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' +'+pr.acts : 'спорт +'+pr.acts);
-    if(pr.plan) части.push(((d.plan||[]).length===1 ? d.plan[0].kind : 'спорт')+' по плану +'+pr.plan);
-    состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' · ')+
-      (pr.delta?' '+(pr.delta>0?'+':'−')+Math.abs(pr.delta)+(pr.floor?' — ниже нельзя, это пол по жиру':' по цели'):'')+
+    if(pr.gym) части.push('зал '+pr.gym);
+    if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' '+pr.acts : 'спорт '+pr.acts);
+    if(pr.plan) части.push(((d.plan||[]).length===1 ? d.plan[0].kind : 'спорт')+' по плану '+pr.plan);
+    состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' + ')+
+      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по жиру, ниже нельзя':' по цели'):'')+
       (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }
   box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
@@ -5868,7 +5872,7 @@ function renderFoodWeek(){
   /* одна строка: среднее против нормы и сколько дней ниже пола; длинный разбор шлёт бот */
   var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
   var low=w.low ? w.low.filter(function(x){ return x!==ruDate(TODAY); }).length : logged.filter(function(d){ return tg.floor && d.kcal<tg.floor; }).length;
-  var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+d.prot; },0)/(logged.length||1))};
+  var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+(+d.prot||0); },0)/(logged.length||1))};
   t.textContent = logged.length
     ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(tg.kcal?' при норме '+tg.kcal+' / '+tg.prot:'')+(low?' · ниже пола '+low+' '+plural(low,['день','дня','дней']):'')
     : 'За неделю записей нет.';
@@ -5877,6 +5881,7 @@ function renderFoodWeek(){
    веса, отдельной линией он бы лёг ровно на вес, поэтому пишем его подписью
    у последней точки. Подписаны первая и последняя точки — на телефоне
    наводить нечем. */
+function sortMeas(a){ return (a||[]).slice().sort(function(x,y){ return x.date<y.date?1:x.date>y.date?-1:0; }); }
 function renderMeas(){
   var box=document.getElementById('fchart'); if(!box) return;
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice(0,21).reverse();
@@ -6123,14 +6128,14 @@ document.getElementById('fmfile').addEventListener('change', function(e){
   var el=document.getElementById('fmreply'); el.hidden=false; el.className='freply wait'; el.innerHTML='<span>Скриншот ушёл, читаю отчёт — секунд 20<span class="dots"><i></i><i></i><i></i></span></span>'; haptic('medium');
   shrink(f, 1600).then(function(b64){ return fPost('/coach', {uid:syncUid(), text:'отчёт весов', image:b64, mime:'image/jpeg'}); })
     .then(function(d){ el.className='freply'; el.textContent=d.reply||'Записал.'; haptic('ok');
-      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }); })
+      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }); })
     .catch(function(err){ el.className='freply bad'; el.textContent=humanErr(err); haptic('err'); });
   e.target.value='';
 });
 document.getElementById('fmsave').addEventListener('click', function(){
   var w=+document.getElementById('fw').value, f=+document.getElementById('ffat').value, ws=+document.getElementById('fwaist').value;
   if(!(w>20)) return;
-  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=d.measures; renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
+  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=sortMeas(d.measures); renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
     fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
     .catch(function(err){ fReply(humanErr(err),'bad'); });
 });
@@ -6487,7 +6492,7 @@ function coachSend(text, image){
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
-      if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=x.measures; renderMeas(); } }).catch(function(){}); }
+      if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
     .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
