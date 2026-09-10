@@ -882,6 +882,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catitem{display:flex;align-items:center;gap:11px;padding:8px;border-radius:12px;
   border:1px solid var(--line);background:var(--card-2)}
 .catitem img{flex:0 0 62px;width:62px;height:48px;object-fit:cover;border-radius:8px;background:var(--card-solid)}
+.catitem svg.fig{flex:0 0 62px;width:62px;height:48px;border-radius:8px}
 .cattx{flex:1;min-width:0}
 .cattx b{display:block;font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
 .cattx i{display:block;font-style:normal;font-size:11px;color:var(--dim);
@@ -1531,6 +1532,12 @@ pullv:'<path class="gnd" d="M62 8 V24"/><path class="body" d="M44 24 H80"/><circ
 pullh:'<path class="gnd" d="M18 62 H62"/><circle class="head" cx="86" cy="44" r="7"/><path class="body" d="M79 47 L46 55"/><path class="body" d="M79 50 L88 78 L83 92"/><path class="body" d="M56 53 L52 62"/><path class="body" d="M68 51 L67 72"/><circle class="load" cx="67" cy="78" r="6.5"/><path class="gnd" d="M14 92 H116"/><path class="arw" d="M104 74 V48 M98 54 L104 47 L110 54"/>',
 plank:'<path class="gnd" d="M14 82 H116"/><circle class="head" cx="92" cy="48" r="7"/><path class="body" d="M85 51 L30 66"/><path class="body" d="M84 54 L84 74 L70 74"/><path class="body" d="M30 66 L26 78"/><path class="arw" d="M46 40 H74 M68 34 L75 40 L68 46"/>',
 legraise:'<path class="gnd" d="M40 8 H90"/><path class="body" d="M65 12 V22"/><circle class="head" cx="65" cy="29" r="7"/><path class="body" d="M65 36 V60"/><path class="body" d="M60 34 L58 14 M70 34 L72 14"/><path class="body" d="M65 60 L86 58 L88 44"/><path class="arw" d="M100 76 V44 M94 50 L100 43 L106 50"/>',
+/* голень (10.09): свои упражнения без фото на CDN — схемы в том же стиле */
+tibwall:'<path class="gnd" d="M14 92 H116"/><path class="gnd" d="M34 8 V92"/><circle class="head" cx="42" cy="20" r="7"/><path class="body" d="M40 27 L38 58"/><path class="body" d="M39 40 L36 62"/><path class="body" d="M38 58 L62 90"/><path class="body" d="M62 92 L78 82"/><path class="arw" d="M92 84 V60 M86 66 L92 59 L98 66"/>',
+tibwall1:'<path class="gnd" d="M14 92 H116"/><path class="gnd" d="M34 8 V92"/><circle class="head" cx="42" cy="20" r="7"/><path class="body" d="M40 27 L38 58"/><path class="body" d="M39 40 L36 62"/><path class="body" d="M38 58 L62 90"/><path class="body" d="M62 92 L78 82"/><path class="body" d="M38 58 L56 66 L52 80"/><path class="arw" d="M92 84 V60 M86 66 L92 59 L98 66"/>',
+tibseat:'<path class="gnd" d="M14 92 H116"/><path class="gnd" d="M16 58 H46 M20 58 V92 M42 58 V92"/><circle class="head" cx="30" cy="28" r="7"/><path class="body" d="M30 35 V58"/><path class="body" d="M30 58 L58 60"/><path class="body" d="M58 60 L80 90"/><path class="body" d="M80 92 L96 83"/><circle class="load" cx="90" cy="78" r="5.5"/><path class="arw" d="M108 84 V60 M102 66 L108 59 L114 66"/>',
+tibband:'<path class="gnd" d="M14 92 H116"/><path class="gnd" d="M114 66 V92"/><circle class="head" cx="34" cy="46" r="7"/><path class="body" d="M36 53 L40 80"/><path class="body" d="M37 62 L24 82"/><path class="body" d="M40 80 L84 86"/><path class="body" d="M84 88 L92 74"/><path class="arw" d="M92 74 L114 78"/><path class="arw" d="M104 58 H90 M96 52 L89 58 L96 64"/>',
+heelwalk:'<path class="gnd" d="M14 92 H116"/><circle class="head" cx="60" cy="18" r="7"/><path class="body" d="M60 25 V54"/><path class="body" d="M60 34 L48 50 M60 34 L74 46"/><path class="body" d="M60 54 L44 88 M60 54 L78 88"/><path class="body" d="M42 92 L56 84 M76 92 L92 84"/><path class="arw" d="M96 40 H114 M108 34 L115 40 L108 46"/>',
 carry:'<circle class="head" cx="60" cy="20" r="7"/><path class="body" d="M60 27 V56"/><path class="body" d="M60 56 L50 84 M60 56 L72 80"/><path class="body" d="M53 34 L49 58 M67 34 L71 58"/><circle class="load" cx="48" cy="64" r="6.5"/><circle class="load" cx="72" cy="64" r="6.5"/><path class="gnd" d="M14 92 H116"/><path class="arw" d="M92 52 H112 M106 46 L113 52 L106 58"/>'
 };
 function figSvg(k){
@@ -1572,7 +1579,7 @@ function mediaFor(e){
            '<img src="'+IMGDIR+own.ph+'-0.jpg'+IMGV+'" alt="" loading="lazy">'+
            '<img src="'+IMGDIR+own.ph+'-1.jpg'+IMGV+'" alt="" loading="lazy">'+
            '</div>';
-    return figSvg(e.fig) || '';
+    return figSvg(own.fig || e.fig) || '';
   }
   if(e.cat){        /* упражнение из каталога — два кадра с CDN */
     return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
@@ -2170,7 +2177,7 @@ function renderCatalog(){
   h+='<div class="catlist">';
   shown.forEach(function(x,i){
     h+='<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
-       (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : '<span class="catnoimg"></span>')
+       (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
               : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
        '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
        '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+
@@ -2931,7 +2938,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 16:35';
+var BUILD = '10.09 17:55';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
