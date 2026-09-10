@@ -558,8 +558,14 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
   color:var(--text);font:inherit;font-size:19px;text-align:center;letter-spacing:.1em;margin-bottom:10px}
 .gatebox .gerr{min-height:18px;color:var(--warn);font-size:12.5px;margin:10px 0 0}
 /* приглашение в профиле */
-.invbox{margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
-.invbox .invl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.invbox{margin-top:14px;padding:0 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
+.invbox .invl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.invhead{display:flex;align-items:center;gap:8px;width:100%;padding:13px 0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.invhead .invsum{flex:1 1 auto;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.invhead .invchev{flex:0 0 auto;font-style:normal;font-size:18px;color:var(--dim);transition:transform .18s}
+.invhead[aria-expanded="true"] .invchev{transform:rotate(90deg)}
+.invbody{padding:2px 0 12px}
+.invbox .invcode+.invcode{margin-top:8px}
 .invbox .invcode{display:flex;align-items:center;gap:10px}
 .invbox .invcode b{flex:1 1 auto;font-size:20px;letter-spacing:.12em;font-family:ui-monospace,'SF Mono',Menlo,monospace}
 .invbox .invcode input{flex:1 1 auto;min-width:0;padding:9px 10px;border-radius:10px;border:.5px solid var(--line);background:var(--card-solid);
@@ -1429,11 +1435,13 @@ body.onb #picker .modalbox::before{display:none}
     <p class="seghint">регулярные занятия приложение само добавит к норме еды в эти дни — останется нажать «Было». Разовое пиши тренеру в чат</p>
     <p class="mtext pfnote">Вес — чтобы прикинуть стартовые веса. Цель, опыт и место — чтобы подсказать программу, когда что-то меняется. Что нравится и чего не хочешь — чтобы тренер не ставил то, что ты не станешь делать. Всё лежит только у тебя.</p>
     <div class="invbox" id="invbox" hidden>
-      <div class="invl">приглашение</div>
+      <button type="button" class="invhead" id="invtoggle" aria-expanded="false"><span class="invl">приглашение</span><span class="invsum" id="invsum"></span><i class="invchev">›</i></button>
+      <div class="invbody" id="invbody" hidden>
       <div class="invcode" id="invview"><b id="invcodev">…</b><button type="button" class="btn small" id="invshare">Поделиться</button></div>
       <div class="invcode" id="invedit" hidden><input id="invcodei" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код"><button type="button" class="btn small prim" id="invsave">Сохранить</button></div>
       <p class="invnote" id="invnote">Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам.</p>
       <div id="memlist"></div>
+      </div>
     </div>
     <p class="mtext bline" id="buildline"></p>
     <div class="pfprog" id="pfprog"></div>
@@ -2717,14 +2725,49 @@ function recoSwaps(me){
   });
   return out;
 }
-var RECO={prog:null, swaps:[]};
+/* «Чего не хочу» из профиля против текущей программы. Он написал «Янодичный
+   мостик, румынская тяга» и спросил, что нажать, чтобы это применилось: раньше
+   — ничего, список читал только тренер. Теперь профиль сам находит такие
+   упражнения в программе (по основам слов, одна опечатка прощается) и одной
+   кнопкой отдаёт замену тренеру — правит программу он, кнопкой в чате. */
+function lev1(a, b){
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 1) return 2;
+  var i = 0, j = 0, d = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++d > 1) return 2;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return d + (a.length - i) + (b.length - j);
+}
+function disWords(t){ return String(t || '').toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9 ]/g, ' ').split(/\s+/).filter(function(w){ return w.length >= 3; }); }
+function disStem(w){ return w.length > 5 ? w.slice(0, 5) : w; }
+function disHit(phrase, name){
+  var pw = disWords(phrase); if (!pw.length) return false;
+  var ns = disWords(name).map(disStem);
+  return pw.every(function(w){ var ps = disStem(w); return ns.some(function(n){ return n === ps || (ps.length >= 4 && lev1(n, ps) <= 1); }); });
+}
+function recoDislikes(me){
+  var out = []; if (!me || !me.dislikes || !me.dislikes.length) return out;
+  allDays().forEach(function(dk){
+    exList(dk).forEach(function(e, di){
+      for (var j = 0; j < me.dislikes.length; j++) {
+        if (disHit(me.dislikes[j], e.n)) { out.push({ dk: dk, di: di, name: e.n, phrase: me.dislikes[j] }); break; }
+      }
+    });
+  });
+  return out;
+}
+var RECO={prog:null, swaps:[], dis:[]};
 function renderReco(){
   var box=document.getElementById('recobox'); if(!box) return;
   var me=myData()||{};
   var seen=gget('reco_seen',null), sig=meSig(me);
   RECO.prog = recoProgram(me);
   RECO.swaps = recoSwaps(me);
-  if(seen===sig || (!RECO.prog && !RECO.swaps.length)){ box.innerHTML=''; paintProfBtn(); return; }
+  RECO.dis = recoDislikes(me);
+  if(seen===sig || (!RECO.prog && !RECO.swaps.length && !RECO.dis.length)){ box.innerHTML=''; paintProfBtn(); return; }
   var h='';
   if(RECO.prog && RECO.prog.home){
     h+='<div class="reco"><h4>Ты занимаешься дома, а программа — для зала</h4>'+
@@ -2747,13 +2790,22 @@ function renderReco(){
          '<button type="button" class="btn" data-reco="skip">Не надо</button></div></div>';
     });
   }
+  if(RECO.dis.length){
+    var uniq={}; RECO.dis.forEach(function(x){ uniq[x.name]=uniq[x.name]||[]; uniq[x.name].push(dayLabel(x.dk)); });
+    var names=Object.keys(uniq);
+    h+='<div class="reco"><h4>Не хочешь — а в программе есть: '+names.length+' '+plural(names.length,['упражнение','упражнения','упражнений'])+'</h4><ul>'+
+       names.map(function(n){ return '<li><b>'+esc(n)+'</b> · '+esc(uniq[n].join(', '))+'</li>'; }).join('')+'</ul>'+
+       '<p>Заменит тренер — на те же мышцы, по одному, кнопкой в чате.</p>'+
+       '<div class="rbtns"><button type="button" class="btn go" data-reco="dis">Попросить тренера заменить</button>'+
+       '<button type="button" class="btn" data-reco="skip">Оставить</button></div></div>';
+  }
   box.innerHTML=h; paintProfBtn();
 }
 /* точка на кнопке профиля, пока есть непросмотренный совет */
 function paintProfBtn(){
   var b=document.getElementById('profbtn'); if(!b) return;
   var me=myData()||{}, seen=gget('reco_seen',null);
-  var есть = seen!==meSig(me) && (RECO.prog || RECO.swaps.length);
+  var есть = seen!==meSig(me) && (RECO.prog || RECO.swaps.length || RECO.dis.length);
   b.classList.toggle('attn', !!есть);
 }
 /* каталог нужен для замен — подтягиваем, когда в профиле есть что беречь */
@@ -2810,7 +2862,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '10.09 10:05';
+var BUILD = '10.09 10:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -3557,6 +3609,7 @@ function renderInvite(){
   tgFetch(SYNCURL + '/invite?uid=' + encodeURIComponent(syncUid())).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
     if (!d || !d.ok) { box.hidden = true; return; }
     INV = d; box.hidden = false;
+    document.getElementById('invsum').textContent = d.code ? 'код ' + d.code : 'код не задан';
     document.getElementById('invcodev').textContent = d.code || '— код не задан —';
     document.getElementById('invshare').hidden = !d.code;
     document.getElementById('invedit').hidden = !d.owner;
@@ -3571,6 +3624,8 @@ function renderMembers(){
   tgFetch(SYNCURL + '/members?uid=' + encodeURIComponent(syncUid())).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
     if (!d || !d.ok) { ml.innerHTML = ''; return; }
     var a = d.members || [];
+    var sm = document.getElementById('invsum');
+    if (sm && INV) sm.textContent = (INV.code ? 'код ' + INV.code : 'код не задан') + ' · внутри ' + (a.length + 1);
     ml.innerHTML = '<div class="invl" style="margin-top:12px">кто внутри · ' + (a.length + 1) + '</div>' +
       '<div class="mem"><span class="memn">ты <i>· владелец</i></span></div>' +
       a.map(function(m){
@@ -3580,6 +3635,10 @@ function renderMembers(){
       }).join('');
   }).catch(function(){ ml.innerHTML = ''; });
 }
+document.getElementById('invtoggle').addEventListener('click', function(){
+  var b = document.getElementById('invbody'), t = document.getElementById('invtoggle');
+  b.hidden = !b.hidden; t.setAttribute('aria-expanded', String(!b.hidden)); haptic('light');
+});
 document.getElementById('invshare').addEventListener('click', function(){
   if (!INV || !INV.code) return;
   var text = 'Приглашаю в GetFit — тренер в Telegram. Код: ' + INV.code;
@@ -5010,6 +5069,13 @@ document.getElementById('profm').addEventListener('click', function(e){
     if(what==='swap'){
       RECO.swaps.filter(function(x){ return x.lim===rb.dataset.lim; }).forEach(function(x){ applySub(x.dk, x.di, x.to); });
       haptic('medium');
+    }
+    if(what==='dis' && RECO.dis.length){
+      /* правит тренер: сообщение в чат, замена встанет кнопкой под его ответом */
+      var names=[]; RECO.dis.forEach(function(x){ if(names.indexOf(x.name)<0) names.push(x.name); });
+      var msg='Я отметил в профиле, чего не хочу: '+((myData()||{}).dislikes||[]).join(', ')+'. В программе это '+
+              names.map(function(n){ return '«'+n+'»'; }).join(' и ')+' — замени на другое на те же мышцы. Предлагай по одному, я буду нажимать кнопку.';
+      closeProf(); openCoach(); coachSend(msg); haptic('medium'); return;
     }
     gset('reco_seen', meSig(myData()||{}));
     renderReco();
