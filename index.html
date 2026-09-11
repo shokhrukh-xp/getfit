@@ -198,7 +198,7 @@ select.week{
   background:var(--card);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
   box-shadow:inset 0 .5px 0 var(--line);padding-bottom:env(safe-area-inset-bottom);
 }
-.l1-in{display:grid;grid-template-columns:repeat(4,1fr);max-width:640px;margin:0 auto}
+.l1-in{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;margin:0 auto}
 .l1 button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:8px 4px 7px;color:var(--muted);font-size:10.5px;letter-spacing:0;
@@ -217,6 +217,9 @@ select.week{
   background:none;border:none;font-family:inherit;min-height:36px;transition:background .15s ease,color .15s ease}
 .zseg button[aria-pressed="true"]{background:var(--card-solid);color:var(--text);box-shadow:var(--shadow-sm)}
 .sec > .zseg:first-child{margin-top:0}
+/* переключатель стоит первым на странице — лишние 26 px сверху от .sec
+   оставались от снятого заголовка и читались как пустая полоса */
+.page > .sec:first-child{margin-top:0}
 .zseg + .todaybar{padding-top:2px}
 
 /* ── Главная «Сегодня» ──
@@ -1427,9 +1430,8 @@ body.onb #picker .modalbox::before{display:none}
 <nav class="l1" id="l1" role="tablist" aria-label="Разделы">
   <div class="l1-in">
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.2 12 5l8 6.2V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z"/></svg><span>Сегодня</span></button>
-    <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Зал</span></button>
+    <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v2M12 20v2"/></svg><span>Еда</span></button>
-    <button role="tab" data-page="circle" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M14.5 18.5c.3-2.4 1.8-4 4-4 1.6 0 2.5.6 2.5 2"/></svg><span>Рейтинг</span></button>
   </div>
 </nav>
 
@@ -1476,7 +1478,7 @@ body.onb #picker .modalbox::before{display:none}
     </section>
     <section class="page hide" id="p-food">
       <div class="sec" style="padding-top:18px">
-        <h2>Еда</h2>
+        <div class="zseg" id="fseg-food"></div>
         <div class="fnav" id="fnav"></div>
         <div class="group">
         <div class="fday" id="fday"></div>
@@ -1523,7 +1525,7 @@ body.onb #picker .modalbox::before{display:none}
     </section>
     <section class="page hide" id="p-circle">
       <div class="sec" style="padding-top:18px">
-        <h2>Рейтинг</h2>
+        <div class="zseg" id="fseg-circle"></div>
         <div id="cirbody"><p class="empt">Загружаю…</p></div>
       </div>
     </section>
@@ -3198,7 +3200,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 11:10';
+var BUILD = '11.09 12:03';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5460,15 +5462,23 @@ tPlusB.addEventListener('click', function(){ if(TMODE==='watch'){ watchStop(true
 /* ══════════ НАВИГАЦИЯ ══════════ */
 var PAGES=['home','gym','log','food','ref','circle'];
 /* журнал и каталог живут внутри «Зала» — внизу подсвечивается его кнопка */
-var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'circle'};
+/* Рейтинг считается ТОЛЬКО по еде — его слова 11.09: «еда и рейтинг должны идти
+   вместе на одной странице». Появится зал в игре — разделим обратно. */
+var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'food'};
 var ZSEG=[['gym','Тренировка'],['log','Журнал'],['ref','Каталог']];
+var FSEG=[['food','Мой день'],['circle','Рейтинг']];
+/* имя segHtml уже занято анкетой профиля — новая функция ДОЛЖНА быть с
+   собственным именем, иначе объявление молча перебивает старое */
+function navSeg(набор, cur){
+  return набор.map(function(b){
+    return '<button type="button" data-zseg="'+b[0]+'" aria-pressed="'+(b[0]===cur)+'">'+b[1]+'</button>';
+  }).join('');
+}
 function renderZseg(cur){
-  ZSEG.forEach(function(a){
-    var el=document.getElementById('zseg-'+a[0]); if(!el) return;
-    el.innerHTML=ZSEG.map(function(b){
-      return '<button type="button" data-zseg="'+b[0]+'" aria-pressed="'+(b[0]===cur)+'">'+b[1]+'</button>';
-    }).join('');
-  });
+  ZSEG.forEach(function(a){ var el=document.getElementById('zseg-'+a[0]); if(el) el.innerHTML=navSeg(ZSEG,cur); });
+}
+function renderFseg(cur){
+  FSEG.forEach(function(a){ var el=document.getElementById('fseg-'+a[0]); if(el) el.innerHTML=navSeg(FSEG,cur); });
 }
 document.addEventListener('click', function(e){
   var b=e.target.closest('button[data-zseg]'); if(!b) return;
@@ -5491,6 +5501,7 @@ function goPage(p){
   });
   gset('page',p);
   if(TABOF[p]==='gym') renderZseg(p);
+  if(TABOF[p]==='food') renderFseg(p);
   if(p==='home') openHome();
   if(p==='log') renderLog();
   if(p==='food') openFood();
@@ -6312,7 +6323,7 @@ function weekSub(me){
 }
 function renderCircle(){
   var box=document.getElementById('cirbody'); if(!box) return;
-  var h2=box.parentNode.querySelector('h2'); if(h2) h2.hidden=!!UDAY;
+  var sg=document.getElementById('fseg-circle'); if(sg) sg.hidden=!!UDAY;
   if(UDAY){ box.innerHTML=udayHtml(); return; }
   if(!CIRC){ box.innerHTML='<p class="empt">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; return; }
   var me=CIRC.me||{}, list=CIRC.circles||[], cur=null;
