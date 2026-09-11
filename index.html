@@ -2603,7 +2603,10 @@ var CDN='https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/';
 function loadCatalog(){
   if(CAT) return Promise.resolve(CAT);
   if(catLoading) return catLoading;
-  catLoading = fetch(BASEDIR+'catalog.json').then(function(r){ return r.json(); })
+  /* ?v=сборка: иначе правки каталога доезжают только после того, как браузер
+     сам решит сбросить кэш. 11.09 переименовали 337 упражнений — без этого
+     человек ещё сутки видел бы старые имена. */
+  catLoading = fetch(BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)).then(function(r){ return r.json(); })
     .then(function(j){ CAT=j; catLoading=false; return j; })
     .catch(function(e){ catLoading=false; throw e; });
   return catLoading;
@@ -3828,7 +3831,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 22:20';
+var BUILD = '11.09 22:25';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
