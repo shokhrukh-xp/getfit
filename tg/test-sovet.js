@@ -58,13 +58,19 @@ const часы = page => page.evaluate(() => ({
   page = await br.newPage({ viewport: { width: 390, height: 844 } });
   await M.поднять(page, { time: '16:10', day: { meals: ЕДА, targets: НОРМА } });
   const тело = await page.evaluate(() => ({
-    строки: Array.from(document.querySelectorAll('.hbody .hbr')).map(e => ({
+    колонки: Array.from(document.querySelectorAll('.hbody .hbh s')).map(e => e.textContent),
+    строки: Array.from(document.querySelectorAll('.hbody .hbr:not(.hbh)')).map(e => ({
       имя: e.querySelector('u').textContent,
       знач: e.querySelector('b').textContent,
-      дельта: e.querySelector('s:last-child').textContent,
+      дельты: Array.from(e.querySelectorAll(':scope > s')).map(x => x.textContent),
       цвет: e.querySelector('s:last-child').className })),
     графики: document.querySelectorAll('.hbody svg').length
   }));
+  дано(тело.колонки.join(',') === 'день,неделя,всего', 'три горизонта в шапке: ' + тело.колонки);
+  дано(тело.строки.every(r => r.дельты.length === 3), 'у каждой строки три дельты');
+  дано(тело.строки.every(r => r.дельты.every(d => d === '—' || /^[+−]\d+,\d$/.test(d))),
+    'дельты с одним знаком после запятой: ' + JSON.stringify(тело.строки[0].дельты));
+  дано(тело.строки[0].дельты[2] === '−4,2', 'за всё время вес считается от первого замера, а не от края окна: ' + тело.строки[0].дельты[2]);
   дано(тело.строки.length === 3, 'в блоке тела три строки');
   дано(тело.строки.map(r => r.имя).join(',') === 'вес,жир,белок', 'это вес, жир и белок: ' + тело.строки.map(r => r.имя));
   дано(!тело.строки.some(r => /мышц/.test(r.имя)), '«мышц» больше нет — весы считают ими воду');

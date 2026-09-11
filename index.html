@@ -1587,7 +1587,8 @@ body.onb #picker .modalbox::before{display:none}
 .hlab{font-size:13px;font-weight:500;color:var(--dim);margin:0 0 10px;display:flex;justify-content:space-between}
 .hbody{background:transparent;border:none;box-shadow:none;padding:0;gap:10px;
   -webkit-backdrop-filter:none;backdrop-filter:none}
-.hbr{grid-template-columns:1fr auto 58px}
+.hbr{grid-template-columns:1fr auto 44px 50px 48px;gap:8px}
+.hbh u{color:var(--dim)} .hbh s{font-size:11px;color:var(--dim);font-weight:500}
 .hbr u{font-size:13px;color:var(--muted);font-weight:500;font-style:normal}
 .hbr b{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:right}
 .hbr b s{text-decoration:none;color:var(--dim);font-weight:500;font-size:12px;margin-left:3px}
@@ -3471,7 +3472,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 17:10';
+var BUILD = '11.09 17:25';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6321,7 +6322,7 @@ document.getElementById('resetm').addEventListener('click', function(e){
 /* ══════════ ЕДА ══════════
    Считает и хранит Worker (тот же uid, что у тренировок). Здесь — сегодня
    против нормы, список приёмов, ввод текстом или фото, неделя и весы. */
-var FOOD={day:null, week:null, meas:null, busy:false, date:null, att:null};
+var FOOD={day:null, week:null, meas:null, first:null, busy:false, date:null, att:null};
 /* Какой день открыт во вкладке «Еда». Вчерашний ужин, вспомненный утром,
    должен лечь во вчера, иначе и дневник, и сверка с весами врут. */
 function fDate(){ return FOOD.date || TODAY; }
@@ -6362,7 +6363,7 @@ function homePull(){
   fGet('/day/score?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.ok){ d.date=TODAY; HOME.sc=d; renderHome(); } }).catch(function(){});
   fGet('/week?uid='+u).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderHome(); } }).catch(function(){});
   if(!(FOOD.meas||[]).length) fGet('/measures?uid='+u)
-    .then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderHome(); } }).catch(function(){});
+    .then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderHome(); } }).catch(function(){});
   if(!CIRC) circlePull().then(function(){ renderHome(); });
   /* журнал нужен часам дня: у закрытой тренировки время старта лежит в записи */
   if(DB && !HIST) loadHist().then(function(){ renderHome(); }).catch(function(){});
@@ -6753,30 +6754,52 @@ function bodySeries(){
       return m.prot!=null ? +m.prot : null; }}
   ];
 }
-function weekAgo(ms, sr){
-  /* ms — по возрастанию даты; берём последний замер не позже чем за 7 дней до последнего */
-  var last=ms[ms.length-1], край=ymd(new Date(new Date(last.date+'T12:00:00').getTime()-7*864e5)), стар=null;
-  ms.forEach(function(m){ if(m.date<=край && sr.f(m)!=null) стар=m; });
-  if(!стар) for(var i=0;i<ms.length-1;i++){ if(sr.f(ms[i])!=null){ стар=ms[i]; break; } }
-  var a=sr.f(last), b=стар?sr.f(стар):null;
-  return (a==null||b==null||стар.date===last.date) ? null : a-b;
+/* Три горизонта вместо одного (его правка 11.09): «покажи изменения за день,
+   за неделю и за всё время с начала». День — против предыдущего замера,
+   неделя — против ближайшего не позже чем за 7 дней, всё время — против
+   самого первого (он приезжает отдельным полем `first`: в /measures влезают
+   только последние 60 дней). ms — по возрастанию даты. */
+var BODY_VIEWS=['день','неделя','всего'];
+function bodyDelta(ms, sr, вид){
+  var last=ms[ms.length-1], a=sr.f(last), стар=null, i;
+  if(a==null) return null;
+  if(вид==='день'){
+    for(i=ms.length-2;i>=0;i--) if(sr.f(ms[i])!=null){ стар=ms[i]; break; }
+  } else if(вид==='неделя'){
+    var край=ymd(new Date(new Date(last.date+'T12:00:00').getTime()-7*864e5));
+    ms.forEach(function(m){ if(m.date<=край && sr.f(m)!=null) стар=m; });
+    if(!стар) for(i=0;i<ms.length-1;i++) if(sr.f(ms[i])!=null){ стар=ms[i]; break; }
+  } else {
+    if(FOOD.first && sr.f(FOOD.first)!=null) стар=FOOD.first;
+    if(!стар) for(i=0;i<ms.length-1;i++) if(sr.f(ms[i])!=null){ стар=ms[i]; break; }
+  }
+  if(!стар || стар.date===last.date) return null;
+  var b=sr.f(стар);
+  return b==null ? null : a-b;
 }
 function homeBody(){
-  var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice(0,21).reverse();
+  var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
   if(ms.length<2) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
     (ms.length?fmtKg(ms[0].w):'—')+'</b><i>'+(ms.length?'нужен второй замер, чтобы увидеть тренд':'впиши вес на «Еде»')+'</i></button>';
-  var h='';
+  /* числа в колонках всегда с одним знаком после запятой: «−3» рядом с «−0,8»
+     ломает табличное выравнивание, ради которого всё и затевалось */
+  var f1=function(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); };
+  /* шапка живёт в той же сетке, что и строки, иначе колонки разъезжаются */
+  var h='<span class="hbr hbh"><u>Тело</u><b></b>'+
+        BODY_VIEWS.map(function(v){ return '<s>'+v+'</s>'; }).join('')+'</span>';
   bodySeries().forEach(function(sr){
-    var v=sr.f(ms[ms.length-1]), d=weekAgo(ms, sr);
+    var v=sr.f(ms[ms.length-1]);
     if(v==null) return;
-    /* изменение меньше порога — это шум прибора, а не факт: показываем словом,
-       а не красной цифрой, иначе экран пугает тем, чего не было */
-    var шум = d==null || Math.abs(d)<sr.порог;
-    var хорошо = шум ? null : (sr.вниз ? d<0 : d>0);
-    h+='<span class="hbr"><u>'+sr.n+'</u>'+
-       '<b>'+fmtKg(v)+'<s> кг</s></b>'+
-       '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+
-         (d==null ? '—' : (шум ? 'ровно' : (d>0?'+':'−')+fmtKg(Math.abs(d))))+'</s></span>';
+    h+='<span class="hbr"><u>'+sr.n+'</u><b>'+f1(v)+'<s> кг</s></b>'+
+       BODY_VIEWS.map(function(вид){
+         var d=bodyDelta(ms, sr, вид);
+         /* изменение меньше порога — шум прибора: число показываем, но серым,
+            чтобы человек не читал его как факт */
+         var шум = d==null || Math.abs(d)<sr.порог;
+         var хорошо = шум ? null : (sr.вниз ? d<0 : d>0);
+         return '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+
+           (d==null ? '—' : (d>0?'+':'−')+f1(Math.abs(d)))+'</s>';
+       }).join('')+'</span>';
   });
   if(!h) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
     fmtKg(ms[ms.length-1].w)+'</b><i>встань на весы — появятся жир и белок</i></button>';
@@ -6821,7 +6844,7 @@ function renderHome(){
   box.innerHTML =
     homeWeek()+homeClock()+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
-    '<p class="hlab"><span>Тело</span><span>за неделю</span></p>'+homeBody()+
+    homeBody()+
     homeAct()+homeRating()+homeNext()+homeBar();
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
@@ -7128,7 +7151,7 @@ function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
-  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderMeas(); } }).catch(function(){});
+  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
   fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
 }
 /* «повторить» — то, что ел в прошлые дни, одним нажатием и без модели */

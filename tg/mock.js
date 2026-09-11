@@ -42,6 +42,11 @@ function замеры() {
   }
   return m;
 }
+/* самый первый замер — 1 сентября, от него считается колонка «всего» */
+function стартовый() {
+  return { date: '2026-09-01', w: 92.3, fat: 28.5, fatkg: 26.3, lean: 66, muscle: 62.5,
+    water: 45.7, prot: 16.1, visc: 14, bmr: 1796 };
+}
 function круг() {
   return {
     ok: true, circle: 'family', name: 'семья',
@@ -100,7 +105,8 @@ async function поднять(page, o) {
     if (p === '/day')        return дать(день_ ? { ok: true, day: день_ } : { ok: true, day: день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }) });
     if (p === '/day/score')  return дать(оценка || { ok: true, r: null });
     if (p === '/week')       return дать({ ok: true, week: неделя(o.week || {}) });
-    if (p === '/measures')   return дать({ ok: true, measures: o.meas === null ? [] : замеры() });
+    if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
+      return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
     if (p === '/circle')     return дать(o.circle === null ? { ok: false } : круг());
     if (p === '/goal')       return дать({ ok: true, goal: { w: 73, fat: 12 } });
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
@@ -117,4 +123,4 @@ async function поднять(page, o) {
   return ошибки;
 }
 
-module.exports = { Д, TODAY, БАЗА, поднять, день, неделя, замеры, круг };
+module.exports = { Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг };
