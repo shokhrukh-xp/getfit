@@ -70,7 +70,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     const R = Date, ч = +час.split(':')[0], м = +час.split(':')[1];
     const F = new R(); F.setHours(ч, м, 0, 0); const f = F.getTime();
@@ -96,10 +96,10 @@ async function поднять(page, o) {
       }
     } };
     try {
-      localStorage.setItem('shp_v1_profile', '"shp"');
+      if (!новичок) localStorage.setItem('shp_v1_profile', '"shp"');
       localStorage.setItem('shp_v1_page', JSON.stringify(сеанс));
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home']);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie]);
 
   await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
     const u = new URL(route.request().url()), p = u.pathname;

@@ -214,6 +214,9 @@ select.week{
   background:var(--card);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
   box-shadow:inset 0 .5px 0 var(--line);padding-bottom:env(safe-area-inset-bottom);
 }
+/* режим «только питание»: всё, что про зал, с экранов уходит */
+body.nogym .l1-in button[data-page="gym"]{display:none}
+body.nogym .gymonly{display:none!important}
 .l1-in{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;margin:0 auto}
 .l1 button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -1901,6 +1904,8 @@ body.onb #picker .modalbox::before{display:none}
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажи о себе — тренер задаст пару вопросов и соберёт программу.</p>
     <div id="wzme" hidden>
+      <div class="pf"><span class="pfl">веду</span><div class="seg" id="wz-only"></div></div>
+      <p class="seghint" id="wz-only-hint">выберешь «только еда» — зала в приложении не будет, программу собирать не станем</p>
       <div class="pf"><span class="pfl">пол</span><div class="seg" id="wz-sex"></div></div>
       <div class="mnums">
         <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
@@ -1991,16 +1996,18 @@ body.onb #picker .modalbox::before{display:none}
     </div>
     <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его меняешь на «Еде», в разделе «Весы».</p>
     <div class="goalcard" id="goalcard"></div>
-    <div class="pf"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
-    <div class="pf"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
-    <div class="pf" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
-    <div class="pf"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
-    <div class="pf" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
-    <p class="seghint">самый маленький блин в зале — шаг прибавки</p>
-    <div class="pf" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
-    <p class="seghint">«сам меняет» — правки встают сразу, ты видишь карточку; «спрашивает» — каждая под кнопкой</p>
-    <label class="mlab">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
-    <label class="mlab">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
+    <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
+    <div class="pf gymonly"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
+    <div class="pf gymonly"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
+    <div class="pf gymonly" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
+    <div class="pf gymonly"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
+    <div class="pf gymonly" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
+    <p class="seghint gymonly">самый маленький блин в зале — шаг прибавки</p>
+    <div class="pf gymonly" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
+    <p class="seghint gymonly">«сам меняет» — правки встают сразу, ты видишь карточку; «спрашивает» — каждая под кнопкой</p>
+    <label class="mlab gymonly">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
+    <label class="mlab gymonly">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
     <p class="seghint">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
     <div class="invbox" id="invbox" hidden>
@@ -2779,6 +2786,18 @@ var WIZ={place:'gym', wd:null, min:45, text:'', qa:[], ask:null, opts:[], hint:'
          likes:[], dislikes:[], prog:null, stage:'form', step:'form', meErr:'',
          busy:false, err:'', fallback:false, show:false, touched:false};
 var SEXES=[['m','мужской'],['f','женский']];
+/* Режим «только питание» (11.09) — его вопрос: «а что для пользователей,
+   которые не ходят в зал, а только питание будут отслеживать?». Следов зала
+   у них на экране быть не должно: ни вкладки, ни дорожки, ни карточки дня,
+   ни гантели на часах. Программа при этом остаётся в памяти — переключил
+   обратно, и всё на месте. */
+var ONLYKEYS=[['all','еда и зал'],['food','только еда']];
+function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
+function applyOnly(){
+  var f=foodOnly();
+  document.body.classList.toggle('nogym', f);
+  if(f && TABOF[gget('page','home')]==='gym') goPage('home');
+}
 /* Без веса, роста, возраста и пола нет ни стартовых весов, ни норм по еде —
    раньше их выпрашивала полоска «заполни профиль» уже после старта, и человек
    попадал на главную, где вместо чисел стояли прочерки. Теперь спрашиваем
@@ -2811,6 +2830,8 @@ function wizSummary(){
 }
 function renderWzMe(){
   var me=myData()||{};
+  var wo=document.getElementById('wz-only');
+  if(wo) wo.innerHTML=segHtml('only',ONLYKEYS,WIZ.only||me.only||'all');
   document.getElementById('wz-sex').innerHTML=segHtml('sex',SEXES,me.sex||'m');
   [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
     var el=document.getElementById(x[0]);
@@ -2823,7 +2844,9 @@ function readWzMe(){
   var num=function(id){ var el=document.getElementById(id); var v=el&&el.value!=='' ? +el.value : null;
     return (v!=null && isFinite(v)) ? v : null; };
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
-  return { sex:(sb?sb.dataset.v:'m'), age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
+  var ob=document.querySelector('#wz-only button[aria-pressed="true"]');
+  return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'),
+           age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
 }
 function wzMeNext(){
   var v=readWzMe(), нет=[];
@@ -2836,10 +2859,13 @@ function wzMeNext(){
   }
   WIZ.meErr='';
   var me=myData()||{};
-  me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw;
+  me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   renderNudge();
+  /* «только еда» — зал не ведём, значит второй и третий шаги (где, когда,
+     разговор про программу) человеку не нужны: знакомство на этом кончается */
+  if(me.only==='food'){ choose(profile||'shp'); return; }
   WIZ.step='form'; renderPicker(); haptic('light');
 }
 function renderWzForm(){
@@ -2923,6 +2949,8 @@ function wzScroll(куда){
 function renderWzList(){
   var box=document.getElementById('picklist'); if(!box) return;
   var h='', me=myData()||{};
+  /* «только еда» — программы не предлагаем вовсе, ни своей, ни готовой */
+  if((WIZ.only||me.only)==='food'){ box.innerHTML=''; return; }
   var готовые = WIZ.fallback || WIZ.show || !firstRun;
   Object.keys(PROFILES).filter(function(k){ return PROFILES[k].custom; }).forEach(function(k){
     var P=PROFILES[k];
@@ -2960,8 +2988,9 @@ function renderPicker(){
   var шаг=document.getElementById('wzstep');
   if(шаг){
     var n = знакомство ? 1 : (анкета ? 2 : 3);
+    var всего = (знакомство && (WIZ.only||(myData()||{}).only)==='food') ? 1 : 3;
     шаг.hidden = !firstRun;
-    шаг.textContent = 'шаг '+n+' из 3';
+    шаг.textContent = всего===1 ? 'один шаг' : 'шаг '+n+' из 3';
   }
   var t=document.getElementById('picktitle'), nm=whoName();
   if(t) t.textContent = знакомство ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
@@ -3086,7 +3115,8 @@ function choose(p){
     /* и в базу: CloudStorage на части устройств глухой, а знать, какая
        программа выбрана, второму устройству обязательно */
     try{ syncPush('state/prof', ук); }catch(e){} }
-  goPage('gym');
+  applyOnly();
+  goPage(foodOnly() ? 'home' : 'gym');
 }
 
 /* ── переключатель фаз ── */
@@ -3250,6 +3280,7 @@ function fillMe(){
   var поля=document.getElementById('mefields');
   if(hint) hint.hidden = !(есть && поля && !поля.hidden);
   renderGoalCard();
+  var O=document.getElementById('me-only'); if(O) O.innerHTML=segHtml('only',ONLYKEYS,me.only||'all');
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
@@ -3275,6 +3306,7 @@ function readMeForm(){
   var op=goalPair(old), wt=pick('me-wt')||op.wt||null, gym=pick('me-gym')||op.gym||null;
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
+          only:pick('me-only')||old.only||'all',
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25), auto:pick('me-auto')||old.auto||'ask',
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
@@ -3282,7 +3314,7 @@ function readMeForm(){
           plan:(readPlanEditor()||old.plan||[]), plan_at:old.plan_at||null, sports:old.sports||''};
 }
 /* подпись профиля: что из него влияет на подсказки */
-function meSig(me){ me=me||{}; var gp=goalPair(me); return [gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),JSON.stringify(me.plan||[]),Object.keys(GYM_DAYS).length].join('|'); }
+function meSig(me){ me=me||{}; var gp=goalPair(me); return [me.only||'all',gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),JSON.stringify(me.plan||[]),Object.keys(GYM_DAYS).length].join('|'); }
 function saveMe(){
   if(!document.getElementById('me-bw')) return;
   var prev=myData()||{}, me=readMeForm();
@@ -3291,6 +3323,7 @@ function saveMe(){
   if(!anyTouched()) renderList();
   if(meSig(prev)!==meSig(me)){ gset('reco_seen', null); }
   var pe=document.getElementById('pf-eq'); if(pe) pe.hidden=(me.place||'gym')!=='home';
+  applyOnly();
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
 }
@@ -3538,7 +3571,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 18:15';
+var BUILD = '11.09 18:45';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5899,6 +5932,8 @@ function plural(n,forms){
 }
 function goPage(p){
   if(PAGES.indexOf(p)<0) p=PAGES[0];
+  /* режим «только питание»: зала нет ни на экране, ни в адресах */
+  if(TABOF[p]==='gym' && foodOnly()) p='home';
   PAGES.forEach(function(x){
     var el=document.getElementById('p-'+x); if(el) el.classList.toggle('hide', x!==p);
   });
@@ -6073,8 +6108,10 @@ document.getElementById('picker').addEventListener('click', function(e){
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
     var seg=sb.parentNode, id=seg.id;
-    if(id==='wz-sex'){
+    if(id==='wz-sex' || id==='wz-only'){
       Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
+      /* выбор режима меняет и счётчик шагов, и список программ — перерисовываем */
+      if(id==='wz-only'){ WIZ.only=sb.dataset.v; renderPicker(); }
       haptic('light'); return;
     }
     WIZ.touched=true;
@@ -6571,7 +6608,7 @@ function homeRows(){
     '<div class="hrow"><u>Белок</u>'+htrack(pt,t.prot,'min')+'<b>'+pt+(t.prot?' <s>/ '+t.prot+' г</s>':' <s>г</s>')+'</b></div>';
   /* зал — только когда сегодня есть что считать; в день отдыха и у тех, кто
      ведёт одну еду, строки зала на экране нет вовсе */
-  if(pr.total) h+='<div class="hrow"><u>Зал</u>'+htrack(pr.done,pr.total,'sets')+'<b>'+pr.done+' <s>/ '+pr.total+' '+plural(pr.total,['подход','подхода','подходов'])+'</s></b></div>';
+  if(pr.total && !foodOnly()) h+='<div class="hrow"><u>Зал</u>'+htrack(pr.done,pr.total,'sets')+'<b>'+pr.done+' <s>/ '+pr.total+' '+plural(pr.total,['подход','подхода','подходов'])+'</s></b></div>';
   var r=(sc&&sc.r!=null)?sc.r:null, норм=!!(sc&&!(sc.why&&sc.why.length)), w=r==null?0:(r*10).toFixed(1);
   h+='<div class="hrow"><u>Оценка</u>'+
      (r==null ? '<div class="htr"></div>'
@@ -6638,7 +6675,7 @@ function hcEvents(){
   });
   (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
   /* зал: закрытая тренировка стоит на времени старта; идущая — тоже, если старт известен */
-  var lw=lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=homeSess(dk), t0=null;
+  var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null;
   if(закрыт || pr.done>0){
     /* старт — из локальной отметки первого касания; с другого устройства — из записи в журнале */
     var w0=get('wt0_'+TODAY+'_'+dk,null); if(w0) t0=new Date(w0);
@@ -6978,7 +7015,7 @@ function renderHome(){
     homeWeek()+homeClock()+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
-    homeAct()+homeRating()+homeNext()+homeBar();
+    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+homeBar();
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
@@ -8289,6 +8326,7 @@ else {
   applyProfile('shp', true); showPicker(true);
 }
 initDb();
+applyOnly();
 /* ссылка из утреннего сообщения бота ведёт сразу в круг */
 goPage(/[?&]p=circle(&|$)/.test(location.search||'') ? 'circle' : gget('page','home'));
 
