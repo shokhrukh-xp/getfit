@@ -295,7 +295,6 @@ select.week{
   font-family:inherit;
   font-size:12px;color:var(--muted)}
 .hbr u i{width:7px;height:7px;border-radius:99px;flex:0 0 7px}
-.hbsp{display:block;width:100%;height:20px}
 /* колонка значения фиксированной ширины — иначе у каждой строки своя сетка,
    и спарклайны обрываются на разной длине, а числа не выстраиваются */
 .hbr b{font-size:14.5px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
@@ -1588,11 +1587,11 @@ body.onb #picker .modalbox::before{display:none}
 .hlab{font-size:13px;font-weight:500;color:var(--dim);margin:0 0 10px;display:flex;justify-content:space-between}
 .hbody{background:transparent;border:none;box-shadow:none;padding:0;gap:10px;
   -webkit-backdrop-filter:none;backdrop-filter:none}
-.hbr{grid-template-columns:64px 1fr 66px 46px}
-.hbr u{font-size:13px;color:var(--muted);font-weight:500}
-.hbr u i{width:6px;height:6px}
-.hbr b{font-size:15px;min-width:0}
-.hbr s{font-size:12px;color:var(--dim);min-width:0}
+.hbr{grid-template-columns:1fr auto 58px}
+.hbr u{font-size:13px;color:var(--muted);font-weight:500;font-style:normal}
+.hbr b{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:right}
+.hbr b s{text-decoration:none;color:var(--dim);font-weight:500;font-size:12px;margin-left:3px}
+.hbr s{font-size:13px;color:var(--dim);text-align:right;font-weight:600}
 .hbr s.dn{color:var(--done)} .hbr s.up{color:var(--warn)}
 .hbnote{display:none}
 .hact{margin-top:14px;background:var(--card-solid);border:1px solid var(--line-soft);border-radius:18px;padding:16px 16px 14px;
@@ -3472,7 +3471,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 16:35';
+var BUILD = '11.09 17:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6467,7 +6466,33 @@ function homeRows(){
    справа вечер. Окно 06→22 раздвигается до ближайшего часа, если запись или
    «сейчас» вышли за край. */
 var HC={W:350,H:250,cx:175,cy:214,R:126};
-var HC_WIN=[['завтрак',5,11,8.5],['обед',11,16,13.5],['ужин',16,22,19]];
+/* Следующий приём считаем ОТ ПОСЛЕДНЕГО, а не по часам на стене. 11.09 он
+   поел в 15:35, часы перевалили за 16:00 — и приложение объявило «ужин ·
+   сейчас», хотя человек только что из-за стола.
+   Интервал 3,5 ч и 4 приёма в день — ISSN Position Stand 2017 (20–40 г белка
+   каждые 3–4 ч) и Schoenfeld & Aragon 2018 (0,4 г/кг на приём, минимум
+   четыре приёма). Это РЕКОМЕНДАЦИЯ: запись принимается по факту, когда бы
+   человек ни поел. */
+var MEAL_GAP=3.5, MEAL_FIRST=8.5, MEAL_LAST=22;
+function mealName(h, used){
+  var n = h<11 ? 'завтрак' : (h<16 ? 'обед' : (h<22.5 ? 'ужин' : 'еда'));
+  return (used && used[n]) ? 'ещё приём' : n;
+}
+function nextMealPlan(meals, nowH){
+  var last=null, used={};
+  (meals||[]).forEach(function(m){
+    var h=hcH(m.t); if(h!=null && (last==null || h>last)) last=h;
+    if(m.kind) used[m.kind]=1;
+  });
+  var at = last==null ? Math.max(nowH, MEAL_FIRST) : Math.max(last+MEAL_GAP, nowH);
+  /* позже 22:00 не советуем: раннее окно питания в сетевом мета-анализе 41 РКИ
+     дало на 1,15 кг больше потери веса, чем позднее (Chen 2026). Съест позже —
+     запишем по факту и раздвинем дугу, но советовать это незачем. */
+  if(at > MEAL_LAST) return {at:null, name:'еда'};
+  var имя=mealName(at, used), used2={}; used2[имя]=1; for(var k in used) used2[k]=1;
+  var after = at+MEAL_GAP; if(after > MEAL_LAST) after=null;
+  return {at:at, name:имя, after:after, afterName:(after!=null?mealName(after,used2):null)};
+}
 var HCW=[6,22];
 function hcA(h){ return -90+(h-HCW[0])/Math.max(1,(HCW[1]-HCW[0]))*180; }
 function hcPt(r,h){ var a=hcA(h)*Math.PI/180; return [HC.cx+r*Math.sin(a), HC.cy-r*Math.cos(a)]; }
@@ -6479,10 +6504,9 @@ function hcH(t){ var m=String(t||'').match(/^(\d{1,2}):(\d\d)/); return m ? (+m[
 function hcHM(h){ var hh=Math.floor(h), mm=Math.round((h-hh)*60); if(mm===60){ hh++; mm=0; } return pad2(hh%24)+':'+pad2(mm); }
 function hNum(n){ n=Math.round(n); return n>=1000 ? Math.floor(n/1000)+' '+('00'+(n%1000)).slice(-3) : String(n); }
 function hcEvents(){
-  var now=new Date(), nowH=now.getHours()+now.getMinutes()/60, d=HOME.day||{}, ev=[], logged={};
+  var now=new Date(), nowH=now.getHours()+now.getMinutes()/60, d=HOME.day||{}, ev=[];
   (d.meals||[]).forEach(function(m){
     var h=hcH(m.t); if(h==null) return;
-    if(m.kind) logged[m.kind]=1;
     ev.push({h:h, cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food'});
   });
   (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
@@ -6497,15 +6521,19 @@ function hcEvents(){
     var gh = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : nowH;
     ev.push({h:gh, cls: закрыт?'gym':'gymon', lab:(t0?hcHM(gh)+' · ':'')+(закрыт?'зал':'зал идёт'), go:'gym'});
   }
-  /* следующий приём: в своём окне и ещё не записан — «+» на месте «сейчас»; те, что позже, — пунктирные места */
-  var next=null, todo=[];
-  HC_WIN.forEach(function(w){
-    if(logged[w[0]]) return;
-    if(nowH>=w[1] && nowH<w[2]) next={kind:w[0]};
-    else if(nowH<w[1]) todo.push({kind:w[0], h:w[3]});
-  });
-  if(next) ev.push({h:nowH, cls:'next', lab:next.kind+' · сейчас', act:'photo'});
-  todo.forEach(function(t){ ev.push({h:t.h, cls:'todo', lab:t.kind+' · '+hcHM(t.h), act:'photo'}); });
+  /* «+» стоит там, когда пора есть по рекомендации, а не когда сменилось окно.
+     Если норма уже закрыта — приёма не советуем вовсе: иначе часы зовут ужинать,
+     а строка под ними говорит «на сегодня хватит» (два места об одном факте). */
+  var tg=d.targets||{}, закрыта = !!(tg.kcal && (tg.kcal-(+d.kcal||0))<=0);
+  var plan=nextMealPlan(d.meals||[], nowH);
+  if(закрыта) plan={at:null, name:'еда'};
+  if(plan.at!=null){
+    var сейчас=Math.abs(plan.at-nowH)<0.5;
+    ev.push({h:plan.at, cls:'next', act:'photo',
+      lab:(сейчас?'сейчас':'≈'+hcHM(plan.at))+' · '+plan.name});
+    if(plan.after!=null) ev.push({h:plan.after, cls:'todo', act:'photo',
+      lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
+  }
   /* взвешивание стоит на той же дуге, что и всё остальное: второе кольцо
      внутри полукруга упиралось бы в число */
   var wt=(FOOD.meas||[]).filter(function(m){ return m.date===TODAY && m.w; })[0];
@@ -6516,10 +6544,13 @@ function hcEvents(){
   for(var i=1;i<ev.length;i++) if(ev[i].h-ev[i-1].h<1.5) ev[i].h=ev[i-1].h+1.5;
   /* окно дуги: по умолчанию 06→22, раздвигается под то, что реально было */
   var н=6, к=22;
-  ev.forEach(function(e){ н=Math.min(н, Math.floor(e.h)); к=Math.max(к, Math.ceil(e.h-0.001)); });
+  ev.forEach(function(e){
+    if(e.cls==='next'||e.cls==='todo') return;   /* рекомендация день не удлиняет */
+    н=Math.min(н, Math.floor(e.h)); к=Math.max(к, Math.ceil(e.h-0.001));
+  });
   н=Math.min(н, Math.floor(nowH)); к=Math.max(к, Math.ceil(nowH+0.01));
   HCW=[Math.max(0,н), Math.min(24,Math.max(к,н+6))];
-  return {ev:ev, nowH:nowH, next:next, todo:todo};
+  return {ev:ev, nowH:nowH, plan:plan};
 }
 function hcBub(e, i, lab){
   var r = e.cls==='w' ? 13 : 20, p=hcPt(HC.R,e.h), x=p[0].toFixed(1), y=p[1].toFixed(1);
@@ -6602,13 +6633,39 @@ function homeClock(){
     c = rem>=0 ? '<b>'+hNum(rem)+'</b><u>ккал до нормы</u>' : '<b class="over">+'+hNum(-rem)+'</b><u>ккал сверх нормы</u>';
     if(t.prot) c+='<i>'+(rp>0 ? 'белка ещё <em>'+rp+' г</em>' : 'белок <em class="hgood">набран</em>')+'</i>';
   }
+  /* показываем ГЛАВНУЮ причину, а не весь список: `why` отсортирован по весу,
+     а три причины в строку не влезают и красят пол-экрана коралловым */
+  var гл = (sc && sc.why && sc.why.length) ? String(sc.why[0].t).split(':')[0] : null;
   var line = (!sc||sc.r==null) ? 'оценка — с первой записью'
-    : (sc.closed?'итог дня':'день идёт')+' · <em class="'+((sc.why&&sc.why.length)?'hbad':'hgood')+'">'+
-      esc((sc.why&&sc.why.length) ? sc.why.map(function(x){ return x.t; }).join(', ') : 'всё в норме')+'</em>';
+    : (sc.closed?'итог дня':'день идёт')+' · <em class="'+(гл?'hbad':'hgood')+'">'+
+      esc(гл || 'всё в норме')+'</em>';
   return '<div class="hclk">'+s+'<div class="hctr">'+c+'<i class="hcl">'+line+'</i></div></div>';
 }
 /* неделя одной строкой: точка — попал ли день в коридор; будущие дни пустые.
    Нажатие открывает этот день на «Еде». */
+/* Одна строка рекомендации под часами: КОГДА следующий приём и ЧЕМ закрыть
+   остаток. Сколько — не повторяем: остаток калорий и белка уже стоит в центре
+   часов (одно число — одно место). Продукты не называем: 0,22 г белка на
+   грамм — это просто пересчёт граммов белка в граммы мяса или рыбы. */
+function homeNextLine(E){
+  var d=HOME.day||{}, t=d.targets||{};
+  if(!t.kcal) return '';
+  if(!E.plan || E.plan.at==null) return '<p class="hnext">на сегодня всё · дальше только если голоден</p>';
+  var rem=Math.round(t.kcal-(+d.kcal||0)), rp=Math.round((t.prot||0)-(+d.prot||0));
+  /* время следующего приёма уже стоит на часах подписью пузыря — здесь
+     только то, чего на экране ещё нет: чем закрыть остаток.
+     Белок делим на ОСТАВШИЕСЯ приёмы, а не валим весь дневной остаток в один:
+     утром «~750 г мяса» — это не совет, а насмешка. Доза на приём ≈ 0,4 г/кг
+     (Schoenfeld & Aragon 2018), в граммах мяса — пересчёт по 0,22 г белка на
+     грамм. */
+  var приёмов = 1 + Math.max(0, Math.floor((MEAL_LAST-E.plan.at)/MEAL_GAP));
+  var наПриём = rp/приёмов, мясо = Math.round(наПриём/0.22/10)*10;
+  var чем = rem<=0 ? 'на сегодня хватит · дальше только если голоден' :
+            (наПриём<=8 ? 'белок набран — дальше по калориям' :
+             приёмов>1 ? 'по ~'+мясо+' г мяса или рыбы на приём'
+                       : 'белок закроют ~'+мясо+' г мяса или рыбы');
+  return '<p class="hnext">'+esc(чем)+'</p>';
+}
 function homeWeek(){
   var w=FOOD.week, by={}; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
   var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<div class="hweek">';
@@ -6622,9 +6679,10 @@ function homeWeek(){
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
 var HROD={'завтрак':'завтрака','обед':'обеда','ужин':'ужина'};
+var HVIN={'завтрак':'завтрак','обед':'обед','ужин':'ужин'};
 function homeBar(){
-  var E=hcEvents(), kind = E.next ? E.next.kind : (E.todo[0] ? E.todo[0].kind : 'еду');
-  var род=HROD[kind]||'еды', файл='<input id="hfile" type="file" accept="image/*" hidden>';
+  var E=hcEvents(), kind = (E.plan && E.plan.at!=null) ? E.plan.name : 'еда';
+  var род=HROD[kind]||'еды', вин=HVIN[kind]||'еду', файл='<input id="hfile" type="file" accept="image/*" hidden>';
   var m=HOME.msg;
   /* ждём разбор или ответ пришёл — панель держит миниатюру того, что ушло */
   if(m) return '<div class="hbar hcard" id="hbar"><div class="hcrow">'+
@@ -6640,13 +6698,13 @@ function homeBar(){
     '<span class="hcst"><b>Фото '+esc(род)+' прикреплено</b></span>'+
     '<button type="button" class="hcx" data-att="off" aria-label="Убрать фото">×</button></div>'+
     '<input id="htext" type="text" placeholder="Что это? можно не писать" autocomplete="off">'+
-    '<button type="button" class="hcsend" id="hsend">Записать '+esc(kind)+'</button>'+файл+'</div>';
+    '<button type="button" class="hcsend" id="hsend">Записать '+esc(вин)+'</button>'+файл+'</div>';
   if(HOME.typing) return '<div class="hbar htyping" id="hbar">'+
     '<button type="button" class="hbtn" id="hphoto" aria-label="Фото еды">'+HCAM+'</button>'+
     '<input id="htext" type="text" placeholder="Что съел?" autocomplete="off">'+
     '<button type="button" class="hbtn hgo2" id="hsend" aria-label="Отправить">→</button>'+файл+'</div>';
   return '<div class="hbar" id="hbar">'+
-    '<button type="button" class="hcam" id="hphoto">'+HCAM+'<span>Сфотографировать '+esc(kind)+'</span></button>'+
+    '<button type="button" class="hcam" id="hphoto">'+HCAM+'<span>Сфотографировать '+esc(вин)+'</span></button>'+
     '<button type="button" class="hbtn" id="htog" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>'+файл+'</div>';
 }
 function homeWeight(){
@@ -6678,12 +6736,21 @@ function homeRating(){
    У каждой линии свой масштаб — 60 кг мышц и 27 % жира на одной оси
    несопоставимы; график показывает форму, а ответ «растёт или падает»
    дают три числа с дельтой за неделю под ним. */
+/* Строка «мышцы» ушла 11.09. Весы не меряют мышцы: они меряют сопротивление
+   тела току, а главная переменная в этой формуле — вода. На старте дефицита
+   уходит гликоген и с ним вода, и прибор списывает её в «мышцы»: у него за
+   10 дней «мышцы» 62,5 → 60,5, а белковая масса при этом 16,1 → 17,2.
+   Наименьшее изменение сухой массы, которое на бытовых весах вообще можно
+   считать реальным, — 1,7–2,4 кг (Vázquez-Bautista 2025); пол-литра воды
+   двигает оценку жира на 2–4 % (Uğraş 2020). Поэтому на главной — жир в
+   килограммах (то, что убираем) и белковая масса (то, что бережём). */
 function bodySeries(){
   return [
-    {c:'var(--accent)',  n:'вес',   f:function(m){ return m.w!=null?+m.w:null; }, fmt:function(v){ return fmtKg(v); }, u:''},
-    {c:'var(--chart-2)', n:'жир',   f:function(m){ return m.fat!=null?+m.fat:null; }, fmt:function(v){ return fmtKg(v); }, u:' %'},
-    /* мышечная масса с весов; если её нет — безжировая */
-    {c:'var(--done)',    n:'мышцы', f:function(m){ return m.muscle!=null?+m.muscle:(m.lean!=null?+m.lean:null); }, fmt:function(v){ return fmtKg(v); }, u:''}
+    {k:'w',    n:'вес',   f:function(m){ return m.w!=null?+m.w:null; }, вниз:true,  порог:0.3},
+    {k:'fat',  n:'жир',   вниз:true,  порог:0.3, f:function(m){
+      return m.fatkg!=null ? +m.fatkg : ((m.w!=null && m.fat!=null) ? Math.round(+m.w*+m.fat)/100 : null); }},
+    {k:'prot', n:'белок', вниз:false, порог:0.3, f:function(m){
+      return m.prot!=null ? +m.prot : null; }}
   ];
 }
 function weekAgo(ms, sr){
@@ -6694,32 +6761,25 @@ function weekAgo(ms, sr){
   var a=sr.f(last), b=стар?sr.f(стар):null;
   return (a==null||b==null||стар.date===last.date) ? null : a-b;
 }
-function homeSpark(vals, c){
-  var vs=vals.filter(function(v){ return v!=null; });
-  if(vs.length<2) return '<span class="hbsp"></span>';
-  var mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs), d=(mx-mn)||1, n=vals.length, pts=[];
-  vals.forEach(function(v,i){ if(v==null) return;
-    pts.push((n>1?(i/(n-1))*100:50).toFixed(2)+','+((1-(v-mn)/d)*15+2.5).toFixed(2)); });
-  /* preserveAspectRatio="none" растягивает линию по ширине карточки,
-     vector-effect держит толщину ровной — иначе линия расплывается */
-  return '<svg class="hbsp" viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true">'+
-    '<polyline fill="none" stroke="'+c+'" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" '+
-    'vector-effect="non-scaling-stroke" points="'+pts.join(' ')+'"/></svg>';
-}
 function homeBody(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice(0,21).reverse();
   if(ms.length<2) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
     (ms.length?fmtKg(ms[0].w):'—')+'</b><i>'+(ms.length?'нужен второй замер, чтобы увидеть тренд':'впиши вес на «Еде»')+'</i></button>';
   var h='';
   bodySeries().forEach(function(sr){
-    var vals=ms.map(sr.f), v=sr.f(ms[ms.length-1]), d=weekAgo(ms, sr);
-    /* цвет дельты — по смыслу: вес и жир вниз — хорошо, мышцы вниз — плохо */
-    var хорошо = d==null||Math.abs(d)<0.05 ? null : (sr.n==='мышцы' ? d>0 : d<0);
-    h+='<span class="hbr"><u><i style="background:'+sr.c+'"></i>'+sr.n+'</u>'+
-       homeSpark(vals, sr.c)+
-       '<b>'+(v==null?'—':sr.fmt(v)+sr.u)+'</b>'+
-       '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+(d==null ? '—' : (Math.abs(d)<0.05 ? 'ровно' : (d>0?'+':'−')+fmtKg(Math.abs(d))))+'</s></span>';
+    var v=sr.f(ms[ms.length-1]), d=weekAgo(ms, sr);
+    if(v==null) return;
+    /* изменение меньше порога — это шум прибора, а не факт: показываем словом,
+       а не красной цифрой, иначе экран пугает тем, чего не было */
+    var шум = d==null || Math.abs(d)<sr.порог;
+    var хорошо = шум ? null : (sr.вниз ? d<0 : d>0);
+    h+='<span class="hbr"><u>'+sr.n+'</u>'+
+       '<b>'+fmtKg(v)+'<s> кг</s></b>'+
+       '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+
+         (d==null ? '—' : (шум ? 'ровно' : (d>0?'+':'−')+fmtKg(Math.abs(d))))+'</s></span>';
   });
+  if(!h) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
+    fmtKg(ms[ms.length-1].w)+'</b><i>встань на весы — появятся жир и белок</i></button>';
   return '<button type="button" class="hbody" data-hgo="food">'+h+
     '<p class="hbnote">изменение за неделю</p></button>';
 }
@@ -6759,7 +6819,7 @@ function renderHome(){
      меняется по нескольку раз в день (часы дня, дорожки, запись еды), ниже —
      то, что меняется раз в день (тело и тренировка). */
   box.innerHTML =
-    homeWeek()+homeClock()+homeRows()+
+    homeWeek()+homeClock()+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     '<p class="hlab"><span>Тело</span><span>за неделю</span></p>'+homeBody()+
     homeAct()+homeRating()+homeNext()+homeBar();
