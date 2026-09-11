@@ -543,9 +543,22 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fbar .tr i.fb-done{background:var(--done)}
 .fbar .tr i.fb-over{background:var(--warn)}
 .fbar .tr s{position:absolute;top:-1px;bottom:-1px;width:2px;background:var(--card-solid);opacity:.95}
+/* «Хочу видеть, от чего пришли белки, от чего жиры и от чего сахар» (11.09):
+   шкала раскрывается списком продуктов, которые её набрали. */
+.fbar.fbtap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fbar .fbc{margin-left:5px;font-size:9px;opacity:.65}
+.fbsplit{list-style:none;margin:3px 0 0;padding:9px 0 1px;display:grid;gap:8px;border-top:.5px solid var(--line-soft)}
+.fbsplit li{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:4px 10px}
+.fbsplit .fbn{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbsplit .fbn em{font-style:normal;color:var(--dim);font-size:11.5px}
+.fbsplit .fbv{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fbsplit .fbp{grid-column:1/-1;height:3px;border-radius:99px;background:var(--track);overflow:hidden}
+.fbsplit .fbp i{display:block;height:100%;background:var(--accent);opacity:.5;border-radius:99px}
+.fbsplit .fbrest .fbn,.fbsplit .fbrest .fbv{color:var(--dim);font-weight:400}
+.fbcap{margin:9px 0 0;font-size:11px;color:var(--dim)}
 
 /* переключатель дня: вчерашний ужин записывается во вчера */
-.fnav{display:flex;align-items:center;gap:8px;margin:2px 0 0}
+.fnav{display:flex;align-items:center;gap:8px;margin:2px 0 12px}
 .fnav button{min-width:40px;min-height:36px;border-radius:10px;border:.5px solid var(--line);
   background:var(--card-2);color:var(--text);font-size:16px;line-height:1}
 .fnav button:disabled{opacity:.35}
@@ -3125,7 +3138,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 09:40';
+var BUILD = '11.09 10:15';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6236,7 +6249,7 @@ document.getElementById('frecent').addEventListener('click', function(e){
    клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя.
    Норма набрана — полоса заполнена целиком и покрашена; никакой штриховки:
    любая фактура на конце читается как «не дозаполнено». */
-function fbar(label, v, t, unit, mode){
+function fbar(label, v, t, unit, mode, key){
   var pct = t ? Math.min(100, Math.round(v/t*100)) : 0;
   var cls = '';
   if(t){
@@ -6244,20 +6257,73 @@ function fbar(label, v, t, unit, mode){
     else if(mode==='max') cls = v>t ? 'fb-over' : '';      /* потолок: важно только «перебрал» */
     else cls = v>t*1.15 ? 'fb-over' : (v>=t*0.9 ? 'fb-done' : '');
   }
-  return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
+  return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
          '<b>'+v+(t?' <em>'+(mode==='max'?'/ до ':'/ ')+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
-         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i></div></div>';
+         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i></div>'+fbOpenHtml(key)+'</div>';
 }
 /* Жир — не потолок и не цель, а полоса: ниже нижней границы страдают гормоны,
    выше верхней он просто вытесняет углеводы. Засечка показывает, где начинается
    «достаточно». */
-function fband(label, v, lo, hi, unit){
-  if(!hi) return fbar(label, v, 0, unit);
+function fband(label, v, lo, hi, unit, key){
+  if(!hi) return fbar(label, v, 0, unit, null, key);
   var pct=Math.min(100, Math.round(v/hi*100)), мет=Math.min(98, Math.round(lo/hi*100));
   var cls = v>hi ? 'fb-over' : (v>=lo ? 'fb-done' : '');
-  return '<div class="fbar"><div class="fh"><u>'+label+'</u>'+
+  return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
          '<b>'+v+' <em>/ '+lo+'–'+hi+' '+unit+'</em></b></div>'+
-         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i><s style="left:'+мет+'%"></s></div></div>';
+         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i><s style="left:'+мет+'%"></s></div>'+
+         fbOpenHtml(key)+'</div>';
+}
+/* ══ из чего набралась шкала ══
+   Его просьба 11.09: «мне хочется видеть, от чего пришли белки, от чего жиры
+   и от чего сахар; удобно, если при нажатии на шкалу это показывалось».
+   Разбираем приёмы на состав (items), одинаковые продукты за день
+   складываем и сортируем по вкладу — так сразу видно, кто съел норму.
+   У записи без состава продуктом считается сам приём. */
+var FBOPEN=null;
+var FBUNIT={kcal:'ккал',prot:'г белка',fat:'г жира',fib:'г клетчатки',sug:'г сахара'};
+function fbTap(key){ return key ? ' fbtap'+(FBOPEN===key?' fbon':'') : ''; }
+function fbAttr(key){ return key ? ' data-fk="'+key+'" role="button" tabindex="0" aria-expanded="'+(FBOPEN===key?'true':'false')+'"' : ''; }
+function fbChev(key){ return key ? '<span class="fbc">'+(FBOPEN===key?'▲':'▼')+'</span>' : ''; }
+function fbSplit(key){
+  var by={}, total=0;
+  ((FOOD.day&&FOOD.day.meals)||[]).forEach(function(m){
+    var its=mealItems(m);
+    if(!its.length) its=[{name:String(m.text||'приём'), g:null, kcal:+m.kcal||0, prot:+m.prot||0,
+                          fat:+m.fat||0, carb:+m.carb||0, fib:+m.fib||0, sug:+m.sug||0}];
+    its.forEach(function(x){
+      var v=+x[key]||0; if(v<=0) return;
+      var n=String(x.name||'').toLowerCase().trim().slice(0,44); if(!n) return;
+      var r=by[n] || (by[n]={name:n, v:0, g:0, kinds:[]});
+      r.v+=v; r.g+=(+x.g||0);
+      if(m.kind && r.kinds.indexOf(m.kind)<0) r.kinds.push(m.kind);
+      total+=v;
+    });
+  });
+  var rows=Object.keys(by).map(function(n){ return by[n]; }).sort(function(a,b){ return b.v-a.v; });
+  return {rows:rows, total:total};
+}
+function fbNum(v){ return String(v>=10 ? Math.round(v) : Math.round(v*10)/10).replace('.',','); }
+function fbOpenHtml(key){
+  if(!key || FBOPEN!==key) return '';
+  var s=fbSplit(key);
+  if(!s.rows.length) return '<p class="fbcap">Пока нечего разложить — за день нет записей.</p>';
+  var top=s.rows.slice(0,6), tail=s.rows.slice(6);
+  var h=top.map(function(r){
+    var pct=s.total?Math.round(r.v/s.total*100):0;
+    /* вес продукта — сразу за названием, приёмы — после точки: у записи руками
+       веса нет, и «шашлык ужин» без разделителя читалось как одно название */
+    var под=[]; if(r.g) под.push(Math.round(r.g)+' г'); if(r.kinds.length) под.push(r.kinds.join(', '));
+    var мета = под.length ? ' <em>'+(r.g?'':'· ')+esc(под.join(' · '))+'</em>' : '';
+    return '<li><span class="fbn">'+esc(r.name)+мета+'</span>'+
+           '<span class="fbv">'+fbNum(r.v)+'</span>'+
+           '<span class="fbp"><i style="width:'+Math.max(2,pct)+'%"></i></span></li>';
+  }).join('');
+  if(tail.length){
+    var rest=tail.reduce(function(a,r){ return a+r.v; },0);
+    h+='<li class="fbrest"><span class="fbn">ещё '+tail.length+' '+plural(tail.length,['продукт','продукта','продуктов'])+'</span>'+
+       '<span class="fbv">'+fbNum(rest)+'</span></li>';
+  }
+  return '<ul class="fbsplit">'+h+'</ul><p class="fbcap">Сколько '+(FBUNIT[key]||'')+' дал каждый продукт за день.</p>';
 }
 /* ══ регулярный спорт вне зала ══
    Жена: «Я добавила в профиль про теннис, но ты его не учёл, мне пришлось
@@ -6420,11 +6486,11 @@ function renderFoodDay(){
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по жиру, ниже нельзя':' по цели'):'')+
       (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }
-  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал') +
-    fbar('белок', d.prot, t.prot, 'г', 'min') +
-    (t.fat ? fband('жир', d.fat||0, t.fat.min, t.fat.max, 'г') : '') +
-    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min') +
-    (t.sug ? fbar('сахар', d.sug||0, t.sug, 'г', 'max') : '') + состав +
+  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
+    fbar('белок', d.prot, t.prot, 'г', 'min', 'prot') +
+    (t.fat ? fband('жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
+    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib') +
+    (t.sug ? fbar('сахар', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
     closeHtml();
   ml.innerHTML = (d.plan||[]).map(function(pp){
@@ -6443,6 +6509,12 @@ function renderFoodDay(){
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
 }
+document.getElementById('fday').addEventListener('click', function(e){
+  if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
+  var b=e.target.closest('.fbar[data-fk]'); if(!b) return;
+  var k=b.dataset.fk; FBOPEN = FBOPEN===k ? null : k;
+  haptic('light'); renderFoodDay();
+});
 function renderFoodWeek(){
   var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
   var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
