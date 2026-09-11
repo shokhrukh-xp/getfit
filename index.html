@@ -3075,6 +3075,16 @@ function renderWzGoal(){
     return;
   }
   var s=WIZ.safe, p=gPlan();
+  /* Бывает, что снижать сейчас нечем: поддержка почти равна полу нормы
+     (норма ниже основного обмена не опускается). Тогда шкала лгала бы —
+     показываем как есть и ставим поддержание. */
+  if(WIZ.gwt==='down' && !(s.max>=0.1)){
+    body.innerHTML='<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
+      '<div class="gsub">снижать сейчас нечем</div>';
+    why.textContent='Твоя поддержка почти равна полу нормы — ниже основного обмена еду не урезаем. Начнём с поддержания: появятся замеры и движение, пересчитаю.';
+    go.disabled=false; go.textContent='Так и делаем';
+    return;
+  }
   if(WIZ.gwt==='keep'){
     body.innerHTML='<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
       '<div class="gsub">вес держим, работаем над составом</div>';
@@ -3092,8 +3102,11 @@ function renderWzGoal(){
     '<div class="gends"><span>'+gвес(r.lo)+'</span><span>'+gвес(r.hi)+' · сейчас</span></div>'+
     '<div class="gbig"><b>'+gвес(WIZ.target)+'</b><small>кг</small></div>'+
     '<div class="gsub"><b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks)+'</div>';
+  var почему = s.limit==='жир' ? ' (быстрее дефицит закрывается уже не жиром)'
+    : s.limit==='обмен' ? ' (это весь доступный дефицит: ниже основного обмена норму не опускаем)'
+    : ' (1 % веса в неделю)';
   why.textContent = WIZ.gwt==='down'
-    ? 'Зелёный отрезок — то, что тело отдаёт жиром при '+gзпт(s.max)+' кг в неделю'+(s.limit==='жир'?' (быстрее дефицит закрывается уже не жиром)':' (1 % веса в неделю)')+
+    ? 'Зелёный отрезок — то, что тело отдаёт жиром при '+gзпт(s.max)+' кг в неделю'+почему+
       (r.stop?'. Ниже '+gвес(r.stop)+' кг жир уже не запасной, а необходимый — туда ручка не идёт.':'.')
     : 'Набор быстрее 0,35 кг в неделю идёт в основном жиром, поэтому срок считаю по нему.';
   go.disabled=false; go.textContent='Так и делаем · до '+gдата(p.weeks);
@@ -3101,7 +3114,10 @@ function renderWzGoal(){
 function wzGoalNext(){
   var go=document.getElementById('g-go'); if(go) { go.disabled=true; go.textContent='Записываю…'; }
   var еда=(WIZ.only||(myData()||{}).only)==='food';
-  var тело={ uid:syncUid(), wt:WIZ.gwt||'down', gym: еда ? 'health' : (WIZ.ggym||'muscle'), target:WIZ.target };
+  var s=WIZ.safe||{};
+  /* снижать нечем — записываем то, что есть на самом деле: поддержание */
+  var нап = (WIZ.gwt==='down' && !(s.max>=0.1)) ? 'keep' : (WIZ.gwt||'down');
+  var тело={ uid:syncUid(), wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target };
   tgFetch(SYNCURL+'/goal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(тело)})
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -3723,7 +3739,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 22:15';
+var BUILD = '11.09 23:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }

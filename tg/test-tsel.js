@@ -83,6 +83,32 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   дано(вкладки.join(',') === 'Сегодня,Еда', 'знакомство кончилось, две вкладки: ' + вкладки.join(' · '));
   await page.close();
 
+  /* ── предел темпа упирается не в процент веса, а в пол нормы ── */
+  page = await br.newPage({ viewport: { width: 390, height: 1300 } });
+  await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500,
+    safe: { w: 79, max: 0.39, limit: 'обмен', floor: 57.3, upMax: 0.35 } });
+  await page.fill('#wz-age', '19'); await page.fill('#wz-ht', '180'); await page.fill('#wz-bw', '79');
+  await page.click('#wz-me-go');
+  await page.waitForTimeout(900);
+  const почему = await page.textContent('#g-why');
+  дано(/0,39 кг в неделю/.test(почему), 'на экране достижимый темп, а не 1 % веса: ' + почему);
+  дано(/ниже основного обмена/.test(почему), 'сказано, что упирается в пол нормы');
+  дано(!/1 % веса/.test(почему), 'про 1 % веса не говорим — ограничивает не он');
+  await page.close();
+
+  /* ── снижать нечем: поддержка почти равна полу нормы ── */
+  page = await br.newPage({ viewport: { width: 390, height: 1300 } });
+  await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500,
+    safe: { w: 58, max: 0, limit: 'обмен', floor: 57.3, upMax: 0.35 } });
+  await page.fill('#wz-age', '29'); await page.fill('#wz-ht', '161'); await page.fill('#wz-bw', '58');
+  await page.click('#wz-me-go');
+  await page.waitForTimeout(900);
+  дано(!(await page.isVisible('#g-rng').catch(() => false)), 'шкалы нет: снижать нечем');
+  дано(/снижать сейчас нечем/.test(await page.textContent('#g-body')),
+    'сказано прямо: ' + await page.textContent('#g-body'));
+  дано(/ниже основного обмена/.test(await page.textContent('#g-why')), 'и объяснено почему');
+  await page.close();
+
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
