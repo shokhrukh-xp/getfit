@@ -3138,7 +3138,13 @@ function gдата(w){ var d=new Date(Date.now()+w*7*864e5); return ruDate(ymd(d
    цель не ставится. Своей копии формулы у экрана нет намеренно. */
 function wzGoalPull(){
   if(WIZ.safeBusy) return; WIZ.safeBusy=true; WIZ.safeErr=false;
-  tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()))
+  /* Анкету знакомства приложение отправляет отдельным запросом и ответа не
+     ждёт: к этому моменту сервер мог её ещё не получить, и тогда «нет веса» —
+     а человек видит «не получилось посчитать» на обязательном шаге. Поэтому
+     ответы едут вместе с запросом; сервер считает по ним, если своих нет. */
+  var me0=myData()||{};
+  var анк='&bw='+(+me0.bw||0)+'&ht='+(+me0.ht||0)+'&age='+(+me0.age||0)+'&sex='+encodeURIComponent(me0.sex||'');
+  tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid())+анк)
     .then(function(r){ return r.json(); })
     .then(function(d){
       WIZ.safeBusy=false;
@@ -3235,7 +3241,9 @@ function wzGoalNext(){
   var s=WIZ.safe||{};
   /* снижать нечем — записываем то, что есть на самом деле: поддержание */
   var нап = (WIZ.gwt==='down' && !(s.max>=0.1)) ? 'keep' : (WIZ.gwt||'down');
-  var тело={ uid:syncUid(), wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target };
+  var me0=myData()||{};
+  var тело={ uid:syncUid(), wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target,
+             bw:+me0.bw||0, ht:+me0.ht||0, age:+me0.age||0, sex:me0.sex||'' };
   tgFetch(SYNCURL+'/goal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(тело)})
     .then(function(r){ return r.json(); })
     .then(function(d){
@@ -3857,7 +3865,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 22:50';
+var BUILD = '11.09 23:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7286,8 +7294,16 @@ function bodyDelta(ms, sr, вид){
 }
 function homeBody(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
-  if(ms.length<2) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
-    (ms.length?fmtKg(ms[0].w):'—')+'</b><i>'+(ms.length?'нужен второй замер, чтобы увидеть тренд':'впиши вес на «Еде»')+'</i></button>';
+  if(ms.length<2){
+    /* Вес человек назвал на первом шаге знакомства. Просить его снова —
+       значит не помнить, что он только что сказал. Показываем его число и
+       зовём на весы за трендом, а не за самим весом. */
+    var me0=myData()||{}, w = ms.length ? ms[0].w : (+me0.bw||0);
+    var под = ms.length ? 'нужен второй замер, чтобы увидеть тренд'
+            : (w ? 'с твоих слов · встань на весы — пойдёт тренд' : 'впиши вес на «Еде»');
+    return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
+      (w?fmtKg(w):'—')+'</b><i>'+под+'</i></button>';
+  }
   /* числа в колонках всегда с одним знаком после запятой: «−3» рядом с «−0,8»
      ломает табличное выравнивание, ради которого всё и затевалось */
   var f1=function(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); };
