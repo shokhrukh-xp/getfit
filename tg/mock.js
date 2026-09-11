@@ -33,10 +33,13 @@ function неделя(o) {
 }
 function замеры() {
   const m = [];
-  for (let i = 0; i < 8; i++) m.push({
-    date: Д(i), w: 88.1 + i * 0.16, fat: 26.4 + i * 0.08, muscle: 60.6 - i * 0.05,
-    lean: 64.8, visc: 13, bmr: 1820, created: new Date(Д(i) + 'T07:28:00').getTime()
-  });
+  for (let i = 0; i < 8; i++) {
+    const w = 88.1 + i * 0.16, fat = 26.4 + i * 0.08;
+    m.push({ date: Д(i), w: +w.toFixed(1), fat: +fat.toFixed(1),
+      fatkg: +(w * fat / 100).toFixed(1), lean: +(w - w * fat / 100).toFixed(1),
+      muscle: +(60.6 - i * 0.05).toFixed(1), prot: +(17.2 - i * 0.07).toFixed(1),
+      water: 42.5, visc: 13, bmr: 1820, created: new Date(Д(i) + 'T07:28:00').getTime() });
+  }
   return m;
 }
 function круг() {
