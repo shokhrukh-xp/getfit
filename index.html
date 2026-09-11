@@ -1102,6 +1102,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catgrp h4 em{font-style:normal;color:var(--dim);font-weight:600;font-size:12px}
 .catgrp h4 button{border:0;background:transparent;color:var(--accent-2);font:inherit;font-size:12.5px;
   font-weight:600;padding:0;flex:0 0 auto}
+.catempt{text-align:center;padding:38px 16px 24px}
+.catempt b{display:block;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.catempt i{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:5px}
+.catempt p{margin:14px 0 16px;font-size:12.5px;color:var(--dim)}
 .catcount{margin:0 0 10px;font-family:inherit;font-size:10.5px;
   color:var(--dim)}
 .catlist{display:flex;flex-direction:column;gap:8px}
@@ -2814,10 +2818,15 @@ function катСводка(){
   if(catMuscle) ч.push(CAT.muscles[catMuscle]||catMuscle);
   if(catEquip)  ч.push(CAT.equip[catEquip]||catEquip);
   if(catLevel)  ч.push(CAT.level[catLevel]||catLevel);
-  if(catType && catType!=='strength') ч.push(((CAT.cats||{})[catType])||catType);
+  /* «сила» стоит по умолчанию — и это ВСЁ РАВНО фильтр. Пока о нём молчали,
+     поиск «растяжка» давал «0 упражнений» при кнопке «ничего не выбрано»:
+     экран фильтровал и не признавался. */
+  if(catType) ч.push(((CAT.cats||{})[catType])||catType);
   return ч;
 }
-function катЧисто(){ return !catQuery.trim() && !катСводка().length; }
+/* подборки показываем, пока человек ничего не сузил сам; тип «сила» по
+   умолчанию сужением не считаем — подборки и так про силовые */
+function катЧисто(){ return !catQuery.trim() && !catMuscle && !catEquip && !catLevel && (!catType || catType==='strength'); }
 /* Снаряд в имени уже написан — «Присед (штанга, Зерхера)», — и повторять его
    в подписи значит писать одно и то же дважды в одной строке. Оставляем в
    подписи только то, чего в имени нет. */
@@ -2848,7 +2857,7 @@ function renderCatalog(){
     /* кнопка фильтров говорит, что ВЫБРАНО; список возможностей — внутри */
     var св=катСводка(), fb=document.getElementById('pcatfbtn'), fr=document.getElementById('pcatreset');
     if(fb) fb.innerHTML = '<s>фильтры</s>'+(св.length ? '<b>'+esc(св.join(' · '))+'</b>' : '<i>ничего не выбрано</i>');
-    if(fr) fr.hidden = !св.length && !catQuery.trim();
+    if(fr) fr.hidden = катЧисто();
   }
   if(onPage && fbox && !fbox.hidden){
     fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
@@ -2877,6 +2886,14 @@ function renderCatalog(){
       hh+='</div>';
     });
     box.innerHTML=hh;
+    return;
+  }
+  if(!list.length){
+    box.innerHTML='<div class="catempt"><b>Ничего не нашлось</b>'+
+      (catQuery.trim()?'<i>по запросу «'+esc(catQuery.trim())+'»</i>':'')+
+      (катСводка().length?'<p>Ищем среди: '+esc(катСводка().join(' · '))+'</p>'+
+        '<button type="button" class="btn" id="catwide">Искать среди всех</button>':'')+
+      '</div>';
     return;
   }
   h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+
@@ -3840,7 +3857,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 22:40';
+var BUILD = '11.09 22:50';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6473,6 +6490,10 @@ var _pcb=document.getElementById('pcatbody');
 if(_pcb) _pcb.addEventListener('click', function(e){
   if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); return; }
   /* «все 84 →» из подборки — это тот же фильтр по мышце, а не отдельный экран */
+  if(e.target.closest('#catwide')){
+    catMuscle=''; catEquip=''; catLevel=''; catType=''; catShown=40;
+    renderCatalog(); haptic('light'); return;
+  }
   var g=e.target.closest('[data-grp]');
   if(g){ catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
     var sc=document.getElementById('p-ref'); if(sc) sc.scrollIntoView({block:'start'}); }

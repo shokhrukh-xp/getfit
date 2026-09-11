@@ -39,8 +39,8 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(фото >= 8, 'у каждой строки подборки есть фото: ' + фото);
 
   /* 3. кнопка фильтров говорит, что выбрано */
-  дано(/ничего не выбрано/.test(await page.textContent('#pcatfbtn')),
-    'на кнопке — состояние, а не список: ' + (await page.textContent('#pcatfbtn')).trim());
+  дано(/сила/i.test(await page.textContent('#pcatfbtn')),
+    'на кнопке — что выбрано, включая фильтр по умолчанию: ' + (await page.textContent('#pcatfbtn')).trim());
   await page.click('#pcatfbtn');
   await page.waitForTimeout(400);
   дано(await page.isVisible('#pcatfilters'), 'по нажатию чипы раскрылись');
@@ -101,6 +101,23 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   });
   дано(имена.всего === 887, 'в каталоге все 887 упражнений: ' + имена.всего);
   дано(имена.повторов === 0, 'одинаковых имён не осталось: ' + имена.повторов);
+
+  /* 9. экран не молчит о том, что сам фильтрует.
+     «сила» стоит по умолчанию — поиск «растяжка» давал 0 при кнопке
+     «ничего не выбрано»: фильтровал и не признавался. */
+  await page.click('#pcatreset'); await page.waitForTimeout(400);
+  дано(/сила/i.test(await page.textContent('#pcatfbtn')),
+    'кнопка признаёт фильтр по умолчанию: ' + (await page.textContent('#pcatfbtn')).trim());
+  await page.fill('#pcatsearch', 'растяжка');
+  await page.waitForTimeout(800);
+  const пусто = await page.textContent('#pcatbody');
+  дано(/Ничего не нашлось/.test(пусто), 'пустой результат подписан, а не пустой экран');
+  дано(/Ищем среди/.test(пусто), 'и сказано, что сузило поиск: ' + пусто.replace(/\s+/g,' ').slice(0,90));
+  дано(await page.isVisible('#catwide'), 'есть выход из тупика одной кнопкой');
+  await page.click('#catwide');
+  await page.waitForTimeout(700);
+  const нашлось = await page.$$('#pcatbody .catitem');
+  дано(нашлось.length > 10, 'после «искать среди всех» растяжки нашлись: ' + нашлось.length);
 
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
