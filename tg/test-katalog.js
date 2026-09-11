@@ -74,6 +74,34 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   const первый = await page.textContent('#pcatbody .catitem .cattx b');
   дано(/присед/i.test(первый), 'первое найденное отвечает запросу: ' + первый);
 
+  /* 7. снаряд не написан дважды в одной строке */
+  await page.click('#pcatreset'); await page.waitForTimeout(400);
+  await page.fill('#pcatsearch', 'штанга');
+  await page.waitForTimeout(800);
+  const строки = await page.$$eval('#pcatbody .catitem', ns => ns.slice(0, 12).map(e => ({
+    имя: e.querySelector('.cattx b').textContent,
+    подпись: e.querySelector('.cattag').textContent })));
+  const двойные = строки.filter(r => /штанга/i.test(r.имя) && /штанга/i.test(r.подпись));
+  дано(строки.length > 0, 'нашлись строки со штангой: ' + строки.length);
+  дано(двойные.length === 0, 'снаряд не повторяется в подписи' +
+    (двойные[0] ? ': ' + двойные[0].имя + ' / ' + двойные[0].подпись : ''));
+  const есть = строки.find(r => !/штанга/i.test(r.имя));
+  if (есть) дано(есть.подпись.split('·').length >= 2,
+    'а где снаряда в имени нет — он остаётся в подписи: ' + есть.имя + ' / ' + есть.подпись);
+
+  /* 8. одинаковых имён в каталоге не осталось */
+  /* весь скрипт приложения в IIFE — CAT изнутри page.evaluate не виден,
+     поэтому читаем тот же файл, который грузит приложение */
+  const имена = await page.evaluate(async () => {
+    const d = await (await fetch('catalog.json')).json();
+    const c = {}; let п = 0;
+    d.ex.forEach(x => { c[x.n] = (c[x.n] || 0) + 1; });
+    Object.values(c).forEach(v => { if (v > 1) п++; });
+    return { всего: d.ex.length, повторов: п };
+  });
+  дано(имена.всего === 887, 'в каталоге все 887 упражнений: ' + имена.всего);
+  дано(имена.повторов === 0, 'одинаковых имён не осталось: ' + имена.повторов);
+
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);

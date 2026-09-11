@@ -2818,14 +2818,23 @@ function катСводка(){
   return ч;
 }
 function катЧисто(){ return !catQuery.trim() && !катСводка().length; }
+/* Снаряд в имени уже написан — «Присед (штанга, Зерхера)», — и повторять его
+   в подписи значит писать одно и то же дважды в одной строке. Оставляем в
+   подписи только то, чего в имени нет. */
+function catTag(x){
+  var сн=CAT.equip[x.q]||x.q, ч=[];
+  if(сн && String(x.n||'').toLowerCase().indexOf(String(сн).toLowerCase())<0) ч.push(сн);
+  ч.push(CAT.level[x.l]||x.l);
+  if(x.c && x.c!=='strength' && x.c!=='powerlifting') ч.push(((CAT.cats||{})[x.c])||x.c);
+  return ч.join(' · ');
+}
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
   return '<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
     (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-    '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+
-    (x.c && x.c!=='strength' && x.c!=='powerlifting' ? ' · '+(((CAT.cats||{})[x.c])||x.c) : '')+'</span></div>'+
+    '<span class="cattag">'+catTag(x)+'</span></div>'+
     (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
           :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
             encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
@@ -3831,7 +3840,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 22:25';
+var BUILD = '11.09 22:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
