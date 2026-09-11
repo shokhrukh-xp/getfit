@@ -3571,7 +3571,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 20:45';
+var BUILD = '11.09 21:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6835,7 +6835,8 @@ function homeWeek(){
   var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<div class="hweek">';
   for(var i=0;i<7;i++){
     var dt=new Date(nd.getTime()+(i-dow)*864e5), iso=ymd(dt), d=by[iso], fut=iso>TODAY, cls='';
-    if(!fut && d && d.n){ var off=tg.kcal?(d.kcal-tg.kcal)/tg.kcal:0; cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
+    if(!fut && d && d.n){ var t=(d.tg&&d.tg.kcal)?d.tg:tg, off=t.kcal?(d.kcal-t.kcal)/t.kcal:0;
+      cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
     h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'>'+WD[dt.getDay()]+(fut?'':'<b class="'+cls+'"></b>')+'</button>';
   }
   return h+'</div>';
@@ -7647,22 +7648,30 @@ document.getElementById('fday').addEventListener('click', function(e){
 function renderFoodWeek(){
   var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
   var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
-  var tg=w.targets||{}, mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return d.kcal; })), 1);
+  var tg=w.targets||{};
+  /* Норма у каждого дня СВОЯ: в день зала она выше, а неделю назад был другой
+     вес. Сервер отдаёт её в d.tg — сохранённую вместе с днём. Раньше все семь
+     столбиков мерились сегодняшней нормой, и цвет прошлого дня мог врать. */
+  var норма=function(d){ return (d.tg && d.tg.kcal) ? d.tg : tg; };
+  var mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return Math.max(d.kcal, (норма(d).kcal)||0); })), 1);
   box.innerHTML = w.days.map(function(d){
     /* цвет — по тому же коридору, что и оценка дня: в ±10 % от нормы зелёный,
        мимо — красный. Раньше красили «ниже пола», и день на 10 из 10 выходил
        красным, а перебор на 40 % — зелёным (его вопрос 11.09).
        Сегодня ещё идёт: недобор не красим, перебор — уже факт. */
-    var откл = tg.kcal ? (d.kcal-tg.kcal)/tg.kcal : 0;
+    var t=норма(d), откл = t.kcal ? (d.kcal-t.kcal)/t.kcal : 0;
     var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
     return '<div class="fd"><i>'+(d.n?d.kcal:'')+'</i><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
   /* одна строка: среднее против нормы и сколько дней попали в коридор */
   var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
-  var вНорме=logged.filter(function(d){ return tg.kcal && Math.abs((d.kcal-tg.kcal)/tg.kcal)<=0.10; }).length;
+  var вНорме=logged.filter(function(d){ var t=норма(d); return t.kcal && Math.abs((d.kcal-t.kcal)/t.kcal)<=0.10; }).length;
   var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+(+d.prot||0); },0)/(logged.length||1))};
+  var ср=function(f){ return logged.length ? Math.round(logged.reduce(function(a,d){ return a+(f(норма(d))||0); },0)/logged.length) : 0; };
+  var нк=ср(function(t){ return t.kcal; }), нб=ср(function(t){ return t.prot; });
+  var разные=logged.some(function(d){ return норма(d).kcal!==норма(logged[0]).kcal; });
   t.textContent = logged.length
-    ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(tg.kcal?' при норме '+tg.kcal+' / '+tg.prot:'')+(tg.kcal?' · в норме '+вНорме+' '+plural(вНорме,['день','дня','дней'])+' из '+logged.length:'')
+    ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(нк?(разные?' при средней норме ':' при норме ')+нк+' / '+нб:'')+(нк?' · в норме '+вНорме+' '+plural(вНорме,['день','дня','дней'])+' из '+logged.length:'')
     : 'За неделю записей нет.';
 }
 /* вес и % жира двумя линиями, каждая в своём масштабе; ИМТ — линейная функция
