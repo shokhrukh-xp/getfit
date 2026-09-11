@@ -755,6 +755,10 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .fparts{margin:6px 0 0;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
 .fmeal .fk{font-weight:500;flex:0 0 58px;font-family:inherit;font-size:12px;color:var(--dim)}
 .fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
+.fmeal .ft i{display:block;font-style:normal;font-size:12px;color:var(--dim);font-weight:500;margin-bottom:1px}
+.fmth{flex:0 0 38px;width:38px;height:38px;border-radius:11px;object-fit:cover;border:1px solid var(--line)}
+.fmno{display:grid;place-items:center;background:var(--field);border-color:transparent;color:var(--dim)}
+.fmno svg{width:19px;height:19px}
 /* «590 · 50 г» читалось как вес порции. Числа подписаны: калории крупно,
    белок отдельной строкой — вес порции живёт в самом названии блюда. */
 .fmeal .fn{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;
@@ -1471,6 +1475,10 @@ body.onb #picker .modalbox::before{display:none}
 .btn.prim{background:var(--prime);color:var(--on-prime);border-color:transparent;font-weight:700}
 .fask input{background:var(--field);border:1px solid transparent;border-radius:14px;padding:13px 16px;font-size:15px}
 .fask input:focus{border-color:var(--accent);outline:none}
+/* тот же порядок и те же роли, что в панели на «Сегодня»: камера — поле —
+   отправка, съёмка залита инверсией фона. Два места об одном действии не
+   должны выглядеть по-разному */
+.fbtn.fshot{background:var(--prime);color:var(--on-prime);border-color:transparent}
 .fbtn{border:none;background:var(--field);color:var(--muted);border-radius:14px;flex-basis:48px;height:48px}
 .fbtn.go{background:var(--accent);color:var(--on-accent)}
 .freply{border-left:none;background:var(--field);border-radius:14px;padding:12px 14px}
@@ -1762,8 +1770,8 @@ body.onb #picker .modalbox::before{display:none}
         <div class="fmeals" id="fmeals"></div>
         <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
+          <button type="button" class="fbtn fshot" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
           <input id="ftext" type="text" placeholder="Что съел?" autocomplete="off">
-          <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
           <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
           <input id="ffile" type="file" accept="image/*" hidden>
         </div>
@@ -3476,7 +3484,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 17:40';
+var BUILD = '11.09 17:55';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6975,7 +6983,7 @@ function renderCircle(){
   if(list.length>1) h+='<div class="cirsw">'+list.map(function(c){ return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>'; }).join('')+'</div>';
   var td=me.today||null;
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
-     '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'пока — день идёт') : 'ещё ничего не записано')+'</i></div>'+
+     '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'день идёт') : 'ещё ничего не записано')+'</i></div>'+
      '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+weekSub(me)+'</i></div></div>'+
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
@@ -7052,7 +7060,7 @@ function udayHtml(){
     '<button type="button" data-udnav="1" aria-label="Следующий день"'+(u.date>=TODAY?' disabled':'')+'>›</button></div>';
   if(!d) return h+'<p class="plempty">'+(u.busy?'Загружаю…':esc(u.err||'Сервер не отвечает.'))+'</p>';
   var day=d.day, fin=!!(day && (day.closed || u.date<TODAY));
-  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока — день идёт')+(d.streak?' · '+streakText(d.streak):'')+
+  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · день идёт')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(day.why))+(!fin && day.counts===false ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
   var meals=d.meals||[];
   if(!meals.length) return h+'<p class="plempty">'+(u.date===TODAY?'Сегодня ещё ничего не записано.':'В этот день ничего не записано.')+'</p>';
@@ -7124,7 +7132,7 @@ function closeHtml(){
   var fin = d.closed || d.date<TODAY;
   /* до первой записи числа нет: «3,0 / 10» с утра — это не оценка, а пустой день */
   if(d.r==null) return fin ? '' : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>';
-  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока — день идёт')+(d.streak?' · '+streakText(d.streak):'')+
+  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · день идёт')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(d.why))+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
 }
 function loadDayScore(){
@@ -7468,7 +7476,13 @@ function renderFoodDay(){
            '<span class="fn"><b>+'+Math.round(a.kcal)+'</b> ккал<i>к норме</i></span>'+
            '<button type="button" class="fx" data-adel="'+a.id+'" aria-label="Убрать">×</button></div>';
   }).join('') + (d.meals||[]).map(function(m){
-    return '<div class="fmeal" data-mid="'+m.id+'"><span class="fk">'+(m.kind||'')+'</span><span class="ft">'+m.text+'</span>'+
+    /* фото приёма — первым: на часах день человек узнаёт по снимкам, и список
+       за тот же день обязан выглядеть так же. Имя приёма ушло подписью над
+       текстом, чтобы строка не росла третьей колонкой */
+    var ф = m.img ? '<img class="fmth" src="'+esc(m.img)+'" alt="" loading="lazy">'
+                  : '<span class="fmth fmno"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg></span>';
+    return '<div class="fmeal" data-mid="'+m.id+'">'+ф+
+           '<span class="ft">'+(m.kind?'<i>'+esc(m.kind)+'</i>':'')+m.text+'</span>'+
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
@@ -7511,18 +7525,19 @@ function renderMeas(){
   if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Пришли скриншот отчёта весов — кнопка справа — или впиши вес.</p>'; return; }
   var ht=(myData()||{}).ht, W=360, H=198, L=10, R=10, T=8, B=22;
   var last=ms[ms.length-1], bmi = ht ? last.w/((ht/100)*(ht/100)) : null;
-  /* Три показателя — три полосы, а не три линии в одном окне: вес, жир и мышцы
-     меняются одинаково, и наложенные друг на друга кривые сливались в одну
-     (его просьба 11.09 — видеть, растут мышцы или падают). У каждой полосы
-     свой масштаб и своя подпись слева. */
+  /* Три показателя — три полосы, а не три линии в одном окне: они меняются
+     одинаково, и наложенные кривые сливались в одну. У каждой полосы свой
+     масштаб и своя подпись слева.
+     Третья полоса — БЕЛКОВАЯ МАССА, а не «мышцы»: на главной мы убрали мышцы
+     как воду, и два места об одном факте не должны расходиться. */
   var series=[
     {c:'var(--accent)',  n:'вес',   f:function(m){ return m.w!=null?+m.w:null; }, fmt:function(v){ return fmtKg(v); }},
     {c:'var(--chart-2)', n:'жир',   f:function(m){ return m.fat!=null?+m.fat:null; }, fmt:function(v){ return fmtKg(v)+' %'; }},
-    {c:'var(--done)',    n:'мышцы', f:function(m){ return m.muscle!=null?+m.muscle:(m.lean!=null?+m.lean:null); }, fmt:function(v){ return fmtKg(v); }}
+    {c:'var(--done)',    n:'белок', f:function(m){ return m.prot!=null?+m.prot:null; }, fmt:function(v){ return fmtKg(v); }}
   ];
   var xs=ms.map(function(_,i){ return ms.length>1 ? L+(W-L-R)*i/(ms.length-1) : W/2; });
   var поле=H-T-B, полоса=поле/series.length, отступ=19;   /* отступ — место под подпись полосы */
-  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Вес, жир и мышцы по дням">';
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Вес, жир и белковая масса по дням">';
   series.forEach(function(sr, si){
     var верх=T+si*полоса, низ=верх+полоса-6;
     var vals=ms.map(sr.f), vs=vals.filter(function(v){ return v!=null; });

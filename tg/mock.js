@@ -29,7 +29,11 @@ function неделя(o) {
   o = o || {};
   const дни = [];
   for (let i = 6; i >= 0; i--) дни.push({ date: Д(i), kcal: [2050, 1880, 2210, 2000, 2450, 1960, 1030][6 - i], n: i === 0 ? 2 : 3 });
-  return { targets: { kcal: 2110, prot: 165 }, days: o.days || дни };
+  дни.forEach(function (d, i) { d.prot = [150, 132, 171, 158, 146, 160, 128][i]; });
+  const было = дни.filter(d => d.date < TODAY);
+  return { targets: { kcal: 2110, prot: 165 }, days: o.days || дни,
+    avg: { kcal: Math.round(было.reduce((a, d) => a + d.kcal, 0) / (было.length || 1)),
+           prot: Math.round(было.reduce((a, d) => a + d.prot, 0) / (было.length || 1)) } };
 }
 function замеры() {
   const m = [];
