@@ -1081,6 +1081,27 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 #pcatfilters .mchips::-webkit-scrollbar{display:none}
 #pcatfilters .chlab{flex:0 0 auto;margin:0 4px 0 0}
 #pcatfilters .mchip{flex:0 0 auto;white-space:nowrap}
+/* ── Каталог: поиск главный, фильтры за одной кнопкой (его эскиз, 11.09) ──
+   Четыре ряда чипов занимали больше половины экрана, и до первого упражнения
+   надо было листать. Теперь сверху поиск, под ним одна строка «фильтры» со
+   сводкой выбранного, а без запроса — подборки по мышцам. */
+.catsearch.big{font-size:16px;padding:14px 16px}
+.catf{display:flex;gap:8px;align-items:stretch;margin:10px 0 2px}
+.catf button{border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;
+  font-size:13px;font-weight:600;border-radius:12px;padding:11px 13px}
+.catf .fbtn{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.catf .fbtn s{text-decoration:none;flex:0 0 auto;color:var(--muted)}
+.catf .fbtn b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent-2);font-weight:700;text-align:right}
+.catf .fbtn i{font-style:normal;color:var(--dim);font-weight:600}
+.catf .fbtn[aria-expanded="true"]{border-color:var(--accent);background:var(--accent-ghost)}
+.catf .fx{flex:0 0 auto;color:var(--muted)}
+.catgrp{margin-top:20px}
+.catgrp:first-child{margin-top:10px}
+.catgrp h4{margin:0 0 8px;font-size:13.5px;font-weight:700;letter-spacing:-.01em;
+  display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.catgrp h4 em{font-style:normal;color:var(--dim);font-weight:600;font-size:12px}
+.catgrp h4 button{border:0;background:transparent;color:var(--accent-2);font:inherit;font-size:12.5px;
+  font-weight:600;padding:0;flex:0 0 auto}
 .catcount{margin:0 0 10px;font-family:inherit;font-size:10.5px;
   color:var(--dim)}
 .catlist{display:flex;flex-direction:column;gap:8px}
@@ -1884,9 +1905,13 @@ body.onb #picker .modalbox::before{display:none}
     <section class="page hide" id="p-ref">
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="zseg-ref"></div>
+        <input class="catsearch big" id="pcatsearch" type="search" placeholder="Что ищешь? жим, тяга, присед…" autocomplete="off">
+        <div class="catf">
+          <button type="button" class="fbtn" id="pcatfbtn" aria-expanded="false"></button>
+          <button type="button" class="fx" id="pcatreset" hidden>сбросить</button>
+        </div>
         <p class="lede" id="catn"></p>
-        <input class="catsearch" id="pcatsearch" type="search" placeholder="Поиск по названию" autocomplete="off">
-        <div id="pcatfilters"></div>
+        <div id="pcatfilters" hidden></div>
         <div id="pcatbody"></div>
       </div>
     </section>
@@ -2749,12 +2774,71 @@ function chipRow(field, cur, dict, label){
   });
   return h+'</div>';
 }
+/* ── Подборки по мышцам ──
+   Без запроса и без фильтров каталог показывает не 633 строки подряд, а
+   несколько групп по четыре упражнения. Порядок внутри группы — БАЗОВЫЕ
+   движения на обычных снарядах впереди: это единственный признак, который
+   честно есть в данных (`mc:'c'` — многосуставное, `q` — снаряд). Слов
+   «часто берут» не пишем: сколько раз что брали, мы не знаем. */
+var КАТГРУППЫ=['chest','lats','middle back','shoulders','quadriceps','hamstrings',
+               'glutes','biceps','triceps','abdominals','calves','lower back'];
+var КАТСНАРЯД={'barbell':0,'dumbbell':1,'machine':2,'cable':3,'body only':4,
+               'kettlebell':5,'e-z curl bar':6,'bands':7,'exercise ball':8};
+function катВес(x){
+  var s=(x.mc==='c'?0:10)+(КАТСНАРЯД[x.q]!=null?КАТСНАРЯД[x.q]:9);
+  if(x.l==='beginner') s-=0.5;
+  return s;
+}
+function катПодборки(){
+  var по={}, всего={};
+  CAT.ex.forEach(function(x){
+    if(катВид(x)!=='strength') return;
+    [x.m, x.m2].forEach(function(m){
+      if(!m) return;
+      всего[m]=(всего[m]||0)+1;
+      (по[m]=по[m]||[]).push(x);
+    });
+  });
+  return КАТГРУППЫ.filter(function(m){ return (по[m]||[]).length>=4; }).map(function(m){
+    var л=по[m].slice().sort(function(a,b){ return катВес(a)-катВес(b); }).slice(0,4);
+    return { m:m, имя:(CAT.muscles[m]||m), всего:всего[m], л:л };
+  });
+}
+function катВид(x){ return catKind(x); }
+/* сводка на кнопке фильтров: что выбрано, а не список возможностей */
+function катСводка(){
+  var ч=[];
+  if(catMuscle) ч.push(CAT.muscles[catMuscle]||catMuscle);
+  if(catEquip)  ч.push(CAT.equip[catEquip]||catEquip);
+  if(catLevel)  ч.push(CAT.level[catLevel]||catLevel);
+  if(catType && catType!=='strength') ч.push(((CAT.cats||{})[catType])||catType);
+  return ч;
+}
+function катЧисто(){ return !catQuery.trim() && !катСводка().length; }
+/* одна строка каталога — и в списке, и в подборках */
+function catRow(x, выбор){
+  return '<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
+    (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
+           : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
+    '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
+    '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+
+    (x.c && x.c!=='strength' && x.c!=='powerlifting' ? ' · '+(((CAT.cats||{})[x.c])||x.c) : '')+'</span></div>'+
+    (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
+          :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
+            encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
+    '</div>';
+}
 function renderCatalog(){
   var onPage = !catCtx;
   var box=document.getElementById(onPage?'pcatbody':'catbody'); if(!box||!CAT) return;
   var fbox=document.getElementById('pcatfilters');
-  if(onPage && fbox){
-    var cn=document.getElementById('catn'); if(cn && CAT.ex) cn.textContent=CAT.ex.length+' '+plural(CAT.ex.length,['упражнение','упражнения','упражнений']);
+  if(onPage){
+    /* кнопка фильтров говорит, что ВЫБРАНО; список возможностей — внутри */
+    var св=катСводка(), fb=document.getElementById('pcatfbtn'), fr=document.getElementById('pcatreset');
+    if(fb) fb.innerHTML = '<s>фильтры</s>'+(св.length ? '<b>'+esc(св.join(' · '))+'</b>' : '<i>ничего не выбрано</i>');
+    if(fr) fr.hidden = !св.length && !catQuery.trim();
+  }
+  if(onPage && fbox && !fbox.hidden){
     fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
                      chipRow('c',catType,CAT.cats||{},'тип')+
                      chipRow('q',catEquip,CAT.equip,'снаряд')+
@@ -2771,21 +2855,22 @@ function renderCatalog(){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
   }
+  /* Без запроса и фильтров — подборки по мышцам вместо простыни из 633 строк */
+  if(onPage && катЧисто()){
+    var гр=катПодборки(), hh='';
+    гр.forEach(function(g){
+      hh+='<div class="catgrp"><h4><span>'+esc(g.имя)+' <em>'+g.всего+'</em></span>'+
+          '<button type="button" data-grp="'+esc(g.m)+'">все '+g.всего+' →</button></h4>';
+      g.л.forEach(function(x){ hh+=catRow(x,false); });
+      hh+='</div>';
+    });
+    box.innerHTML=hh;
+    return;
+  }
   h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+
      (list.length>lim?' · показано '+lim:'')+'</p>';
   h+='<div class="catlist">';
-  shown.forEach(function(x,i){
-    h+='<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
-       (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
-              : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
-       '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-       '<span class="cattag">'+(CAT.equip[x.q]||x.q)+' · '+(CAT.level[x.l]||x.l)+
-       (x.c && x.c!=='strength' && x.c!=='powerlifting' ? ' · '+(((CAT.cats||{})[x.c])||x.c) : '')+'</span></div>'+
-       (catCtx?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
-              :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
-                encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
-       '</div>';
-  });
+  shown.forEach(function(x){ h+=catRow(x,!!catCtx); });
   h+='</div>';
   if(onPage && list.length>shown.length)
     h+='<button class="btn wide" id="catmore">Показать ещё '+
@@ -3743,7 +3828,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 23:30';
+var BUILD = '11.09 22:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6374,7 +6459,28 @@ if(_pcf) _pcf.addEventListener('click', function(e){
 });
 var _pcb=document.getElementById('pcatbody');
 if(_pcb) _pcb.addEventListener('click', function(e){
-  if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); }
+  if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); return; }
+  /* «все 84 →» из подборки — это тот же фильтр по мышце, а не отдельный экран */
+  var g=e.target.closest('[data-grp]');
+  if(g){ catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
+    var sc=document.getElementById('p-ref'); if(sc) sc.scrollIntoView({block:'start'}); }
+});
+/* фильтры свёрнуты по умолчанию: до первого упражнения на телефоне было
+   больше половины экрана чипов */
+var _pfb=document.getElementById('pcatfbtn');
+if(_pfb) _pfb.addEventListener('click', function(){
+  var f=document.getElementById('pcatfilters'); if(!f) return;
+  f.hidden=!f.hidden;
+  this.setAttribute('aria-expanded', String(!f.hidden));
+  if(CAT) renderCatalog();
+  haptic('light');
+});
+var _pfr=document.getElementById('pcatreset');
+if(_pfr) _pfr.addEventListener('click', function(){
+  catMuscle=''; catEquip=''; catLevel=''; catType='strength'; catQuery=''; catShown=40;
+  var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
+  if(CAT) renderCatalog();
+  haptic('light');
 });
 /* кнопка «заменить» на карточке упражнения */
 document.getElementById('list').addEventListener('click', function(e){
