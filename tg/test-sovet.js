@@ -17,7 +17,7 @@ const часы = page => page.evaluate(() => ({
   метки: Array.from(document.querySelectorAll('.hclk-svg .hbl')).map(e => e.textContent),
   плюс: !!document.querySelector('.hb-next'),
   совет: (document.querySelector('.hnext') || {}).textContent || '',
-  кнопка: (document.querySelector('#hphoto') || {}).textContent || ''
+  кнопка: (document.querySelector('#htext') || {}).placeholder || ''
 }));
 
 (async () => {
@@ -31,7 +31,7 @@ const часы = page => page.evaluate(() => ({
   дано(!ч.метки.some(t => /сейчас/.test(t)), 'через полчаса после обеда никакого «сейчас» нет');
   дано(ч.метки.some(t => /19:0\d · ужин/.test(t)), 'ужин предложен через 3,5 часа после обеда ' + JSON.stringify(ч.метки));
   дано(/мяса или рыбы/.test(ч.совет), 'под часами сказано, чем закрыть белок: ' + ч.совет);
-  дано(/ужин/.test(ч.кнопка), 'кнопка называет тот же приём, что и часы');
+  дано(/ужин/.test(ч.кнопка), 'поле называет тот же приём, что и часы: ' + ч.кнопка);
   await page.close();
 
   /* 2. утром весь дневной белок не валится в один приём */
@@ -60,7 +60,8 @@ const часы = page => page.evaluate(() => ({
   const тело = await page.evaluate(() => ({
     колонки: Array.from(document.querySelectorAll('.hbody .hbh s')).map(e => e.textContent),
     строки: Array.from(document.querySelectorAll('.hbody .hbr:not(.hbh)')).map(e => ({
-      имя: e.querySelector('u').textContent,
+      имя: e.querySelector('u').childNodes[0].textContent.trim(),
+      под: (e.querySelector('u em') || {}).textContent || '',
       знач: e.querySelector('b').textContent,
       дельты: Array.from(e.querySelectorAll(':scope > s')).map(x => x.textContent),
       цвет: e.querySelector('s:last-child').className })),
@@ -73,6 +74,7 @@ const часы = page => page.evaluate(() => ({
   дано(тело.строки[0].дельты[2] === '−4,2', 'за всё время вес считается от первого замера, а не от края окна: ' + тело.строки[0].дельты[2]);
   дано(тело.строки.length === 3, 'в блоке тела три строки');
   дано(тело.строки.map(r => r.имя).join(',') === 'вес,жир,белок', 'это вес, жир и белок: ' + тело.строки.map(r => r.имя));
+  дано(/%/.test(тело.строки[1].под), 'у жира рядом с килограммами стоит процент: ' + тело.строки[1].под);
   дано(!тело.строки.some(r => /мышц/.test(r.имя)), '«мышц» больше нет — весы считают ими воду');
   дано(тело.графики === 0, 'графиков в блоке тела нет — они дублировали дорожки');
   дано(/кг/.test(тело.строки[1].знач), 'жир показан в килограммах, а не в процентах');

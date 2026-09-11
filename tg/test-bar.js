@@ -14,9 +14,12 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   const ош = await M.поднять(page, { theme: 'dark' });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
 
-  /* 1. покой */
-  дано(await page.isVisible('#hphoto'), 'в покое видна большая кнопка съёмки');
-  дано(/Сфотографировать/.test(await page.textContent('#hbar')), 'кнопка называет приём');
+  /* 1. покой — один-единственный вид панели */
+  дано(await page.isVisible('#hphoto'), 'кнопка съёмки на месте');
+  дано(await page.isVisible('#htext'), 'поле ввода видно сразу, без переключения');
+  дано(await page.isVisible('#hsend'), 'кнопка отправки на месте');
+  дано(await page.$('#htog') === null, 'переключателя «текстом» больше нет — вид один');
+  дано(/ужин/.test(await page.getAttribute('#htext', 'placeholder') || ''), 'приём назван в подсказке поля');
   дано(await page.$('#homebody .attbox') === null, 'миниатюры в потоке страницы больше нет');
   дано(await page.$('#homebody > .freply') === null, 'ответа в потоке страницы больше нет');
 
@@ -36,8 +39,8 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   /* 3. крестик убирает фото */
   await page.click('#hbar [data-att]');
   await page.waitForTimeout(200);
-  дано(await page.$('.hbar.hcard') === null, 'после ✕ панель вернулась к большой кнопке');
-  дано(await page.isVisible('#hphoto'), 'большая кнопка на месте');
+  дано(await page.$('.hbar.hcard') === null, 'после ✕ панель вернулась к обычному виду');
+  дано(await page.isVisible('#hphoto') && await page.isVisible('#htext'), 'камера и поле на месте');
 
   /* 4. отправка: ожидание с миниатюрой, потом ответ */
   await page.setInputFiles('#hfile', 'tg/fixtures/c.jpg');
@@ -58,12 +61,14 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   дано(/Записал/.test(await page.textContent('#hbar')), 'ответ тренера пришёл в панель');
   await page.click('#hclose');
   await page.waitForTimeout(200);
-  дано(await page.isVisible('#hphoto'), 'после ✕ панель снова готова к следующему приёму');
+  дано(await page.isVisible('#hphoto') && await page.isVisible('#htext'),
+    'после ✕ панель снова готова к следующему приёму');
 
-  /* 5. путь «текстом» не сломан */
-  await page.click('#htog');
-  await page.waitForSelector('#htext');
-  дано(await page.isVisible('#htext'), 'кнопка «текстом» открывает поле');
+  /* 5. запись словами без фото */
+  await page.fill('#htext', 'плов');
+  await page.click('#hsend');
+  await page.waitForTimeout(500);
+  дано(/считаю|Записал/i.test(await page.textContent('#hbar')), 'текст уходит той же кнопкой «→»');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
