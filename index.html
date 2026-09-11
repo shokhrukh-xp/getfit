@@ -1620,6 +1620,10 @@ body.onb #picker .modalbox::before{display:none}
 .hctr{position:absolute;left:20%;right:20%;top:65%;transform:translateY(-50%);text-align:center;pointer-events:none}
 .hctr b{display:block;font-size:42px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
 .hctr b.over{color:var(--warn)}
+/* перебор В ПРЕДЕЛАХ КОРИДОРА — это попадание, а не промах: тот же зелёный,
+   что у дорожки калорий и у столбика недели. Его вопрос 11.09: «я же уложился
+   в норму, почему +78 красным, как штраф?» */
+.hctr b.okover{color:var(--done)}
 .hctr u{text-decoration:none;display:block;font-size:13px;color:var(--muted);margin-top:5px;font-weight:600}
 .hctr i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:6px;font-weight:500;line-height:1.3}
 .hctr i em{font-style:normal;color:var(--text);font-weight:700}
@@ -3739,7 +3743,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 23:05';
+var BUILD = '11.09 23:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6984,7 +6988,11 @@ function homeClock(){
   if(!t.kcal) c='<b>'+hNum(kc)+'</b><u>ккал съедено</u><i>заполни профиль — будет норма</i>';
   else {
     var rem=t.kcal-kc, rp=Math.round((t.prot||0)-pt);
-    c = rem>=0 ? '<b>'+hNum(rem)+'</b><u>ккал до нормы</u>' : '<b class="over">+'+hNum(-rem)+'</b><u>ккал сверх нормы</u>';
+    /* коридор тот же, что у оценки дня и у недели: ±10 % от нормы. Три места
+       об одном факте обязаны красить одинаково. */
+    var вКоридоре = Math.abs(kc-t.kcal) <= 0.10*t.kcal;
+    c = rem>=0 ? '<b>'+hNum(rem)+'</b><u>ккал до нормы</u>'
+               : '<b class="'+(вКоридоре?'okover':'over')+'">+'+hNum(-rem)+'</b><u>ккал сверх нормы</u>';
     if(t.prot) c+='<i>'+(rp>0 ? 'белка ещё <em>'+rp+' г</em>' : 'белок <em class="hgood">набран</em>')+'</i>';
   }
   /* показываем ГЛАВНУЮ причину, а не весь список: `why` отсортирован по весу,

@@ -83,6 +83,33 @@ async function часы(page){
   дано(/оценка — с первой записью/.test(await p3.textContent('.hctr')), 'без записей оценка не выдумывается');
   await p3.close();
 
+  /* ── перебор в пределах коридора — не промах ──
+     Его вопрос 11.09 вечером: «я же уложился в норму, почему +78 красным?».
+     Коридор ±10 % — тот же, по которому считается оценка дня и красится
+     неделя. Три места об одном факте обязаны красить одинаково. */
+  const цвет = async (page) => page.$eval('.hctr b', e => ({
+    cls: e.className, col: getComputedStyle(e).color, t: e.textContent }));
+  const НОРМА = { kcal: 1700, prot: 160, fat: { min: 45, max: 66 }, fib: 30, sug: 45,
+    parts: { base: 1700, gym: 0, acts: 0, plan: 0, delta: 0, k: 1 } };
+
+  const p4 = await br.newPage({ viewport: { width: 390, height: 844 } });
+  await M.поднять(p4, { theme: 'dark', time: '21:11',
+    day: { meals: ЕДА, kcal: 1778, prot: 162, targets: НОРМА } });
+  const c4 = await цвет(p4);
+  дано(/okover/.test(c4.cls), '+78 при норме 1700 (+4,6 %) — не красный: ' + c4.t + ' · ' + c4.cls);
+  дано(!/\bover\b/.test(c4.cls.replace('okover','')), 'класса промаха на нём нет');
+  const зелёный = c4.col;
+  await p4.close();
+
+  const p5 = await br.newPage({ viewport: { width: 390, height: 844 } });
+  await M.поднять(p5, { theme: 'dark', time: '21:11',
+    day: { meals: ЕДА, kcal: 2100, prot: 162, targets: НОРМА } });
+  const c5 = await цвет(p5);
+  дано(/\bover\b/.test(c5.cls) && !/okover/.test(c5.cls),
+    '+400 при норме 1700 (+23,5 %) — уже промах: ' + c5.t + ' · ' + c5.cls);
+  дано(c5.col !== зелёный, 'и цвет другой, чем у перебора в коридоре');
+  await p5.close();
+
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
