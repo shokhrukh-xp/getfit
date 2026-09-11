@@ -1516,10 +1516,10 @@ body.onb #picker .modalbox::before{display:none}
 .htr .hcor::before{left:0}.htr .hcor::after{right:0}
 .htr .hmin{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--dim)}
 .htr .hfill{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--accent);transition:width .6s cubic-bezier(.32,.72,0,1)}
-.htr .hfill.ok{background:var(--done)} .htr .hfill.over{background:var(--warn)}
+.htr .hfill.hf-ok{background:var(--done)} .htr .hfill.hf-over{background:var(--warn)}
 .htr .hdot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--text);border:3px solid var(--bg);
   transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--accent);transition:left .6s cubic-bezier(.32,.72,0,1)}
-.htr .hdot.ok{box-shadow:0 0 0 1px var(--done)} .htr .hdot.over{box-shadow:0 0 0 1px var(--warn)}
+.htr .hdot.hf-ok{box-shadow:0 0 0 1px var(--done)} .htr .hdot.hf-over{box-shadow:0 0 0 1px var(--warn)}
 .htr.rest{background:repeating-linear-gradient(90deg,var(--track) 0 6px,transparent 6px 10px)}
 .hwrap .fask{margin:0}
 .hwrap .freply{margin-top:10px}
@@ -1548,6 +1548,80 @@ body.onb #picker .modalbox::before{display:none}
 .hline span{color:var(--muted);font-size:13px}
 .hline b{font-size:14px;font-weight:600;white-space:nowrap}
 .hline b em{font-style:normal;color:var(--dim);font-weight:500;margin-left:6px}
+
+/* ── «Еда» по системе ── */
+.fnav{margin:0 0 18px;justify-content:space-between}
+.fnav .fd{text-align:left;flex:1;font-size:22px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
+.fnav .fd small{font-size:13px;color:var(--muted);margin-top:3px;font-weight:500}
+.fnav .fdarr{display:flex;gap:6px}
+.fnav button{min-width:36px;min-height:36px;border-radius:50%;border:none;background:var(--field);color:var(--text);font-size:18px;line-height:1}
+.fnav button:disabled{opacity:.3}
+.fday{gap:14px;margin:16px 0 8px}
+.fbar{gap:8px}
+.fbar u{font-size:13px;color:var(--muted)}
+.fbar b{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.fbar b em{font-size:13px;color:var(--dim);font-weight:500}
+.fbar .fbc{font-size:8px;opacity:.5;margin-left:6px;vertical-align:1px}
+.fbar .tr{height:6px;overflow:visible}
+.fbar .tr .fcor{position:absolute;top:-4px;bottom:-4px;border-radius:5px;background:var(--corr)}
+.fbar .tr .fcor::before,.fbar .tr .fcor::after{content:"";position:absolute;top:0;bottom:0;width:1px;background:var(--done);opacity:.55}
+.fbar .tr .fcor::before{left:0}.fbar .tr .fcor::after{right:0}
+.fbar .tr s.fmk{top:-4px;bottom:-4px;width:1px;background:var(--dim);opacity:1}
+.fbar .tr s.fmk.fcap{background:var(--warn);opacity:.7}
+.fbar .tr .fdot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--text);border:3px solid var(--bg);
+  transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--accent)}
+.fbar .tr .fdot.fb-done{box-shadow:0 0 0 1px var(--done)} .fbar .tr .fdot.fb-over{box-shadow:0 0 0 1px var(--warn)}
+.fbsplit{margin-top:6px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.fbsplit .fbn{font-size:13px} .fbsplit .fbv{font-size:13px;font-weight:600}
+.fparts{font-size:12px;margin-top:2px}
+.fline{font-size:13px;margin-top:2px}
+.fclose{margin:14px 0 0}
+.fclose .fdone,.fclose .fdone.fpend{border:none;background:transparent;padding:12px 0 0;border-top:1px solid var(--line-soft);border-radius:0;font-size:13px;color:var(--muted)}
+.fclose .fdone b{font-size:17px;font-weight:700;color:var(--text)}
+.fclose .fdone small{color:var(--dim);font-size:12px}
+.fmeals{margin:6px 0 12px}
+.fmeal{padding:11px 0;font-size:14px;border-top:1px solid var(--line-soft)}
+.fmeal .fk{font-size:12px;flex-basis:62px}
+.fmeal .fn b{font-size:14px;color:var(--text);font-weight:700}
+.fmeal .fn i{color:var(--dim);font-size:12px}
+.fmeal .fx{border:none;background:var(--field);border-radius:50%;flex-basis:32px;width:32px;height:32px;font-size:14px}
+.fchips button{border:none;background:var(--field);color:var(--muted);font-size:13px;padding:9px 13px}
+.fchips button b{font-weight:600}
+.fweek{height:104px;margin-top:4px}
+.fweek .fd .fb{border-radius:4px;opacity:1;max-width:30px}
+.fweek .fd u,.fweek .fd i{font-size:11px}
+.fweekt{font-size:13px}
+.fmeasq{align-items:flex-end;gap:8px}
+.fld{flex:1 1 0;min-width:0;display:grid;gap:5px}
+.fld span{font-size:12px;color:var(--dim);font-weight:500;padding-left:2px}
+.fld input{width:100%;flex:none;padding:12px 10px;font-size:15px;text-align:center}
+.fchart{margin-top:6px}
+.fchart .lg{font-size:12px}
+
+/* ── «Рейтинг» по системе ── */
+.cirsw .mchip{border:none;background:var(--field);color:var(--muted);font-weight:600}
+.cirsw .mchip.on{background:var(--card-solid);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.cirtiles{gap:10px}
+.cirtiles .tile{padding:14px 15px}
+.cirtiles .tile b{font-size:24px;font-weight:800;letter-spacing:-.03em}
+.cirtiles .tile b small{font-size:13px;color:var(--dim);font-weight:500}
+.cirwhy{font-size:13px;color:var(--muted)}
+.lb{padding:0}
+.lbhead{padding:6px 0 8px;font-size:12px}
+.lbrow{padding:12px 0;font-size:14px;border-top:1px solid var(--line-soft)}
+.lbrow .pos{font-size:12px;font-weight:600}
+.lbrow .who b{font-size:15px;font-weight:600}
+.lbrow .who i{font-size:12px}
+.lbrow .sc{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.lbrow.lbme{background:transparent;box-shadow:none;border-radius:0;border-top-color:var(--line-soft);position:relative}
+.lbrow.lbme::before{content:"";position:absolute;left:-20px;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--accent)}
+.lbrow.lbme + .lbrow{border-top-color:var(--line-soft)}
+.lbrow.lbme .who b{color:var(--text)} .lbrow.lbme .sc{color:var(--accent)}
+.lbdots s{width:8px;height:8px;flex-basis:8px}
+.lbkey,.cirnote{font-size:12px;line-height:1.5}
+.cirnote button{font-size:12px;font-weight:600}
+.udhead .udback{border:none;background:var(--field);color:var(--text);border-radius:99px;padding:8px 14px}
+.plate{border:none;background:var(--field);border-radius:16px}
 
 </style>
 </head>
@@ -1622,7 +1696,7 @@ body.onb #picker .modalbox::before{display:none}
         <div class="fmeals" id="fmeals"></div>
         <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
-          <input id="ftext" type="text" placeholder="что съел — «200 г творога и 2 яйца»" autocomplete="off">
+          <input id="ftext" type="text" placeholder="Что съел?" autocomplete="off">
           <button type="button" class="fbtn" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
           <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
           <input id="ffile" type="file" accept="image/*" hidden>
@@ -1639,10 +1713,10 @@ body.onb #picker .modalbox::before{display:none}
         <h3 class="lh">Весы</h3>
         <div class="group">
         <div class="fchart" id="fchart"></div>
-        <div class="fask">
-          <input id="fw" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="вес" aria-label="Вес, кг">
-          <input id="ffat" type="number" inputmode="decimal" step="0.1" min="3" max="60" placeholder="жир %" aria-label="Жир, процент">
-          <input id="fwaist" type="number" inputmode="decimal" step="0.5" min="40" max="200" placeholder="талия" aria-label="Талия, см">
+        <div class="fask fmeasq">
+          <label class="fld"><span>Вес, кг</span><input id="fw" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="88,1" aria-label="Вес, кг"></label>
+          <label class="fld"><span>Жир, %</span><input id="ffat" type="number" inputmode="decimal" step="0.1" min="3" max="60" placeholder="27,6" aria-label="Жир, процент"></label>
+          <label class="fld"><span>Талия</span><input id="fwaist" type="number" inputmode="decimal" step="0.5" min="40" max="200" placeholder="см" aria-label="Талия, см"></label>
           <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
@@ -3336,7 +3410,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 13:39';
+var BUILD = '11.09 14:09';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6284,7 +6358,9 @@ function homeAct(){
 function htrack(v, t, mode){
   if(!t) return '<div class="htr"></div>';
   var max = mode==='sets' ? t : t*1.4, pos=Math.min(1, v/max)*100;
-  var cls = mode==='range' ? (v>t*1.1?'over':(v>=t*0.9?'ok':'')) : (v>=t?'ok':'');
+  /* .ok и .over без префикса — чужие: .ok — кнопка «подход сделан» 44 px, и при
+     полной дорожке зала вместо линии вырастал зелёный блок (его скриншот 14:03) */
+  var cls = mode==='range' ? (v>t*1.1?'hf-over':(v>=t*0.9?'hf-ok':'')) : (v>=t?'hf-ok':'');
   var h='<div class="htr">';
   if(mode==='range') h+='<div class="hcor" style="left:'+(0.9/1.4*100).toFixed(1)+'%;width:'+(0.2/1.4*100).toFixed(1)+'%"></div>';
   if(mode==='min') h+='<div class="hmin" style="left:'+(100/1.4).toFixed(1)+'%"></div>';
@@ -6699,9 +6775,9 @@ function renderFoodNav(){
   var дата=new Date(d+'T12:00:00');
   var имя = сегодня ? 'Сегодня' : (d===вчера ? 'Вчера' : (дата.getDate()+' '+MONTHS[дата.getMonth()]));
   var низ = сегодня || d===вчера ? (дата.getDate()+' '+MONTHS[дата.getMonth()]+' · '+WDFULL[дата.getDay()]) : WDFULL[дата.getDay()];
-  el.innerHTML='<button type="button" data-fnav="-1" aria-label="Предыдущий день">‹</button>'+
-    '<span class="fd">'+имя+'<small>'+низ+'</small></span>'+
-    '<button type="button" data-fnav="1" aria-label="Следующий день"'+(сегодня?' disabled':'')+'>›</button>';
+  el.innerHTML='<span class="fd">'+имя+'<small>'+низ+'</small></span>'+
+    '<span class="fdarr"><button type="button" data-fnav="-1" aria-label="Предыдущий день">‹</button>'+
+    '<button type="button" data-fnav="1" aria-label="Следующий день"'+(сегодня?' disabled':'')+'>›</button></span>';
 }
 document.getElementById('fnav').addEventListener('click', function(e){
   var b=e.target.closest('button[data-fnav]'); if(!b||b.disabled) return;
@@ -6766,29 +6842,35 @@ document.getElementById('frecent').addEventListener('click', function(e){
    клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя.
    Норма набрана — полоса заполнена целиком и покрашена; никакой штриховки:
    любая фактура на конце читается как «не дозаполнено». */
+/* ── дорожка-коридор: тот же знак, что на «Сегодня» ──
+   Шкала не «до 100 %», а до 1,4 нормы: норма стоит на 71 %, и видно, что
+   после неё. range — коридор ±10 % (калории); min — засечка «от» (белок,
+   клетчатка); max — засечка «до» (сахар); band — коридор lo…hi (жир).
+   Точка — где ты сейчас. */
+function trackHtml(v, t, mode, lo){
+  if(!t) return '<div class="tr"></div>';
+  var max=t*1.4, pct=Math.min(100, v/max*100);
+  var cls = mode==='range' ? (v>t*1.1?'fb-over':(v>=t*0.9?'fb-done':''))
+          : mode==='band'  ? (v>t?'fb-over':(v>=lo?'fb-done':''))
+          : mode==='max'   ? (v>t?'fb-over':'')
+          :                  (v>=t?'fb-done':'');
+  var h='<div class="tr">';
+  if(mode==='range') h+='<em class="fcor" style="left:'+(0.9/1.4*100).toFixed(1)+'%;width:'+(0.2/1.4*100).toFixed(1)+'%"></em>';
+  if(mode==='band')  h+='<em class="fcor" style="left:'+(lo/max*100).toFixed(1)+'%;width:'+((t-lo)/max*100).toFixed(1)+'%"></em>';
+  if(mode==='min'||mode==='max') h+='<s class="fmk'+(mode==='max'?' fcap':'')+'" style="left:'+(100/1.4).toFixed(1)+'%"></s>';
+  h+='<i class="'+cls+'" style="width:'+pct.toFixed(1)+'%"></i><span class="fdot '+cls+'" style="left:'+pct.toFixed(1)+'%"></span></div>';
+  return h;
+}
 function fbar(label, v, t, unit, mode, key){
-  var pct = t ? Math.min(100, Math.round(v/t*100)) : 0;
-  var cls = '';
-  if(t){
-    if(mode==='min') cls = v>=t ? 'fb-done' : '';
-    else if(mode==='max') cls = v>t ? 'fb-over' : '';      /* потолок: важно только «перебрал» */
-    else cls = v>t*1.15 ? 'fb-over' : (v>=t*0.9 ? 'fb-done' : '');
-  }
   return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
          '<b>'+v+(t?' <em>'+(mode==='max'?'/ до ':'/ ')+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
-         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i></div>'+fbOpenHtml(key)+'</div>';
+         trackHtml(v, t, mode||'range')+fbOpenHtml(key)+'</div>';
 }
-/* Жир — не потолок и не цель, а полоса: ниже нижней границы страдают гормоны,
-   выше верхней он просто вытесняет углеводы. Засечка показывает, где начинается
-   «достаточно». */
 function fband(label, v, lo, hi, unit, key){
   if(!hi) return fbar(label, v, 0, unit, null, key);
-  var pct=Math.min(100, Math.round(v/hi*100)), мет=Math.min(98, Math.round(lo/hi*100));
-  var cls = v>hi ? 'fb-over' : (v>=lo ? 'fb-done' : '');
   return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
          '<b>'+v+' <em>/ '+lo+'–'+hi+' '+unit+'</em></b></div>'+
-         '<div class="tr"><i class="'+cls+'" style="width:'+pct+'%"></i><s style="left:'+мет+'%"></s></div>'+
-         fbOpenHtml(key)+'</div>';
+         trackHtml(v, hi, 'band', lo)+fbOpenHtml(key)+'</div>';
 }
 /* ══ из чего набралась шкала ══
    Его просьба 11.09: «мне хочется видеть, от чего пришли белки, от чего жиры
@@ -7003,11 +7085,11 @@ function renderFoodDay(){
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по жиру, ниже нельзя':' по цели'):'')+
       (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }
-  box.innerHTML = fbar('калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
-    fbar('белок', d.prot, t.prot, 'г', 'min', 'prot') +
-    (t.fat ? fband('жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
-    fbar('клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib') +
-    (t.sug ? fbar('сахар', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
+  box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
+    fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot') +
+    (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
+    fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib') +
+    (t.sug ? fbar('Сахар', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
     closeHtml();
   ml.innerHTML = (d.plan||[]).map(function(pp){
