@@ -3028,7 +3028,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 00:35';
+var BUILD = '11.09 07:45';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5893,7 +5893,7 @@ function udayHtml(){
     '<button type="button" data-udnav="1" aria-label="Следующий день"'+(u.date>=TODAY?' disabled':'')+'>›</button></div>';
   if(!d) return h+'<p class="plempty">'+(u.busy?'Загружаю…':esc(u.err||'Сервер не отвечает.'))+'</p>';
   var day=d.day, fin=!!(day && (day.closed || u.date<TODAY));
-  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · '+streakText(d.streak):'')+
+  if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · пока — день идёт')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(day.why))+(!fin && day.counts===false ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
   var meals=d.meals||[];
   if(!meals.length) return h+'<p class="plempty">'+(u.date===TODAY?'Сегодня ещё ничего не записано.':'В этот день ничего не записано.')+'</p>';
@@ -5961,9 +5961,11 @@ function circleShare(id){
 /* оценка дня на «Еде» — всегда, без закрытия (его правило: «не нужно закрывать
    день, чтобы получить оценку»); итог фиксируется в полночь сам */
 function closeHtml(){
-  var d=DAYSC; if(!d || d.date!==fDate() || d.r==null) return '';
+  var d=DAYSC; if(!d || d.date!==fDate()) return '';
   var fin = d.closed || d.date<TODAY;
-  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока')+(d.streak?' · '+streakText(d.streak):'')+
+  /* до первой записи числа нет: «3,0 / 10» с утра — это не оценка, а пустой день */
+  if(d.r==null) return fin ? '' : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>';
+  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · пока — день идёт')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(d.why))+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
 }
 function loadDayScore(){
@@ -6258,16 +6260,20 @@ function renderFoodWeek(){
   var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
   var tg=w.targets||{}, mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return d.kcal; })), 1);
   box.innerHTML = w.days.map(function(d){
-    /* сегодняшний день ещё не закончен — красным его не красим */
-    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'fb-none' : (tg.floor && d.kcal<tg.floor && d.date<TODAY ? 'fb-low' : (tg.kcal && d.kcal>=tg.kcal*0.9 ? 'fb-hi' : ''));
+    /* цвет — по тому же коридору, что и оценка дня: в ±10 % от нормы зелёный,
+       мимо — красный. Раньше красили «ниже пола», и день на 10 из 10 выходил
+       красным, а перебор на 40 % — зелёным (его вопрос 11.09).
+       Сегодня ещё идёт: недобор не красим, перебор — уже факт. */
+    var откл = tg.kcal ? (d.kcal-tg.kcal)/tg.kcal : 0;
+    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
     return '<div class="fd"><i>'+(d.n?d.kcal:'')+'</i><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
-  /* одна строка: среднее против нормы и сколько дней ниже пола; длинный разбор шлёт бот */
+  /* одна строка: среднее против нормы и сколько дней попали в коридор */
   var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
-  var low=w.low ? w.low.filter(function(x){ return x!==ruDate(TODAY); }).length : logged.filter(function(d){ return tg.floor && d.kcal<tg.floor; }).length;
+  var вНорме=logged.filter(function(d){ return tg.kcal && Math.abs((d.kcal-tg.kcal)/tg.kcal)<=0.10; }).length;
   var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+(+d.prot||0); },0)/(logged.length||1))};
   t.textContent = logged.length
-    ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(tg.kcal?' при норме '+tg.kcal+' / '+tg.prot:'')+(low?' · ниже пола '+low+' '+plural(low,['день','дня','дней']):'')
+    ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(tg.kcal?' при норме '+tg.kcal+' / '+tg.prot:'')+(tg.kcal?' · в норме '+вНорме+' '+plural(вНорме,['день','дня','дней'])+' из '+logged.length:'')
     : 'За неделю записей нет.';
 }
 /* вес и % жира двумя линиями, каждая в своём масштабе; ИМТ — линейная функция
