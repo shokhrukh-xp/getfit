@@ -1549,6 +1549,23 @@ body.onb #picker .modalbox::before{display:none}
 .hbar input{flex:1;min-width:0;height:56px;border-radius:18px;border:1px solid transparent;background:var(--card-solid);padding:0 16px;font:inherit;font-size:15px;color:var(--text);box-shadow:var(--shadow)}
 .hbar input:focus{outline:none;border-color:var(--accent)}
 .hbtn.hgo2{background:var(--accent);color:var(--on-accent);font-size:20px;font-weight:700}
+/* прикреплённое фото, ожидание и ответ тренера живут В САМОЙ панели: человек
+   смотрит туда, куда только что нажал. Раньше миниатюра и ответ стояли выше
+   по странице — при прокрутке вниз их не видно, и 11.09 он прикрепил фото,
+   не понял, прикрепилось ли, и отправил снимок боту в Telegram */
+.hbar.hcard{flex-direction:column;gap:8px;padding:10px;border-radius:22px;background:var(--card-solid);
+  border:1px solid var(--line-soft);box-shadow:0 12px 30px rgba(15,20,25,.26)}
+.hcrow{display:flex;align-items:center;gap:10px;width:100%}
+.hcth{flex:0 0 46px;width:46px;height:46px;border-radius:13px;object-fit:cover;border:1px solid var(--line)}
+.hcst{flex:1 1 auto;min-width:0;font-size:13px;color:var(--muted);line-height:1.4;max-height:34vh;overflow:auto}
+.hcst b{display:block;color:var(--text);font-size:14px;font-weight:700;letter-spacing:-.01em}
+.hcst.hcbad b,.hcst.hcbad{color:var(--warn)}
+.hcx{flex:0 0 36px;height:36px;border-radius:12px;border:1px solid var(--line);background:transparent;
+  color:var(--dim);font:inherit;font-size:17px;line-height:1}
+.hbar.hcard input{width:100%;height:48px;border-radius:14px;background:var(--field);box-shadow:none;
+  border:1px solid var(--line-soft)}
+.hcsend{width:100%;height:52px;border-radius:16px;border:none;background:var(--prime);color:var(--on-prime);
+  font:inherit;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .hwrap .attbox{margin-top:12px}
 .hrows{display:grid;gap:12px;padding:10px 0 2px}
 .hrow{display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:12px}
@@ -3455,7 +3472,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 15:22';
+var BUILD = '11.09 16:22';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6583,17 +6600,33 @@ function homeWeek(){
 }
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
+var HROD={'завтрак':'завтрака','обед':'обеда','ужин':'ужина'};
 function homeBar(){
   var E=hcEvents(), kind = E.next ? E.next.kind : (E.todo[0] ? E.todo[0].kind : 'еду');
-  if(HOME.typing || HOME.att) return '<div class="hbar htyping" id="hbar">'+
+  var род=HROD[kind]||'еды', файл='<input id="hfile" type="file" accept="image/*" hidden>';
+  var m=HOME.msg;
+  /* ждём разбор или ответ пришёл — панель держит миниатюру того, что ушло */
+  if(m) return '<div class="hbar hcard" id="hbar"><div class="hcrow">'+
+    (m.i ? '<img class="hcth" src="data:image/jpeg;base64,'+m.i+'" alt="">' : '')+
+    '<span class="hcst'+(m.c==='bad'?' hcbad':'')+'">'+esc(m.t)+
+      (m.c==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':'')+'</span>'+
+    (m.c==='wait' ? '' : '<button type="button" class="hcx" id="hclose" aria-label="Закрыть">×</button>')+
+    '</div></div>';
+  /* фото прикреплено: миниатюра — доказательство, что оно дошло, а отправляет
+     большая кнопка на месте той, которую он только что нажал */
+  if(HOME.att) return '<div class="hbar hcard" id="hbar">'+
+    '<div class="hcrow"><img class="hcth" src="data:image/jpeg;base64,'+HOME.att+'" alt="">'+
+    '<span class="hcst"><b>Фото '+esc(род)+' прикреплено</b></span>'+
+    '<button type="button" class="hcx" data-att="off" aria-label="Убрать фото">×</button></div>'+
+    '<input id="htext" type="text" placeholder="Что это? можно не писать" autocomplete="off">'+
+    '<button type="button" class="hcsend" id="hsend">Записать '+esc(kind)+'</button>'+файл+'</div>';
+  if(HOME.typing) return '<div class="hbar htyping" id="hbar">'+
     '<button type="button" class="hbtn" id="hphoto" aria-label="Фото еды">'+HCAM+'</button>'+
     '<input id="htext" type="text" placeholder="Что съел?" autocomplete="off">'+
-    '<button type="button" class="hbtn hgo2" id="hsend" aria-label="Отправить">→</button>'+
-    '<input id="hfile" type="file" accept="image/*" hidden></div>';
+    '<button type="button" class="hbtn hgo2" id="hsend" aria-label="Отправить">→</button>'+файл+'</div>';
   return '<div class="hbar" id="hbar">'+
     '<button type="button" class="hcam" id="hphoto">'+HCAM+'<span>Сфотографировать '+esc(kind)+'</span></button>'+
-    '<button type="button" class="hbtn" id="htog" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>'+
-    '<input id="hfile" type="file" accept="image/*" hidden></div>';
+    '<button type="button" class="hbtn" id="htog" aria-label="Написать текстом"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>'+файл+'</div>';
 }
 function homeWeight(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; });
@@ -6684,10 +6717,14 @@ function homeNext(){
 }
 function hReply(text, cls, thumb){
   HOME.msg = text ? {t:text, c:cls||'', i:thumb||null} : null;
-  var el=document.getElementById('hreply'); if(!el) return;
-  el.hidden=!text; el.className='freply'+(cls?' '+cls:'');
-  el.innerHTML=(thumb?'<img class="fthumb" src="data:image/jpeg;base64,'+thumb+'" alt="">':'')+
-    '<span>'+esc(text||'')+(cls==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':'')+'</span>';
+  renderBar();
+}
+/* перерисовываем одну панель, а не весь экран: дорожки не должны заново
+   ехать из нуля каждый раз, когда сменилось состояние записи */
+function renderBar(){
+  var old=document.getElementById('hbar'); if(!old || !old.parentNode) return;
+  var t=document.createElement('div'); t.innerHTML=homeBar();
+  old.parentNode.replaceChild(t.firstChild, old);
 }
 function renderHome(){
   var box=document.getElementById('homebody'); if(!box) return;
@@ -6702,14 +6739,10 @@ function renderHome(){
      то, что меняется раз в день (тело и тренировка). */
   box.innerHTML =
     homeWeek()+homeClock()+homeRows()+
-    '<div class="attbox" id="hattach" hidden></div>'+
-    '<p class="freply" id="hreply" hidden></p>'+
     '<div class="hsep"></div>'+
     '<p class="hlab"><span>Тело</span><span>за неделю</span></p>'+homeBody()+
     homeAct()+homeRating()+homeNext()+homeBar();
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
-  renderAtt('hattach', HOME.att, 'фото прикреплено — допиши, что это, и отправь');
-  if(HOME.msg){ var m=HOME.msg; hReply(m.t, m.c, m.i); }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
   Array.prototype.forEach.call(fills, function(el,i){ el.style.width=былоW[i]||'0%'; });
@@ -6746,7 +6779,8 @@ function homeSend(text, image){
 (function(){
   var box=document.getElementById('homebody'); if(!box) return;
   box.addEventListener('click', function(e){
-    if(e.target.closest('#hattach [data-att]')){ HOME.att=null; renderHome(); haptic('light'); return; }
+    if(e.target.closest('#hbar [data-att]')){ HOME.att=null; renderBar(); haptic('light'); return; }
+    if(e.target.closest('#hclose')){ HOME.msg=null; renderBar(); haptic('light'); return; }
     if(e.target.closest('#hphoto') || e.target.closest('[data-hact="photo"]')){ var f=document.getElementById('hfile'); if(f) f.click(); return; }
     if(e.target.closest('#hsend')){ hGo(); return; }
     if(e.target.closest('#htog')){ HOME.typing=true; renderHome(); var ti=document.getElementById('htext'); if(ti) try{ ti.focus(); }catch(_){} haptic('light'); return; }
@@ -6762,8 +6796,8 @@ function homeSend(text, image){
     var f=e.target.files && e.target.files[0]; if(!f) return;
     hReply('Читаю фото','wait');
     shrink(f).then(function(b64){
-      /* фото прикреплено — панель переключается на строку с подписью и «→» */
-      HOME.att=b64; HOME.msg=null; renderHome(); haptic('light');
+      /* панель показывает миниатюру, поле подписи и кнопку «Записать обед» */
+      HOME.att=b64; HOME.msg=null; renderBar(); haptic('light');
     }).catch(function(err){ hReply(humanErr(err),'bad'); });
     e.target.value='';
   });
