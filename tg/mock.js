@@ -112,7 +112,25 @@ async function поднять(page, o) {
     if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
     if (p === '/circle')     return дать(o.circle === null ? { ok: false } : круг());
-    if (p === '/goal')       return дать({ ok: true, goal: { w: 73, fat: 12 } });
+    if (p === '/goal') {
+      /* границы безопасного отдаёт сервер — экран их только рисует.
+         Мужчина 88,1 кг, сухая 63,8 → пол 70,9; предел темпа 0,88 кг/нед. */
+      if (route.request().method() === 'POST') {
+        const b = JSON.parse(route.request().postData() || '{}');
+        const w = 88.1, пол = 70.9, темп = b.wt === 'down' ? 0.88 : b.wt === 'up' ? 0.35 : 0;
+        let t = b.target != null ? +b.target : w;
+        if (b.wt === 'down' && t < пол) t = пол;
+        if (b.wt === 'keep') t = w;
+        const kg = Math.round(Math.abs(w - t) * 10) / 10;
+        const weeks = (kg && темп) ? Math.max(1, Math.round(kg / темп)) : null;
+        return дать({ ok: true, target: t, safe: { w, max: 0.88, limit: 'вес', floor: пол, upMax: 0.35 },
+          goal: { wt: b.wt, gym: b.gym, kg, weeks, rate: b.wt === 'down' ? -темп : темп,
+                  text: b.wt === 'keep' ? 'держим 88,1 кг' : t + ' кг · ' + темп + ' кг в неделю',
+                  verdict: 'ok', note: 'проверка' } });
+      }
+      return дать({ ok: true, goal: o.goal === undefined ? null : o.goal,
+        safe: o.safe === undefined ? { w: 88.1, max: 0.88, limit: 'вес', floor: 70.9, upMax: 0.35 } : o.safe });
+    }
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })
