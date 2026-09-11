@@ -328,12 +328,25 @@ select.week{
 .dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:16px 0 4px;flex-wrap:wrap}
 .dayhead h2{font-size:21px}
 .dayhead .when{font-weight:500;font-family:inherit;font-size:12px;color:var(--dim);}
-.dayseg{display:flex;gap:6px;margin:12px 0 6px}
+/* шапка дня: статус, название, дорожка подходов */
+.dayhd{margin:14px 0 2px}
+.dayhd u{text-decoration:none;display:block;font-family:inherit;font-size:12px;font-weight:600;color:var(--accent)}
+.dayhd u.rest{color:var(--dim)} .dayhd u.done{color:var(--done)}
+.dayhd b{display:block;font-size:21px;font-weight:800;letter-spacing:-.025em;margin:3px 0 11px;line-height:1.15}
+.dhtr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
+.dhtr>span{height:6px;border-radius:99px;background:var(--track);position:relative;overflow:hidden}
+.dhtr>span s{position:absolute;left:0;top:0;bottom:0;border-radius:99px;background:var(--accent);transition:width .5s ease}
+.dhtr>span s.full{background:var(--done)}
+.dhtr em{font-style:normal;font-family:inherit;font-size:13px;font-weight:700;white-space:nowrap}
+.dhtr em i{font-style:normal;color:var(--dim);font-weight:500}
+.dayseg{display:flex;gap:6px;margin:14px 0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.dayseg::-webkit-scrollbar{display:none}
+/* выбор другого дня — служебное действие, а не главное: чипы тише и ниже */
 .dayseg button{
-  flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 6px;
-  font-size:12.5px;color:var(--muted);line-height:1.3;
+  flex:0 0 auto;border:1px solid var(--line);background:none;border-radius:12px;padding:6px 11px;
+  font-size:11px;color:var(--dim);line-height:1.25;
 }
-.dayseg button b{display:block;font-weight:600;font-size:13.5px;color:inherit}
+.dayseg button b{display:block;font-weight:600;font-size:12.5px;color:var(--muted)}
 .dayseg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--accent)}
 .phaseline{font-size:12.5px;color:var(--muted);margin:10px 0 16px;line-height:1.5}
 .phaseline b{color:var(--text)}
@@ -537,8 +550,8 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 
 .l1-in.two{grid-template-columns:repeat(2,1fr)}
 @media (min-width:760px){.l1-in.two{grid-template-columns:repeat(2,auto)}}
-.todaybar{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:18px 0 2px}
-.todaybar .td{font-family:inherit;font-size:20px;font-weight:800;letter-spacing:-.02em}
+.todaybar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0 0}
+.todaybar .td{font-family:inherit;font-size:12.5px;font-weight:500;color:var(--dim);letter-spacing:0}
 .todaybar .ts{font-weight:500;display:inline-flex;align-items:center;gap:6px;font-family:inherit;
   font-size:12px;border:1px solid var(--line);
   border-radius:99px;padding:4px 10px;color:var(--muted)}
@@ -593,6 +606,47 @@ td:first-child{color:var(--accent);font-weight:500;white-space:nowrap}
 .setrow .swb.on{font-family:inherit;font-size:13px;font-weight:700}
 .setrow .swb.on{background:var(--accent);border-color:transparent;color:var(--on-accent)}
 .setrow.done .ok{background:var(--done);border-color:var(--done);color:var(--on-accent);font-weight:700}
+/* ── Один подход крупно (11.09): активное упражнение раскрыто, остальные —
+   строками с фото. Числа подхода — герои, кнопка одна на всю ширину. ── */
+.card.exact .exthumb{flex:0 0 88px;width:88px}
+.card.exact .exthumb .fig2,.card.exact .exthumb .fig{width:88px}
+.card.exact .exthumb .fig{height:66px}
+.exbox{background:var(--card-solid);border:1px solid var(--line-soft);border-radius:18px;
+  padding:12px 13px 13px;margin-top:12px;gap:0;display:block}
+.exboxh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.exboxh u{text-decoration:none;font-family:inherit;font-size:12px;color:var(--dim)}
+.exbox .setrow{display:block}
+.exnum{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.exnum.one{grid-template-columns:1fr}
+.exnp{display:grid;gap:5px;min-width:0}
+.exnp>span{font-family:inherit;font-size:11px;color:var(--dim);text-align:center}
+.exbox .stp{height:52px;border-radius:14px;background:var(--field);border:none}
+.exbox .stp button{flex:0 0 38px;height:52px}
+.exbox .stp input{height:52px;font-size:23px;font-weight:800;letter-spacing:-.03em}
+.exbox .exgo{display:block;width:100%;flex:none;height:50px;border-radius:15px;border:none;
+  background:var(--prime);color:var(--on-prime);font:inherit;font-weight:700;font-size:15px;margin-top:11px}
+.exbox .setrow.done .exgo{background:var(--field);color:var(--muted);font-weight:600}
+.exbox .swb{width:100%;height:44px;margin-top:9px;flex:none}
+.exchips{display:flex;gap:6px;margin-top:10px}
+.exchip{flex:1;min-width:0;height:30px;border-radius:9px;background:var(--field);border:none;
+  color:var(--dim);font:inherit;font-size:11.5px;padding:0 4px;white-space:nowrap;overflow:hidden}
+.exchip.d{background:var(--corr);color:var(--done);font-weight:700}
+.exchip.n{background:none;border:1px solid var(--accent);color:var(--accent);font-weight:700}
+.exbox .setadd{margin-top:11px}
+.exrow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;
+  padding:13px 0;border:none;border-top:1px solid var(--line-soft);background:none;color:inherit;
+  font:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
+.exrow:active{opacity:.6}
+.exrow .exph{width:44px;height:44px;border-radius:12px;overflow:hidden;display:block;background:var(--field)}
+.exrow .exph .fig2,.exrow .exph .fig{width:44px;border-radius:12px}
+.exrow .exph .fig{height:44px}
+.exrn{min-width:0}
+.exrn b{display:block;font-size:14.5px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
+.exrn i{font-style:normal;font-size:12px;color:var(--dim)}
+.exrv{text-align:right;white-space:nowrap;font-size:13.5px;font-weight:700}
+.exrv u{text-decoration:none;display:block;font-size:11.5px;color:var(--dim);font-weight:500;margin-top:2px}
+.exrow.done .exrn b{color:var(--dim)}
+.exrow.done .exrv{color:var(--done)}
 .setrow.done .stp{border-color:rgba(var(--done-rgb),.4)}
 .setrow.done .stp input{color:var(--done)}
 .dbnote{font-family:inherit;font-size:10.5px;color:var(--dim);text-align:right;
@@ -852,14 +906,14 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
   grid-template-columns:repeat(5,minmax(0,110px))}
 .dayseg button{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  border:1px solid var(--line);background:var(--card);border-radius:12px;
-  padding:0 4px;height:52px;min-height:0;
+  border:1px solid var(--line);background:none;border-radius:12px;
+  padding:0 11px;height:40px;min-height:0;flex:0 0 auto;
   color:var(--muted);transition:border-color .18s,background .18s;
 }
 .dayseg button b{font-family:inherit;font-weight:700;font-size:11.5px;
   letter-spacing:-.02em;color:var(--text);max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .dayseg button i{display:block;font-style:normal;font-family:inherit;
-  font-size:9.5px;letter-spacing:.03em;color:var(--dim)}
+  font-size:9.5px;letter-spacing:.03em;color:var(--dim);margin-top:-1px}
 .dayseg button[aria-pressed="true"]{border-color:transparent;background:var(--accent)}
 .dayseg button[aria-pressed="true"] b{color:var(--on-accent)}
 .dayseg button[aria-pressed="true"] i{color:rgba(255,255,255,.72)}
@@ -1729,9 +1783,9 @@ body.onb #picker .modalbox::before{display:none}
       <div class="zseg" id="zseg-gym"></div>
       <div class="todaybar" id="todaybar"></div>
       <div id="gym-work">
+        <div class="dayhd" id="nexthint"></div>
         <div class="dayseg" id="dayseg"></div>
         <div class="dayseg lite" id="liteseg"></div>
-        <p class="nexthint" id="nexthint"></p>
         <button type="button" class="nudge" id="nudge" hidden></button>
         <button type="button" class="nudge" id="newver" hidden></button>
         <div id="planbox" hidden></div>
@@ -3484,7 +3538,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '11.09 17:55';
+var BUILD = '11.09 18:15';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -3549,18 +3603,32 @@ function renderDayHead(){
            if(k===nx && k!==day) b.setAttribute('data-next','1'); else b.removeAttribute('data-next'); }
   });
   var h=document.getElementById('nexthint');
-  if(h){
-    if(doneToday){
-      var af = nextAfter(doneToday);
-      var кw=whenLabel(af);
-      h.innerHTML = шапкаДня() + (day===doneToday ? ' · сегодня закрыт, дальше <b>'+dayShort(af).toLowerCase()+'</b>'+(кw && кw!=='—' ? ' · '+кw : '') : '');
-    } else if(day===nx){
-      h.innerHTML = шапкаДня() + ' · следующий по очереди';
-    } else {
-      var нw=whenLabel(nx);
-      h.innerHTML = шапкаДня() + ' · по очереди <b>'+dayShort(nx).toLowerCase()+'</b>'+(нw && нw!=='—' ? ' · '+нw : '');
-    }
-  }
+  if(h) h.innerHTML = шапкаДняБольшая(nx, doneToday);
+}
+/* Шапка дня (11.09): статус строчными, название дня крупно, дорожка подходов.
+   Раньше на этом месте стояли дата, чип статуса, пять кнопок дней и строка
+   «День 1 · присед и квадрицепс · следующий по очереди» — четыре блока, и все
+   про одно и то же. */
+function dayProgress(){
+  var сделано=0, всего=0;
+  ((sess&&sess.ex)||[]).forEach(function(x){
+    ((x&&x.sets)||[]).forEach(function(v){ всего++; if(v.done) сделано++; });
+  });
+  return {done:сделано, total:всего};
+}
+function шапкаДняБольшая(nx, doneToday){
+  var d=DAYS[day]||{}, метка=dayLabel(day).toLowerCase(), кл='', ст;
+  var пр0=dayProgress(), всёЗакрыто = пр0.total>0 && пр0.done>=пр0.total;
+  /* «сегодня закрыт» при двух подходах из тринадцати — неправда: отметка о
+     тренировке ставится с первого же подхода, а день закрыт, когда закрыт */
+  if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
+  else if(todayLetter() && day===nx){ ст='сегодня зал · '+метка; }
+  else if(day===nx){ ст=метка+' · следующий по очереди'; кл=' rest'; }
+  else { var w=whenLabel(day); ст=метка+((w&&w!=='—')?' · '+w:''); кл=' rest'; }
+  var пр=пр0, доля = пр.total ? Math.round(пр.done/пр.total*100) : 0;
+  return '<u class="'+кл.trim()+'">'+esc(ст)+'</u><b>'+esc(String(d.sub||'').replace(/^./,function(c){return c.toUpperCase();}))+'</b>'+
+    '<div class="dhtr"><span><s class="'+(пр.total&&пр.done>=пр.total?'full':'')+'" style="width:'+доля+'%"></s></span>'+
+    '<em>'+пр.done+'<i> / '+пр.total+' '+plural(пр.total,['подход','подхода','подходов'])+'</i></em></div>';
 }
 function pickDay(e){
   var b=e.target.closest('button[data-day]'); if(!b) return;
@@ -3722,43 +3790,94 @@ function lastLine(e){
   return '<div class="lastline">прошлый раз'+(p.d?' '+ruDate(p.d):'')+' · <b>'+parts.join(' · ')+'</b></div>';
 }
 
-function setGrid(e,di){
-  var st=sess.ex[di].sets, wt=hasW(e), t=targetOf(e);
-  /* Цель стоит серым прямо в пустой ячейке — так её видно там, где вводишь,
-     а не в отдельном тексте выше. Ввёл своё — цель уступает место. */
+/* ── Один подход крупно ──
+   Его выбор 11.09 из четырёх эскизов, с условием «обязательно чтобы было фото
+   упражнения для понятности». Раскрыто ровно одно упражнение — то, которое
+   делаешь сейчас; остальные свёрнуты в строки с фото 44 px. Внутри раскрытого
+   ровно один подход: вес и повторы крупными числами, одна кнопка на всю
+   ширину, сделанные подходы чипами под ней.
+   Разметка `.setrow` с `data-ex`/`data-set` сохранена намеренно — на ней висят
+   все старые обработчики (ступеньки, ввод, галочка, секундомер). */
+function exDone(di){
+  var st=(sess.ex[di]||{}).sets||[];
+  return st.length>0 && st.every(function(v){ return v.done; });
+}
+function activeSet(di){
+  var st=(sess.ex[di]||{}).sets||[], c=sess.ex[di].cur;
+  if(c!=null && st[c] && !st[c].done) return c;
+  for(var i=0;i<st.length;i++) if(!st[i].done) return i;
+  return (c!=null && st[c]) ? c : Math.max(0, st.length-1);
+}
+function activeEx(){
+  var сп=exList(day), c=sess.cur;
+  if(c!=null && сп[c] && !exDone(c)) return c;
+  for(var i=0;i<сп.length;i++) if(!exDone(i)) return i;
+  return (c!=null && сп[c]) ? c : 0;
+}
+/* после закрытого подхода активным становится следующий незакрытый: внутри
+   упражнения, потом партнёр по суперсету (в круге сначала А, потом Б),
+   потом следующее упражнение дня */
+function advanceCur(di){
+  var e=exList(day)[di], пара = (e && e.ss) ? партнёрDi(di) : -1;
+  var st=sess.ex[di].sets, nx=-1, i;
+  for(i=0;i<st.length;i++) if(!st[i].done){ nx=i; break; }
+  if(пара>=0){
+    var ps=sess.ex[пара].sets, pn=-1;
+    for(i=0;i<ps.length;i++) if(!ps[i].done){ pn=i; break; }
+    if(pn>=0 && (nx<0 || pn<=nx)){ sess.cur=пара; sess.ex[пара].cur=pn; return; }
+  }
+  if(nx>=0){ sess.cur=di; sess.ex[di].cur=nx; return; }
+  sess.ex[di].cur=null;
+  var сп=exList(day);
+  for(i=0;i<сп.length;i++) if(!exDone(i)){ sess.cur=i; return; }
+  sess.cur=di;
+}
+function setGrid(e,di,подвал){
+  var st=sess.ex[di].sets, wt=hasW(e), t=targetOf(e), si=activeSet(di), v=st[si]||{};
   var pw = (wt && t.tw!=null) ? fmtKg(t.tw) : '—';
   var pr = (t.tr!=null) ? String(t.tr) : '—';
-  /* Подпись «+2,5» рядом с уже подставленным весом читалась как «прибавь ещё
-     2,5 к тому, что в ячейке», а «цель 6» — как «шесть подходов». Теперь в шапке
-     стоит факт (что было в прошлый раз) и диапазон повторов, а не приказ. */
-  var подпись = (wt && t.lw!=null) ? '<span class="tgt">было '+fmtKg(t.lw)+'</span>'
-              : (t.kind==='start' && wt) ? '<span class="tgt">ориентир</span>' : '';
   var блины = plateFor(e, t.tw);
-  var h='<div class="sethead"><span class="sn"></span>'+
-        (wt?'<span class="hw">вес, кг'+подпись+'</span>':'')+
-        '<span class="hr">'+unitR(e)+'<span class="tgt">'+repsOf(e)+'</span></span>'+
-        '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
-        (блины ? '<p class="plates">'+блины+'</p>' : '');
-  st.forEach(function(v,si){
-    h+='<div class="setrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
-       '<span class="sn">'+(si+1)+'</span>'+
-       (wt?'<div class="stp"><button type="button" data-f="w" data-d="-1" aria-label="Убавить вес">−</button>'+
-           '<input data-f="w" inputmode="decimal" placeholder="'+pw+'" aria-label="Вес, кг" value="'+(v.w==null?'':v.w)+'">'+
-           '<button type="button" data-f="w" data-d="1" aria-label="Прибавить вес">+</button></div>':'')+
-       '<div class="stp"><button type="button" data-f="r" data-d="-1" aria-label="Убавить">−</button>'+
-       '<input data-f="r" inputmode="numeric" placeholder="'+pr+'" aria-label="'+unitR(e)+'" value="'+(v.r==null?'':v.r)+'">'+
-       '<button type="button" data-f="r" data-d="1" aria-label="Прибавить">+</button></div>'+
-       /* планку и вис держат по секундомеру, а не считают в уме (его просьба 11.09) */
-       (isTime(e)?'<button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button>':'')+
-       '<button type="button" class="ok" data-ok="1" aria-label="Подход сделан" aria-pressed="'+(!!v.done)+'">✓</button>'+
-       '</div>';
-  });
-  h+='<div class="setadd"><button type="button" data-sets="-1" data-ex="'+di+'"'+
-     (st.length<=1?' disabled':'')+' aria-label="Убрать подход">−</button>'+
-     '<span>'+st.length+' '+plural(st.length,['подход','подхода','подходов'])+'</span>'+
-     '<button type="button" data-sets="1" data-ex="'+di+'"'+
-     (st.length>=8?' disabled':'')+' aria-label="Добавить подход">+</button></div>';
-  return '<div class="setgrid">'+h+'</div>';
+  var поле=function(f,ph,им,ик){
+    return '<div class="exnp"><span>'+им+'</span><div class="stp">'+
+      '<button type="button" data-f="'+f+'" data-d="-1" aria-label="Убавить">−</button>'+
+      '<input data-f="'+f+'" inputmode="'+ик+'" placeholder="'+ph+'" aria-label="'+им+'" value="'+(v[f]==null?'':v[f])+'">'+
+      '<button type="button" data-f="'+f+'" data-d="1" aria-label="Прибавить">+</button></div></div>';
+  };
+  var чипы = st.map(function(x,k){
+    var txt = x.done ? ((wt && x.w!=null && x.w!=='' ? fmtKg(+x.w)+' × ' : '')+((x.r==null||x.r==='')?'—':x.r))
+                     : (k===si ? 'сейчас' : '—');
+    return '<button type="button" class="exchip'+(x.done?' d':'')+(k===si?' n':'')+
+           '" data-pick="'+di+'" data-pset="'+k+'">'+esc(txt)+'</button>';
+  }).join('');
+  return '<div class="setgrid exbox">'+
+    '<div class="exboxh"><u>подход '+(si+1)+' из '+st.length+'</u>'+
+      '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
+    (блины ? '<p class="plates">'+блины+'</p>' : '')+
+    '<div class="setrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
+      '<div class="exnum'+(wt?'':' one')+'">'+(wt?поле('w',pw,'вес, кг','decimal'):'')+поле('r',pr,unitR(e),'numeric')+'</div>'+
+      (isTime(e)?'<button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button>':'')+
+      '<button type="button" class="exgo ok" data-ok="1" aria-pressed="'+(!!v.done)+'">'+
+        (v.done?'Отменить подход':'Подход сделан')+'</button>'+
+    '</div>'+
+    '<div class="exchips">'+чипы+'</div>'+
+    (подвал!==undefined ? подвал :
+      '<div class="setadd"><button type="button" data-sets="-1" data-ex="'+di+'"'+
+      (st.length<=1?' disabled':'')+' aria-label="Убрать подход">−</button>'+
+      '<span>'+st.length+' '+plural(st.length,['подход','подхода','подходов'])+'</span>'+
+      '<button type="button" data-sets="1" data-ex="'+di+'"'+
+      (st.length>=8?' disabled':'')+' aria-label="Добавить подход">+</button></div>')+
+    '</div>';
+}
+/* свёрнутое упражнение: фото, название, рабочий вес и сколько подходов закрыто */
+function exRow(e,di,метка){
+  var st=sess.ex[di].sets, сделано=st.filter(function(v){ return v.done; }).length;
+  var t=targetOf(e), вес=(hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—';
+  var всё=exDone(di);
+  return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
+    '<span class="exph">'+mediaFor(e)+'</span>'+
+    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.n)+'</b>'+
+      '<i>'+setsFor(e,di)+' × '+repsOf(e)+'</i></span>'+
+    '<span class="exrv">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
 }
 /* Добавить или убрать подход в конкретном упражнении на сегодня.
    Правка живёт в самой сессии дня и уезжает в журнал как есть — программа
@@ -3801,6 +3920,12 @@ function renderList(){
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+
      '</div>';
   box.innerHTML=h;
+  /* дорожка в шапке считает закрытые подходы — она меняется вместе со списком */
+  var hh=document.getElementById('nexthint');
+  if(hh && typeof suggestedDay==='function'){
+    var lw2=lastWorkout();
+    hh.innerHTML = шапкаДняБольшая(suggestedDay(), (lw2&&lw2.date===TODAY)?lw2.day:null);
+  }
   /* список перерисовали — вернуть подсветку идущему секундомеру */
   if(typeof watchBtns==='function') watchBtns();
 }
@@ -3848,49 +3973,35 @@ function шапка(e, di, метка){
     '</div></div>';
 }
 function одна(e,di){
-  var all = sess.ex[di].sets.every(function(v){ return v.done; });
-  return '<article class="card'+(all?' full':'')+'">'+
-     шапка(e,di,'')+
+  if(di!==activeEx()) return exRow(e,di,'');
+  return '<article class="card exact">'+
+     шапка(e,di,'')+ lastLine(e)+
      adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di,'')+
    '</article>';
 }
 /* ── суперсет: одна карточка, круги ── */
+/* Суперсет по той же модели: раскрыто то упражнение круга, которое делаешь
+   сейчас, партнёр — свёрнутой строкой под ним. Пара целиком не в работе —
+   обе строки свёрнуты. Круг = номер подхода у обоих. */
 function ssCard(a,dia,b,dib){
-  var na=setsFor(a,dia), nb=setsFor(b,dib), кругов=Math.max(na,nb);
-  var готово = sess.ex[dia].sets.every(function(v){return v.done;}) &&
-               sess.ex[dib].sets.every(function(v){return v.done;});
-  var отдых = Math.max(a.rest,b.rest);
-  var h='<article class="card sscard'+(готово?' full':'')+'">'+
+  var act=activeEx(), отдых=Math.max(a.rest,b.rest);
+  if(act!==dia && act!==dib) return exRow(a,dia,'А')+exRow(b,dib,'Б');
+  var первый = act===dia;
+  var e=первый?a:b, di=act, o=первый?b:a, odi=первый?dib:dia;
+  var кругов=Math.max(setsFor(a,dia), setsFor(b,dib));
+  var готово = exDone(dia) && exDone(dib);
+  var круги='<div class="setadd"><button type="button" data-cyc="-1" data-a="'+dia+'" data-b="'+dib+'"'+
+    (кругов<=1?' disabled':'')+' aria-label="Убрать круг">−</button>'+
+    '<span>'+кругов+' '+plural(кругов,['круг','круга','кругов'])+'</span>'+
+    '<button type="button" data-cyc="1" data-a="'+dia+'" data-b="'+dib+'"'+
+    (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div>';
+  return '<article class="card exact sscard'+(готово?' full':'')+'">'+
     '<div class="sshead"><b>суперсет</b>между А и Б не отдыхаешь, отдых '+
-      Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга</div>';
-  [[a,dia,'А'],[b,dib,'Б']].forEach(function(x){
-    var e=x[0], di=x[1], t=x[2], tg=targetOf(e);
-    h+='<div class="sslead">'+
-       '<button type="button" class="exthumb sm" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
-       '<div class="sslead-t"><b><span class="sstag">'+t+'</span>'+e.n+'</b>'+
-         '<i>'+repsUnit(e)+(tg.lw!=null?' · было '+fmtKg(tg.lw)+' кг':'')+'</i></div>'+
-       '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
-       adviceLine(e);
-  });
-  var едА=unitR(a), едБ=unitR(b);
-  h+='<div class="setgrid"><div class="sethead"><span class="sn"></span>'+
-     '<span class="hw">вес, кг</span><span class="hr">'+(едА===едБ?едА:едА+' · '+едБ)+'</span>'+
-     '<span class="hend"></span></div>';
-  for(var c=0;c<кругов;c++){
-    h+='<div class="cyc"><div class="cychead">круг '+(c+1)+'</div>';
-    [[a,dia,'А',na],[b,dib,'Б',nb]].forEach(function(x){
-      if(c>=x[3]) return;
-      h+=ssRow(x[0],x[1],c,x[2]);
-    });
-    h+='</div>';
-  }
-  h+='<div class="setadd"><button type="button" data-cyc="-1" data-a="'+dia+'" data-b="'+dib+'"'+
-     (кругов<=1?' disabled':'')+' aria-label="Убрать круг">−</button>'+
-     '<span>'+кругов+' '+plural(кругов,['круг','круга','кругов'])+'</span>'+
-     '<button type="button" data-cyc="1" data-a="'+dia+'" data-b="'+dib+'"'+
-     (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div></div>';
-  h+=ssFoot(a,dia,b,dib)+'</article>';
-  return h;
+      Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга</div>'+
+    шапка(e,di,первый?'А':'Б')+ lastLine(e)+ adviceLine(e)+ setGrid(e,di,круги)+
+    exRow(o,odi,первый?'Б':'А')+
+    ssFoot(a,dia,b,dib)+
+  '</article>';
 }
 /* Подвал суперсета: те же две кнопки, что у обычной карточки. Четыре кнопки
    «А · Описание / Б · Описание …» читались как каша. Нажал «Описание» —
@@ -4002,6 +4113,13 @@ function партнёрDi(di){
   return -1;
 }
 document.getElementById('list').addEventListener('click', function(ev){
+  /* тап по свёрнутому упражнению или по чипу подхода переносит фокус дня */
+  var pe=ev.target.closest('[data-pickex]');
+  if(pe){ var pdi=+pe.dataset.pickex; sess.cur=pdi; if(sess.ex[pdi]) sess.ex[pdi].cur=null;
+          saveSess(); renderList(); haptic('light'); return; }
+  var pc=ev.target.closest('[data-pick]');
+  if(pc){ sess.cur=+pc.dataset.pick; sess.ex[sess.cur].cur=+pc.dataset.pset;
+          saveSess(); renderList(); haptic('light'); return; }
   var cb=ev.target.closest('[data-cyc]');
   if(cb && !cb.disabled){ bumpCycles(+cb.dataset.a, +cb.dataset.b, +cb.dataset.cyc); return; }
   var sb=ev.target.closest('[data-sets]');
@@ -4051,8 +4169,12 @@ document.getElementById('list').addEventListener('click', function(ev){
       var первыйВПаре = пара>=0 && di<пара;
       if(!первыйВПаре) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
       markDone();
+      advanceCur(di);
     }
-    saveSess(); syncRow(di,si); commit();
+    /* перерисовать ДО commit: commit снимает состояние с DOM (harvestDom), и на
+       старой разметке закрытый подход читался как незакрытый — галочка тут же
+       отменялась сама */
+    saveSess(); renderList(); commit();
   }
 });
 document.getElementById('list').addEventListener('input', function(ev){
@@ -5818,17 +5940,9 @@ function renderTodaybar(){
   var el=document.getElementById('todaybar'); if(!el) return;
   var DNL=WDFULL;
   var n=new Date();
-  var out='<span class="td">'+n.getDate()+' '+MONTHS[n.getMonth()]+', '+DNL[n.getDay()]+'</span>';
-  var lw=lastWorkout();
-  if(lw && lw.date===TODAY && DAYS[lw.day]){
-    out+='<span class="ts done">сегодня закрыт · '+DAYS[lw.day].sub.toLowerCase()+'</span>';
-  } else if(todayLetter()){
-    out+='<span class="ts gym">сегодня зал · '+DAYS[suggestedDay()].sub.toLowerCase()+'</span>';
-  } else {
-    var nx=nextGymDay();
-    out+='<span class="ts">отдых'+(nx?' · зал '+(nx.in===1?'завтра':'в '+nx.d):' · дни не заданы')+'</span>';
-  }
-  out+='<button class="tsedit" id="schedbtn" type="button">мои дни</button>';
+  /* статус дня переехал в шапку дня (11.09): тут остаётся дата и «мои дни» */
+  var out='<span class="td">'+n.getDate()+' '+MONTHS[n.getMonth()]+', '+DNL[n.getDay()]+'</span>'+
+          '<button class="tsedit" id="schedbtn" type="button">мои дни</button>';
   el.innerHTML=out;
 }
 
