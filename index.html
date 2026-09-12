@@ -3894,7 +3894,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 11:21';
+var BUILD = '12.09 11:47';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5096,8 +5096,9 @@ function commit(){
     var rows=sess.ex[di].sets, done=rows.filter(function(v){return v.done;});
     if(!done.length) return;
     var lastv=done[done.length-1];
-    LAST[e.n]={ w:lastv.w, r:lastv.r, d:TODAY,
-                s:rows.map(function(v){ return [v.w, v.r]; }) };
+    var rec={ w:lastv.w, r:lastv.r, d:TODAY,
+              s:rows.map(function(v){ return [v.w, v.r]; }) };
+    LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec;
   });
   set('last',LAST);
   paintNote(DB?'saving':'local');
@@ -5332,7 +5333,8 @@ function finishSave(){
       try{ pushVolume(); }catch(e){}
       thaw();
       exList(day).forEach(function(e,di){ if(sc.byEx[di]){ var arr=sc.byEx[di], l=arr[arr.length-1];
-        LAST[e.n]={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(x){return [x.w==null?'':x.w, x.r==null?'':x.r];})}; } });
+        var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(x){return [x.w==null?'':x.w, x.r==null?'':x.r];})};
+        LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; } });
       set('last',LAST);
       return DB.doc('state/last').set({m:LAST, lastDone:lastDone, updated:body.updated});
     }).then(function(){
@@ -5922,6 +5924,9 @@ function sameMove(name, e){
 }
 /* последний вес по упражнению — по имени, а если имя новое, то по движению */
 function lastFor(e){
+  /* сначала по id каталога: имя упражнения может смениться при правке
+     каталога, id — нет, и вес не должен из-за этого теряться */
+  if(e.cat && LAST['#'+e.cat]) return LAST['#'+e.cat];
   if(LAST[e.n]) return LAST[e.n];
   if(!e.ph) return null;
   var ks=Object.keys(LAST), best=null;
@@ -6629,26 +6634,6 @@ function csGetBig(k){
 function incFor(q){ return {barbell:2.5, dumbbell:2, kettlebells:4, machine:5, cable:2.5, 'e-z curl bar':2.5}[q] || 2.5; }
 /* имя из истории, если это то же движение под другим именем: так прогрессия
    не обнуляется при переходе на новую программу */
-function normName(n){
-  return String(n||'').toLowerCase().replace(/\([^)]*\)/g,' ')
-    .replace(/\b(в|на|с|со|из|к|тренажёре|тренажёр|блоке|блок|гантели|гантелями|штанга|штангой|штанги|сидя|лёжа|стоя)\b/g,' ')
-    .replace(/[^а-яё0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-}
-function histName(n, ph){
-  if(!HIST) return n;
-  var want=normName(n), hit=null;
-  for(var i=0;i<HIST.length;i++){
-    var ex=HIST[i].ex||[];
-    for(var j=0;j<ex.length;j++){ if(normName(ex[j].n)===want){ if(hit && hit!==ex[j].n) return n; hit=ex[j].n; } }
-  }
-  if(hit) return hit;
-  /* по словам не совпало — ищем то же движение: самое свежее имя из истории с тем же ph */
-  if(ph){
-    for(var a=0;a<HIST.length;a++){ var ex2=HIST[a].ex||[];
-      for(var b=0;b<ex2.length;b++){ if(phOfName(ex2[b].n)===ph) return ex2[b].n; } }
-  }
-  return n;
-}
 function installAiProg(prog){
   if(!prog || !prog.days || !prog.days.length) return null;
   var keys=[];
@@ -6658,7 +6643,7 @@ function installAiProg(prog){
     DAYS[k]={ name:'День '+(i+1), s:sLabel.slice(0,10), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
       var time=/ с$/.test(x.reps||'');
       var ph0 = (x.q==='body only'?null:phGuess(x.en, x.q, x.m));
-      return { p:x.p||'', n:histName(x.n, ph0), en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
+      return { p:x.p||'', n:x.n, en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
                ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'',
                eq:({barbell:'штанга', dumbbell:'гантели', kettlebells:'гиря', machine:'тренажёр', cable:'блок'})[x.q]||'',
                ph:ph0, fig:null, ai:true,
@@ -6742,9 +6727,11 @@ function renderAiPreview(prog){
 }
 function aiApply(){
   if(!AIPROG) return;
-  /* имена из истории фиксируем в самой программе — иначе при следующем
-     запуске, когда история ещё не подгружена, они бы вернулись к каталожным */
-  AIPROG.days.forEach(function(d){ d.ex.forEach(function(x){ x.n=histName(x.n); }); });
+  /* Имена НЕ подменяем именами из истории. Раньше здесь имя из старой записи
+     вписывалось в саму программу и сохранялось навсегда: после переименования
+     каталога 11.09 «Сгибание ног (тренажёр, лёжа)» осталось «…сидя», и в дне 4
+     два разных упражнения показывались под одним именем. Имя — из каталога по
+     id; запись занятия хранит своё и сверяется по id. */
   gset('sched_any', GYM_DAYS);
   var k=installAiProg(AIPROG); if(!k) return;
   gset('ai_prog', AIPROG);
