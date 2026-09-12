@@ -21,6 +21,7 @@ const З = (p, тело) => fetch(БАЗА + p, {
 const анкета = (uid, me) => З('/s', { uid, key: 'me', data: { me } });
 const стереть = uid => З('/forget', { uid, scope: 'all' });
 const чат = (uid, text) => З('/food', { uid, text });
+const sb_err = o => (o && o.error) ? (': ' + o.error) : '';
 
 /* слова, которых у человека без зала быть не должно */
 const ЗАЛ = /зал|подход|упражнен|программ|тренировк|прогресси/i;
@@ -209,6 +210,42 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
   дано(ЗАЛ.test(r9), 'в разборе есть зал');
 
   for (const u of ['svc_t_food', 'svc_t_gym', 'svc_t_goal', 'svc_t_rev', 'svc_t_cal', 'svc_t_zal']) await стереть(u);
+  console.log('\n═══ 10 · объём программы идёт за целью ═══');
+  /* 12.09. Программа, собранная 10.09, давала спине 9 подходов в неделю,
+     груди 6, а квадрицепсу, которого в цели нет, — 12: объём был разложен
+     ровно против цели, и никто его не считал. Теперь сборщик считает сам и
+     переспрашивает модель с числами. Проверяем на служебном профиле с той же
+     целью: мышцы из цели должны стоять в верху таблицы объёма.
+     Пороги: не меньше 10 подходов в неделю на растущую мышцу — ACSM 2026,
+     Bernardez-Vazquez 2022; 12–20 у тренированных — Baz-Valle 2022. */
+  const МЕ = { sex: 'm', age: 34, ht: 178, bw: 88, wt: 'down', gym: 'muscle', goal: 'fat',
+    level: 'exp', only: 'all', place: 'gym', lim: [], eq: [], min: 45,
+    dislikes: ['ягодичный мостик', 'румынская тяга'] };
+  await З('/s', { uid: 'svc_t_vol', key: 'me', data: { me: МЕ } });
+  await З('/goal', { uid: 'svc_t_vol', wt: 'down', gym: 'muscle', target: 75,
+    long: 'V-силуэт: плечи, спина, верх груди' });
+  const сб = await З('/ai', { uid: 'svc_t_vol', me: МЕ, days: 5, min: 45 });
+  дано(!!(сб && сб.prog && сб.prog.days), 'программа собралась' + (сб && sb_err(сб)));
+  if (сб && сб.prog) {
+    const v = сб.vol || {}, ф = сб.prog.focus || [];
+    const пары = Object.keys(v).sort((a, b) => v[b] - v[a]);
+    console.log('    фокус:', ф.join(', '));
+    console.log('    объём:', пары.map(k => k + ' ' + v[k]).join(', '));
+    дано(ф.length >= 2, 'тренер назвал мышцы цели: ' + ф.join(', '));
+    const мин = ф.length ? Math.min.apply(null, ф.map(m => v[m] || 0)) : 0;
+    дано(мин >= 10, 'самая слабая мышца из цели получает не меньше 10 подходов: ' + мин);
+    const выше = пары.filter(m => ф.indexOf(m) < 0 && (v[m] || 0) > мин);
+    дано(!выше.length, 'ни одна мышца вне цели не обгоняет цель' +
+      (выше.length ? ': ' + выше.map(m => m + ' ' + v[m]).join(', ') : ''));
+    const нули = ['chest','lats','shoulders','quadriceps','hamstrings','glutes','abdominals']
+      .filter(m => !(v[m] > 0));
+    дано(!нули.length, 'ни одна крупная группа не осталась без работы' + (нули.length ? ': ' + нули.join(', ') : ''));
+    let всего = 0; сб.prog.days.forEach(d => (d.ex || []).forEach(x => { всего += x.sets; }));
+    const вДень = Math.round(всего / сб.prog.days.length);
+    дано(вДень <= 20, 'занятие укладывается в 45 минут: ' + вДень + ' подходов в день');
+  }
+  await стереть('svc_t_vol');
+
   console.log('\nслужебные стёрты');
   console.log(плохо ? ('\nПРОВАЛОВ: ' + плохо + ' из ' + всего) : ('\nВСЕ ' + всего + ' ПРОВЕРОК ПРОЙДЕНЫ'));
   process.exit(плохо ? 1 : 0);
