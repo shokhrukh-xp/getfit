@@ -124,6 +124,9 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
   const gym = await page.$('.l1 button[data-page="gym"]');
   if (gym) {
     await gym.click(); await page.waitForTimeout(700);
+    /* 12.09: при входе всё свёрнуто — карточку надо открыть нажатием */
+    const стр = await page.$('#list .exrow');
+    if (стр) { await стр.click(); await page.waitForTimeout(400); }
     const set = await page.$('.exgo');
     if (set) {
       await set.click(); await page.waitForTimeout(900);

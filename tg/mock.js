@@ -96,7 +96,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     const R = Date, ч = +час.split(':')[0], м = +час.split(':')[1];
     const F = new R(); F.setHours(ч, м, 0, 0); const f = F.getTime();
@@ -135,12 +135,14 @@ async function поднять(page, o) {
       localStorage.setItem('shp_v1_page', JSON.stringify(сеанс));
       /* журнал тренировок кладём туда же, откуда приложение его читает */
       if (видел != null) localStorage.setItem('shp_v1_chat_seen', String(видел));
+      /* замены упражнений на день: {'D1:2': {n, e, i}} — как их пишет приложение */
+      if (замены) localStorage.setItem('shp_v1_shp_subs', JSON.stringify(замены));
       (журнал || []).forEach(w => {
         localStorage.setItem('cs_workouts_' + w.id, JSON.stringify(w));
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null]);
 
   await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
     const u = new URL(route.request().url()), p = u.pathname;

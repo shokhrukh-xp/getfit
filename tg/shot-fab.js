@@ -22,6 +22,8 @@ const снять = (page, имя) => page.screenshot({ path: `tg/fab-${тема}
   page = await нов();
   await M.поднять(page, { theme: тема, hist: M.журнал() });
   await page.click('.l1 button[data-page="gym"]'); await page.waitForTimeout(600);
+  const стр = await page.$('#list .exrow');
+  if (стр) { await стр.click(); await page.waitForTimeout(400); }
   const set = await page.$('.exgo');
   if (set) { await set.click(); await page.waitForTimeout(1000); }
   await снять(page, '3-otdyh');

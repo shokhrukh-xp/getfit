@@ -63,6 +63,28 @@ async function журнал(page) {
   дано(сКадром.length >= 3, 'кадр нашёлся по имени в программе: ' + сКадром.join(', '));
   await br2.close();
 
+  /* СВОИ УПРАЖНЕНИЯ. 12.09 он показал «Сумо-тягу (гантель)» без кадра: её нет
+     в free-exercise-db, кадры лежат у нас в img/, а знает об этом только наш
+     каталог — он же грузился лишь на экране каталога. Открыл «Тренировку»
+     сразу — ушёл адрес CDN, оттуда 404, и вместо кадра пустой квадрат. */
+  const br5 = await chromium.launch();
+  const p5 = await br5.newPage({ viewport: { width: 390, height: 844 } });
+  const картинки = [];
+  p5.on('request', r => { if (/\.(jpg|png)(\?|$)/.test(r.url())) картинки.push(r.url()); });
+  await M.поднять(p5, { theme: 'dark', subs: { 'D1:1': {
+    n: 'Сумо-тяга (гантель)', e: 'Dumbbell Sumo Deadlift', i: 'Dumbbell_Sumo_Deadlift' } } });
+  await p5.click('.l1 button[data-page="gym"]');
+  await p5.waitForTimeout(2000);
+  const сумо = картинки.filter(u => /rdl-[01]\.jpg/.test(u));
+  const чужие = картинки.filter(u => /Dumbbell_Sumo_Deadlift/.test(u));
+  дано(сумо.length >= 1, 'своему упражнению ушли наши кадры: ' +
+    (сумо[0] || '—').replace(/^https?:\/\/[^/]+/, ''));
+  дано(чужие.length === 0, 'на CDN за ним не ходим — там его нет (' + чужие.length + ' запросов)');
+  const естьВСписке = await p5.$$eval('#list .exrow, #list .card.exact',
+    rs => rs.map(r => (r.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24)));
+  дано(естьВСписке.some(t => /Сумо/.test(t)), 'замена стоит в дне: ' + естьВСписке.join(' / ').slice(0, 90));
+  await br5.close();
+
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
 })().catch(e => { console.error('УПАЛО:', e.stack); process.exit(1); });

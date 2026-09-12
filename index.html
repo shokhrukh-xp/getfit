@@ -2236,6 +2236,22 @@ function catOwn(id){
   for(var i=CAT.ex.length-1;i>=0;i--){ var x=CAT.ex[i]; if(x.i===id) return x.own ? x : null; }
   return null;
 }
+/* СВОИ УПРАЖНЕНИЯ ЖИВУТ ТОЛЬКО В НАШЕМ КАТАЛОГЕ. Сумо-тяга, мостик, кикбэк —
+   их нет в free-exercise-db, кадры к ним лежат у нас в img/. Узнать об этом
+   можно лишь из каталога, а он грузился только на экране каталога: открыл
+   «Тренировку» сразу — и такому упражнению уходил адрес CDN, оттуда 404, и
+   вместо кадра оставался пустой квадрат. Значит каталог нужен сразу, как
+   только на экране есть упражнение с id. */
+var катЖдём=false;
+function катНадо(){
+  if(CAT || катЖдём) return;
+  катЖдём=true;
+  loadCatalog().then(function(){
+    катЖдём=false;
+    try{ renderList(); }catch(e){}
+    try{ renderProgress(); }catch(e){}
+  }).catch(function(){ катЖдём=false; });
+}
 function mediaFor(e){
   var own = e.cat ? catOwn(e.cat) : null;
   if(own){
@@ -2246,6 +2262,7 @@ function mediaFor(e){
     return figSvg(own.fig || e.fig) || '';
   }
   if(e.cat){        /* упражнение из каталога — два кадра с CDN */
+    катНадо();      /* свои упражнения знает только каталог, см. ниже */
     return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
            '<img src="'+CDN+encodeURI(e.cat)+'/0.jpg" alt="" loading="lazy">'+
            '<img src="'+CDN+encodeURI(e.cat)+'/1.jpg" alt="" loading="lazy">'+
@@ -3968,7 +3985,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 19:25';
+var BUILD = '12.09 19:57';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4160,6 +4177,7 @@ function blankSess(){
   return o;
 }
 function loadSess(){
+  EXPICK=false;                     /* другой день — снова список, а не карточка */
   var x=get(sKey(),null);
   if(!x || !x.ex || x.ex.length!==exList(day).length) x=blankSess();
   exList(day).forEach(function(e,di){
@@ -4238,6 +4256,14 @@ function activeSet(di){
   for(var i=0;i<st.length;i++) if(!st[i].done) return i;
   return (c!=null && st[c]) ? c : Math.max(0, st.length-1);
 }
+/* КАРТОЧКА ОТКРЫВАЕТСЯ ПО НАЖАТИЮ. Раньше при входе всегда было раскрыто
+   первое незакрытое упражнение: оно занимало пол-экрана, и день целиком, чтобы
+   выбрать, с чего начать, было не видно. Теперь при запуске всё свёрнуто,
+   а как только человек ткнул в упражнение — дальше как прежде: закрыл его,
+   следующее открылось само (в зале лишний тап дороже). Сбрасывается на
+   запуске и при смене дня программы. */
+var EXPICK=false;
+function раскрытыйEx(){ return EXPICK ? activeEx() : -1; }
 function activeEx(){
   var сп=exList(day), c=sess.cur;
   if(c!=null && сп[c] && !exDone(c)) return c;
@@ -4403,7 +4429,7 @@ function шапка(e, di, метка){
     '</div></div>';
 }
 function одна(e,di){
-  if(di!==activeEx()) return exRow(e,di,'');
+  if(di!==раскрытыйEx()) return exRow(e,di,'');
   return '<article class="card exact">'+
      шапка(e,di,'')+ lastLine(e)+
      adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di,'')+
@@ -4414,7 +4440,7 @@ function одна(e,di){
    сейчас, партнёр — свёрнутой строкой под ним. Пара целиком не в работе —
    обе строки свёрнуты. Круг = номер подхода у обоих. */
 function ssCard(a,dia,b,dib){
-  var act=activeEx(), отдых=Math.max(a.rest,b.rest);
+  var act=раскрытыйEx(), отдых=Math.max(a.rest,b.rest);
   if(act!==dia && act!==dib) return exRow(a,dia,'А')+exRow(b,dib,'Б');
   var первый = act===dia;
   var e=первый?a:b, di=act, o=первый?b:a, odi=первый?dib:dia;
@@ -4546,10 +4572,10 @@ document.getElementById('list').addEventListener('click', function(ev){
   /* тап по свёрнутому упражнению или по чипу подхода переносит фокус дня */
   var pe=ev.target.closest('[data-pickex]');
   if(pe){ var pdi=+pe.dataset.pickex; sess.cur=pdi; if(sess.ex[pdi]) sess.ex[pdi].cur=null;
-          saveSess(); renderList(); haptic('light'); return; }
+          EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
   var pc=ev.target.closest('[data-pick]');
   if(pc){ sess.cur=+pc.dataset.pick; sess.ex[sess.cur].cur=+pc.dataset.pset;
-          saveSess(); renderList(); haptic('light'); return; }
+          EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
   var cb=ev.target.closest('[data-cyc]');
   if(cb && !cb.disabled){ bumpCycles(+cb.dataset.a, +cb.dataset.b, +cb.dataset.cyc); return; }
   var sb=ev.target.closest('[data-sets]');
