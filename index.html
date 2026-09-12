@@ -1937,9 +1937,6 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
-        <!-- Разговор живёт здесь же, под днём: на сервере это одна и та же
-             история, и делить её на «еду» и «тренера» было выдумкой интерфейса -->
-        <div class="chatlog" id="chatlog"></div>
         <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
           <button type="button" class="fbtn fshot" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -3942,7 +3939,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 17:08';
+var BUILD = '12.09 17:46';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5034,6 +5031,23 @@ function cloudPull(force){
         чужих.forEach(function(id){ var v=vals[pre+id]; if(!v) return;
           try{ syncPush('workouts/'+id, JSON.parse(v)); }catch(e){} });
       });
+      /* ПОЧИНКА РАЗМЕТКИ. Записи, сделанные до 12.09, хранят только имя
+         упражнения. На сервере они уже размечены id каталога, но сюда это
+         никогда не доезжало: раньше бралось только то, чего нет локально.
+         Без id тренер не узнаёт упражнение — в журнале пустой квадрат вместо
+         фото, а одно движение двоится под старым и новым именем. */
+      var сId=(d.workouts||[]).filter(function(w){
+        return есть[w.id] && (((w.data||{}).ex)||[]).some(function(x){ return x && x.id; }); });
+      if(сId.length) csGetMany(сId.map(function(w){ return pre+w.id; })).then(function(vals){
+        var чинить=сId.filter(function(w){
+          var v=vals[pre+w.id]; if(!v) return false;
+          try{ return ((JSON.parse(v).ex)||[]).some(function(x){ return x && !x.id; }); }catch(e){ return false; }
+        });
+        if(!чинить.length) return;
+        return Promise.all(чинить.map(function(w){ return csSet(pre+w.id, fit(w.data)).catch(function(){}); }))
+          .then(function(){ return loadHist(true); })
+          .then(function(){ try{ renderProgress(); }catch(e){} });
+      }).catch(function(){});
       if(!новых.length) return взято.length;
       return Promise.all(новых.map(function(w){ return csSet(pre+w.id, fit(w.data)).catch(function(){}); }))
         .then(function(){ return loadHist(true); })
@@ -6927,6 +6941,7 @@ var HCAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 function openHome(){
   homeRestore();
   renderHome();
+  chatPull();                         /* разговор с тренером живёт здесь */
   if(Date.now()-HOME.at>60000){ HOME.at=Date.now(); homePull(); }
   /* стрелка «сейчас» идёт по кругу, пока экран открыт */
   if(!HOME.tick) HOME.tick=setInterval(function(){
@@ -7476,9 +7491,11 @@ function renderHome(){
     homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
-    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+homeBar();
+    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+
+    '<div class="chatlog" id="chatlog"></div>'+homeBar();
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
+  try{ renderChat(false); }catch(e){}   /* разговор живёт здесь, под днём */
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
@@ -7493,8 +7510,8 @@ function hGo(){
   var el=document.getElementById('htext'), t=((el&&el.value)||'').trim();
   if(!t && !HOME.att) return;
   var img=HOME.att; HOME.att=null; HOME.typing=false; if(el) el.value='';
-  renderHome();                       /* панель возвращается к большой кнопке */
-  homeSend(t, img);
+  renderHome();                       /* панель возвращается к строке ввода */
+  coachSend(t, img);
 }
 /* запись с главной идёт всегда в СЕГОДНЯ: «Еда» может быть открыта на
    прошлом дне, и молча записать ужин во вчера — худшее, что можно сделать */
@@ -7806,7 +7823,6 @@ function humanErr(e){
 }
 function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
-  chatPull();                       /* разговор теперь часть этой вкладки */
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
@@ -8276,8 +8292,7 @@ function fGo(){
   var el=document.getElementById('ftext'), t=el.value.trim();
   if(!t && !FOOD.att) return;
   var img=FOOD.att; fAttSet(null); el.value='';
-  /* один путь для еды и для вопроса: ответ становится пузырём в той же ленте */
-  coachSend(t, img);
+  foodSend(t, img, img?'image/jpeg':null);
 }
 document.getElementById('fsend').addEventListener('click', fGo);
 document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); fGo(); } });
@@ -8442,8 +8457,8 @@ document.getElementById('fmsave').addEventListener('click', function(){
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
 var CHAT={items:null, busy:false, att:null};
-/* человек сейчас на вкладке «Еда» — значит разговор у него перед глазами */
-function наЕде(){ var p=document.getElementById('p-food'); return !!(p && !p.classList.contains('hide')); }
+/* человек сейчас на главной — значит разговор у него перед глазами */
+function наЕде(){ var p=document.getElementById('p-home'); return !!(p && !p.classList.contains('hide')); }
 function coachAttn(on){
   var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
 }
@@ -8466,13 +8481,13 @@ function chatPull(){
   }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(false); });
 }
 function openCoach(){
-  goPage('food');
+  goPage('home');
   coachAttn(false);
   chatPull();
   setTimeout(function(){
     var b=document.getElementById('chatlog');
     if(b) try{ b.scrollIntoView({block:'end', behavior:'smooth'}); }catch(e){ b.scrollIntoView(false); }
-    var t=document.getElementById('ftext'); if(t && window.innerWidth>700) t.focus();
+    var t=document.getElementById('htext'); if(t && window.innerWidth>700) t.focus();
   }, 220);
 }
 function closeCoach(){}   /* закрывать нечего: разговор живёт на вкладке «Еда» */
@@ -8765,7 +8780,9 @@ function recoClick(e){
 document.getElementById('coachreco').addEventListener('click', recoClick);
 document.getElementById('rbbox').addEventListener('click', rbClick);
 document.getElementById('recobox').addEventListener('click', rbClick);
-document.getElementById('chatlog').addEventListener('click', recoClick);
+/* лента рисуется вместе с главным экраном, поэтому слушаем через документ:
+   к моменту загрузки страницы самого узла ещё нет */
+document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('#chatlog')) recoClick(e); });
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
   if(d && d.goal && d.goal.text) takeGoal(d.goal, null);
@@ -8796,14 +8813,23 @@ function coachSend(text, image){
   CHAT.prep=false;
   /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
      значит показывать человеку, что сообщение никуда не ушло */
-  var ta=document.getElementById('ftext');
+  var ta=document.getElementById('htext');
   if(ta){ ta.value=''; }
+  /* Пока считает — это видно в панели, там, куда человек только что печатал.
+     Ответ придёт пузырём в ленте, а панель вернётся к строке ввода: держать
+     ответ в двух местах — тот же спор двух экранов, от которого уходили. */
+  hReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
   renderChat(); haptic('medium');
-  var sb=document.getElementById('fsend'); if(sb) sb.disabled=true;
-  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null})
+  var sb=document.getElementById('hsend'); if(sb) sb.disabled=true;
+  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:TODAY})
     .then(function(d){
       CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
-      CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; renderChat(); haptic('ok');
+      CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
+      HOME.msg=null;
+      if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
+      renderHome(); haptic('ok');
+      fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+TODAY)
+        .then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; if(!FOOD.date) DAYSC=x; renderHome(); } }).catch(function(){});
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
       if(!наЕде()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
@@ -8813,7 +8839,8 @@ function coachSend(text, image){
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
-    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
+    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e);
+      HOME.msg=null; renderHome(); haptic('err'); })
     .then(function(){ CHAT.busy=false; if(sb) sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
