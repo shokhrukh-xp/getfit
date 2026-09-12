@@ -3950,7 +3950,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 13:59';
+var BUILD = '12.09 16:11';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8222,21 +8222,35 @@ function foodSend(text, image, mime){
   fReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
   haptic('medium');
   fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null, date:fDate()})
-    .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay(); fReply(d.reply||'Записал.', '', image); haptic('ok'); takeChanges(d);
+    .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay();
+      /* если снимок не лёг в хранилище — сказать сразу, а не оставлять пустой
+         значок вместо тарелки и гадать, куда делось фото */
+      var потеря = image && d['фото']==='нет' ? '\n\nФото не сохранилось — запись осталась без снимка.' : '';
+      fReply((d.reply||'Записал.')+потеря, '', image); haptic('ok'); takeChanges(d);
       fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
     .catch(function(e){ fReply(humanErr(e),'bad'); haptic('err'); })
     .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
 }
-/* фото ужимаем до 1280 px и JPEG — Worker и модель большего не ждут */
+/* Фото ужимаем до 1280 px и JPEG, но главное — до размера, а не до качества.
+   Один проход с 0,82 на детальном кадре давал больше мегабайта: такой снимок
+   дольше идёт, тяжелее для модели и упирается в пределы хранилища. Снижаем
+   качество, потом сторону, пока не уложимся в 700 КБ. */
 function shrink(file, max){
   return new Promise(function(res, rej){
     var img=new Image(), url=URL.createObjectURL(file);
     img.onload=function(){
-      var k=Math.min(1, (max||1280)/Math.max(img.width,img.height));
-      var c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       URL.revokeObjectURL(url);
-      res(c.toDataURL('image/jpeg',0.82).split(',')[1]);
+      var сторона=max||1280, кач=[0.82,0.72,0.62,0.55], b64='';
+      for(var п=0; п<6; п++){
+        var k=Math.min(1, сторона/Math.max(img.width,img.height));
+        var c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k));
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        b64=c.toDataURL('image/jpeg', кач[Math.min(п,3)]).split(',')[1];
+        if(b64.length*0.75 <= 700000) break;
+        if(п>=3) сторона=Math.round(сторона*0.8);
+      }
+      res(b64);
     };
     img.onerror=function(){ URL.revokeObjectURL(url); rej(new Error('не смог прочитать фото')); };
     img.src=url;
