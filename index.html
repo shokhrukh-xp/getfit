@@ -3894,7 +3894,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 11:07';
+var BUILD = '12.09 11:21';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5110,7 +5110,10 @@ function sessionBody(){
   exList(day).forEach(function(e,di){
     var done=sess.ex[di].sets.filter(function(v){return v.done;});
     if(!done.length) return;
-    ex.push({ n:e.n, unit:(isTime(e)?'sec':'reps'),
+    /* id каталога рядом с именем: имена упражнений меняются (11.09 каталог
+       переименован), и тренер на сервере сверял историю с программой по
+       строке — сделанное переставало находиться. Имя остаётся как есть. */
+    ex.push({ n:e.n, id:(e.id||e.cat||null), unit:(isTime(e)?'sec':'reps'),
       sets:done.map(function(v){
         var w=parseFloat(String(v.w).replace(',','.')), r=parseFloat(String(v.r).replace(',','.'));
         return { w:isNaN(w)?null:w, r:isNaN(r)?null:r };
