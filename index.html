@@ -223,6 +223,27 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .reco .rbtns{display:flex;gap:8px;margin-top:10px}
 .reco .rbtns .btn{flex:1 1 0;padding:9px;font-size:13px}
 .reco .rbtns .btn.go{border-color:var(--accent-txt);color:var(--accent-txt)}
+/* ── ЛИСТ СБОРКИ ──
+   12.09: «почему при нажатии на собрать заново не спрашиваются дни,
+   продолжительность, упор, зал или дом, блины? Это нужно спрашивать здесь, а
+   не показывать в профиле постоянно — если что-то из них поменять, программу
+   всё равно надо собирать заново». Верно: это не свойства человека, это
+   условия сборки. Теперь они живут в листе сборки и в карточке программы. */
+.wdgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wdgrid button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:11px;
+  padding:9px 0;font:inherit;font-size:12.5px;min-height:44px}
+.wdgrid button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+  color:var(--on-accent);font-weight:700}
+.sbrow{margin-bottom:16px}
+.sblab{display:block;font-size:11px;color:var(--dim);letter-spacing:.02em;margin-bottom:7px}
+.sbhint{margin:6px 0 0;font-size:11.5px;color:var(--dim);line-height:1.45}
+.progcard{background:var(--card-2);border:1px solid var(--line-soft);border-radius:16px;padding:14px;margin:12px 0}
+.progcard h4{margin:0 0 2px;font-family:inherit;font-size:15px}
+.progcard i{font-style:normal;font-size:12px;color:var(--dim);display:block;margin-bottom:10px}
+.progcard .pl{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-top:1px solid var(--line-soft)}
+.progcard .pl:first-of-type{border-top:none}
+.progcard .pl s{text-decoration:none;color:var(--dim);flex:none}
+.progcard .pl b{font-weight:600;text-align:right}
 .aistate{margin:8px 0 0;font-size:12px;color:var(--dim);line-height:1.5}
 .aistate.bad{color:var(--warn-txt)}
 .aiprev{border:1px solid var(--line-soft);border-radius:12px;padding:12px 13px;margin-top:10px}
@@ -2178,6 +2199,26 @@ body.onb #picker .modalbox::before{display:none}
     </div>
   </div>
 </div>
+<div class="modal" id="sborm" role="dialog" aria-modal="true" aria-labelledby="sbortitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="sbortitle">Собрать программу</h3><button class="xbtn" id="sborclose" aria-label="Закрыть">✕</button></div>
+    <p class="mtext" id="sborgoal"></p>
+    <div class="sbrow"><span class="sblab">В КАКИЕ ДНИ</span><div class="wdgrid" id="sb-wd"></div>
+      <p class="sbhint" id="sb-wdh"></p></div>
+    <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sb-min"></div>
+      <p class="sbhint" id="sb-minh"></p></div>
+    <div class="sbrow"><span class="sblab">ГДЕ</span><div class="seg" id="sb-place"></div></div>
+    <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">ЧТО ЕСТЬ ДОМА</span><div class="seg multi" id="sb-eq"></div></div>
+    <div class="sbrow"><span class="sblab">УПОР</span><div class="seg multi" id="sb-focus"></div>
+      <p class="sbhint">Выбранным — 12–16 подходов в неделю, остальным 6–8 на удержание</p></div>
+    <div class="sbrow" id="sb-platerow"><span class="sblab">САМЫЙ МАЛЕНЬКИЙ БЛИН</span><div class="seg" id="sb-plate"></div>
+      <p class="sbhint">От него зависит, каким шагом растут веса</p></div>
+    <div class="sbrow"><span class="sblab">ЧТО БЕРЕЧЬ</span><div class="seg multi" id="sb-lim"></div></div>
+    <label class="mlab">чего не хочу<input id="sb-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    <button class="btn prim wide" id="sb-go">Собрать</button>
+    <p class="aistate" id="sbstate" hidden></p>
+  </div>
+</div>
 <div class="modal" id="profm" role="dialog" aria-modal="true" aria-labelledby="proftitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="proftitle">Профиль</h3><button class="xbtn" id="profclose" aria-label="Закрыть">✕</button></div>
@@ -2192,16 +2233,16 @@ body.onb #picker .modalbox::before{display:none}
     <div class="goalcard" id="goalcard"></div>
     <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
     <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
+    <div class="progcard gymonly" id="progcard"></div>
     <div class="pf gymonly"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
-    <div class="pf gymonly"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
-    <div class="pf gymonly" id="pf-eq" hidden><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
-    <div class="pf gymonly"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
-    <div class="pf gymonly" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
-    <p class="seghint gymonly">самый маленький блин в зале — шаг прибавки</p>
+    <div class="pf gymonly hide" id="pf-place"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
+    <div class="pf gymonly hide" id="pf-eq"><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
+    <div class="pf gymonly hide" id="pf-lim"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
+    <div class="pf gymonly hide" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
     <div class="pf gymonly" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
     <p class="seghint gymonly">«сам меняет» — правки встают сразу, ты видишь карточку; «спрашивает» — каждая под кнопкой</p>
     <label class="mlab gymonly">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
-    <label class="mlab gymonly">чего не хочу<input id="me-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    <label class="mlab gymonly hide"><input id="me-dis" type="text" autocomplete="off"></label>
     <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
     <p class="seghint">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
     <div class="invbox" id="invbox" hidden>
@@ -2217,7 +2258,7 @@ body.onb #picker .modalbox::before{display:none}
     <p class="mtext bline" id="buildline"></p>
     <div class="pfprog" id="pfprog"></div>
     <div id="recobox"></div>
-    <button class="btn wide" id="profai">Собрать программу под меня</button>
+    <button class="btn wide" id="profai">Собрать программу заново</button>
     <p class="aistate" id="aistate" hidden></p>
     <div id="aibox"></div>
     <button class="btn wide danger" id="profreset">Начать заново</button>
@@ -3781,7 +3822,9 @@ function saveMe(){
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
 }
-function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite();
+  try{ renderProgCard(); }catch(e){}
+  var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
    нет ни стартовых весов, ни норм по еде */
 /* Кто вошёл по коду внутри приложения, а не через бота, остаётся без
@@ -4050,7 +4093,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 23:16';
+var BUILD = '13.09 00:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6873,6 +6916,122 @@ function installAiProg(prog){
     start:[t.getFullYear(),t.getMonth(),t.getDate()], phases:PROFILES.friend.phases, fit:fit, custom:true };
   return 'ai';
 }
+/* ── УПОР: что человек выбрал, а не что модель угадала из текста цели ──
+   Слева — как он это называет, справа — мышцы каталога, по которым считается
+   объём. «Спина» это широчайшие И середина спины: одной строкой человек, двумя
+   — арифметика. */
+var FOCUSKEYS=[['even','всё тело ровно'],['shoulders','плечи'],['back','спина'],
+               ['chest','грудь'],['legs','ноги'],['arms','руки'],['abs','пресс']];
+var FOCUSMUS={ shoulders:['shoulders'], back:['lats','middle back'], chest:['chest'],
+               legs:['quadriceps','hamstrings','glutes'], arms:['biceps','triceps'], abs:['abdominals'] };
+function focusMus(list){
+  var out=[];
+  (list||[]).forEach(function(k){ (FOCUSMUS[k]||[]).forEach(function(m){ if(out.indexOf(m)<0) out.push(m); }); });
+  return out;
+}
+var MINKEYS=[['30','30'],['45','45'],['60','60'],['90','90']];
+var PLACEKEYS2=[['gym','в зале'],['home','дома']];
+var SBPLATE=[['0.5','0,5 кг'],['1.25','1,25'],['2.5','2,5'],['5','5']];
+function sbPick(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; }
+function sbMulti(id){ return Array.prototype.map.call(
+  document.querySelectorAll('#'+id+' button[aria-pressed="true"]'), function(b){ return b.dataset.v; }); }
+function sbДней(){ return Array.prototype.filter.call(
+  document.querySelectorAll('#sb-wd button'), function(b){ return b.getAttribute('aria-pressed')==='true'; }).length; }
+function sbПодходов(){
+  var м=+sbPick('sb-min')||45;
+  return (м>=90?30:м>=60?24:м>=45?19:м>=30?14:10);
+}
+function sbСчёт(){
+  var д=sbДней(), п=sbПодходов();
+  var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выбери хотя бы два дня';
+  var m=document.getElementById('sb-minh'); if(m) m.textContent = 'это '+п+' рабочих подходов за занятие, около '+(п*д)+' в неделю';
+  var g=document.getElementById('sb-go'); if(g) g.disabled = д<2;
+}
+function openSbor(){
+  var me=myData()||{};
+  var wd=document.getElementById('sb-wd');
+  if(wd) wd.innerHTML = WEEK.map(function(d){
+    return '<button type="button" data-v="'+d+'" aria-pressed="'+(GYM_DAYS[d]?'true':'false')+'">'+WD[d]+'</button>'; }).join('');
+  var set=function(id,list,val,multi){ var el=document.getElementById(id); if(el) el.innerHTML=segHtml(id,list,val,multi); };
+  set('sb-min', MINKEYS, String(me.min||45));
+  set('sb-place', PLACEKEYS2, me.place||'gym');
+  set('sb-eq', EQKEYS, me.eq||[], true);
+  set('sb-focus', FOCUSKEYS, (me.focus&&me.focus.length)?me.focus:['even'], true);
+  set('sb-plate', SBPLATE, String(me.plate||'2.5'));
+  set('sb-lim', LIMKEYS, me.lim||[], true);
+  var d=document.getElementById('sb-dis'); if(d) d.value=(me.dislikes||[]).join(', ');
+  var g=document.getElementById('sborgoal');
+  if(g){ var gt=goalObj();
+    g.textContent = gt&&gt.text ? ('Цель уже согласована: '+gt.text+'. Её здесь не меняем — ниже только то, от чего зависит сама программа.')
+                                : 'Ниже — только то, от чего зависит сама программа.'; }
+  sbPlaceUI(); sbСчёт();
+  var m=document.getElementById('sborm'); if(m) m.classList.add('show');
+}
+function sbPlaceUI(){
+  var дома = sbPick('sb-place')==='home';
+  var r=document.getElementById('sb-eqrow'); if(r) r.hidden=!дома;
+  var pr=document.getElementById('sb-platerow'); if(pr) pr.hidden=дома;
+}
+function closeSbor(){ var m=document.getElementById('sborm'); if(m) m.classList.remove('show'); }
+document.getElementById('sborclose').addEventListener('click', closeSbor);
+document.getElementById('sborm').addEventListener('click', function(e){
+  if(e.target.id==='sborm'){ closeSbor(); return; }
+  var b=e.target.closest('#sborm .seg button, #sb-wd button'); if(!b) return;
+  var box=b.parentNode, multi=box.classList.contains('multi')||box.id==='sb-wd';
+  if(multi){
+    b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')==='true'?'false':'true');
+    /* «всё тело ровно» и точечный упор — это разные ответы, вместе не бывают */
+    if(box.id==='sb-focus'){
+      var ровно = b.dataset.v==='even' && b.getAttribute('aria-pressed')==='true';
+      Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){
+        if(ровно && x!==b) x.setAttribute('aria-pressed','false');
+        else if(!ровно && x.dataset.v==='even') x.setAttribute('aria-pressed','false');
+      });
+    }
+  } else {
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x===b)); });
+  }
+  if(box.id==='sb-place') sbPlaceUI();
+  sbСчёт(); haptic('light');
+});
+document.getElementById('sb-go').addEventListener('click', function(){
+  var me=myData()||{};
+  var дни={}; Array.prototype.forEach.call(document.querySelectorAll('#sb-wd button'), function(b){
+    if(b.getAttribute('aria-pressed')==='true') дни[+b.dataset.v]=1; });
+  if(Object.keys(дни).length<2) return;
+  GYM_DAYS=schedNorm(дни); set('sched', GYM_DAYS); gset('sched_any', GYM_DAYS); saveSched();
+  me.min=+sbPick('sb-min')||45;
+  me.place=sbPick('sb-place')||'gym';
+  me.eq=sbMulti('sb-eq');
+  me.focus=sbMulti('sb-focus').filter(function(k){ return k!=='even'; });
+  me.plate=+(sbPick('sb-plate')||2.5);
+  me.lim=sbMulti('sb-lim');
+  me.dislikes=csv((document.getElementById('sb-dis')||{}).value);
+  gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
+  closeSbor(); openProf(); renderProgCard();
+  aiBuild();
+});
+/* Карточка «под что собрана программа»: те же условия, но уже как факт.
+   Держать их ещё и россыпью в профиле значило бы дать два места для одного
+   ответа — и однажды они разойдутся. */
+function renderProgCard(){
+  var box=document.getElementById('progcard'); if(!box) return;
+  var me=myData()||{}, дни=WEEK.filter(function(d){ return GYM_DAYS[d]; });
+  var уп=(me.focus&&me.focus.length) ? me.focus.map(function(k){ return (FOCUSKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', ') : 'всё тело ровно';
+  var стр=function(l,v){ return '<div class="pl"><s>'+l+'</s><b>'+esc(v)+'</b></div>'; };
+  box.innerHTML='<h4>'+esc((PROF&&PROF.name)||'Программа')+'</h4>'+
+    '<i>'+(дни.length?дни.length+' '+plural(дни.length,['день','дня','дней'])+' в неделю':'дни не выбраны')+'</i>'+
+    стр('дни', дни.length?дни.map(function(d){ return WD[d]; }).join(', '):'—')+
+    стр('минут', String(me.min||45))+
+    стр('где', me.place==='home'?'дома':'в зале')+
+    стр('упор', уп)+
+    (me.place==='home'?'':стр('блин', String(me.plate||2.5).replace('.',',')+' кг'))+
+    ((me.lim||[]).length?стр('беречь', me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', ')):'')+
+    ((me.dislikes||[]).length?стр('не хочу', me.dislikes.join(', ')):'')+
+    '<button type="button" class="btn wide" id="progedit" style="margin-top:12px">Изменить и пересобрать</button>';
+  var b=document.getElementById('progedit');
+  if(b) b.addEventListener('click', function(){ closeProf(); openSbor(); haptic('light'); });
+}
 function aiPayload(){
   var me=myData()||{};
   var program={ name:PROF.name, days: allDays().map(function(dk){ return { sub:(DAYS[dk]||{}).sub||'', ex: exList(dk).map(function(e){ return e.n; }) }; }) };
@@ -6883,7 +7042,7 @@ function aiPayload(){
     }) };
   });
   return { uid:syncUid(), me:me, days:Object.keys(GYM_DAYS).length||3, min:me.min||null,
-           program:program, history:history, eq:me.eq||[] };
+           focus:focusMus(me.focus), program:program, history:history, eq:me.eq||[] };
 }
 var AIPROG=null;
 function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
@@ -6963,7 +7122,7 @@ function aiApply(){
   closeProf(); haptic('ok');
 }
 /* обработчик передал бы в аргумент событие клика, а там ждут флаг «повтор» */
-document.getElementById('profai').addEventListener('click', function(){ aiBuild(false); });
+document.getElementById('profai').addEventListener('click', function(){ closeProf(); openSbor(); haptic('light'); });
 document.getElementById('aibox').addEventListener('click', function(e){
   if(e.target.closest('#aiapply')) aiApply();
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }

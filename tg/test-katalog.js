@@ -145,6 +145,40 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(/продвинутый/.test((флаг[0] || {}).тег || ''), 'и помечено продвинутым: ' + (флаг[0] || {}).тег);
   дано((флаг[0] || {}).схема, 'фото у него нет ни в одном открытом наборе — стоит наша схема движения');
 
+  /* ── ЛИСТ СБОРКИ (12.09) ──
+     «Почему при нажатии на собрать заново не спрашиваются дни, минуты, упор,
+     зал или дома, блины? Это нужно спрашивать здесь, а не показывать в профиле
+     постоянно». Условия сборки теперь живут в листе, а профиль показывает
+     карточку «под что собрана». */
+  await page.click('#profbtn');
+  await page.waitForTimeout(700);
+  const карт = (await page.textContent('#progcard')).replace(/\s+/g, ' ');
+  дано(/дни/.test(карт) && /минут/.test(карт) && /упор/.test(карт),
+    'в профиле карточка «под что собрана»: ' + карт.slice(0, 80));
+  for (const id of ['pf-place', 'pf-plate', 'pf-lim'])
+    дано(!(await page.isVisible('#' + id)), 'россыпь в профиле убрана: #' + id);
+
+  await page.click('#profai');
+  await page.waitForTimeout(600);
+  дано(await page.isVisible('#sborm'), 'кнопка открывает лист сборки, а не собирает молча');
+  for (const id of ['sb-wd', 'sb-min', 'sb-place', 'sb-focus', 'sb-plate', 'sb-lim', 'sb-dis'])
+    дано(await page.isVisible('#' + id), 'в листе спрашивается ' + id);
+  const дней = await page.$$eval('#sb-wd button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').length);
+  дано(дней >= 2, 'дни подставлены из расписания: ' + дней);
+  дано(/подходов за занятие/.test(await page.textContent('#sb-minh')),
+    'сказано, во что превращаются минуты: ' + (await page.textContent('#sb-minh')));
+
+  /* «всё тело ровно» и точечный упор вместе не бывают */
+  const кн = await page.$$('#sb-focus button');
+  for (const b of кн) if (/плечи/.test(await b.textContent())) { await b.click(); break; }
+  await page.waitForTimeout(200);
+  let выбр = await page.$$eval('#sb-focus button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.textContent));
+  дано(выбр.length === 1 && выбр[0] === 'плечи', 'выбрал мышцу — «всё тело ровно» снялось: ' + выбр.join(', '));
+  for (const b of кн) if (/всё тело/.test(await b.textContent())) { await b.click(); break; }
+  await page.waitForTimeout(200);
+  выбр = await page.$$eval('#sb-focus button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.textContent));
+  дано(выбр.length === 1 && /всё тело/.test(выбр[0]), 'выбрал «ровно» — точечный упор снялся: ' + выбр.join(', '));
+
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
