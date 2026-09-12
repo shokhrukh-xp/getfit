@@ -3894,7 +3894,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 11:47';
+var BUILD = '12.09 12:27';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7285,7 +7285,12 @@ function bodySeries(){
       f:function(m){
       return m.fatkg!=null ? +m.fatkg : ((m.w!=null && m.fat!=null) ? Math.round(+m.w*+m.fat)/100 : null); }},
     {k:'prot', n:'белок', вниз:false, порог:0.3, f:function(m){
-      return m.prot!=null ? +m.prot : null; }}
+      return m.prot!=null ? +m.prot : null; }},
+    /* Талия — единственное здесь, что меряет сантиметр, а не весы. На дефиците
+       она врёт меньше веса: вода и гликоген её почти не двигают. Строки нет,
+       пока нет замера, — пустого места на главном не появляется. */
+    {k:'waist', n:'талия', вниз:true, порог:0.5, ед:'см', f:function(m){
+      return m.waist!=null ? +m.waist : null; }}
   ];
 }
 /* Три горизонта вместо одного (его правка 11.09): «покажи изменения за день,
@@ -7333,7 +7338,7 @@ function homeBody(){
     var v=sr.f(ms[ms.length-1]);
     if(v==null) return;
     var под = sr.под ? sr.под(ms[ms.length-1]) : null;
-    h+='<span class="hbr"><u>'+sr.n+(под?'<em>'+esc(под)+'</em>':'')+'</u><b>'+f1(v)+'<s> кг</s></b>'+
+    h+='<span class="hbr"><u>'+sr.n+(под?'<em>'+esc(под)+'</em>':'')+'</u><b>'+f1(v)+'<s> '+(sr.ед||'кг')+'</s></b>'+
        BODY_VIEWS.map(function(вид){
          var d=bodyDelta(ms, sr, вид);
          /* изменение меньше порога — шум прибора: число показываем, но серым,
@@ -8014,6 +8019,10 @@ function renderFoodDay(){
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
+  /* пустой день — это не пустое место: человеку надо сказать, что делать.
+     Норма и оценка выше уже нарисованы, здесь не хватало только списка */
+  if(!ml.innerHTML) ml.innerHTML='<p class="empt">'+((d.date||fDate())===TODAY?'За сегодня записей нет.':'За этот день записей нет.')+
+    '<br>Напиши, что ел, или пришли фото — посчитаю и покажу, сколько до нормы.</p>';
 }
 document.getElementById('fday').addEventListener('click', function(e){
   if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
