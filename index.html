@@ -1327,15 +1327,6 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .hall span{font-family:inherit;font-size:11px;color:var(--dim)}
 .hall::after{content:"›";font-size:18px;color:var(--dim);transform:rotate(90deg);transition:transform .18s}
 .hall[aria-expanded="true"]::after{transform:rotate(-90deg)}
-.prow{display:grid;grid-template-columns:1fr 64px auto;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line-soft)}
-.prow:first-child{border-top:0}
-.prow .pn{font-size:13px;color:var(--text);line-height:1.3;min-width:0}
-.prow .pw{font-family:inherit;font-size:11px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
-.prow .pw b{color:var(--text);font-weight:500}
-.prow svg{display:block;width:64px;height:22px}
-.prow .pd{font-family:inherit;font-size:12px;font-variant-numeric:tabular-nums;text-align:right;min-width:52px}
-.prow .pd.up{color:var(--done-txt)}.prow .pd.down{color:var(--warn-txt)}.prow .pd.flat{color:var(--dim)}
-.prow .pd.first{color:var(--dim);font-size:10.5px}
 .hbody .lex{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .hbody .lex:first-child{border-top:0;padding-top:2px}
 .hbody .lex i{font-style:normal;color:var(--text);flex:1 1 auto;min-width:0;line-height:1.35}
@@ -1392,14 +1383,6 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 /* итог блока в журнале */
 .blk{padding:4px 0}
 .blk .blkh{font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.45}
-.blkrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
-.blkrow:first-of-type{border-top:0}
-.blkrow .bn{flex:1 1 auto;min-width:0;line-height:1.3}
-.blkrow .bn i{display:block;font-style:normal;color:var(--dim);font-size:11.5px;line-height:1.35;margin-top:2px}
-.blkrow .bd{flex:0 0 auto;font-family:inherit;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.blkrow .bv{font-weight:500;flex:0 0 auto;font-size:12px;padding:3px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-.blkrow .bv.grow{color:var(--done-txt);border-color:rgba(var(--done-rgb),.5)}
-.blkrow .bv.stall,.blkrow .bv.fall,.blkrow .bv.hurt{color:var(--warn-txt);border-color:var(--warn-txt)}
 .blk .blkask{margin-top:10px;width:100%}
 .sschoice{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .sschoice .ebtn{display:flex;align-items:center;gap:8px;text-align:left;padding:9px 10px;
@@ -1851,6 +1834,24 @@ body.onb #picker .modalbox::before{display:none}
 .resetline .linkbtn, .timer-in .tbtn, .fday .fbar.fbtap,
 .catitem .catpick, .hweek .hwd{min-height:44px}
 
+/* ── Строка упражнения в журнале: фото, название, что беру и что было ── */
+.uprow{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line-soft)}
+.uprow:first-child{border-top:none;padding-top:2px}
+.uprow .exph{flex:0 0 44px;width:44px;height:44px;border-radius:12px;overflow:hidden;display:block;background:var(--field)}
+.uprow .exph .fig2,.uprow .exph .fig{width:44px;border-radius:12px}
+.uprow .exph .fig2{aspect-ratio:1}      /* в строке кадр квадратный, а не 4:3 */
+.uprow .exph .fig{height:44px}
+.upn{flex:1 1 auto;min-width:0;font-size:13.5px;line-height:1.25}
+.upn em{display:block;font-style:normal;font-size:11.5px;margin-top:2px}
+.upw{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums}
+.upw b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em}
+.upw b s{text-decoration:none;font-size:11.5px;font-weight:600;color:var(--dim)}
+.upw u{display:block;text-decoration:none;font-size:11px;color:var(--dim);margin-top:1px;white-space:nowrap;min-height:13px}
+.upmore{display:block;width:100%;margin-top:10px;padding-top:11px;border:none;border-top:1px solid var(--line-soft);
+  background:none;font:inherit;font-size:13px;font-weight:600;color:var(--accent-txt);text-align:left;min-height:44px}
+.v-grow{color:var(--done-txt)} .v-hold{color:var(--muted)} .v-stall{color:var(--dim)}
+.v-fall{color:var(--warn-txt)} .v-hurt{color:var(--warn-txt)}
+
 /* ── УЗКИЕ ЭКРАНЫ ──
    На 320 точках (старые iPhone SE и бюджетные андроиды) главный экран ехал
    вбок на 8 px: полоска дней не сжималась ниже своего содержимого, а
@@ -1919,10 +1920,8 @@ body.onb #picker .modalbox::before{display:none}
         <div class="zseg" id="zseg-log"></div>
         <div id="logsum" class="tiles"></div>
         <div id="logmusbox"><div id="logmus"></div></div>
-        <h3 class="lh">Прогресс</h3>
-        <div class="group"><div id="logprog"></div></div>
-        <h3 class="lh" id="blkh" hidden>Итог блока</h3>
-        <div class="group" id="blkg" hidden><div id="logblk" class="blk"></div></div>
+        <h3 class="lh">Упражнения</h3>
+        <div class="group"><div id="logprog"></div><div id="logblk" class="blk"></div></div>
         <h3 class="lh">Замеры</h3>
         <div class="group"><div id="logmeas"></div></div>
         <p class="profline" hidden><b id="profwho"></b><span id="profname">—</span> · <button type="button" id="profswitch">сменить программу</button></p>
@@ -3950,7 +3949,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 16:11';
+var BUILD = '12.09 16:35';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5803,6 +5802,33 @@ function bestOf(x){
   return b;
 }
 function fmtBest(b, time){ return b ? ((b.w!=null? fmtKg(b.w)+'×':'')+b.r+(time?' с':'')) : '—'; }
+/* ── УПРАЖНЕНИЯ: одна таблица вместо «Прогресса» и «Итога блока» ──
+   Две секции показывали рост по упражнениям и умели спорить между собой:
+   «Тяга к лицу» в одной стояла как «=», в другой как «растёт» — окна и
+   пороги разные. Теперь одна строка на упражнение: фото, что берёшь сейчас,
+   что было в прошлый раз, и слово тренера, когда ему есть что сказать.
+   Порядок — по весу, который берёшь; десять сверху, остальные по кнопке. */
+var PROGMORE=false;
+function нормИмя(n){ return String(n||'').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim(); }
+function вердиктДля(e){
+  var rows=(BLK&&BLK.rows)||[];
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i]; if(!r || r.v==='new') continue;
+    if(e.id && r.id ? r.id===e.id : нормИмя(r.n)===нормИмя(e.n)) return r;
+  }
+  return null;
+}
+function числоПодхода(b, time){
+  if(!b) return '';
+  if(time) return '<b>'+b.r+'<s>с</s></b>';
+  if(b.w!=null) return '<b>'+fmtKg(b.w)+'<s>×'+b.r+'</s></b>';
+  return '<b>'+b.r+'<s>раз</s></b>';
+}
+function строкаБыло(b, time){
+  if(!b) return '';
+  if(time) return 'было '+b.r+' с';
+  return 'было '+(b.w!=null? fmtKg(b.w)+'×'+b.r : b.r);
+}
 function renderProgress(){
   var box=document.getElementById('logprog'); if(!box) return;
   if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметь подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
@@ -5810,63 +5836,33 @@ function renderProgress(){
   HIST.slice().reverse().forEach(function(w){            /* от старых к новым */
     (w.ex||[]).forEach(function(x){
       var b=bestOf(x); if(!b) return;
-      if(!by[x.n]){ by[x.n]={n:x.n, time:x.unit==='sec', pts:[]}; order.push(x.n); }
-      by[x.n].pts.push({d:w.date, b:b});
+      var k=x.id || ('n:'+нормИмя(x.n));
+      if(!by[k]){ by[k]={k:k, id:x.id||null, n:x.n, time:x.unit==='sec', pts:[]}; order.push(k); }
+      by[k].n=x.n;                                       /* имя как в последней записи */
+      by[k].pts.push({d:w.date, b:b});
     });
   });
-  /* сначала те, что делались чаще и недавно */
-  var all=order.map(function(n){ return by[n]; }).sort(function(a,b){
-    var la=a.pts[a.pts.length-1].d, lb=b.pts[b.pts.length-1].d;
-    return (b.pts.length-a.pts.length) || (la<lb?1:-1);
+  /* тяжелее — выше; без веса уходят вниз, но остаются в списке */
+  var все=order.map(function(k){ return by[k]; }).sort(function(a,b){
+    var wa=a.pts[a.pts.length-1].b.w, wb=b.pts[b.pts.length-1].b.w;
+    if((wa==null)!==(wb==null)) return wa==null?1:-1;
+    if(wa!=null && wa!==wb) return wb-wa;
+    return b.pts[b.pts.length-1].b.r - a.pts[a.pts.length-1].b.r;
   });
-  /* строки с динамикой — все; «первый раз» — только свежие, за последние 10 дней:
-     новое упражнение появляется здесь сразу после первой тренировки */
-  var rows=all.filter(function(e){ return e.pts.length>=2; });
-  var свежие=all.filter(function(e){ return e.pts.length<2 && (new Date(TODAY)-new Date(e.pts[0].d))/864e5<=10; })
-    .sort(function(a,b){ return a.pts[0].d<b.pts[0].d?1:-1; });
-  rows=rows.concat(свежие.slice(0, Math.max(0, 8-rows.length)));
-  box.innerHTML=rows.map(function(e){
-    var f=e.pts[0].b, l=e.pts[e.pts.length-1].b, n=e.pts.length;
-    var delta='', cls='first';
-    if(n>=2 && f.sc>0){
-      var d=Math.round((l.sc-f.sc)/f.sc*100);
-      cls = d>=3?'up':(d<=-3?'down':'flat');
-      delta = (d>=3?'▲ +':(d<=-3?'▼ ':''))+(d<=-3?d:(d>=3?d:'='))+(cls==='flat'?'':'%');
-    } else delta='первый раз';
-    var spark='';
-    if(n>=2){
-      var vs=e.pts.map(function(p){ return p.b.sc; }), mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs); if(mx-mn<1e-6){ mn-=1; mx+=1; }
-      var pts=vs.map(function(v,i){ return [(2+60*i/(vs.length-1)).toFixed(1), (19-16*(v-mn)/(mx-mn)).toFixed(1)]; });
-      spark='<svg viewBox="0 0 64 22" aria-hidden="true"><polyline fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" points="'+pts.map(function(p){ return p.join(','); }).join(' ')+'"/>'+
-            '<circle cx="'+pts[pts.length-1][0]+'" cy="'+pts[pts.length-1][1]+'" r="2.2" fill="var(--accent)"/></svg>';
-    }
-    return '<div class="prow"><div><div class="pn">'+e.n+'</div><div class="pw">'+(n>=2? fmtBest(f,e.time)+' → <b>'+fmtBest(l,e.time)+'</b> · '+n+' '+plural(n,['раз','раза','раз']) : '<b>'+fmtBest(l,e.time)+'</b> · '+ruDate(e.pts[0].d))+'</div></div>'+
-           '<div>'+spark+'</div><div class="pd '+cls+'">'+delta+'</div></div>';
-  }).join('');
-}
-function renderHistory(){
-  var box=document.getElementById('logbox'); if(!box) return;
-  var hn=document.getElementById('histn'); if(hn) hn.textContent=HIST.length? '· '+HIST.length : '';
-  if(!HIST.length){ box.innerHTML=''; return; }
-  var h='';
-  HIST.forEach(function(w,i){
-    var ton=0, cnt=0, rows='';
-    (w.ex||[]).forEach(function(x){
-      var sets=(x.sets||[]).filter(function(v){ return v.r!=null || v.w!=null; });
-      cnt+=sets.length;
-      sets.forEach(function(v){ if(v.w!=null && v.r!=null && x.unit!=='sec') ton += v.w*v.r; });
-      if(sets.length) rows+='<div class="lex"><i>'+x.n+'</i><em>'+fmtSets(sets, x.unit==='sec')+'</em></div>';
-    });
-    h+='<div class="hitem'+(i===0?' open':'')+'">'+
-       '<button type="button" class="hhead" data-hist="'+i+'" aria-expanded="'+(i===0)+'">'+
-         '<span class="hdate">'+ruDate(w.date)+'</span>'+
-         '<span class="hsub">'+(w.sub||w.name||'тренировка').toLowerCase()+'</span>'+
-         '<span class="hcnt">'+cnt+'</span></button>'+
-       '<div class="hbody"'+(i===0?'':' hidden')+'>'+rows+
-         '<div class="logtot"><span>'+cnt+' '+plural(cnt,['подход','подхода','подходов'])+'</span>'+
-         (ton?'<span>тоннаж '+Math.round(ton)+' кг</span>':'<span></span>')+'</div></div></div>';
-  });
-  box.innerHTML=h;
+  var видно=PROGMORE ? все : все.slice(0,10);
+  box.innerHTML = видно.map(function(e){
+    var n=e.pts.length, посл=e.pts[n-1].b, пред=n>=2?e.pts[n-2].b:null;
+    var v=вердиктДля(e);
+    return '<div class="uprow">'+
+      '<span class="exph">'+mediaFor({cat:e.id, n:e.n, ph:null, fig:null})+'</span>'+
+      '<span class="upn">'+esc(e.n)+(v?'<em class="v-'+v.v+'">'+esc(v.vru)+'</em>':'')+'</span>'+
+      '<span class="upw">'+числоПодхода(посл, e.time)+
+        '<u>'+(пред?строкаБыло(пред, e.time):'')+'</u></span></div>';
+  }).join('') +
+  (все.length>10 ? '<button type="button" class="upmore" id="upmore">'+
+     (PROGMORE ? 'Свернуть' : 'Ещё '+(все.length-10)+' '+plural(все.length-10,['упражнение','упражнения','упражнений']))+'</button>' : '');
+  var mb=document.getElementById('upmore');
+  if(mb) mb.addEventListener('click', function(){ PROGMORE=!PROGMORE; renderProgress(); haptic('light'); });
 }
 
 /* ══════════ ИТОГ БЛОКА ══════════
@@ -5875,16 +5871,14 @@ function renderHistory(){
    вердиктов; здесь — таблица и кнопка «спросить тренера, что оставить». */
 var BLK=null;
 function renderBlock(){
-  var h3=document.getElementById('blkh'), g=document.getElementById('blkg'), box=document.getElementById('logblk'); if(!box) return;
-  var b=BLK; var rows=(b&&b.rows||[]).filter(function(r){ return r.sessions>0 || r.hurt; });
-  if(!b || !rows.length || profile!=='ai'){ h3.hidden=true; g.hidden=true; return; }
-  h3.hidden=false; g.hidden=false;
-  /* ЗДЕСЬ ГОВОРЯТ ТОЛЬКО О ТОМ, ЧТО УЖЕ ЗНАЮТ. Пока у упражнения одно занятие,
-     сравнивать нечего — и строка «60×15 → 60×15 · мало данных» не сообщает
-     ничего, кроме того, что её зря показали. Раньше таких строк было столько
-     же, сколько упражнений в программе: двадцать пять пустых на одну живую. */
-  var есть=rows.filter(function(r){ return r.v!=='new'; });
-  var f=function(x){ return x ? ((x.w?x.w+'×':'')+x.r) : '—'; };
+  var box=document.getElementById('logblk'); if(!box) return;
+  /* Подвал под общим списком: сколько идёт блок, сколько упражнений пока без
+     сравнения, и кнопка к тренеру. Сами упражнения рисует renderProgress —
+     таблица одна. */
+  var b=BLK;
+  if(!b || !b.rows || !b.rows.length || profile!=='ai'){ box.innerHTML=''; return; }
+  var есть=b.rows.filter(function(r){ return r.sessions>0 || r.hurt; });
+  var живые=есть.filter(function(r){ return r.v!=='new'; });
   var c=b.counts||{}, дней=Math.max(1, Math.round((b.weeks||0)*7));
   var срок=(b.weeks!=null && b.weeks<2) ? дней+' '+plural(дней,['день','дня','дней']) : (b.weeks+' нед');
   var счёт=[];
@@ -5892,25 +5886,14 @@ function renderBlock(){
   if(c.hold) счёт.push(c.hold+' держится');
   if((c.stall||0)+(c.fall||0)) счёт.push(((c.stall||0)+(c.fall||0))+' стоит или падает');
   if(c.hurt) счёт.push(c.hurt+' мешает');
-  var head='<p class="blkh">'+срок+' с '+ruDate(b.since)+(счёт.length?' · '+счёт.join(' · '):'')+'</p>';
-  if(!есть.length){
-    box.innerHTML=head+'<p class="blkh">Сравнивать пока нечего: нужно хотя бы по два занятия на упражнение.</p>';
-    return;
-  }
-  var list=есть.map(function(r){
-    /* одно занятие — одно число. Стрелка между одинаковыми числами читается
-       как «не вырос», хотя расти ещё не с чего */
-    var числа=(r.sessions>=2 && r.first && r.last) ? f(r.first)+' → '+f(r.last) : (r.last?f(r.last):'');
-    var проц=(r.pct!=null && Math.abs(r.pct)>=1) ? ' '+(r.pct>0?'+':'')+r.pct+'%' : '';
-    return '<div class="blkrow"><span class="bn">'+esc(r.n)+(r.note?'<br><i>'+esc(r.note)+'</i>':'')+'</span>'+
-      '<span class="bd">'+числа+проц+'</span>'+
-      '<span class="bv '+r.v+'">'+esc(r.vru)+'</span></div>';
-  }).join('');
-  var мало=rows.length-есть.length;
-  var хвост=мало ? '<p class="blkh" style="margin:8px 0 0">мало данных: '+мало+' из '+rows.length+'</p>' : '';
-  var ask=(c.stall||c.fall||c.hurt) ? '<button type="button" class="btn blkask" id="blkask">Спросить тренера, что оставить</button>' : '';
-  box.innerHTML=head+list+хвост+ask;
+  var мало=есть.length-живые.length;
+  var h='<p class="blkh">Программа идёт '+срок+' с '+ruDate(b.since)+
+        (счёт.length?' · '+счёт.join(' · '):'')+
+        (мало?' · '+мало+' ещё без сравнения':'')+'</p>';
+  if((c.stall||c.fall||c.hurt)) h+='<button type="button" class="btn blkask" id="blkask">Спросить тренера, что оставить</button>';
+  box.innerHTML=h;
 }
+
 function loadBlock(){
   return tgFetch(SYNCURL+'/block?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.ok?r.json():null; })
     .then(function(d){ BLK=(d&&d.ok&&d.block)||null; renderBlock(); }).catch(function(){ BLK=null; renderBlock(); });
@@ -5924,7 +5907,7 @@ document.getElementById('logblk').addEventListener('click', function(e){
 });
 function renderLog(){
   var box=document.getElementById('logprog'); if(!box) return;
-  loadBlock();
+  loadBlock().then(function(){ try{ renderProgress(); }catch(e){} });
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
   box.innerHTML='<p class="empt">Загружаю…</p>';
   loadHist(true).then(function(){
