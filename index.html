@@ -909,9 +909,12 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
 .coachfab:active{transform:scale(.94)}
 .coachfab svg{width:24px;height:24px}
 .coachfab.attn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
-#coachm .modalbox{display:flex;flex-direction:column;max-height:88vh;overflow:hidden;padding-bottom:calc(10px + var(--pad-bottom,0px))}
-.chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
+/* Лента живёт внутри страницы, а не в окне: своя прокрутка ей не нужна и
+   вредна — два скролла один в другом. Высоту задаёт содержимое. */
+.chatlog{display:flex;flex-direction:column;gap:8px;padding:0;min-height:0}
+.chatlog:not(:empty){padding:10px 0 2px;margin-top:8px;border-top:1px solid var(--line-soft)}
+.chatmore{align-self:center;background:none;border:none;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--accent-txt);padding:6px 10px;min-height:44px}
 .msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
 .msg.me{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
@@ -1934,10 +1937,13 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
+        <!-- Разговор живёт здесь же, под днём: на сервере это одна и та же
+             история, и делить её на «еду» и «тренера» было выдумкой интерфейса -->
+        <div class="chatlog" id="chatlog"></div>
         <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
           <button type="button" class="fbtn fshot" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-          <input id="ftext" type="text" placeholder="Что съел?" autocomplete="off">
+          <input id="ftext" type="text" placeholder="Напиши, что съел, или спроси" autocomplete="off">
           <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
           <input id="ffile" type="file" accept="image/*" hidden>
         </div>
@@ -2067,19 +2073,6 @@ body.onb #picker .modalbox::before{display:none}
     <p class="mtext">Веса встали или падают — семь дней по половине подходов на тех же весах. Тренер включит сам, если веса падают два занятия подряд.</p>
     <div id="deloadbox"></div>
     <button class="btn wide" id="schedclose">Готово</button>
-  </div>
-</div>
-<div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
-  <div class="modalbox">
-    <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
-    <div class="chatlog" id="chatlog"></div>
-    <div class="attbox" id="cattach" hidden></div>
-    <div class="chatask">
-      <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
-      <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-      <button type="button" class="fbtn go" id="csend" aria-label="Отправить">→</button>
-      <input id="cfile" type="file" accept="image/*" hidden>
-    </div>
   </div>
 </div>
 <div class="modal" id="mealm" role="dialog" aria-modal="true" aria-labelledby="mealtitle">
@@ -3949,7 +3942,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 16:51';
+var BUILD = '12.09 17:08';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6448,7 +6441,7 @@ document.getElementById('profm').addEventListener('click', function(e){
   if(e.target.closest('#pfswitch')){ closeProf(); showPicker(); return; }
   if(e.target.closest('#goaltalk')){
     closeProf(); openCoach();
-    var ct=document.getElementById('ctext');
+    var ct=document.getElementById('ftext');
     if(ct && !ct.value){ ct.value = goalObj() ? 'Хочу обсудить цель: ' : 'Моя цель: '; try{ ct.focus(); ct.setSelectionRange(ct.value.length, ct.value.length); }catch(_){} }
     haptic('light'); return;
   }
@@ -7813,6 +7806,7 @@ function humanErr(e){
 }
 function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
+  chatPull();                       /* разговор теперь часть этой вкладки */
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
@@ -8282,7 +8276,8 @@ function fGo(){
   var el=document.getElementById('ftext'), t=el.value.trim();
   if(!t && !FOOD.att) return;
   var img=FOOD.att; fAttSet(null); el.value='';
-  foodSend(t, img, img?'image/jpeg':null);
+  /* один путь для еды и для вопроса: ответ становится пузырём в той же ленте */
+  coachSend(t, img);
 }
 document.getElementById('fsend').addEventListener('click', fGo);
 document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); fGo(); } });
@@ -8447,15 +8442,19 @@ document.getElementById('fmsave').addEventListener('click', function(){
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
 var CHAT={items:null, busy:false, att:null};
+/* человек сейчас на вкладке «Еда» — значит разговор у него перед глазами */
+function наЕде(){ var p=document.getElementById('p-food'); return !!(p && !p.classList.contains('hide')); }
 function coachAttn(on){
   var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
 }
-function openCoach(){
-  var m=document.getElementById('coachm'); if(m) m.classList.add('show');
-  coachAttn(false);
-  renderChat();
+/* «Тренер» — это не отдельная комната. На сервере запись еды и вопрос идут
+   в одну и ту же историю; теперь и в приложении она одна, под днём на
+   вкладке «Еда». Кнопка в шапке просто приводит сюда. */
+function chatPull(){
+  renderChat(false);
   /* пока ответ в пути, историю не перечитываем: она затрёт ждущий пузырь */
-  if(!CHAT.busy) fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
+  if(CHAT.busy) return;
+  fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
     if(!d||!d.ok || CHAT.busy) return;
     CHAT.intro=d.intro||'';
     /* Свежий ответ уже лежит у нас; если сервер вернул историю короче — она
@@ -8463,18 +8462,33 @@ function openCoach(){
        полученный ответ. */
     var срв=d.chat||[];
     if(!CHAT.items || срв.length>=CHAT.items.length) CHAT.items=срв;
-    renderChat(true);
-  }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(true); });
-  setTimeout(function(){ var t=document.getElementById('ctext'); if(t && window.innerWidth>700) t.focus(); }, 200);
+    renderChat(false);
+  }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(false); });
 }
-function closeCoach(){ var m=document.getElementById('coachm'); if(m) m.classList.remove('show'); }
+function openCoach(){
+  goPage('food');
+  coachAttn(false);
+  chatPull();
+  setTimeout(function(){
+    var b=document.getElementById('chatlog');
+    if(b) try{ b.scrollIntoView({block:'end', behavior:'smooth'}); }catch(e){ b.scrollIntoView(false); }
+    var t=document.getElementById('ftext'); if(t && window.innerWidth>700) t.focus();
+  }, 220);
+}
+function closeCoach(){}   /* закрывать нечего: разговор живёт на вкладке «Еда» */
+var CHATALL=false;
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
   if(CHAT.items===null) h='<div class="msg intro">Загружаю…</div>';
   else {
-    if(CHAT.intro) h+='<div class="msg intro">'+CHAT.intro+'</div>';
-    h+=CHAT.items.map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
+    /* Лента внутри страницы не должна расти бесконечно: показываем последние
+       шесть реплик, остальное — по кнопке. Раньше это был отдельный экран со
+       своей прокруткой, и весь разговор было видно сразу. */
+    var все=CHAT.items, скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
+    if(CHAT.intro && !скрыто) h+='<div class="msg intro">'+CHAT.intro+'</div>';
+    if(скрыто) h+='<button type="button" class="chatmore" id="chatmore">Показать, что было раньше ('+скрыто+')</button>';
+    h+=(скрыто?все.slice(-6):все).map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
     if(CHAT.prep) h+='<div class="msg ai wait">Готовлю фото<span class="dots"><i></i><i></i><i></i></span></div>';
     else if(CHAT.pending || CHAT.pendingImg)
       h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
@@ -8483,6 +8497,8 @@ function renderChat(scroll){
     h+=recoCard('chat');
   }
   box.innerHTML=h;
+  var mb=document.getElementById('chatmore');
+  if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
   if(scroll!==false) chatScroll();
 }
 /* Лист чата открывается анимацией, а высоты внутри считаются позже, поэтому
@@ -8490,7 +8506,8 @@ function renderChat(scroll){
    и листал руками. Догоняем на следующих кадрах и после раскладки. */
 function chatScroll(){
   var box=document.getElementById('chatlog'); if(!box) return;
-  var вниз=function(){ box.scrollTop=box.scrollHeight; };
+  /* лента больше не прокручивается сама — подводим к ней страницу */
+  var вниз=function(){ var п=box.lastElementChild; if(п) try{ п.scrollIntoView({block:'nearest'}); }catch(e){} };
   вниз();
   if(window.requestAnimationFrame) requestAnimationFrame(function(){ вниз(); requestAnimationFrame(вниз); });
   setTimeout(вниз,120); setTimeout(вниз,320);
@@ -8591,8 +8608,7 @@ function renderReco2(){
     el.hidden=!h; el.innerHTML=h;
   }
   /* карточка живёт в двух местах сразу — чат перерисовываем, если он открыт */
-  var m=document.getElementById('coachm');
-  if(m && m.classList.contains('show') && !reco2Rendering){
+  if(наЕде() && !reco2Rendering){
     reco2Rendering=true; try{ renderChat(false); } finally { reco2Rendering=false; }
   }
 }
@@ -8780,17 +8796,16 @@ function coachSend(text, image){
   CHAT.prep=false;
   /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
      значит показывать человеку, что сообщение никуда не ушло */
-  var ta=document.getElementById('ctext');
-  if(ta){ ta.value=''; ta.style.height='auto'; }
+  var ta=document.getElementById('ftext');
+  if(ta){ ta.value=''; }
   renderChat(); haptic('medium');
-  var sb=document.getElementById('csend'); sb.disabled=true;
+  var sb=document.getElementById('fsend'); if(sb) sb.disabled=true;
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null})
     .then(function(d){
       CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; renderChat(); haptic('ok');
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
-      var м=document.getElementById('coachm');
-      if(!м || !м.classList.contains('show')) coachAttn(true);
+      if(!наЕде()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
@@ -8799,36 +8814,10 @@ function coachSend(text, image){
       takeChanges(d);
     })
     .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
-    .then(function(){ CHAT.busy=false; sb.disabled=false; });
+    .then(function(){ CHAT.busy=false; if(sb) sb.disabled=false; });
 }
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
 
-document.getElementById('coachclose').addEventListener('click', closeCoach);
-document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
-function cGo(){
-  var t=document.getElementById('ctext').value.trim();
-  if(!t && !CHAT.att) return;
-  var img=CHAT.att; cAttSet(null);
-  coachSend(t, img);
-}
-document.getElementById('csend').addEventListener('click', cGo);
-document.getElementById('ctext').addEventListener('keydown', function(e){
-  if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); cGo(); }
-});
-document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; });
-document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
-document.getElementById('cfile').addEventListener('change', function(e){
-  var f=e.target.files&&e.target.files[0]; if(!f) return;
-  /* Снимок сначала прикрепляется — отправляет его кнопка, вместе с подписью.
-     Сжатие занимает секунду-две, поэтому состояние показываем сразу. */
-  CHAT.prep=true; CHAT.err=''; renderChat(); haptic('light');
-  shrink(f).then(function(b64){ CHAT.prep=false; cAttSet(b64); renderChat();
-    var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
-  }).catch(function(err){ CHAT.prep=false; CHAT.err=humanErr(err); renderChat(); });
-  e.target.value='';
-});
-function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); }
-document.getElementById('cattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 /* ── init ── */
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
