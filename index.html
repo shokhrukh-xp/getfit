@@ -3949,7 +3949,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 16:35';
+var BUILD = '12.09 16:51';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6932,6 +6932,7 @@ function loadDay(){
 var HOME={day:null, sc:null, att:null, msg:null, at:0, busy:false, typing:false};
 var HCAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 function openHome(){
+  homeRestore();
   renderHome();
   if(Date.now()-HOME.at>60000){ HOME.at=Date.now(); homePull(); }
   /* стрелка «сейчас» идёт по кругу, пока экран открыт */
@@ -6940,16 +6941,34 @@ function openHome(){
     if(pg && !pg.classList.contains('hide') && !document.hidden && !HOME.typing) renderHome();
   }, 60000);
 }
+/* ПЯТЬ ОТВЕТОВ — ОДНА ПЕРЕРИСОВКА. Данные главного экрана приходят пятью
+   запросами, и каждый звал renderHome: часы со снимками еды пересобирались
+   три-четыре раза подряд, и это читалось как рывок при запуске. Теперь ответы
+   копятся и экран перерисовывается один раз на кадр. */
+var HDIRTY=0, HCLKHTML='';
+function homeDirty(){
+  if(HDIRTY) return;
+  HDIRTY=requestAnimationFrame(function(){ HDIRTY=0; renderHome(); });
+}
+/* Первый кадр — из памяти телефона: последнее, что видели сегодня. Без этого
+   до первого ответа сервера на месте экрана стояло «Загружаю…». */
+function homeSave(){ try{ gset('home_'+TODAY, {day:HOME.day, sc:HOME.sc, at:Date.now()}); }catch(e){} }
+function homeRestore(){
+  try{ var c=gget('home_'+TODAY, null); if(!c) return;
+    if(!HOME.day && c.day) HOME.day=c.day;
+    if(!HOME.sc && c.sc) HOME.sc=c.sc;
+  }catch(e){}
+}
 function homePull(){
   var u=encodeURIComponent(syncUid());
-  fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; renderHome(); } }).catch(function(){});
-  fGet('/day/score?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.ok){ d.date=TODAY; HOME.sc=d; renderHome(); } }).catch(function(){});
-  fGet('/week?uid='+u).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderHome(); } }).catch(function(){});
+  fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; homeSave(); homeDirty(); } }).catch(function(){});
+  fGet('/day/score?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.ok){ d.date=TODAY; HOME.sc=d; homeSave(); homeDirty(); } }).catch(function(){});
+  fGet('/week?uid='+u).then(function(d){ if(d&&d.week){ FOOD.week=d.week; homeDirty(); } }).catch(function(){});
   if(!(FOOD.meas||[]).length) fGet('/measures?uid='+u)
-    .then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderHome(); } }).catch(function(){});
-  if(!CIRC) circlePull().then(function(){ renderHome(); });
+    .then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); homeDirty(); } }).catch(function(){});
+  if(!CIRC) circlePull().then(function(){ homeDirty(); });
   /* журнал нужен часам дня: у закрытой тренировки время старта лежит в записи */
-  if(DB && !HIST) loadHist().then(function(){ renderHome(); }).catch(function(){});
+  if(DB && !HIST) loadHist().then(function(){ homeDirty(); }).catch(function(){});
 }
 /* расписание зала может быть не задано — тогда дни программы идут по очереди
    и «сегодня отдых» было бы неправдой */
@@ -7453,11 +7472,20 @@ function renderHome(){
   /* Порядок — по частоте обращения (его правка 11.09): сверху то, что
      меняется по нескольку раз в день (часы дня, дорожки, запись еды), ниже —
      то, что меняется раз в день (тело и тренировка). */
+  /* ЧАСЫ ДНЯ НЕ ПЕРЕСОБИРАЕМ ЗРЯ. В них живут снимки еды, и каждая пересборка
+     заново создавала <img>: при запуске данные приходят пятью ответами, часы
+     пересобирались три-четыре раза, и это читалось как рывок. Если разметка
+     часов не изменилась — возвращаем на место прежний узел, вместе с уже
+     загруженными картинками. */
+  var часы=homeClock(), прежние=box.querySelector('.hclk');
+  var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
-    homeWeek()+homeBotStrip()+homeClock()+homeNextLine(hcEvents())+homeRows()+
+    homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
     (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+homeBar();
+  if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
+  HCLKHTML=часы;
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
