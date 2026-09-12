@@ -927,14 +927,32 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px) 
 body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .coachfab svg{width:24px;height:24px}
 .coachfab.attn::after{content:"";position:absolute;top:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
+/* ── РАЗГОВОР ──
+   12.09: «интерфейс чата выглядит доисторическим». Ответы тренера длинные —
+   абзац с числами и разбором; в пузыре шириной 88 % они читались как записка,
+   втиснутая в облачко. Поэтому реплики человека остались пузырями (они
+   короткие, и видно, где чья очередь), а ответ тренера стоит текстом во всю
+   ширину, с подписью «тренер · время» над ним. Шапка и поле не едут: см.
+   #coachm ниже. */
 .chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
-  display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
+  display:flex;flex-direction:column;gap:10px;padding:4px 0 8px;min-height:160px}
 .chatmore{align-self:center;background:none;border:none;font:inherit;font-size:12.5px;font-weight:600;
   color:var(--accent-txt);padding:6px 10px;min-height:44px}
+.chatsep{align-self:center;font-size:11px;color:var(--dim);padding:2px 0}
 .msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
-.msg.me{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
+.msg.me{align-self:flex-end;max-width:80%;padding:9px 13px;font-size:14.5px;line-height:1.45;
+  background:var(--accent);border:none;color:var(--on-accent);
+  border-radius:16px 16px 6px 16px}
+.turn{align-self:stretch;max-width:100%;display:flex;flex-direction:column;gap:4px}
+.turn+.turn{border-top:1px solid var(--line-soft);padding-top:10px}
+.turn .who{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim)}
+.turn .who img{width:18px;height:18px;border-radius:50%;display:block;flex:none}
+.turn .say{font-size:15px;line-height:1.58;color:var(--text);white-space:pre-line}
+.turn .say.wait{color:var(--muted)}
+.turn .say.bad{color:var(--warn-txt)}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
-.msg.intro{align-self:stretch;max-width:100%;background:var(--card-2);border:none;color:var(--muted);font-size:12.5px}
+.msg.intro{align-self:stretch;max-width:100%;background:none;border:none;padding:2px 0;
+  color:var(--muted);font-size:12.5px;line-height:1.5}
 /* Ожидание в чате нельзя красить бледным: человек решает, что ничего не
    произошло, и отправляет то же фото второй раз. Тот же приём, что во
    вкладке «Еда»: подсветка акцентом, миниатюра и бегущие точки. */
@@ -942,9 +960,22 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .msg.sent{opacity:.85}
 .msg .fthumb{border-color:transparent}
 .msg.bad{border-color:var(--warn-txt)}
-.chatask{display:flex;gap:8px;align-items:flex-end;padding-top:8px;border-top:1px solid var(--line-soft)}
-.chatask textarea{flex:1 1 auto;min-width:0;max-height:120px;padding:11px 12px;border-radius:11px;border:1px solid var(--line);
-  background:var(--card-2);color:var(--text);font:inherit;font-size:14px;line-height:1.35;resize:none;-webkit-appearance:none}
+.chatask{display:flex;gap:8px;align-items:flex-end;padding-top:10px;border-top:1px solid var(--line-soft)}
+/* поле — одна пилюля: камера живёт внутри неё, а не третьей кнопкой в ряду */
+.cpill{flex:1 1 auto;min-width:0;display:flex;align-items:flex-end;gap:6px;
+  background:var(--field);border:1px solid transparent;border-radius:22px;padding:4px 4px 4px 14px}
+.cpill:focus-within{border-color:var(--line)}
+.chatask textarea{flex:1 1 auto;min-width:0;max-height:120px;padding:9px 0;border:none;background:none;
+  color:var(--text);font:inherit;font-size:14.5px;line-height:1.4;resize:none;outline:none;-webkit-appearance:none}
+.chatask textarea::placeholder{color:var(--dim)}
+.cic{flex:none;width:36px;height:36px;border-radius:50%;border:none;background:none;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;padding:0}
+.cic svg{width:20px;height:20px}
+.cic:active{color:var(--accent-txt)}
+.csend{flex:none;width:40px;height:40px;border-radius:50%;border:none;background:var(--accent);
+  color:var(--on-accent);font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.csend:disabled{opacity:.45}
+.csend:active{transform:scale(.94)}
 .fweekt{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted);line-height:1.5}   /* стояла вплотную под датами столбиков */
 .fmeas{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:8px}
 .fmeas .fm{flex:0 0 auto;padding:8px 10px;border:1px solid var(--line-soft);border-radius:10px;background:var(--card-2);text-align:center}
@@ -1480,6 +1511,18 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .modalbox::before{content:"";display:block;width:36px;height:5px;border-radius:3px;
   background:var(--line);margin:-10px auto 14px}
 .modalbox h3{margin:0 0 8px;font-family:inherit;font-size:17px;color:var(--text)}
+/* ЛИСТ РАЗГОВОРА СТОИТ НА МЕСТЕ. Раньше прокручивался весь лист целиком:
+   заголовок «Тренер» и крестик уезжали вверх вместе с перепиской, и закрыть
+   разговор было нечем. Теперь лист — колонка фиксированной высоты: шапка и
+   поле ввода не двигаются, едет только лента. */
+#coachm .modalbox{height:86vh;display:flex;flex-direction:column;overflow:hidden;
+  padding:0 0 calc(10px + var(--pad-bottom))}
+#coachm .modalbox::before{margin:8px auto 2px}
+#coachm .cathead{flex:none;margin:0;padding:6px 16px 10px;
+  border-bottom:1px solid transparent;transition:border-color .2s ease}
+#coachm .cathead.line{border-bottom-color:var(--line-soft)}   /* лента уехала — шапка отделяется */
+#coachm .chatlog{flex:1 1 auto;min-height:0;padding:8px 16px 12px}
+#coachm .chatask{flex:none;margin:0;padding:10px 16px 0}
 .modalbox .mtext{margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .pbtn{display:block;width:100%;text-align:left;margin-bottom:10px;padding:14px 16px;
   border:1px solid var(--line);border-radius:var(--r);background:var(--card-2);color:var(--text);
@@ -2101,9 +2144,11 @@ body.onb #picker .modalbox::before{display:none}
     <div class="chatlog" id="chatlog"></div>
     <div class="attbox" id="cattach" hidden></div>
     <div class="chatask">
-      <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
-      <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-      <button type="button" class="fbtn go" id="csend" aria-label="Отправить">→</button>
+      <div class="cpill">
+        <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
+        <button type="button" class="cic" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+      </div>
+      <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
     </div>
   </div>
@@ -3992,7 +4037,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 20:12';
+var BUILD = '12.09 21:52';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8528,23 +8573,48 @@ function chatWatch(){
   }).catch(function(){});
 }
 var CHATALL=false;
+/* Подпись над ответом тренера. Время берём из самой записи (сервер хранит ts
+   каждой реплики) — выдумывать его нельзя: у старых записей ts может не быть,
+   тогда просто «тренер». */
+function chatВремя(ts){
+  if(!ts) return '';
+  var d=new Date(+ts); if(isNaN(d.getTime())) return '';
+  return pad2(d.getHours())+':'+pad2(d.getMinutes());
+}
+function chatДень(ts){
+  if(!ts) return '';
+  var d=new Date(+ts); if(isNaN(d.getTime())) return '';
+  var день=ymd(d), вчера=ymd(new Date(new Date(TODAY+'T12:00:00').getTime()-864e5));
+  if(день===TODAY) return 'сегодня';
+  if(день===вчера) return 'вчера';
+  return d.getDate()+' '+MONTHS[d.getMonth()];
+}
+function ответТренера(текст, время, cls){
+  return '<div class="turn"><div class="who"><img src="img/logo-64.png" alt="">тренер'+
+    (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div></div>';
+}
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
   if(CHAT.items===null) h='<div class="msg intro">Загружаю…</div>';
   else {
-    /* Лента внутри страницы не должна расти бесконечно: показываем последние
-       шесть реплик, остальное — по кнопке. Раньше это был отдельный экран со
-       своей прокруткой, и весь разговор было видно сразу. */
+    /* Лента не должна расти бесконечно: показываем последние шесть реплик,
+       остальное — по кнопке. */
     var все=CHAT.items, скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
     if(CHAT.intro && !скрыто) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     if(скрыто) h+='<button type="button" class="chatmore" id="chatmore">Показать, что было раньше ('+скрыто+')</button>';
-    h+=(скрыто?все.slice(-6):все).map(function(c){ return '<div class="msg '+(c.role==='user'?'me':'ai')+'">'+esc(c.text)+'</div>'; }).join('');
-    if(CHAT.prep) h+='<div class="msg ai wait">Готовлю фото<span class="dots"><i></i><i></i><i></i></span></div>';
+    var день='';
+    h+=(скрыто?все.slice(-6):все).map(function(c){
+      var d=chatДень(c.ts), шапка='';
+      if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
+      if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
+      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '');
+    }).join('');
+    if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
       h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
-      '<div class="msg ai wait">'+(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span></div>';
-    if(CHAT.err) h+='<div class="msg ai bad">'+esc(CHAT.err)+'</div>';
+      ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
+    if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad');
     h+=recoCard('chat');
   }
   box.innerHTML=h;
@@ -8552,6 +8622,13 @@ function renderChat(scroll){
   if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
   if(scroll!==false) chatScroll();
 }
+/* Лента уехала от начала — шапка отделяется волосяной линией. Пока разговор
+   помещается целиком, линии нет: лишняя черта на пустом листе. */
+(function(){
+  var box=document.getElementById('chatlog'), hd=document.querySelector('#coachm .cathead');
+  if(!box || !hd) return;
+  box.addEventListener('scroll', function(){ hd.classList.toggle('line', box.scrollTop>2); }, {passive:true});
+})();
 /* Лист чата открывается анимацией, а высоты внутри считаются позже, поэтому
    один scrollTop в том же кадре не срабатывал: человек видел старые сообщения
    и листал руками. Догоняем на следующих кадрах и после раскладки. */
@@ -8852,7 +8929,10 @@ function coachSend(text, image){
   var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:TODAY})
     .then(function(d){
-      CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
+      var сейчас=Date.now();
+      CHAT.items=(CHAT.items||[]).concat([
+        {role:'user', text:(text||'')+(image?' [фото]':''), ts:сейчас},
+        {role:'assistant', text:d.reply||'Записал.', ts:сейчас}]);
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
       if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
       renderChat(); renderHome(); haptic('ok');

@@ -60,7 +60,8 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
   await page.fill('#ctext', 'плов');
   await page.click('#csend');
   await page.waitForTimeout(900);
-  const пузыри = await page.$$eval('#chatlog .msg', es => es.map(e => e.textContent.trim()));
+  /* 12.09: ответ тренера больше не пузырь — он стоит текстом во всю ширину */
+  const пузыри = await page.$$eval('#chatlog .msg, #chatlog .say', es => es.map(e => e.textContent.trim()));
   дано(пузыри.some(t => /Записал/.test(t)), 'ответ пришёл в ту же ленту: ' + (пузыри[пузыри.length - 1] || '—'));
 
   /* 6. закрыл — кнопка вернулась */
@@ -155,7 +156,7 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
   дано(await p3.$eval('#coachfab', e => e.classList.contains('attn')),
     'новое сообщение от тренера — точка на кнопке');
   await p3.click('#coachfab'); await p3.waitForTimeout(500);
-  const лента = await p3.$$eval('#chatlog .msg', es => es.map(e => e.textContent.trim()));
+  const лента = await p3.$$eval('#chatlog .msg, #chatlog .say', es => es.map(e => e.textContent.trim()));
   дано(лента.some(t => /Разбор недели/.test(t)), 'само сообщение — в разговоре: ' + (лента[лента.length - 1] || '—'));
   await p3.click('#coachclose'); await p3.waitForTimeout(400);
   дано(!(await p3.$eval('#coachfab', e => e.classList.contains('attn'))), 'прочитал — точка снялась');
