@@ -402,7 +402,14 @@ body.nogym .gymonly{display:none!important}
    (надкласс, название, два чипа) занимали втрое больше места, а движение —
    главное, что нужно увидеть перед подходом, — было спрятано в «Описание». */
 .exhead{display:flex;align-items:center;gap:12px}
-.exttl{flex:1;min-width:0}
+.exttl{flex:1;min-width:0;display:block;text-align:left;background:none;border:none;padding:0;
+  font:inherit;color:inherit;position:relative;padding-right:22px}
+.exttl .eyebrow,.exttl .exname,.exttl .spec{display:block}
+/* галочка вниз: карточка раскрыта нажатием — тем же нажатием и сворачивается */
+.exchev{position:absolute;right:0;top:50%;width:9px;height:9px;margin-top:-6px;
+  border-right:1.8px solid var(--dim);border-bottom:1.8px solid var(--dim);
+  transform:rotate(-135deg);border-radius:0 0 2px 0}
+.exttl:active{opacity:.6}
 .exthumb{flex:0 0 76px;width:76px;padding:0;border:none;background:none;border-radius:10px;
   -webkit-tap-highlight-color:transparent}
 .exthumb .fig2{flex:none;width:76px;border-radius:10px}
@@ -3985,7 +3992,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 19:57';
+var BUILD = '12.09 20:12';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4422,11 +4429,12 @@ function шапка(e, di, метка){
   var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
   return '<div class="exhead">'+
     '<button type="button" class="exthumb" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
-    '<div class="exttl">'+
-      '<div class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</div>'+
-      '<div class="exname">'+e.n+'</div>'+
-      '<div class="spec">'+setsFor(e,di)+' × '+repsOf(e)+' <span>·</span> отдых '+rest+'</div>'+
-    '</div></div>';
+    '<button type="button" class="exttl" data-shut="'+di+'" aria-expanded="true" aria-label="Свернуть '+e.n+'">'+
+      '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</span>'+
+      '<span class="exname">'+e.n+'</span>'+
+      '<span class="spec">'+setsFor(e,di)+' × '+repsOf(e)+' <span>·</span> отдых '+rest+'</span>'+
+      '<span class="exchev" aria-hidden="true"></span>'+
+    '</button></div>';
 }
 function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
@@ -4573,6 +4581,9 @@ document.getElementById('list').addEventListener('click', function(ev){
   var pe=ev.target.closest('[data-pickex]');
   if(pe){ var pdi=+pe.dataset.pickex; sess.cur=pdi; if(sess.ex[pdi]) sess.ex[pdi].cur=null;
           EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
+  /* нажал по шапке раскрытой карточки — свернул её обратно в строку */
+  var sh=ev.target.closest('[data-shut]');
+  if(sh){ EXPICK=false; renderList(); haptic('light'); return; }
   var pc=ev.target.closest('[data-pick]');
   if(pc){ sess.cur=+pc.dataset.pick; sess.ex[sess.cur].cur=+pc.dataset.pset;
           EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
