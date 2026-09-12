@@ -3950,7 +3950,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 13:36';
+var BUILD = '12.09 13:59';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5879,16 +5879,37 @@ function renderBlock(){
   var b=BLK; var rows=(b&&b.rows||[]).filter(function(r){ return r.sessions>0 || r.hurt; });
   if(!b || !rows.length || profile!=='ai'){ h3.hidden=true; g.hidden=true; return; }
   h3.hidden=false; g.hidden=false;
+  /* ЗДЕСЬ ГОВОРЯТ ТОЛЬКО О ТОМ, ЧТО УЖЕ ЗНАЮТ. Пока у упражнения одно занятие,
+     сравнивать нечего — и строка «60×15 → 60×15 · мало данных» не сообщает
+     ничего, кроме того, что её зря показали. Раньше таких строк было столько
+     же, сколько упражнений в программе: двадцать пять пустых на одну живую. */
+  var есть=rows.filter(function(r){ return r.v!=='new'; });
   var f=function(x){ return x ? ((x.w?x.w+'×':'')+x.r) : '—'; };
-  var c=b.counts||{};
-  var head='<p class="blkh">'+(b.weeks||0)+' нед с '+ruDate(b.since)+' · '+(c.grow||0)+' растёт · '+(c.hold||0)+' держится · '+((c.stall||0)+(c.fall||0))+' стоит или падает · '+(c.hurt||0)+' мешает</p>';
-  var list=rows.map(function(r){
+  var c=b.counts||{}, дней=Math.max(1, Math.round((b.weeks||0)*7));
+  var срок=(b.weeks!=null && b.weeks<2) ? дней+' '+plural(дней,['день','дня','дней']) : (b.weeks+' нед');
+  var счёт=[];
+  if(c.grow) счёт.push(c.grow+' растёт');
+  if(c.hold) счёт.push(c.hold+' держится');
+  if((c.stall||0)+(c.fall||0)) счёт.push(((c.stall||0)+(c.fall||0))+' стоит или падает');
+  if(c.hurt) счёт.push(c.hurt+' мешает');
+  var head='<p class="blkh">'+срок+' с '+ruDate(b.since)+(счёт.length?' · '+счёт.join(' · '):'')+'</p>';
+  if(!есть.length){
+    box.innerHTML=head+'<p class="blkh">Сравнивать пока нечего: нужно хотя бы по два занятия на упражнение.</p>';
+    return;
+  }
+  var list=есть.map(function(r){
+    /* одно занятие — одно число. Стрелка между одинаковыми числами читается
+       как «не вырос», хотя расти ещё не с чего */
+    var числа=(r.sessions>=2 && r.first && r.last) ? f(r.first)+' → '+f(r.last) : (r.last?f(r.last):'');
+    var проц=(r.pct!=null && Math.abs(r.pct)>=1) ? ' '+(r.pct>0?'+':'')+r.pct+'%' : '';
     return '<div class="blkrow"><span class="bn">'+esc(r.n)+(r.note?'<br><i>'+esc(r.note)+'</i>':'')+'</span>'+
-      '<span class="bd">'+(r.first?f(r.first)+' → '+f(r.last):'')+(r.pct!=null?' '+(r.pct>0?'+':'')+r.pct+'%':'')+'</span>'+
+      '<span class="bd">'+числа+проц+'</span>'+
       '<span class="bv '+r.v+'">'+esc(r.vru)+'</span></div>';
   }).join('');
+  var мало=rows.length-есть.length;
+  var хвост=мало ? '<p class="blkh" style="margin:8px 0 0">мало данных: '+мало+' из '+rows.length+'</p>' : '';
   var ask=(c.stall||c.fall||c.hurt) ? '<button type="button" class="btn blkask" id="blkask">Спросить тренера, что оставить</button>' : '';
-  box.innerHTML=head+list+ask;
+  box.innerHTML=head+list+хвост+ask;
 }
 function loadBlock(){
   return tgFetch(SYNCURL+'/block?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.ok?r.json():null; })
