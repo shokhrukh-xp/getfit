@@ -112,6 +112,10 @@ async function поднять(page, o) {
     if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
     if (p === '/circle')     return дать(o.circle === null ? { ok: false } : круг());
+    /* заведён ли бот: o.bot === false — человек вошёл по коду в приложении
+       и остался без напоминаний; undefined — неизвестно, полоски нет */
+    if (p === '/bot')        return дать({ ok: true, bot: o.bot === undefined ? true : o.bot,
+                                           link: 'https://t.me/GetFit_MyBot' });
     if (p === '/goal') {
       /* границы безопасного отдаёт сервер — экран их только рисует.
          Мужчина 88,1 кг, сухая 63,8 → пол 70,9; предел темпа 0,88 кг/нед. */

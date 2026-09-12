@@ -957,6 +957,10 @@ body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))
 .nudge{display:block;width:100%;margin:10px 0 0;padding:11px 14px;border-radius:12px;text-align:left;
   border:none;background:var(--accent-ghost);color:var(--text);font:inherit;font-size:13px;line-height:1.4}
 .nudge b{color:var(--accent);font-weight:500}
+.hbot{display:flex;align-items:baseline;gap:10px;width:100%;margin:10px 0 2px;padding:11px 14px;
+  border-radius:12px;text-align:left;border:1px solid var(--line);background:var(--card);
+  color:var(--muted);font:inherit;font-size:12.5px;line-height:1.4}
+.hbot b{flex:0 0 auto;color:var(--accent-2);font-weight:700;margin-left:auto}
 
 .phaseline{margin:12px 0 18px}
 
@@ -3624,6 +3628,31 @@ function saveMe(){
 function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
    нет ни стартовых весов, ни норм по еде */
+/* Кто вошёл по коду внутри приложения, а не через бота, остаётся без
+   вечернего напоминания, утренней таблицы круга и разбора недели — Telegram
+   не даёт боту написать первым. Человек об этом не узнает: и экран, и бот
+   молчат. Сервер проверяет незаметно (sendChatAction), приложение говорит.
+   Одна полоска, две причины; бот важнее — без него молчит половина приложения. */
+var BOTOK = null, BOTLINK = 'https://t.me/GetFit_MyBot';
+/* Полоска живёт на ГЛАВНОЙ, а не в подсказке на «Тренировке»: у человека в
+   режиме «только питание» вкладки зала нет вовсе, а без бота он теряет ровно
+   столько же. */
+function homeBotStrip(){
+  if(BOTOK!==false) return '';
+  return '<button type="button" class="hbot" id="hbot">Бот не подключён — напоминания и таблица круга не приходят'+
+         '<b>Включить →</b></button>';
+}
+function botPull(){
+  tgFetch(SYNCURL+'/bot?uid='+encodeURIComponent(syncUid()))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || !d.ok) return;
+      if(d.link) BOTLINK=d.link;
+      BOTOK = (d.bot===true) ? true : (d.bot===false ? false : null);
+      if(BOTOK===false) renderHome();
+    })
+    .catch(function(){});
+}
 function renderNudge(){
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
@@ -3865,7 +3894,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 10:20';
+var BUILD = '12.09 10:25';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5182,7 +5211,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull();
+      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -7366,7 +7395,7 @@ function renderHome(){
      меняется по нескольку раз в день (часы дня, дорожки, запись еды), ниже —
      то, что меняется раз в день (тело и тренировка). */
   box.innerHTML =
-    homeWeek()+homeClock()+homeNextLine(hcEvents())+homeRows()+
+    homeWeek()+homeBotStrip()+homeClock()+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
     (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+homeBar();
@@ -7407,6 +7436,10 @@ function homeSend(text, image){
 (function(){
   var box=document.getElementById('homebody'); if(!box) return;
   box.addEventListener('click', function(e){
+    if(e.target.closest('#hbot')){
+      if(TG && TG.openTelegramLink) TG.openTelegramLink(BOTLINK); else window.open(BOTLINK,'_blank');
+      haptic('medium'); return;
+    }
     if(e.target.closest('#hbar [data-att]')){ HOME.att=null; renderBar(); haptic('light'); return; }
     if(e.target.closest('#hclose')){ HOME.msg=null; renderBar(); haptic('light'); return; }
     if(e.target.closest('#hphoto') || e.target.closest('[data-hact="photo"]')){ var f=document.getElementById('hfile'); if(f) f.click(); return; }
