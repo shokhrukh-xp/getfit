@@ -1898,6 +1898,9 @@ body.onb #picker .modalbox::before{display:none}
 .zseg button, .todaybar .tsedit, .dayseg button, .exfoot .ebtn,
 .resetline .linkbtn, .timer-in .tbtn, .fday .fbar.fbtap,
 .catitem .catpick, .hweek .hwd{min-height:44px}
+/* тяжёлый вариант того же движения — строкой под подписью, не отдельной записью */
+.cathard{display:block;text-decoration:none;margin-top:3px;font-size:11px;line-height:1.4;color:var(--dim)}
+.cathard b{font-weight:600;color:var(--muted)}
 
 /* ── Строка упражнения в журнале: фото, название, что беру и что было ── */
 .uprow{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line-soft)}
@@ -2900,7 +2903,10 @@ function catFiltered(){
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
        отдельно: «жим гантели» находит «Жим гантелей лёжа» */
-    var hay=(x.n+' '+x.e+' '+(CAT.muscles[x.m]||'')+' '+(x.m2?(CAT.muscles[x.m2]||''):'')).toLowerCase();
+    /* тяжёлые варианты ищутся вместе с базой: «Пендлея» приводит к тяге в
+       наклоне, а не в пустоту — это тот же подход, а не другое упражнение */
+    var hay=(x.n+' '+x.e+' '+(CAT.muscles[x.m]||'')+' '+(x.m2?(CAT.muscles[x.m2]||''):'')+
+             ' '+(x.hard?x.hard.map(function(v){ return v.n; }).join(' '):'')).toLowerCase();
     return words.every(function(w){ return hay.indexOf(w)>=0; });
   });
 }
@@ -2990,7 +2996,14 @@ function catRow(x, выбор){
     (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-    '<span class="cattag">'+catTag(x)+'</span></div>'+
+    '<span class="cattag">'+catTag(x)+'</span>'+
+    /* ТЯЖЁЛЫЙ ВАРИАНТ — не отдельная строка каталога. Присед с паузой и
+       присед Андерсона это тот же присед, то же фото и то же место в
+       программе; разводить их в разные упражнения значило бы удвоить список
+       и развести историю весов по двум именам. */
+    (x.hard ? x.hard.map(function(v){
+        return '<u class="cathard"><b>'+esc(v.n)+'</b> — '+esc(v.t)+'</u>'; }).join('') : '')+
+    '</div>'+
     (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
           :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
             encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
@@ -4037,7 +4050,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 21:52';
+var BUILD = '12.09 22:43';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
