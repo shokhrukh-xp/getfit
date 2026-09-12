@@ -17,8 +17,18 @@ const часы = page => page.evaluate(() => ({
   метки: Array.from(document.querySelectorAll('.hclk-svg .hbl')).map(e => e.textContent),
   плюс: !!document.querySelector('.hb-next'),
   совет: (document.querySelector('.hnext') || {}).textContent || '',
-  кнопка: (document.querySelector('#htext') || {}).placeholder || ''
+  /* 12.09: поля на главной больше нет — разговор один, за круглой кнопкой.
+     Подсказку в нём читаем, открыв разговор. */
+  кнопка: (document.querySelector('#ctext') || {}).placeholder || ''
 }));
+const подсказка = async page => {
+  await page.click('#coachfab');
+  await page.waitForTimeout(300);
+  const t = await page.getAttribute('#ctext', 'placeholder');
+  await page.click('#coachclose');
+  await page.waitForTimeout(250);
+  return t || '';
+};
 
 (async () => {
   const br = await chromium.launch();
@@ -31,7 +41,8 @@ const часы = page => page.evaluate(() => ({
   дано(!ч.метки.some(t => /сейчас/.test(t)), 'через полчаса после обеда никакого «сейчас» нет');
   дано(ч.метки.some(t => /19:0\d · ужин/.test(t)), 'ужин предложен через 3,5 часа после обеда ' + JSON.stringify(ч.метки));
   дано(/мяса или рыбы/.test(ч.совет), 'под часами сказано, чем закрыть белок: ' + ч.совет);
-  дано(/ужин/.test(ч.кнопка), 'поле называет тот же приём, что и часы: ' + ч.кнопка);
+  const пд = await подсказка(page);
+  дано(/ужин/.test(пд), 'поле разговора называет тот же приём, что и часы: ' + пд);
   await page.close();
 
   /* 2. утром весь дневной белок не валится в один приём */

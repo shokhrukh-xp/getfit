@@ -62,6 +62,32 @@ function круг() {
   };
 }
 
+/* ── журнал тренировок: три занятия с разметкой каталога ──
+   Экраны «Упражнения» и итог блока живут на истории. Без неё они пустые, и
+   проверить, что в строке есть фото, а в сравнении — прошлый раз, нельзя.
+   id здесь настоящие, из каталога: по ним берутся кадры движения. */
+function журнал() {
+  const дни = [
+    { сдвиг: 6, k: 0 }, { сдвиг: 3, k: 1 }, { сдвиг: 1, k: 2 }
+  ];
+  /* имена и id — как в готовой программе приложения: только так проверяется
+     и путь по id каталога, и путь по имени для записей до 12.09 */
+  const движения = [
+    { id: 'Barbell_Squat', n: 'Приседания со штангой', w: [70, 72.5, 75], r: 8 },
+    { id: 'Barbell_Bench_Press_-_Medium_Grip', n: 'Жим лёжа', w: [55, 55, 57.5], r: 8 },
+    { id: 'Stiff-Legged_Dumbbell_Deadlift', n: 'Румынская тяга с гантелями', w: [26, 28, 28], r: 10 },
+    { id: 'Plank', n: 'Планка', w: [null, null, null], r: 60, unit: 'sec' }
+  ];
+  return дни.map(({ сдвиг, k }) => ({
+    id: Д(сдвиг) + '_A', date: Д(сдвиг), day: 'A', name: 'День A', week: 1,
+    updated: new Date(Д(сдвиг) + 'T19:10:00').toISOString(),
+    ex: движения.map(m => ({
+      n: m.n, id: m.id, unit: m.unit || 'reps',
+      sets: [1, 2, 3].map(() => ({ w: m.w[k], r: m.unit === 'sec' ? m.r + k * 5 : m.r }))
+    }))
+  }));
+}
+
 /* ── подстановки ── */
 async function поднять(page, o) {
   o = o || {};
@@ -70,7 +96,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     const R = Date, ч = +час.split(':')[0], м = +час.split(':')[1];
     const F = new R(); F.setHours(ч, м, 0, 0); const f = F.getTime();
@@ -89,17 +115,32 @@ async function поднять(page, o) {
       HapticFeedback: { impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
       MainButton: { show(){}, hide(){}, setText(){}, onClick(){}, offClick(){} },
       BackButton: { show(){}, hide(){}, onClick(){}, offClick(){} },
+      /* CloudStorage раньше отвечал пустым списком ключей — и любой экран,
+         который живёт на истории (Журнал, «Упражнения», итог блока), в
+         проверках оставался пустым. Теперь это настоящее хранилище поверх
+         localStorage: что записали, то и прочитаем. */
       CloudStorage: {
         getItem(k, cb){ cb(null, localStorage.getItem('cs_' + k) || ''); },
         setItem(k, v, cb){ localStorage.setItem('cs_' + k, v); cb && cb(null, true); },
-        getKeys(cb){ cb(null, []); }, removeItem(k, cb){ cb && cb(null, true); }
+        getItems(ks, cb){ const o = {}; ks.forEach(k => { o[k] = localStorage.getItem('cs_' + k) || ''; }); cb(null, o); },
+        getKeys(cb){ const out = [];
+          for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i);
+            if (k && k.indexOf('cs_') === 0) out.push(k.slice(3)); }
+          cb(null, out); },
+        removeItem(k, cb){ localStorage.removeItem('cs_' + k); cb && cb(null, true); }
       }
     } };
     try {
       if (!новичок) localStorage.setItem('shp_v1_profile', '"shp"');
       localStorage.setItem('shp_v1_page', JSON.stringify(сеанс));
+      /* журнал тренировок кладём туда же, откуда приложение его читает */
+      if (видел != null) localStorage.setItem('shp_v1_chat_seen', String(видел));
+      (журнал || []).forEach(w => {
+        localStorage.setItem('cs_workouts_' + w.id, JSON.stringify(w));
+        localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
+      });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen]);
 
   await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
     const u = new URL(route.request().url()), p = u.pathname;
@@ -114,6 +155,9 @@ async function поднять(page, o) {
     if (p === '/circle')     return дать(o.circle === null ? { ok: false } : круг());
     /* заведён ли бот: o.bot === false — человек вошёл по коду в приложении
        и остался без напоминаний; undefined — неизвестно, полоски нет */
+    /* разговор с тренером: o.chat — реплики, которые уже лежат на сервере
+       (например, вечерний разбор, написанный без человека) */
+    if (p === '/chat')       return дать({ ok: true, chat: o.chat || [], intro: o.intro || '' });
     if (p === '/bot')        return дать({ ok: true, bot: o.bot === undefined ? true : o.bot,
                                            link: 'https://t.me/GetFit_MyBot' });
     if (p === '/goal') {
@@ -144,9 +188,9 @@ async function поднять(page, o) {
 
   const ошибки = [];
   page.on('pageerror', e => ошибки.push(String(e)));
-  await page.goto(БАЗА, { waitUntil: 'domcontentloaded' });
+  await page.goto(o.base || БАЗА, { waitUntil: 'domcontentloaded' });   /* o.base — эскиз на другом порту */
   await page.waitForTimeout(o.wait || 1400);
   return ошибки;
 }
 
-module.exports = { Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг };
+module.exports = { Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };

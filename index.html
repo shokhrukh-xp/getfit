@@ -900,19 +900,27 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .fchart .lg{display:flex;gap:14px;margin-top:6px;font-family:inherit;font-size:10px;color:var(--dim)}
 .fchart .lg i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
 /* ── тренер: плавающая кнопка и окно чата ── */
-.coachfab{position:fixed;right:16px;bottom:calc(84px + var(--pad-bottom,0px));z-index:60;width:50px;height:50px;border-radius:50%;
+.coachfab{position:fixed;right:14px;bottom:calc(84px + var(--pad-bottom,0px) + var(--fab-lift,0px));z-index:60;width:44px;height:44px;border-radius:50%;
   border:none;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 6px 20px rgba(var(--accent-rgb),.34);padding:0;transition:transform .15s ease,bottom .3s cubic-bezier(.2,.8,.3,1)}
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.26);padding:0;transform-origin:75% 75%;opacity:.62;
+  transition:transform .22s cubic-bezier(.2,.8,.3,1),opacity .22s ease,bottom .3s cubic-bezier(.2,.8,.3,1)}
 /* пока идёт отдых, внизу плашка таймера — кнопка тренера поднимается над ней,
    иначе она закрывает «+30с» */
-body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px))}
-.coachfab:active{transform:scale(.94)}
+body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px) + var(--fab-lift,0px))}
+/* 44 точки и вполсилы: свободного места под плавающую кнопку на экранах нет
+   (мерил — ближайшее в 120–260 точках выше), поэтому она не прячется, а
+   перестаёт спорить с тем, что под ней. Трогаешь — оживает. */
+.coachfab:active{transform:scale(.94);opacity:1}
+.coachfab:focus-visible{opacity:1}
+.coachfab.attn{opacity:1}                 /* тренер ответил — тут прятаться незачем */
+/* страница едет — кнопка отступает: под ней видно то, мимо чего идут глаза */
+.coachfab.away{transform:scale(.8);opacity:.2}
+/* разговор открыт — входа в разговор на экране быть не должно */
+body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .coachfab svg{width:24px;height:24px}
-.coachfab.attn::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
-/* Лента живёт внутри страницы, а не в окне: своя прокрутка ей не нужна и
-   вредна — два скролла один в другом. Высоту задаёт содержимое. */
-.chatlog{display:flex;flex-direction:column;gap:8px;padding:0;min-height:0}
-.chatlog:not(:empty){padding:10px 0 2px;margin-top:8px;border-top:1px solid var(--line-soft)}
+.coachfab.attn::after{content:"";position:absolute;top:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--warn);border:2px solid var(--bg)}
+.chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:8px;padding:4px 0 8px;min-height:160px}
 .chatmore{align-self:center;background:none;border:none;font:inherit;font-size:12.5px;font-weight:600;
   color:var(--accent-txt);padding:6px 10px;min-height:44px}
 .msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-line}
@@ -1619,10 +1627,13 @@ body.onb #picker .modalbox::before{display:none}
 .hright{display:flex;align-items:center;gap:8px}
 /* тренер — в шапке, рядом с профилем: плавающий угол закрывал последнюю строку
    «Сегодня», а угол экрана — самое дорогое место на телефоне */
-.coachfab,body.tmr .coachfab{position:static;width:32px;height:32px;bottom:auto;right:auto;background:var(--field);color:var(--text);box-shadow:none;transition:transform .15s ease}
-.coachfab svg{width:18px;height:18px}
-.coachfab.attn{box-shadow:0 0 0 2px var(--accent)}
-.coachfab.attn::after{top:-2px;right:-2px;width:9px;height:9px}
+/* 12.09: единственный вход в разговор — плавающая кнопка с логотипом.
+   56 точек: палец попадает без прицеливания. Внутри — сам логотип, поэтому
+   фона у кнопки нет, только тень и волосяной кант. */
+.coachfab{width:44px;height:44px;overflow:hidden;background:var(--bg-2);
+  box-shadow:0 4px 14px rgba(0,0,0,.22), 0 0 0 1px var(--line-soft)}
+.coachfab img{width:100%;height:100%;object-fit:cover;display:block}
+.coachfab.attn::after{top:0;right:0}
 .empt{font-size:14px}
 
 /* ── «Сегодня»: число дня как герой, коридор нормы как знак ── */
@@ -1841,6 +1852,7 @@ body.onb #picker .modalbox::before{display:none}
 .uprow{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line-soft)}
 .uprow:first-child{border-top:none;padding-top:2px}
 .uprow .exph{flex:0 0 44px;width:44px;height:44px;border-radius:12px;overflow:hidden;display:block;background:var(--field)}
+.uprow .exph:empty{display:none}          /* кадр не загрузился — не держим пустое место */
 .uprow .exph .fig2,.uprow .exph .fig{width:44px;border-radius:12px}
 .uprow .exph .fig2{aspect-ratio:1}      /* в строке кадр квадратный, а не 4:3 */
 .uprow .exph .fig{height:44px}
@@ -1877,7 +1889,7 @@ body.onb #picker .modalbox::before{display:none}
 <header class="top">
   <div class="top-in">
     <div class="hctx" id="hctx"></div>
-    <div class="hright"><button type="button" class="coachfab" id="coachfab" aria-label="Тренер"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4z"/><path d="M8 9h8M8 13h5"/></svg></button>
+    <div class="hright">
     <button type="button" class="profbtn" id="profbtn" aria-label="Профиль"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"/></svg></button>
     </div>
   </div>
@@ -2072,6 +2084,22 @@ body.onb #picker .modalbox::before{display:none}
     <button class="btn wide" id="schedclose">Готово</button>
   </div>
 </div>
+<!-- Один вход в разговор на всё приложение: круглая кнопка с логотипом.
+     Она поднимается над таймером, когда он идёт, и не лезет под вкладки. -->
+<button type="button" class="coachfab" id="coachfab" aria-label="Спросить тренера"><img src="img/logo-64.png" alt=""></button>
+<div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <div class="chatlog" id="chatlog"></div>
+    <div class="attbox" id="cattach" hidden></div>
+    <div class="chatask">
+      <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
+      <button type="button" class="fbtn" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+      <button type="button" class="fbtn go" id="csend" aria-label="Отправить">→</button>
+      <input id="cfile" type="file" accept="image/*" hidden>
+    </div>
+  </div>
+</div>
 <div class="modal" id="mealm" role="dialog" aria-modal="true" aria-labelledby="mealtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="mealtitle">Приём</h3><button class="xbtn" id="mealclose" aria-label="Закрыть">✕</button></div>
@@ -2242,7 +2270,7 @@ document.addEventListener('error', function(ev){
     box.setAttribute('data-failed','1');
     var f=box.getAttribute('data-fig');
     var svg=(f && FIG[f]) ? figSvg(f) : '';
-    if(svg) box.outerHTML=svg; else box.style.display='none';
+    if(svg) box.outerHTML=svg; else box.remove();   /* серый квадрат не объясняет движение */
     return;
   }
   if(im.className==='fig ph' || (im.parentNode && im.parentNode.className==='catitem')) im.style.visibility='hidden';
@@ -3939,7 +3967,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '12.09 17:46';
+var BUILD = '12.09 19:07';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5836,6 +5864,20 @@ function строкаБыло(b, time){
   if(time) return 'было '+b.r+' с';
   return 'было '+(b.w!=null? fmtKg(b.w)+'×'+b.r : b.r);
 }
+/* Записи до 12.09 хранят только имя — id каталога у них нет, и строка
+   оставалась с пустым серым квадратом вместо кадра. Движение ищем по имени
+   в программе: там есть и id каталога, и своё фото, и схема. */
+function видПоИмени(n){
+  var ks=Object.keys(DAYS);
+  for(var i=0;i<ks.length;i++){
+    var ex=(DAYS[ks[i]]||{}).ex||[];
+    for(var j=0;j<ex.length;j++){
+      var e=ex[j];
+      if(e.n===n) return {cat:e.id||e.cat||null, ph:e.ph||null, fig:e.fig||null};
+    }
+  }
+  return {cat:null, ph:null, fig:null};
+}
 function renderProgress(){
   var box=document.getElementById('logprog'); if(!box) return;
   if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметь подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
@@ -5860,8 +5902,10 @@ function renderProgress(){
   box.innerHTML = видно.map(function(e){
     var n=e.pts.length, посл=e.pts[n-1].b, пред=n>=2?e.pts[n-2].b:null;
     var v=вердиктДля(e);
+    var м=e.id ? {cat:e.id, ph:null, fig:null} : видПоИмени(e.n);
+    var кадр=mediaFor({cat:м.cat, n:e.n, ph:м.ph, fig:м.fig});
     return '<div class="uprow">'+
-      '<span class="exph">'+mediaFor({cat:e.id, n:e.n, ph:null, fig:null})+'</span>'+
+      (кадр ? '<span class="exph">'+кадр+'</span>' : '')+
       '<span class="upn">'+esc(e.n)+(v?'<em class="v-'+v.v+'">'+esc(v.vru)+'</em>':'')+'</span>'+
       '<span class="upw">'+числоПодхода(посл, e.time)+
         '<u>'+(пред?строкаБыло(пред, e.time):'')+'</u></span></div>';
@@ -6329,6 +6373,7 @@ function plural(n,forms){
   return forms[2];
 }
 function goPage(p){
+  setTimeout(function(){ try{ fabSoon(); }catch(e){} }, 60);
   if(PAGES.indexOf(p)<0) p=PAGES[0];
   /* режим «только питание»: зала нет ни на экране, ни в адресах */
   if(TABOF[p]==='gym' && foodOnly()) p='home';
@@ -6941,7 +6986,6 @@ var HCAM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-widt
 function openHome(){
   homeRestore();
   renderHome();
-  chatPull();                         /* разговор с тренером живёт здесь */
   if(Date.now()-HOME.at>60000){ HOME.at=Date.now(); homePull(); }
   /* стрелка «сейчас» идёт по кругу, пока экран открыт */
   if(!HOME.tick) HOME.tick=setInterval(function(){
@@ -6977,6 +7021,7 @@ function homePull(){
   if(!CIRC) circlePull().then(function(){ homeDirty(); });
   /* журнал нужен часам дня: у закрытой тренировки время старта лежит в записи */
   if(DB && !HIST) loadHist().then(function(){ homeDirty(); }).catch(function(){});
+  try{ chatWatch(); }catch(e){}
 }
 /* расписание зала может быть не задано — тогда дни программы идут по очереди
    и «сегодня отдых» было бы неправдой */
@@ -7300,34 +7345,6 @@ function homeWeek(){
    всегда на месте и называет следующий приём; текст — по второй кнопке */
 var HROD={'завтрак':'завтрака','обед':'обеда','ужин':'ужина'};
 var HVIN={'завтрак':'завтрак','обед':'обед','ужин':'ужин'};
-function homeBar(){
-  var E=hcEvents(), kind = (E.plan && E.plan.at!=null) ? E.plan.name : 'еда';
-  var род=HROD[kind]||'еды', вин=HVIN[kind]||'еду', файл='<input id="hfile" type="file" accept="image/*" hidden>';
-  var m=HOME.msg;
-  /* ждём разбор или ответ пришёл — панель держит миниатюру того, что ушло */
-  if(m) return '<div class="hbar hcard" id="hbar"><div class="hcrow">'+
-    (m.i ? '<img class="hcth" src="data:image/jpeg;base64,'+m.i+'" alt="">' : '')+
-    '<span class="hcst'+(m.c==='bad'?' hcbad':'')+'">'+esc(m.t)+
-      (m.c==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':'')+'</span>'+
-    (m.c==='wait' ? '' : '<button type="button" class="hcx" id="hclose" aria-label="Закрыть">×</button>')+
-    '</div></div>';
-  /* фото прикреплено: миниатюра — доказательство, что оно дошло, а отправляет
-     большая кнопка на месте той, которую он только что нажал */
-  if(HOME.att) return '<div class="hbar hcard" id="hbar">'+
-    '<div class="hcrow"><img class="hcth" src="data:image/jpeg;base64,'+HOME.att+'" alt="">'+
-    '<span class="hcst"><b>Фото '+esc(род)+' прикреплено</b></span>'+
-    '<button type="button" class="hcx" data-att="off" aria-label="Убрать фото">×</button></div>'+
-    '<input id="htext" type="text" placeholder="Что это? можно не писать" autocomplete="off">'+
-    '<button type="button" class="hcsend" id="hsend">Записать '+esc(вин)+'</button>'+файл+'</div>';
-  /* Один вид панели, его выбор 11.09: раньше в покое стояла большая кнопка с
-     именем приёма, а по «текстом» панель превращалась в строку — два разных
-     вида на одном месте, «то одного вида то другого, никто ничего не путал бы».
-     Теперь всегда: камера слева, поле, отправка. Имя приёма живёт в подсказке. */
-  return '<div class="hbar" id="hbar">'+
-    '<button type="button" class="hbtn hshot" id="hphoto" aria-label="Сфотографировать '+esc(вин)+'">'+HCAM+'</button>'+
-    '<input id="htext" type="text" placeholder="'+esc(HVIN[kind] ? 'Что съел на '+kind+'?' : 'Что съел?')+'" autocomplete="off">'+
-    '<button type="button" class="hbtn hgo2" id="hsend" aria-label="Отправить">→</button>'+файл+'</div>';
-}
 function homeWeight(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; });
   if(!ms.length) return null;
@@ -7458,17 +7475,8 @@ function homeNext(){
   if(сп.length) sub = (sub?sub+' · ':'')+сп.join(', ');
   return '<div class="hline"><span>Завтра</span><b>'+esc(val)+(sub?'<em>'+esc(sub)+'</em>':'')+'</b></div>';
 }
-function hReply(text, cls, thumb){
-  HOME.msg = text ? {t:text, c:cls||'', i:thumb||null} : null;
-  renderBar();
-}
 /* перерисовываем одну панель, а не весь экран: дорожки не должны заново
    ехать из нуля каждый раз, когда сменилось состояние записи */
-function renderBar(){
-  var old=document.getElementById('hbar'); if(!old || !old.parentNode) return;
-  var t=document.createElement('div'); t.innerHTML=homeBar();
-  old.parentNode.replaceChild(t.firstChild, old);
-}
 function renderHome(){
   var box=document.getElementById('homebody'); if(!box) return;
   if(!PROF || !CYCLE.length){ box.innerHTML='<p class="empt">Загружаю…</p>'; return; }
@@ -7491,11 +7499,9 @@ function renderHome(){
     homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
-    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext())+
-    '<div class="chatlog" id="chatlog"></div>'+homeBar();
+    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext());
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
-  try{ renderChat(false); }catch(e){}   /* разговор живёт здесь, под днём */
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
@@ -7506,30 +7512,8 @@ function renderHome(){
     Array.prototype.forEach.call(dots, function(el){ el.style.left=el.dataset.l+'%'; });
   });
 }
-function hGo(){
-  var el=document.getElementById('htext'), t=((el&&el.value)||'').trim();
-  if(!t && !HOME.att) return;
-  var img=HOME.att; HOME.att=null; HOME.typing=false; if(el) el.value='';
-  renderHome();                       /* панель возвращается к строке ввода */
-  coachSend(t, img);
-}
 /* запись с главной идёт всегда в СЕГОДНЯ: «Еда» может быть открыта на
    прошлом дне, и молча записать ужин во вчера — худшее, что можно сделать */
-function homeSend(text, image){
-  if(HOME.busy) return; HOME.busy=true;
-  hReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
-  haptic('medium');
-  fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:TODAY})
-    .then(function(d){
-      if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
-      hReply(d.reply||'Записал.', '', image); haptic('ok'); takeChanges(d);
-      renderHome();
-      fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+TODAY)
-        .then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; if(!FOOD.date) DAYSC=x; renderHome(); } }).catch(function(){});
-    })
-    .catch(function(e){ hReply(humanErr(e),'bad'); haptic('err'); })
-    .then(function(){ HOME.busy=false; });
-}
 (function(){
   var box=document.getElementById('homebody'); if(!box) return;
   box.addEventListener('click', function(e){
@@ -7537,33 +7521,9 @@ function homeSend(text, image){
       if(TG && TG.openTelegramLink) TG.openTelegramLink(BOTLINK); else window.open(BOTLINK,'_blank');
       haptic('medium'); return;
     }
-    if(e.target.closest('#hbar [data-att]')){ HOME.att=null; renderBar(); haptic('light'); return; }
-    if(e.target.closest('#hclose')){ HOME.msg=null; renderBar(); haptic('light'); return; }
-    if(e.target.closest('#hphoto') || e.target.closest('[data-hact="photo"]')){ var f=document.getElementById('hfile'); if(f) f.click(); return; }
-    if(e.target.closest('#hsend')){ hGo(); return; }
-
     var hd=e.target.closest('[data-hday]');
     if(hd){ if(hd.disabled) return; var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
-  });
-  box.addEventListener('keydown', function(e){
-    if(e.target.id==='htext' && e.key==='Enter'){ e.preventDefault(); hGo(); }
-  });
-  /* поле теперь на экране всегда, и минутная перерисовка пересоздавала бы его
-     прямо под пальцем — пока в нём фокус или текст, главную не трогаем */
-  box.addEventListener('focusin', function(e){ if(e.target.id==='htext') HOME.typing=true; });
-  box.addEventListener('focusout', function(e){
-    if(e.target.id==='htext') HOME.typing = !!(e.target.value||'').trim();
-  });
-  box.addEventListener('change', function(e){
-    if(e.target.id!=='hfile') return;
-    var f=e.target.files && e.target.files[0]; if(!f) return;
-    hReply('Читаю фото','wait');
-    shrink(f).then(function(b64){
-      /* панель показывает миниатюру, поле подписи и кнопку «Записать обед» */
-      HOME.att=b64; HOME.msg=null; renderBar(); haptic('light');
-    }).catch(function(err){ hReply(humanErr(err),'bad'); });
-    e.target.value='';
   });
 })();
 
@@ -8457,8 +8417,8 @@ document.getElementById('fmsave').addEventListener('click', function(){
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
 var CHAT={items:null, busy:false, att:null};
-/* человек сейчас на главной — значит разговор у него перед глазами */
-function наЕде(){ var p=document.getElementById('p-home'); return !!(p && !p.classList.contains('hide')); }
+/* лист разговора открыт — значит ответ человек видит сразу */
+function чатОткрыт(){ var m=document.getElementById('coachm'); return !!(m && m.classList.contains('show')); }
 function coachAttn(on){
   var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
 }
@@ -8477,20 +8437,58 @@ function chatPull(){
        полученный ответ. */
     var срв=d.chat||[];
     if(!CHAT.items || срв.length>=CHAT.items.length) CHAT.items=срв;
+    if(чатОткрыт()) gset('chat_seen', (CHAT.items||[]).length);
     renderChat(false);
   }).catch(function(){ CHAT.items=CHAT.items||[]; renderChat(false); });
 }
+/* Поле называет тот же приём, что и часы на главной. Разговор открывают
+   чаще всего чтобы записать еду, и человек не должен гадать, какой приём
+   приложение сейчас ждёт. Когда норма закрыта — приёма не называем: часы в
+   этот момент тоже никуда не зовут (одно место — один факт). */
+function chatHint(){
+  var d=HOME.day||{}, t=d.targets||{};
+  var общее='спроси или напиши, что съел';
+  if(t.kcal && (t.kcal-(+d.kcal||0))<=0) return общее;
+  var n=new Date(), p=nextMealPlan(d.meals||[], n.getHours()+n.getMinutes()/60);
+  return (p && p.at!=null && p.name) ? ('что съел на '+p.name+' — или спроси') : общее;
+}
 function openCoach(){
-  goPage('home');
+  var m=document.getElementById('coachm'); if(m) m.classList.add('show');
+  document.body.classList.add('coach');
+  var ph=document.getElementById('ctext');
+  if(ph){ try{ ph.placeholder=chatHint(); }catch(e){} }
   coachAttn(false);
   chatPull();
   setTimeout(function(){
-    var b=document.getElementById('chatlog');
-    if(b) try{ b.scrollIntoView({block:'end', behavior:'smooth'}); }catch(e){ b.scrollIntoView(false); }
-    var t=document.getElementById('htext'); if(t && window.innerWidth>700) t.focus();
+    var t=document.getElementById('ctext'); if(t && window.innerWidth>700) t.focus();
   }, 220);
 }
-function closeCoach(){}   /* закрывать нечего: разговор живёт на вкладке «Еда» */
+function closeCoach(){
+  var m=document.getElementById('coachm'); if(m) m.classList.remove('show');
+  document.body.classList.remove('coach');
+  gset('chat_seen', (CHAT.items||[]).length);
+}
+/* ТРЕНЕР ПИШЕТ САМ. Вечерний разбор и напоминания приходят в этот же
+   разговор. Пока лента висела на главной, новое было видно сразу; теперь она
+   живёт за кнопкой — значит про новое должна сказать точка на кнопке.
+   Считаем по числу реплик: сколько их было, когда он закрывал разговор. */
+var chatСмотр=0;
+function chatWatch(){
+  if(!CHAT) return;                 /* первый проход главной бывает раньше, чем заведён разговор */
+  if(чатОткрыт() || CHAT.busy) return;
+  if(Date.now()-chatСмотр < 60000) return;
+  chatСмотр=Date.now();
+  fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(!d || !d.ok || чатОткрыт() || CHAT.busy) return;
+    var срв=d.chat||[];
+    if(!CHAT.items || срв.length>=CHAT.items.length){ CHAT.items=срв; CHAT.intro=d.intro||''; }
+    var видел=gget('chat_seen', null);
+    /* счёт ещё не заведён — это первый запуск после обновления: разговор уже
+       прочитан человеком, точка тут была бы неправдой. Просто запоминаем. */
+    if(видел==null){ gset('chat_seen', срв.length); return; }
+    if(срв.length > (+видел||0)) coachAttn(true);
+  }).catch(function(){});
+}
 var CHATALL=false;
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
@@ -8521,8 +8519,7 @@ function renderChat(scroll){
    и листал руками. Догоняем на следующих кадрах и после раскладки. */
 function chatScroll(){
   var box=document.getElementById('chatlog'); if(!box) return;
-  /* лента больше не прокручивается сама — подводим к ней страницу */
-  var вниз=function(){ var п=box.lastElementChild; if(п) try{ п.scrollIntoView({block:'nearest'}); }catch(e){} };
+  var вниз=function(){ box.scrollTop=box.scrollHeight; };
   вниз();
   if(window.requestAnimationFrame) requestAnimationFrame(function(){ вниз(); requestAnimationFrame(вниз); });
   setTimeout(вниз,120); setTimeout(вниз,320);
@@ -8623,7 +8620,7 @@ function renderReco2(){
     el.hidden=!h; el.innerHTML=h;
   }
   /* карточка живёт в двух местах сразу — чат перерисовываем, если он открыт */
-  if(наЕде() && !reco2Rendering){
+  if(чатОткрыт() && !reco2Rendering){
     reco2Rendering=true; try{ renderChat(false); } finally { reco2Rendering=false; }
   }
 }
@@ -8780,9 +8777,7 @@ function recoClick(e){
 document.getElementById('coachreco').addEventListener('click', recoClick);
 document.getElementById('rbbox').addEventListener('click', rbClick);
 document.getElementById('recobox').addEventListener('click', rbClick);
-/* лента рисуется вместе с главным экраном, поэтому слушаем через документ:
-   к моменту загрузки страницы самого узла ещё нет */
-document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('#chatlog')) recoClick(e); });
+document.getElementById('chatlog').addEventListener('click', recoClick);
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
   if(d && d.goal && d.goal.text) takeGoal(d.goal, null);
@@ -8813,25 +8808,20 @@ function coachSend(text, image){
   CHAT.prep=false;
   /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
      значит показывать человеку, что сообщение никуда не ушло */
-  var ta=document.getElementById('htext');
-  if(ta){ ta.value=''; }
-  /* Пока считает — это видно в панели, там, куда человек только что печатал.
-     Ответ придёт пузырём в ленте, а панель вернётся к строке ввода: держать
-     ответ в двух местах — тот же спор двух экранов, от которого уходили. */
-  hReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
+  var ta=document.getElementById('ctext');
+  if(ta){ ta.value=''; ta.style.height='auto'; }
   renderChat(); haptic('medium');
-  var sb=document.getElementById('hsend'); if(sb) sb.disabled=true;
+  var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:TODAY})
     .then(function(d){
       CHAT.items=(CHAT.items||[]).concat([{role:'user',text:(text||'')+(image?' [фото]':'')},{role:'assistant',text:d.reply||'Записал.'}]);
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
-      HOME.msg=null;
       if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
-      renderHome(); haptic('ok');
+      renderChat(); renderHome(); haptic('ok');
       fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+TODAY)
         .then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; if(!FOOD.date) DAYSC=x; renderHome(); } }).catch(function(){});
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
-      if(!наЕде()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
+      if(!чатОткрыт()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
@@ -8839,11 +8829,96 @@ function coachSend(text, image){
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
-    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e);
-      HOME.msg=null; renderHome(); haptic('err'); })
+    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
     .then(function(){ CHAT.busy=false; if(sb) sb.disabled=false; });
 }
+/* ── КНОПКА И ЧУЖИЕ КНОПКИ ──
+   Плавающая кнопка висит над страницей и обязательно оказывается над чем-то.
+   Померил на живых экранах, шагая по 20 точек вверх: свободного квадрата
+   56×56 в досягаемости нижнего угла нет ни на одном — «Сегодня» освобождается
+   только на 260 точках выше, «Зал» на 200, «Еда» на 120. Кнопка, которая на
+   каждом экране стоит в своём месте, — уже не кнопка, а сюрприз. Поэтому:
+   1) уступаем только тому, что само не уедет, — закреплённым внизу полоскам
+      (таймер отдыха). Всё остальное человек убирает из-под кнопки прокруткой:
+      на самом низу любой страницы под кнопкой пусто — это проверено;
+   2) пока страница едет, кнопка бледнеет и поджимается, чтобы не закрывать
+      то, мимо чего человек сейчас проходит глазами. */
+function fabFit(){
+  var f=document.getElementById('coachfab'); if(!f) return;
+  var s=getComputedStyle(f);
+  if(s.display==='none' || s.visibility==='hidden') return;
+  /* position:fixed — offsetParent у такого элемента null всегда, поэтому про
+     видимость спрашиваем стиль. И двигать кнопку, чтобы померить, нельзя: на
+     bottom висит переход, прямоугольник вернётся старый. Считаем от базы. */
+  var r=f.getBoundingClientRect();
+  var тек=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fab-lift'))||0;
+  var низ=r.bottom+тек, верх=r.top+тек;
+  var было=f.style.pointerEvents; f.style.pointerEvents='none';
+  var подъём=0;
+  var точки=[[r.left+r.width/2,(верх+низ)/2],[r.left+9,низ-9],[r.right-9,низ-9]];
+  for(var i=0;i<точки.length;i++){
+    var el=document.elementFromPoint(Math.round(точки[i][0]), Math.round(точки[i][1]));
+    while(el && el!==document.body){
+      var п=getComputedStyle(el).position;
+      if(п==='fixed' || п==='sticky'){
+        var b=el.getBoundingClientRect();
+        /* только то, что закреплено ВНИЗУ: шапка сверху кнопке не мешает */
+        if(b.top>верх-200 && b.top<низ) подъём=Math.max(подъём, Math.ceil(низ-b.top+10));
+        break;
+      }
+      el=el.parentElement;
+    }
+  }
+  f.style.pointerEvents=было;
+  if(подъём>160) подъём=160;
+  document.documentElement.style.setProperty('--fab-lift', подъём+'px');
+}
+var fabTick=0;
+function fabSoon(){ if(fabTick) return; fabTick=requestAnimationFrame(function(){ fabTick=0; try{ fabFit(); }catch(e){} }); }
+/* пока палец ведёт страницу — кнопка отступает: видно, что под ней */
+var fabЖдёт=0;
+function fabЕдем(){
+  var f=document.getElementById('coachfab'); if(!f) return;
+  f.classList.add('away');
+  clearTimeout(fabЖдёт);
+  fabЖдёт=setTimeout(function(){ f.classList.remove('away'); fabSoon(); }, 420);
+}
+window.addEventListener('scroll', fabЕдем, {passive:true});
+window.addEventListener('resize', fabSoon);
+/* экраны перерисовываются в разное время: после ответа сервера, после
+   закрытого подхода, после смены дня. Вместо того чтобы помнить про кнопку в
+   каждом из этих мест, слушаем сам поток страницы. */
+try{
+  new MutationObserver(fabSoon).observe(document.querySelector('main.wrap'),
+    {childList:true, subtree:true});
+}catch(e){}
+addEventListener('load', fabSoon);
+setTimeout(fabSoon, 300);
 document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
+document.getElementById('coachclose').addEventListener('click', closeCoach);
+document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
+function cGo(){
+  var t=document.getElementById('ctext').value.trim();
+  if(!t && !CHAT.att) return;
+  var img=CHAT.att; cAttSet(null);
+  coachSend(t, img);
+}
+document.getElementById('csend').addEventListener('click', cGo);
+document.getElementById('ctext').addEventListener('keydown', function(e){
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); cGo(); }
+});
+document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; });
+document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
+document.getElementById('cfile').addEventListener('change', function(e){
+  var f=e.target.files && e.target.files[0]; e.target.value='';
+  if(!f) return;
+  CHAT.prep=true; renderChat();
+  shrink(f).then(function(b64){ CHAT.prep=false; cAttSet(b64); renderChat();
+    var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
+  }).catch(function(){ CHAT.prep=false; CHAT.err='Не смог прочитать фото'; renderChat(); });
+});
+function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); }
+document.getElementById('cattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 
 /* ── init ── */

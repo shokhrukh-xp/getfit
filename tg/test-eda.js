@@ -25,7 +25,7 @@ const ЕДА = [
   const ряд = await page.evaluate(() => Array.from(document.querySelector('.fask').children)
     .filter(e => e.id).map(e => e.id));
   дано(ряд.slice(0, 3).join(',') === 'fphoto,ftext,fsend',
-    'порядок как на главной: камера, поле, отправка — ' + ряд.join(','));
+    'порядок тот же, что в разговоре с тренером: камера, поле, отправка — ' + ряд.join(','));
   const фон = await page.$eval('#fphoto', e => getComputedStyle(e).backgroundColor);
   const фонПоля = await page.$eval('#ftext', e => getComputedStyle(e).backgroundColor);
   дано(фон !== фонПоля, 'кнопка съёмки выделена фоном, а не сливается с полем');
