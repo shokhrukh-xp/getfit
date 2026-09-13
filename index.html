@@ -2326,6 +2326,7 @@ function catOwn(id){
    вместо кадра оставался пустой квадрат. Значит каталог нужен сразу, как
    только на экране есть упражнение с id. */
 var катЖдём=false;
+var катПопыток=0;
 function катНадо(){
   if(CAT || катЖдём) return;
   катЖдём=true;
@@ -2333,7 +2334,16 @@ function катНадо(){
     катЖдём=false;
     try{ renderList(); }catch(e){}
     try{ renderProgress(); }catch(e){}
-  }).catch(function(){ катЖдём=false; });
+    /* карта тела достаёт мышцу из каталога: без перерисовки она оставалась
+       пустой ровно до следующего захода на вкладку */
+    try{ renderMus(); }catch(e){}
+  }).catch(function(){
+    /* сеть моргнула — без повторной попытки экран остаётся без кадров движения
+       до следующей перерисовки, а на маке это выглядит как «упражнений нет».
+       Три попытки, дальше молчим: бесконечно долбить недоступный файл незачем. */
+    катЖдём=false;
+    if(катПопыток++ < 3) setTimeout(function(){ if(!CAT) катНадо(); }, 2500);
+  });
 }
 function mediaFor(e){
   var own = e.cat ? catOwn(e.cat) : null;
@@ -4097,7 +4107,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 11:04';
+var BUILD = '13.09 11:39';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4306,10 +4316,46 @@ function blankSess(){
   o.n = exList(day).map(function(e){ return e.n; });
   return o;
 }
+/* ДЕНЬ, КОТОРЫЙ УЖЕ СДЕЛАН, ВЫГЛЯДИТ СДЕЛАННЫМ — НА ЛЮБОМ ЭКРАНЕ.
+   13.09: «почему в телеграме на маке тренировка пуста, хотя с телефона я её
+   сохранил». Отметки подходов живут в памяти устройства, в облако уезжает
+   результат. Мак честно рисовал день с нуля. Теперь: если за сегодня в журнале
+   уже есть этот день, а на этом устройстве не отмечено ничего, показываем
+   сделанное — те же числа, что лежат в журнале, и их можно править.
+   Ход занятия по-прежнему не синхронизируется: галочки остаются на том
+   телефоне, где тренируешься. */
+function сессияИзЖурнала(){
+  if(!HIST || !HIST.length) return null;
+  var w=null;
+  HIST.forEach(function(x){ if(!w && x.date===TODAY && dayHere(x.day)===day) w=x; });
+  if(!w || !w.ex || !w.ex.length) return null;
+  var сп=exList(day), o={ex:[]}, нашли=false;
+  сп.forEach(function(e,di){
+    var rec=null;
+    (w.ex||[]).forEach(function(x){
+      if(rec) return;
+      var id=x.id||null, мой=e.cat||e.id||null;
+      if((id && мой && id===мой) || x.n===e.n) rec=x;
+    });
+    var arr=[];
+    if(rec && rec.sets && rec.sets.length){
+      нашли=true;
+      rec.sets.forEach(function(v){
+        arr.push({ w:(v.w==null?'':v.w), r:(v.r==null?'':v.r), done:true, t:true });
+      });
+    }
+    var n=setsFor(e,di);
+    while(arr.length<n) arr.push({w:'',r:'',done:false});
+    o.ex.push({sets:arr});
+  });
+  if(!нашли) return null;
+  o.n=сп.map(function(e){ return e.n; });
+  return o;
+}
 function loadSess(){
   EXPICK=false;                     /* другой день — снова список, а не карточка */
   var x=get(sKey(),null);
-  if(!x || !x.ex || x.ex.length!==exList(day).length) x=blankSess();
+  if(!x || !x.ex || x.ex.length!==exList(day).length) x=сессияИзЖурнала()||blankSess();
   exList(day).forEach(function(e,di){
     /* число подходов считает setsFor: она знает и про фазу, и про лёгкую
        неделю, и про правку человека. Отдельная формула здесь однажды уже
@@ -4334,7 +4380,7 @@ function anyTouched(){
 }
 function refillIfUntouched(){
   if(anyTouched()) return;          /* пользователь уже что-то ввёл — не трогаем */
-  sess=blankSess(); saveSess(); renderList();
+  sess=сессияИзЖурнала()||blankSess(); saveSess(); renderList();
 }
 /* Источник правды — экран. Перед сохранением снимаем состояние с DOM,
    чтобы никакая рассинхронизация памяти не потеряла то, что человек видит. */
@@ -5414,7 +5460,10 @@ function sessionBody(){
     /* id каталога рядом с именем: имена упражнений меняются (11.09 каталог
        переименован), и тренер на сервере сверял историю с программой по
        строке — сделанное переставало находиться. Имя остаётся как есть. */
-    ex.push({ n:e.n, id:(e.id||e.cat||null), unit:(isTime(e)?'sec':'reps'),
+    /* мышца и группа движения едут вместе с подходами: карта тела не должна
+       зависеть от того, загрузился ли каталог на этом устройстве */
+    ex.push({ n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
+      unit:(isTime(e)?'sec':'reps'),
       sets:done.map(function(v){
         var w=parseFloat(String(v.w).replace(',','.')), r=parseFloat(String(v.r).replace(',','.'));
         return { w:isNaN(w)?null:w, r:isNaN(r)?null:r };
@@ -5525,14 +5574,30 @@ var resetArmed=false, resetT=null;
 document.getElementById('reset').addEventListener('click', function(){
   var b=this;
   if(!resetArmed){
-    resetArmed=true; b.textContent='Точно очистить?'; b.classList.add('armed');
+    resetArmed=true; b.textContent='Точно? Сотрёт и запись в журнале'; b.classList.add('armed');
     clearTimeout(resetT); resetT=setTimeout(function(){ resetArmed=false; b.textContent='Очистить день'; b.classList.remove('armed'); },4000);
     return;
   }
   clearTimeout(resetT); resetArmed=false; b.textContent='Очистить день'; b.classList.remove('armed');
   set(wt0Key(), null);
+  стеретьЗапись();
   sess=blankSess(); saveSess(); renderList(); paintNote('');
 });
+/* «Очистить» значит «этого занятия не было». Раньше кнопка чистила только
+   экран, а запись оставалась в журнале, в карте тела и в недельном объёме —
+   очищенный день продолжал считаться сделанным. Стираем везде: копию в
+   Telegram, строку в облаке и историю в памяти. */
+function стеретьЗапись(){
+  var id=TODAY+'_'+day;
+  try{ if(HIST) HIST=HIST.filter(function(w){ return !(w.date===TODAY && dayHere(w.day)===day); }); }catch(e){}
+  try{ csDel(csKey('workouts/'+id)); }catch(e){}
+  try{ syncPost('/w/del', {uid:syncUid(), id:id}); }catch(e){}
+  try{ if(lastDone && lastDone.date===TODAY && lastDone.day===day){ lastDone=null; set('lastdone', null); } }catch(e){}
+  try{ pushVolume(); }catch(e){}
+  try{ renderMus(); }catch(e){}
+  try{ renderProgress(); }catch(e){}
+  try{ renderDayHead(); renderTodaybar(); }catch(e){}
+}
 /* ── «Завершить и сохранить»: собственный путь, без общих состояний ──
    Читает экран → пишет в облако → красит кнопку. Любая ошибка — в статус и в облако. */
 var finArmed=false, finT=null, finBtn=document.getElementById('finish');
@@ -5612,7 +5677,8 @@ function finishSave(){
 
     var ex=[];
     exList(day).forEach(function(e,di){ if(sc.byEx[di])
-      ex.push({n:e.n, p:e.p, unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
+      ex.push({n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
+               unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
     /* время тренировки — от первого касания подхода до этого нажатия, не до
        ответа облака; едет в запись, чтобы журнал и тренер его видели */
     var fin=Date.now(), t0=wStart();
@@ -5706,11 +5772,26 @@ var MUS_EN={quadriceps:'quad', hamstrings:'ham', glutes:'glute', calves:'calf', 
  shoulders:'delt', traps:'trap', lats:'lat', 'middle back':'mid', 'lower back':'lower',
  biceps:'bic', triceps:'tri', forearms:'fore', abdominals:'abs', abductors:'abd',
  adductors:'add', neck:'neck'};
+/* ЗАПИСЬ ЖУРНАЛА ЗНАЕТ СВОЮ МЫШЦУ ТОЛЬКО ТАК.
+   13.09: «почему на карте тела счёт не соответствует тому, что я сделал, я
+   сегодня качал ноги». Потому что карта доставала мышцу двумя путями —
+   из группы движения (p) по таблице MMAP и из поля m. У программы, собранной
+   тренером, p — свободный текст («Жим ногами», «Подтягивания»), в таблице его
+   нет, а m в запись журнала не попадало вовсе. Итог: всё, что сделано по
+   собранной программе, для карты не существовало.
+   Теперь третий путь: мышца каталога по id записи. Вес такой же, как у сервера
+   при сборке программы (progVolume): основная мышца за подход, вспомогательные
+   за половину — иначе экран и тренер считали бы объём по-разному. */
 function musOf(x){
   var p=patOf(x);
   if(p && MMAP[p]) return MMAP[p];
-  if(x.m && MUS_EN[x.m]) return [[MUS_EN[x.m],1]];
-  return null;
+  var c=null;
+  try{ c=catById(x.id||x.cat||null); }catch(e){}
+  var m=(c&&c.m)||x.m||null, sm=(c&&c.sm)||x.sm||null;
+  if(!m || !MUS_EN[m]) return null;
+  var out=[[MUS_EN[m],1]], уже={}; уже[MUS_EN[m]]=1;
+  (sm||[]).forEach(function(v){ var k=MUS_EN[v]; if(k && !уже[k]){ уже[k]=1; out.push([k,.5]); } });
+  return out;
 }
 
 /* ── Недельный объём по мышцам ──
@@ -5895,6 +5976,9 @@ function openCatFor(m){
 
 function renderMus(){
   var box=document.getElementById('logmus'); if(!box) return;
+  /* мышца записи журнала берётся по id каталога — значит каталог здесь нужен
+     так же, как кадры движения на карточках */
+  try{ катНадо(); }catch(e){}
   var карт=document.getElementById('logmusbox');
   /* пустая карточка на сером фоне выглядит как сбой вёрстки — прячем целиком */
   var пусто=!HIST || !HIST.length;
