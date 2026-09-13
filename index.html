@@ -2859,8 +2859,25 @@ function setsFor(e, di, dk){
   if(deloadOn() && !isTime(e)) base = Math.round(base/2);
   return Math.max(1, Math.min(8, base));
 }
+/* «ЗАМЕНЕНО» — ЭТО ПОДТВЕРЖДЕНИЕ, А НЕ СОСТОЯНИЕ.
+   13.09: «кнопка заменено должна стоять секунд 10, потом снова должна быть
+   возможность заменить». Надпись висела навсегда и читалась как запертая
+   кнопка, хотя нажать её можно было всегда. Теперь она держится десять секунд
+   после замены, а потом возвращается к «Заменить». */
+var SUBNEW={}, subTimer=null;
+function свежаяЗамена(k){ return !!(k && SUBNEW[k] && (Date.now()-SUBNEW[k]) < 10000); }
+function subСнять(){
+  clearTimeout(subTimer);
+  subTimer=setTimeout(function(){
+    var было=Object.keys(SUBNEW).length;
+    Object.keys(SUBNEW).forEach(function(k){ if(!свежаяЗамена(k)) delete SUBNEW[k]; });
+    if(было!==Object.keys(SUBNEW).length){ try{ renderList(); }catch(e){} }
+    if(Object.keys(SUBNEW).length) subСнять();
+  }, 1100);
+}
 function applySub(k, item){
   if(item) SUBS[k] = {n:item.n, e:item.e, i:item.i}; else delete SUBS[k];
+  if(item && k){ SUBNEW[k]=Date.now(); subСнять(); } else if(k) delete SUBNEW[k];
   saveSubs(); rebuildSess();
   renderList(); paintNote(''); haptic('medium');
 }
@@ -4093,7 +4110,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 00:13';
+var BUILD = '13.09 08:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4374,7 +4391,13 @@ var EXPICK=false;
 function раскрытыйEx(){ return EXPICK ? activeEx() : -1; }
 function activeEx(){
   var сп=exList(day), c=sess.cur;
-  if(c!=null && сп[c] && !exDone(c)) return c;
+  /* ЗАКРЫТОЕ УПРАЖНЕНИЕ ТОЖЕ ОТКРЫВАЕТСЯ. 13.09: «я сделал 2 подхода первого
+     упражнения, после чего его карточка больше не открывается, а я хочу
+     добавить ещё один». Тап по строке ставил sess.cur на неё, но здесь стояло
+     !exDone(c) — и выбор человека молча подменялся первым незакрытым. Пока он
+     сам ничего не выбирал (EXPICK=false), список остаётся свёрнутым и это
+     условие не работает; как только выбрал — открываем именно то, что выбрал. */
+  if(c!=null && сп[c] && (EXPICK || !exDone(c))) return c;
   for(var i=0;i<сп.length;i++) if(!exDone(i)) return i;
   return (c!=null && сп[c]) ? c : 0;
 }
@@ -4453,6 +4476,9 @@ function bumpSets(di, d){
     if(arr.length>=8) return;
     var last = arr[arr.length-1] || {};
     arr.push({w:last.w, r:last.r!=null?last.r:baseReps(e), done:false});
+    /* добавил подход к упражнению, которое уже закрыл, — работать ты будешь
+       именно в нём, а не в том, что приложение считало текущим */
+    sess.cur=di; sess.ex[di].cur=arr.length-1; EXPICK=true;
   } else {
     if(arr.length<=1) return;
     arr.pop();
@@ -4496,7 +4522,7 @@ function renderList(){
 function низКарточки(e,di,метка){
   return '<div class="exfoot">'+
       '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">'+(метка?метка+' · ':'')+'Описание</button>'+
-      '<button type="button" class="ebtn'+(e.sub?' on':'')+'" data-swap="'+di+'">'+(метка?метка+' · ':'')+(e.sub?'Заменено':'Заменить')+'</button>'+
+      '<button type="button" class="ebtn'+(свежаяЗамена(e.k)?' on':'')+'" data-swap="'+di+'">'+(метка?метка+' · ':'')+(свежаяЗамена(e.k)?'Заменено':'Заменить')+'</button>'+
       '<button type="button" class="ebtn drop" data-drop="'+di+'" aria-label="Убрать упражнение из этого дня">Убрать</button>'+
     '</div>'+
     '<div class="exinfo" id="exinfo'+di+'" hidden>'+

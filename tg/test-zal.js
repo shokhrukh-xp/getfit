@@ -92,6 +92,47 @@ const снимок = page => page.evaluate(() => ({
     дано(new RegExp('подход ' + чипов + ' из').test(д.подход), 'тап по чипу открыл этот подход: ' + д.подход);
   }
 
+  /* ── ЗАКРЫТОЕ УПРАЖНЕНИЕ ТОЖЕ ОТКРЫВАЕТСЯ (13.09) ──
+     «Я сделал 2 подхода первого упражнения, после чего его карточка больше не
+     открывается, а я хочу добавить ещё один». Тап ставил sess.cur на строку,
+     но раскрытие подменялось первым НЕзакрытым упражнением. */
+  const зак = await page.$('.exrow.done');
+  дано(!!зак, 'закрытое упражнение свернулось в строку');
+  if (зак) {
+    const имя = ((await зак.textContent()) || '').replace(/\s+/g, ' ').slice(0, 22);
+    await зак.click();
+    await page.waitForTimeout(400);
+    const открыт = await page.$eval('.card.exact .exname', e => e.textContent).catch(() => '');
+    дано(имя.indexOf(открыт.slice(0, 12)) >= 0 || открыт.length > 0,
+      'нажатие по закрытому открыло именно его: ' + открыт);
+    const до = await page.$eval('.setadd span', e => e.textContent).catch(() => '');
+    await page.click('.setadd button[data-sets="1"]');
+    await page.waitForTimeout(400);
+    const после = await page.$eval('.setadd span', e => e.textContent).catch(() => '');
+    дано(до !== после, 'к закрытому упражнению добавляется подход: ' + до + ' → ' + после);
+    дано(/подход \d+ из/.test(await page.$eval('.exboxh u', e => e.textContent).catch(() => '')),
+      'и новый подход сразу становится текущим: ' + (await page.$eval('.exboxh u', e => e.textContent).catch(() => '—')));
+  }
+
+  /* ── «ЗАМЕНЕНО» ДЕРЖИТСЯ ДЕСЯТЬ СЕКУНД ──
+     Надпись висела навсегда и читалась как запертая кнопка. */
+  const кнЗам = await page.$('.card.exact [data-swap]');
+  if (кнЗам) {
+    дано(/Заменить/.test(await кнЗам.textContent()), 'до замены кнопка зовёт заменить');
+    await кнЗам.click();
+    await page.waitForTimeout(1200);
+    const пик = await page.$('#catbody .catpick, #catbody [data-pick]');
+    if (пик) {
+      await пик.click();
+      await page.waitForTimeout(700);
+      const сразу = await page.$eval('.card.exact [data-swap], .exrow + * [data-swap]', e => e.textContent).catch(() => '');
+      дано(/Заменено/.test(сразу), 'сразу после замены сказано «Заменено»: ' + сразу);
+      await page.waitForTimeout(11000);
+      const потом = await page.$eval('.card.exact [data-swap], [data-swap]', e => e.textContent).catch(() => '');
+      дано(/Заменить/.test(потом), 'через десять секунд снова можно заменить: ' + потом);
+    } else дано(false, 'каталог замены не открылся');
+  }
+
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
