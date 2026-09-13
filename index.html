@@ -647,6 +647,14 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .mesum button{background:none;border:none;padding:4px 0;color:var(--accent-txt);font:inherit;font-size:13px;cursor:pointer;flex:0 0 auto}
 .mehint{margin:-6px 2px 12px;font-size:11.5px;color:var(--dim);line-height:1.45}
 .dayedit{margin:18px 0 4px}
+/* занятие вне зала — не зал, и цвет другой намеренно */
+.dayedit .sportbtn{margin-top:9px;color:var(--done-txt)}
+.sptoday{margin:9px 2px 0;font-size:11.5px;color:var(--dim);line-height:1.5}
+.sptoday b{color:var(--done-txt);font-weight:700}
+.sptoday button{background:none;border:none;padding:0 0 0 6px;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
+#sp-itog{margin:14px 0 2px}
+#sp-itog b{color:var(--done-txt);font-size:15px}
+#sp-itog i{font-style:normal;display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.45}
 .dayedit .btn{color:var(--accent-txt);border-color:var(--line)}
 .dayeditn{margin:8px 2px 0;font-size:11.5px;color:var(--dim);line-height:1.45;text-align:center}
 .dayeditn button{background:none;border:none;padding:0;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
@@ -2190,6 +2198,18 @@ body.onb #picker .modalbox::before{display:none}
       <button class="btn prim" id="ml-save">Сохранить</button>
       <button class="btn" id="ml-del">Удалить</button>
     </div>
+  </div>
+</div>
+<div class="modal" id="sportm" role="dialog" aria-modal="true" aria-labelledby="sporttitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="sporttitle">Занятие вне зала</h3><button class="xbtn" id="sportclose" aria-label="Закрыть">✕</button></div>
+    <div class="sbrow"><span class="sblab">ЧТО БЫЛО</span><div class="seg multi" id="sp-kind"></div>
+      <label class="mlab" id="sp-ownrow" hidden>своё название<input id="sp-own" type="text" autocomplete="off" maxlength="24" placeholder="джиу-джитсу"></label></div>
+    <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sp-min"></div>
+      <label class="mlab" id="sp-minrow" hidden>минут<input id="sp-minown" type="number" inputmode="numeric" min="1" max="600" placeholder="75"></label></div>
+    <div class="sbrow"><span class="sblab">КАК ШЛО</span><div class="seg" id="sp-int"></div></div>
+    <p class="rec" id="sp-itog"></p>
+    <button class="btn prim wide" id="sp-save">Записать</button>
   </div>
 </div>
 <div class="modal" id="sborm" role="dialog" aria-modal="true" aria-labelledby="sbortitle">
@@ -4113,7 +4133,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 15:54';
+var BUILD = '13.09 17:56';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4584,6 +4604,165 @@ function bumpSets(di, d){
   saveSubs(); saveSess(); renderList(); haptic('light');
 }
 
+/* ══════════ ЗАНЯТИЕ ВНЕ ЗАЛА ══════════
+   13.09, его просьба: «хочу поиграть в теннис, но не могу найти, как
+   добавить». Механика была с самого начала — тренер разбирал «сегодня теннис
+   полтора часа» из чата и писал в день, — но нажать было негде, и найти это
+   человек не мог.
+   Лист спрашивает три вещи: что было, сколько минут, как шло. Виды берём с
+   сервера (там же, где считаются траты), плюс «своё» — его условие: «может
+   чего-то не будет в списке». Незнакомый вид сохраняется своим именем и
+   считается по запасным MET.
+   ПРИБАВКУ СЧИТАЕТ СЕРВЕР. Формула (MET − 1) × вес × часы живёт в воркере
+   одна; повторить её здесь — значит завести второе место про один факт,
+   которое однажды разойдётся с первым. */
+var SPORT = { kind:'', own:'', min:60, int:'mod', all:false };
+var SPKINDS = null, SPTODAY = null, spWait = 0, spBusy = false;
+/* виды, которыми человек пользовался: они встают первыми — свой теннис
+   искать в алфавитном списке из тридцати восьми не нужно */
+function spRecent(){ var a=get('sp_recent',null); return Array.isArray(a)?a:[]; }
+function spRemember(k){
+  var a=spRecent().filter(function(x){ return x!==k; });
+  a.unshift(k); set('sp_recent', a.slice(0,4));
+}
+var SPБАЗА = ['теннис','бег','ходьба','плавание','велосипед','футбол'];
+function spChips(){
+  var box=document.getElementById('sp-kind'); if(!box) return;
+  var все = SPKINDS || SPБАЗА;
+  /* своё занятие тоже встаёт первым, даже если его нет в справочнике:
+     человек вписал его руками, значит оно у него и повторится */
+  var часто = spRecent().slice();
+  SPБАЗА.forEach(function(k){ if(часто.indexOf(k)<0 && все.indexOf(k)>=0) часто.push(k); });
+  часто = часто.slice(0,6);
+  var список = SPORT.all ? все : часто;
+  if(SPORT.kind && список.indexOf(SPORT.kind)<0 && !SPORT.own) список = список.concat([SPORT.kind]);
+  var h = список.map(function(k){
+    return '<button type="button" data-spk="'+esc(k)+'" aria-pressed="'+(SPORT.kind===k && !SPORT.own)+'">'+esc(k)+'</button>';
+  }).join('');
+  if(!SPORT.all && все.length>список.length)
+    h += '<button type="button" data-spmore="1" aria-pressed="false">ещё '+(все.length-список.length)+' →</button>';
+  h += '<button type="button" data-spown="1" aria-pressed="'+(!!SPORT.own)+'">своё</button>';
+  box.innerHTML = h;
+  var row=document.getElementById('sp-ownrow'); if(row) row.hidden = !SPORT.own;
+}
+function spMin(){
+  var box=document.getElementById('sp-min'); if(!box) return;
+  var свои=[30,45,60,90,120], сам = свои.indexOf(SPORT.min)<0;
+  box.innerHTML = свои.map(function(m){
+    return '<button type="button" data-spm="'+m+'" aria-pressed="'+(!сам && SPORT.min===m)+'">'+m+'</button>';
+  }).join('') + '<button type="button" data-spm="own" aria-pressed="'+сам+'">своё</button>';
+  var row=document.getElementById('sp-minrow'); if(row) row.hidden = !сам;
+}
+function spInt(){
+  var box=document.getElementById('sp-int'); if(!box) return;
+  box.innerHTML = [['light','легко'],['mod','обычно'],['hard','тяжело']].map(function(p){
+      return '<button type="button" data-spi="'+p[0]+'" aria-pressed="'+(SPORT.int===p[0])+'">'+p[1]+'</button>';
+    }).join('');
+}
+function spName(){ return (SPORT.own ? (document.getElementById('sp-own')||{}).value : SPORT.kind) || ''; }
+/* прибавку спрашиваем у сервера: на экране должно стоять то же число, что
+   уедет в день, поэтому считает её тот же код, что и записывает */
+function spItog(){
+  var el=document.getElementById('sp-itog'); if(!el) return;
+  var имя=spName().trim(), btn=document.getElementById('sp-save');
+  if(!имя || !(SPORT.min>0)){
+    el.innerHTML='<i>Выбери занятие и время — покажу, на сколько вырастет норма еды.</i>';
+    if(btn) btn.disabled=true;
+    return;
+  }
+  if(btn) btn.disabled=false;
+  if(!/ккал/.test(el.textContent||'')) el.innerHTML='<i>считаю прибавку…</i>';
+  clearTimeout(spWait);
+  spWait=setTimeout(function(){
+    fGet('/acts?uid='+encodeURIComponent(syncUid())+'&kind='+encodeURIComponent(имя)+
+         '&min='+SPORT.min+'&intensity='+SPORT.int).then(function(d){
+      var p=d&&d.preview; if(!p) return;
+      if(spName().trim()!==имя || SPORT.min!==p.min || SPORT.int!==p.intensity) return;  /* ответ устарел */
+      el.innerHTML='<b>+'+p.kcal+' ккал к норме еды</b>'+
+        '<i>'+esc(p.kind)+' · '+p.min+' мин · MET '+String(p.met).replace('.',',')+
+        (p.known ? ' · Compendium 2011, не по часам'
+                 : ' · такого вида в справочнике нет — считаю по средним') + '</i>';
+    }).catch(function(){ el.innerHTML='<i>Не удалось посчитать — запишу, прибавку увидишь в дне.</i>'; });
+  }, 260);
+}
+function spDraw(){ spChips(); spMin(); spInt(); spItog(); }
+function openSport(){
+  var m=document.getElementById('sportm'); if(!m) return;
+  SPORT={ kind:(spRecent()[0]||'теннис'), own:'', min:60, int:'mod', all:false };
+  spDraw(); m.classList.add('show');
+  if(!SPKINDS) fGet('/acts?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(d&&d.kinds&&d.kinds.length){ SPKINDS=d.kinds; spChips(); }
+  }).catch(function(){});
+}
+function closeSport(){ var m=document.getElementById('sportm'); if(m) m.classList.remove('show'); }
+/* что уже записано за сегодня — строкой под кнопкой: запись живёт на «Еде»,
+   и без этой строки было бы непонятно, засчиталось ли занятие */
+function spToday(){
+  var el=document.getElementById('sporttoday'); if(!el) return;
+  var сп=SPTODAY;
+  if(!сп || !сп.length){
+    el.innerHTML='<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>';
+    return;
+  }
+  el.innerHTML='<p class="sptoday">Сегодня: '+сп.map(function(a){
+    return '<b>'+esc(a.kind)+'</b> '+a.min+' мин · +'+Math.round(a.kcal)+' ккал';
+  }).join(' · ')+'<button type="button" id="spgo">в день →</button></p>';
+}
+function spLoadToday(){
+  if(!DB) return;
+  fGet('/acts?uid='+encodeURIComponent(syncUid())+'&date='+TODAY).then(function(d){
+    if(d&&d.ok){ SPTODAY=d.acts||[]; spToday(); }
+  }).catch(function(){});
+}
+document.addEventListener('click', function(e){
+  if(e.target.closest('#addsport')){ openSport(); haptic('light'); return; }
+  if(e.target.closest('#sportclose')){ closeSport(); return; }
+  if(e.target.closest('#spgo')){ goPage('food'); haptic('light'); return; }
+  var m=document.getElementById('sportm');
+  if(m && m.classList.contains('show') && e.target===m){ closeSport(); return; }
+  var k=e.target.closest('[data-spk]');
+  if(k){ SPORT.kind=k.dataset.spk; SPORT.own=''; spDraw(); haptic('light'); return; }
+  if(e.target.closest('[data-spmore]')){ SPORT.all=true; spChips(); return; }
+  if(e.target.closest('[data-spown]')){
+    SPORT.own='1'; spChips();
+    var i=document.getElementById('sp-own'); if(i){ i.focus(); }
+    spItog(); return;
+  }
+  var mm=e.target.closest('[data-spm]');
+  if(mm){
+    if(mm.dataset.spm==='own'){ SPORT.min=0; spMin();
+      var mi=document.getElementById('sp-minown'); if(mi){ mi.focus(); } }
+    else { SPORT.min=+mm.dataset.spm; spMin(); }
+    spItog(); haptic('light'); return;
+  }
+  var ii=e.target.closest('[data-spi]');
+  if(ii){ SPORT.int=ii.dataset.spi; spInt(); spItog(); haptic('light'); return; }
+});
+document.addEventListener('input', function(e){
+  if(e.target.id==='sp-own'){ spItog(); return; }
+  if(e.target.id==='sp-minown'){ SPORT.min=Math.max(0, Math.min(600, parseInt(e.target.value,10)||0)); spItog(); }
+});
+document.getElementById('sp-save').addEventListener('click', function(){
+  if(spBusy) return;
+  var имя=spName().trim();
+  if(!имя || !(SPORT.min>0)) return;
+  spBusy=true; var b=this; b.disabled=true; b.textContent='Записываю…';
+  fPost('/act/add', {uid:syncUid(), date:TODAY, kind:имя, min:SPORT.min, intensity:SPORT.int})
+    .then(function(d){
+      spBusy=false; b.disabled=false; b.textContent='Записать';
+      if(d && d.act) spRemember(d.act.kind);
+      if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e2){} }
+      SPTODAY=null; spLoadToday();
+      closeSport(); haptic('ok');
+    })
+    .catch(function(err){
+      spBusy=false; b.disabled=false; b.textContent='Записать';
+      var el=document.getElementById('sp-itog');
+      if(el) el.innerHTML='<i>'+esc(humanErr(err))+'</i>';
+      haptic('err');
+    });
+});
+
 function renderList(){
   var box = document.getElementById('list'), h='';
   var список = exList(day);
@@ -4602,6 +4781,11 @@ function renderList(){
   var пр=dayEdits(day);
   h+='<div class="dayedit">'+
      '<button type="button" class="btn wide" id="addex">+ Добавить упражнение</button>'+
+     /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить». Искал
+        он здесь, в конце дня зала — сюда кнопку и ставим. Сама запись живёт в
+        дне рядом с едой и поднимает норму: об этом говорит строка под ней. */
+     '<button type="button" class="btn wide sportbtn" id="addsport">+ Занятие вне зала</button>'+
+     '<div id="sporttoday"></div>'+
      (пр.skip||пр.add ? '<p class="dayeditn">В этом дне'+
         (пр.add?' добавлено '+пр.add:'')+(пр.add&&пр.skip?' ·':'')+(пр.skip?' убрано '+пр.skip:'')+
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+
@@ -4615,6 +4799,8 @@ function renderList(){
   }
   /* список перерисовали — вернуть подсветку идущему секундомеру */
   if(typeof watchBtns==='function') watchBtns();
+  /* строка занятий живёт внутри дня и пропадает вместе с ним */
+  try{ spToday(); if(SPTODAY===null) spLoadToday(); }catch(e){}
 }
 function низКарточки(e,di,метка){
   return '<div class="exfoot">'+

@@ -187,6 +187,28 @@ async function поднять(page, o) {
       return дать({ ok: true, goal: o.goal === undefined ? null : o.goal,
         safe: o.safe === undefined ? { w: 88.1, max: 0.88, limit: 'вес', floor: 70.9, upMax: 0.35 } : o.safe });
     }
+    /* спорт вне зала. Прибавку СЧИТАЕТ СЕРВЕР, а не приложение: стенд нарочно
+       отвечает числом, которого не даст никакая формула (777), и проверка
+       убеждается, что на экране стоит именно ответ сервера. Посчитай
+       приложение само — и число разошлось бы с тем, что уедет в день. */
+    if (p === '/acts') {
+      const виды = o.kinds || ['теннис', 'бег', 'ходьба', 'плавание', 'велосипед', 'футбол',
+        'бадминтон', 'сквош', 'йога', 'танцы', 'гребля', 'лыжи', 'коньки', 'бокс'];
+      const kind = u.searchParams.get('kind') || '', min = +u.searchParams.get('min') || 0;
+      if (kind && min > 0) {
+        const знаком = виды.indexOf(kind) >= 0;
+        return дать({ ok: true, kinds: виды, preview: { kind, min, kcal: 777,
+          intensity: u.searchParams.get('intensity') || 'mod', met: 7.3, kg: 88.1, known: знаком } });
+      }
+      return дать({ ok: true, kinds: виды, acts: o.acts || [] });
+    }
+    if (p === '/act/add') {
+      const b2 = JSON.parse(route.request().postData() || '{}');
+      const акт = { id: 'a1', date: b2.date, t: '18:20', kind: b2.kind, min: b2.min,
+                    kcal: 777, intensity: b2.intensity, hr: null, dev: null, src: 'hand', note: null };
+      o.acts = (o.acts || []).concat([акт]);
+      return дать({ ok: true, act: акт, day: день({ acts: o.acts }) });
+    }
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })
