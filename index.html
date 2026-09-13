@@ -650,8 +650,16 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 /* занятие вне зала — не зал, и цвет другой намеренно */
 .dayedit .sportbtn{margin-top:9px;color:var(--done-txt)}
 .sptoday{margin:9px 2px 0;font-size:11.5px;color:var(--dim);line-height:1.5}
-.sptoday b{color:var(--done-txt);font-weight:700}
-.sptoday button{background:none;border:none;padding:0 0 0 6px;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
+.actcard{border-color:rgba(var(--done-rgb),.35)}
+.acthead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.actcard .eyebrow{color:var(--done-txt)}
+.actcard .exname{display:block;font-size:18px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.actcard .spec{display:block;font-size:12px;color:var(--dim);margin-top:3px}
+.actcard .spec span{opacity:.5}
+.actgain{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(var(--done-rgb),.10);
+  font-family:inherit;font-size:12.5px;color:var(--muted);line-height:1.4}
+.actgain b{color:var(--done-txt);font-size:15px;font-weight:700}
+.actgain i{font-style:normal;color:var(--dim);font-size:11.5px}
 #sp-itog{margin:14px 0 2px}
 #sp-itog b{color:var(--done-txt);font-size:15px}
 #sp-itog i{font-style:normal;display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.45}
@@ -4133,7 +4141,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 17:56';
+var BUILD = '13.09 19:52';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4695,18 +4703,41 @@ function openSport(){
   }).catch(function(){});
 }
 function closeSport(){ var m=document.getElementById('sportm'); if(m) m.classList.remove('show'); }
-/* что уже записано за сегодня — строкой под кнопкой: запись живёт на «Еде»,
-   и без этой строки было бы непонятно, засчиталось ли занятие */
+/* ЗАПИСАННОЕ ЗАНЯТИЕ — КАРТОЧКА, А НЕ СТРОЧКА.
+   Сначала это была одна подпись под кнопкой; его слова: «добавь нормальной
+   отдельной карточкой, а не просто одной незаметной строкой». Он прав:
+   сделанное занятие — такой же факт дня, как закрытое упражнение, и весит
+   столько же. Карточка на том же языке, что и остальной день: надкласс,
+   название крупно, под ним чем оно было, и отдельной строкой — что оно дало. */
+var ИНТЕНС={light:'легко', mod:'обычно', hard:'тяжело'};
 function spToday(){
   var el=document.getElementById('sporttoday'); if(!el) return;
   var сп=SPTODAY;
-  if(!сп || !сп.length){
-    el.innerHTML='<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>';
-    return;
-  }
-  el.innerHTML='<p class="sptoday">Сегодня: '+сп.map(function(a){
-    return '<b>'+esc(a.kind)+'</b> '+a.min+' мин · +'+Math.round(a.kcal)+' ккал';
-  }).join(' · ')+'<button type="button" id="spgo">в день →</button></p>';
+  if(!сп || !сп.length){ el.innerHTML=''; return; }
+  el.innerHTML=сп.map(function(a){
+    var имя=String(a.kind||'занятие');
+    return '<article class="card actcard">'+
+      '<div class="acthead">'+
+        '<div class="actt"><span class="eyebrow">вне зала</span>'+
+          '<span class="exname">'+esc(имя.charAt(0).toUpperCase()+имя.slice(1))+'</span>'+
+          '<span class="spec">'+a.min+' мин'+(ИНТЕНС[a.intensity]?' <span>·</span> '+ИНТЕНС[a.intensity]:'')+
+            (a.t?' <span>·</span> '+esc(String(a.t).slice(0,5)):'')+'</span></div>'+
+        '<button type="button" class="xbtn" data-actdel="'+esc(a.id)+'" aria-label="Убрать занятие">✕</button>'+
+      '</div>'+
+      '<div class="actgain"><b>+'+Math.round(a.kcal)+' ккал</b> к норме еды сегодня'+
+        (a.met?' <i>· MET '+String(a.met).replace('.',',')+'</i>':'')+'</div>'+
+    '</article>';
+  }).join('');
+}
+/* убрать занятие можно там же, где оно показано: искать его на «Еде» ради
+   крестика человек не должен */
+function spDel(id){
+  if(!id) return;
+  fPost('/act/del', {uid:syncUid(), id:id}).then(function(d){
+    if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e){} }
+    SPTODAY=(SPTODAY||[]).filter(function(a){ return a.id!==id; });
+    spToday(); haptic('light');
+  }).catch(function(){ SPTODAY=null; spLoadToday(); });
 }
 function spLoadToday(){
   if(!DB) return;
@@ -4717,7 +4748,8 @@ function spLoadToday(){
 document.addEventListener('click', function(e){
   if(e.target.closest('#addsport')){ openSport(); haptic('light'); return; }
   if(e.target.closest('#sportclose')){ closeSport(); return; }
-  if(e.target.closest('#spgo')){ goPage('food'); haptic('light'); return; }
+  var ad=e.target.closest('[data-actdel]');
+  if(ad){ spDel(ad.dataset.actdel); return; }
   var m=document.getElementById('sportm');
   if(m && m.classList.contains('show') && e.target===m){ closeSport(); return; }
   var k=e.target.closest('[data-spk]');
@@ -4779,13 +4811,15 @@ function renderList(){
     h += одна(e,di);
   });
   var пр=dayEdits(day);
-  h+='<div class="dayedit">'+
+  /* Занятия вне зала — часть сегодняшнего дня, поэтому карточками ДО кнопок,
+     вместе с упражнениями, а не подписью под ними. */
+  h+='<div id="sporttoday"></div>'+
+     '<div class="dayedit">'+
      '<button type="button" class="btn wide" id="addex">+ Добавить упражнение</button>'+
      /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить». Искал
-        он здесь, в конце дня зала — сюда кнопку и ставим. Сама запись живёт в
-        дне рядом с едой и поднимает норму: об этом говорит строка под ней. */
+        он здесь, в конце дня зала — сюда кнопку и ставим. */
      '<button type="button" class="btn wide sportbtn" id="addsport">+ Занятие вне зала</button>'+
-     '<div id="sporttoday"></div>'+
+     '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>'+
      (пр.skip||пр.add ? '<p class="dayeditn">В этом дне'+
         (пр.add?' добавлено '+пр.add:'')+(пр.add&&пр.skip?' ·':'')+(пр.skip?' убрано '+пр.skip:'')+
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+

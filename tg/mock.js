@@ -209,6 +209,11 @@ async function поднять(page, o) {
       o.acts = (o.acts || []).concat([акт]);
       return дать({ ok: true, act: акт, day: день({ acts: o.acts }) });
     }
+    if (p === '/act/del') {
+      const b3 = JSON.parse(route.request().postData() || '{}');
+      o.acts = (o.acts || []).filter(a => a.id !== b3.id);
+      return дать({ ok: true, day: день({ acts: o.acts }) });
+    }
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })

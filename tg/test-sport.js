@@ -41,6 +41,7 @@ const лист = page => page.evaluate(() => ({
   дано(/Добавить упражнение/.test(рядом) && /Занятие вне зала/.test(рядом),
     'рядом с «Добавить упражнение»: ' + рядом.slice(0, 80));
   дано(/поднимает норму еды/.test(рядом), 'и подписано, куда занятие идёт');
+  дано(await page.$('#sporttoday .actcard') === null, 'пока занятий нет — пусто, без лишней карточки');
 
   await кн.scrollIntoViewIfNeeded();
   await кн.click();
@@ -88,11 +89,44 @@ const лист = page => page.evaluate(() => ({
   await page.click('#sp-save');
   await page.waitForTimeout(1400);
   дано(!(await лист(page)).открыт, 'после записи лист закрылся');
-  const строка = await page.$eval('#sporttoday', e => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
-  дано(/Сегодня/.test(строка) && /джиу-джитсу/.test(строка),
-    'под кнопкой видно, что занятие засчиталось: ' + строка.slice(0, 80));
-  дано(/777/.test(строка), 'с той же прибавкой, что показывал лист: ' + строка.slice(0, 80));
-  дано(/в день/.test(строка), 'и есть путь туда, где запись живёт');
+
+  /* ── ЗАНЯТИЕ ПОКАЗАНО КАРТОЧКОЙ, А НЕ СТРОЧКОЙ ──
+     Сначала это была одна подпись под кнопкой; его слова: «добавь нормальной
+     отдельной карточкой, а не просто одной незаметной строкой». Сделанное
+     занятие — такой же факт дня, как закрытое упражнение. */
+  const к = await page.evaluate(() => {
+    const c = document.querySelector('#sporttoday .actcard');
+    if (!c) return null;
+    const r = c.getBoundingClientRect();
+    const спис = document.querySelector('#list .exrow, #list .card');
+    return { имя: (c.querySelector('.exname') || {}).textContent || '',
+      над: (c.querySelector('.eyebrow') || {}).textContent || '',
+      чем: (c.querySelector('.spec') || {}).textContent.replace(/\s+/g, ' ') || '',
+      дало: (c.querySelector('.actgain') || {}).textContent.replace(/\s+/g, ' ') || '',
+      убрать: !!c.querySelector('[data-actdel]'),
+      высота: Math.round(r.height),
+      /* карточка стоит в дне, а не под кнопками */
+      доКнопок: !!(spис_before()) };
+    function spис_before(){
+      const c2 = document.querySelector('#sporttoday'), d = document.querySelector('.dayedit');
+      return c2 && d && (c2.compareDocumentPosition(d) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+  });
+  дано(!!к, 'занятие показано отдельной карточкой, а не строчкой');
+  if (к) {
+    дано(/Джиу-джитсу/i.test(к.имя), 'название крупно и с большой буквы: ' + к.имя);
+    дано(/вне зала/.test(к.над), 'надкласс говорит, что это за нагрузка: ' + к.над);
+    дано(/75 мин/.test(к.чем), 'под ним — чем занятие было: ' + к.чем);
+    дано(/777/.test(к.дало) && /норме еды/.test(к.дало), 'отдельной строкой — что оно дало: ' + к.дало);
+    дано(к.убрать, 'убрать можно здесь же, не уходя на «Еду»');
+    дано(к.высота >= 90, 'карточка заметная, а не строчка: ' + к.высота + 'px');
+    дано(!!к.доКнопок, 'и стоит в дне, до кнопок, вместе с упражнениями');
+  }
+
+  /* ── крестик убирает занятие ── */
+  await page.click('#sporttoday [data-actdel]');
+  await page.waitForTimeout(1100);
+  дано(await page.$('#sporttoday .actcard') === null, 'крестик убрал занятие из дня');
 
   /* ── использованный вид встаёт первым ── */
   await page.click('#addsport');
