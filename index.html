@@ -4094,7 +4094,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 09:30';
+var BUILD = '13.09 10:18';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4290,16 +4290,14 @@ function sKey(){ return 'sess_'+TODAY+'_'+day; }
 function blankSess(){
   var o={ex:[]};
   exList(day).forEach(function(e){
-    /* Ячейки заполняются тем, что приложение рекомендует на сегодня: вес с учётом
-       прибавки и целевые повторы. Прошлые цифры остаются запасным вариантом на
-       случай, когда рекомендации ещё нет (история не загрузилась). */
-    var prev=lastFor(e)||{}, t=targetOf(e), arr=[];
-    for(var i=0;i<setsFor(e, o.ex.length);i++){
-      var ps = prev.s && prev.s[i];
-      var lw = ps && ps[0]!=null && ps[0]!=='' ? ps[0] : (prev.w!=null&&prev.w!==''?prev.w:'');
-      var lr = ps && ps[1]!=null && ps[1]!=='' ? ps[1] : (prev.r!=null&&prev.r!==''?prev.r:baseReps(e));
-      arr.push({ w: (t.tw!=null ? t.tw : lw), r: (t.tr!=null ? t.tr : lr), done:false });
-    }
+    /* ЯЧЕЙКИ ПУСТЫЕ. Раньше в них заранее вписывался РЕКОМЕНДОВАННЫЙ вес —
+       готовым значением, а не подсказкой. Нажал галочку не глядя — и в журнал
+       уехало число, которого ты не поднимал: 13.09 приложение записало 47,5 кг
+       там, где человек сделал 40. Рекомендация осталась серой подсказкой в
+       пустой ячейке и словами в строке совета; записывается только то, что
+       видно числом, и галочка сначала переносит подсказку в саму ячейку. */
+    var arr=[];
+    for(var i=0;i<setsFor(e, o.ex.length);i++) arr.push({ w:'', r:'', done:false });
     o.ex.push({sets:arr});
   });
   o.n = exList(day).map(function(e){ return e.n; });
