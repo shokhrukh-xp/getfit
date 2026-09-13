@@ -174,6 +174,38 @@ const снимок = page => page.evaluate(() => ({
     } else дано(false, 'каталог замены не открылся');
   }
 
+  /* ── «ВСЁ» ТОЖЕ ПИШЕТ ЧИСЛА ──
+     Кнопка отмечала все подходы разом, не трогая ячейки: упражнение уходило
+     в журнал прочерком вместо веса. */
+  await page.click('.exrow:not(.done)').catch(() => {});
+  await page.waitForTimeout(400);
+  const всёКн = await page.$('.card.exact .allb');
+  if (всёКн) {
+    await всёКн.click();
+    await page.waitForTimeout(500);
+    const в = await снимок(page);
+    const этаСтрока = в.свёрнуто.find(r => r.done) || {};
+    дано(в.строки.length === 0 || в.строки.every(r => r.повт !== ''),
+      'после «всё» в каждой строке стоит число: ' + JSON.stringify(в.строки.map(r => r.кг + '×' + r.повт)));
+    дано(!/^\s*—/.test(этаСтрока.справа || ''),
+      'и свёрнутая строка не показывает прочерк: ' + (этаСтрока.справа || '—').replace(/\s+/g, ' '));
+  }
+
+  /* ── СТРОКА СОСТОЯНИЯ ИДЁТ СТРОКОЙ ──
+     Класс ok на #dbnote значит «сохранено», а не «кнопка 44×44». Правило
+     галочки подхода однажды поймало его без .setrow, и «11 подходов отмечено ·
+     сохранено в Telegram» встало столбиком в сорок четыре пикселя поверх
+     кнопки «Завершить». */
+  const заметка = await page.evaluate(() => {
+    const e = document.getElementById('dbnote'); if (!e) return null;
+    e.className = 'dbnote ok';
+    e.textContent = '13 подходов отмечено · сохранено в Telegram ✓';
+    const b = e.getBoundingClientRect();
+    return { w: Math.round(b.width), h: Math.round(b.height) };
+  });
+  дано(заметка && заметка.w > 200 && заметка.h < 60,
+    'строка «сохранено» идёт строкой, а не столбиком: ' + JSON.stringify(заметка));
+
   await br.close();
 
   /* ── ЧТО ДЕРЖАТ, СЧИТАЕТСЯ В СЕКУНДАХ (13.09) ──
