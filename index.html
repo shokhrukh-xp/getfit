@@ -631,29 +631,12 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 /* ── журнал подходов ─────────────────────── */
 .lastline{font-family:inherit;font-size:10.5px;color:var(--dim);margin:10px 0 0;letter-spacing:.02em;line-height:1.45}
 .lastline b{color:var(--muted);font-weight:400}
-.setgrid{margin-top:6px;display:flex;flex-direction:column;gap:6px}
-.sethead{font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:-1px;
-  font-family:inherit;font-size:12px;
-  color:var(--muted)}
-.sethead .sn{flex:0 0 16px}
+.setgrid{margin-top:6px}
 /* что вешать на гриф — считать блины между подходами человек не должен */
-.plates{margin:5px 0 0;font-family:inherit;
+.plates{margin:9px 0 0;font-family:inherit;
   font-size:10.5px;letter-spacing:.02em;color:var(--dim)}
-.sethead .hw,.sethead .hr{flex:1;text-align:center}
-.sethead .hk{flex:0 0 44px}
-.setrow{display:flex;align-items:center;gap:6px}
-.setrow .sn{flex:0 0 16px;font-family:inherit;font-size:12px;color:var(--dim);text-align:center}
-.stp{flex:1;min-width:0;display:flex;align-items:center;background:var(--card-2);
-  border:.5px solid var(--line-soft);border-radius:10px;overflow:hidden}
-.stp button{flex:0 0 36px;height:44px;font-size:20px;line-height:1;color:var(--muted);
-  display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none}
-.stp button:active{background:var(--accent-ghost);color:var(--accent-txt)}
-.stp input{flex:1;min-width:0;width:100%;height:44px;background:none;border:none;text-align:center;
-  color:var(--text);font-family:inherit;font-size:15px;font-weight:700;padding:0}
-.stp input::placeholder{color:var(--dim);font-weight:400}
-.stp input:focus{outline:none;color:var(--accent-txt)}
-.ok{flex:0 0 44px;height:44px;border-radius:11px;border:2px solid var(--line);background:var(--card-2);
-  color:var(--dim);font-size:18px;display:flex;align-items:center;justify-content:center;
+.ok{width:44px;height:44px;border-radius:11px;border:2px solid var(--line);background:var(--card-2);
+  color:var(--dim);font-size:18px;display:inline-flex;align-items:center;justify-content:center;
   -webkit-tap-highlight-color:transparent}
 .ok:active{transform:scale(.94)}
 .mesum{display:flex;align-items:baseline;gap:10px;margin:2px 0 14px;font-size:13.5px;color:var(--muted)}
@@ -665,38 +648,55 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .dayeditn{margin:8px 2px 0;font-size:11.5px;color:var(--dim);line-height:1.45;text-align:center}
 .dayeditn button{background:none;border:none;padding:0;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
 .exfoot .ebtn.drop{color:var(--dim);padding-left:12px;padding-right:12px}
-.setrow .swb{flex:0 0 44px;height:44px;border:1px solid var(--line);border-radius:11px;background:var(--card-2);
-  color:var(--accent-txt);font:inherit;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.setrow .swb.on{font-family:inherit;font-size:13px;font-weight:700}
-.setrow .swb.on{background:var(--accent);border-color:transparent;color:var(--on-accent)}
+.setrow .swb{width:100%;height:44px;border:1px solid var(--line);border-radius:11px;background:var(--card-2);
+  color:var(--accent-txt);font:inherit;font-size:14px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.setrow .swb.on{font-family:inherit;font-size:13px;font-weight:700;
+  background:var(--accent);border-color:transparent;color:var(--on-accent)}
 .setrow.done .ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:700}
 /* ── Один подход крупно (11.09): активное упражнение раскрыто, остальные —
    строками с фото. Числа подхода — герои, кнопка одна на всю ширину. ── */
 .card.exact .exthumb{flex:0 0 88px;width:88px}
 .card.exact .exthumb .fig2,.card.exact .exthumb .fig{width:88px}
 .card.exact .exthumb .fig{height:66px}
+/* ── Таблица подходов (13.09) ──
+   «Очень неудобно и непонятно записывать подходы». До этого в карточке жил
+   ровно ОДИН подход крупными числами, а остальные — чипами внизу: чтобы
+   поправить второй подход, нужно было сначала на него переключиться, а что
+   было в прошлый раз — не видно вовсе. Мировая практика (Strong, Hevy,
+   StrengthLog) сошлась на другом: строка на подход, все подходы видны
+   сразу, и вплотную к полям ввода — колонка «было», прошлый раз именно на
+   этом подходе. Сравнение с прошлым разом — единственное, ради чего между
+   подходами вообще смотрят на экран. */
 .exbox{background:var(--card-solid);border:1px solid var(--line-soft);border-radius:18px;
-  padding:12px 13px 13px;margin-top:12px;gap:0;display:block}
-.exboxh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
-.exboxh u{text-decoration:none;font-family:inherit;font-size:12px;color:var(--dim)}
-.exbox .setrow{display:block}
-.exnum{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.exnum.one{grid-template-columns:1fr}
-.exnp{display:grid;gap:5px;min-width:0}
-.exnp>span{font-family:inherit;font-size:11px;color:var(--dim);text-align:center}
-.exbox .stp{height:52px;border-radius:14px;background:var(--field);border:none}
-.exbox .stp button{flex:0 0 38px;height:52px}
-.exbox .stp input{height:52px;font-size:23px;font-weight:800;letter-spacing:-.03em}
-.exbox .exgo{display:block;width:100%;flex:none;height:50px;border-radius:15px;border:none;
-  background:var(--prime);color:var(--on-prime);font:inherit;font-weight:700;font-size:15px;margin-top:11px}
-.exbox .setrow.done .exgo{background:var(--field);color:var(--muted);font-weight:600}
-.exbox .swb{width:100%;height:44px;margin-top:9px;flex:none}
-.exchips{display:flex;gap:6px;margin-top:10px}
-.exchip{flex:1;min-width:0;height:30px;border-radius:9px;background:var(--field);border:none;
-  color:var(--dim);font:inherit;font-size:11.5px;padding:0 4px;white-space:nowrap;overflow:hidden}
-.exchip.d{background:var(--corr);color:var(--done-txt);font-weight:700}
-.exchip.n{background:none;border:1px solid var(--accent);color:var(--accent-txt);font-weight:700}
-.exbox .setadd{margin-top:11px}
+  padding:12px 11px 12px;margin-top:12px;gap:0;display:block}
+.settbl{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.settbl th{font-family:inherit;font-size:10.5px;font-weight:600;color:var(--dim);
+  letter-spacing:.03em;text-align:center;padding:0 0 5px;vertical-align:bottom}
+.settbl th.cn,.settbl th.cb{text-align:left}
+.settbl .cn{width:20px}
+.settbl .cw,.settbl .cr{width:62px}
+.settbl .cs{width:40px}
+.settbl .cok{width:44px}
+.settbl td{padding:3px 0;text-align:center;vertical-align:middle}
+.settbl td.cn{text-align:left;font-family:inherit;font-size:12.5px;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.settbl td.cb{text-align:left;font-family:inherit;font-size:11.5px;color:var(--dim);
+  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;padding-right:6px}
+.settbl .cell{width:58px;height:46px;border-radius:12px;border:1px solid var(--line-soft);
+  background:var(--field);color:var(--text);font-family:inherit;font-size:17px;font-weight:700;
+  text-align:center;font-variant-numeric:tabular-nums;padding:0;-webkit-appearance:none;appearance:none}
+.settbl .cell::placeholder{color:var(--dim);font-weight:400;font-size:15px}
+.settbl .cell:focus{outline:none;border-color:var(--accent);color:var(--accent-txt)}
+.settbl .ok{margin:0 auto}
+.settbl .swb{width:36px}
+tr.setrow{display:table-row}
+tr.setrow.now .cell{border-color:var(--accent)}
+tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transparent;color:var(--done-txt)}
+.exbox .setadd{display:flex;align-items:center;gap:8px;margin-top:10px;justify-content:stretch}
+.exbox .setadd .addset{flex:1;width:auto;height:44px;border:1px dashed var(--line);background:none;
+  color:var(--accent-txt);border-radius:12px;font:inherit;font-size:13.5px;font-weight:600}
+.exbox .setadd .delset{flex:0 0 44px;width:44px;height:44px;border-radius:12px;
+  border:.5px solid var(--line-soft);background:none;color:var(--dim);font:inherit;font-size:19px}
 .exrow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;
   padding:13px 0;border:none;border-top:1px solid var(--line-soft);background:none;color:inherit;
   font:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
@@ -711,8 +711,10 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .exrv u{text-decoration:none;display:block;font-size:11.5px;color:var(--dim);font-weight:500;margin-top:2px}
 .exrow.done .exrn b{color:var(--dim)}
 .exrow.done .exrv{color:var(--done-txt)}
-.setrow.done .stp{border-color:rgba(var(--done-rgb),.4)}
-.setrow.done .stp input{color:var(--done-txt)}
+/* сделанное — как факт, план — приглушённо: это разные вещи и выглядеть
+   одинаково не должны */
+.exrv b{font-weight:700;font-variant-numeric:tabular-nums}
+.exrv s{text-decoration:none;color:var(--dim);font-weight:600}
 .dbnote{font-family:inherit;font-size:10.5px;color:var(--dim);text-align:right;
   margin:10px 0 0;min-height:14px;letter-spacing:.03em}
 .dbnote.ok{color:var(--done-txt)}
@@ -1074,21 +1076,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .cues li.nb{padding-left:0;margin-bottom:0}
 .cues li.nb::before{display:none}
 
-/* Степпер — один контрол, а не три кнопки: общая поверхность, между
-   частями волосяные разделители, поле внутри без своей заливки. */
-.stp{align-items:stretch;border-radius:11px;background:var(--card-2);overflow:hidden}
-.stp button{flex:0 0 40px;height:auto;min-height:44px;background:none;
-  font-size:20px;font-weight:300;color:var(--muted)}
-.stp button:first-child{box-shadow:inset -.5px 0 0 var(--line-soft)}
-.stp button:last-child{box-shadow:inset .5px 0 0 var(--line-soft)}
-.stp button:active{background:var(--accent-ghost);color:var(--accent-txt)}
-.stp input{height:44px;font-size:16px;letter-spacing:-.01em;background:none;box-shadow:none}
-.stp input::placeholder{color:var(--dim);font-weight:300;font-size:14px}
-.setrow.done .stp input{background:rgba(var(--done-rgb),.09);box-shadow:none}
-.sethead{margin-bottom:1px}
-.setgrid{gap:6px;margin-top:7px}
-.setrow .sn{font-size:11.5px;color:var(--dim)}
-.setrow.done .sn{color:var(--done-txt)}
+.setgrid{margin-top:7px}
 .exmedia{margin-top:14px}
 
 .btnrow{margin-top:14px;gap:9px}
@@ -1111,7 +1099,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   border:none;background:none;padding:0 2px;line-height:1.5}
 .dbnote.ok{color:var(--done-txt)}
 .dbnote.warn{color:var(--accent-txt)}
-.allb{font-weight:500;flex:0 0 48px;min-height:32px;background:none;border:none;padding:0;
+.allb{font-weight:500;width:100%;min-height:32px;background:none;border:none;padding:0;
   font-family:inherit;font-size:12px;
   color:var(--dim);text-align:center;line-height:1}
 .allb:active{color:var(--accent-txt)}
@@ -1419,12 +1407,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   font-family:inherit;font-size:11px;font-weight:700}
 .sscard .rec{margin:2px 0 12px}
 .cyc{border:1px solid var(--line-soft);border-radius:12px;padding:8px 8px 6px;margin-bottom:8px}
-.sscard .sethead{margin-bottom:4px}
-.sscard .hend{width:34px}
 .cychead{font-weight:500;font-family:inherit;font-size:12px;
   color:var(--dim);margin:0 0 6px 2px}
-.ssrow .sn{opacity:1}
-.stp.ghost{visibility:hidden}
 .sscard .exfoot{margin-top:10px}
 .rec{font-size:13px;line-height:1.38;color:var(--muted);margin:9px 0 9px;
   padding:7px 10px;border-radius:10px;background:var(--card-2);
@@ -1909,11 +1893,11 @@ body.onb #picker .modalbox::before{display:none}
    «все 68 →» в каталоге — 18 по высоте. Там, где увеличить саму кнопку
    значит переверстать ряд, расширяем только зону нажатия псевдоэлементом:
    вид остаётся прежним, палец получает свои 44. */
-.hright > button, .exboxh .allb, .setadd button, .fmeal .fx, .fdarr button,
-.exchips .exchip, .catlist h4 button, .catgrp h4 button, .stp button{position:relative}
-.hright > button::after, .exboxh .allb::after, .setadd button::after,
-.fmeal .fx::after, .fdarr button::after, .exchips .exchip::after,
-.catlist h4 button::after, .catgrp h4 button::after, .stp button::after{
+.hright > button, .allb, .setadd button, .fmeal .fx, .fdarr button,
+.catlist h4 button, .catgrp h4 button{position:relative}
+.hright > button::after, .allb::after, .setadd button::after,
+.fmeal .fx::after, .fdarr button::after,
+.catlist h4 button::after, .catgrp h4 button::after{
   content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:max(100%,44px);height:max(100%,44px)}
 .zseg button, .todaybar .tsedit, .dayseg button, .exfoot .ebtn,
@@ -4110,7 +4094,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 08:51';
+var BUILD = '13.09 09:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4368,20 +4352,48 @@ function harvestDom(){
   saveSess();
 }
 
+/* Раньше здесь перечислялись все подходы прошлого раза одной строкой. Теперь
+   те же числа стоят в колонке «было» напротив своего подхода — а два места
+   про один факт расходиться не должны. Остаётся дата: она говорит, насколько
+   давно это было, а колонка этого сказать не может. */
 function lastLine(e){
   var p=lastFor(e);
-  if(!p) return '';
-  var src = (p.s&&p.s.length) ? p.s : [[p.w,p.r]];
-  var parts=[];
-  src.forEach(function(x){
-    if(!x) return;
-    var w=x[0], r=x[1];
-    if((w===''||w==null) && (r===''||r==null)) return;
-    parts.push((hasW(e)&&w!==''&&w!=null ? w+'×' : '')+((r===''||r==null)?'—':r));
-  });
-  if(!parts.length) return '';
-  return '<div class="lastline">прошлый раз'+(p.d?' '+ruDate(p.d):'')+' · <b>'+parts.join(' · ')+'</b></div>';
+  if(!p || !p.d) return '';
+  return '<div class="lastline">прошлый раз · '+ruDate(p.d)+'</div>';
 }
+/* Что человек поднял в прошлый раз ИМЕННО на этом подходе. Только точное
+   совпадение номера: подставлять чужой подход в пустую строку — то же
+   враньё, что показывать рекомендацию как результат. */
+function былоСета(e,si){
+  var p=lastFor(e); if(!p) return '';
+  var src=(p.s&&p.s.length)?p.s:[[p.w,p.r]];
+  var x=src[si]; if(!x) return '';
+  var w=x[0], r=x[1];
+  if((w===''||w==null) && (r===''||r==null)) return '';
+  return (hasW(e)&&w!==''&&w!=null ? String(w).replace('.',',')+'×' : '')+
+         ((r===''||r==null)?'—':r)+(isTime(e)?' с':'');
+}
+/* Чем подсказана пустая ячейка. Лесенка сверху вниз:
+     1) что уже стоит в подходе выше сегодня — это и есть твой рабочий вес;
+     2) тот же подход в прошлый раз;
+     3) рекомендация на сегодня.
+   Рекомендация идёт ПОСЛЕДНЕЙ намеренно. 13.09 приложение показало 47,5 кг
+   там, где человек поднял 40, и он прочитал это как свой результат: число,
+   стоящее рядом с фактом, должно быть фактом, а совет живёт словами строкой
+   выше. Возвращает число, а не текст — его же записывает галочка. */
+function подсказкаСета(e,di,si,f){
+  var st=(sess.ex[di]||{}).sets||[], i, v, z;
+  for(i=si-1;i>=0;i--){ v=st[i]; if(v && v[f]!=null && v[f]!=='' && !isNaN(parseFloat(v[f]))) return parseFloat(v[f]); }
+  var p=lastFor(e);
+  if(p){
+    var src=(p.s&&p.s.length)?p.s:[[p.w,p.r]], x=src[si];
+    if(x){ z=(f==='w')?x[0]:x[1]; if(z!=null && z!=='' && !isNaN(parseFloat(z))) return parseFloat(z); }
+  }
+  var t=targetOf(e);
+  if(f==='w') return (hasW(e) && t.tw!=null) ? t.tw : null;
+  return (t.tr!=null) ? t.tr : null;
+}
+function показЧисла(n,f){ return n==null ? '—' : (f==='w' ? fmtKg(n) : String(n)); }
 
 /* ── Один подход крупно ──
    Его выбор 11.09 из четырёх эскизов, с условием «обязательно чтобы было фото
@@ -4440,51 +4452,63 @@ function advanceCur(di){
   sess.cur=di;
 }
 function setGrid(e,di,подвал){
-  var st=sess.ex[di].sets, wt=hasW(e), t=targetOf(e), si=activeSet(di), v=st[si]||{};
-  var pw = (wt && t.tw!=null) ? fmtKg(t.tw) : '—';
-  var pr = (t.tr!=null) ? String(t.tr) : '—';
-  var блины = plateFor(e, t.tw);
-  var поле=function(f,ph,им,ик){
-    return '<div class="exnp"><span>'+им+'</span><div class="stp">'+
-      '<button type="button" data-f="'+f+'" data-d="-1" aria-label="Убавить">−</button>'+
-      '<input data-f="'+f+'" inputmode="'+ик+'" placeholder="'+ph+'" aria-label="'+им+'" value="'+(v[f]==null?'':v[f])+'">'+
-      '<button type="button" data-f="'+f+'" data-d="1" aria-label="Прибавить">+</button></div></div>';
-  };
-  var чипы = st.map(function(x,k){
-    var txt = x.done ? ((wt && x.w!=null && x.w!=='' ? fmtKg(+x.w)+' × ' : '')+((x.r==null||x.r==='')?'—':x.r))
-                     : (k===si ? 'сейчас' : '—');
-    return '<button type="button" class="exchip'+(x.done?' d':'')+(k===si?' n':'')+
-           '" data-pick="'+di+'" data-pset="'+k+'">'+esc(txt)+'</button>';
+  var st=sess.ex[di].sets, wt=hasW(e), время=isTime(e), si=activeSet(di);
+  var блины = plateFor(e, targetOf(e).tw);
+  var шапка='<tr><th class="cn">#</th><th class="cb">было</th>'+
+    (wt?'<th class="cw">кг</th>':'')+
+    (время?'<th class="cs"></th>':'')+
+    '<th class="cr">'+unitR(e)+'</th>'+
+    '<th class="cok"><button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></th></tr>';
+  var ряды=st.map(function(v,k){
+    function поле(f,ик,им){
+      return '<input class="cell" data-f="'+f+'" inputmode="'+ик+'"'+
+        ' placeholder="'+показЧисла(подсказкаСета(e,di,k,f),f)+'"'+
+        ' aria-label="'+им+', подход '+(k+1)+'"'+
+        ' value="'+(v[f]==null||v[f]===''?'':esc(String(v[f]).replace('.',',')))+'">';
+    }
+    var было=былоСета(e,k);
+    return '<tr class="setrow'+(v.done?' done':'')+(k===si&&!v.done?' now':'')+
+           '" data-ex="'+di+'" data-set="'+k+'">'+
+      '<td class="cn">'+(k+1)+'</td>'+
+      '<td class="cb">'+(было?esc(было):'·')+'</td>'+
+      (wt?'<td class="cw">'+поле('w','decimal','вес, кг')+'</td>':'')+
+      (время?'<td class="cs"><button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
+      '<td class="cr">'+поле('r','numeric',unitR(e))+'</td>'+
+      '<td class="cok"><button type="button" class="ok" data-ok="1" aria-pressed="'+(!!v.done)+
+        '" aria-label="Подход '+(k+1)+' сделан">'+(v.done?'✓':'○')+'</button></td></tr>';
   }).join('');
   return '<div class="setgrid exbox">'+
-    '<div class="exboxh"><u>подход '+(si+1)+' из '+st.length+'</u>'+
-      '<button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></div>'+
+    '<table class="settbl"><thead>'+шапка+'</thead><tbody>'+ряды+'</tbody></table>'+
     (блины ? '<p class="plates">'+блины+'</p>' : '')+
-    '<div class="setrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
-      '<div class="exnum'+(wt?'':' one')+'">'+(wt?поле('w',pw,'вес, кг','decimal'):'')+поле('r',pr,unitR(e),'numeric')+'</div>'+
-      (isTime(e)?'<button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button>':'')+
-      '<button type="button" class="exgo ok" data-ok="1" aria-pressed="'+(!!v.done)+'">'+
-        (v.done?'Отменить подход':'Подход сделан')+'</button>'+
-    '</div>'+
-    '<div class="exchips">'+чипы+'</div>'+
     (подвал!==undefined ? подвал :
-      '<div class="setadd"><button type="button" data-sets="-1" data-ex="'+di+'"'+
-      (st.length<=1?' disabled':'')+' aria-label="Убрать подход">−</button>'+
-      '<span>'+st.length+' '+plural(st.length,['подход','подхода','подходов'])+'</span>'+
-      '<button type="button" data-sets="1" data-ex="'+di+'"'+
-      (st.length>=8?' disabled':'')+' aria-label="Добавить подход">+</button></div>')+
+      '<div class="setadd">'+
+      '<button type="button" class="addset" data-sets="1" data-ex="'+di+'"'+
+      (st.length>=8?' disabled':'')+'>+ подход</button>'+
+      '<button type="button" class="delset" data-sets="-1" data-ex="'+di+'"'+
+      (st.length<=1?' disabled':'')+' aria-label="Убрать последний подход">−</button></div>')+
     '</div>';
 }
 /* свёрнутое упражнение: фото, название, рабочий вес и сколько подходов закрыто */
 function exRow(e,di,метка){
   var st=sess.ex[di].sets, сделано=st.filter(function(v){ return v.done; }).length;
-  var t=targetOf(e), вес=(hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—';
   var всё=exDone(di);
+  /* СПРАВА — ТО, ЧТО БЫЛО, А НЕ ТО, ЧТО СОВЕТУЮТ.
+     13.09: «Жим ногами на икры я сделал по 40 кг, почему на карточке пишется
+     47,5?» Потому что в строке стоял РЕКОМЕНДОВАННЫЙ вес: тот же, что в
+     подсказке «40 → 47,5». Глаз читает это место как результат, и приложение
+     приписывало человеку вес, которого он не поднимал. Теперь: начал —
+     показываем лучший сделанный подход; не начинал — вес-ориентир, и он
+     подписан приглушённо, как план. */
+  var b=bestOf({sets:st.filter(function(v){ return v.done; })});
+  var время=isTime(e);
+  var вес;
+  if(сделано && b) вес='<b>'+((b.w!=null?fmtKg(b.w)+'×':'')+b.r+(время?' с':''))+'</b>';
+  else { var t=targetOf(e); вес='<s>'+((hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—')+'</s>'; }
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
     '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.n)+'</b>'+
       '<i>'+setsFor(e,di)+' × '+repsOf(e)+'</i></span>'+
-    '<span class="exrv">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
+    '<span class="exrv'+(сделано?' был':'')+'">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
 }
 /* Добавить или убрать подход в конкретном упражнении на сегодня.
    Правка живёт в самой сессии дня и уезжает в журнал как есть — программа
@@ -4652,24 +4676,6 @@ function ssChoice(btn){
   box.hidden=false;
   btn.setAttribute('aria-expanded','true');
 }
-function ssRow(e,di,si,tag){
-  var v=sess.ex[di].sets[si]; if(!v) return '';
-  var t=targetOf(e), wt=hasW(e);
-  var pw=(wt && t.tw!=null) ? fmtKg(t.tw) : '—', pr=(t.tr!=null) ? String(t.tr) : '—';
-  return '<div class="setrow ssrow'+(v.done?' done':'')+'" data-ex="'+di+'" data-set="'+si+'">'+
-    '<span class="sn sstag">'+tag+'</span>'+
-    (wt?'<div class="stp"><button type="button" data-f="w" data-d="-1" aria-label="Убавить вес">−</button>'+
-        '<input data-f="w" inputmode="decimal" placeholder="'+pw+'" aria-label="Вес, кг" value="'+(v.w==null?'':v.w)+'">'+
-        '<button type="button" data-f="w" data-d="1" aria-label="Прибавить вес">+</button></div>'
-       :'<div class="stp ghost"></div>')+
-    '<div class="stp"><button type="button" data-f="r" data-d="-1" aria-label="Убавить">−</button>'+
-    '<input data-f="r" inputmode="numeric" placeholder="'+pr+'" aria-label="'+unitR(e)+'" value="'+(v.r==null?'':v.r)+'">'+
-    '<button type="button" data-f="r" data-d="1" aria-label="Прибавить">+</button></div>'+
-    /* планка чаще всего живёт в суперсете — секундомер нужен и здесь */
-    (isTime(e)?'<button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button>':'')+
-    '<button type="button" class="ok" data-ok="1" aria-label="Подход сделан" aria-pressed="'+(!!v.done)+'">✓</button>'+
-    '</div>';
-}
 /* круги меняются сразу у обоих упражнений — на то они и круги */
 function bumpCycles(dia,dib,d){
   var la=sess.ex[dia].sets.length, lb=sess.ex[dib].sets.length, n=Math.max(la,lb)+d;
@@ -4702,10 +4708,12 @@ function syncRow(di,si){
   if(!row) return;
   var v=sess.ex[di].sets[si];
   row.classList.toggle('done',!!v.done);
-  var ok=row.querySelector('.ok'); if(ok) ok.setAttribute('aria-pressed',String(!!v.done));
+  var ok=row.querySelector('.ok');
+  if(ok){ ok.setAttribute('aria-pressed',String(!!v.done)); ok.textContent = v.done?'✓':'○'; }
   ['w','r'].forEach(function(f){
     var inp=row.querySelector('input[data-f="'+f+'"]');
-    if(inp && document.activeElement!==inp) inp.value=(v[f]==null?'':v[f]);
+    if(inp && document.activeElement!==inp)
+      inp.value=(v[f]==null||v[f]==='')?'':String(v[f]).replace('.',',');
   });
   var card=row.closest('.card');
   if(card){
@@ -4724,16 +4732,13 @@ function партнёрDi(di){
   return -1;
 }
 document.getElementById('list').addEventListener('click', function(ev){
-  /* тап по свёрнутому упражнению или по чипу подхода переносит фокус дня */
+  /* тап по свёрнутой строке упражнения переносит фокус дня на него */
   var pe=ev.target.closest('[data-pickex]');
   if(pe){ var pdi=+pe.dataset.pickex; sess.cur=pdi; if(sess.ex[pdi]) sess.ex[pdi].cur=null;
           EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
   /* нажал по шапке раскрытой карточки — свернул её обратно в строку */
   var sh=ev.target.closest('[data-shut]');
   if(sh){ EXPICK=false; renderList(); haptic('light'); return; }
-  var pc=ev.target.closest('[data-pick]');
-  if(pc){ sess.cur=+pc.dataset.pick; sess.ex[sess.cur].cur=+pc.dataset.pset;
-          EXPICK=true; saveSess(); renderList(); haptic('light'); return; }
   var cb=ev.target.closest('[data-cyc]');
   if(cb && !cb.disabled){ bumpCycles(+cb.dataset.a, +cb.dataset.b, +cb.dataset.cyc); return; }
   var sb=ev.target.closest('[data-sets]');
@@ -4751,32 +4756,25 @@ document.getElementById('list').addEventListener('click', function(ev){
   var di=+row.dataset.ex, si=+row.dataset.set;
   var e=exList(day)[di], v=sess.ex[di].sets[si];
 
-  var st=ev.target.closest('button[data-d]');
-  if(st){
-    var f=st.dataset.f, dir=+st.dataset.d, step=(f==='w')?2.5:stepR(e);
-    var cur=parseFloat(String(v[f]).replace(',','.'));
-    if(isNaN(cur)) cur = (f==='w') ? (dir>0?2.5:0) : (isTime(e)?30:8);
-    else cur = cur + dir*step;
-    if(cur<0) cur=0;
-    v[f]=Math.round(cur*10)/10; v.t=true; wTouch();
-    haptic('light');
-    saveSess(); syncRow(di,si); commit(); return;
-  }
   var wb=ev.target.closest('[data-watch]');
   if(wb){
     if(WATCH && WATCH.di===di && WATCH.si===si) watchStop(true); else watchStart(di,si);
     return;
   }
   if(ev.target.closest('[data-ok]')){
+    /* ЗАПИСАННЫМ ДОЛЖНО БЫТЬ ВИДИМОЕ ЧИСЛО. Пустая ячейка под галочкой
+       раньше уезжала в журнал пустотой, а на экране стояла серая подсказка —
+       и было не понять, что именно засчиталось. Теперь галочка переносит
+       подсказку в саму ячейку: число видно и его можно поправить. */
+    if(!v.done) ['w','r'].forEach(function(f){
+      if(f==='w' && !hasW(e)) return;
+      if(v[f]!=null && v[f]!=='') return;
+      var h=подсказкаСета(e,di,si,f);
+      if(h!=null){ v[f]=String(h); v.t=true; }
+    });
     v.done=!v.done;
     haptic(v.done?'medium':'light');
     if(v.done){
-      var nx=sess.ex[di].sets[si+1];
-      if(nx && !nx.done){
-        if(nx.w===''||nx.w==null) nx.w=v.w;
-        if(nx.r===''||nx.r==null) nx.r=v.r;
-        syncRow(di,si+1);
-      }
       /* В суперсете отдых только после второго упражнения круга: между А и Б
          человек переходит сразу, иначе весь смысл экономии времени теряется. */
       var пара = e.ss ? партнёрDi(di) : -1;
@@ -4791,15 +4789,30 @@ document.getElementById('list').addEventListener('click', function(ev){
     saveSess(); renderList(); commit();
   }
 });
+/* Встал в ячейку — этот подход и есть текущий: от него считает секундомер и
+   на нём стоит синяя рамка. Перерисовывать список нельзя (поле потеряет
+   фокус и клавиатуру), поэтому метку переносим руками. Содержимое выделяем
+   целиком: палец бьёт в середину числа, и без выделения «45» поверх «40»
+   превращалось в «4045». */
+document.getElementById('list').addEventListener('focusin', function(ev){
+  var inp=ev.target.closest('.setrow input[data-f]'); if(!inp) return;
+  try{ inp.select(); }catch(e){}
+  var row=inp.closest('.setrow'), di=+row.dataset.ex, si=+row.dataset.set;
+  if(!sess.ex[di]) return;
+  sess.cur=di; sess.ex[di].cur=si; EXPICK=true; saveSess();
+  Array.prototype.forEach.call(document.querySelectorAll('#list .setrow.now'),
+    function(r){ r.classList.remove('now'); });
+  if(!sess.ex[di].sets[si].done) row.classList.add('now');
+});
 document.getElementById('list').addEventListener('input', function(ev){
-  var inp=ev.target.closest('.stp input'); if(!inp) return;
+  var inp=ev.target.closest('.setrow input[data-f]'); if(!inp) return;
   var row=inp.closest('.setrow'); if(!row) return;
   var vv=sess.ex[+row.dataset.ex].sets[+row.dataset.set];
   vv[inp.dataset.f]=inp.value.trim().replace(',','.'); vv.t=true; wTouch();
   saveSess();
 });
 document.getElementById('list').addEventListener('change', function(ev){
-  if(ev.target.closest('.stp input')) commit();
+  if(ev.target.closest('.setrow input[data-f]')) commit();
 });
 
 /* ══════════ ХРАНИЛИЩЕ · Telegram CloudStorage ══════════
@@ -6224,6 +6237,15 @@ function lastFor(e){
      каталога, id — нет, и вес не должен из-за этого теряться */
   if(e.cat && LAST['#'+e.cat]) return LAST['#'+e.cat];
   if(LAST[e.n]) return LAST[e.n];
+  /* LAST копится в момент сохранения тренировки. Если его нет — переустановил
+     приложение, или облако отдало журнал раньше состояния, — а занятия в
+     журнале есть, берём прошлый раз прямо из журнала: два места про один факт
+     расходиться не должны. */
+  var h=exHistory(e);
+  if(h.length && h[0].sets.length){
+    var w=h[0], l=w.sets[w.sets.length-1];
+    return {d:w.date, w:l.w, r:l.r, s:w.sets.map(function(x){ return [x.w, x.r]; })};
+  }
   if(!e.ph) return null;
   var ks=Object.keys(LAST), best=null;
   ks.forEach(function(k){ var v=LAST[k]; if(v && phOfName(k)===e.ph && (!best || String(v.d||'')>String(best.d||''))) best=v; });
@@ -6363,10 +6385,15 @@ function advice(e){
       short:'Оставь <b>'+fmtKg(w)+' кг</b> · повторов стало меньше, вес не поднимай',
       text:'Прошлый раз повторов стало меньше ('+prevVol+' → '+lastVol+' на том же весе). Вес не поднимай: не хватает восстановления, сна или еды.'};
   }
+  /* need считается по ПРОШЛОМУ занятию — сколько подходов не дотянули до
+     верха диапазона. Формулировка «осталось N подходов» читалась как счётчик
+     сегодняшнего дня и спорила с дорожкой в шапке: закрыл подход, а «осталось»
+     не менялось. Говорим прямо, про какой день речь. */
   var need = done.filter(function(v){ return v.r<top; }).length;
+  var где = need+' '+plural(need,['подходе','подходах','подходах']);
   return {kind:'hold', tw:w, tr:top, lw:w,
-    short:(w!=null?'<b>'+fmtKg(w)+' кг</b> · ':'')+'добери до '+top+' повторов, осталось '+need+' '+plural(need,['подход','подхода','подходов']),
-    text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+' — осталось '+need+' '+plural(need,['подход','подхода','подходов'])+'.'};
+    short:(w!=null?'<b>'+fmtKg(w)+' кг</b> · ':'')+'добери до '+top+' повторов — прошлый раз недобрал в '+где,
+    text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+': в прошлый раз недобрал в '+где+'.'};
 }
 /* нижняя граница диапазона: '6–10' → 6 */
 function botReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 8; }

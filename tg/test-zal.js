@@ -1,10 +1,11 @@
 'use strict';
-/* «Тренировка»: один подход крупно (его выбор 11.09 из четырёх эскизов,
-   с условием «обязательно чтобы было фото упражнения»). Раскрыто ровно одно
-   упражнение, внутри — ровно один подход; остальные свёрнуты строками с фото.
-   12.09: при входе не раскрыто НИЧЕГО — «можно не раскрывать карточку, пока я
-   не нажму на неё». Нажал — дальше как прежде: закрыл упражнение, следующее
-   открылось само (в зале лишний тап дороже). */
+/* «Тренировка»: таблица подходов (его выбор 13.09 из трёх эскизов).
+   До этого в карточке жил ровно ОДИН подход крупными числами, остальные —
+   чипами внизу: «очень неудобно и непонятно записывать подходы». Теперь
+   строка на подход, все видны сразу, и вплотную к полям — колонка «было»:
+   что поднял в прошлый раз именно на этом подходе.
+   Раскрыто по-прежнему ровно одно упражнение, остальные — строки с фото;
+   при входе не раскрыто ничего, пока не нажал. */
 const { chromium } = require('playwright');
 const M = require('./mock');
 let плохо = 0;
@@ -19,15 +20,21 @@ const снимок = page => page.evaluate(() => ({
     фото: !!e.querySelector('.exph img, .exph svg'),
     справа: (e.querySelector('.exrv') || {}).textContent || '',
     done: e.classList.contains('done') })),
-  подход: (document.querySelector('.exboxh u') || {}).textContent || '',
-  чипы: Array.from(document.querySelectorAll('.exchip')).map(e => e.className + '|' + e.textContent),
-  кнопка: (document.querySelector('.exgo') || {}).textContent || ''
+  колонки: Array.from(document.querySelectorAll('.card.exact .settbl th')).map(t => t.textContent.trim()),
+  строки: Array.from(document.querySelectorAll('.card.exact .settbl .setrow')).map(r => ({
+    n: (r.querySelector('.cn') || {}).textContent || '',
+    было: ((r.querySelector('.cb') || {}).textContent || '').trim(),
+    кг: (r.querySelector('input[data-f="w"]') || {}).value,
+    подсказкаКг: (r.querySelector('input[data-f="w"]') || {}).placeholder,
+    повт: (r.querySelector('input[data-f="r"]') || {}).value,
+    done: r.classList.contains('done'),
+    now: r.classList.contains('now') }))
 }));
 
 (async () => {
   const br = await chromium.launch();
   const page = await br.newPage({ viewport: { width: 390, height: 1400 } });
-  const ош = await M.поднять(page, { theme: 'dark', time: '17:40', page: 'gym', wait: 2200 });
+  const ош = await M.поднять(page, { theme: 'dark', time: '17:40', page: 'gym', wait: 2200, hist: M.журнал() });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   await page.waitForTimeout(500);
 
@@ -52,28 +59,55 @@ const снимок = page => page.evaluate(() => ({
   с = await снимок(page);
   дано(с.раскрыто === 1, 'и снова раскрывается нажатием: ' + с.раскрыто);
   дано(с.фотоБольшое, 'у активного упражнения есть фото');
-  дано(с.свёрнуто.length >= 1, 'остальные упражнения свёрнуты: ' + с.свёрнуто.length);
   дано(с.свёрнуто.every(r => r.фото), 'у каждого свёрнутого тоже есть фото');
   дано(/из/.test(с.свёрнуто[0].справа), 'в свёрнутой строке видно, сколько подходов закрыто: ' + с.свёрнуто[0].справа);
-  дано(/подход 1 из/.test(с.подход), 'первым идёт первый подход: ' + с.подход);
-  дано(/Подход сделан/.test(с.кнопка), 'кнопка одна и называет действие');
-  дано(с.чипы.filter(x => /\bn\b/.test(x.split('|')[0])).length === 1, 'ровно один чип помечен как текущий');
 
-  /* закрываем подход — активным становится следующий */
-  const всего = с.чипы.length;
-  await page.click('.exgo');
-  await page.waitForTimeout(400);
+  /* ── ТАБЛИЦА ПОДХОДОВ (13.09) ── */
+  дано(с.строки.length >= 2, 'все подходы видны строками сразу: ' + с.строки.length);
+  дано(/^#/.test(с.колонки[0]) && с.колонки[1] === 'было',
+    'колонки названы: ' + с.колонки.join(' | '));
+  дано(/повторы|секунды/.test(с.колонки.join(' ')), 'колонка повторов подписана: ' + с.колонки.join(' | '));
+  дано(с.строки.filter(r => r.now).length === 1, 'ровно одна строка помечена текущей');
+  дано(с.строки[0].было !== '' && с.строки[0].было !== '·',
+    'в колонке «было» стоит прошлый раз: ' + с.строки[0].было);
+  дано(с.строки.every(r => r.n !== ''), 'у каждой строки виден номер подхода');
+
+  /* ── ЗАПИСАННОЕ ЧИСЛО = ВИДИМОЕ ЧИСЛО (13.09) ──
+     «Жим ногами на икры я сделал по 40 кг, почему на карточке пишется 47,5?»
+     В строке стоял рекомендованный вес. Вводим 40×15 и проверяем, что
+     свёрнутая строка показывает ровно это. */
+  await page.fill('.card.exact .settbl .setrow:first-child input[data-f="w"]', '40');
+  await page.fill('.card.exact .settbl .setrow:first-child input[data-f="r"]', '15');
+  await page.waitForTimeout(150);
+  await page.click('.card.exact .settbl .setrow:first-child .ok');
+  await page.waitForTimeout(500);
   let д = await снимок(page);
-  дано(/подход 2 из/.test(д.подход), 'после «Подход сделан» активен следующий подход: ' + д.подход);
-  дано(д.чипы.filter(x => /\bd\b/.test(x.split('|')[0])).length === 1, 'закрытый подход помечен чипом');
+  дано(д.строки[0].done, 'подход закрылся галочкой');
+  дано(д.строки[0].кг === '40' && д.строки[0].повт === '15',
+    'введённое осталось в ячейках: ' + д.строки[0].кг + '×' + д.строки[0].повт);
+  дано(д.строки[1] && д.строки[1].now, 'текущей стала следующая строка');
+  дано(д.строки[1] && д.строки[1].подсказкаКг === '40',
+    'следующий подход подсказан твоим же весом, а не рекомендацией: ' + (д.строки[1] || {}).подсказкаКг);
   дано(д.доля !== с.доля, 'дорожка дня сдвинулась: ' + с.доля + ' → ' + д.доля);
 
+  await page.click('.card.exact .exttl');
+  await page.waitForTimeout(350);
+  д = await снимок(page);
+  дано(/40×15/.test(д.свёрнуто[0].справа.replace(/\s/g, '')),
+    'в свёрнутой строке стоит сделанное, а не рекомендованное: ' + д.свёрнуто[0].справа.replace(/\s+/g, ' '));
+
   /* закрываем упражнение целиком — фокус уходит на следующее */
-  for (let i = 1; i < всего; i++) { await page.click('.exgo'); await page.waitForTimeout(260); }
+  await page.click('.exrow');
+  await page.waitForTimeout(350);
+  for (let i = 0; i < 6; i++) {
+    const кн = await page.$('.card.exact .settbl .setrow:not(.done) .ok');
+    if (!кн) break;
+    await кн.click(); await page.waitForTimeout(280);
+  }
   д = await снимок(page);
   дано(д.раскрыто === 1, 'по-прежнему раскрыто одно упражнение');
   дано(д.свёрнуто.some(r => r.done), 'закрытое упражнение свернулось с отметкой: ' +
-    JSON.stringify(д.свёрнуто.filter(r => r.done).map(r => r.справа)));
+    JSON.stringify(д.свёрнуто.filter(r => r.done).map(r => r.справа.replace(/\s+/g, ' '))));
 
   /* тап по свёрнутому возвращает фокус на него */
   const имя = д.свёрнуто.find(r => !r.done) ? д.свёрнуто.find(r => !r.done).имя : д.свёрнуто[0].имя;
@@ -83,35 +117,25 @@ const снимок = page => page.evaluate(() => ({
   дано(д.раскрыто === 1 && !new RegExp(имя.slice(0, 10)).test(д.свёрнуто.map(r => r.имя).join('|')),
     'тап по свёрнутой строке раскрыл именно её');
 
-  /* тап по чипу переключает подход внутри упражнения */
-  const чипов = д.чипы.length;
-  if (чипов > 1) {
-    await page.click('.exchip:last-child');
-    await page.waitForTimeout(300);
-    д = await снимок(page);
-    дано(new RegExp('подход ' + чипов + ' из').test(д.подход), 'тап по чипу открыл этот подход: ' + д.подход);
-  }
-
   /* ── ЗАКРЫТОЕ УПРАЖНЕНИЕ ТОЖЕ ОТКРЫВАЕТСЯ (13.09) ──
      «Я сделал 2 подхода первого упражнения, после чего его карточка больше не
-     открывается, а я хочу добавить ещё один». Тап ставил sess.cur на строку,
-     но раскрытие подменялось первым НЕзакрытым упражнением. */
+     открывается, а я хочу добавить ещё один». */
   const зак = await page.$('.exrow.done');
   дано(!!зак, 'закрытое упражнение свернулось в строку');
   if (зак) {
-    const имя = ((await зак.textContent()) || '').replace(/\s+/g, ' ').slice(0, 22);
     await зак.click();
     await page.waitForTimeout(400);
     const открыт = await page.$eval('.card.exact .exname', e => e.textContent).catch(() => '');
-    дано(имя.indexOf(открыт.slice(0, 12)) >= 0 || открыт.length > 0,
-      'нажатие по закрытому открыло именно его: ' + открыт);
-    const до = await page.$eval('.setadd span', e => e.textContent).catch(() => '');
-    await page.click('.setadd button[data-sets="1"]');
+    дано(открыт.length > 0, 'нажатие по закрытому открыло именно его: ' + открыт);
+    const до = (await снимок(page)).строки.length;
+    await page.click('.card.exact .setadd .addset');
     await page.waitForTimeout(400);
-    const после = await page.$eval('.setadd span', e => e.textContent).catch(() => '');
-    дано(до !== после, 'к закрытому упражнению добавляется подход: ' + до + ' → ' + после);
-    дано(/подход \d+ из/.test(await page.$eval('.exboxh u', e => e.textContent).catch(() => '')),
-      'и новый подход сразу становится текущим: ' + (await page.$eval('.exboxh u', e => e.textContent).catch(() => '—')));
+    const п = await снимок(page);
+    дано(п.строки.length === до + 1, 'к закрытому упражнению добавляется подход: ' + до + ' → ' + п.строки.length);
+    дано(п.строки[п.строки.length - 1].now, 'и новый подход сразу становится текущим');
+    /* закрытые подходы остаются доступными для правки — это его условие */
+    дано(п.строки.filter(r => r.done).every(r => r.кг !== undefined),
+      'сделанные подходы остались редактируемыми');
   }
 
   /* ── «ЗАМЕНЕНО» ДЕРЖИТСЯ ДЕСЯТЬ СЕКУНД ──
@@ -136,10 +160,8 @@ const снимок = page => page.evaluate(() => ({
   await br.close();
 
   /* ── ЧТО ДЕРЖАТ, СЧИТАЕТСЯ В СЕКУНДАХ (13.09) ──
-     «Планка считается в секундах же, где таймер здесь?» Признаком служило
-     окончание «с» в строке повторов; тренер написал планке «12–15», и
-     приложение показало повторы и спрятало секундомер. Признак теперь —
-     каталог: у упражнений, которые держат, стоит tm. */
+     «Планка считается в секундах же, где таймер здесь?» Признак — каталог:
+     у упражнений, которые держат, стоит tm. */
   const br2 = await chromium.launch();
   const p2 = await br2.newPage({ viewport: { width: 390, height: 900 } });
   await M.поднять(p2, { theme: 'dark', page: 'gym', wait: 2500,
@@ -154,12 +176,14 @@ const снимок = page => page.evaluate(() => ({
     await p2.waitForTimeout(600);
     const к = await p2.evaluate(() => ({
       спец: ((document.querySelector('.card.exact .spec') || {}).textContent || '').replace(/\s+/g, ' '),
-      поле: ((document.querySelector('.card.exact .exbox') || {}).textContent || '').replace(/\s+/g, ' '),
-      часы: !!document.querySelector('.card.exact [data-watch]')
+      колонки: Array.from(document.querySelectorAll('.card.exact .settbl th')).map(t => t.textContent.trim()).join('|'),
+      кг: !!document.querySelector('.card.exact input[data-f="w"]'),
+      часы: document.querySelectorAll('.card.exact [data-watch]').length
     }));
     дано(/ с/.test(к.спец), 'в карточке тоже секунды: ' + к.спец);
-    дано(/секунд/.test(к.поле), 'поле подписано «секунды», а не «повторы»');
-    дано(к.часы, 'секундомер на месте');
+    дано(/секунды/.test(к.колонки), 'колонка подписана «секунды», а не «повторы»: ' + к.колонки);
+    дано(!к.кг, 'веса у планки нет — колонки килограммов тоже');
+    дано(к.часы >= 1, 'секундомер стоит в каждой строке подхода: ' + к.часы);
   }
   await br2.close();
 

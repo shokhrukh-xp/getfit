@@ -128,7 +128,7 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
     /* 12.09: при входе всё свёрнуто — карточку надо открыть нажатием */
     const стр = await page.$('#list .exrow');
     if (стр) { await стр.click(); await page.waitForTimeout(400); }
-    const set = await page.$('.exgo');
+    const set = await page.$('.settbl .setrow:not(.done) .ok');
     if (set) {
       await set.click(); await page.waitForTimeout(900);
       const т = await пр(page, '.timer');
