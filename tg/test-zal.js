@@ -134,6 +134,35 @@ const снимок = page => page.evaluate(() => ({
   }
 
   await br.close();
+
+  /* ── ЧТО ДЕРЖАТ, СЧИТАЕТСЯ В СЕКУНДАХ (13.09) ──
+     «Планка считается в секундах же, где таймер здесь?» Признаком служило
+     окончание «с» в строке повторов; тренер написал планке «12–15», и
+     приложение показало повторы и спрятало секундомер. Признак теперь —
+     каталог: у упражнений, которые держат, стоит tm. */
+  const br2 = await chromium.launch();
+  const p2 = await br2.newPage({ viewport: { width: 390, height: 900 } });
+  await M.поднять(p2, { theme: 'dark', page: 'gym', wait: 2500,
+    subs: { 'D1:4': { n: 'Планка', e: 'Plank', i: 'Plank' } } });
+  const стр = await p2.$$eval('#list .exrow', rs => rs.map(r =>
+    ((r.querySelector('.exrn b') || {}).textContent || '') + ' | ' + ((r.querySelector('.exrn i') || {}).textContent || '')));
+  const пл = стр.findIndex(t => /Планка/.test(t));
+  дано(пл >= 0, 'планка встала в день: ' + (стр[пл] || '—'));
+  if (пл >= 0) {
+    дано(/ с$/.test(стр[пл].trim()), 'в строке у неё секунды, а не повторы: ' + стр[пл]);
+    await (await p2.$$('#list .exrow'))[пл].click();
+    await p2.waitForTimeout(600);
+    const к = await p2.evaluate(() => ({
+      спец: ((document.querySelector('.card.exact .spec') || {}).textContent || '').replace(/\s+/g, ' '),
+      поле: ((document.querySelector('.card.exact .exbox') || {}).textContent || '').replace(/\s+/g, ' '),
+      часы: !!document.querySelector('.card.exact [data-watch]')
+    }));
+    дано(/ с/.test(к.спец), 'в карточке тоже секунды: ' + к.спец);
+    дано(/секунд/.test(к.поле), 'поле подписано «секунды», а не «повторы»');
+    дано(к.часы, 'секундомер на месте');
+  }
+  await br2.close();
+
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
 })().catch(e => { console.error('УПАЛО:', e.stack); process.exit(1); });

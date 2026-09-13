@@ -2732,7 +2732,7 @@ function rirNow(){
   var p=phaseNow();
   return (p && p.rir) ? p.rir : 2;
 }
-function repsOf(e, dk){ return e.reps; }
+function repsOf(e, dk){ return (typeof repsTime==='function') ? repsTime(e.reps, e) : e.reps; }
 function allDays(){ return PROF.heavy.concat(PROF.lightDays); }
 
 function applyProfile(p, silent){
@@ -4110,7 +4110,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 08:30';
+var BUILD = '13.09 08:51';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4215,7 +4215,27 @@ var _lite=document.getElementById('liteseg'); if(_lite) _lite.addEventListener('
 /* ══════════ ЖУРНАЛ ПОДХОДОВ ══════════ */
 var NOWT={'Планка':1,'Боковая планка':1,'Ролик для пресса':1,'Подъём ног в висе':1};
 function hasW(e){ return !NOWT[e.n] && !e.nw; }
-function isTime(e){ return / с$/.test(e.reps); }
+/* ── ЧТО СЧИТАЕТСЯ В СЕКУНДАХ ──
+   13.09: «Планка считается в секундах же, где таймер здесь?» Признаком было
+   только окончание «с» в строке повторов: своя программа пишет «20–40 с», а
+   собранная тренером написала планке «12–15» — и приложение показало повторы
+   и спрятало секундомер. Строка — не признак. Теперь спрашиваем каталог: у
+   упражнений, которые ДЕРЖАТ, стоит tm, и счёт у них в секундах независимо от
+   того, что написала модель. */
+function держим(e){
+  if(!e) return false;
+  var id=e.cat||e.id; if(!id || !CAT || !CAT.ex) return false;
+  for(var i=0;i<CAT.ex.length;i++) if(CAT.ex[i].i===id) return !!CAT.ex[i].tm;
+  return false;
+}
+function isTime(e){ return / с$/.test(e.reps) || держим(e); }
+/* Если движение держат, а в программе стоят повторы — показываем секунды.
+   20–40 с — то же окно, что стоит у планки в собственной программе
+   приложения; подобрать своё он может шагом в 5 секунд. */
+function repsTime(r, e){
+  if(!держим(e) || / с$/.test(r||'')) return r;
+  return '20–40 с';
+}
 function stepR(e){ return isTime(e)?5:1; }
 function unitR(e){ return isTime(e)?'секунды':'повторы'; }
 function unitR2(e){ return isTime(e)?'секунд':'повторов'; }
