@@ -1897,15 +1897,21 @@ body.onb #picker .modalbox::before{display:none}
    значит переверстать ряд, расширяем только зону нажатия псевдоэлементом:
    вид остаётся прежним, палец получает свои 44. */
 .hright > button, .allb, .setadd button, .fmeal .fx, .fdarr button,
-.catlist h4 button, .catgrp h4 button{position:relative}
+.catlist h4 button, .catgrp h4 button,
+.xbtn, .mesum button, .plan .btn.sm, .mchip, .cpill .cic, .chatask .csend{position:relative}
 .hright > button::after, .allb::after, .setadd button::after,
 .fmeal .fx::after, .fdarr button::after,
-.catlist h4 button::after, .catgrp h4 button::after{
+.catlist h4 button::after, .catgrp h4 button::after,
+.xbtn::after, .mesum button::after, .plan .btn.sm::after, .mchip::after,
+.cpill .cic::after, .chatask .csend::after{
   content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   width:max(100%,44px);height:max(100%,44px)}
 .zseg button, .todaybar .tsedit, .dayseg button, .exfoot .ebtn,
 .resetline .linkbtn, .timer-in .tbtn, .fday .fbar.fbtap,
-.catitem .catpick, .hweek .hwd{min-height:44px}
+.catitem .catpick, .hweek .hwd, .seg button, .goalcard #goaltalk,
+.mlchk, .hurt .hurtbtn{min-height:44px}
+/* ссылка на видео техники — такая же цель нажатия, как кнопка рядом */
+.cues .vid, a.vid{display:inline-flex;align-items:center;min-height:44px}
 /* тяжёлый вариант того же движения — строкой под подписью, не отдельной записью */
 .cathard{display:block;text-decoration:none;margin-top:3px;font-size:11px;line-height:1.4;color:var(--dim)}
 .cathard b{font-weight:600;color:var(--muted)}
@@ -4107,7 +4113,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 11:39';
+var BUILD = '13.09 13:46';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9319,7 +9325,13 @@ function fabFit(){
     var el=document.elementFromPoint(Math.round(точки[i][0]), Math.round(точки[i][1]));
     while(el && el!==document.body){
       var п=getComputedStyle(el).position;
-      if(п==='fixed' || п==='sticky'){
+      /* .fask — строка ввода с кнопкой справа («Напиши, что съел» и весы).
+         Она не закреплена, лежит в потоке, и кнопка чата садилась прямо на
+         «Отправить»: на экране «Еда» по ней нельзя было попасть пальцем
+         вообще. Уступаем ей так же, как закреплённой мебели. Спискам не
+         уступаем намеренно: строк много, кнопка прыгала бы при каждом
+         касании экрана. */
+      if(п==='fixed' || п==='sticky' || el.classList.contains('fask')){
         var b=el.getBoundingClientRect();
         /* только то, что закреплено ВНИЗУ: шапка сверху кнопке не мешает */
         if(b.top>верх-200 && b.top<низ) подъём=Math.max(подъём, Math.ceil(низ-b.top+10));
