@@ -4141,7 +4141,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '13.09 19:52';
+var BUILD = '14.09 11:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4322,6 +4322,13 @@ function suggestedDay(){
    Сбрасывает его только «Очистить день». */
 function wt0Key(){ return 'wt0_'+TODAY+'_'+day; }
 function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0; return t||null; }
+/* Сколько шло занятие: от первого касания подхода до этой минуты. Потолок в
+   четыре часа — от случая «открыл вечером и поправил подход»: без него в
+   запись уехало бы «занятие 9 часов», и по нему считались бы траты. */
+function wDur(){
+  var t0=wStart(); if(!t0) return null;
+  return Math.max(1, Math.min(240, Math.round((Date.now()-t0)/60000)));
+}
 function wTouch(){ if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); }
 function markDone(){
   wTouch();
@@ -5695,8 +5702,19 @@ function sessionBody(){
         return { w:isNaN(w)?null:w, r:isNaN(r)?null:r };
       })});
   });
+  /* НАЧАЛО И ДЛИТЕЛЬНОСТЬ ЕДУТ В КАЖДУЮ ЗАПИСЬ.
+     14.09: «время тренировки отличается на телефоне и на маке». Отметка о
+     начале занятия живёт в памяти устройства, а в запись её клал только
+     «Завершить и сохранить» — и тут же затирало автосохранение, которое
+     срабатывает последним. В облаке t0 не было НИ У ОДНОЙ тренировки.
+     Телефон рисовал зал на своей локальной отметке (08:12), мак — не найдя
+     ничего, ставил его на «сейчас», то есть на момент, когда человек смотрит
+     на экран. Заодно терялась длительность: траты зала и недельная нагрузка
+     считались по заявленным минутам из профиля вместо фактических. */
+  var t0=wStart();
   return { date:TODAY, day:day, name:d.name, sub:d.sub, week:week,
-           updated:new Date().toISOString(), ex:ex };
+           updated:new Date().toISOString(), ex:ex,
+           t0:t0?new Date(t0).toISOString():null, dur:wDur() };
 }
 var lastSavedAt=null, dirty=false;
 function pushDb(){
@@ -5907,8 +5925,7 @@ function finishSave(){
                unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
     /* время тренировки — от первого касания подхода до этого нажатия, не до
        ответа облака; едет в запись, чтобы журнал и тренер его видели */
-    var fin=Date.now(), t0=wStart();
-    var dur=t0 ? Math.max(1, Math.round((fin-t0)/60000)) : null;
+    var t0=wStart(), dur=wDur();
     var body={date:TODAY, day:day, name:d.name, sub:d.sub, week:week, updated:new Date().toISOString(), ex:ex,
               t0:t0?new Date(t0).toISOString():null, dur:dur};
     var label=sc.n+' '+plural(sc.n,['подход','подхода','подходов']);
@@ -7817,15 +7834,23 @@ function hcEvents(){
   });
   (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
   /* зал: закрытая тренировка стоит на времени старта; идущая — тоже, если старт известен */
-  var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null;
+  var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null, конец=false;
   if(закрыт || pr.done>0){
     /* старт — из локальной отметки первого касания; с другого устройства — из записи в журнале */
     var w0=get('wt0_'+TODAY+'_'+dk,null); if(w0) t0=new Date(w0);
-    if(!t0 && HIST && HIST[0] && HIST[0].date===TODAY && HIST[0].t0) t0=new Date(HIST[0].t0);
+    var зап = (HIST && HIST[0] && HIST[0].date===TODAY) ? HIST[0] : null;
+    if(!t0 && зап && зап.t0) t0=new Date(зап.t0);
+    /* СТАРЫЕ ЗАПИСИ БЕЗ ВРЕМЕНИ СТАРТА. Раньше зал в этом случае вставал на
+       «сейчас» — то есть на момент, когда человек смотрит на экран, и один и
+       тот же день на двух устройствах выглядел по-разному. Время последнего
+       сохранения — это конец занятия, а не начало, зато это факт. Подпись со
+       временем рисуется только для настоящего старта, ниже. */
+    if(!t0 && закрыт && зап && зап.updated){ var u=new Date(зап.updated); if(!isNaN(u)){ t0=u; конец=true; } }
   }
   if(закрыт || pr.done>0){
     var gh = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : nowH;
-    ev.push({h:gh, cls: закрыт?'gym':'gymon', lab:(t0?hcHM(gh)+' · ':'')+(закрыт?'зал':'зал идёт'), go:'gym'});
+    ev.push({h:gh, cls: закрыт?'gym':'gymon',
+      lab:((t0&&!конец)?hcHM(gh)+' · ':'')+(закрыт?'зал':'зал идёт'), go:'gym'});
   }
   /* «+» стоит там, когда пора есть по рекомендации, а не когда сменилось окно.
      Если норма уже закрыта — приёма не советуем вовсе: иначе часы зовут ужинать,
