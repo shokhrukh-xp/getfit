@@ -95,6 +95,49 @@ const ЗАПИСЬ = () => {
     'повторное сохранение уже не переспрашивает');
   дано(((await page.evaluate(ЗАПИСЬ))[0] || {}).dur === 60, 'и время осталось прежним');
 
+  /* ── ЗАНЯТИЕ НЕ РАСТЁТ ОТ ТОГО, ЧТО ПРИЛОЖЕНИЕ ОТКРЫТО ──
+     15.09: в записи оказалось 240 минут вместо сорока (потолок в четыре
+     часа), и зал насчитал 880 ккал вместо двухсот с небольшим. Занятие
+     кончилось ночью, а днём он открыл приложение — и автосохранение
+     пересчитало длительность до текущей минуты. Конец занятия — это время
+     последнего касания подхода, и открывание его не двигает. */
+  const page3 = await br.newPage({ viewport: { width: 390, height: 900 } });
+  await page3.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+  await M.поднять(page3, { theme: 'dark', page: 'gym', wait: 2600 });
+  for (let i = 0; i < 2; i++) {
+    const карточки = await page3.$$('#list .exrow');
+    if (!карточки[i]) break;
+    await карточки[i].click(); await page3.waitForTimeout(500);
+    const все = await page3.$('.card.exact .allb');
+    if (все) { await все.click(); await page3.waitForTimeout(700); }
+    const назад = await page3.$('#list .card.exact .exrow');
+    if (назад) { await назад.click(); await page3.waitForTimeout(400); }
+  }
+  /* занятие было три часа назад и шло по пять минут на подход — обычный
+     темп, лишних вопросов не будет; с тех пор приложение просто открыто */
+  const подходов3 = await page3.$$eval('#list .exrow .exrv u', ns =>
+    ns.reduce((s, n) => s + (parseInt((n.textContent.match(/^(\d+)/) || [])[1], 10) || 0), 0));
+  const шло = 5 * подходов3;
+  const сдвинул = await page3.evaluate(мин => {
+    const t0 = Date.now() - 3 * 3600e3;
+    let n = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf('wt0_') > 0) {
+        localStorage.setItem(k, JSON.stringify(t0));
+        localStorage.setItem(k.replace('wt0_', 'wtl_'), JSON.stringify(t0 + мин * 60e3));
+        n++;
+      }
+    }
+    return n;
+  }, шло);
+  дано(сдвинул === 1, 'отметка начала занятия найдена и сдвинута на три часа назад: ' + сдвинул);
+  await page3.click('#finish');
+  await page3.waitForTimeout(2200);
+  const зап3 = (await page3.evaluate(ЗАПИСЬ))[0] || {};
+  дано(зап3.dur === шло, 'в записи время работы, а не «до сейчас» и не потолок в 240: ' + зап3.dur + ' при ' + шло);
+  await page3.close();
+
   /* ── раскладка нормы на «Еде» объясняет число зала ── */
   const page2 = await br.newPage({ viewport: { width: 390, height: 900 } });
   await page2.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));

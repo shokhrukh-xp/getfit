@@ -4155,7 +4155,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.09 09:16';
+var BUILD = '15.09 12:23';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4343,21 +4343,34 @@ function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0
    «было 70 минут», спорить с ним нечем — таймер видел только то, что ему
    показали. Живёт рядом с t0 и стирается вместе с днём. */
 function wDurKey(){ return 'wdur_'+TODAY+'_'+day; }
+/* ДЛИТЕЛЬНОСТЬ — ДО ПОСЛЕДНЕЙ РАБОТЫ, А НЕ ДО «СЕЙЧАС».
+   15.09: у него в записи оказалось 240 минут вместо сорока, и зал насчитал
+   880 ккал. Причина не в подходах и не в весах: занятие кончилось в 03:15,
+   а днём он открыл приложение — автосохранение пересчитало длительность от
+   первого подхода до ТЕКУЩЕЙ минуты, упёрлось в потолок четырёх часов и
+   записало его. Пока зал считался по одному MET, четыре часа стоили столько
+   же, сколько сорок минут, умноженные на шесть, — просто никто не смотрел.
+   Теперь конец занятия — это время последнего касания подхода. Открыть
+   приложение, полистать журнал или дописать заметку больше не делает
+   тренировку длиннее: чтобы она росла, надо работать. */
+function wtLastKey(){ return 'wtl_'+TODAY+'_'+day; }
+function wEnd(){
+  var t=+get(wtLastKey(),0) || 0;
+  return t>0 ? t : Date.now();
+}
 function wDur(){
   var фикс=+get(wDurKey(),0) || 0;
   if(фикс>0) return Math.max(1, Math.min(240, Math.round(фикс)));
   var t0=wStart(); if(!t0) return null;
-  return Math.max(1, Math.min(240, Math.round((Date.now()-t0)/60000)));
+  return Math.max(1, Math.min(240, Math.round((wEnd()-t0)/60000)));
 }
-/* Замер таймера сам по себе — без подтверждения. Нужен, чтобы понять, стоит
-   ли вообще спрашивать, и чтобы показать в вопросе честное «насчитал N». */
-function wDurRaw(){
-  var t0=wStart(); if(!t0) return null;
-  return Math.max(1, Math.min(240, Math.round((Date.now()-t0)/60000)));
-}
-function wTouch(){ if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); }
+function wTouch(){ if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); set(wtLastKey(), Date.now()); }
+/* markDone отмечает, что СЕГОДНЯ этот день программы уже делали, и вызывается
+   в том числе из «Завершить». Отметку времени она больше не двигает: иначе
+   нажатие «Завершить» само сдвигало бы конец занятия на текущую минуту, и
+   тренировка, сохранённая повторно через шесть часов, длилась бы шесть часов.
+   Время двигает только работа — там, где подход действительно трогают. */
 function markDone(){
-  wTouch();
   if(lastDone && lastDone.day===day && lastDone.date===TODAY) return;
   lastDone = {day:day, date:TODAY};
   set('lastdone', lastDone);
@@ -4416,6 +4429,12 @@ function сессияИзЖурнала(){
     o.ex.push({sets:arr});
   });
   if(!нашли) return null;
+  /* Время занятия приезжает вместе с записью. Без этого второе устройство
+     не знало, когда работа кончилась, начинало отсчитывать «до сейчас» — и
+     один и тот же день на телефоне и на маке давал разную длительность, а
+     значит и разные калории зала. */
+  if(w.t0){ try{ set(wt0Key(), new Date(w.t0).getTime()); }catch(e){} }
+  if(w.dur>0){ try{ set(wDurKey(), w.dur); }catch(e){} }
   o.n=сп.map(function(e){ return e.n; });
   return o;
 }
@@ -4767,9 +4786,12 @@ function durИтог(){
 function openDur(n, замер, потом){
   var m=document.getElementById('durm'); if(!m){ if(потом) потом(замер); return; }
   DUR={n:n, замер:замер, min:замер, own:false, потом:потом||null};
+  var долго = замер > 10*n;
   var w=document.getElementById('dur-why');
   if(w) w.textContent='Таймер насчитал '+замер+' '+plural(замер,['минуту','минуты','минут'])+
-    ' — на '+n+' '+plural(n,['подход','подхода','подходов'])+' это слишком быстро. Он включается с первого записанного подхода, так что мог опоздать.';
+    ' — на '+n+' '+plural(n,['подход','подхода','подходов'])+
+    (долго ? ' это слишком долго. Похоже, занятие давно кончилось, а приложение открыли позже.'
+           : ' это слишком быстро. Он включается с первого записанного подхода, так что мог опоздать.');
   durМин(); durИтог(); m.classList.add('show');
 }
 function closeDur(){ var m=document.getElementById('durm'); if(m) m.classList.remove('show'); DUR.потом=null; }
@@ -5125,7 +5147,7 @@ document.getElementById('list').addEventListener('click', function(ev){
     });
     rows.forEach(function(v,si){ v.done=!already; syncRow(adi,si); });
     haptic(already?'light':'medium');
-    if(!already) markDone();
+    if(!already){ wTouch(); markDone(); }
     saveSess(); commit(); return;
   }
   var row=ev.target.closest('.setrow'); if(!row) return;
@@ -5156,7 +5178,7 @@ document.getElementById('list').addEventListener('click', function(ev){
       var пара = e.ss ? партнёрDi(di) : -1;
       var первыйВПаре = пара>=0 && di<пара;
       if(!первыйВПаре) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
-      markDone();
+      wTouch(); markDone();
       advanceCur(di);
     }
     /* перерисовать ДО commit: commit снимает состояние с DOM (harvestDom), и на
@@ -5919,7 +5941,7 @@ document.getElementById('reset').addEventListener('click', function(){
 function стеретьЗапись(){
   var id=TODAY+'_'+day;
   try{ if(HIST) HIST=HIST.filter(function(w){ return !(w.date===TODAY && dayHere(w.day)===day); }); }catch(e){}
-  try{ set(wDurKey(), null); }catch(e){}
+  try{ set(wDurKey(), null); set(wtLastKey(), null); }catch(e){}
   try{ csDel(csKey('workouts/'+id)); }catch(e){}
   try{ syncPost('/w/del', {uid:syncUid(), id:id}); }catch(e){}
   try{ if(lastDone && lastDone.date===TODAY && lastDone.day===day){ lastDone=null; set('lastdone', null); } }catch(e){}
@@ -6021,7 +6043,7 @@ function finishSave(){
     /* Замер меньше двух минут на подход — почти наверняка таймер включился
        не с начала, а от этого числа считаются калории зала. Спрашиваем один
        раз, ответ запоминаем и сохраняем уже с ним. */
-    if(dur!=null && сделано>=4 && dur < 2*сделано && !(+get(wDurKey(),0)>0)){
+    if(dur!=null && сделано>=4 && (dur < 2*сделано || dur > 10*сделано) && !(+get(wDurKey(),0)>0)){
       finReset(); openDur(сделано, dur, function(){ finishSave(); });
       return;
     }
