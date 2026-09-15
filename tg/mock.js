@@ -268,7 +268,13 @@ async function поднять(page, o) {
 
   const ошибки = [];
   page.on('pageerror', e => ошибки.push(String(e)));
-  await page.goto(o.base || БАЗА, { waitUntil: 'domcontentloaded' });   /* o.base — эскиз на другом порту */
+  /* Нужный экран открываем адресом, а не памятью вкладки: с 15.09 приложение
+     всегда начинает с главной («сейчас как попало открывается» — его слова),
+     и последняя вкладка между заходами больше ничего не решает. */
+  let адрес = o.base || БАЗА;
+  if (o.page && o.page !== 'home' && !/[?&]p=/.test(адрес))
+    адрес += (адрес.indexOf('?') >= 0 ? '&' : '?') + 'p=' + o.page;
+  await page.goto(адрес, { waitUntil: 'domcontentloaded' });   /* o.base — эскиз на другом порту */
   await page.waitForTimeout(o.wait || 1400);
   return ошибки;
 }
