@@ -1342,6 +1342,14 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .udkind{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:18px 0 8px;font-weight:700;text-transform:capitalize}
 .udkind s{text-decoration:none;font-weight:400;font-size:11px;color:var(--dim);text-transform:none;white-space:nowrap}
 .plate{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:8px;cursor:pointer}
+.subin{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.subin li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--text);line-height:1.4}
+.subin li::before{content:'';flex:0 0 6px;height:6px;margin-top:6px;border-radius:50%;background:var(--accent)}
+.subfree{margin:14px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
+#sub-buy{margin-top:18px}
+#sub-note:empty{display:none}
+.subrow{margin:10px 0 0;font-size:12.5px;color:var(--dim);line-height:1.5}
+.subrow button{background:none;border:none;padding:8px 0;min-height:44px;color:var(--accent-txt);font:inherit;font-size:12.5px;cursor:pointer}
 .plate .plph{flex:0 0 92px;width:92px;height:92px;border-radius:10px;background:var(--accent-ghost);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)}
 .plate .plph img{width:100%;height:100%;object-fit:cover;display:block}
 .plate .pltx{min-width:0;flex:1}
@@ -2224,6 +2232,19 @@ body.onb #picker .modalbox::before{display:none}
      меньше двух минут на подход — почти наверняка он включился не с начала.
      От этого числа считаются калории зала, поэтому молча брать неверное
      нельзя, а спрашивать каждый раз — значит спрашивать зря. -->
+<!-- Тренер по подписке. Экран нужен ровно тем, у кого доступа нет: свои и
+     оплатившие его не видят никогда, поэтому он не в меню, а всплывает там,
+     где человек упёрся — на первом же обращении к тренеру. -->
+<div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="subtitle">Тренер по подписке</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
+    <p class="mtext" id="sub-what"></p>
+    <ul class="subin" id="sub-list"></ul>
+    <p class="subfree">Дневник, нормы, зал, журнал, карта тела и рейтинг остаются бесплатными.</p>
+    <button class="btn prim wide" id="sub-buy">Подключить</button>
+    <p class="rec" id="sub-note"></p>
+  </div>
+</div>
 <div class="modal" id="durm" role="dialog" aria-modal="true" aria-labelledby="durtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="durtitle">Сколько шло занятие</h3><button class="xbtn" id="durclose" aria-label="Закрыть">✕</button></div>
@@ -2265,6 +2286,8 @@ body.onb #picker .modalbox::before{display:none}
       <label id="me-bwl">вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
     </div>
     <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его меняешь на «Еде», в разделе «Весы».</p>
+    <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
+    <p class="subrow" id="subrow" hidden></p>
     <div class="goalcard" id="goalcard"></div>
     <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
     <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
@@ -4155,7 +4178,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.09 12:55';
+var BUILD = '15.09 21:06';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5915,7 +5938,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull();
+      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull(); subPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -8571,7 +8594,92 @@ function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{
 /* Человек не должен видеть текст Google про квоты и биллинг: у жены Шохруха
    такой абзац вылез прямо в профиле, когда она просто заполняла анкету.
    Наружу — одна понятная фраза, техника уходит в консоль. */
+/* ── ТРЕНЕР ПО ПОДПИСКЕ ────────────────────────────────────────────────
+   15.09, его решение: приложение открывается посторонним, и платным
+   становится только тренер — то единственное, что стоит денег в работе.
+   Экран показывается не в меню, а там, где человек упёрся: попросил разбор
+   еды или написал тренеру, сервер ответил кодом sub — и лист всплыл. Кто
+   был в приложении до появления цены, не видит его никогда.
+   Платим Звёздами: правила Telegram не оставляют выбора — цифровые услуги
+   в ботах и мини-аппах идут только через Stars. */
+var SUB=null, SUBBUSY=false;
+function subPull(){
+  return fGet('/sub?uid='+encodeURIComponent(syncUid()))
+    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); } return d; }).catch(function(){ return null; });
+}
+function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
+function renderSub(){
+  var w=document.getElementById('sub-what'); if(!w||!SUB) return;
+  var ц=SUB.stars||500;
+  w.textContent='Тренер — '+ц+' ★ в месяц. Списывается раз в месяц, отменить можно в любой момент.';
+  var l=document.getElementById('sub-list');
+  if(l) l.innerHTML=['Разбор еды по фото и по словам — калории, белок, жиры, клетчатка',
+    'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
+    'Сборка программы под тебя и правки по ходу',
+    'Недельный разбор: что получилось, что менять'].map(function(t){ return '<li>'+t+'</li>'; }).join('');
+  var b=document.getElementById('sub-buy');
+  if(b){ b.textContent='Подключить за '+ц+' ★'; b.disabled=!SUB.link||SUBBUSY; }
+  var n=document.getElementById('sub-note');
+  if(n) n.innerHTML = SUB.link ? '' : '<i>Оплата открывается из Telegram. Если кнопка не работает — напиши боту «подписка».</i>';
+  var r=document.getElementById('subrow'), с=SUB.sub||{};
+  if(r){
+    if(с.kind==='grand'){ r.hidden=true; }                   /* свой — про цену молчим */
+    else if(с.ok){
+      r.hidden=false;
+      r.innerHTML='Тренер подключён'+(с.until?', следующее списание '+датаРус(с.until):'')+
+        (с.canceled?' — подписка отменена, дорабатывает оплаченное.':'. <button type="button" id="sub-off">Отменить</button>');
+    } else {
+      r.hidden=false;
+      r.innerHTML='Тренер — по подписке, '+ц+' ★ в месяц. <button type="button" id="sub-on">Подключить</button>';
+    }
+  }
+}
+function датаРус(ms){
+  var d=new Date(+ms); if(isNaN(d)) return '';
+  return d.getDate()+' '+MONTHS[d.getMonth()];
+}
+function openSub(){
+  var m=document.getElementById('subm'); if(!m) return;
+  renderSub(); m.classList.add('show');
+  if(!SUB || !SUB.link) subPull();
+}
+function closeSub(){ var m=document.getElementById('subm'); if(m) m.classList.remove('show'); }
+/* Одна дверь на все отказы: любой запрос, которому сервер ответил кодом sub,
+   приводит сюда, и человек видит цену, а не красную ошибку. */
+function стенаЕсли(e){
+  if(!e || e.code!=='sub') return false;
+  SUB = SUB || {}; if(e.stars) SUB.stars=e.stars;
+  openSub(); subPull();
+  return true;
+}
+document.addEventListener('click', function(e){
+  if(e.target.closest('#sub-on')){ openSub(); haptic('light'); return; }
+  if(e.target.closest('#sub-off')){
+    var b=e.target.closest('#sub-off'); b.disabled=true; b.textContent='Отменяю…';
+    fPost('/sub/cancel', {uid:syncUid()}).then(function(d){
+      if(d&&d.ok){ haptic('ok'); subPull(); } else { b.disabled=false; b.textContent='Отменить'; say((d&&d.error)||'Не вышло.'); }
+    }).catch(function(err){ b.disabled=false; b.textContent='Отменить'; say(humanErr(err)); });
+    return;
+  }
+  if(e.target.closest('#subclose')){ closeSub(); return; }
+  var m=document.getElementById('subm');
+  if(m && m.classList.contains('show') && e.target===m){ closeSub(); return; }
+  if(e.target.closest('#sub-buy')){
+    if(SUBBUSY || !SUB || !SUB.link) return;
+    var tg=window.Telegram&&window.Telegram.WebApp;
+    if(!tg||!tg.openInvoice){ say('Оплата открывается только внутри Telegram.'); return; }
+    SUBBUSY=true; renderSub();
+    tg.openInvoice(SUB.link, function(st){
+      SUBBUSY=false;
+      if(st==='paid'){ haptic('ok'); subPull().then(function(){ closeSub(); say('Тренер открыт.'); }); return; }
+      renderSub();
+      if(st==='failed') { haptic('err'); say('Оплата не прошла.'); }
+    });
+    return;
+  }
+});
 function humanErr(e){
+  if(стенаЕсли(e)) return 'Тренер работает по подписке.';
   var t=String((e&&e.message)||e||'');
   if(e&&e.detail) try{ console.log('getfit:', e.detail); }catch(_){}
   if(e && e.name==='AbortError') return 'Слишком долго — попробуй ещё раз.';

@@ -236,6 +236,18 @@ async function поднять(page, o) {
             stars: { n: 3, why: 'мало клетчатки' }, likes: 1, liked: false, likers: ['Ты'] }
         ]) });
     }
+    /* подписка. o.sub — что отдаёт сервер про доступ; по умолчанию доступ
+       есть (так живут все, кто был в приложении до появления цены), а
+       o.sub:'нет' поднимает стену. */
+    if (p === '/sub') {
+      if (o.sub === 'нет') return дать({ ok: true, stars: 500, link: 'https://t.me/$invoice_mock',
+        title: 'GetFit — тренер', about: 'Разбор еды по фото и словам, разговор с тренером, сборка программы и недельный разбор.',
+        sub: { ok: false, kind: 'none', until: 0, stars: 500 } });
+      if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
+        sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
+      return дать({ ok: true, stars: 500, link: null, sub: { ok: true, kind: 'grand', until: 0 } });
+    }
+    if (p === '/sub/cancel') return дать({ ok: true });
     if (p === '/acts') {
       const виды = o.kinds || ['теннис', 'бег', 'ходьба', 'плавание', 'велосипед', 'футбол',
         'бадминтон', 'сквош', 'йога', 'танцы', 'гребля', 'лыжи', 'коньки', 'бокс'];
@@ -259,6 +271,10 @@ async function поднять(page, o) {
       o.acts = (o.acts || []).filter(a => a.id !== b3.id);
       return дать({ ok: true, day: день({ acts: o.acts }) });
     }
+    if ((p === '/food' || p === '/coach' || p === '/ai' || p === '/onboard') && o.sub === 'нет')
+      return route.fulfill({ status: 402, contentType: 'application/json',
+        body: JSON.stringify({ error: 'Тренер работает по подписке.', code: 'sub', stars: 500,
+          sub: { ok: false, kind: 'none', until: 0 } }) });
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })
