@@ -21,8 +21,12 @@ function день(o) {
     prot: o.prot !== undefined ? o.prot : сумма('prot'),
     fat: o.fat || 48, fib: o.fib || 17, sug: o.sug || 32,
     line: o.line || 'За день: 1030 ккал, белка 67 г. До нормы ещё 1080 ккал.',
+    /* Раскладка нормы — ровно теми полями, что отдаёт сервер. Зал считается
+       по плотности: 60 минут на 24 подхода — 2,5 минуты на подход, это
+       строка компендиума 5,0, и (5 − 1) × 88,1 × 1 ч = 350 ккал. */
     targets: o.targets || { kcal: 2110, prot: 165, fat: { min: 52, max: 78 }, fib: 30, sug: 50,
-      parts: { base: 1780, gym: 330, acts: 0, plan: 0, delta: 0, k: 1 } }
+      parts: { base: 1760, gym: 350, acts: 0, plan: 0, delta: 0, k: 1,
+               gymMin: 60, gymSets: 24, gymMet: 5 } }
   };
 }
 function неделя(o) {
@@ -51,14 +55,23 @@ function стартовый() {
   return { date: '2026-09-01', w: 92.3, fat: 28.5, fatkg: 26.3, lean: 66, muscle: 62.5,
     water: 45.7, prot: 16.1, visc: 14, bmr: 1796 };
 }
+/* Круг отдаём ровно тем же набором полей, что и сервер (/circle): без
+   списка circles приложение честно решает, что человек ни в каком кругу не
+   состоит, и рисует «Круг ещё не собран» вместо таблицы — на этом 14.09
+   и споткнулась первая проверка страницы человека. */
 function круг() {
   return {
-    ok: true, circle: 'family', name: 'семья',
+    ok: true, today: TODAY, circle: 'family',
+    circles: [{ id: 'family', name: 'семья', n: 2, code: 'СЕМЬЯ7', link: 'https://t.me/GetFit_MyBot?start=c_semya7', owner: true }],
     board: [
-      { uid: '308687648', name: 'Ты', me: true, today: { r: 8.4 }, ravg: 7.9, streak: 6 },
-      { uid: '850965787', name: 'жена', today: { r: 9.1 }, ravg: 8.3, streak: 9 }
+      { uid: '308687648', name: 'Ты', me: true, days: ['ok', 'ok', 'low', 'ok', 'today', '', ''],
+        avg: 7.9, ravg: 7.9, pts: 41, closed: false, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true }, streak: 6, level: 2 },
+      { uid: '850965787', name: 'жена', me: false, days: ['ok', 'ok', 'ok', 'ok', 'today', '', ''],
+        avg: 8.3, ravg: 8.3, pts: 45, closed: false, today: { r: 9.1, closed: false, why: [], n: 2, counts: true, going: true }, streak: 9, level: 3 }
     ],
-    me: { streak: 6, level: 2, week: 41 }
+    last: { monday: Д(7), best: null, grow: null },
+    me: { streak: 6, week: ['ok', 'ok', 'low', 'ok', 'today', '', ''], pts: 41, avg: 7.9, ravg: 7.9,
+          elapsed: 5, level: 2, closed: false, score: null, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true } }
   };
 }
 
@@ -150,6 +163,17 @@ async function поднять(page, o) {
     } catch (e) {}
   }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null]);
 
+  /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
+     15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
+     чём. Страница тянет скрипт мини-аппа с telegram.org, и он ПЕРЕЗАПИСЫВАЕТ
+     window.Telegram — вместе с подставным CloudStorage. Загрузился скрипт —
+     хранилище отвечает «метод не поддерживается» (вне Telegram он объявляет
+     версию 6.0), загрузка дня обрывается, и половина проверок смотрит на
+     пустой экран. Не загрузился (сеть моргнула) — стенд работает.
+     Проверка, которая зависит от того, доехал ли чужой сервер, не проверка;
+     блокируем его всегда, а подставка и так полнее. */
+  await page.route('**://telegram.org/**', r => r.abort().catch(() => {}));
+
   await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
@@ -191,6 +215,27 @@ async function поднять(page, o) {
        отвечает числом, которого не даст никакая формула (777), и проверка
        убеждается, что на экране стоит именно ответ сервера. Посчитай
        приложение само — и число разошлось бы с тем, что уедет в день. */
+    /* страница человека в круге: его еда за день. Один приём С фото и один
+       БЕЗ — чтобы видеть оба случая сразу (14.09: «почему фото еды других не
+       отображаются» — фото не было в самих записях, но проверки этого не
+       знали). */
+    if (p === '/feed') {
+      const who = u.searchParams.get('who') || '';
+      if (!who) return дать({ ok: true, circle: 'family', today: TODAY, feed: o.feed || [] });
+      return дать({ ok: true, circle: 'family', today: TODAY, who, name: 'жена',
+        date: u.searchParams.get('date') || TODAY, streak: 4,
+        day: { r: 7.2, closed: false, why: [], n: 2, counts: true, going: true },
+        meals: o.meals === null ? [] : (o.meals || [
+          { ref: who + ':m1', uid: who, name: 'жена', me: false, date: TODAY, t: '09:05',
+            kind: 'завтрак', text: 'Яичница с томатами', kcal: 420, prot: 26, fat: 24, carb: 18,
+            fib: 5, sug: 4, items: [{ name: 'яйца', g: 120 }], img: '/p/a.jpg', note: '',
+            stars: { n: 4, why: 'белок и овощи' }, likes: 0, liked: false, likers: [] },
+          { ref: who + ':m2', uid: who, name: 'жена', me: false, date: TODAY, t: '14:33',
+            kind: 'обед', text: 'Творог и кофе', kcal: 254, prot: 34, fat: 9, carb: 12,
+            fib: 0, sug: 3, items: [{ name: 'творог', g: 200 }], img: null, note: '',
+            stars: { n: 3, why: 'мало клетчатки' }, likes: 1, liked: false, likers: ['Ты'] }
+        ]) });
+    }
     if (p === '/acts') {
       const виды = o.kinds || ['теннис', 'бег', 'ходьба', 'плавание', 'велосипед', 'футбол',
         'бадминтон', 'сквош', 'йога', 'танцы', 'гребля', 'лыжи', 'коньки', 'бокс'];

@@ -1315,7 +1315,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbkey s{flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:var(--track);text-decoration:none;display:inline-block}
 .lbkey s.lbd-ok{background:var(--done)}.lbkey s.lbd-low{background:var(--warn)}.lbkey s.lbd-today{background:var(--accent)}
 .lbseg{display:flex;gap:6px;margin:14px 0 2px}
-.lbseg button{flex:1;padding:9px 0;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.lbseg button{flex:1;min-height:44px;padding:0;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
 .lbseg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
 .cirtiles .tile{display:flex;flex-direction:column}
 .cirtiles .tile i{margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1325,7 +1325,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbrow .lbwhy{grid-column:1 / -1;font-size:11.5px;color:var(--muted);line-height:1.4;padding-top:2px}
 .fclose .fdone small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
 .fclose .fdone.fpend{border-color:var(--line);background:var(--card-2)}
-.cirnote button{background:none;border:none;padding:0;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
+.cirnote button{background:none;border:none;padding:11px 0;min-height:44px;color:var(--accent-txt);font:inherit;font-size:11.5px;cursor:pointer}
 .cirrules{margin:8px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);font-size:12px;color:var(--muted);line-height:1.5}
 .cirempty{padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
 .cirempty b{display:block;font-size:20px;color:var(--text);margin:6px 0 10px;}
@@ -1690,7 +1690,7 @@ body.onb #picker .modalbox::before{display:none}
 .zseg button[aria-pressed="true"]{background:var(--card-solid);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 /* переключатель периода в рейтинге — той же природы, что и разделы: один вид */
 .lbseg{gap:4px;background:var(--field);border-radius:14px;padding:3px;margin:14px 0 4px}
-.lbseg button{border:none;background:none;border-radius:11px;font-weight:600;color:var(--muted);min-height:36px}
+.lbseg button{border:none;background:none;border-radius:11px;font-weight:600;color:var(--muted);min-height:44px}
 .lbseg button[aria-pressed="true"]{background:var(--card-solid);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .tile{border:none;background:var(--field);box-shadow:none}
 .tile u{font-size:12px}
@@ -2218,6 +2218,20 @@ body.onb #picker .modalbox::before{display:none}
     <div class="sbrow"><span class="sblab">КАК ШЛО</span><div class="seg" id="sp-int"></div></div>
     <p class="rec" id="sp-itog"></p>
     <button class="btn prim wide" id="sp-save">Записать</button>
+  </div>
+</div>
+<!-- Сколько шло занятие. Открывается редко: только когда таймер насчитал
+     меньше двух минут на подход — почти наверняка он включился не с начала.
+     От этого числа считаются калории зала, поэтому молча брать неверное
+     нельзя, а спрашивать каждый раз — значит спрашивать зря. -->
+<div class="modal" id="durm" role="dialog" aria-modal="true" aria-labelledby="durtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="durtitle">Сколько шло занятие</h3><button class="xbtn" id="durclose" aria-label="Закрыть">✕</button></div>
+    <p class="mtext" id="dur-why"></p>
+    <div class="sbrow"><span class="sblab">МИНУТ</span><div class="seg" id="dur-min"></div>
+      <label class="mlab" id="dur-ownrow" hidden>минут<input id="dur-own" type="number" inputmode="numeric" min="5" max="240" placeholder="75"></label></div>
+    <p class="rec" id="dur-itog"></p>
+    <button class="btn prim wide" id="dur-save">Записать</button>
   </div>
 </div>
 <div class="modal" id="sborm" role="dialog" aria-modal="true" aria-labelledby="sbortitle">
@@ -4141,7 +4155,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '14.09 11:10';
+var BUILD = '15.09 09:16';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4325,7 +4339,19 @@ function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0
 /* Сколько шло занятие: от первого касания подхода до этой минуты. Потолок в
    четыре часа — от случая «открыл вечером и поправил подход»: без него в
    запись уехало бы «занятие 9 часов», и по нему считались бы траты. */
+/* Подтверждённое человеком время перебивает замер таймера: если он сказал
+   «было 70 минут», спорить с ним нечем — таймер видел только то, что ему
+   показали. Живёт рядом с t0 и стирается вместе с днём. */
+function wDurKey(){ return 'wdur_'+TODAY+'_'+day; }
 function wDur(){
+  var фикс=+get(wDurKey(),0) || 0;
+  if(фикс>0) return Math.max(1, Math.min(240, Math.round(фикс)));
+  var t0=wStart(); if(!t0) return null;
+  return Math.max(1, Math.min(240, Math.round((Date.now()-t0)/60000)));
+}
+/* Замер таймера сам по себе — без подтверждения. Нужен, чтобы понять, стоит
+   ли вообще спрашивать, и чтобы показать в вопросе честное «насчитал N». */
+function wDurRaw(){
   var t0=wStart(); if(!t0) return null;
   return Math.max(1, Math.min(240, Math.round((Date.now()-t0)/60000)));
 }
@@ -4710,6 +4736,65 @@ function openSport(){
   }).catch(function(){});
 }
 function closeSport(){ var m=document.getElementById('sportm'); if(m) m.classList.remove('show'); }
+/* ── СКОЛЬКО ШЛО ЗАНЯТИЕ ───────────────────────────────────────────────
+   15.09, его вопрос: «позанимался хорошенько, а норма выросла на 150».
+   Траты зала считаются от минут и плотности — (MET − 1) × вес × часы, где
+   MET берётся из того, сколько минут пришлось на подход. Значит минуты —
+   не украшение итога, а число, от которого зависит норма еды.
+   А таймер стартует с первого касания подхода: пришёл, размялся, сделал
+   пару подходов молча — и он опоздал на полчаса. Спрашиваем только когда
+   замер не сходится с работой: меньше двух минут на подход столько
+   подходов подряд не держат. В остальные дни не спрашиваем вовсе. */
+var DUR={n:0, замер:0, min:0, own:false, потом:null};
+function durМин(){
+  var box=document.getElementById('dur-min'); if(!box) return;
+  var свои=[]; [DUR.замер,30,45,60,75,90].forEach(function(m){ if(m>0 && свои.indexOf(m)<0) свои.push(m); });
+  свои.sort(function(a,b){ return a-b; });
+  var сам = !DUR.own ? false : true;
+  box.innerHTML = свои.map(function(m){
+    return '<button type="button" data-dm="'+m+'" aria-pressed="'+(!сам && DUR.min===m)+'">'+m+'</button>';
+  }).join('') + '<button type="button" data-dm="own" aria-pressed="'+сам+'">своё</button>';
+  var row=document.getElementById('dur-ownrow'); if(row) row.hidden = !сам;
+}
+function durИтог(){
+  var el=document.getElementById('dur-itog'), b=document.getElementById('dur-save'); if(!el) return;
+  if(!(DUR.min>0)){ el.innerHTML='<i>Выбери время или впиши своё.</i>'; if(b) b.disabled=true; return; }
+  var на=DUR.min/Math.max(1,DUR.n);
+  el.innerHTML = DUR.n+' '+plural(DUR.n,['подход','подхода','подходов'])+' за '+DUR.min+' '+
+    plural(DUR.min,['минуту','минуты','минут'])+' — по '+на.toFixed(1).replace('.',',')+' минуты на подход.';
+  if(b) b.disabled=false;
+}
+function openDur(n, замер, потом){
+  var m=document.getElementById('durm'); if(!m){ if(потом) потом(замер); return; }
+  DUR={n:n, замер:замер, min:замер, own:false, потом:потом||null};
+  var w=document.getElementById('dur-why');
+  if(w) w.textContent='Таймер насчитал '+замер+' '+plural(замер,['минуту','минуты','минут'])+
+    ' — на '+n+' '+plural(n,['подход','подхода','подходов'])+' это слишком быстро. Он включается с первого записанного подхода, так что мог опоздать.';
+  durМин(); durИтог(); m.classList.add('show');
+}
+function closeDur(){ var m=document.getElementById('durm'); if(m) m.classList.remove('show'); DUR.потом=null; }
+document.addEventListener('click', function(e){
+  if(e.target.closest('#durclose')){ closeDur(); return; }
+  var dm=document.getElementById('durm');
+  if(dm && dm.classList.contains('show') && e.target===dm){ closeDur(); return; }
+  var b=e.target.closest('[data-dm]');
+  if(b){
+    if(b.dataset.dm==='own'){ DUR.own=true; DUR.min=0; durМин();
+      var i=document.getElementById('dur-own'); if(i) i.focus(); }
+    else { DUR.own=false; DUR.min=+b.dataset.dm; durМин(); }
+    durИтог(); haptic('light'); return;
+  }
+});
+document.addEventListener('input', function(e){
+  if(e.target.id==='dur-own'){ DUR.min=Math.max(0, Math.min(240, parseInt(e.target.value,10)||0)); durИтог(); }
+});
+document.getElementById('dur-save').addEventListener('click', function(){
+  if(!(DUR.min>0)) return;
+  var мин=DUR.min, потом=DUR.потом;
+  set(wDurKey(), мин);
+  closeDur(); haptic('ok');
+  if(потом) потом(мин);
+});
 /* ЗАПИСАННОЕ ЗАНЯТИЕ — КАРТОЧКА, А НЕ СТРОЧКА.
    Сначала это была одна подпись под кнопкой; его слова: «добавь нормальной
    отдельной карточкой, а не просто одной незаметной строкой». Он прав:
@@ -5834,6 +5919,7 @@ document.getElementById('reset').addEventListener('click', function(){
 function стеретьЗапись(){
   var id=TODAY+'_'+day;
   try{ if(HIST) HIST=HIST.filter(function(w){ return !(w.date===TODAY && dayHere(w.day)===day); }); }catch(e){}
+  try{ set(wDurKey(), null); }catch(e){}
   try{ csDel(csKey('workouts/'+id)); }catch(e){}
   try{ syncPost('/w/del', {uid:syncUid(), id:id}); }catch(e){}
   try{ if(lastDone && lastDone.date===TODAY && lastDone.day===day){ lastDone=null; set('lastdone', null); } }catch(e){}
@@ -5895,8 +5981,11 @@ function finishSave(){
     clearTimeout(ctimer); stopTimer();
     var d=DAYS[day], sc=readScreen();
 
-    if(sc.n===0){
-      if(!sc.filled){ paintNote('empty'); return; }
+    /* Экран показывает ОДНО раскрытое упражнение — по нему судим только о
+       том, заполнил ли человек числа, не отметив их. Есть ли работа за день
+       вообще, знает сессия, а не разметка. */
+    if(sc.n===0 && !sc.filled && countDone()===0){ paintNote('empty'); return; }
+    if(sc.n===0 && sc.filled){
       if(!finArmed){
         finArmed=true; finSay('Отметить всё сделанным?','');
         clearTimeout(finT); finT=setTimeout(finReset, 6000);
@@ -5919,16 +6008,24 @@ function finishSave(){
     /* локальное состояние подтягиваем к экрану */
     try{ harvestDom(); markDone(); }catch(e){ reportErr('local',e); }
 
-    var ex=[];
-    exList(day).forEach(function(e,di){ if(sc.byEx[di])
-      ex.push({n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
-               unit:isTime(e)?'sec':'reps', sets:sc.byEx[di]}); });
-    /* время тренировки — от первого касания подхода до этого нажатия, не до
-       ответа облака; едет в запись, чтобы журнал и тренер его видели */
-    var t0=wStart(), dur=wDur();
-    var body={date:TODAY, day:day, name:d.name, sub:d.sub, week:week, updated:new Date().toISOString(), ex:ex,
-              t0:t0?new Date(t0).toISOString():null, dur:dur};
-    var label=sc.n+' '+plural(sc.n,['подход','подхода','подходов']);
+    /* ЗАПИСЬ СОБИРАЕТСЯ ИЗ СЕССИИ, А НЕ ИЗ РАЗМЕТКИ.
+       Раскрыто всегда одно упражнение, у свёрнутых строк подходов в разметке
+       просто нет — и «Завершить» складывало в запись последнее раскрытое, а
+       всё остальное возвращало обратно уже автосохранение. Пока оно успевало,
+       никто не замечал; не успевало — тренировка уезжала обрезанной, и итог
+       под кнопкой считал подходы одного упражнения. Теперь оба пути собирают
+       запись одной и той же сборкой, и расходиться им негде.
+       Время тренировки — от первого касания подхода до этого нажатия, не до
+       ответа облака; едет в запись, чтобы журнал и тренер его видели. */
+    var body=sessionBody(), сделано=countDone(), dur=body.dur;
+    /* Замер меньше двух минут на подход — почти наверняка таймер включился
+       не с начала, а от этого числа считаются калории зала. Спрашиваем один
+       раз, ответ запоминаем и сохраняем уже с ним. */
+    if(dur!=null && сделано>=4 && dur < 2*сделано && !(+get(wDurKey(),0)>0)){
+      finReset(); openDur(сделано, dur, function(){ finishSave(); });
+      return;
+    }
+    var label=сделано+' '+plural(сделано,['подход','подхода','подходов']);
 
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
     finSay('Сохраняю…','busy');
@@ -5941,9 +6038,14 @@ function finishSave(){
       try{ if(HIST){ HIST=HIST.filter(function(w){ return !(w.date===body.date && w.day===body.day); }); HIST.unshift(body); HIST.sort(function(a,b){ return a.date<b.date?1:-1; }); } }catch(e){}
       try{ pushVolume(); }catch(e){}
       thaw();
-      exList(day).forEach(function(e,di){ if(sc.byEx[di]){ var arr=sc.byEx[di], l=arr[arr.length-1];
-        var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(x){return [x.w==null?'':x.w, x.r==null?'':x.r];})};
-        LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; } });
+      /* «в прошлый раз» — тоже из записи, а не из разметки: иначе подсказка
+         помнила бы только последнее раскрытое упражнение */
+      exList(day).forEach(function(e,di){
+        var x=(body.ex||[]).filter(function(y){ return y.n===e.n; })[0];
+        var arr=x&&x.sets||[]; if(!arr.length) return;
+        var l=arr[arr.length-1];
+        var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(y){return [y.w==null?'':y.w, y.r==null?'':y.r];})};
+        LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; });
       set('last',LAST);
       return DB.doc('state/last').set({m:LAST, lastDone:lastDone, updated:body.updated});
     }).then(function(){
@@ -8738,8 +8840,16 @@ function renderFoodDay(){
     if(pr.gym) части.push('зал '+pr.gym);
     if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' '+pr.acts : 'спорт '+pr.acts);
     if(pr.plan) части.push(((d.plan||[]).length===1 ? d.plan[0].kind : 'спорт')+' по плану '+pr.plan);
+    /* Откуда взялось число зала. Он спросил 15.09: «учитываешь интенсивность,
+       подходы, веса?» — и был прав, что число нужно объяснять. Веса не
+       участвуют (подъём железа за всю тренировку — меньше 50 ккал), а минуты
+       и плотность участвуют, и это видно строкой. */
+    var темп = pr.gymMet>=5.8 ? 'круговой' : pr.gymMet>=5 ? 'плотный' : 'обычный';
+    var зал = pr.gymMin ? ('зал: '+pr.gymMin+' '+plural(pr.gymMin,['минута','минуты','минут'])+
+      (pr.gymSets?' и '+pr.gymSets+' '+plural(pr.gymSets,['подход','подхода','подходов'])+' — темп '+темп:'')) : '';
     состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' + ')+
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по жиру, ниже нельзя':' по цели'):'')+
+      (pr.gym&&зал?'<br>'+зал:'')+
       (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }
   box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
