@@ -270,8 +270,16 @@ select.week{
 }
 /* режим «только питание»: всё, что про зал, с экранов уходит */
 body.nogym .l1-in button[data-page="gym"]{display:none}
+/* На приборной плавающая кнопка тренера только закрывает таблицу людей */
+body.onadmin .coachfab{display:none!important}
 body.nogym .gymonly{display:none!important}
 .l1-in{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;margin:0 auto}
+/* Четвёртая вкладка появляется только у владельца — и только тогда сетка
+   становится четырёхколоночной. Иначе три кнопки поделили бы место на
+   четверых и висела бы пустая колонка. */
+body.boss .l1-in{grid-template-columns:repeat(4,1fr)}
+body.boss .l1 button{padding-left:2px;padding-right:2px;font-size:9.5px}
+body.boss .l1 button svg{width:22px;height:22px}
 .l1 button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:8px 4px 7px;color:var(--muted);font-size:10.5px;letter-spacing:0;
@@ -1342,6 +1350,39 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .udkind{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:18px 0 8px;font-weight:700;text-transform:capitalize}
 .udkind s{text-decoration:none;font-weight:400;font-size:11px;color:var(--dim);text-transform:none;white-space:nowrap}
 .plate{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:8px;cursor:pointer}
+/* ── ПРИБОРНАЯ ВЛАДЕЛЬЦА ── */
+.adhero{background:var(--card-2);border:.5px solid var(--line-soft);border-radius:16px;padding:16px;margin-bottom:10px}
+.adhero .adline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.adhero .adbig{font-size:30px;font-weight:600;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+.adhero .adbig.plus{color:var(--done-txt)}
+.adhero .adbig.minus{color:var(--warn-txt)}
+.adhero .adwhen{color:var(--dim);font-size:12px}
+.adnote{color:var(--dim);font-size:12px;line-height:1.55}
+.adnote em{font-style:normal;color:var(--text)}
+.adnote .admini{display:inline-block;margin-top:6px;text-decoration:none;font-size:11px;color:var(--dim);line-height:1.45}
+.adatt{background:var(--accent-ghost);border:.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;font-size:13px;line-height:1.5}
+.adatt b{color:var(--accent-txt)}
+.adatt+.adatt{margin-top:-4px}
+.adstrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 0 6px;-webkit-overflow-scrolling:touch}
+.adstrip .ads{flex:0 0 auto;background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;padding:10px 13px;min-width:92px}
+.adstrip .ads u{display:block;text-decoration:none;color:var(--dim);font-size:10.5px;margin-bottom:3px}
+.adstrip .ads b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.adh{font-size:12px;color:var(--dim);font-weight:500;margin:18px 0 8px}
+.adrow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;margin-bottom:6px}
+.adrow .adn{flex:1;min-width:0}
+.adrow .adn b{display:block;font-size:13.5px;font-weight:500}
+.adrow .adn i{display:block;font-style:normal;color:var(--dim);font-size:11px;margin-top:2px}
+.adpill{font-size:10.5px;padding:4px 8px;border-radius:99px;white-space:nowrap}
+.adpill.pay{background:rgba(var(--done-rgb),.14);color:var(--done-txt)}
+.adpill.free{background:var(--accent-ghost);color:var(--accent-txt)}
+.adpill.off{background:var(--field);color:var(--dim)}
+.admore{width:100%;min-height:44px;text-align:center;color:var(--accent-txt);font:inherit;font-size:12.5px;background:none;border:none;cursor:pointer}
+.adbars{display:flex;align-items:flex-end;gap:6px;height:40px;margin-top:12px}
+.adbars i{flex:1 1 0;max-width:26px;background:var(--field);border-radius:4px 4px 0 0;display:block;min-height:3px}
+.adbars i.hi{background:var(--done)}
+.adcode{display:flex;gap:8px;margin-top:8px}
+.adcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:13px}
+.adcode input.nn{flex:0 0 74px}
 .subin{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .subin li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--text);line-height:1.4}
 .subin li::before{content:'';flex:0 0 6px;height:6px;margin-top:6px;border-radius:50%;background:var(--accent)}
@@ -1992,6 +2033,9 @@ body.onb #picker .modalbox::before{display:none}
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
+    <!-- Владельцу — четвёртая. Скрыта до тех пор, пока сервер не подтвердит,
+         что это он: угадывать такое по номеру на устройстве нельзя. -->
+    <button role="tab" data-page="admin" aria-selected="false" id="l1boss" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M9.5 19V5M15 19v-7M20.5 19v-4"/></svg><span>Приборная</span></button>
   </div>
 </nav>
 
@@ -2089,6 +2133,14 @@ body.onb #picker .modalbox::before{display:none}
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="fseg-circle"></div>
         <div id="cirbody"><p class="empt">Загружаю…</p></div>
+      </div>
+    </section>
+    <!-- Приборная владельца. Сверху ответ на «я в плюсе?», потом то, что
+         требует действия, и только потом числа и люди: экран должен говорить,
+         что делать, а не просто показывать данные. -->
+    <section class="page hide" id="p-admin">
+      <div class="sec" style="padding-top:18px">
+        <div id="admbody"><p class="empt">Загружаю…</p></div>
       </div>
     </section>
     
@@ -2242,6 +2294,9 @@ body.onb #picker .modalbox::before{display:none}
     <ul class="subin" id="sub-list"></ul>
     <p class="subfree">Дневник, нормы, зал, журнал, карта тела и рейтинг остаются бесплатными.</p>
     <button class="btn prim wide" id="sub-buy">Подключить</button>
+    <!-- Промокод здесь, а не отдельным экраном: человеку, которому его дали,
+         он нужен ровно в ту секунду, когда он увидел цену. -->
+    <div class="invcode" id="sub-promo"><input id="sub-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="промокод"><button type="button" class="btn small" id="sub-codeb">Применить</button></div>
     <p class="rec" id="sub-note"></p>
   </div>
 </div>
@@ -2310,7 +2365,19 @@ body.onb #picker .modalbox::before{display:none}
       <div class="invcode" id="invedit" hidden><select id="invcirc" aria-label="какой круг"></select><input id="invcodei" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код"><button type="button" class="btn small prim" id="invsave">Сохранить</button></div>
       <p class="invnote" id="invnote">Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам. Круги считаются отдельно: у семьи своя таблица, у друзей своя.</p>
       <div class="invcode" id="invjoin"><input id="invjoini" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="код другого круга"><button type="button" class="btn small" id="invjoinb">Войти</button></div>
+      <!-- Круг заводит каждый сам: своё имя, свой код, свои люди. -->
+      <div class="invcode" id="invmake"><input id="invnewi" type="text" autocomplete="off" maxlength="24" placeholder="название своего круга"><button type="button" class="btn small prim" id="invnewb">Завести</button></div>
       <div id="memlist"></div>
+      </div>
+    </div>
+    <!-- Приглашения и баллы. Своя ссылка есть у каждого, а не только у владельца. -->
+    <div class="invbox" id="refbox" hidden>
+      <button type="button" class="invhead" id="reftoggle" aria-expanded="false"><span class="invl">пригласить</span><span class="invsum" id="refsum"></span><i class="invchev">›</i></button>
+      <div class="invbody" id="refbody" hidden>
+        <p class="invnote" id="refwhat"></p>
+        <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
+        <div id="reflist"></div>
+        <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
       </div>
     </div>
     <p class="mtext bline" id="buildline"></p>
@@ -3907,7 +3974,7 @@ function saveMe(){
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
 }
-function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite();
+function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
   try{ renderProgCard(); }catch(e){}
   var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
@@ -4178,7 +4245,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.09 21:06';
+var BUILD = '15.09 22:08';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5447,13 +5514,21 @@ function renderInvite(){
     INV = d; box.hidden = false;
     var list = d.circles || [], owner = list.some(function(c){ return c.owner; });
     document.getElementById('invsum').textContent = list.length ? list.map(function(c){ return c.name + ' ' + c.n; }).join(' · ') : 'не в круге';
+    /* Свой круг держишь ты: имя, код, кого убрать, когда закрыть. Из чужого
+       можно только выйти — вот и вся разница в строке. */
     document.getElementById('invlist').innerHTML = list.map(function(c){
-      return '<div class="invrow"><span class="invn">' + esc(c.name) + '<i>код ' + esc(c.code) + ' · внутри ' + c.n + '</i></span>' +
-             '<button type="button" class="btn small" data-cshare="' + esc(c.id) + '">Поделиться</button></div>';
-    }).join('') || '<p class="invnote">Ты пока не в круге — введи код ниже.</p>';
-    var ed = document.getElementById('invedit'); ed.hidden = !owner;
-    if (owner) document.getElementById('invcirc').innerHTML = list.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('');
-    if (owner) renderMembers(list); else document.getElementById('memlist').innerHTML = '';
+      return '<div class="invrow"><span class="invn">' + esc(c.name) + '<i>код ' + esc(c.code) + ' · внутри ' + c.n + (c.owner ? ' · твой' : '') + '</i></span>' +
+             '<button type="button" class="btn small" data-cshare="' + esc(c.id) + '">Поделиться</button>' +
+             (c.owner
+               ? (c.id === 'family' || c.id === 'friends' ? ''
+                  : '<button type="button" class="btn small danger" data-cdrop="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Закрыть</button>')
+               : '<button type="button" class="btn small" data-cleave="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Выйти</button>') +
+             '</div>';
+    }).join('') || '<p class="invnote">Ты пока не в круге. Заведи свой и позови своих — или войди в чужой по коду.</p>';
+    var свои = list.filter(function(c){ return c.owner; });
+    var ed = document.getElementById('invedit'); ed.hidden = !свои.length;
+    if (свои.length) document.getElementById('invcirc').innerHTML = свои.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('');
+    if (свои.length) renderMembers(свои); else document.getElementById('memlist').innerHTML = '';
   });
 }
 function renderMembers(list){
@@ -5474,8 +5549,29 @@ document.getElementById('invtoggle').addEventListener('click', function(){
   var b = document.getElementById('invbody'), t = document.getElementById('invtoggle');
   b.hidden = !b.hidden; t.setAttribute('aria-expanded', String(!b.hidden)); haptic('light');
 });
+var кругЖдёт = false;
+function кругПост(path, body, после){
+  if (кругЖдёт) return; кругЖдёт = true;
+  tgFetch(SYNCURL + path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ uid: syncUid() }, body)) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ кругЖдёт = false;
+      if (d && d.ok) { haptic('ok'); CIRCACHE = {}; renderInvite(); circlePull(); if (после) после(d); }
+      else { haptic('err'); say((d && d.error) || 'Не вышло.'); } })
+    .catch(function(){ кругЖдёт = false; haptic('err'); });
+}
 document.getElementById('invlist').addEventListener('click', function(e){
-  var b = e.target.closest('[data-cshare]'); if (b) circleShare(b.dataset.cshare);
+  var b = e.target.closest('[data-cshare]'); if (b) { circleShare(b.dataset.cshare); return; }
+  var l = e.target.closest('[data-cleave]');
+  if (l) { if (l.textContent !== 'Точно?') { l.textContent = 'Точно?'; setTimeout(function(){ l.textContent = 'Выйти'; }, 4000); return; }
+    кругПост('/circle/leave', { id: l.dataset.cleave }); return; }
+  var d0 = e.target.closest('[data-cdrop]');
+  if (d0) { if (d0.textContent !== 'Точно?') { d0.textContent = 'Точно?'; setTimeout(function(){ d0.textContent = 'Закрыть'; }, 4000); return; }
+    кругПост('/circle/drop', { id: d0.dataset.cdrop }); return; }
+});
+document.getElementById('invnewb').addEventListener('click', function(){
+  var i = document.getElementById('invnewi'), имя = (i.value || '').trim();
+  if (имя.length < 2) { i.focus(); return; }
+  кругПост('/circle/new', { name: имя }, function(d){ i.value = ''; if (d.circle) shareCircle(d.circle); });
 });
 document.getElementById('invsave').addEventListener('click', function(){
   var inp = document.getElementById('invcodei'), code = (inp.value || '').trim(), id = document.getElementById('invcirc').value;
@@ -7039,11 +7135,11 @@ tSkipB.addEventListener('click', function(){ if(TMODE==='watch') watchStop(false
 tPlusB.addEventListener('click', function(){ if(TMODE==='watch'){ watchStop(true); return; } left+=30; paint(); });
 
 /* ══════════ НАВИГАЦИЯ ══════════ */
-var PAGES=['home','gym','log','food','ref','circle'];
+var PAGES=['home','gym','log','food','ref','circle','admin'];
 /* журнал и каталог живут внутри «Зала» — внизу подсвечивается его кнопка */
 /* Рейтинг считается ТОЛЬКО по еде — его слова 11.09: «еда и рейтинг должны идти
    вместе на одной странице». Появится зал в игре — разделим обратно. */
-var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'food'};
+var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'food',admin:'admin'};
 var ZSEG=[['gym','Тренировка'],['log','Журнал'],['ref','Каталог']];
 var FSEG=[['food','Мой день'],['circle','Рейтинг']];
 /* имя segHtml уже занято анкетой профиля — новая функция ДОЛЖНА быть с
@@ -7086,11 +7182,13 @@ function goPage(p){
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<b>'+wd.charAt(0).toUpperCase()+wd.slice(1)+'</b>, '+nd.getDate()+' '+MONTHS[nd.getMonth()]; }
-          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда'}[p]||'')+'</b>'; }
+          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',admin:'Приборная'}[p]||'')+'</b>'; }
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
   if(p==='home') openHome();
+  if(p==='admin') openAdmin();
+  document.body.classList.toggle('onadmin', p==='admin');
   if(p==='log') renderLog();
   if(p==='food') openFood();
   if(p==='ref') openCatPage();
@@ -8549,12 +8647,18 @@ document.getElementById('cirbody').addEventListener('click', function(e){
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
 });
-function circleShare(id){
-  var c=null; (CIRC&&CIRC.circles||[]).forEach(function(x){ if(x.id===id) c=x; }); if(!c) return;
+function shareCircle(c){
+  if(!c) return;
   var text='Приглашаю в GetFit — тренер в Telegram, круг «'+c.name+'». Код: '+c.code;
   var u='https://t.me/share/url?url='+encodeURIComponent(c.link||'https://t.me/GetFit_MyBot')+'&text='+encodeURIComponent(text);
   if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
   haptic('light');
+}
+function circleShare(id){
+  var c=null;
+  ((CIRC&&CIRC.circles)||[]).forEach(function(x){ if(x.id===id) c=x; });
+  if(!c) ((INV&&INV.circles)||[]).forEach(function(x){ if(x.id===id) c=x; });
+  shareCircle(c);
 }
 /* оценка дня на «Еде» — всегда, без закрытия (его правило: «не нужно закрывать
    день, чтобы получить оценку»); итог фиксируется в полночь сам */
@@ -8605,9 +8709,15 @@ function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{
 var SUB=null, SUBBUSY=false;
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); } return d; }).catch(function(){ return null; });
+    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
+function admВкладка(){
+  var b=document.getElementById('l1boss'); if(!b) return;
+  var он = !!(SUB && SUB.boss);
+  b.hidden = !он;
+  document.body.classList.toggle('boss', он);
+}
 function renderSub(){
   var w=document.getElementById('sub-what'); if(!w||!SUB) return;
   var ц=SUB.stars||500;
@@ -8661,6 +8771,17 @@ document.addEventListener('click', function(e){
     }).catch(function(err){ b.disabled=false; b.textContent='Отменить'; say(humanErr(err)); });
     return;
   }
+  if(e.target.closest('#sub-codeb')){
+    var i=document.getElementById('sub-code'), код=(i.value||'').trim();
+    if(код.length<4){ i.focus(); return; }
+    var b=e.target.closest('#sub-codeb'); b.disabled=true; b.textContent='Проверяю…';
+    fPost('/promo', {uid:syncUid(), code:код}).then(function(d){
+      b.disabled=false; b.textContent='Применить';
+      if(d&&d.ok){ haptic('ok'); i.value=''; subPull().then(function(){ closeSub(); say('Код принят — полный доступ открыт.'); }); }
+      else { haptic('err'); say((d&&d.error)||'Код не подошёл.'); }
+    }).catch(function(err){ b.disabled=false; b.textContent='Применить'; haptic('err'); say(humanErr(err)); });
+    return;
+  }
   if(e.target.closest('#subclose')){ closeSub(); return; }
   var m=document.getElementById('subm');
   if(m && m.classList.contains('show') && e.target===m){ closeSub(); return; }
@@ -8677,6 +8798,166 @@ document.addEventListener('click', function(e){
     });
     return;
   }
+});
+/* ── ПРИБОРНАЯ ВЛАДЕЛЬЦА ──────────────────────────────────────────────
+   15.09, его просьба и его выбор из трёх эскизов: сверху ответ на вопрос
+   «я в плюсе?», под ним то, что требует действия, и только потом числа и
+   люди. Экран не показывает данные — он говорит, что с ними делать.
+   Все числа считает сервер одной ручкой: складывать деньги в двух местах
+   значит рано или поздно показать две разные суммы. */
+var ADM=null, ADMALL=false, ADMBUSY=false;
+function openAdmin(){ if(!ADM) admPull(); else renderAdmin(); }
+function admPull(){
+  return fGet('/admin?uid='+encodeURIComponent(syncUid()))
+    .then(function(d){ if(d&&d.ok){ ADM=d; renderAdmin(); } return d; })
+    .catch(function(){ var b=document.getElementById('admbody'); if(b) b.innerHTML='<p class="empt">Не открылось.</p>'; return null; });
+}
+function дол(x){ var n=Math.round((+x||0)*100)/100; return (n<0?'−':'')+'$'+Math.abs(n).toFixed(2).replace('.',','); }
+function чис(x){ return String(Math.round(+x||0)).replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+function admДата(ms){ var d=new Date(+ms); return isNaN(d)?'':(d.getDate()+' '+MONTHS[d.getMonth()]); }
+function renderAdmin(){
+  var box=document.getElementById('admbody'); if(!box) return;
+  if(!ADM){ box.innerHTML='<p class="empt">Загружаю…</p>'; return; }
+  var д=ADM.деньги||{}, л=ADM.люди||{}, дс=ADM.доступ||{}, в=(ADM.внимание||{}).молчат||[], н=ADM.неделя||{};
+  var h='';
+  /* 1. Я в плюсе? Раскладка рядом, чтобы число не пришлось брать на веру. */
+  var итог=+д.итог||0;
+  h+='<div class="adhero"><div class="adline"><span class="adbig '+(итог>=0?'plus':'minus')+'">'+
+     (итог>0?'+':'')+дол(итог)+'</span><span class="adwhen">с '+admДата(ADM.month)+'</span></div>'+
+     '<p class="adnote">'+чис(д.замесяц)+' ★ собрано (<em>'+дол(д.долларов)+'</em> по курсу вывода '+
+     String(д.курс).replace('.',',')+' $ за звезду), минус <em>'+дол(д.ии)+'</em> на ИИ'+
+     (д.роздано?', минус <em>'+чис(д.роздано)+' ★</em> роздано баллами':'')+'.'+
+     (д.заморожено?'<br>Заморожено до вывода (21 день) — <em>'+чис(д.заморожено)+' ★</em>.':'')+
+     '<br><s class="admini">Расход на ИИ — оценка: '+чис(д.реплик)+' ответов тренера × '+
+     String(д.цена_реплики).replace('.',',')+' $. Счетов Google приложение не видит.</s></p>'+
+     (д.понеделям&&д.понеделям.some(function(x){return x>0;})
+       ? '<div class="adbars">'+admПолоски(д.понеделям)+'</div><p class="adnote" style="margin-top:6px">по неделям, ★</p>' : '')+
+     '</div>';
+  /* 2. Что требует действия. Молчит ноль — блока нет: пустая тревога хуже
+     отсутствующей, к ней привыкают. */
+  if(в.length) h+='<div class="adatt"><b>'+в.length+' '+plural(в.length,['платит','платят','платят'])+
+    ', но не заходил'+(в.length===1?'':'и')+' неделю.</b> '+
+    в.slice(0,4).map(function(x){ return esc(x.name); }).join(', ')+
+    (в.length>4?' и ещё '+(в.length-4):'')+'. Обычно это отписка в следующем месяце.</div>';
+  /* 3. Числа. */
+  h+='<div class="adstrip">'+
+     admПлитка('людей', л.всего)+admПлитка('платят', дс.платных)+admПлитка('бессрочно', дс.вечных)+
+     admПлитка('живых', л.активных)+admПлитка('кругов', л.кругов)+admПлитка('баллов на руках', (ADM.баллы||{}).на_руках)+
+     '</div>';
+  /* 4. Что изменилось за неделю. */
+  var откуда=(н.откуда||[]).filter(function(x){ return x.n; });
+  h+='<h3 class="adh">что изменилось за неделю</h3>';
+  if(л.занеделю||н.новыхПлатящих){
+    h+='<div class="adrow"><span class="adn"><b>+'+чис(л.занеделю)+' '+plural(л.занеделю,['человек','человека','человек'])+'</b><i>'+
+       (откуда.length? откуда.map(function(x){ return чис(x.n)+' '+({ref:'по ссылкам',bot:'через бота',code:'по кодам',open:'сами',owner:'вручную'}[x.by]||x.by||'иначе'); }).join(', ') : 'источник не записан')+
+       '</i></span><span class="adpill '+(н.новыхПлатящих?'pay':'off')+'">+'+чис(н.новыхПлатящих)+' платят</span></div>';
+  } else h+='<div class="adrow"><span class="adn"><b>Тихая неделя</b><i>новых людей не приходило</i></span></div>';
+  (ADM.рефералы&&ADM.рефералы.зовуны||[]).filter(function(x){ return x.привёл; }).slice(0,3).forEach(function(x){
+    h+='<div class="adrow"><span class="adn"><b>'+esc(x.name)+'</b><i>привёл '+x.привёл+' · оплатили '+x.оплатили+'</i></span>'+
+       '<span class="adpill '+(x.оплатили?'free':'off')+'">'+(x.оплатили? '−'+дол(x.оплатили*500*(д.курс||0.013)) : 'пока ноль')+'</span></div>';
+  });
+  /* 5. Люди. */
+  var сп=ADM.список||[], видно=ADMALL?сп:сп.slice(0,6);
+  h+='<h3 class="adh">люди · '+сп.length+'</h3>'+видно.map(admЧеловек).join('');
+  if(сп.length>видно.length) h+='<button type="button" class="admore" id="admall">все '+сп.length+' →</button>';
+  else if(ADMALL && сп.length>6) h+='<button type="button" class="admore" id="admless">свернуть</button>';
+  /* 6. Промокоды. */
+  h+='<h3 class="adh">промокоды</h3>'+(ADM.промо||[]).map(function(x){
+    var кончился=(x.used||0)>=(x.uses||0);
+    return '<div class="adrow"><span class="adn"><b>'+esc(String(x.code).toUpperCase())+'</b><i>'+
+      (x.note?esc(x.note)+' · ':'')+(x.used||0)+' из '+(x.uses||0)+'</i></span>'+
+      '<span class="adpill '+(кончился?'off':'free')+'">'+(кончился?'разобран':'навсегда')+'</span>'+
+      '<button type="button" class="memx" data-pdrop="'+esc(x.code)+'" aria-label="Убрать">×</button></div>';
+  }).join('')+
+  '<div class="adcode"><input id="adm-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код">'+
+  '<input id="adm-n" class="nn" type="number" inputmode="numeric" min="1" max="10000" placeholder="20">'+
+  '<button type="button" class="btn small prim" id="adm-add">Завести</button></div>'+
+  '<p class="adnote" style="margin-top:8px">Второе поле — на скольких человек хватит кода. Код даёт полный доступ навсегда, такой же, как у тех, кто был до появления цены.</p>';
+  box.innerHTML=h;
+}
+function admПлитка(имя, знач){ return '<div class="ads"><u>'+имя+'</u><b>'+чис(знач)+'</b></div>'; }
+function admПолоски(a){
+  var max=Math.max.apply(null, a.concat([1]));
+  return a.map(function(v,i){ return '<i class="'+(i===a.length-1?'hi':'')+'" style="height:'+Math.max(2, Math.round(v/max*100))+'%"></i>'; }).join('');
+}
+function admЧеловек(x){
+  var вечный=x.kind==='grand', платит=x.kind==='sub' && (x.until||0)>Date.now();
+  var кто={ref:'по ссылке',bot:'через бота',code:'по коду',open:'сам',owner:'вручную',svc:'служебный'}[x.by]||x.by||'—';
+  var тихо = x.последний ? '' : ' · ничего не записал';
+  return '<div class="adrow"><span class="adn"><b>'+esc(x.name||('id '+x.uid))+'</b><i>'+
+    admДата(x.created)+' · '+esc(кто)+' · '+(x.приёмов||0)+' '+plural(x.приёмов||0,['приём','приёма','приёмов'])+
+    (x.привёл?' · привёл '+x.привёл:'')+тихо+'</i></span>'+
+    '<span class="adpill '+(платит?'pay':вечный?'free':'off')+'">'+
+    (платит?'платит':вечный?'бессрочно':'не платит')+'</span></div>';
+}
+document.getElementById('admbody').addEventListener('click', function(e){
+  if(e.target.closest('#admall')){ ADMALL=true; renderAdmin(); return; }
+  if(e.target.closest('#admless')){ ADMALL=false; renderAdmin(); return; }
+  var d=e.target.closest('[data-pdrop]');
+  if(d){ if(ADMBUSY) return; ADMBUSY=true;
+    fPost('/admin/promo', {uid:syncUid(), code:d.dataset.pdrop, drop:1})
+      .then(function(){ ADMBUSY=false; haptic('ok'); admPull(); })
+      .catch(function(err){ ADMBUSY=false; say(humanErr(err)); });
+    return; }
+  if(e.target.closest('#adm-add')){
+    if(ADMBUSY) return;
+    var c=(document.getElementById('adm-code').value||'').trim();
+    var n=parseInt(document.getElementById('adm-n').value,10)||1;
+    if(c.length<4){ document.getElementById('adm-code').focus(); return; }
+    ADMBUSY=true;
+    fPost('/admin/promo', {uid:syncUid(), code:c, uses:n})
+      .then(function(){ ADMBUSY=false; haptic('ok'); admPull(); })
+      .catch(function(err){ ADMBUSY=false; haptic('err'); say(humanErr(err)); });
+    return;
+  }
+});
+/* ── ПРИГЛАШЕНИЯ И БАЛЛЫ ───────────────────────────────────────────────
+   15.09, его просьба: привёл человека, тот оплатил — пригласившему баллы,
+   которыми платят за подписку. Скидку на Звёздную подписку сделать нельзя
+   (цену списывает Telegram), поэтому баллы превращаются в месяц доступа, а
+   автосписание на это время гасится — иначе деньги взяли бы дважды. */
+var REF=null, REFBUSY=false;
+function refPull(){
+  return fGet('/ref?uid='+encodeURIComponent(syncUid()))
+    .then(function(d){ if(d&&d.ok){ REF=d; renderRef(); } return d; }).catch(function(){ return null; });
+}
+function renderRef(){
+  var box=document.getElementById('refbox'); if(!box||!REF) return;
+  box.hidden=false;
+  var было=(REF.people||[]).length, оплатили=(REF.people||[]).filter(function(x){ return x.paid; }).length;
+  document.getElementById('refsum').textContent = REF.points ? REF.points+' баллов' : (было? было+' приглашено' : 'своя ссылка');
+  document.getElementById('refwhat').textContent =
+    'Кто придёт по твоей ссылке и оформит подписку — тебе '+REF.perRef+' баллов. '+REF.month+' баллов = месяц тренера.';
+  var i=document.getElementById('reflink'); if(i) i.value=REF.link||'';
+  document.getElementById('reflist').innerHTML = было
+    ? '<div class="invl" style="margin-top:12px">по ссылке пришли · '+было+', оплатили · '+оплатили+'</div>'+
+      (REF.people||[]).map(function(x){
+        return '<div class="mem"><span class="memn">'+esc(x.name||'кто-то')+(x.paid?' <i>· оплатил</i>':' <i>· пока без подписки</i>')+'</span></div>';
+      }).join('')
+    : '';
+  var b=document.getElementById('refspend');
+  if(b){ b.hidden = REF.points < REF.month; b.disabled=REFBUSY;
+         b.textContent = REFBUSY ? 'Оплачиваю…' : 'Оплатить месяц баллами ('+REF.points+')'; }
+}
+document.getElementById('reftoggle').addEventListener('click', function(){
+  var b=document.getElementById('refbody'), t=document.getElementById('reftoggle');
+  b.hidden=!b.hidden; t.setAttribute('aria-expanded', String(!b.hidden)); haptic('light');
+  if(!b.hidden) refPull();
+});
+document.getElementById('refshare').addEventListener('click', function(){
+  if(!REF||!REF.link) return;
+  var text='Веду еду и зал в GetFit — тренер прямо в Telegram. Заходи по ссылке.';
+  var u='https://t.me/share/url?url='+encodeURIComponent(REF.link)+'&text='+encodeURIComponent(text);
+  if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
+  haptic('light');
+});
+document.getElementById('refspend').addEventListener('click', function(){
+  if(REFBUSY) return; REFBUSY=true; renderRef();
+  fPost('/ref/spend', {uid:syncUid()}).then(function(d){
+    REFBUSY=false;
+    if(d&&d.ok){ haptic('ok'); say('Месяц тренера оплачен баллами.'); refPull(); subPull(); }
+    else { renderRef(); say((d&&d.error)||'Не вышло.'); }
+  }).catch(function(e){ REFBUSY=false; renderRef(); say(humanErr(e)); });
 });
 function humanErr(e){
   if(стенаЕсли(e)) return 'Тренер работает по подписке.';

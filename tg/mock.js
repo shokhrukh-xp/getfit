@@ -62,7 +62,8 @@ function стартовый() {
 function круг() {
   return {
     ok: true, today: TODAY, circle: 'family',
-    circles: [{ id: 'family', name: 'семья', n: 2, code: 'СЕМЬЯ7', link: 'https://t.me/GetFit_MyBot?start=c_semya7', owner: true }],
+    circles: [{ id: 'family', name: 'семья', n: 2, code: 'семья7', link: 'https://t.me/GetFit_MyBot?start=semya7', owner: true },
+              { id: 'c_zal', name: 'зал', n: 4, code: 'fit7788', link: 'https://t.me/GetFit_MyBot?start=fit7788', owner: false }],
     board: [
       { uid: '308687648', name: 'Ты', me: true, days: ['ok', 'ok', 'low', 'ok', 'today', '', ''],
         avg: 7.9, ravg: 7.9, pts: 41, closed: false, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true }, streak: 6, level: 2 },
@@ -245,9 +246,68 @@ async function поднять(page, o) {
         sub: { ok: false, kind: 'none', until: 0, stars: 500 } });
       if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
-      return дать({ ok: true, stars: 500, link: null, sub: { ok: true, kind: 'grand', until: 0 } });
+      return дать({ ok: true, stars: 500, link: null, boss: !!o.admin, sub: { ok: true, kind: 'grand', until: 0 } });
     }
     if (p === '/sub/cancel') return дать({ ok: true });
+    /* приглашения и баллы. o.ref — что отдаёт сервер; по умолчанию ссылка
+       есть, приглашённых нет, баллов нет. */
+    /* Приборная владельца. По умолчанию стенд — ОБЫЧНЫЙ человек: владелец
+       в приложении один, и если бы стенд был им всегда, четвёртая вкладка
+       молча уехала бы во все проверки, которые считают кнопки внизу.
+       Владельцем стенд становится только когда попросили: o.admin. */
+    if (p === '/admin') {
+      if (!o.admin) return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'нет' }) });
+      const мес = Date.parse('2026-09-01T00:00:00Z');
+      return дать(Object.assign({
+        ok: true, build: '15.09', now: Date.now(), month: мес,
+        люди: { всего: 42, занеделю: 6, активных: 19, кругов: 11 },
+        доступ: { вечных: 8, платных: 6, ушедших: 2 },
+        деньги: { завсё: 7500, платежей: 15, ставка: 500, замесяц: 3000, платежейМес: 6, новыхМес: 4,
+                  понеделям: [500, 1000, 500, 1500, 1000, 2000, 3000], заморожено: 3000, курс: 0.013,
+                  долларов: 39, ии: 24, реплик: 2353, цена_реплики: 0.0102,
+                  роздано: 1000, розданоДолларов: 13, итог: 2 },
+        внимание: { молчат: [{ uid: '1', name: 'Пётр' }, { uid: '2', name: 'Олег' }, { uid: '3', name: 'Инна' }, { uid: '4', name: 'Марат' }] },
+        неделя: { откуда: [{ by: 'ref', n: 4 }, { by: 'code', n: 2 }], новыхПлатящих: 2 },
+        рефералы: { всего: 5, оплатили: 2, зовуны: [{ uid: '9', name: 'Фируз', привёл: 3, оплатили: 2 }] },
+        баллы: { на_руках: 1000, выдано: 2000, потрачено: 1000 },
+        промо: [{ code: 'zalfriends', uses: 20, used: 7, note: 'для зала', created: Date.now() }],
+        свои: { kind: 'grand' },
+        список: [
+          { uid: '11', name: 'Пётр Смирнов', by: 'ref', created: Date.now() - 864e5, kind: 'sub', until: Date.now() + 20 * 864e5, приёмов: 4, последний: '2026-09-15', привёл: 0 },
+          { uid: '12', name: 'Нигора', by: 'code', created: Date.now() - 3 * 864e5, kind: 'grand', until: 0, приёмов: 22, последний: '2026-09-15', привёл: 0 },
+          { uid: '13', name: 'Andrew Nee', by: 'bot', created: Date.now() - 2 * 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0 }
+        ]
+      }, o.admin === true ? {} : o.admin));
+    }
+    if (p === '/admin/promo') return дать({ ok: true, code: 'новый', uses: 10 });
+    if (p === '/ref') {
+      const r = o.ref || {};
+      return дать({ ok: true, link: 'https://t.me/GetFit_MyBot?start=r_308687648',
+        points: r.points || 0, earned: r.earned || 0, spent: r.spent || 0,
+        perRef: 500, month: 500,
+        people: r.people || [] });
+    }
+    if (p === '/ref/spend') {
+      const r = o.ref || {};
+      if ((r.points || 0) < 500) return route.fulfill({ status: 400, contentType: 'application/json',
+        body: JSON.stringify({ error: 'Нужно 500 баллов, у тебя ' + (r.points || 0) + '.' }) });
+      r.points -= 500; o.ref = r;
+      return дать({ ok: true, until: Date.now() + 30 * 864e5, points: r.points, autoOff: true });
+    }
+    if (p === '/promo') {
+      const b4 = JSON.parse(route.request().postData() || '{}');
+      if (String(b4.code || '').toLowerCase() === 'getfit') return дать({ ok: true, code: 'getfit' });
+      return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'Такого кода нет.' }) });
+    }
+    if (p === '/circle/new') {
+      const b5 = JSON.parse(route.request().postData() || '{}');
+      return дать({ ok: true, circle: { id: 'c_new', name: b5.name, code: 'fit4242',
+        link: 'https://t.me/GetFit_MyBot?start=fit4242', n: 1, owner: true } });
+    }
+    if (p === '/circle/leave' || p === '/circle/drop' || p === '/circle/rename') return дать({ ok: true });
+    if (p === '/circle/members') return дать({ ok: true, id: u.searchParams.get('id') || '', mine: true,
+      members: [{ uid: '308687648', name: 'Ты', owner: true, me: true },
+                { uid: '850965787', name: 'жена', owner: false, me: false }] });
     if (p === '/acts') {
       const виды = o.kinds || ['теннис', 'бег', 'ходьба', 'плавание', 'велосипед', 'футбол',
         'бадминтон', 'сквош', 'йога', 'танцы', 'гребля', 'лыжи', 'коньки', 'бокс'];
