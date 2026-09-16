@@ -1161,6 +1161,9 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 #copyrep{margin-top:14px}
 /* ── каталог ── */
 .modal.wide .modalbox{max-height:92vh}
+.catitem.nope{opacity:.62}
+.catitem.nope .cattx b::after{content:" 👎";font-size:11px;opacity:.85}
+.catpick.undo{color:var(--accent-txt)}
 .cathead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .cathead h3{margin:0}
 .xbtn{background:none;border:none;color:var(--muted);font-size:18px;line-height:1;
@@ -1406,7 +1409,14 @@ body.ordmode #list .exrow{animation:дрожь .42s linear infinite;pointer-even
 body.ordmode #list .card{animation:дрожь .42s linear infinite}
 @keyframes дрожь{0%{transform:rotate(-.5deg)}50%{transform:rotate(.5deg)}100%{transform:rotate(-.5deg)}}
 @media (prefers-reduced-motion:reduce){body.ordmode #list .exrow,body.ordmode #list .card{animation:none}}
-.ordrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--line-soft)}
+.ordrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--line-soft);
+  transition:transform .16s ease;background:var(--bg)}
+.ordgrip{flex:0 0 40px;width:40px;height:44px;display:flex;align-items:center;justify-content:center;
+  color:var(--dim);font-size:19px;line-height:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.ordrow.drag{transition:none;position:relative;z-index:6;border-radius:12px;border-bottom-color:transparent;
+  background:var(--card-solid,var(--card));box-shadow:0 10px 26px rgba(0,0,0,.34)}
+.ordrow.drag .ordgrip{cursor:grabbing;color:var(--accent-txt)}
+@media (prefers-reduced-motion:reduce){.ordrow{transition:none}}
 .ordrow .ordn{flex:1;min-width:0;font-size:14px}
 .ordrow .ordn i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px}
 .ordrow .ordb{width:44px;height:44px;flex:0 0 44px;border-radius:12px;border:.5px solid var(--line);
@@ -3256,7 +3266,7 @@ function resetDay(){
 /* ── окно каталога ── */
 function openCatalog(ctx){
   catCtx = ctx || null;                    /* {dk, di, muscle} — режим замены */
-  catQuery=''; catEquip=''; catLevel='';
+  catQuery=''; catEquip=''; catLevel=''; catNope='';
   /* заменяем силовое — предлагаем силовое: велотренажёр вместо приседа
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
@@ -3272,7 +3282,7 @@ function openCatalog(ctx){
 }
 function closeCatalog(){
   var m=document.getElementById('catalog'); if(m) m.classList.remove('show');
-  catCtx=null; catQuery=''; catMuscle=''; catEquip=''; catLevel=''; catType=''; catShown=40;
+  catCtx=null; catQuery=''; catMuscle=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
 }
 
@@ -3287,7 +3297,12 @@ function muscleChips(){
   });
   return h;
 }
-var catEquip='', catLevel='', catType='', catShown=40;
+var catEquip='', catLevel='', catType='', catShown=40, catNope='';
+/* Отмеченные 👎 копились и не показывались нигде: передумал — вернуть некуда.
+   Его правка 16.09: не заводить отдельный список, а добавить фильтр в самом
+   каталоге — там, где человек и так выбирает упражнение, и замена видна
+   сразу. Фильтр появляется, только когда отмеченные есть. */
+function нетуСписок(){ return Object.keys(NOPE||{}); }
 /* в базе базовые штанговые движения помечены «powerlifting» — для человека это та же сила, два чипа «сила» читались как ошибка */
 function catKind(x){ var c=x.c||'strength'; return c==='powerlifting' ? 'strength' : c; }
 function catFiltered(){
@@ -3298,6 +3313,7 @@ function catFiltered(){
     if(catEquip && x.q!==catEquip) return false;
     if(catLevel && x.l!==catLevel) return false;
     if(catType && catKind(x)!==catType) return false;
+    if(catNope && !NOPE[x.i]) return false;
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
        отдельно: «жим гантели» находит «Жим гантелей лёжа» */
@@ -3366,6 +3382,7 @@ function катВид(x){ return catKind(x); }
 /* сводка на кнопке фильтров: что выбрано, а не список возможностей */
 function катСводка(){
   var ч=[];
+  if(catNope) ч.push('отмеченные 👎');
   if(catMuscle) ч.push(CAT.muscles[catMuscle]||catMuscle);
   if(catEquip)  ч.push(CAT.equip[catEquip]||catEquip);
   if(catLevel)  ч.push(CAT.level[catLevel]||catLevel);
@@ -3377,7 +3394,7 @@ function катСводка(){
 }
 /* подборки показываем, пока человек ничего не сузил сам; тип «сила» по
    умолчанию сужением не считаем — подборки и так про силовые */
-function катЧисто(){ return !catQuery.trim() && !catMuscle && !catEquip && !catLevel && (!catType || catType==='strength'); }
+function катЧисто(){ return !catQuery.trim() && !catMuscle && !catEquip && !catLevel && !catNope && (!catType || catType==='strength'); }
 /* Снаряд в имени уже написан — «Присед (штанга, Зерхера)», — и повторять его
    в подписи значит писать одно и то же дважды в одной строке. Оставляем в
    подписи только то, чего в имени нет. */
@@ -3390,7 +3407,7 @@ function catTag(x){
 }
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
-  return '<div class="catitem" data-i="'+CAT.ex.indexOf(x)+'">'+
+  return '<div class="catitem'+(NOPE[x.i]?' nope':'')+'" data-i="'+CAT.ex.indexOf(x)+'">'+
     (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
@@ -3403,8 +3420,9 @@ function catRow(x, выбор){
         return '<u class="cathard"><b>'+esc(v.n)+'</b> — '+esc(v.t)+'</u>'; }).join('') : '')+
     '</div>'+
     (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
+          : (NOPE[x.i] ? '<button class="catpick undo" data-unnope="'+esc(x.i)+'">вернуть</button>'
           :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
-            encodeURIComponent(x.e+' exercise technique')+'">видео</a>')+
+            encodeURIComponent(x.e+' exercise technique')+'">видео</a>'))+
     '</div>';
 }
 function renderCatalog(){
@@ -3418,7 +3436,11 @@ function renderCatalog(){
     if(fr) fr.hidden = катЧисто();
   }
   if(onPage && fbox && !fbox.hidden){
-    fbox.innerHTML = chipRow('m',catMuscle,CAT.muscles,'мышца')+
+    var нету=нетуСписок();
+    fbox.innerHTML = (нету.length ? '<div class="mchips" data-f="nope"><span class="chlab">моё</span>'+
+                       '<button class="mchip'+(catNope?'':' on')+'" data-v="">все</button>'+
+                       '<button class="mchip'+(catNope?' on':'')+'" data-v="no">👎 отмеченные <s>'+нету.length+'</s></button></div>' : '')+
+                     chipRow('m',catMuscle,CAT.muscles,'мышца')+
                      chipRow('c',catType,CAT.cats||{},'тип')+
                      chipRow('q',catEquip,CAT.equip,'снаряд')+
                      chipRow('l',catLevel,CAT.level,'уровень');
@@ -4660,7 +4682,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 16:50';
+var BUILD = '16.09 17:27';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5444,6 +5466,17 @@ function ordСдвиг(gi, шаг){
   ORD[day] = гр.reduce(function(a,g){ return a.concat(g.k); }, []);
   saveSubs(); rebuildSess(); renderList(); haptic('light');
 }
+/* Стрелки меняют местами соседей, палец — переносит через несколько строк
+   сразу. Это разные действия, и перенос нельзя выразить обменом: протащив
+   через три строки, человек ждёт, что остальные сдвинутся, а не перемешаются. */
+function ordПеренести(from, to){
+  var гр = ordГруппы();
+  if(from===to || from<0 || to<0 || from>=гр.length || to>=гр.length) return false;
+  var g = гр.splice(from,1)[0]; гр.splice(to,0,g);
+  ORD[day] = гр.reduce(function(a,x){ return a.concat(x.k); }, []);
+  saveSubs(); rebuildSess(); renderList(); haptic('ok');
+  return true;
+}
 function ordСброс(){ delete ORD[day]; saveSubs(); rebuildSess(); renderList(); haptic('light'); }
 function ordСписок(){
   var гр = ordГруппы();
@@ -5454,10 +5487,57 @@ function ordСписок(){
       var имя = g.ex.map(function(x){ return esc(x.n); }).join(' + ');
       var под = g.ex.length>1 ? 'суперсет · ' + setsFor(g.ex[0], g.di) + ' ' + plural(setsFor(g.ex[0], g.di),['круг','круга','кругов'])
                               : setsFor(g.ex[0], g.di) + ' × ' + repsOf(g.ex[0]);
-      return '<div class="ordrow"><span class="ordn">' + имя + '<i>' + под + '</i></span>' +
+      return '<div class="ordrow" data-g="'+gi+'">' +
+        '<span class="ordgrip" aria-hidden="true">\u2261</span>' +
+        '<span class="ordn">' + имя + '<i>' + под + '</i></span>' +
         '<button type="button" class="ordb" data-ordup="'+gi+'"'+(gi===0?' disabled':'')+' aria-label="Выше">↑</button>' +
         '<button type="button" class="ordb" data-orddn="'+gi+'"'+(gi===гр.length-1?' disabled':'')+' aria-label="Ниже">↓</button></div>';
     }).join('');
+}
+/* ПЕРЕНОС ПАЛЬЦЕМ. Тащим за ручку, а не за всю строку: иначе список,
+   который длиннее экрана, нельзя было бы прокрутить — палец на строке
+   означал бы перенос, а не прокрутку. Стрелки остаются: ими попадает тот,
+   кому не даётся перетаскивание, и они же работают при отключённой анимации. */
+var ORDDRAG = null;
+function ordВзять(e){
+  if(!ORDMODE || ORDDRAG) return;
+  if(!e.target.closest('.ordgrip')) return;
+  var row = e.target.closest('.ordrow'); if(!row) return;
+  var box = document.getElementById('list');
+  var rows = Array.prototype.slice.call(box.querySelectorAll('.ordrow'));
+  var i = rows.indexOf(row); if(i<0) return;
+  var h = row.getBoundingClientRect().height;
+  if(!(h>0)) return;
+  ORDDRAG = { row:row, rows:rows, from:i, to:i, y0:e.clientY, h:h, id:e.pointerId };
+  try{ row.setPointerCapture(e.pointerId); }catch(err){}
+  row.classList.add('drag');
+  haptic('medium');
+  e.preventDefault();
+}
+function ordВедём(e){
+  var d = ORDDRAG; if(!d || e.pointerId!==d.id) return;
+  var dy = e.clientY - d.y0;
+  d.row.style.transform = 'translateY('+dy+'px)';
+  var to = Math.max(0, Math.min(d.rows.length-1, d.from + Math.round(dy / d.h)));
+  if(to !== d.to){
+    d.to = to;
+    d.rows.forEach(function(r, k){
+      if(r===d.row) return;
+      var сдвиг = 0;
+      if(d.to > d.from && k > d.from && k <= d.to) сдвиг = -d.h;
+      else if(d.to < d.from && k >= d.to && k < d.from) сдвиг = d.h;
+      r.style.transform = сдвиг ? 'translateY('+сдвиг+'px)' : '';
+    });
+    haptic('light');
+  }
+  e.preventDefault();
+}
+function ordБросить(e){
+  var d = ORDDRAG; if(!d || (e && e.pointerId!=null && e.pointerId!==d.id)) return;
+  ORDDRAG = null;
+  d.row.classList.remove('drag');
+  d.rows.forEach(function(r){ r.style.transform=''; });
+  if(d.to !== d.from) ordПеренести(d.from, d.to);
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
@@ -7993,6 +8073,7 @@ if(_pcf) _pcf.addEventListener('click', function(e){
   var b=e.target.closest('.mchip'); if(!b) return;
   var f=b.parentNode.dataset.f, v=b.dataset.v||'';
   if(f==='m') catMuscle=v; else if(f==='q') catEquip=v; else if(f==='l') catLevel=v; else if(f==='c') catType=v;
+  else if(f==='nope'){ catNope=v; if(v) catType=''; }   /* отмеченные ищем среди всех типов, а не только силовых */
   catShown=40; renderCatalog();
 });
 var _pcb=document.getElementById('pcatbody');
@@ -8000,8 +8081,17 @@ if(_pcb) _pcb.addEventListener('click', function(e){
   if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); return; }
   /* «все 84 →» из подборки — это тот же фильтр по мышце, а не отдельный экран */
   if(e.target.closest('#catwide')){
-    catMuscle=''; catEquip=''; catLevel=''; catType=''; catShown=40;
+    catMuscle=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
     renderCatalog(); haptic('light'); return;
+  }
+  /* Передумал: отметка снимается там же, где видна. Упражнение сразу
+     возвращается в подбор замен — оно снова «моё». */
+  var un=e.target.closest('[data-unnope]');
+  if(un){
+    var ид=un.dataset.unnope;
+    delete NOPE[ид]; сохранитьМнение();
+    if(catNope && !нетуСписок().length) catNope='';
+    renderCatalog(); haptic('ok'); return;
   }
   var g=e.target.closest('[data-grp]');
   if(g){ catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
@@ -8025,6 +8115,15 @@ if(_pfr) _pfr.addEventListener('click', function(){
   haptic('light');
 });
 /* кнопка «заменить» на карточке упражнения */
+(function(){
+  var L = document.getElementById('list');
+  L.addEventListener('pointerdown', ordВзять);
+  L.addEventListener('pointermove', ordВедём);
+  L.addEventListener('pointerup', ordБросить);
+  L.addEventListener('pointercancel', ordБросить);
+  /* палец ушёл за край списка — это тоже конец переноса, а не зависший режим */
+  L.addEventListener('lostpointercapture', ordБросить);
+})();
 document.getElementById('list').addEventListener('click', function(e){
   var sp=e.target.closest('button[data-sspick]');
   if(sp){ ssChoice(sp); haptic('light'); return; }
