@@ -1297,7 +1297,17 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent-txt);font:inherit;font-size:13px;cursor:pointer}
 .bmpick:active{background:var(--accent);color:var(--on-accent)}
 /* ── рейтинг: плитки, таблица недели, страница человека ── */
-.cirsw{display:flex;gap:6px;margin:4px 0 12px}
+.cirsw{display:flex;gap:6px;margin:4px 0 12px;flex-wrap:wrap;align-items:center}
+.cirsw .cirgear,.cirsw .cirnew{flex:0 0 auto;min-width:44px;min-height:40px;padding:0 12px;font-size:16px;line-height:1}
+.krow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:.5px solid var(--line-soft)}
+.krow:last-of-type{border-bottom:none}
+.krow .kn{flex:1;min-width:0;font-size:14px}
+.krow .kn i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px}
+.kcode{display:flex;gap:8px;margin-top:8px}
+.kcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:14px}
+.klab{font-size:12px;color:var(--dim);margin:16px 0 6px}
+.klab:first-child{margin-top:0}
+.kmine{font-size:12px;color:var(--dim);line-height:1.5;margin:14px 0 0}
 .cirsw .mchip{font-size:13px;padding:8px 14px}
 .lb{padding:2px 14px}
 .lbrow{display:grid;grid-template-columns:22px 1fr auto auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line-soft);font-size:13.5px}
@@ -2316,6 +2326,15 @@ body.onb #picker .modalbox::before{display:none}
          он нужен ровно в ту секунду, когда он увидел цену. -->
     <div class="invcode" id="sub-promo"><input id="sub-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="промокод"><button type="button" class="btn small" id="sub-codeb">Применить</button></div>
     <p class="rec" id="sub-note"></p>
+  </div>
+</div>
+<!-- Круг: имя, код, кто внутри, выход. Открывается с «Рейтинга» — там, где
+     круги и живут. 16.09: раньше всё это лежало в профиле под свёрнутой
+     строкой «круги», и человек их просто не находил. -->
+<div class="modal" id="krugm" role="dialog" aria-modal="true" aria-labelledby="krugtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="krugtitle">Круг</h3><button class="xbtn" id="krugclose" aria-label="Закрыть">✕</button></div>
+    <div id="krugbody"></div>
   </div>
 </div>
 <div class="modal" id="durm" role="dialog" aria-modal="true" aria-labelledby="durtitle">
@@ -4374,7 +4393,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 08:59';
+var BUILD = '16.09 11:51';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5699,8 +5718,7 @@ function renderInvite(){
       return '<div class="invrow"><span class="invn">' + esc(c.name) + '<i>код ' + esc(c.code) + ' · внутри ' + c.n + (c.owner ? ' · твой' : '') + '</i></span>' +
              '<button type="button" class="btn small" data-cshare="' + esc(c.id) + '">Поделиться</button>' +
              (c.owner
-               ? (c.id === 'family' || c.id === 'friends' ? ''
-                  : '<button type="button" class="btn small danger" data-cdrop="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Закрыть</button>')
+               ? '<button type="button" class="btn small danger" data-cdrop="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Закрыть</button>'
                : '<button type="button" class="btn small" data-cleave="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Выйти</button>') +
              '</div>';
     }).join('') || '<p class="invnote">Ты пока не в круге. Заведи свой и позови своих — или войди в чужой по коду.</p>';
@@ -8769,7 +8787,15 @@ function renderCircle(){
   var me=CIRC.me||{}, list=CIRC.circles||[], cur=null;
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
   var h='';
-  if(list.length>1) h+='<div class="cirsw">'+list.map(function(c){ return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>'; }).join('')+'</div>';
+  /* 16.09, его слова: «не вижу, как редактировать круги, удалять, создавать».
+     Круги живут здесь — значит и управление ими живёт здесь, а не в профиле
+     под свёрнутой строкой, куда я его спрятал. Полоса кругов теперь стоит
+     всегда, даже когда круг один: рядом с ней «+» и шестерёнка текущего. */
+  h+='<div class="cirsw">'+list.map(function(c){
+       return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>';
+     }).join('')+
+     (cur?'<button type="button" class="mchip cirgear" data-krug="'+esc(cur.id)+'" aria-label="Настроить круг «'+esc(cur.name)+'»">⚙</button>':'')+
+     '<button type="button" class="mchip cirnew" id="cirnew" aria-label="Завести круг">+</button></div>';
   var td=me.today||null;
   /* Человек не в круге — плитки «— / 10» показывать нечестно: это места под
      числа, которых не будет. Вместо них объяснение и кнопка туда, где
@@ -8780,9 +8806,8 @@ function renderCircle(){
     box.innerHTML = h + '<div class="group cirempty"><b>Круг ещё не собран</b>'+
       'Здесь будет таблица: кто как попадает в свою норму. Сравнивается не еда, '+
       'а попадание в свою — это честно и для дефицита, и для набора.'+
-      '<button type="button" class="btn" id="cirgo">Ввести код круга</button></div>';
-    var g=document.getElementById('cirgo');
-    if(g) g.addEventListener('click', function(){ openProf(); haptic('light'); });
+      '<button type="button" class="btn prim" id="cirmake">Завести свой круг</button>'+
+      '<button type="button" class="btn" id="cirgo">Войти по коду</button></div>';
     return;
   }
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
@@ -8793,7 +8818,9 @@ function renderCircle(){
 
   if(CIRC.loading){ h+='<p class="empt">Загружаю «'+esc(cur.name)+'»…</p>'; box.innerHTML=h; return; }
   if(b.length<2){
-    h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b><button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button></div>';
+    h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b>'+
+      '<button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button>'+
+      '<button type="button" class="btn small" data-krug="'+esc(cur.id)+'">Настроить</button></div>';
   } else {
     var неделя = LBMODE==='week';
     /* один и тот же список, два взгляда: за сегодня и за неделю — сортировка и
@@ -8920,6 +8947,114 @@ document.getElementById('cirbody').addEventListener('click', function(e){
   var lm=e.target.closest('[data-lbmode]'); if(lm){ if(lm.dataset.lbmode!==LBMODE){ LBMODE=lm.dataset.lbmode; gset('lbmode',LBMODE); renderCircle(); } haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
+});
+/* ── ЛИСТ КРУГА ───────────────────────────────────────────────────────
+   16.09, его слова: «не вижу, как редактировать круги, удалять, создавать».
+   Управление кругом стояло в профиле, под свёрнутой строкой — то есть его
+   не было. Здесь всё в одном месте и ровно в том объёме, который человеку
+   позволен: своим кругом он распоряжается целиком, в чужом может только
+   посмотреть, кто внутри, и выйти. */
+var KRUG = null, KRUGBUSY = false;
+function openKrug(id){
+  var c = null; ((CIRC && CIRC.circles) || []).forEach(function(x){ if(x.id === id) c = x; });
+  if(!c) return;
+  KRUG = { c: c, люди: null, нов: false };
+  var m = document.getElementById('krugm'); if(!m) return;
+  renderKrug(); m.classList.add('show');
+  fGet('/circle/members?uid=' + encodeURIComponent(syncUid()) + '&id=' + encodeURIComponent(c.id))
+    .then(function(d){ if(d && d.ok && KRUG && KRUG.c.id === c.id){ KRUG.люди = d.members || []; renderKrug(); } })
+    .catch(function(){});
+}
+function openKrugНовый(){
+  KRUG = { c: null, люди: null, нов: true };
+  var m = document.getElementById('krugm'); if(m){ renderKrug(); m.classList.add('show'); }
+}
+function closeKrug(){ var m = document.getElementById('krugm'); if(m) m.classList.remove('show'); KRUG = null; }
+function renderKrug(){
+  var box = document.getElementById('krugbody'), t = document.getElementById('krugtitle');
+  if(!box || !KRUG) return;
+  if(KRUG.нов){
+    if(t) t.textContent = 'Новый круг';
+    box.innerHTML = '<p class="mtext">Круг — это своя таблица: кто как попадает в свою норму. ' +
+      'Сравнивается не еда, а попадание в свою.</p>' +
+      '<p class="klab">НАЗВАНИЕ</p><div class="kcode"><input id="k-new" type="text" autocomplete="off" maxlength="24" placeholder="зал, беговой клуб, семья"></div>' +
+      '<button type="button" class="btn prim wide" id="k-make" style="margin-top:14px">Завести</button>';
+    return;
+  }
+  var c = KRUG.c, моё = !!c.owner;
+  if(t) t.textContent = c.name;
+  var h = '';
+  if(моё){
+    h += '<p class="klab">НАЗВАНИЕ</p><div class="kcode"><input id="k-name" type="text" autocomplete="off" maxlength="24" value="' + esc(c.name) + '">' +
+         '<button type="button" class="btn small" id="k-rename">Сохранить</button></div>';
+  }
+  h += '<p class="klab">КОД ДЛЯ ПРИГЛАШЕНИЯ</p>' +
+       '<div class="kcode"><input id="k-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" value="' + esc(c.code) + '"' + (моё ? '' : ' readonly') + '>' +
+       (моё ? '<button type="button" class="btn small" id="k-code-save">Сменить</button>' : '') + '</div>' +
+       '<button type="button" class="btn wide" data-cshare="' + esc(c.id) + '" style="margin-top:8px">Отправить приглашение</button>';
+  h += '<p class="klab">КТО ВНУТРИ · ' + c.n + '</p>';
+  if(!KRUG.люди) h += '<p class="mtext">Загружаю…</p>';
+  else h += KRUG.люди.map(function(m){
+    return '<div class="krow"><span class="kn">' + esc(m.me ? 'Ты' : m.name) + (m.owner ? '<i>завёл круг</i>' : '') + '</span>' +
+      (моё && !m.owner ? '<button type="button" class="memx" data-kdel="' + esc(m.uid) + '" aria-label="Убрать">×</button>' : '') + '</div>';
+  }).join('');
+  if(моё){
+    h += '<p class="kmine">Круг твой: имя, код и состав меняешь только ты. Закроешь — таблица исчезнет у всех, записи людей останутся при них.</p>';
+    h += '<button type="button" class="btn wide danger" id="k-drop" style="margin-top:10px">Закрыть круг</button>';
+  } else {
+    h += '<p class="kmine">Круг завёл кто-то другой — имя и состав меняет он. Ты можешь выйти в любой момент.</p>' +
+         '<button type="button" class="btn wide danger" id="k-leave" style="margin-top:10px">Выйти из круга</button>';
+  }
+  box.innerHTML = h;
+}
+function кругПосле(){ KRUGBUSY = false; CIRCACHE = {}; circlePull(); renderInvite(); }
+function кругДействие(path, body, закрыть){
+  if(KRUGBUSY) return; KRUGBUSY = true;
+  fPost(path, Object.assign({ uid: syncUid() }, body))
+    .then(function(d){
+      if(d && d.ok){ haptic('ok'); if(закрыть) closeKrug(); кругПосле();
+                     if(!закрыть && KRUG && KRUG.c) setTimeout(function(){ if(KRUG) openKrug(KRUG.c.id); }, 400); }
+      else { KRUGBUSY = false; haptic('err'); say((d && d.error) || 'Не вышло.'); }
+    })
+    .catch(function(e){ KRUGBUSY = false; haptic('err'); say(humanErr(e)); });
+}
+document.addEventListener('click', function(e){
+  if(e.target.closest('#krugclose')){ closeKrug(); return; }
+  var m = document.getElementById('krugm');
+  if(m && m.classList.contains('show') && e.target === m){ closeKrug(); return; }
+  var g = e.target.closest('[data-krug]'); if(g){ openKrug(g.dataset.krug); haptic('light'); return; }
+  if(e.target.closest('#cirnew') || e.target.closest('#cirmake')){ openKrugНовый(); haptic('light'); return; }
+  if(e.target.closest('#cirgo')){ openProf(); haptic('light'); return; }
+  if(e.target.closest('#k-make')){
+    var i = document.getElementById('k-new'), имя = (i.value || '').trim();
+    if(имя.length < 2){ i.focus(); return; }
+    if(KRUGBUSY) return; KRUGBUSY = true;
+    fPost('/circle/new', { uid: syncUid(), name: имя }).then(function(d){
+      KRUGBUSY = false;
+      if(d && d.ok && d.circle){ haptic('ok'); CIRCACHE = {}; renderInvite();
+        circlePull(d.circle.id).then(function(){ KRUG = { c: d.circle, люди: null, нов: false }; renderKrug(); shareCircle(d.circle); }); }
+      else { haptic('err'); say((d && d.error) || 'Не вышло.'); }
+    }).catch(function(err){ KRUGBUSY = false; say(humanErr(err)); });
+    return;
+  }
+  if(e.target.closest('#k-rename')){
+    var имя2 = (document.getElementById('k-name').value || '').trim();
+    if(имя2.length < 2) return;
+    кругДействие('/circle/rename', { id: KRUG.c.id, name: имя2 }); return;
+  }
+  if(e.target.closest('#k-code-save')){
+    var код = (document.getElementById('k-code').value || '').trim();
+    if(код.length < 4) return;
+    кругДействие('/circle/code', { id: KRUG.c.id, code: код }); return;
+  }
+  var kd = e.target.closest('[data-kdel]');
+  if(kd){ кругДействие('/circle/del', { id: KRUG.c.id, who: kd.dataset.kdel }); return; }
+  var kl = e.target.closest('#k-leave');
+  if(kl){ if(kl.textContent !== 'Точно выйти?'){ kl.textContent = 'Точно выйти?'; setTimeout(function(){ if(kl) kl.textContent = 'Выйти из круга'; }, 4000); return; }
+    кругДействие('/circle/leave', { id: KRUG.c.id }, true); return; }
+  var kdr = e.target.closest('#k-drop');
+  if(kdr){ if(kdr.textContent !== 'Точно закрыть?'){ kdr.textContent = 'Точно закрыть?'; setTimeout(function(){ if(kdr) kdr.textContent = 'Закрыть круг'; }, 4000); return; }
+    кругДействие('/circle/drop', { id: KRUG.c.id }, true); return; }
 });
 function shareCircle(c){
   if(!c) return;
