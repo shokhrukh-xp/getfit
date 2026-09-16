@@ -1640,6 +1640,36 @@ body.ordmode #list .card{animation:дрожь .42s linear infinite}
 #picker #picklist{margin-top:14px}
 #picker .seg.wd button{padding:9px 1px;font-size:11.5px}
 #wz-err{margin:10px 0 0;color:var(--warn-txt)}
+#sr-when{margin:0 0 14px}
+.srv{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.srv b{display:block;font-size:17px;font-weight:600;line-height:1.35;margin-bottom:7px;letter-spacing:-.2px}
+.srv p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.55}
+.srr{display:flex;align-items:baseline;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px}
+.srr u{text-decoration:none;flex:1;min-width:0}
+.srr u b{display:block;font-size:13.5px;font-weight:500}
+.srr u i{display:block;font-style:normal;color:var(--muted);font-size:11px;margin-top:2px}
+.srr s{text-decoration:none;font-size:16px;font-weight:600;white-space:nowrap}
+.srr s.dn{color:var(--done-txt)}.srr s.up{color:var(--warn-txt)}.srr s.nc{color:var(--muted)}
+.srch{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 14px 10px;margin-bottom:12px}
+.srch .hd{margin:0 0 10px;font-size:11.5px;color:var(--muted)}
+.srleg{display:flex;gap:14px;margin-bottom:12px;font-size:11.5px;color:var(--muted)}
+.srleg i{font-style:normal;display:flex;align-items:center;gap:5px}
+.srleg u{text-decoration:none;width:14px;height:3px;border-radius:2px;display:inline-block}
+.srax{display:flex;justify-content:space-between;margin-top:9px;color:var(--muted);font-size:10.5px}
+.srax s{text-decoration:none}
+.srh3{font-size:11px;color:var(--muted);font-weight:500;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.3px}
+.srtxt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.srtxt span{display:block}
+.srtxt span+span{margin-top:8px}
+.srsrc{color:var(--muted);font-size:10.5px;margin:8px 0 0;opacity:.75}
+.sract{display:flex;align-items:center;gap:11px;background:var(--accent-ghost);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px}
+.sract u{text-decoration:none;flex:1;font-size:12.5px;line-height:1.5}
+.srsw{display:flex;gap:6px;margin:14px 0 0}
+.srsw button{flex:1;padding:8px 4px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:12px}
+.srsw button[aria-pressed="true"]{background:var(--accent-ghost);color:var(--text)}
+.hwrap .srgo{grid-column:1/-1}
+.srgo{display:block;width:100%;text-align:left;margin:8px 0 0;padding:11px 13px;border-radius:12px;
+  border:1px solid var(--line);background:var(--card);color:var(--accent-txt);font:inherit;font-size:12.5px}
 .wzq{background:rgba(74,140,255,.09);border:.5px solid rgba(74,140,255,.28);border-radius:14px;padding:12px 13px;margin-top:10px}
 .wzq p{margin:0 0 9px}
 .wzq .wzopts{margin-top:0}
@@ -2331,6 +2361,17 @@ body.onb #picker .modalbox::before{display:none}
 <!-- Тренер по подписке. Экран нужен ровно тем, у кого доступа нет: свои и
      оплатившие его не видят никогда, поэтому он не в меню, а всплывает там,
      где человек упёрся — на первом же обращении к тренеру. -->
+<!-- Срез состава: доказательство, что подписка работает. Считает формула на
+     сервере, экран только рисует — иначе число на экране и число в сообщении
+     бота однажды разойдутся. -->
+<div class="modal" id="srezm" role="dialog" aria-modal="true" aria-labelledby="srtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="srtitle">Срез</h3><button class="xbtn" id="srclose" aria-label="Закрыть">✕</button></div>
+    <p class="mtext" id="sr-when"></p>
+    <div id="sr-body"></div>
+    <div class="srsw" id="sr-sw"></div>
+  </div>
+</div>
 <div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="subtitle">Тренер по подписке</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
@@ -4616,7 +4657,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 13:08';
+var BUILD = '16.09 15:56';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7831,6 +7872,19 @@ document.getElementById('picker').addEventListener('input', function(e){
   if(sub) sub.innerHTML='<b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks);
   if(go) go.textContent='Так и делаем · до '+gдата(p.weeks);
 });
+document.getElementById('srclose').addEventListener('click', closeSrez);
+document.getElementById('srezm').addEventListener('click', function(e){
+  if(e.target.id==='srezm'){ closeSrez(); return; }
+  var b=e.target.closest('[data-srdn]');
+  if(b){ srezPull(+b.dataset.srdn); haptic('light'); return; }
+  if(e.target.closest('#sr-ask')){
+    var q=(SREZ&&SREZ.дальше&&SREZ.дальше.ask)||'';
+    closeSrez(); openCoach();
+    var t=document.getElementById('ctext');
+    if(t && q){ t.value=q; t.dispatchEvent(new Event('input',{bubbles:true})); }
+    haptic('medium'); return;
+  }
+});
 document.getElementById('picker').addEventListener('click', function(e){
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
@@ -8917,8 +8971,12 @@ function homeBody(){
   });
   if(!h) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
     fmtKg(ms[ms.length-1].w)+'</b><i>встань на весы — появятся жир и белок</i></button>';
+  /* Колонки показывают, НА СКОЛЬКО изменилось. Главного — сколько из этого
+     было жиром — в них нет, а это ровно то, ради чего человек встаёт на
+     весы. Поэтому под таблицей отдельная дверь в срез. */
   return '<button type="button" class="hbody" data-hgo="food">'+h+
-    '<p class="hbnote">изменение за неделю</p></button>';
+    '<p class="hbnote">изменение за неделю</p></button>'+
+    '<button type="button" class="srgo" data-srez>Срез: сколько из этого — жир →</button>';
 }
 function homeNext(){
   var lw=lastWorkout(), закрыт=!!(lw && lw.date===TODAY);
@@ -8981,6 +9039,7 @@ function renderHome(){
     }
     var hd=e.target.closest('[data-hday]');
     if(hd){ if(hd.disabled) return; var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
+    if(e.target.closest('[data-srez]')){ openSrez(14); haptic('light'); return; }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
   });
 })();
@@ -9362,6 +9421,119 @@ function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{
    Платим Звёздами: правила Telegram не оставляют выбора — цифровые услуги
    в ботах и мини-аппах идут только через Stars. */
 var SUB=null, SUBBUSY=false;
+/* ══════════ СРЕЗ СОСТАВА ══════════
+   16.09. На главной видно изменение за день, за неделю и за всё время, но не
+   видно главного: сколько из ушедшего веса было жиром. Это и есть то
+   доказательство, ради которого платят, и оно всё время лежало в базе.
+
+   Ни одного числа экран не считает сам: всё приходит с сервера той же
+   формулой, что уходит в сообщение бота. */
+var SREZ=null, SREZDN=14, SREZBUSY=false;
+function srezPull(дн){
+  SREZBUSY=true; SREZDN=дн||SREZDN;
+  renderSrez();
+  return fGet('/srez?uid='+encodeURIComponent(syncUid())+'&days='+SREZDN)
+    .then(function(d){ SREZBUSY=false; if(d&&d.ok){ SREZ=d; } else SREZ={ошибка:1}; renderSrez(); return d; })
+    .catch(function(e){ SREZBUSY=false; SREZ={ошибка:1, что:humanErr(e)}; renderSrez(); return null; });
+}
+function срЗпт(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); }
+function срЗн(x){ return (x>0?'+':'−')+срЗпт(Math.abs(x)); }
+/* График в ИЗМЕНЕНИЯХ от первого замера, а не в килограммах. В килограммах
+   вес и жир идут двумя параллельными линиями на разных шкалах, и человек
+   видит одно и то же дважды. В изменениях они расходятся, и расстояние между
+   ними — ровно то, что ушло не жиром. */
+function срГрафик(ряд){
+  var т=ряд.filter(function(x){ return x.w!=null && x.f!=null; });
+  if(т.length<2) return '';
+  var w0=т[0].w, f0=т[0].f;
+  var dw=т.map(function(x){ return x.w-w0; }), df=т.map(function(x){ return x.f-f0; });
+  var все=dw.concat(df), lo=Math.min.apply(null,все), hi=Math.max.apply(null,все);
+  var пад=Math.max(0.4,(hi-lo)*0.12); lo-=пад; hi+=пад;
+  /* Координаты в пикселях, а не в условных единицах, растянутых по ширине:
+     при растянутой системе координат буквы подписей растягиваются вместе с
+     ней, и «−2,0» превращается в «−2 0» с дырой посередине. */
+  var Ш=340, В=150;
+  var кx=function(i){ return т.length<2?0:i*Ш/(т.length-1); };
+  var кy=function(v){ return В-(v-lo)/(hi-lo)*В; };
+  var путь=function(a){ return 'M'+a.map(function(v,i){ return кx(i).toFixed(2)+','+кy(v).toFixed(1); }).join(' L'); };
+  var полоса='M'+df.map(function(v,i){ return кx(i).toFixed(2)+','+кy(v).toFixed(1); }).join(' L')+
+    ' L'+dw.map(function(v,i){ return кx(т.length-1-i).toFixed(2)+','+кy(dw[т.length-1-i]).toFixed(1); }).join(' L')+' Z';
+  var сетка='';
+  [0,-2,-4,-6,-8,2,4].forEach(function(v){
+    if(v<lo||v>hi) return;
+    var y=кy(v).toFixed(1);
+    сетка+='<line x1="0" y1="'+y+'" x2="'+Ш+'" y2="'+y+'" stroke="var(--line)" stroke-width=".7"/>'+
+      '<text x="0" y="'+y+'" dy="-3.5" fill="var(--muted)" font-size="9.5">'+(v===0?'0':срЗн(v))+'</text>';
+  });
+  return '<svg viewBox="-2 -8 '+(Ш+4)+' '+(В+14)+'" style="width:100%;height:auto;overflow:visible" role="img">'+
+    сетка+
+    '<path d="'+полоса+'" fill="var(--warn)" opacity=".16" stroke="none"/>'+
+    '<path d="'+путь(df)+'" fill="none" stroke="var(--done)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<path d="'+путь(dw)+'" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+кx(т.length-1).toFixed(2)+'" cy="'+кy(dw[dw.length-1]).toFixed(1)+'" r="3.4" fill="var(--accent)"/>'+
+    '<circle cx="'+кx(т.length-1).toFixed(2)+'" cy="'+кy(df[df.length-1]).toFixed(1)+'" r="3.4" fill="var(--done)"/>'+
+    '</svg>'+
+    '<div class="srax"><s>'+ruDate(т[0].d)+'</s><s>'+ruDate(т[т.length-1].d)+'</s></div>';
+}
+/* цел — величина без долей (индекс висцерального жира, сантиметры талии):
+   «−1,0» у индекса читается как точность до десятых, которой у него нет */
+function срСтрока(имя, под, д, вниз, ед, цел){
+  if(д==null) return '';
+  var шум = Math.abs(д) < (цел ? 0.5 : 0.05);
+  var цвет = шум ? 'nc' : ((вниз ? д<0 : д>0) ? 'dn' : 'up');
+  var знач = шум ? (цел ? '0' : '0,0') : (цел ? ((д>0?'+':'−')+Math.abs(Math.round(д))) : срЗн(д));
+  return '<div class="srr"><u><b>'+esc(имя)+'</b><i>'+esc(под)+'</i></u><s class="'+цвет+'">'+
+    знач+(ед?' '+ед:'')+'</s></div>';
+}
+function renderSrez(){
+  var box=document.getElementById('sr-body'), когда=document.getElementById('sr-when');
+  if(!box) return;
+  var sw=document.getElementById('sr-sw');
+  if(sw) sw.innerHTML=[[14,'2 недели'],[30,'месяц'],[90,'3 месяца']].map(function(x){
+    return '<button type="button" data-srdn="'+x[0]+'" aria-pressed="'+(SREZDN===x[0])+'">'+x[1]+'</button>'; }).join('');
+  if(SREZBUSY){ if(когда) когда.textContent='Считаю…'; box.innerHTML=''; return; }
+  if(!SREZ || SREZ.ошибка){
+    if(когда) когда.textContent='';
+    box.innerHTML='<p class="mtext">'+esc((SREZ&&SREZ.что)||'Не получилось посчитать срез.')+'</p>';
+    return;
+  }
+  if(!SREZ.есть){
+    if(когда) когда.textContent='';
+    box.innerHTML='<p class="mtext">Чтобы увидеть, сколько из веса ушло жиром, нужно хотя бы два замера за выбранный срок. '+
+      'Встань на весы — и срез посчитается сам.</p>';
+    return;
+  }
+  var d=SREZ, дл=d['д']||{};
+  if(когда) когда.textContent=ruDate(d['от'])+' — '+ruDate(d['до'])+' · '+d.n+' '+(d.n===1?'замер':(d.n<5?'замера':'замеров'));
+  var h='<div class="srv"><b>'+esc(d.шапка)+'</b>'+
+    (d.текст&&d.текст.length?'<p>'+d.текст.map(esc).join(' ')+'</p>':'')+'</div>';
+  h+=срСтрока('вес', срЗпт(d.a.w)+' → '+срЗпт(d.b.w)+' кг', дл.w, true);
+  h+=срСтрока('жир', (d.a.fat!=null?срЗпт(d.a.fat)+' → '+срЗпт(d.b.fat)+' кг':'')+
+      (d.a.pct!=null?' · '+срЗпт(d.a.pct)+' → '+срЗпт(d.b.pct)+' %':''), дл.fat, true);
+  h+=срСтрока('белковая масса', (d.a.prot!=null?срЗпт(d.a.prot)+' → '+срЗпт(d.b.prot)+' кг':''), дл.prot, false);
+  if(дл.waist!=null) h+=срСтрока('талия', d.a.waist+' → '+d.b.waist+' см', дл.waist, true, 'см', true);
+  if(дл.visc!=null) h+=срСтрока('висцеральный', d.a.visc+' → '+d.b.visc, дл.visc, true, '', true);
+  var гр=срГрафик(d.ряд||[]);
+  if(гр) h+='<div class="srch"><p class="hd">сколько ушло от '+ruDate(d['от'])+'</p>'+
+    '<div class="srleg"><i><u style="background:var(--accent)"></u>вес</i>'+
+    '<i><u style="background:var(--done)"></u>жир</i>'+
+    '<i><u style="background:var(--warn);opacity:.5"></u>не жир</i></div>'+гр+'</div>';
+  if(d.значит&&d.значит.length){
+    h+='<p class="srh3">что это значит</p><div class="srtxt">'+
+      d.значит.map(function(x){ return '<span>'+esc(x)+'</span>'; }).join('')+'</div>';
+    if(d.источник) h+='<p class="srsrc">'+esc(d.источник)+'</p>';
+  }
+  if(d.дальше && d.дальше.text){
+    h+='<div class="sract"><u>'+esc(d.дальше.text)+'</u></div>'+
+       '<button type="button" class="srgo" id="sr-ask">Спросить тренера →</button>';
+  }
+  box.innerHTML=h;
+}
+function openSrez(дн){
+  var m=document.getElementById('srezm'); if(m) m.classList.add('show');
+  srezPull(дн||SREZDN);
+}
+function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
     .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); } return d; }).catch(function(){ return null; });
@@ -10838,6 +11010,9 @@ applyOnly();
    Тем же адресом стенд открывает нужный экран сразу. */
 var СТАРТ = (/[?&]p=([a-z]+)(&|$)/.exec(location.search||'')||[])[1] || '';
 goPage(PAGES.indexOf(СТАРТ)>=0 ? СТАРТ : 'home');
+/* Сообщение бота про срез ведёт прямо в срез, а не «куда-то в приложение»:
+   человек нажал на конкретную вещь и должен увидеть именно её. */
+if(/[?&]srez=1(&|$)/.test(location.search||'')) setTimeout(function(){ openSrez(14); }, 400);
 
 })();
 </script>
