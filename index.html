@@ -1383,6 +1383,24 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adcode{display:flex;gap:8px;margin-top:8px}
 .adcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:13px}
 .adcode input.nn{flex:0 0 74px}
+/* ── ПАЛЬЦЫ И РЕЖИМ ПОРЯДКА ── */
+.exfoot .ebtn.th{padding:0 13px;font-size:16px;line-height:1}
+.exfoot .ebtn.th.on{border-color:var(--accent-txt);color:var(--accent-txt);background:var(--accent-ghost)}
+.ordbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
+  margin:0 0 10px;padding:10px 12px;border-radius:14px;background:var(--accent-ghost);
+  border:.5px solid var(--line);font-size:13px;color:var(--text)}
+.ordbar b{flex:1;font-weight:500}
+.ordbar button{min-height:40px;padding:0 14px;border-radius:11px;border:none;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;font-size:13px}
+body.ordmode #list .exrow{animation:дрожь .42s linear infinite;pointer-events:none}
+body.ordmode #list .card{animation:дрожь .42s linear infinite}
+@keyframes дрожь{0%{transform:rotate(-.5deg)}50%{transform:rotate(.5deg)}100%{transform:rotate(-.5deg)}}
+@media (prefers-reduced-motion:reduce){body.ordmode #list .exrow,body.ordmode #list .card{animation:none}}
+.ordrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--line-soft)}
+.ordrow .ordn{flex:1;min-width:0;font-size:14px}
+.ordrow .ordn i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px}
+.ordrow .ordb{width:44px;height:44px;flex:0 0 44px;border-radius:12px;border:.5px solid var(--line);
+  background:var(--field);color:var(--text);font:inherit;font-size:17px;line-height:1}
+.ordrow .ordb[disabled]{opacity:.35}
 .subin{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .subin li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--text);line-height:1.4}
 .subin li::before{content:'';flex:0 0 6px;height:6px;margin-top:6px;border-radius:50%;background:var(--accent)}
@@ -2891,6 +2909,9 @@ function applyProfile(p, silent){
   ADJ  = get('adj', {});
   EXTRA= get('extra', {});
   SKIP = get('skip', {});
+  ORD  = get('ord', {});
+  NOPE = get('nope', {});
+  LIKE = get('like', {});
   lastDone = get('lastdone', null);
   var pick = get('pick_'+TODAY, null);
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
@@ -2947,6 +2968,24 @@ var SUBS = {};
 /* Упражнения, добавленные в день сверх программы (например, по разбору
    недельного объёма). Идут в конец дня, чтобы не сдвигать номера слотов. */
 var EXTRA = {}, SKIP = {};
+/* ── ПОРЯДОК УПРАЖНЕНИЙ В ДНЕ ─────────────────────────────────────────
+   16.09, его просьба. Порядок — это не украшение: тренажёр бывает занят,
+   а два тяжёлых движения подряд на одну мышцу выматывают сильнее, чем те
+   же два вразбивку. Хранится списком ключей дня рядом с заменами, потому
+   что это такая же ручная правка программы; чего в списке нет, то встаёт
+   в конец — новое упражнение не должно молча влезать в середину. */
+var ORD = {};
+function упорядочить(dk, out){
+  var o = ORD[dk]; if(!o || !o.length) return out;
+  var поз = {}; o.forEach(function(k,i){ поз[k]=i; });
+  return out.slice().sort(function(a,b){
+    var ai=поз[a.k], bi=поз[b.k];
+    if(ai==null && bi==null) return 0;
+    if(ai==null) return 1;
+    if(bi==null) return -1;
+    return ai-bi;
+  });
+}
 function subKey(dk, di){ return dk+':'+di; }
 /* Действующий список упражнений дня: программа плюс сделанные замены.
    Замена наследует схему подходов и отдых у того упражнения, которое заменила —
@@ -2969,7 +3008,7 @@ function exList(dk){
                rest:x.rest||90, cat:x.i, add:true, cues:x.cues||[], why:x.why||'', ph:null, fig:null,
                k:dk+':x'+(x.id||xi), xi:xi });
   });
-  return out;
+  return упорядочить(dk, out);
 }
 /* что в этом дне поправлено руками — для строки «вернуть как было» */
 function dayEdits(dk){
@@ -2981,8 +3020,8 @@ function dayEdits(dk){
    с заменами и в том же облачном ключе: иначе пересборка дня затирала правку. */
 var ADJ = {};
 function saveSubs(){
-  set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP);
-  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, at:new Date().toISOString()}).catch(function(){});
+  set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD);
+  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, at:new Date().toISOString()}).catch(function(){});
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
@@ -3010,6 +3049,96 @@ function subСнять(){
     if(Object.keys(SUBNEW).length) subСнять();
   }, 1100);
 }
+/* ── НРАВИТСЯ / НЕ НРАВИТСЯ ───────────────────────────────────────────
+   16.09, его просьба. «Заменить» спрашивало, чем заменить, и человек
+   листал каталог в зале между подходами. Палец вниз отвечает за него:
+   берём другое движение на ТУ ЖЕ мышцу, которого он ещё не отвергал и
+   которого сегодня нет в дне. Нажал ещё раз — берём следующее.
+   Отказ навсегда: он сказал «не моё», и предлагать это снова — значит не
+   слушать. Отменяется в профиле, там же список отвергнутого.
+   Когда на мышцу не осталось ничего — не молчим и не подсовываем чужую
+   мышцу: показываем всё, что есть в базе, и говорим честно. */
+var NOPE = {}, LIKE = {};
+function мнКлюч(e){ return String((e && (e.cat || e.id)) || (e && e.n) || ''); }
+function сохранитьМнение(){
+  set('nope', NOPE); set('like', LIKE);
+  if(DB) DB.doc('state/mnenie').set({no:NOPE, yes:LIKE, at:new Date().toISOString()}).catch(function(){});
+}
+function мышцаЕго(e){
+  if(!e) return '';
+  if(e.m) return e.m;
+  var x = (CAT && e.cat) ? (CAT.ex||[]).filter(function(y){ return y.i===e.cat; })[0] : null;
+  return (x && x.m) || MUSCLEOF[e.p] || '';
+}
+/* Кандидаты на замену: та же мышца, тот же род движения (силовое на силовое —
+   велотренажёр вместо приседа формально та же мышца, но это не замена),
+   ничего отвергнутого и ничего, что уже стоит в этом дне. */
+function кандидаты(e){
+  if(!CAT || !CAT.ex) return [];
+  var м = мышцаЕго(e); if(!м) return [];
+  var свой = (CAT.ex||[]).filter(function(y){ return y.i===e.cat; })[0];
+  var род = catKind(свой || {c:'strength'});
+  var сегодня = {}; exList(day).forEach(function(x){ if(x.cat) сегодня[x.cat]=1; });
+  return CAT.ex.filter(function(x){
+    if(x.m!==м && x.m2!==м) return false;
+    if(catKind(x)!==род) return false;
+    if(NOPE[x.i]) return false;
+    if(сегодня[x.i]) return false;
+    return true;
+  }).sort(function(a,b){
+    /* ближе к тому, что было: тот же снаряд, потом та же сложность */
+    var са = (свой && a.q===свой.q ? 0 : 1) + (свой && a.l===свой.l ? 0 : 1);
+    var сб = (свой && b.q===свой.q ? 0 : 1) + (свой && b.l===свой.l ? 0 : 1);
+    if(са!==сб) return са-сб;
+    return String(a.n).localeCompare(String(b.n));
+  });
+}
+function неНравится(di){
+  var e = exList(day)[di]; if(!e) return;
+  loadCatalog().then(function(){
+    var было = exList(day)[di] || e;
+    NOPE[мнКлюч(было)] = { n: было.n, at: Date.now(), m: мышцаЕго(было) };
+    delete LIKE[мнКлюч(было)];
+    сохранитьМнение();
+    var сп = кандидаты(было);
+    if(!сп.length){ тупик(было); return; }
+    applySub(было.k, сп[0]);
+    свапНота(было.n, сп[0].n, было.k, di);
+  }).catch(function(){ say('Каталог не загрузился — попробуй ещё раз.'); });
+}
+function нравится(di){
+  var e = exList(day)[di]; if(!e) return;
+  var k = мнКлюч(e);
+  if(LIKE[k]) delete LIKE[k]; else { LIKE[k] = Date.now(); delete NOPE[k]; }
+  сохранитьМнение(); renderList(); haptic('light');
+}
+/* Строка после замены: что на что, и выход для того, кто хочет выбрать сам.
+   Постоянной кнопки «Заменить» больше нет — она была нужна, пока приложение
+   не умело выбирать само. */
+function свапНота(былоИмя, сталоИмя, k, di){
+  var el = document.getElementById('dbnote'); if(!el) return;
+  el.innerHTML = 'Заменил «' + esc(былоИмя) + '» на «' + esc(сталоИмя) + '». Не то — жми ещё. ' +
+    '<button type="button" class="linkbtn" data-selfpick="' + esc(String(di)) + '">выбрать самому</button>';
+  el.className = 'dbnote';
+  haptic('medium');
+}
+/* Все движения на эту мышцу отвергнуты. Молчать нельзя, подсунуть чужую
+   мышцу — тоже: человек просил работать именно её. */
+function тупик(e){
+  var м = мышцаЕго(e);
+  var все = (CAT && CAT.ex || []).filter(function(x){ return x.m===м || x.m2===м; });
+  var el = document.getElementById('dbnote');
+  if(el){
+    el.textContent = 'На эту мышцу в базе всего ' + все.length + ' ' +
+      plural(все.length, ['движение','движения','движений']) + ', и все они тебе не подошли. ' +
+      'Выбери из них, если хочешь её работать, — или убери упражнение из дня.';
+    el.className = 'dbnote warn';
+  }
+  NOPEALL = м;
+  openCatalog({ dk: day, k: e.k, di: 0, muscle: м, все: 1 });
+  haptic('err');
+}
+var NOPEALL = '';
 function applySub(k, item){
   if(item) SUBS[k] = {n:item.n, e:item.e, i:item.i}; else delete SUBS[k];
   if(item && k){ SUBNEW[k]=Date.now(); subСнять(); } else if(k) delete SUBNEW[k];
@@ -4245,7 +4374,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 07:57';
+var BUILD = '16.09 08:59';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -4999,8 +5128,54 @@ document.getElementById('sp-save').addEventListener('click', function(){
     });
 });
 
+/* ── РЕЖИМ «ПОРЯДОК» ──────────────────────────────────────────────────
+   16.09, его просьба: долгое удержание — карточки дрожат — тащишь пальцем.
+   Дрожь оставили, а перетаскивание заменили стрелками: список сам
+   прокручивается, и палец, ведущий карточку, всё время спорит со скроллом.
+   Стрелка попадает всегда и работает одинаково на телефоне и на маке. */
+var ORDMODE = false;
+function ordВкл(){ if(ORDMODE) return; ORDMODE=true; document.body.classList.add('ordmode'); renderList(); haptic('medium'); }
+function ordВыкл(){ if(!ORDMODE) return; ORDMODE=false; document.body.classList.remove('ordmode'); renderList(); haptic('light'); }
+/* Порядок записывается ключами дня целиком: частичный список оставил бы
+   новичков в середине на произвол сортировки. */
+/* Суперсет переставляется ПАРОЙ. Между А и Б человек не отдыхает — это одно
+   место в тренировке, а не два; разнести их значит сломать сам суперсет. */
+function ordГруппы(){
+  var сп = exList(day), занято = {}, гр = [];
+  сп.forEach(function(e, di){
+    if(занято[di]) return;
+    var pdi = -1;
+    if(e.ss) for(var i=0;i<сп.length;i++) if(i!==di && сп[i].ss===e.ss){ pdi=i; break; }
+    if(pdi>=0){ занято[pdi]=1; гр.push({ ex:[e, сп[pdi]], k:[e.k, сп[pdi].k], di:di }); }
+    else гр.push({ ex:[e], k:[e.k], di:di });
+  });
+  return гр;
+}
+function ordСдвиг(gi, шаг){
+  var гр = ordГруппы();
+  var j = gi + шаг; if(j<0 || j>=гр.length) return;
+  var t = гр[gi]; гр[gi] = гр[j]; гр[j] = t;
+  ORD[day] = гр.reduce(function(a,g){ return a.concat(g.k); }, []);
+  saveSubs(); rebuildSess(); renderList(); haptic('light');
+}
+function ordСброс(){ delete ORD[day]; saveSubs(); rebuildSess(); renderList(); haptic('light'); }
+function ordСписок(){
+  var гр = ordГруппы();
+  return '<div class="ordbar"><b>Порядок упражнений</b>' +
+    (ORD[day] ? '<button type="button" id="ordreset" class="linkbtn">как было</button>' : '') +
+    '<button type="button" id="orddone">Готово</button></div>' +
+    гр.map(function(g,gi){
+      var имя = g.ex.map(function(x){ return esc(x.n); }).join(' + ');
+      var под = g.ex.length>1 ? 'суперсет · ' + setsFor(g.ex[0], g.di) + ' ' + plural(setsFor(g.ex[0], g.di),['круг','круга','кругов'])
+                              : setsFor(g.ex[0], g.di) + ' × ' + repsOf(g.ex[0]);
+      return '<div class="ordrow"><span class="ordn">' + имя + '<i>' + под + '</i></span>' +
+        '<button type="button" class="ordb" data-ordup="'+gi+'"'+(gi===0?' disabled':'')+' aria-label="Выше">↑</button>' +
+        '<button type="button" class="ordb" data-orddn="'+gi+'"'+(gi===гр.length-1?' disabled':'')+' aria-label="Ниже">↓</button></div>';
+    }).join('');
+}
 function renderList(){
   var box = document.getElementById('list'), h='';
+  if(ORDMODE){ box.innerHTML = ordСписок(); return; }
   var список = exList(day);
   /* Суперсет — это один снаряд времени, а не два упражнения подряд. Раньше
      пара жила в двух отдельных карточках с текстовой пометкой: было непонятно,
@@ -5041,9 +5216,13 @@ function renderList(){
   try{ spToday(); if(SPTODAY===null) spLoadToday(); }catch(e){}
 }
 function низКарточки(e,di,метка){
+  /* 16.09: вместо «Заменить» — два пальца. Палец вниз и есть замена, только
+     он не спрашивает «чем», а помнит, что человек уже отверг. */
+  var нрав = !!LIKE[мнКлюч(e)];
   return '<div class="exfoot">'+
+      '<button type="button" class="ebtn th'+(нрав?' on':'')+'" data-like="'+di+'" aria-pressed="'+нрав+'" aria-label="Нравится">👍</button>'+
+      '<button type="button" class="ebtn th" data-nope="'+di+'" aria-label="Не нравится, заменить">👎</button>'+
       '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">'+(метка?метка+' · ':'')+'Описание</button>'+
-      '<button type="button" class="ebtn'+(свежаяЗамена(e.k)?' on':'')+'" data-swap="'+di+'">'+(метка?метка+' · ':'')+(свежаяЗамена(e.k)?'Заменено':'Заменить')+'</button>'+
       '<button type="button" class="ebtn drop" data-drop="'+di+'" aria-label="Убрать упражнение из этого дня">Убрать</button>'+
     '</div>'+
     '<div class="exinfo" id="exinfo'+di+'" hidden>'+
@@ -5694,6 +5873,7 @@ function adoptState(key, b){
       if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
       if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
         if(b.sk && typeof b.sk==='object'){ SKIP=b.sk; set('skip',SKIP); }
+      if(b.ord && typeof b.ord==='object'){ ORD=b.ord; set('ord',ORD); }
       if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
       renderList(); paintNote('');
       return true;
@@ -6057,6 +6237,7 @@ function initDb(){
         if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
         if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
         if(b.sk && typeof b.sk==='object'){ SKIP=b.sk; set('skip',SKIP); }
+        if(b.ord && typeof b.ord==='object'){ ORD=b.ord; set('ord',ORD); }
         if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
         renderList();
       }
@@ -7470,7 +7651,11 @@ document.getElementById('catalog').addEventListener('click', function(e){
   var p=e.target.closest('button[data-pick]');
   if(p && catCtx && CAT){
     if(catCtx.add){ addEx(CAT.ex[+p.dataset.pick]); closeCatalog(); return; }
-    applySub(catCtx.k, CAT.ex[+p.dataset.pick]);
+    var вещь = CAT.ex[+p.dataset.pick];
+    /* выбрал руками — значит, это уже не «не моё»: снимаем отказ, иначе в
+       следующий раз приложение само же его и заменит */
+    if(вещь && NOPE[вещь.i]){ delete NOPE[вещь.i]; сохранитьМнение(); }
+    applySub(catCtx.k, вещь);
     closeCatalog(); return;
   }
   if(e.target.id==='catundo' && catCtx){ applySub(catCtx.k, null); closeCatalog(); }
@@ -7551,6 +7736,14 @@ document.getElementById('list').addEventListener('click', function(e){
     return;
   }
   var hb2=e.target.closest('button[data-hurt]'); if(hb2){ hurtToggle(hb2.dataset.hurt); return; }
+  /* ── режим порядка ── */
+  if(e.target.closest('#orddone')){ ordВыкл(); return; }
+  if(e.target.closest('#ordreset')){ ordСброс(); return; }
+  var ou=e.target.closest('[data-ordup]'); if(ou){ ordСдвиг(+ou.dataset.ordup, -1); return; }
+  var od=e.target.closest('[data-orddn]'); if(od){ ordСдвиг(+od.dataset.orddn, 1); return; }
+  /* ── пальцы ── */
+  var lk=e.target.closest('button[data-like]'); if(lk){ нравится(+lk.dataset.like); return; }
+  var np=e.target.closest('button[data-nope]'); if(np){ неНравится(+np.dataset.nope); return; }
   var dr=e.target.closest('button[data-drop]');
   if(dr){ dropEx(+dr.dataset.drop); return; }
   if(e.target.closest('#addex')){ openCatalog({dk:day, add:true}); return; }
@@ -7562,6 +7755,37 @@ document.getElementById('list').addEventListener('click', function(e){
                c:(вкат&&вкат.c)||'strength'});   /* у своей программы мышца известна из каталога */
 });
 
+/* «выбрать самому» из строки после замены: тот же каталог, что и раньше */
+var _dbn=document.getElementById('dbnote');
+if(_dbn) _dbn.addEventListener('click', function(e){
+  var b=e.target.closest('[data-selfpick]'); if(!b) return;
+  var di=+b.dataset.selfpick, base=exList(day)[di]||{};
+  openCatalog({dk:day, k:base.k, di:di, muscle:мышцаЕго(base), c:'strength'});
+});
+/* ДОЛГОЕ УДЕРЖАНИЕ — РЕЖИМ ПОРЯДКА.
+   Слушаем на списке, а не на каждой строке: строки перерисовываются целиком
+   после каждой галочки, и обработчики на них жили бы до первого подхода.
+   Движение пальцем отменяет: человек листает список, а не держит его. */
+(function(){
+  var список=document.getElementById('list'); if(!список) return;
+  var т=null, x0=0, y0=0;
+  function стоп(){ if(т){ clearTimeout(т); т=null; } }
+  список.addEventListener('pointerdown', function(e){
+    if(ORDMODE) return;
+    if(e.target.closest('input,button.ok,.setrow,.setadd')) return;   /* работа с подходами важнее */
+    if(!e.target.closest('.exrow,.card')) return;
+    x0=e.clientX; y0=e.clientY;
+    стоп(); т=setTimeout(function(){ т=null; ordВкл(); }, 550);
+  }, {passive:true});
+  список.addEventListener('pointermove', function(e){
+    if(!т) return;
+    if(Math.abs(e.clientX-x0)>8 || Math.abs(e.clientY-y0)>8) стоп();
+  }, {passive:true});
+  ['pointerup','pointercancel','pointerleave','scroll'].forEach(function(ev){
+    список.addEventListener(ev, стоп, {passive:true});
+  });
+  window.addEventListener('scroll', стоп, {passive:true});
+})();
 var _ps=document.getElementById('profswitch');
 if(_ps) _ps.addEventListener('click', function(){ showPicker(); });
 

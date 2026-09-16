@@ -138,10 +138,14 @@ const ОКНА = [
   ['мои дни', async p => { await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(400); await p.click('#schedbtn'); }, '#schedm'],
   ['чат', async p => { await p.click('#coachfab'); }, '#coachm'],
   ['сборка', async p => { await p.click('#profbtn'); await p.waitForTimeout(500); await p.click('#profai'); }, '#sborm'],
+  /* 16.09: кнопки «Заменить» больше нет — её место занял палец вниз, а
+     каталог открывается ссылкой «выбрать самому» из строки после замены. */
   ['каталог замены', async p => {
     await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(500);
     const r = await p.$('#list .exrow'); if (r) { await r.click(); await p.waitForTimeout(400); }
-    const s = await p.$('.card.exact [data-swap]'); if (s) await s.click();
+    const n = await p.$('.card.exact [data-nope]'); if (n) await n.click();
+    await p.waitForTimeout(1600);
+    const s = await p.$('[data-selfpick]'); if (s) await s.click();
   }, '#catalog'],
   ['приём еды', async p => {
     await p.click('.l1 button[data-page="food"]'); await p.waitForTimeout(900);
