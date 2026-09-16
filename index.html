@@ -1405,23 +1405,33 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   border:.5px solid var(--line);font-size:13px;color:var(--text)}
 .ordbar b{flex:1;font-weight:500}
 .ordbar button{min-height:40px;padding:0 14px;border-radius:11px;border:none;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;font-size:13px}
-body.ordmode #list .exrow{animation:дрожь .42s linear infinite;pointer-events:none}
-body.ordmode #list .card{animation:дрожь .42s linear infinite}
+/* Дрожит РУЧКА, а не вся карточка. Пока дрожала карточка, вместе с ней
+   ездили стрелки: по движущейся кнопке трудно попасть пальцем, а проверка
+   вовсе не могла её нажать («element is not stable»). Знак режима остался —
+   рамки, ручка и полоска сверху, — а цели нажатия стоят на месте. */
+body.ordmode #list .ordgrip{animation:дрожь .42s linear infinite}
+body.ordmode #list .ordg.drag .ordgrip{animation:none}
 @keyframes дрожь{0%{transform:rotate(-.5deg)}50%{transform:rotate(.5deg)}100%{transform:rotate(-.5deg)}}
-@media (prefers-reduced-motion:reduce){body.ordmode #list .exrow,body.ordmode #list .card{animation:none}}
-.ordrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid var(--line-soft);
-  transition:transform .16s ease;background:var(--bg)}
-.ordgrip{flex:0 0 40px;width:40px;height:44px;display:flex;align-items:center;justify-content:center;
-  color:var(--dim);font-size:19px;line-height:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
-.ordrow.drag{transition:none;position:relative;z-index:6;border-radius:12px;border-bottom-color:transparent;
+@media (prefers-reduced-motion:reduce){body.ordmode #list .ordgrip{animation:none}}
+/* Группа в режиме порядка: те же строки упражнений, только с ручкой слева
+   и стрелками справа. Экран остаётся тем же экраном. */
+.ordg{display:flex;align-items:center;gap:2px;margin-bottom:8px;padding:2px 4px;
+  border:.5px solid var(--line);border-radius:14px;background:var(--card-2,var(--card));
+  transition:transform .16s ease}
+.ordgin{flex:1;min-width:0}
+/* строки внутри группы только показывают: нажатия в этом режиме ничего не значат */
+.ordgin .exrow{pointer-events:none;padding:9px 0}
+.ordgin .exrow:first-child{border-top:0}
+.ordbs{flex:0 0 auto;display:flex;flex-direction:column;gap:3px}
+.ordgrip{flex:0 0 26px;width:26px;align-self:stretch;min-height:52px;display:flex;align-items:center;justify-content:center;
+  color:var(--dim);font-size:18px;line-height:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.ordg.drag{transition:none;position:relative;z-index:6;
   background:var(--card-solid,var(--card));box-shadow:0 10px 26px rgba(0,0,0,.34)}
-.ordrow.drag .ordgrip{cursor:grabbing;color:var(--accent-txt)}
-@media (prefers-reduced-motion:reduce){.ordrow{transition:none}}
-.ordrow .ordn{flex:1;min-width:0;font-size:14px}
-.ordrow .ordn i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:2px}
-.ordrow .ordb{width:44px;height:44px;flex:0 0 44px;border-radius:12px;border:.5px solid var(--line);
+.ordg.drag .ordgrip{cursor:grabbing;color:var(--accent-txt)}
+@media (prefers-reduced-motion:reduce){.ordg{transition:none}}
+.ordbs .ordb{width:36px;height:36px;flex:0 0 36px;border-radius:10px;border:.5px solid var(--line);
   background:var(--field);color:var(--text);font:inherit;font-size:17px;line-height:1}
-.ordrow .ordb[disabled]{opacity:.35}
+.ordbs .ordb[disabled]{opacity:.35}
 .subin{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .subin li{display:flex;gap:10px;align-items:baseline;font-size:13.5px;color:var(--text);line-height:1.4}
 .subin li::before{content:'';flex:0 0 6px;height:6px;margin-top:6px;border-radius:50%;background:var(--accent)}
@@ -4682,7 +4692,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 17:27';
+var BUILD = '16.09 18:16';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5454,8 +5464,8 @@ function ordГруппы(){
     if(занято[di]) return;
     var pdi = -1;
     if(e.ss) for(var i=0;i<сп.length;i++) if(i!==di && сп[i].ss===e.ss){ pdi=i; break; }
-    if(pdi>=0){ занято[pdi]=1; гр.push({ ex:[e, сп[pdi]], k:[e.k, сп[pdi].k], di:di }); }
-    else гр.push({ ex:[e], k:[e.k], di:di });
+    if(pdi>=0){ занято[pdi]=1; гр.push({ ex:[e, сп[pdi]], k:[e.k, сп[pdi].k], di:di, dis:[di, pdi] }); }
+    else гр.push({ ex:[e], k:[e.k], di:di, dis:[di] });
   });
   return гр;
 }
@@ -5478,20 +5488,26 @@ function ordПеренести(from, to){
   return true;
 }
 function ordСброс(){ delete ORD[day]; saveSubs(); rebuildSess(); renderList(); haptic('light'); }
+/* 16.09, его слова: «режим перетаскивания полностью меняет, как выглядит
+   экран, это сбивает с толку». Так и было: вместо списка упражнений с фото и
+   весами появлялся другой список — голые строки, и человек терял, где он.
+   Теперь режим НЕ подменяет экран: те же строки, те же фото и веса, только
+   каждая группа берётся в рамку с ручкой и стрелками. */
 function ordСписок(){
   var гр = ordГруппы();
   return '<div class="ordbar"><b>Порядок упражнений</b>' +
     (ORD[day] ? '<button type="button" id="ordreset" class="linkbtn">как было</button>' : '') +
     '<button type="button" id="orddone">Готово</button></div>' +
     гр.map(function(g,gi){
-      var имя = g.ex.map(function(x){ return esc(x.n); }).join(' + ');
-      var под = g.ex.length>1 ? 'суперсет · ' + setsFor(g.ex[0], g.di) + ' ' + plural(setsFor(g.ex[0], g.di),['круг','круга','кругов'])
-                              : setsFor(g.ex[0], g.di) + ' × ' + repsOf(g.ex[0]);
-      return '<div class="ordrow" data-g="'+gi+'">' +
-        '<span class="ordgrip" aria-hidden="true">\u2261</span>' +
-        '<span class="ordn">' + имя + '<i>' + под + '</i></span>' +
-        '<button type="button" class="ordb" data-ordup="'+gi+'"'+(gi===0?' disabled':'')+' aria-label="Выше">↑</button>' +
-        '<button type="button" class="ordb" data-orddn="'+gi+'"'+(gi===гр.length-1?' disabled':'')+' aria-label="Ниже">↓</button></div>';
+      return '<div class="ordg" data-g="'+gi+'">' +
+        '<span class="ordgrip" aria-hidden="true">≡</span>' +
+        '<span class="ordgin">' +
+          g.ex.map(function(x,k){ return exRow(x, g.dis[k], g.ex.length>1 ? (k ? 'Б' : 'А') : ''); }).join('') +
+        '</span>' +
+        '<span class="ordbs">' +
+          '<button type="button" class="ordb" data-ordup="'+gi+'"'+(gi===0?' disabled':'')+' aria-label="Выше">↑</button>' +
+          '<button type="button" class="ordb" data-orddn="'+gi+'"'+(gi===гр.length-1?' disabled':'')+' aria-label="Ниже">↓</button>' +
+        '</span></div>';
     }).join('');
 }
 /* ПЕРЕНОС ПАЛЬЦЕМ. Тащим за ручку, а не за всю строку: иначе список,
@@ -5502,13 +5518,17 @@ var ORDDRAG = null;
 function ordВзять(e){
   if(!ORDMODE || ORDDRAG) return;
   if(!e.target.closest('.ordgrip')) return;
-  var row = e.target.closest('.ordrow'); if(!row) return;
+  var row = e.target.closest('.ordg'); if(!row) return;
   var box = document.getElementById('list');
-  var rows = Array.prototype.slice.call(box.querySelectorAll('.ordrow'));
+  var rows = Array.prototype.slice.call(box.querySelectorAll('.ordg'));
   var i = rows.indexOf(row); if(i<0) return;
-  var h = row.getBoundingClientRect().height;
-  if(!(h>0)) return;
-  ORDDRAG = { row:row, rows:rows, from:i, to:i, y0:e.clientY, h:h, id:e.pointerId };
+  /* Строки разной высоты: у суперсета их две, у длинного названия перенос.
+     Поэтому считаем не «сколько строк пролетели», а через какие середины
+     прошёл центр перетаскиваемой карточки. Замеряем один раз на захвате —
+     дальше геометрия не меняется, двигаются только сдвиги. */
+  var rc = rows.map(function(r){ var b=r.getBoundingClientRect(); return { t:b.top, h:b.height, c:b.top+b.height/2 }; });
+  if(!(rc[i].h>0)) return;
+  ORDDRAG = { row:row, rows:rows, rc:rc, from:i, to:i, y0:e.clientY, h:rc[i].h, id:e.pointerId };
   try{ row.setPointerCapture(e.pointerId); }catch(err){}
   row.classList.add('drag');
   haptic('medium');
@@ -5518,14 +5538,19 @@ function ordВедём(e){
   var d = ORDDRAG; if(!d || e.pointerId!==d.id) return;
   var dy = e.clientY - d.y0;
   d.row.style.transform = 'translateY('+dy+'px)';
-  var to = Math.max(0, Math.min(d.rows.length-1, d.from + Math.round(dy / d.h)));
+  var c = d.rc[d.from].c + dy, to = d.from, k;
+  if(dy < 0){ for(k=d.from-1; k>=0; k--){ if(c < d.rc[k].c) to = k; else break; } }
+  else { for(k=d.from+1; k<d.rows.length; k++){ if(c > d.rc[k].c) to = k; else break; } }
   if(to !== d.to){
     d.to = to;
-    d.rows.forEach(function(r, k){
+    /* Соседи расступаются ровно на высоту того, что едет между ними —
+       иначе на суперсете щель получалась вдвое меньше карточки. */
+    var шаг = d.h + 8;
+    d.rows.forEach(function(r, j){
       if(r===d.row) return;
       var сдвиг = 0;
-      if(d.to > d.from && k > d.from && k <= d.to) сдвиг = -d.h;
-      else if(d.to < d.from && k >= d.to && k < d.from) сдвиг = d.h;
+      if(d.to > d.from && j > d.from && j <= d.to) сдвиг = -шаг;
+      else if(d.to < d.from && j >= d.to && j < d.from) сдвиг = шаг;
       r.style.transform = сдвиг ? 'translateY('+сдвиг+'px)' : '';
     });
     haptic('light');
