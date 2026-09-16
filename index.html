@@ -4245,7 +4245,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.09 22:35';
+var BUILD = '16.09 07:57';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5704,7 +5704,7 @@ function adoptState(key, b){
     }
     if(key==='last'){
       var было=false;
-      if(b.m && typeof b.m==='object' && Object.keys(b.m).length){ LAST=b.m; set('last',LAST); refillIfUntouched(); было=true; }
+      if(b.m && typeof b.m==='object' && Object.keys(b.m).length){ LAST=подрезатьLAST(b.m); set('last',LAST); refillIfUntouched(); было=true; }
       /* день другой программы в эту не переносим: там свои ключи дней */
       if(b.lastDone && b.lastDone.day && DAYS[b.lastDone.day] &&
          (!lastDone || String(b.lastDone.date) > String(lastDone.date))){
@@ -5894,6 +5894,48 @@ function paintNote(k){
   el.className = 'dbnote' + (k==='saved' ? ' ok' : '') + (k==='empty' ? ' warn' : '');
 }
 function thaw(){ if(Object.isFrozen(LAST)) LAST=JSON.parse(JSON.stringify(LAST)); }
+/* ── «В ПРОШЛЫЙ РАЗ» НЕ ДОЛЖЕН УПИРАТЬСЯ В ПОТОЛОК ────────────────────
+   16.09, его снимок: красное «Сбой — cloud/last: CloudStorage timeout»
+   прямо под зелёным «Сохранено ✓ 15 подходов». Тренировка сохранилась;
+   не доехала ВТОРАЯ, служебная запись — карта «в прошлый раз».
+   Причина в её размере. Карта росла с каждым новым движением и подошла
+   вплотную к потолку значения Telegram (4 КБ), а у самого потолка стояла
+   тихая мясорубка fit(): сначала она выбрасывала историю подходов, потом
+   удаляла упражнения с начала. Человек терял подсказки и не узнавал об
+   этом — карта просто худела на одно движение за раз.
+   Лечим не потолок, а источник: подсказка от движения, которого не было
+   четыре месяца, — это не подсказка. Держим свежие, а историю подходов —
+   только у того, что делали недавно. */
+var LAST_MAX=80, LAST_DAYS=120, LAST_SETS_DAYS=45;
+function подрезатьLAST(m){
+  if(!m || typeof m!=='object') return {};
+  var порог=ymd(new Date(Date.now()-LAST_DAYS*864e5));
+  var порогS=ymd(new Date(Date.now()-LAST_SETS_DAYS*864e5));
+  var имена=Object.keys(m).filter(function(n){ return m[n] && typeof m[n]==='object' && (!m[n].d || String(m[n].d)>=порог); });
+  имена.sort(function(a,b){ return String(m[b].d||'').localeCompare(String(m[a].d||'')); });
+  var out={};
+  имена.slice(0,LAST_MAX).forEach(function(n){
+    var v=m[n];
+    if(v.s && v.d && String(v.d)<порогS){ v=Object.assign({},v); delete v.s; }
+    out[n]=v;
+  });
+  return out;
+}
+/* Одна дорога для карты подсказок: подрезать, положить на телефон, отправить
+   в облако. Один раз повторить — у Telegram таймаут дело обычное, а вторая
+   попытка через пару секунд почти всегда проходит.
+   Если не прошла и она — это не «сбой»: те же данные уже уехали на наш
+   сервер этим же вызовом, и на другом устройстве они появятся оттуда. */
+function сохранитьLAST(updated){
+  thaw();
+  LAST=подрезатьLAST(LAST);
+  set('last',LAST);
+  var тело={m:LAST, lastDone:lastDone, updated:updated||new Date().toISOString()};
+  if(!DB) return Promise.resolve();
+  return DB.doc('state/last').set(тело).catch(function(){
+    return new Promise(function(r){ setTimeout(r,2000); }).then(function(){ return DB.doc('state/last').set(тело); });
+  });
+}
 function commit(){
   thaw(); guardClose(true);
   try{ harvestDom(); }catch(e){ reportErr('harvest',e); }
@@ -5952,7 +5994,7 @@ function pushDb(){
   paintNote('saving');
   DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
     lastSavedAt=new Date(); dirty=false; paintNote('saved'); guardClose(false);
-    return DB.doc('state/last').set({ m:LAST, lastDone:lastDone, updated:body.updated });
+    return сохранитьLAST(body.updated);
   }).catch(function(){ dirty=true; paintNote('err'); guardClose(true); });
 }
 function initDb(){
@@ -5986,7 +6028,7 @@ function initDb(){
         }
       }
       var m=body.m;
-      if(m && typeof m==='object' && Object.keys(m).length){ LAST=m; set('last',LAST); refillIfUntouched(); }
+      if(m && typeof m==='object' && Object.keys(m).length){ LAST=подрезатьLAST(m); set('last',LAST); refillIfUntouched(); }
     }
     return DB.doc('state/sched').get();
   }).then(function(sn){
@@ -6187,12 +6229,20 @@ function finishSave(){
         var l=arr[arr.length-1];
         var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(y){return [y.w==null?'':y.w, y.r==null?'':y.r];})};
         LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; });
-      set('last',LAST);
-      return DB.doc('state/last').set({m:LAST, lastDone:lastDone, updated:body.updated});
+      return сохранитьLAST(body.updated);
     }).then(function(){
       setTimeout(function(){ if(finBtn.classList.contains('ok')) finReset(); }, 4000);
     }).catch(function(err){
-      if(finBtn.classList.contains('ok')){ reportErr('cloud/last',err); }   /* тренировка уже сохранена */
+      /* Тренировка уже в облаке — это сказала зелёная кнопка. Не доехала
+         только карта подсказок, и те же данные ушли на наш сервер тем же
+         вызовом. Красное «Сбой» под зелёным «Сохранено» — это два ответа
+         об одном и том же, и один из них неправда. */
+      if(finBtn.classList.contains('ok')){
+        var эл=document.getElementById('dbnote');
+        if(эл){ эл.textContent='Тренировка сохранена. Подсказки «в прошлый раз» Telegram принял не сразу — на других устройствах они подтянутся с сервера.';
+                эл.className='dbnote'; }
+        try{ console.log('getfit cloud/last:', (err&&err.message)||err); }catch(_){}
+      }
       else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); guardClose(true); }
     });
     setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Telegram не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
