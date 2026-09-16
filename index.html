@@ -4692,7 +4692,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 21:44';
+var BUILD = '16.09 21:53';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6506,8 +6506,11 @@ function сохранитьLAST(updated){
     return new Promise(function(r){ setTimeout(r,2000); }).then(function(){ return DB.doc('state/last').set(тело); });
   });
 }
-function commit(){
-  thaw(); guardClose(true);
+function commit(тихо){
+  thaw();
+  /* тихо — это фоновая досылка при запуске, а не правка человека:
+     поднимать из-за неё вопрос о несохранённом нечестно */
+  if(!тихо){ вПолёте=true; охрана(); }
   try{ harvestDom(); }catch(e){ reportErr('harvest',e); }
   exList(day).forEach(function(e,di){
     var rows=sess.ex[di].sets, done=rows.filter(function(v){return v.done;});
@@ -6557,15 +6560,15 @@ function sessionBody(){
 var lastSavedAt=null, dirty=false;
 function pushDb(){
   harvestDom();
-  if(countDone()===0){ paintNote('empty'); guardClose(false); return; }
-  if(!DB){ dirty=true; paintNote('local'); return; }
+  if(countDone()===0){ paintNote('empty'); вПолёте=false; неУехало=false; охрана(); return; }
+  if(!DB){ dirty=true; paintNote('local'); вПолёте=false; неУехало=false; охрана(); return; }
   var body=sessionBody();
-  if(!body.ex.length){ paintNote('empty'); guardClose(false); return; }
+  if(!body.ex.length){ paintNote('empty'); вПолёте=false; неУехало=false; охрана(); return; }
   paintNote('saving');
   DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
-    lastSavedAt=new Date(); dirty=false; paintNote('saved'); guardClose(false);
+    lastSavedAt=new Date(); dirty=false; paintNote('saved'); вПолёте=false; неУехало=false; охрана();
     return сохранитьLAST(body.updated);
-  }).catch(function(){ dirty=true; paintNote('err'); guardClose(true); });
+  }).catch(function(){ dirty=true; paintNote('err'); вПолёте=false; неУехало=true; охрана(); });
 }
 function initDb(){
   DB = STORE;
@@ -6640,7 +6643,7 @@ function initDb(){
       renderDayHead(); renderList(); renderTodaybar(); paintNote('');
     }
     /* галочки, поставленные до готовности хранилища, иначе никуда не уедут */
-    if(countDone()>0) commit();
+    if(countDone()>0) commit(true);
     /* подсказки на карточках считаются по истории — подтягиваем её сразу */
     return loadHist().then(function(){
       /* очередь считается по истории: с её приходом следующий день может смениться */
@@ -6785,7 +6788,7 @@ function finishSave(){
     finSay('Сохраняю…','busy');
     var t0=Date.now();
     DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
-      lastSavedAt=new Date(); dirty=false; guardClose(false);
+      lastSavedAt=new Date(); dirty=false; вПолёте=false; неУехало=false; охрана();
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       try{ renderFinSum(body); }catch(e){}
       /* тренировка ушла в историю — недельный объём стал другим */
@@ -6814,7 +6817,7 @@ function finishSave(){
                 эл.className='dbnote'; }
         try{ console.log('getfit cloud/last:', (err&&err.message)||err); }catch(_){}
       }
-      else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); guardClose(true); }
+      else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); вПолёте=false; неУехало=true; охрана(); }
     });
     setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Telegram не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
   }catch(err){ finSay('Ошибка','bad'); reportErr('finish',err); }
@@ -7888,6 +7891,18 @@ function guardClose(on){
     if(on){ if(TG.enableClosingConfirmation) TG.enableClosingConfirmation(); }
     else if(TG.disableClosingConfirmation) TG.disableClosingConfirmation(); }catch(e){}
 }
+/* ── «Изменения могут не сохраниться» — ровно когда это правда ──
+   16.09 человек увидел этот вопрос на полностью сохранённом дне и, разумно,
+   не понял, что именно он не сохранил. Причина: охрана включалась при каждом
+   касании подхода И при запуске приложения, если за день был хоть один
+   закрытый подход, а выключалась только на успешной записи в облако. Любая
+   ветка, вышедшая раньше — нет хранилища, пустая тренировка, сбой, — оставляла
+   её включённой до конца сессии.
+   Теперь состояние одно и считается из него: терять нечего, пока запись не
+   в полёте и не упала. Локальная запись риском не считается: она уже лежит
+   в памяти телефона, и Telegram пугать ею человека незачем. */
+var вПолёте=false, неУехало=false;
+function охрана(){ guardClose(вПолёте || неУехало); }
 
 /* ── обработчики окон ── */
 ['me-bw','me-ht','me-age','me-sex','me-likes','me-dis'].forEach(function(id){
