@@ -1069,6 +1069,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .nudge{display:block;width:100%;margin:10px 0 0;padding:11px 14px;border-radius:12px;text-align:left;
   border:none;background:var(--accent-ghost);color:var(--text);font:inherit;font-size:13px;line-height:1.4}
 .nudge b{color:var(--accent-txt);font-weight:500}
+.nudge.onb{margin:0 0 12px}
 .hbot{display:flex;align-items:baseline;gap:10px;width:100%;margin:10px 0 2px;padding:11px 14px;
   border-radius:12px;text-align:left;border:1px solid var(--line);background:var(--card);
   color:var(--muted);font:inherit;font-size:12.5px;line-height:1.4}
@@ -1639,6 +1640,17 @@ body.ordmode #list .card{animation:дрожь .42s linear infinite}
 #picker #picklist{margin-top:14px}
 #picker .seg.wd button{padding:9px 1px;font-size:11.5px}
 #wz-err{margin:10px 0 0;color:var(--warn-txt)}
+.wzq{background:rgba(74,140,255,.09);border:.5px solid rgba(74,140,255,.28);border-radius:14px;padding:12px 13px;margin-top:10px}
+.wzq p{margin:0 0 9px}
+.wzq .wzopts{margin-top:0}
+.wzdone{margin:10px 0 0;color:var(--done)}
+.wzbad{margin:10px 0 0;color:var(--warn-txt)}
+#wz-one{margin-top:16px}
+/* Одна страница длинная, и главное действие не должно уезжать за край: оно
+   стоит внизу окна всегда. Заодно кнопка перестаёт ездить под пальцем, когда
+   блок цели меняет высоту, — нажатие больше не пропадает. */
+body.onb #wz-one{position:sticky;bottom:8px;z-index:3;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#wz-one-err{margin:10px 0 0;color:var(--warn-txt)}
 #wz-go{margin-top:16px}
 .wzsum{font-weight:500;font-family:inherit;font-size:12px;
   color:var(--dim);margin-bottom:12px}
@@ -2070,7 +2082,9 @@ body.onb #picker .modalbox::before{display:none}
 <main class="wrap">
     
     <section class="page" id="p-home">
-      <div class="sec" style="margin-top:0"><div class="hwrap" id="homebody"></div></div>
+      <div class="sec" style="margin-top:0">
+        <button type="button" class="nudge onb" id="onbbar" hidden></button>
+        <div class="hwrap" id="homebody"></div></div>
     </section>
     <section class="page hide" id="p-gym">
       <div class="zseg" id="zseg-gym"></div>
@@ -2231,6 +2245,8 @@ body.onb #picker .modalbox::before{display:none}
       <p class="mtext" id="wz-err" hidden></p>
       <button class="btn prim wide" id="wz-go">Дальше</button>
     </div>
+    <p class="mtext" id="wz-one-err" hidden></p>
+    <button class="btn prim wide" id="wz-one" hidden>Собрать программу</button>
     <div id="wzchat" hidden></div>
     <div id="picklist"></div>
   </div>
@@ -3476,11 +3492,20 @@ function wizSummary(){
          (d.length ? d.map(function(x){ return WD[x]; }).join(' ') : 'дни не выбраны')+
          ' · до '+WIZ.min+' мин';
 }
+/* Кнопка, которую пересобрали между нажатием и отпусканием, теряет нажатие:
+   браузер отдаёт click общему предку, и для человека это «нажал — ничего не
+   произошло». Знакомство перерисовывается на каждый ответ сервера, поэтому
+   разметку сегментов трогаем, только когда она и правда другая. */
+function segSet(id, html){
+  var el=document.getElementById(id);
+  if(el && el.innerHTML!==html) el.innerHTML=html;
+  return el;
+}
 function renderWzMe(){
   var me=myData()||{};
   var wo=document.getElementById('wz-only');
-  if(wo) wo.innerHTML=segHtml('only',ONLYKEYS,WIZ.only||me.only||'all');
-  document.getElementById('wz-sex').innerHTML=segHtml('sex',SEXES,me.sex||'m');
+  if(wo) segSet('wz-only', segHtml('only',ONLYKEYS,WIZ.only||me.only||'all'));
+  segSet('wz-sex', segHtml('sex',SEXES,me.sex||'m'));
   [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
     var el=document.getElementById(x[0]);
     if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=me[x[1]];
@@ -3496,34 +3521,54 @@ function readWzMe(){
   return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'),
            age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
 }
-function wzMeNext(){
+/* 16.09. Знакомство новичка — одна страница: профиль, цель и расписание
+   разом, одна кнопка внизу. Четверо из первых семи ушли, не дойдя до
+   программы, и обрыв был размазан по всем четырём шагам, а не сидел в
+   одном. Старая лесенка осталась для тех, кто открывает это окно потом
+   («сменить программу»): им переспрашивать про рост и возраст незачем. */
+function однаСтр(){ return firstRun && WIZ.stage==='form'; }
+function wzMeSave(тихо){
   var v=readWzMe(), нет=[];
   if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
   if(!v.ht || v.ht<120 || v.ht>230) нет.push('рост');
   if(!v.bw || v.bw<35 || v.bw>250) нет.push('вес');
   if(нет.length){
-    WIZ.meErr='Заполни '+нет.join(', ')+' — без этого не подскажу ни стартовые веса, ни норму еды.';
-    renderPicker(); haptic('err'); return;
+    if(!тихо){
+      WIZ.meErr='Заполни '+нет.join(', ')+' — без этого не подскажу ни стартовые веса, ни норму еды.';
+      renderPicker(); haptic('err');
+    }
+    return false;
   }
   WIZ.meErr='';
   var me=myData()||{};
+  var было=[me.sex,me.age,me.ht,me.bw].join('|');
   me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   renderNudge();
   applyOnly();
+  /* Безопасный темп считается от веса, и правка веса делает старое число
+     неверным. Но ОБНУЛЯТЬ его нельзя: экран цели тогда схлопывается в
+     «считаю…», страница под пальцем прыгает, и нажатие уходит мимо кнопки.
+     Поэтому число остаётся на месте и помечается устаревшим — пересчёт
+     подменит его, когда придёт ответ. */
+  if(было!==[me.sex,me.age,me.ht,me.bw].join('|')) WIZ.safeErr=false;
+  return true;
+}
+function wzMeNext(){
+  if(!wzMeSave()) return;
   /* Цель — обязательный шаг для всех: и для тех, кто ходит в зал, и для тех,
      кто ведёт одну еду. Без неё приложение молча считает поддержание. */
   WIZ.step='goal'; WIZ.safe=null; WIZ.safeErr=false; WIZ.target=null;
   renderPicker(); wzGoalPull(); haptic('light');
 }
 function renderWzForm(){
-  document.getElementById('wz-place').innerHTML=segHtml('place',PLACES,WIZ.place);
-  document.getElementById('wz-wd').innerHTML=WEEK.map(function(d){
+  segSet('wz-place', segHtml('place',PLACES,WIZ.place));
+  segSet('wz-wd', WEEK.map(function(d){
     var on=!!WIZ.wd[d];
     return '<button type="button" data-wd="'+d+'" aria-pressed="'+on+'">'+WD[d]+'</button>';
-  }).join('');
-  document.getElementById('wz-min').innerHTML=segHtml('min',MINS,String(WIZ.min));
+  }).join(''));
+  segSet('wz-min', segHtml('min',MINS,String(WIZ.min)));
   var ta=document.getElementById('wz-text');
   if(ta && document.activeElement!==ta && ta.value!==WIZ.text) ta.value=WIZ.text;
   var n=wizDays().length;
@@ -3534,47 +3579,69 @@ function renderWzForm(){
   var go=document.getElementById('wz-go');
   if(go){ go.disabled = !n || WIZ.busy; go.textContent = WIZ.busy ? 'Думаю…' : 'Дальше'; }
 }
+function wzПолеОтвета(){
+  var h='';
+  if(WIZ.opts.length) h+='<div class="wzopts">'+WIZ.opts.map(function(o){
+    return '<button type="button" class="mchip" data-opt="'+esc(o)+'">'+esc(o)+'</button>'; }).join('')+'</div>';
+  h+='<div class="wzin"><input id="wz-ans" type="text" autocomplete="off" placeholder="'+
+     (WIZ.opts.length?'или своими словами':'ответь своими словами')+'"><button type="button" id="wz-send" aria-label="Ответить">→</button></div>';
+  return h;
+}
 function renderWzChat(){
   var box=document.getElementById('wzchat'); if(!box) return;
+  /* 16.09: программа стоит выше всего остального и НЕ исчезает, пока тренер
+     думает над ответом. Раньше на время запроса на экране оставался один
+     «Думаю», и человек терял из виду то, ради чего пришёл. */
+  var p = (WIZ.stage==='prog' && WIZ.prog && WIZ.prog.days && WIZ.prog.days.length) ? WIZ.prog : null;
   var h='<div class="wzsum">'+wizSummary()+'</div><div class="wzline">';
-  if(WIZ.text) h+='<div class="wzb u">'+esc(WIZ.text)+'</div>';
-  WIZ.qa.forEach(function(x){
-    h+='<div class="wzb c">'+esc(x.q)+'</div><div class="wzb u">'+esc(x.a)+'</div>';
-  });
-  if(WIZ.busy){
-    h+='<div class="wzb c wait">'+(WIZ.qa.length||WIZ.ask?'Думаю':'Читаю, что ты написал')+
-       '<span class="dots"><i></i><i></i><i></i></span></div>';
-  } else if(WIZ.err){
-    h+='<div class="wzb c bad">'+esc(WIZ.err)+'</div>'+
-       '<div class="wzopts"><button type="button" class="mchip" id="wzretry">Попробовать ещё раз</button>'+
-       '<button type="button" class="mchip" id="wzback">Изменить ответы</button></div>';
-  } else if(WIZ.stage==='prog' && WIZ.prog){
-    var p=WIZ.prog;
-    if(WIZ.hint) h+='<div class="wzb c">'+esc(WIZ.hint)+'</div>';
-    h+='</div><div class="aiprev"><h4>'+esc(p.name)+'</h4><p class="aisub">'+esc(p.note)+'</p>';
-    p.days.forEach(function(d,i){
-      var lbl=(d.s && !/^день/i.test(d.s.trim())) ? ' · '+d.s : '';
-      h+='<div class="aiday">День '+(i+1)+lbl+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
-         d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+
-           '<b>'+esc(x.n)+'</b> · '+x.sets+' × '+esc(x.reps)+'</li>'; }).join('')+'</ul>';
+  if(!p){
+    if(WIZ.text) h+='<div class="wzb u">'+esc(WIZ.text)+'</div>';
+    WIZ.qa.forEach(function(x){
+      h+='<div class="wzb c">'+esc(x.q)+'</div><div class="wzb u">'+esc(x.a)+'</div>';
     });
-    h+='<div class="rbtns"><button type="button" class="btn go" id="wzapply">Начать по ней</button>'+
-       '<button type="button" class="btn" id="wzagain">Переделать</button></div></div>';
-    box.innerHTML=h; wzScroll('top'); return;
-  } else if(WIZ.ask){
-    if(WIZ.hint) h+='<div class="wzhint">'+esc(WIZ.hint)+'</div>';
-    h+='<div class="wzb c">'+esc(WIZ.ask)+'</div>';
-    h+='</div>';
-    if(WIZ.opts.length) h+='<div class="wzopts">'+WIZ.opts.map(function(o){
-      return '<button type="button" class="mchip" data-opt="'+esc(o)+'">'+esc(o)+'</button>'; }).join('')+'</div>';
-    h+='<div class="wzin"><input id="wz-ans" type="text" autocomplete="off" placeholder="'+
-       (WIZ.opts.length?'или своими словами':'ответь своими словами')+'"><button type="button" id="wz-send" aria-label="Ответить">→</button></div>';
-    box.innerHTML=h; wzScroll('end');
-    var inp=document.getElementById('wz-ans'); if(inp) inp.focus();
-    return;
+    if(WIZ.busy){
+      h+='<div class="wzb c wait">'+(WIZ.qa.length||WIZ.ask?'Думаю':'Читаю, что ты написал')+
+         '<span class="dots"><i></i><i></i><i></i></span></div></div>';
+      box.innerHTML=h; wzScroll('end'); return;
+    }
+    if(WIZ.err){
+      h+='<div class="wzb c bad">'+esc(WIZ.err)+'</div>'+
+         '<div class="wzopts"><button type="button" class="mchip" id="wzretry">Попробовать ещё раз</button>'+
+         '<button type="button" class="mchip" id="wzback">Изменить ответы</button></div></div>';
+      box.innerHTML=h; wzScroll('end'); return;
+    }
+    if(WIZ.ask){
+      if(WIZ.hint) h+='<div class="wzhint">'+esc(WIZ.hint)+'</div>';
+      h+='<div class="wzb c">'+esc(WIZ.ask)+'</div></div>'+wzПолеОтвета();
+      box.innerHTML=h; wzScroll('end');
+      var i0=document.getElementById('wz-ans'); if(i0) i0.focus();
+      return;
+    }
+    h+='</div>'; box.innerHTML=h; wzScroll('end'); return;
   }
-  h+='</div>';
-  box.innerHTML=h; wzScroll('end');
+  h+='</div><div class="aiprev"><h4>'+esc(p.name)+'</h4><p class="aisub">'+esc(p.note)+'</p>';
+  p.days.forEach(function(d,i){
+    var lbl=(d.s && !/^день/i.test(d.s.trim())) ? ' · '+d.s : '';
+    h+='<div class="aiday">День '+(i+1)+lbl+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
+       d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+
+         '<b>'+esc(x.n)+'</b> · '+x.sets+' × '+esc(x.reps)+'</li>'; }).join('')+'</ul>';
+  });
+  h+='<div class="rbtns"><button type="button" class="btn go" id="wzapply">Начать по ней</button>'+
+     '<button type="button" class="btn" id="wzagain">Переделать</button></div></div>';
+  if(WIZ.hint) h+='<p class="wzdone">'+esc(WIZ.hint)+'</p>';
+  if(WIZ.err) h+='<p class="wzbad">'+esc(WIZ.err)+'</p>';
+  if(WIZ.busy){
+    h+='<div class="wzq wait">'+(WIZ.qa.length?'Правлю программу':'Тренер смотрит, что уточнить')+
+       '<span class="dots"><i></i><i></i><i></i></span></div>';
+  } else if(WIZ.ask){
+    h+='<div class="wzq"><p>'+esc(WIZ.ask)+'</p>'+wzПолеОтвета()+'</div>';
+  }
+  box.innerHTML=h;
+  /* первую программу показываем с начала — с названия; дальше человек уже
+     знает, что там, и ему нужен новый вопрос внизу */
+  var вниз = !!(WIZ.qa && WIZ.qa.length);
+  wzScroll(вниз ? 'end' : 'top');
+  if(вниз && WIZ.ask){ var i1=document.getElementById('wz-ans'); if(i1) i1.focus(); }
 }
 /* Разговор растёт вниз, а окно короткое: без прокрутки новый вопрос и кнопки
    ответа оказываются за краем и выглядят так, будто ничего не произошло.
@@ -3637,6 +3704,13 @@ function gвес(x){ return gзпт(Math.round(x*10)/10); }
 function gдата(w){ var d=new Date(Date.now()+w*7*864e5); return ruDate(ymd(d)); }
 /* границы безопасного приходят с сервера: предел темпа и вес, ниже которого
    цель не ставится. Своей копии формулы у экрана нет намеренно. */
+/* По каким числам посчитан темп. Пока снимок экрана и снимок ответа не
+   совпадают, на экране чужое число, и цель по нему записывать нельзя. */
+function meСнимок(){
+  var p=document.getElementById('wzme');
+  if(p && !p.hidden){ var q=readWzMe(); if(q.bw) return [q.sex,q.age,q.ht,q.bw].join('|'); }
+  var m=myData()||{}; return [m.sex,m.age,m.ht,m.bw].join('|');
+}
 function wzGoalPull(){
   if(WIZ.safeBusy) return; WIZ.safeBusy=true; WIZ.safeErr=false;
   /* Анкету знакомства приложение отправляет отдельным запросом и ответа не
@@ -3644,16 +3718,36 @@ function wzGoalPull(){
      а человек видит «не получилось посчитать» на обязательном шаге. Поэтому
      ответы едут вместе с запросом; сервер считает по ним, если своих нет. */
   var me0=myData()||{};
+  /* Числа берём С ЭКРАНА, если он открыт. В памяти вес может быть другим —
+     его пишут туда и весы, — и тогда на шаге цели считался бы темп не от
+     того веса, который человек прямо сейчас видит в поле. */
+  var поле=document.getElementById('wzme');
+  if(поле && !поле.hidden){
+    var v=readWzMe();
+    if(v.bw) me0={ sex:v.sex||me0.sex, age:v.age||me0.age, ht:v.ht||me0.ht, bw:v.bw };
+  }
   var анк='&bw='+(+me0.bw||0)+'&ht='+(+me0.ht||0)+'&age='+(+me0.age||0)+'&sex='+encodeURIComponent(me0.sex||'');
+  var снимок=meСнимок();
   tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid())+анк)
     .then(function(r){ return r.json(); })
     .then(function(d){
       WIZ.safeBusy=false;
-      if(d && d.ok && d.safe && d.safe.w){ WIZ.safe=d.safe; wzTargetReset(); }
+      WIZ.safeOf = снимок;
+      if(d && d.ok && d.safe && d.safe.w){
+        var сменаВеса = !WIZ.safe || WIZ.safe.w!==d.safe.w || WIZ.target==null;
+        WIZ.safe=d.safe; if(сменаВеса) wzTargetReset();
+      }
       else WIZ.safeErr=true;
       renderPicker();
+      /* числа успели поменяться, пока мы считали — считаем ещё раз, под них */
+      if(WIZ.safeOf!==meСнимок()){ wzGoalPull(); return; }
+      /* человек уже нажал «Собрать программу», пока мы считали — доводим сам */
+      if(WIZ.ждёт && WIZ.safe && WIZ.safeOf===meСнимок()){ WIZ.ждёт=false; WIZ.oneErr=''; wzOneGo(); }
+      else if(WIZ.ждёт && WIZ.safeErr){ WIZ.ждёт=false; WIZ.oneErr='Не получилось посчитать безопасный темп — нажми ещё раз.'; renderPicker(); }
     })
-    .catch(function(){ WIZ.safeBusy=false; WIZ.safeErr=true; renderPicker(); });
+    .catch(function(){ WIZ.safeBusy=false; WIZ.safeErr=true;
+      if(WIZ.ждёт){ WIZ.ждёт=false; WIZ.oneErr='Не получилось посчитать безопасный темп — нажми ещё раз.'; }
+      renderPicker(); });
 }
 function wzTargetReset(){
   var s=WIZ.safe; if(!s) return;
@@ -3687,32 +3781,49 @@ function gPlan(){
 function renderWzGoal(){
   var wtBox=document.getElementById('g-wt'); if(!wtBox) return;
   if(!WIZ.gwt) WIZ.gwt='down';
-  wtBox.innerHTML=segHtml('gwt',GOALWT,WIZ.gwt);
+  /* На одной странице цель стоит под ростом и весом, и пока их не ввели,
+     считать безопасный темп не от чего: запрос ушёл бы с нулём и человек
+     увидел бы «не получилось посчитать» там, где он ещё ничего не набрал. */
+  if(однаСтр() && !meFull()){
+    segSet('g-wt', segHtml('gwt',GOALWT,WIZ.gwt));
+    var gr0=document.getElementById('g-gymrow'), gg0=document.getElementById('g-gym');
+    var еда0=(WIZ.only||(myData()||{}).only)==='food';
+    if(gr0) gr0.hidden=еда0;
+    if(gg0 && !еда0) segSet('g-gym', segHtml('ggym',GOALGYM,WIZ.ggym||'muscle'));
+    var b0=document.getElementById('g-body'), w0=document.getElementById('g-why'), o0=document.getElementById('g-go');
+    if(b0) segSet('g-body', '<p class="gwait">Заполни возраст, рост и вес — посчитаю безопасный темп.</p>');
+    if(w0) w0.textContent='';
+    if(o0){ o0.disabled=true; o0.textContent='Дальше'; }
+    return;
+  }
+  segSet('g-wt', segHtml('gwt',GOALWT,WIZ.gwt));
   var gr=document.getElementById('g-gymrow'), gg=document.getElementById('g-gym');
   var еда=(WIZ.only||(myData()||{}).only)==='food';
   if(gr) gr.hidden=еда;
-  if(gg && !еда) gg.innerHTML=segHtml('ggym',GOALGYM,WIZ.ggym||'muscle');
+  if(gg && !еда) segSet('g-gym', segHtml('ggym',GOALGYM,WIZ.ggym||'muscle'));
   var body=document.getElementById('g-body'), why=document.getElementById('g-why'), go=document.getElementById('g-go');
   if(!WIZ.safe){
-    body.innerHTML='<p class="gwait">'+(WIZ.safeErr?'Не получилось посчитать безопасный темп. <button type="button" class="btn small" id="g-retry">Повторить</button>':'Считаю безопасный темп…')+'</p>';
+    segSet('g-body', '<p class="gwait">'+(WIZ.safeErr?'Не получилось посчитать безопасный темп. <button type="button" class="btn small" id="g-retry">Повторить</button>':'Считаю безопасный темп…')+'</p>');
     why.textContent=''; go.disabled=true; go.textContent='Дальше';
     if(!WIZ.safeErr && !WIZ.safeBusy) wzGoalPull();
     return;
   }
+  /* темп на экране посчитан не по тем числам, что в полях, — пересчитываем */
+  if(!WIZ.safeBusy && !WIZ.safeErr && WIZ.safeOf!==meСнимок()) wzGoalPull();
   var s=WIZ.safe, p=gPlan();
   /* Бывает, что снижать сейчас нечем: поддержка почти равна полу нормы
      (норма ниже основного обмена не опускается). Тогда шкала лгала бы —
      показываем как есть и ставим поддержание. */
   if(WIZ.gwt==='down' && !(s.max>=0.1)){
-    body.innerHTML='<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
-      '<div class="gsub">снижать сейчас нечем</div>';
+    segSet('g-body', '<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
+      '<div class="gsub">снижать сейчас нечем</div>');
     why.textContent='Твоя поддержка почти равна полу нормы — ниже основного обмена еду не урезаем. Начнём с поддержания: появятся замеры и движение, пересчитаю.';
     go.disabled=false; go.textContent='Так и делаем';
     return;
   }
   if(WIZ.gwt==='keep'){
-    body.innerHTML='<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
-      '<div class="gsub">вес держим, работаем над составом</div>';
+    segSet('g-body', '<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
+      '<div class="gsub">вес держим, работаем над составом</div>');
     why.textContent='Норму посчитаю на поддержание. Захочешь снижать — скажешь тренеру, пересчитаю.';
     go.disabled=false; go.textContent='Так и делаем';
     return;
@@ -3721,12 +3832,12 @@ function renderWzGoal(){
   var грунт = стоп!=null
     ? 'linear-gradient(90deg,var(--warn) 0 '+стоп.toFixed(1)+'%,var(--done) '+стоп.toFixed(1)+'% 100%)'
     : 'linear-gradient(90deg,var(--done) 0 100%)';
-  body.innerHTML=
+  segSet('g-body',
     '<div class="grul"><input type="range" class="grng" id="g-rng" min="'+r.lo+'" max="'+r.hi+'" step="0.5" value="'+WIZ.target+'" '+
       'style="--gtrack:'+грунт+'" aria-label="целевой вес"></div>'+
     '<div class="gends"><span>'+gвес(r.lo)+'</span><span>'+gвес(r.hi)+' · сейчас</span></div>'+
     '<div class="gbig"><b>'+gвес(WIZ.target)+'</b><small>кг</small></div>'+
-    '<div class="gsub"><b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks)+'</div>';
+    '<div class="gsub"><b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks)+'</div>');
   var почему = s.limit==='жир' ? ' (быстрее дефицит закрывается уже не жиром)'
     : s.limit==='обмен' ? ' (это весь доступный дефицит: ниже основного обмена норму не опускаем)'
     : ' (1 % веса в неделю)';
@@ -3736,8 +3847,7 @@ function renderWzGoal(){
     : 'Набор быстрее 0,35 кг в неделю идёт в основном жиром, поэтому срок считаю по нему.';
   go.disabled=false; go.textContent='Так и делаем · до '+gдата(p.weeks);
 }
-function wzGoalNext(){
-  var go=document.getElementById('g-go'); if(go) { go.disabled=true; go.textContent='Записываю…'; }
+function wzGoalSend(){
   var еда=(WIZ.only||(myData()||{}).only)==='food';
   var s=WIZ.safe||{};
   /* снижать нечем — записываем то, что есть на самом деле: поддержание */
@@ -3745,16 +3855,19 @@ function wzGoalNext(){
   var me0=myData()||{};
   var тело={ uid:syncUid(), wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target,
              bw:+me0.bw||0, ht:+me0.ht||0, age:+me0.age||0, sex:me0.sex||'' };
-  tgFetch(SYNCURL+'/goal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(тело)})
+  return tgFetch(SYNCURL+'/goal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(тело)})
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d || !d.ok || !d.goal) throw new Error('нет цели');
       takeGoal(d.goal, null);
-      wzGoalDone();
-    })
-    .catch(function(){
-      if(go){ go.disabled=false; go.textContent='Не записалось — повторить'; }
+      return d.goal;
     });
+}
+function wzGoalNext(){
+  var go=document.getElementById('g-go'); if(go) { go.disabled=true; go.textContent='Записываю…'; }
+  wzGoalSend().then(wzGoalDone).catch(function(){
+    if(go){ go.disabled=false; go.textContent='Не записалось — повторить'; }
+  });
 }
 function wzGoalDone(){
   /* «только еда» — зал не ведём, значит шаги про программу не нужны */
@@ -3764,40 +3877,110 @@ function wzGoalDone(){
 function renderPicker(){
   if(!document.getElementById('wzform')) return;
   wizInit();
-  var знакомство = WIZ.stage==='form' && WIZ.step==='me';
-  var цель       = WIZ.stage==='form' && WIZ.step==='goal';
-  var анкета     = WIZ.stage==='form' && WIZ.step!=='me' && WIZ.step!=='goal';
+  var стр = однаСтр();
+  var еда = (WIZ.only||(myData()||{}).only)==='food';
+  var знакомство = стр || (WIZ.stage==='form' && WIZ.step==='me');
+  var цель       = стр || (WIZ.stage==='form' && WIZ.step==='goal');
+  var анкета     = (стр && !еда) || (WIZ.stage==='form' && WIZ.step!=='me' && WIZ.step!=='goal');
   var mebox=document.getElementById('wzme'), form=document.getElementById('wzform'),
       chat=document.getElementById('wzchat'), gbox=document.getElementById('wzgoal');
-  mebox.hidden = !знакомство;
-  if(gbox) gbox.hidden = !цель;
-  form.hidden  = !анкета;
+  var анкета0 = WIZ.stage==='form' && анкета;
+  mebox.hidden = !(знакомство && WIZ.stage==='form');
+  if(gbox) gbox.hidden = !(цель && WIZ.stage==='form');
+  form.hidden  = !анкета0;
   chat.hidden  = WIZ.stage==='form';
-  if(знакомство) renderWzMe(); else if(цель) renderWzGoal(); else if(анкета) renderWzForm(); else renderWzChat();
+  if(знакомство && WIZ.stage==='form') renderWzMe();
+  if(цель && WIZ.stage==='form') renderWzGoal();
+  if(анкета0) renderWzForm();
+  if(WIZ.stage!=='form') renderWzChat();
+  /* одна страница — одна кнопка внизу, кнопки отдельных шагов на ней лишние */
+  var mg=document.getElementById('wz-me-go'); if(mg) mg.hidden=стр;
+  var gg=document.getElementById('g-go'); if(gg) gg.hidden=стр;
+  var wg=document.getElementById('wz-go'); if(wg) wg.hidden=стр;
+  var one=document.getElementById('wz-one');
+  if(one){
+    one.hidden = !(стр && WIZ.stage==='form');
+    one.disabled = !!(WIZ.busy || WIZ.ждёт);
+    one.textContent = (WIZ.busy || WIZ.ждёт) ? 'Собираю…' : (еда ? 'Начать' : 'Собрать программу');
+  }
+  var oe=document.getElementById('wz-one-err');
+  if(oe){ oe.hidden = !(стр && WIZ.oneErr); oe.textContent = WIZ.oneErr||''; }
   renderWzList();
-  /* «у меня уже есть программа» — это про зал, на шаге цели ему не место */
-  var pl=document.getElementById('picklist'); if(pl) pl.hidden = цель;
+  /* «у меня уже есть программа» — это про зал, на отдельном шаге цели ему не
+     место; на одной странице он нужен: это запасной выход, если тренер упал */
+  var pl=document.getElementById('picklist'); if(pl) pl.hidden = цель && !стр;
   var шаг=document.getElementById('wzstep');
   if(шаг){
-    var еда = (WIZ.only||(myData()||{}).only)==='food';
     var n = знакомство ? 1 : (цель ? 2 : (анкета ? 3 : 4));
     var всего = еда ? 2 : 4;
-    шаг.hidden = !firstRun;
+    шаг.hidden = !firstRun || стр;
     шаг.textContent = 'шаг '+n+' из '+всего;
   }
   var t=document.getElementById('picktitle'), nm=whoName();
-  if(t) t.textContent = знакомство ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
-      : цель ? 'Чего хочешь?'
-      : анкета ? (nm ? nm+', когда занимаешься?' : 'Когда занимаешься?')
+  if(t) t.textContent = (стр && WIZ.stage==='form') ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
+      : (знакомство && WIZ.stage==='form') ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
+      : (цель && WIZ.stage==='form') ? 'Чего хочешь?'
+      : анкета0 ? (nm ? nm+', когда занимаешься?' : 'Когда занимаешься?')
       : 'Собираем программу';
   var hi=document.getElementById('pickhi');
   if(hi){
     hi.hidden = WIZ.stage!=='form';
-    hi.textContent = знакомство
-      ? 'Отсюда считаются стартовые веса и норма еды.'
+    hi.textContent = стр
+      ? (еда ? 'Одна страница. Дальше сразу норма на день.'
+             : 'Одна страница. Дальше сразу программа — вопросы тренер задаст уже по ней.')
+      : знакомство ? 'Отсюда считаются стартовые веса и норма еды.'
       : цель ? 'Без цели норма считается на поддержание — это не то, зачем ты пришёл.'
       : 'Где и когда — и своими словами, чего хочешь. Остальное тренер спросит.';
   }
+}
+/* ── одна страница: собрать всё разом ── */
+function wzOneGo(){
+  if(WIZ.busy) return;
+  WIZ.oneErr='';
+  WIZ.safeErr=false;
+  var еда=(WIZ.only||(myData()||{}).only)==='food';
+  var ta=document.getElementById('wz-text'); if(ta) WIZ.text=ta.value.trim();
+  if(!wzMeSave()) return;
+  if(!еда && !wizDays().length){ WIZ.err='Отметь хотя бы один день — по ним и построю неделю.'; renderPicker(); haptic('err'); return; }
+  /* Безопасный темп в этот момент может ещё считаться на сервере: человек
+     набрал вес и сразу нажал. Отказывать ему «нажми ещё раз» — значит
+     требовать второго нажатия там, где мы обещали одно. Запоминаем намерение
+     и продолжаем сами, как только число придёт. */
+  if(!WIZ.safe || WIZ.safeOf!==meСнимок()){
+    WIZ.ждёт=true; WIZ.oneErr='Секунду — считаю безопасный темп.';
+    renderPicker(); if(!WIZ.safeBusy && !WIZ.safeErr) wzGoalPull(); haptic('light'); return;
+  }
+  WIZ.ждёт=false;
+  WIZ.busy=true; WIZ.err=''; renderPicker(); haptic('medium');
+  wzGoalSend().then(function(){
+    if(еда){ WIZ.busy=false; чернСтереть(); choose(profile||'shp'); return; }
+    WIZ.after=false; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
+    wzSend();
+  }).catch(function(){
+    WIZ.busy=false; WIZ.oneErr='Цель не записалась — нажми ещё раз.';
+    renderPicker(); haptic('err');
+  });
+}
+/* Черновик знакомства. Человек закрывает приложение на середине и
+   возвращается через день — 15.09 так сделал один из первых семи и начал с
+   нуля. Программа и заданные вопросы переживают закрытие. */
+function чернСохр(){
+  if(!firstRun) return;
+  gset('onbdraft', { prog:WIZ.prog||null, qa:WIZ.qa||[], ask:WIZ.ask||null, opts:WIZ.opts||[], hint:WIZ.hint||'',
+    place:WIZ.place, min:WIZ.min, wd:WIZ.wd, text:WIZ.text||'', wt:WIZ.wt||null, gym:WIZ.gym||null,
+    goalObj:WIZ.goalObj||null, likes:WIZ.likes||[], dislikes:WIZ.dislikes||[], sports:WIZ.sports||'', at:Date.now() });
+}
+function чернСтереть(){ gset('onbdraft', null); }
+function чернВзять(){
+  var д=gget('onbdraft', null);
+  if(!(д && д.prog && д.prog.days && д.prog.days.length)) return false;
+  WIZ.prog=д.prog; WIZ.qa=д.qa||[]; WIZ.ask=д.ask||null; WIZ.opts=д.opts||[]; WIZ.hint=д.hint||'';
+  WIZ.after=true; WIZ.stage='prog'; WIZ.err='';
+  if(д.place) WIZ.place=д.place; if(д.min) WIZ.min=д.min; if(д.wd) WIZ.wd=д.wd;
+  if(д.text) WIZ.text=д.text;
+  WIZ.wt=д.wt||null; WIZ.gym=д.gym||null; WIZ.goalObj=д.goalObj||null;
+  WIZ.likes=д.likes||[]; WIZ.dislikes=д.dislikes||[]; WIZ.sports=д.sports||'';
+  return true;
 }
 /* ── ход разговора ── */
 var wzCtl=null;
@@ -3806,6 +3989,7 @@ function wzSend(){
   renderPicker();
   var me=myData()||{};
   var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
+    after: !!WIZ.after, prog: WIZ.after ? WIZ.prog : null,
     me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
          place:WIZ.place, level:me.level||null, wt:goalPair(me).wt, gym:goalPair(me).gym, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
          likes:me.likes||[], dislikes:me.dislikes||[], sports:me.sports||'' } };
@@ -3819,14 +4003,24 @@ function wzSend(){
       return d; }); })
     .then(function(d){
       WIZ.busy=false;
+      var былоПосле=!!WIZ.after;
       if(d.prog && d.prog.days && d.prog.days.length){
         WIZ.prog=d.prog; WIZ.goal=d.goal||null; WIZ.wt=d.wt||null; WIZ.gym=d.gym||null; WIZ.hint=d.hint||'';
-        WIZ.goalObj=d.goalObj||null;
+        if(d.goalObj) WIZ.goalObj=d.goalObj;
         WIZ.likes=d.likes||[]; WIZ.dislikes=d.dislikes||[]; WIZ.sports=d.sports||'';
-        WIZ.stage='prog'; haptic('ok');
+        WIZ.stage='prog'; WIZ.ask=d.ask||null; WIZ.opts=d.options||[];
+        haptic('ok');
+        /* Программа собралась молча — теперь тренер добирает то, что важно,
+           по одному вопросу и правит программу у человека на глазах. */
+        if(!былоПосле){
+          WIZ.after=true; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[];
+          чернСохр(); renderPicker(); wzSend(); return;
+        }
+        чернСохр();
       } else {
         WIZ.ask=d.ask||null; WIZ.opts=d.options||[]; WIZ.hint=d.hint||'';
-        if(!WIZ.ask){ WIZ.err='Тренер не понял вопроса. Расскажи о себе чуть подробнее.'; WIZ.stage='form'; }
+        if(!WIZ.ask && !WIZ.prog){ WIZ.err='Тренер не понял вопроса. Расскажи о себе чуть подробнее.'; WIZ.stage='form'; }
+        if(WIZ.prog) чернСохр();
         haptic('light');
       }
       renderPicker();
@@ -3862,6 +4056,7 @@ function wzSaveMe(){
 }
 function wzApply(){
   if(!WIZ.prog) return;
+  чернСтереть();
   wzSaveMe();
   var дни=wizDays();
   AIPROG=WIZ.prog; WIZ.prog=null; WIZ.stage='form'; WIZ.qa=[]; WIZ.ask=null;
@@ -3875,15 +4070,20 @@ function wzApply(){
 }
 function wzReset(){
   WIZ.stage='form'; WIZ.step='form'; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
-  WIZ.prog=null; WIZ.err='';
+  WIZ.prog=null; WIZ.err=''; WIZ.oneErr=''; WIZ.after=false;
+  чернСтереть();
   renderPicker();
 }
 var firstRun=false;
 function showPicker(first){
   firstRun = !!first;
-  WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.show=false;
+  WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.oneErr=''; WIZ.show=false;
+  WIZ.after=false;
   /* профиль уже заполнен — второй раз про рост и возраст не спрашиваем */
   WIZ.step = meFull() ? 'form' : 'me';
+  wzЧисла=''; clearTimeout(wzЖдун);
+  /* вернулся на середине — продолжаем с того места, а не с чистого листа */
+  if(firstRun) чернВзять();
   renderPicker();
   var el=document.getElementById('picker'); if(el) el.classList.add('show');
   if(firstRun) document.body.classList.add('onb');
@@ -3894,6 +4094,7 @@ function hidePicker(){
 }
 function choose(p){
   hidePicker();
+  чернСтереть();
   if(firstRun && !gget('startdate', null)) gset('startdate', TODAY);
   firstRun=false;
   wzSaveMe();
@@ -4152,7 +4353,28 @@ function botPull(){
     })
     .catch(function(){});
 }
+/* Знакомство, не доведённое до конца, — это то место, где четверо из первых
+   семи человек ушли (16.09, по базе). Полоска стоит НА ГЛАВНОЙ, куда человек
+   и попадает при каждом открытии, и ведёт ровно туда, где он остановился, а
+   не в профиль вообще. Подсказка про профиль осталась на «Тренировке»: она
+   про другое — про стартовые веса у того, кто уже занимается. */
+function renderOnb(){
+  var el=document.getElementById('onbbar'); if(!el) return '';
+  var me=myData()||{};
+  var черн=gget('onbdraft', null);
+  var своя=(PROFILES[profile]||{}).custom;
+  var надо = !своя && me.only!=='food' && ((черн && черн.prog) || !hasGoal(me) || !meFull());
+  if(!надо){ el.hidden=true; return ''; }
+  el.hidden=false;
+  el.innerHTML = (черн && черн.prog)
+    ? 'Программа собрана — <b>осталось ответить, и она станет твоей →</b>'
+    : (hasGoal(me) && meFull()
+        ? 'Остался один шаг — <b>соберу программу за полминуты →</b>'
+        : 'Знакомство не закончено — <b>без него нет ни нормы еды, ни программы →</b>');
+  return 'да';
+}
 function renderNudge(){
+  renderOnb();
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
   var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
@@ -4160,6 +4382,7 @@ function renderNudge(){
   el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
 }
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
+document.getElementById('onbbar').addEventListener('click', function(){ showPicker(true); haptic('light'); });
 function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
 function renderProfProg(){
   var el=document.getElementById('pfprog'); if(!el||!PROF) return;
@@ -4393,7 +4616,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 11:51';
+var BUILD = '16.09 13:08';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7626,6 +7849,7 @@ document.getElementById('picker').addEventListener('click', function(e){
     if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-min') WIZ.min=+sb.dataset.v;
     renderPicker(); haptic('light'); return;
   }
+  if(e.target.closest('#wz-one')){ wzOneGo(); return; }
   if(e.target.closest('#wz-me-go')){ wzMeNext(); return; }
   if(e.target.closest('#g-retry')){ WIZ.safeErr=false; renderPicker(); wzGoalPull(); haptic('light'); return; }
   if(e.target.closest('#g-go')){ wzGoalNext(); haptic('medium'); return; }
@@ -7655,7 +7879,29 @@ document.getElementById('picker').addEventListener('click', function(e){
 document.getElementById('wz-text').addEventListener('input', function(e){ WIZ.text=e.target.value; });
 /* Enter в числовом поле = «Дальше»: на телефоне это ожидаемо */
 document.getElementById('wzme').addEventListener('keydown', function(e){
-  if(e.key==='Enter'){ e.preventDefault(); wzMeNext(); }
+  if(e.key==='Enter'){ e.preventDefault(); if(однаСтр()){ if(wzMeSave(true)) renderPicker(); } else wzMeNext(); }
+});
+/* На одной странице цель считается от веса, который набирают тут же:
+   ввёл — считаем, не дожидаясь нажатия кнопки. */
+/* Числа подхватываем ПО ХОДУ НАБОРА, а не когда поле теряет фокус.
+   Потеря фокуса случается ровно в момент нажатия на кнопку: перерисовка на
+   ней уводит кнопку из-под пальца между нажатием и отпусканием, браузер
+   отдаёт click общему предку — и нажатие пропадает. На телефоне это выглядит
+   как «жму, и ничего не происходит». Набор кончился — к моменту нажатия всё
+   уже посчитано, и делать на самом нажатии нечего. */
+var wzЧисла='', wzЖдун=null;
+document.getElementById('wzme').addEventListener('input', function(e){
+  if(!однаСтр()) return;
+  if(!/^wz-(age|ht|bw)$/.test(e.target.id||'')) return;
+  clearTimeout(wzЖдун);
+  wzЖдун=setTimeout(function(){
+    var сн=meСнимок();
+    if(сн===wzЧисла) return;
+    wzЧисла=сн;
+    wzMeSave(true);
+    renderPicker();
+    if(!WIZ.safeBusy && !WIZ.safeErr) wzGoalPull();
+  }, 400);
 });
 document.getElementById('wzchat').addEventListener('keydown', function(e){
   if(e.key==='Enter' && e.target.id==='wz-ans'){ e.preventDefault(); wzAnswer(e.target.value); }
