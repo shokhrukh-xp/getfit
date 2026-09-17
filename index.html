@@ -940,7 +940,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fchips{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
 .fchips:empty{display:none}
 .fchips button{flex:0 0 auto;max-width:220px;padding:8px 11px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
-  color:var(--muted);font:inherit;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px}
+  color:var(--muted);font:inherit;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:44px}
 .fchips button b{color:var(--text);font-weight:500}
 /* ── «Что съесть»: цель приёма, варианты и примерка ── */
 .podc{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:2px 0 4px}
@@ -954,7 +954,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .podv .pn i{font-style:normal;color:var(--text);font-weight:600}
 .podv p{margin:0 0 9px;font-size:12.5px;color:var(--muted);line-height:1.4}
 .podv .pb{display:flex;gap:7px}
-.podv .pb button{flex:1;min-height:36px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:13px;font-weight:600}
+.podv .pb button{flex:1;min-height:44px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:13px;font-weight:600}
 .podv.best .pb button:first-child{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d)}
 .podall{color:var(--muted);font-size:13px;margin:0;line-height:1.45}
 .podall b{color:var(--text)}
@@ -4717,7 +4717,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 08:01';
+var BUILD = '17.09 08:18';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
