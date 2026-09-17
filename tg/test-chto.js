@@ -72,12 +72,15 @@ async function вкладка(page) {
 
   /* ── каталог ── */
   const строки = await page.$$eval('.eatrow .en b', bs => bs.map(b => b.innerText));
-  дано(строки.length >= 8, 'каталог показывает своё и базу вместе: ' + строки.length);
+  дано(строки.length >= 8, 'каталог показывает прошлые записи и базу вместе: ' + строки.length);
   дано(строки[0] === 'Творог, яйца, греческий йогурт и банан',
     'сверху то, что лучше ложится в цель приёма: ' + строки[0]);
-  const своё = await page.$$eval('.eatrow .en s', ss => ss.map(x => x.innerText));
-  дано(своё.indexOf('своё') >= 0, 'своя еда подписана «своё»');
-  дано(своё.indexOf('японская') >= 0 || своё.indexOf('итальянская') >= 0, 'у блюд базы подписана кухня');
+  const ярлык = await page.$$eval('.eatrow .en s', ss => ss.map(x => x.innerText));
+  /* «Своё» было неточным: это прошлые записи, а еда в них могла быть и из
+     доставки, и из заведения. Его замечание 17.09. */
+  дано(ярлык.indexOf('из дневника') >= 0, 'прошлые записи подписаны «из дневника»: ' + ярлык.slice(0, 3).join(' | '));
+  дано(ярлык.indexOf('своё') < 0, 'и слова «своё» на экране больше нет');
+  дано(ярлык.indexOf('японская') >= 0 || ярлык.indexOf('итальянская') >= 0, 'у блюд базы подписана кухня');
 
   /* ── блюда, после которых день не закрыть ── */
   const меток = await page.$$eval('.eatrow', rs => rs.map(r => r.classList.contains('brk') ? 1 : 0));
@@ -110,17 +113,18 @@ async function вкладка(page) {
   await page.click('[data-podk="обед"]'); await page.waitForTimeout(500);
 
   /* ── «Посмотреть» вместо «Записать» ──
-     Каталог — выбор ДО еды. У своей еды название человек писал сам, его и
-     ищем целиком; карт для неё нет — это не блюдо заведения. */
+     Каталог — выбор ДО еды. Обе кнопки есть и у прошлых записей: еда оттуда
+     могла быть из заведения, и «Где поесть» для неё осмысленно. */
   const ссылки = () => page.evaluate(() => window['__ссылки'] || []);
   дано(!(await page.$('.eatopen [data-catadd]')), 'в каталоге больше не записывают — кнопки «Записать» нет');
-  дано(!(await page.$('.eatopen [data-catmap]')), 'у своей еды «Где поесть» не предлагают');
-  await page.click('.eatopen [data-catweb]');
-  await page.waitForTimeout(400);
+  дано(!!(await page.$('.eatopen [data-catmap]')), 'у прошлой записи «Где поесть» тоже есть');
+  await page.click('.eatopen [data-catweb]'); await page.waitForTimeout(400);
+  await page.click('.eatopen [data-catmap]'); await page.waitForTimeout(400);
   let сс = await ссылки();
-  дано(сс.length === 1 && /google\.com\/search/.test(сс[0]), 'открывается поиск: ' + (сс[0] || 'ничего не ушло'));
+  дано(сс.length === 2 && /google\.com\/search/.test(сс[0]) && /yandex\.uz\/maps/.test(сс[1]),
+    'одна ведёт в поиск, другая на карты: ' + сс.join(' | ').slice(0, 120));
   дано(decodeURIComponent(сс[0]).indexOf('Творог, яйца, греческий йогурт и банан') > 0,
-    'своё уходит в поиск целиком: ' + decodeURIComponent(сс[0] || ''));
+    'запись без порции в названии уходит целиком, а не до первой запятой: ' + decodeURIComponent(сс[0] || ''));
 
   /* ── вкладка и фильтры ── */
   const сег = await page.$$eval('#fseg-food button', bs => bs.map(b => b.textContent.trim()));
@@ -142,12 +146,12 @@ async function вкладка(page) {
   await page.click('.eatopen [data-catweb]'); await page.waitForTimeout(400);
   await page.click('.eatopen [data-catmap]'); await page.waitForTimeout(400);
   сс = await ссылки();
-  дано(сс.length === 3, 'обе кнопки сработали: ' + сс.length);
-  дано(/google\.com\/search/.test(сс[1]) && decodeURIComponent(сс[1]).indexOf('Роллы с лососем') > 0
-       && decodeURIComponent(сс[1]).indexOf('6 шт') < 0,
-    'в поиск уходит блюдо без порции: ' + decodeURIComponent(сс[1] || ''));
-  дано(/yandex\.uz\/maps/.test(сс[2]) && decodeURIComponent(сс[2]).indexOf('Роллы с лососем') > 0,
-    '«Где поесть» ведёт на карты с тем же запросом: ' + decodeURIComponent(сс[2] || ''));
+  дано(сс.length === 4, 'обе кнопки сработали: ' + сс.length);
+  дано(/google\.com\/search/.test(сс[2]) && decodeURIComponent(сс[2]).indexOf('Роллы с лососем') > 0
+       && decodeURIComponent(сс[2]).indexOf('6 шт') < 0,
+    'в поиск уходит блюдо без порции: ' + decodeURIComponent(сс[2] || ''));
+  дано(/yandex\.uz\/maps/.test(сс[3]) && decodeURIComponent(сс[3]).indexOf('Роллы с лососем') > 0,
+    '«Где поесть» ведёт на карты с тем же запросом: ' + decodeURIComponent(сс[3] || ''));
   дано(поймал === null && добавил === null, 'и ни одна запись еды при этом не ушла');
 
   /* ── сортировка ── */
@@ -217,6 +221,14 @@ async function вкладка(page) {
   await page.fill('#eatq', 'паст'); await page.waitForTimeout(500);
   const пск = await page.$$eval('.eatrow .en b', bs => bs.map(b => b.innerText));
   дано(пск.length === 1 && /карбонара/i.test(пск[0]), 'поиск ищет по названию: ' + пск.join(' | '));
+
+  /* «полпорции» — это про размер, а не про еду, и в запрос идти не должно */
+  await page.fill('#eatq', 'полпорц'); await page.waitForTimeout(500);
+  await page.click('.eatopen [data-catmap]'); await page.waitForTimeout(400);
+  сс = await ссылки();
+  const посл = decodeURIComponent(сс[сс.length - 1] || '');
+  дано(посл.indexOf('Плов с говядиной, салат, лепёшка') > 0 && посл.indexOf('полпорц') < 0,
+    'размер порции из запроса вырезан, остальное цело: ' + посл);
   await page.close();
 
   /* ── у кого истории ещё нет: доли обычные, и об этом сказано ── */
