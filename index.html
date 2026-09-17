@@ -842,6 +842,14 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
   color:var(--text);font:inherit;font-size:16px;}
 .invbox .btn.small{padding:9px 12px;font-size:13px;flex:0 0 auto}
 .invbox .invnote{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+/* Здоровье: тот же блок в знакомстве и в профиле, поэтому правила общие */
+.zdbox .pf{margin-top:13px}
+.zdbox .pf:first-child{margin-top:4px}
+.zdbox .seg.multi button{font-size:12.5px}
+.zdbox .zdwhy{margin:9px 0 0;font-size:11.5px;opacity:.85}
+.zdbox .mlab{margin-top:13px}
+.zdbox .invnote{margin-top:13px}
+#wzzd{margin-top:12px}
 .mem{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .mem .memn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mem .memn i{font-style:normal;color:var(--dim)}
@@ -2193,6 +2201,7 @@ body.onb #picker .modalbox::before{display:none}
     <section class="page" id="p-home">
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
+        <button type="button" class="nudge onb" id="zdnudge" hidden></button>
         <div class="hwrap" id="homebody"></div></div>
     </section>
     <section class="page hide" id="p-gym">
@@ -2340,6 +2349,10 @@ body.onb #picker .modalbox::before{display:none}
         <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
         <label>рост, см<input id="wz-ht" type="number" inputmode="numeric" min="120" max="230" placeholder="176"></label>
         <label>вес, кг<input id="wz-bw" type="number" inputmode="decimal" min="35" max="250" placeholder="89"></label>
+      </div>
+      <div class="invbox zdbox" id="wzzd">
+        <button type="button" class="invhead" id="wzzdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="wzzdsum">диабет, давление, чего не ешь — если есть</span><i class="invchev">›</i></button>
+        <div class="invbody" id="wzzdbody" hidden></div>
       </div>
       <p class="mtext" id="wz-me-err" hidden></p>
       <button class="btn prim wide" id="wz-me-go">Дальше</button>
@@ -2523,6 +2536,13 @@ body.onb #picker .modalbox::before{display:none}
     <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
     <p class="subrow" id="subrow" hidden></p>
     <div class="goalcard" id="goalcard"></div>
+    <!-- Здоровье стоит сразу под целью, а не внизу: оно меняет норму и темп,
+         а не дополняет их. Свёрнуто — одна строка; в сводке справа видно,
+         что внутри, чтобы не открывать ради проверки. -->
+    <div class="invbox zdbox" id="zdbox">
+      <button type="button" class="invhead" id="zdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="zdsum">не заполнено</span><i class="invchev">›</i></button>
+      <div class="invbody" id="zdbody" hidden></div>
+    </div>
     <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
     <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
     <div class="progcard gymonly" id="progcard"></div>
@@ -3650,6 +3670,7 @@ function renderWzMe(){
   });
   var e=document.getElementById('wz-me-err');
   if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
+  здРендер('wz', 'wzzdbody', 'wzzdsum', me.med);
 }
 function readWzMe(){
   var num=function(id){ var el=document.getElementById(id); var v=el&&el.value!=='' ? +el.value : null;
@@ -3681,6 +3702,7 @@ function wzMeSave(тихо){
   var me=myData()||{};
   var было=[me.sex,me.age,me.ht,me.bw].join('|');
   me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
+  var зд=здRead('wz'); if(зд) me.med=зд;
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   renderNudge();
@@ -3693,6 +3715,12 @@ function wzMeSave(тихо){
   if(было!==[me.sex,me.age,me.ht,me.bw].join('|')) WIZ.safeErr=false;
   return true;
 }
+document.getElementById('wzzd').addEventListener('click', function(e){
+  var t=e.target.closest('#wzzdtoggle');
+  if(t){ var b=document.getElementById('wzzdbody'), от=t.getAttribute('aria-expanded')==='true';
+    t.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light'); return; }
+  здКлик(e, 'wz', null);
+});
 function wzMeNext(){
   if(!wzMeSave()) return;
   /* Цель — обязательный шаг для всех: и для тех, кто ходит в зал, и для тех,
@@ -4448,7 +4476,101 @@ function readMeForm(){
           min:old.min||null, about:old.about||'',
           likes:csv((document.getElementById('me-likes')||{}).value),
           dislikes:csv((document.getElementById('me-dis')||{}).value),
-          plan:(readPlanEditor()||old.plan||[]), plan_at:old.plan_at||null, sports:old.sports||''};
+          plan:(readPlanEditor()||old.plan||[]), plan_at:old.plan_at||null, sports:old.sports||'',
+          med:здRead('zd')||old.med||null};
+}
+/* ══════════ ЗДОРОВЬЕ ══════════
+   17.09, его просьба: у сестры диабет, и советы приложения обязаны это
+   учитывать. Спрашиваем не диагнозы, а то, что человек про себя знает:
+   колет ли инсулин и бывает ли низкий сахар. Первая формулировка была
+   «инсулин или таблетки, от которых бывает низкий сахар» — он справедливо
+   сказал, что так не спрашивают: человек не знает группу своих таблеток.
+
+   Один и тот же блок стоит в двух местах — в знакомстве и в профиле, —
+   поэтому он собран одной функцией. Числа по нему зажимает СЕРВЕР: норму,
+   белок и темп цели. Здесь только вопрос и ответ. */
+var ЗД_DIA=[['','нет'],['t1','1 тип'],['t2','2 тип'],['?','не знаю']];
+var ЗД_INS=[['1','колю'],['0','нет']];
+var ЗД_LOW=[['1','бывает'],['0','нет'],['?','не знаю']];
+var ЗД_ОСЛ=[['eyes','диабет задел глаза'],['feet','стопы немеют'],['kid','почки хуже']];
+var ЗД_ЕЩЁ=[['bp','высокое давление'],['preg','беременность']];
+function здSeg(id, пары, знач, мульти){
+  return '<div class="seg'+(мульти?' multi':'')+'" id="'+id+'">'+пары.map(function(x){
+    var он = мульти ? !!(знач&&знач[x[0]]) : String(знач)===String(x[0]);
+    return '<button type="button" data-v="'+esc(x[0])+'" aria-pressed="'+он+'">'+esc(x[1])+'</button>';
+  }).join('')+'</div>';
+}
+function здBody(pfx, med){
+  med = med || {};
+  var диабет = med.dia==='t1'||med.dia==='t2'||med.dia==='?';
+  var ряд=function(имя, вн){ return '<div class="pf pfcol"><span class="pfl">'+имя+'</span>'+вн+'</div>'; };
+  var h = ряд('диабет', здSeg(pfx+'-dia', ЗД_DIA, med.dia||'', false));
+  h += '<div id="'+pfx+'-diamore"'+(диабет?'':' hidden')+'>'+
+       ряд('колешь инсулин', здSeg(pfx+'-ins', ЗД_INS, med.ins==null?'':String(med.ins), false)) +
+       ряд('сахар падает низко', здSeg(pfx+'-low', ЗД_LOW, med.low==null?'':String(med.low), false)) +
+       '<p class="seghint zdwhy">От этих двух ответов зависит, насколько осторожно приложение считает норму.</p>' +
+       ряд('врач говорил', здSeg(pfx+'-osl', ЗД_ОСЛ, {eyes:med.eyes===1,feet:med.feet===1,kid:med.kid===1}, true)) +
+       '</div>';
+  h += ряд('ещё', здSeg(pfx+'-more', ЗД_ЕЩЁ, {bp:med.bp===1,preg:med.preg===1}, true));
+  h += '<label class="mlab">чего не ешь по здоровью<input id="'+pfx+'-no" type="text" autocomplete="off" maxlength="200" placeholder="лактоза, орехи, глютен" value="'+esc(med.no||'')+'"></label>';
+  h += '<p class="invnote">Видно только тебе — в рейтинге круга этого нет. Дозы приложение не трогает: инсулин и лекарства назначает врач.</p>';
+  return h;
+}
+/* Если блока на экране нет, возвращаем то, что было: иначе профиль,
+   сохранённый с другого экрана, молча стёр бы здоровье. */
+function здRead(pfx){
+  if(!document.getElementById(pfx+'-dia')) return ((myData()||{}).med)||null;
+  var один=function(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:''; };
+  var есть=function(id,k){ var b=document.querySelector('#'+id+' button[data-v="'+k+'"][aria-pressed="true"]'); return b?1:0; };
+  var dia=один(pfx+'-dia');
+  var no=(document.getElementById(pfx+'-no')||{}).value||'';
+  var m={ dia:dia, no:String(no).slice(0,200).trim(),
+          bp:есть(pfx+'-more','bp'), preg:есть(pfx+'-more','preg') };
+  if(dia){
+    var ins=один(pfx+'-ins'), low=один(pfx+'-low');
+    m.ins = ins==='1'?1:ins==='0'?0:null;
+    m.low = low===''?null:(low==='?'?'?':(low==='1'?1:0));
+    m.eyes=есть(pfx+'-osl','eyes'); m.feet=есть(pfx+'-osl','feet'); m.kid=есть(pfx+'-osl','kid');
+  } else { m.ins=null; m.low=null; m.eyes=0; m.feet=0; m.kid=0; }
+  m.at=new Date().toISOString();
+  return m;
+}
+function здПусто(m){
+  if(!m) return true;
+  return !(m.dia || m.bp===1 || m.preg===1 || String(m.no||'').trim());
+}
+function здSum(m){
+  if(!m || !m.at) return 'не заполнено';
+  if(здПусто(m)) return 'ничего из этого нет';
+  var ч=[];
+  if(m.dia) ч.push(m.dia==='t1'?'диабет 1 типа':m.dia==='t2'?'диабет 2 типа':'диабет');
+  if(m.ins===1) ч.push('инсулин');
+  if(m.kid===1) ч.push('почки');
+  if(m.bp===1) ч.push('давление');
+  if(m.preg===1) ч.push('беременность');
+  if(String(m.no||'').trim()) ч.push('не ест: '+String(m.no).trim());
+  return ч.join(' · ');
+}
+function здРендер(pfx, boxId, sumId, med){
+  var b=document.getElementById(boxId); if(!b) return;
+  if(document.activeElement && b.contains(document.activeElement)) return;  /* не рвём ввод */
+  b.innerHTML=здBody(pfx, med);
+  var s=document.getElementById(sumId);
+  if(s && sumId==='zdsum') s.textContent=здSum(med);
+}
+/* Нажатия внутри обоих блоков: переключение кнопок и показ подвопросов. */
+function здКлик(e, pfx, save){
+  var t=e.target.closest('#'+pfx+'-dia button, #'+pfx+'-ins button, #'+pfx+'-low button, #'+pfx+'-osl button, #'+pfx+'-more button');
+  if(!t) return false;
+  var box=t.parentNode, мульти=box.classList.contains('multi');
+  if(мульти) t.setAttribute('aria-pressed', t.getAttribute('aria-pressed')==='true'?'false':'true');
+  else Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x===t)); });
+  if(box.id===pfx+'-dia'){
+    var more=document.getElementById(pfx+'-diamore');
+    if(more) more.hidden = !t.dataset.v;
+  }
+  haptic('light'); if(save) save();
+  return true;
 }
 /* подпись профиля: что из него влияет на подсказки */
 function meSig(me){ me=me||{}; var gp=goalPair(me); return [me.only||'all',gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),JSON.stringify(me.plan||[]),Object.keys(GYM_DAYS).length].join('|'); }
@@ -4463,8 +4585,10 @@ function saveMe(){
   applyOnly();
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
+  var zs=document.getElementById('zdsum'); if(zs) zs.textContent=здSum(me.med);
 }
 function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
+  здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med);
   try{ renderProgCard(); }catch(e){}
   var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
@@ -4516,12 +4640,37 @@ function renderOnb(){
 }
 function renderNudge(){
   renderOnb();
+  try{ renderZdNudge(); }catch(e){}
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
   var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
   if(!нет.length){ el.hidden=true; return; }
   el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
 }
+document.getElementById('zdbox').addEventListener('click', function(e){
+  var t=e.target.closest('#zdtoggle');
+  if(t){ var b=document.getElementById('zdbody'), от=t.getAttribute('aria-expanded')==='true';
+    t.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light'); return; }
+  здКлик(e, 'zd', saveMe);
+});
+document.getElementById('zdbox').addEventListener('input', function(e){ if(e.target.id==='zd-no') saveMe(); });
+/* Тем, кто уже пользуется приложением, знакомство не показывается — и про
+   здоровье они бы не узнали никогда. Одна карточка, один раз. */
+function renderZdNudge(){
+  var el=document.getElementById('zdnudge'); if(!el) return;
+  var me=myData()||{};
+  var готов = !!(me.bw && me.age && me.ht);
+  var спросили = !!(me.med && me.med.at);
+  el.hidden = !(готов && !спросили && !gget('zd_seen', 0));
+  if(!el.hidden) el.innerHTML='<b>Приложение научилось учитывать здоровье.</b> Если есть диабет, давление или что-то, чего тебе нельзя, — скажи, и норма с программой это учтут. Полминуты.';
+}
+document.getElementById('zdnudge').addEventListener('click', function(){
+  gset('zd_seen', 1);
+  openProf();
+  var t=document.getElementById('zdtoggle'), b=document.getElementById('zdbody');
+  if(t && b){ t.setAttribute('aria-expanded','true'); b.hidden=false; }
+  renderZdNudge(); haptic('light');
+});
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
 document.getElementById('onbbar').addEventListener('click', function(){ showPicker(true); haptic('light'); });
 function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
@@ -4757,7 +4906,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 12:21';
+var BUILD = '17.09 12:56';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
