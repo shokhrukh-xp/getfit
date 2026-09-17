@@ -54,13 +54,37 @@ async function часы(page){
   дано((await page.$$('.hweek .hwd')).length === 7, 'неделя семью точками');
   дано((await page.$$('.hrows .hrow')).length >= 3, 'дорожки под часами на месте');
 
-  /* пузырь еды — это вход в «Еду», пустое место следующего приёма — камера */
+  /* пузырь еды — это вход в «Еду», пустое место следующего приёма — запись */
   дано(await page.$('.hb-meal[data-hgo="food"]') !== null, 'по фото еды можно уйти в «Еду»');
-  дано(await page.$('.hb-next[data-hact="photo"], .hb-todo[data-hact="photo"]') !== null, 'пустое место приёма ведёт к камере');
   дано(await page.$('.hb-w') !== null, 'взвешивание стоит на дуге');
-  await page.click('.hb-meal[data-hgo="food"]');
-  await page.waitForTimeout(400);
-  дано(await page.isVisible('#p-food, [data-page="food"]').catch(() => false) || await page.$eval('body', b => /Еда/.test(b.textContent)), 'тап по еде открыл «Еду»');
+
+  /* 17.09, его слова: «плюсик на дуге перестал работать, я хотел добавить
+     перекус». Пять дней он ничего не делал, а проверка этого не видела:
+     она смотрела на АТРИБУТ на пузыре, а обработчик к тому времени уехал.
+     Проверять надо нажатие, а не разметку. */
+  /* нажимаем пальцем по координате, а не элементом: попадание по пузырю —
+     часть того, что проверяется. Внутри <g> лежат три фигуры, и попасть
+     обязана любая. */
+  const где = await page.evaluate(() => {
+    const g = document.querySelector('.hb-next[data-hact]') || document.querySelector('.hb-todo[data-hact]');
+    if (!g) return null;
+    const b = g.querySelector('circle').getBoundingClientRect();
+    const x = b.left + b.width / 2, y = b.top + b.height / 2;
+    const el = document.elementFromPoint(x, y);
+    return { x, y, свой: !!(el && el.closest('[data-hact]')) };
+  });
+  дано(!!где, 'пустое место приёма на дуге есть');
+  if (где) {
+    дано(где.свой, 'палец в середину пузыря попадает по нему, а не мимо');
+    await page.mouse.click(где.x, где.y);
+    await page.waitForTimeout(700);
+    const куда = await page.evaluate(() => ({
+      еда: !document.getElementById('p-food').classList.contains('hide'),
+      вполе: document.activeElement && document.activeElement.id === 'ftext'
+    }));
+    дано(куда.еда, 'нажатие на «+» открыло «Еду», а не осталось ничем');
+    дано(куда.вполе, 'и палец сразу в строке записи');
+  }
   await page.close();
 
   /* поздняя запись раздвигает окно до полуночи */

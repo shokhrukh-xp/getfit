@@ -4993,7 +4993,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 17:20';
+var BUILD = '17.09 18:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9102,9 +9102,9 @@ function hcEvents(){
   if(закрыта) plan={at:null, name:'еда'};
   if(plan.at!=null){
     var сейчас=Math.abs(plan.at-nowH)<0.5;
-    ev.push({h:plan.at, cls:'next', act:'photo',
+    ev.push({h:plan.at, cls:'next', act:'eat',
       lab:(сейчас?'сейчас':'≈'+hcHM(plan.at))+' · '+plan.name});
-    if(plan.after!=null) ev.push({h:plan.after, cls:'todo', act:'photo',
+    if(plan.after!=null) ev.push({h:plan.after, cls:'todo', act:'eat',
       lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
   }
   /* взвешивание стоит на той же дуге, что и всё остальное: второе кольцо
@@ -9445,6 +9445,17 @@ function renderHome(){
     var hd=e.target.closest('[data-hday]');
     if(hd){ if(hd.disabled) return; var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
     if(e.target.closest('[data-srez]')){ openSrez(14); haptic('light'); return; }
+    /* 17.09, его слова: «плюсик на дуге перестал работать, я хотел добавить
+       перекус». Пузырь со знаком плюса отвечал на нажатие с 11.09 и умер
+       12.09 вместе с кнопкой фото на главной: атрибут на пузыре остался, а
+       обработчик уехал в плавающую кнопку тренера. Нажатие ведёт туда, где
+       еда и записывается, и ставит палец в строку — фото там же рядом. */
+    if(e.target.closest('[data-hact]')){
+      FOOD.date=null; FOOD.day=null; goPage('food');
+      setTimeout(function(){ var i=document.getElementById('ftext');
+        if(i){ try{ i.focus(); }catch(e2){} } }, 320);
+      haptic('light'); return;
+    }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
   });
 })();
