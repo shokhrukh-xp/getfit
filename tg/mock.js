@@ -400,6 +400,33 @@ async function поднять(page, o) {
                    'ломает': (107 - v.prot) / (849 - v.kcal) * 100 > 22 ? 1 : 0 } })),
         примерка: было });
     }
+    /* сахар в крови: список за период, запись, удаление */
+    if (p === '/glu' && route.request().method() === 'GET') {
+      if (o.glu) return дать(Object.assign({ ok: true, from: '2026-09-04', to: '2026-09-17',
+        'коридор': { 'низ2': 3, 'низ': 3.9, 'доНиз': 4.4, 'доВерх': 7.2, 'после': 10 } }, o.glu));
+      return дать({ ok: true, from: '2026-09-04', to: '2026-09-17',
+        'коридор': { 'низ2': 3, 'низ': 3.9, 'доНиз': 4.4, 'доВерх': 7.2, 'после': 10 },
+        list: [
+          { id: 'g1', date: '2026-09-17', t: '07:30', v: 5.6, kind: 'fast', meal: null, 'где': 'вкоридоре' },
+          { id: 'g2', date: '2026-09-17', t: '14:45', v: 12.4, kind: 'post', meal: 'm3', 'где': 'высоко',
+            'после': { text: 'Плов с говядиной полпорции, салат, лепёшка', kcal: 612, t: '13:10', 'спустя': 95 } },
+          { id: 'g3', date: '2026-09-16', t: '21:00', v: 8.9, kind: 'post', meal: 'm9', 'где': 'вкоридоре',
+            'после': { text: 'Куриное филе на гриле с капустным салатом', kcal: 372, t: '19:40', 'спустя': 80 } },
+          { id: 'g4', date: '2026-09-15', t: '03:20', v: 3.4, kind: 'night', meal: null, 'где': 'низко' }
+        ] });
+    }
+    if (p === '/glu/add') {
+      const b = JSON.parse(route.request().postData() || '{}');
+      let v = +b.v; if (v > 30) v = Math.round(v / 18 * 10) / 10;
+      if (!(v > 0) || v > 40) return route.fulfill({ status: 400, contentType: 'application/json',
+        body: JSON.stringify({ error: 'не похоже на замер сахара', code: 'glu' }) });
+      const где = v < 3 ? 'оченьнизко' : v < 3.9 ? 'низко'
+        : (b.kind === 'post' ? (v < 10 ? 'вкоридоре' : 'высоко')
+          : b.kind === 'fast' ? (v < 4.4 ? 'ниже' : v <= 7.2 ? 'вкоридоре' : 'высоко')
+          : (v < 10 ? 'вкоридоре' : 'высоко'));
+      return дать({ ok: true, id: 'new', v, kind: b.kind, meal: null, 'где': где, list: [] });
+    }
+    if (p === '/glu/del') return дать({ ok: true, list: [] });
     if (p === '/srez') {
       if (o.srez === null) return дать({ ok: true, есть: false, n: 0 });
       if (o.srez) return дать(Object.assign({ ok: true, есть: true }, o.srez));

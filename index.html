@@ -850,6 +850,28 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .zdbox .mlab{margin-top:13px}
 .zdbox .invnote{margin-top:13px}
 #wzzd{margin-top:12px}
+/* Сахар в крови */
+.glukind{margin:0 0 10px;flex-wrap:wrap}
+.glukind button{flex:0 1 auto;padding:9px 12px}
+.fgluq .fld{flex:1 1 auto}
+.glrow{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px}
+.glchip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 12px;min-height:44px;
+  border-radius:11px;border:1px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;text-align:left}
+.glchip b{font-size:16px;font-weight:650;line-height:1.1}
+.glchip s{text-decoration:none;font-size:11px;color:var(--muted)}
+.glchip.gl-ok b{color:var(--done-txt)}
+.glchip.gl-hi b{color:var(--warn-txt)}
+.glchip.gl-low{border-color:var(--warn-txt)}
+.glchip.gl-low b{color:var(--warn-txt)}
+.glempt{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.glh{margin:14px 0 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.glpost{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.glpost b{flex:0 0 auto;font-size:15px;font-weight:650}
+.glpost b.gl-hi{color:var(--warn-txt)} .glpost b.gl-ok{color:var(--done-txt)} .glpost b.gl-low{color:var(--warn-txt)}
+.glpost span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.glpost s{flex:0 0 auto;text-decoration:none;font-size:11.5px;color:var(--muted)}
+.glunote{margin:14px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.glwarn{margin:10px 0 0;font-size:12px;line-height:1.5;color:var(--warn-txt)}
 .mem{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .mem .memn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mem .memn i{font-style:normal;color:var(--dim)}
@@ -2256,6 +2278,22 @@ body.onb #picker .modalbox::before{display:none}
         <p class="freply" id="freply" hidden></p>
 
         </div>
+        <!-- Сахар в крови. Появляется только у тех, кто сказал про диабет или
+             преддиабет: остальным этот раздел не нужен, а место занимает. -->
+        <h3 class="lh" id="gluh" hidden>Сахар в крови</h3>
+        <div class="group" id="glugroup" hidden>
+          <div id="glutoday"></div>
+          <div class="seg multi glukind" id="glkind"></div>
+          <div class="fask fgluq">
+            <!-- type=text, а не number: в number запятая не вводится вовсе, а «5,6» —
+                 это ровно то, что человек наберёт. Разделитель разбираем сами. -->
+            <label class="fld"><span>ммоль/л</span><input id="glv" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="5,6" aria-label="Сахар в крови"></label>
+            <button type="button" class="fbtn go" id="glsave" aria-label="Записать">→</button>
+          </div>
+          <p class="freply" id="glreply" hidden></p>
+          <div id="glupost"></div>
+          <p class="glunote">Коридоры общие, для взрослого с диабетом: натощак 4,4–7,2, через 1–2 часа после еды меньше 10. Врач мог назначить тебе свои — тогда считай по ним. Приложение хранит числа и показывает, после какой еды сахар выше; дозы и лечение — только врач.</p>
+        </div>
         <h3 class="lh">Неделя</h3>
         <div class="group">
         <div class="fweek" id="fweek"></div>
@@ -2265,9 +2303,9 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fchart" id="fchart"></div>
         <div class="fask fmeasq">
-          <label class="fld"><span>Вес, кг</span><input id="fw" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="88,1" aria-label="Вес, кг"></label>
-          <label class="fld"><span>Жир, %</span><input id="ffat" type="number" inputmode="decimal" step="0.1" min="3" max="60" placeholder="27,6" aria-label="Жир, процент"></label>
-          <label class="fld"><span>Талия</span><input id="fwaist" type="number" inputmode="decimal" step="0.5" min="40" max="200" placeholder="см" aria-label="Талия, см"></label>
+          <label class="fld"><span>Вес, кг</span><input id="fw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"></label>
+          <label class="fld"><span>Жир, %</span><input id="ffat" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"></label>
+          <label class="fld"><span>Талия</span><input id="fwaist" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"></label>
           <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
@@ -2348,7 +2386,7 @@ body.onb #picker .modalbox::before{display:none}
       <div class="mnums">
         <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
         <label>рост, см<input id="wz-ht" type="number" inputmode="numeric" min="120" max="230" placeholder="176"></label>
-        <label>вес, кг<input id="wz-bw" type="number" inputmode="decimal" min="35" max="250" placeholder="89"></label>
+        <label>вес, кг<input id="wz-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="89"></label>
       </div>
       <div class="invbox zdbox" id="wzzd">
         <button type="button" class="invhead" id="wzzdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="wzzdsum">диабет, давление, чего не ешь — если есть</span><i class="invchev">›</i></button>
@@ -2530,7 +2568,7 @@ body.onb #picker .modalbox::before{display:none}
       <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
       <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
       <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
-      <label id="me-bwl">вес, кг<input id="me-bw" type="number" inputmode="decimal" min="30" max="250" step="0.5"></label>
+      <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
     </div>
     <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его меняешь на «Еде», в разделе «Весы».</p>
     <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
@@ -3673,8 +3711,7 @@ function renderWzMe(){
   здРендер('wz', 'wzzdbody', 'wzzdsum', me.med);
 }
 function readWzMe(){
-  var num=function(id){ var el=document.getElementById(id); var v=el&&el.value!=='' ? +el.value : null;
-    return (v!=null && isFinite(v)) ? v : null; };
+  var num=function(id){ var el=document.getElementById(id); return el ? дробь(el.value) : null; };
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
   var ob=document.querySelector('#wz-only button[aria-pressed="true"]');
   return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'),
@@ -4459,10 +4496,19 @@ function fillMe(){
 }
 /* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
    строкой, модели — списком */
+/* «88,1» в input[type=number] не вводится вовсе: браузер отдаёт пустую
+   строку, и число молча теряется. А запятая — ровно то, что человек наберёт
+   на русской раскладке и на телефоне. Поэтому десятичные поля text, а разбор
+   один на всех. Нашлось 17.09 на поле сахара: тест не смог вписать «3,2». */
+function дробь(v){
+  var x=String(v==null?'':v).replace(',','.').trim();
+  if(x==='') return null;
+  var n=+x; return isFinite(n) ? n : null;
+}
 function csv(v){ return String(v||'').split(',').map(function(x){ return x.trim(); })
   .filter(Boolean).slice(0,5).map(function(x){ return x.slice(0,60); }); }
 function readMeForm(){
-  var v=function(id){ var el=document.getElementById(id); return el&&el.value!=='' ? +el.value : null; };
+  var v=function(id){ var el=document.getElementById(id); return el ? дробь(el.value) : null; };
   var sx=document.getElementById('me-sex');
   var pick=function(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; };
   var lim=Array.prototype.map.call(document.querySelectorAll('#me-lim button[aria-pressed="true"]'),function(b){ return b.dataset.v; });
@@ -4489,7 +4535,7 @@ function readMeForm(){
    Один и тот же блок стоит в двух местах — в знакомстве и в профиле, —
    поэтому он собран одной функцией. Числа по нему зажимает СЕРВЕР: норму,
    белок и темп цели. Здесь только вопрос и ответ. */
-var ЗД_DIA=[['','нет'],['t1','1 тип'],['t2','2 тип'],['?','не знаю']];
+var ЗД_DIA=[['','нет'],['t1','1 тип'],['t2','2 тип'],['pre','преддиабет'],['?','не знаю']];
 var ЗД_INS=[['1','колю'],['0','нет']];
 var ЗД_LOW=[['1','бывает'],['0','нет'],['?','не знаю']];
 var ЗД_ОСЛ=[['eyes','диабет задел глаза'],['feet','стопы немеют'],['kid','почки хуже']];
@@ -4502,12 +4548,12 @@ function здSeg(id, пары, знач, мульти){
 }
 function здBody(pfx, med){
   med = med || {};
-  var диабет = med.dia==='t1'||med.dia==='t2'||med.dia==='?';
+  var диабет = med.dia==='t1'||med.dia==='t2'||med.dia==='?'||med.dia==='pre';
   var ряд=function(имя, вн){ return '<div class="pf pfcol"><span class="pfl">'+имя+'</span>'+вн+'</div>'; };
   var h = ряд('диабет', здSeg(pfx+'-dia', ЗД_DIA, med.dia||'', false));
   h += '<div id="'+pfx+'-diamore"'+(диабет?'':' hidden')+'>'+
        ряд('колешь инсулин', здSeg(pfx+'-ins', ЗД_INS, med.ins==null?'':String(med.ins), false)) +
-       ряд('сахар падает низко', здSeg(pfx+'-low', ЗД_LOW, med.low==null?'':String(med.low), false)) +
+       ряд('сахар в крови падает низко', здSeg(pfx+'-low', ЗД_LOW, med.low==null?'':String(med.low), false)) +
        '<p class="seghint zdwhy">От этих двух ответов зависит, насколько осторожно приложение считает норму.</p>' +
        ряд('врач говорил', здSeg(pfx+'-osl', ЗД_ОСЛ, {eyes:med.eyes===1,feet:med.feet===1,kid:med.kid===1}, true)) +
        '</div>';
@@ -4543,7 +4589,7 @@ function здSum(m){
   if(!m || !m.at) return 'не заполнено';
   if(здПусто(m)) return 'ничего из этого нет';
   var ч=[];
-  if(m.dia) ч.push(m.dia==='t1'?'диабет 1 типа':m.dia==='t2'?'диабет 2 типа':'диабет');
+  if(m.dia) ч.push(m.dia==='t1'?'диабет 1 типа':m.dia==='t2'?'диабет 2 типа':m.dia==='pre'?'преддиабет':'диабет');
   if(m.ins===1) ч.push('инсулин');
   if(m.kid===1) ч.push('почки');
   if(m.bp===1) ч.push('давление');
@@ -4906,7 +4952,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 12:56';
+var BUILD = '17.09 13:47';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9503,8 +9549,8 @@ function renderCircle(){
     }).join('')+'</div>'+
     '<p class="lbkey">Точки — дни недели, с понедельника: <i><s class="lbd-ok"></s>оценка 7 и выше</i>, <i><s class="lbd-low"></s>ниже 7</i>, <i><s class="lbd-today"></s>сегодня</i>, <i><s></s>не в зачёте</i> — еды не записано или только один приём.</p>';
   }
-  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
-  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар до 1 (норма — ничего).<br>'+
+  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар в еде. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
+  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
     'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
     'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
@@ -9577,7 +9623,7 @@ function plateHtml(m){
   return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
     (m.img?'<div class="plph">'+ph+'</div>':'')+
     (items.length?'<u>'+items.join('<br>')+'</u>':'<u>состав не разобран</u>')+
-    '<u>жир '+(m.fat==null?'—':m.fat)+' г · углеводы '+(m.carb==null?'—':m.carb)+' г · клетчатка '+(m.fib==null?'—':m.fib)+' г · сахар '+(m.sug==null?'—':m.sug)+' г</u>'+
+    '<u>жир '+(m.fat==null?'—':m.fat)+' г · углеводы '+(m.carb==null?'—':m.carb)+' г · клетчатка '+(m.fib==null?'—':m.fib)+' г · сахар в еде '+(m.sug==null?'—':m.sug)+' г</u>'+
     (m.note?'<p class="plnote"><b>Как готовить:</b> '+esc(m.note)+'</p>':'')+
     '<div class="plact">'+
       (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'">👍'+(m.likes?' '+m.likes:'')+'</button>')+
@@ -10177,12 +10223,120 @@ function humanErr(e){
 }
 function openFood(){
   renderFoodNav(); renderFoodDay(); renderFoodWeek(); renderMeas();
+  renderGlu(); if(gluВидно()) gluPull();
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
   fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
   podPull();
 }
+/* ── САХАР В КРОВИ ─────────────────────────────────────────────────────
+   17.09, его вопрос: «у сестры высокий сахар, она должна его снижать — это
+   учитывается?» Не учитывалось никак. Слов «глюкоза» и «ммоль» в приложении
+   не было вовсе, а слово «сахар» значило добавленный сахар в ЕДЕ: человек с
+   диабетом видел «сахар 12 г» и думал, что это про него.
+
+   Раздел виден только тем, кто сказал про диабет или преддиабет. Приложение
+   хранит числа, говорит, где они относительно ОБЩЕГО коридора, и связывает
+   замер после еды с тем приёмом, после которого он сделан. Больше ничего:
+   ни диагноза, ни оценки, ни дозы. */
+var GLU={list:[],busy:false,понял:''};
+var GLKIND=[['fast','натощак'],['post','после еды'],['night','ночью'],['any','просто так']];
+var GLPICK='fast';
+function gluВидно(){
+  var m=(myData()||{}).med||{};
+  return m.dia==='t1'||m.dia==='t2'||m.dia==='?'||m.dia==='pre';
+}
+function gluPull(){
+  return fGet('/glu?uid='+encodeURIComponent(syncUid())+'&days=14')
+    .then(function(d){ if(d&&d.ok){ GLU.list=d.list||[]; renderGlu(); } }).catch(function(){});
+}
+function глЗпт(v){ return String(Math.round(v*10)/10).replace('.',','); }
+function глКласс(где){ return где==='низко'||где==='оченьнизко' ? 'gl-low' : где==='высоко' ? 'gl-hi' : 'gl-ok'; }
+function глСпустя(м){
+  if(!(м>0)) return '';
+  var ч=Math.floor(м/60), мм=м%60;
+  return ч ? (ч+' ч'+(мм?' '+мм+' мин':'')) : (мм+' мин');
+}
+function renderGlu(){
+  var h3=document.getElementById('gluh'), g=document.getElementById('glugroup');
+  if(!g) return;
+  var видно=gluВидно();
+  if(h3) h3.hidden=!видно; g.hidden=!видно;
+  if(!видно) return;
+  var k=document.getElementById('glkind');
+  if(k) k.innerHTML=GLKIND.map(function(x){
+    return '<button type="button" data-glk="'+x[0]+'" aria-pressed="'+(GLPICK===x[0])+'">'+x[1]+'</button>'; }).join('');
+  var сег=(GLU.list||[]).filter(function(x){ return x.date===fDate(); });
+  var t=document.getElementById('glutoday');
+  if(t) t.innerHTML = сег.length
+    ? '<div class="glrow">'+сег.map(function(x){
+        return '<button type="button" class="glchip '+глКласс(x['где'])+'" data-gldel="'+esc(x.id)+'" title="нажми, чтобы удалить">'+
+          '<b>'+глЗпт(x.v)+'</b><s>'+esc(x.t)+(x.kind==='fast'?' натощак':x.kind==='post'?' после еды':x.kind==='night'?' ночью':'')+'</s></button>';
+      }).join('')+'</div>'
+    : '<p class="glempt">За сегодня замеров нет.</p>';
+  /* Ради чего всё и делалось: после какой еды сахар выше. */
+  var после=(GLU.list||[]).filter(function(x){ return x['после'] && x['после'].text; })
+    .sort(function(a,b){ return b.v-a.v; }).slice(0,5);
+  var pb=document.getElementById('glupost');
+  var ph = после.length
+    ? '<p class="glh">Выше всего было после этой еды, за 14 дней</p>'+после.map(function(x){
+        return '<div class="glpost"><b class="'+глКласс(x['где'])+'">'+глЗпт(x.v)+'</b>'+
+          '<span>'+esc(x['после'].text)+'</span><s>через '+глСпустя(x['после']['спустя'])+'</s></div>';
+      }).join('')
+    : '';
+  /* Низкие замеры не попадают в список «выше всего», а они и есть то, что
+     важнее всего заметить: повторяющаяся гипогликемия — это разговор с
+     врачом о лечении, и приложение должно его подтолкнуть, а не вести. */
+  var низ=(GLU.list||[]).filter(function(x){ return x['где']==='низко'||x['где']==='оченьнизко'; });
+  if(низ.length) ph = '<p class="glh">Низкий сахар за 14 дней — '+низ.length+' '+plural(низ.length,['раз','раза','раз'])+'</p>'+
+    низ.slice(-4).map(function(x){
+      return '<div class="glpost"><b class="gl-low">'+глЗпт(x.v)+'</b><span>'+esc(датаКратко(x.date))+', '+esc(x.t)+'</span></div>';
+    }).join('')+
+    '<p class="glwarn">Если низкий сахар повторяется — это повод показать эти числа врачу: лечение подбирает он.</p>' + ph;
+  if(pb) pb.innerHTML = ph;
+}
+function датаКратко(d){ var a=String(d||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : d; }
+function gluSave(){
+  if(GLU.busy) return;
+  var el=document.getElementById('glv'); if(!el) return;
+  var v=дробь(el.value);
+  if(v==null || v<=0){ glReply('Впиши замер — например 5,6.','bad'); return; }
+  GLU.busy=true;
+  var b=document.getElementById('glsave'); if(b) b.disabled=true;
+  fPost('/glu/add', {uid:syncUid(), v:v, kind:GLPICK, date:fDate()}).then(function(d){
+    GLU.busy=false; if(b) b.disabled=false;
+    if(!d||!d.ok){ glReply('Не похоже на замер сахара. Жду число от 1 до 33 в ммоль/л или от 20 до 600 в мг/дл.','bad'); return; }
+    el.value='';
+    /* Показываем, КАК поняли: 101 с глюкометра в мг/дл — это 5,6 ммоль/л, и
+       человек должен это увидеть, а не гадать. */
+    var понял = Math.abs(d.v-v)>0.05 ? 'Записал '+глЗпт(d.v)+' ммоль/л — понял твои '+глЗпт(v)+' как мг/дл. ' : 'Записал '+глЗпт(d.v)+'. ';
+    glReply(понял+глСлово(d.v, d['где']), d['где']==='низко'||d['где']==='оченьнизко' ? 'bad' : '');
+    gluPull(); haptic('ok');
+  }).catch(function(err){ GLU.busy=false; if(b) b.disabled=false; glReply(humanErr(err),'bad'); });
+}
+/* Что приложение говорит о числе — и ничего сверх. «Низко» и «высоко» здесь
+   про КОРИДОР, а не про здоровье человека и не про лечение. */
+function глСлово(v, где){
+  if(где==='оченьнизко') return 'Это очень низкий сахар. Съешь 15 г быстрых углеводов и перемерь через 15 минут. Если плохо — это срочно, зови помощь.';
+  if(где==='низко') return 'Это низкий сахар. Съешь 15 г быстрых углеводов и перемерь через 15 минут.';
+  if(где==='высоко') return 'Выше общего коридора. Что с этим делать — вопрос к врачу, а не к приложению.';
+  if(где==='ниже') return 'Чуть ниже обычного коридора натощак.';
+  return 'В общем коридоре.';
+}
+function glReply(t, вид){
+  var el=document.getElementById('glreply'); if(!el) return;
+  el.hidden=false; el.textContent=t; el.className='freply'+(вид==='bad'?' bad':'');
+}
+document.getElementById('glugroup').addEventListener('click', function(e){
+  var k=e.target.closest('[data-glk]');
+  if(k){ GLPICK=k.dataset.glk; renderGlu(); haptic('light'); return; }
+  var s=e.target.closest('#glsave'); if(s){ gluSave(); return; }
+  var d=e.target.closest('[data-gldel]');
+  if(d){ fPost('/glu/del', {uid:syncUid(), id:d.dataset.gldel, date:fDate()})
+      .then(function(){ gluPull(); haptic('light'); }).catch(function(){}); return; }
+});
+document.getElementById('glv').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); gluSave(); } });
 /* «повторить» — то, что ел в прошлые дни, одним нажатием и без модели */
 /* Кому и когда приписать приём, добавленный одним нажатием: первое за день
    в своё время — это завтрак/обед/ужин, всё, что сверх, — перекус. */
@@ -10566,7 +10720,7 @@ function fband(label, v, lo, hi, unit, key){
    складываем и сортируем по вкладу — так сразу видно, кто съел норму.
    У записи без состава продуктом считается сам приём. */
 var FBOPEN=null;
-var FBUNIT={kcal:'ккал',prot:'г белка',fat:'г жира',fib:'г клетчатки',sug:'г сахара'};
+var FBUNIT={kcal:'ккал',prot:'г белка',fat:'г жира',fib:'г клетчатки',sug:'г сахара в еде'};
 function fbTap(key){ return key ? ' fbtap'+(FBOPEN===key?' fbon':'') : ''; }
 function fbAttr(key){ return key ? ' data-fk="'+key+'" role="button" tabindex="0" aria-expanded="'+(FBOPEN===key?'true':'false')+'"' : ''; }
 function fbChev(key){ return key ? '<span class="fbc">'+(FBOPEN===key?'▲':'▼')+'</span>' : ''; }
@@ -10787,7 +10941,7 @@ function renderFoodDay(){
     fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot') +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib') +
-    (t.sug ? fbar('Сахар', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
+    (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
     closeHtml();
   ml.innerHTML = (d.plan||[]).map(function(pp){
@@ -11122,7 +11276,7 @@ document.getElementById('fmfile').addEventListener('change', function(e){
   e.target.value='';
 });
 document.getElementById('fmsave').addEventListener('click', function(){
-  var w=+document.getElementById('fw').value, f=+document.getElementById('ffat').value, ws=+document.getElementById('fwaist').value;
+  var w=дробь(document.getElementById('fw').value)||0, f=дробь(document.getElementById('ffat').value)||0, ws=дробь(document.getElementById('fwaist').value)||0;
   if(!(w>20)) return;
   fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
     fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
