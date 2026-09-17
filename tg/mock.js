@@ -132,6 +132,9 @@ async function поднять(page, o) {
       expand(){}, ready(){}, close(){}, disableVerticalSwipes(){}, enableVerticalSwipes(){},
       enableClosingConfirmation(){}, disableClosingConfirmation(){}, requestFullscreen(){},
       setHeaderColor(){}, setBackgroundColor(){}, onEvent(){}, offEvent(){},
+      /* Внешние ссылки мини-апп открывает сам — проверка смотрит, ЧТО ушло. */
+      openLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
+      openTelegramLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
       HapticFeedback: { impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
       MainButton: { show(){}, hide(){}, setText(){}, onClick(){}, offClick(){} },
       BackButton: { show(){}, hide(){}, onClick(){}, offClick(){} },

@@ -967,6 +967,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .eatf .row button{flex:0 0 auto;padding:9px 13px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;min-height:44px}
 .eatf .row button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
+.eatf .row button[disabled]{opacity:.35}
 .eatq{width:100%;margin-top:12px;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:14px;min-height:44px}
 .eatsort{display:flex;gap:6px;overflow-x:auto;margin:12px 0 0;padding-bottom:3px;-webkit-overflow-scrolling:touch}
@@ -4756,7 +4757,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 11:09';
+var BUILD = '17.09 11:52';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10068,6 +10069,25 @@ function подКак(v, ц){
   if(дф<-3) ч.push('клетчатки не хватит '+String(-дф).replace('.',',')+' г');
   return ч.join(', ')+'.';
 }
+/* Каталог — это выбор ДО еды, а не запись после неё: человек смотрит на
+   незнакомое название и хочет понять, что это и где такое дают. 17.09, его
+   просьба: вместо «Записать» — поиск по названию. Запись осталась там, где
+   ей место: фото или пара слов тренеру и «Мой день».
+
+   Ссылку открываем через Telegram: внутри мини-аппа window.open молча
+   не срабатывает, и кнопка выглядит сломанной. */
+function вебОткрыть(u){
+  try{ if(TG && TG.openLink){ TG.openLink(u); return; } }catch(e){}
+  try{ window.open(u,'_blank','noopener'); }catch(e){}
+}
+/* Название блюда в базе написано для дневника: «Сазан на углях, подача с
+   костями», «Роллы с лососем, 6 шт». В поиск такое отдавать нельзя — там
+   нужна сама еда, без порции и подачи. У своей еды название человек писал
+   сам и резать его не по чему: отдаём целиком. */
+function катЗапрос(x){
+  if(x.свой) return String(x.n||'').trim();
+  return String(x.n||'').split('·')[0].split(',')[0].replace(/\s+/g,' ').trim();
+}
 /* 17.09, его вопрос: «если ты рекомендуешь блюдо на 750 ккал на обед, то на
    ужин что останется?» Остаток дня и цель одного приёма — разные числа, и
    раскладку по приёмам считает сервер по его собственным долям. Здесь только
@@ -10138,26 +10158,13 @@ function renderPod(){
   }
   box.innerHTML=h;
 }
-/* #fpod теперь создаётся внутри вкладки, статического узла в разметке нет:
-   вешать слушатель на него при загрузке — это обращение к null. Слушаем
-   вкладку целиком. */
-document.getElementById('eatbody').addEventListener('click', function(e){
-  var t=e.target.closest('[data-podk]');
-  if(t){ PODK=t.dataset.podk||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
-  if(e.target.closest('[data-podelse]')){
-    goPage('food');
-    var i2=document.getElementById('ftext');
-    if(i2){ i2.value='Что съесть на '+(подЦель().kind||'ужин')+'? Не из того, что уже предложено.'; i2.focus(); }
-    haptic('light'); return;
-  }
-});
 /* ── ВКЛАДКА «ЧТО СЪЕСТЬ» ─────────────────────────────────────────────
    17.09, его просьба: вынести подбор в отдельную вкладку и дать фильтры по
-   кухне и главному ингредиенту. Каталог — 93 блюда — приходит с сервера
-   один раз и лежит здесь, пока не сменится версия: фильтры считаются на
-   телефоне и потому отвечают мгновенно, а не через сеть на каждое нажатие.
+   кухне и главному ингредиенту. Каталог приходит с сервера один раз и лежит
+   здесь, пока не сменится версия: фильтры считаются на телефоне и потому
+   отвечают мгновенно, а не через сеть на каждое нажатие.
    Своя еда идёт первой и помечена: её числа человек проверял сам. */
-var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN='0', CATBUSY=false;
+var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN='0';
 function catПрочесть(){
   try{ var r=JSON.parse(localStorage.getItem('gf_dishes')||'null');
        if(r && r.v && r.блюда) return r; }catch(e){}
@@ -10225,7 +10232,10 @@ function catРяд(имя, ключ, знач, список, счёт, всег�
     '<button type="button" data-'+ключ+'="" aria-pressed="'+(!знач)+'">все<s>'+всего+'</s></button>'+
     список.map(function(x){
       var c=счёт[x]||0;
-      return '<button type="button" data-'+ключ+'="'+esc(x)+'" aria-pressed="'+(знач===x)+'">'+esc(x)+'<s>'+c+'</s></button>';
+      /* Фишка с нулём ведёт в пустой список — нажимать её незачем. Выбранную
+         не гасим никогда: иначе от неё не отойти, когда поиск всё сузил. */
+      var мимо = (!c && знач!==x) ? ' disabled' : '';
+      return '<button type="button" data-'+ключ+'="'+esc(x)+'"'+мимо+' aria-pressed="'+(знач===x)+'">'+esc(x)+'<s>'+c+'</s></button>';
     }).join('')+
     '</div></div>';
 }
@@ -10284,8 +10294,8 @@ function renderEat(){
           : (x.точно
              ? 'Состав по технологической карте '+esc(x.ттк||'')+(x.url?' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">карта</a>':'')
              : 'Прикидка: нормативной карты на это блюдо нет, состав подобран.'))+'</p>'+
-        '<div class="eatbtns"><button type="button" class="btn prim" data-catadd="'+i+'">Записать</button>'+
-        (i?'':'<button type="button" class="btn" data-podelse="1">Другое</button>')+'</div></div>';
+        '<div class="eatbtns"><button type="button" class="btn prim" data-catweb="'+i+'">Посмотреть</button>'+
+        (x.свой?'':'<button type="button" class="btn" data-catmap="'+i+'">Где поесть</button>')+'</div></div>';
     }
     return s;
   }).join('');
@@ -10293,7 +10303,12 @@ function renderEat(){
   box.innerHTML=h;
   renderPod();
 }
+/* #fpod создаётся внутри вкладки, статического узла в разметке нет: вешать
+   слушатель на него при загрузке — это обращение к null. Слушаем вкладку
+   целиком, одним обработчиком на все её кнопки. */
 document.getElementById('eatbody').addEventListener('click', function(e){
+  var пр=e.target.closest('[data-podk]');
+  if(пр){ PODK=пр.dataset.podk||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var o=e.target.closest('[data-cosn]'); if(o){ CATOSN=o.dataset.cosn||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var ст=e.target.closest('[data-csort]');
@@ -10304,22 +10319,17 @@ document.getElementById('eatbody').addEventListener('click', function(e){
     CATOPEN='0'; renderEat(); haptic('light'); return;
   }
   if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATSORT=''; CATDIR=0; CATOPEN='0'; renderEat(); haptic('light'); return; }
-  var a=e.target.closest('[data-catadd]');
-  if(a){
-    if(CATBUSY) return;
-    var x=catСписок()[+a.dataset.catadd]; if(!x) return;
-    CATBUSY=true; a.disabled=true; a.textContent='Записываю…';
-    /* Своё кладётся повтором записи, блюдо базы — новой записью с его числами:
-       у базы нет id приёма, и притворяться, что есть, нельзя. */
-    var путь = x.свой ? '/meal/repeat' : '/meal/add';
-    var тело = x.свой ? {uid:syncUid(), id:x.id, date:fDate()}
-                      : {uid:syncUid(), date:fDate(), kind:kindNow(),
-                         text:x.n+(x.g?' '+x.g+' г':''), kcal:x.kp, prot:x.pp, fib:x.cp};
-    fPost(путь, тело).then(function(d){
-      CATBUSY=false; if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); }
-      haptic('ok'); CATOPEN='0'; podPull(); loadDayScore();
-    }).catch(function(err){ CATBUSY=false; a.disabled=false; a.textContent='Записать'; say(humanErr(err)); });
-    return;
+  var w=e.target.closest('[data-catweb]');
+  if(w){
+    var xw=catСписок()[+w.dataset.catweb]; if(!xw) return;
+    вебОткрыть('https://www.google.com/search?q='+encodeURIComponent(катЗапрос(xw)));
+    haptic('light'); return;
+  }
+  var mp=e.target.closest('[data-catmap]');
+  if(mp){
+    var xm=catСписок()[+mp.dataset.catmap]; if(!xm) return;
+    вебОткрыть('https://yandex.uz/maps/?text='+encodeURIComponent(катЗапрос(xm)));
+    haptic('light'); return;
   }
   var r=e.target.closest('[data-cat]');
   if(r){ CATOPEN = CATOPEN===r.dataset.cat ? null : r.dataset.cat; renderEat(); haptic('light'); return; }
