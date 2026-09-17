@@ -958,6 +958,30 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .podv.best .pb button:first-child{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d)}
 .podall{color:var(--muted);font-size:13px;margin:0;line-height:1.45}
 .podall b{color:var(--text)}
+/* фильтры и каталог вкладки «Что съесть» */
+.eatf{margin:16px 0 4px}
+.eatf .fl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.eatf .row{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.eatf .row button{flex:0 0 auto;padding:9px 13px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;min-height:44px}
+.eatf .row button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
+.eatq{width:100%;margin-top:12px;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--text);font:inherit;font-size:14px;min-height:44px}
+.eatcount{color:var(--muted);font-size:12.5px;margin:14px 0 8px}
+.lnk{border:0;background:none;padding:0;font:inherit;font-size:12.5px;color:var(--accent);text-decoration:underline;min-height:0}
+.eatrow{width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card-2);
+  color:var(--text);font:inherit;padding:11px 12px;margin-bottom:7px;min-height:44px;display:block}
+.eatrow .en{display:flex;gap:8px;align-items:baseline}
+.eatrow .en b{font-size:14.5px;font-weight:600;flex:1;min-width:0}
+.eatrow .en s{text-decoration:none;font-size:11px;color:var(--muted);white-space:nowrap}
+.eatrow .em{display:flex;gap:11px;font-size:12.5px;color:var(--muted);margin-top:3px}
+.eatrow .em i{font-style:normal;color:var(--text);font-weight:600}
+.eatrow[aria-expanded="true"]{border-color:var(--accent)}
+.eatopen{border:1px solid var(--accent);border-top:0;border-radius:0 0 12px 12px;margin:-9px 0 9px;padding:10px 12px 12px;background:var(--card-2)}
+.eatopen p{margin:0 0 9px;font-size:12.5px;color:var(--muted);line-height:1.45}
+.eatopen p b{color:var(--text)}
+.eatopen .src{font-size:11.5px}
+.eatopen .btn{width:100%;min-height:44px}
 .podtry{margin-top:12px}
 .podtry .tl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .podfit{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
@@ -2209,10 +2233,6 @@ body.onb #picker .modalbox::before{display:none}
         <p class="freply" id="freply" hidden></p>
 
         </div>
-        <h3 class="lh">Что съесть</h3>
-        <div class="group">
-        <div id="fpod"></div>
-        </div>
         <h3 class="lh">Неделя</h3>
         <div class="group">
         <div class="fweek" id="fweek"></div>
@@ -2244,6 +2264,12 @@ body.onb #picker .modalbox::before{display:none}
         <p class="lede" id="catn"></p>
         <div id="pcatfilters" hidden></div>
         <div id="pcatbody"></div>
+      </div>
+    </section>
+    <section class="page hide" id="p-eat">
+      <div class="sec" style="padding-top:18px">
+        <div class="zseg" id="fseg-eat"></div>
+        <div id="eatbody"><p class="empt">Загружаю…</p></div>
       </div>
     </section>
     <section class="page hide" id="p-circle">
@@ -4717,7 +4743,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 08:18';
+var BUILD = '17.09 08:44';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7784,13 +7810,13 @@ tSkipB.addEventListener('click', function(){ if(TMODE==='watch') watchStop(false
 tPlusB.addEventListener('click', function(){ if(TMODE==='watch'){ watchStop(true); return; } left+=30; paint(); });
 
 /* ══════════ НАВИГАЦИЯ ══════════ */
-var PAGES=['home','gym','log','food','ref','circle','admin'];
+var PAGES=['home','gym','log','food','ref','circle','eat','admin'];
 /* журнал и каталог живут внутри «Зала» — внизу подсвечивается его кнопка */
 /* Рейтинг считается ТОЛЬКО по еде — его слова 11.09: «еда и рейтинг должны идти
    вместе на одной странице». Появится зал в игре — разделим обратно. */
-var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'food',admin:'admin'};
+var TABOF={home:'home',gym:'gym',log:'gym',ref:'gym',food:'food',circle:'food',eat:'food',admin:'admin'};
 var ZSEG=[['gym','Тренировка'],['log','Журнал'],['ref','Каталог']];
-var FSEG=[['food','Мой день'],['circle','Рейтинг']];
+var FSEG=[['food','Мой день'],['eat','Что съесть'],['circle','Рейтинг']];
 /* имя segHtml уже занято анкетой профиля — новая функция ДОЛЖНА быть с
    собственным именем, иначе объявление молча перебивает старое */
 function navSeg(набор, cur){
@@ -7831,7 +7857,7 @@ function goPage(p){
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<b>'+wd.charAt(0).toUpperCase()+wd.slice(1)+'</b>, '+nd.getDate()+' '+MONTHS[nd.getMonth()]; }
-          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',admin:'Приборная'}[p]||'')+'</b>'; }
+          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Приборная'}[p]||'')+'</b>'; }
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
@@ -7841,6 +7867,7 @@ function goPage(p){
   if(p==='log') renderLog();
   if(p==='food') openFood();
   if(p==='ref') openCatPage();
+  if(p==='eat') openEat();
   if(p==='circle') openCircle(); else udayLeave();
   var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
@@ -10015,6 +10042,7 @@ function podPull(){
     .catch(function(){});
 }
 function подЧисло(v,ед){ return '<b>'+Math.round(v)+'</b><s>'+ед+'</s>'; }
+function зпт(v){ return String(Math.round(v*10)/10).replace('.',','); }
 /* Та же арифметика, что на сервере, и та же, что человек видит числами рядом:
    считается вычитанием, и проверить её можно глазами. */
 function подКак(v, ц){
@@ -10024,7 +10052,7 @@ function подКак(v, ц){
   else if(дк<-120) ч.push('останется '+(-дк)+' ккал в запасе');
   else ч.push('в калории попадает');
   ч.push(дб>=0 ? 'белок закрывает целиком' : 'белка не хватит '+(-дб)+' г');
-  if(дф<-3) ч.push('клетчатки не хватит '+String(-дф).replace('.',','));
+  if(дф<-3) ч.push('клетчатки не хватит '+String(-дф).replace('.',',')+' г');
   return ч.join(', ')+'.';
 }
 function renderPod(){
@@ -10047,23 +10075,12 @@ function renderPod(){
     }).join('');
     if(!(POD['варианты']||[]).length) h+='<p class="podall">'+esc(POD['нет']||'Пока не из чего выбирать — запиши несколько дней еды.')+'</p>';
   }
-  if((POD['примерка']||[]).length){
-    h+='<div class="podtry"><p class="tl">Примерить</p><div class="fchips" id="podchips">'+
-      POD['примерка'].map(function(v,i){
-        /* обрезает CSS многоточием; резать ещё и в коде значило бы получить
-           два многоточия подряд — так и вышло на первой сборке */
-        return '<button type="button" data-podfit="'+i+'"'+(PODFIT===i?' aria-pressed="true"':'')+' title="'+esc(v.text)+'"><b>'+
-          esc(v.text)+'</b> · '+v.kcal+' · '+v.prot+' б</button>';
-      }).join('')+'</div>';
-    if(PODFIT!=null && POD['примерка'][PODFIT]){
-      var f=POD['примерка'][PODFIT];
-      h+='<p class="podfit"><b>'+esc(f.text)+'</b> — '+f.kcal+' ккал, '+f.prot+' г белка, '+f.fib+' г клетчатки. '+esc(подКак(f,ц))+'</p>';
-    }
-    h+='</div>';
-  }
   box.innerHTML=h;
 }
-document.getElementById('fpod').addEventListener('click', function(e){
+/* #fpod теперь создаётся внутри вкладки, статического узла в разметке нет:
+   вешать слушатель на него при загрузке — это обращение к null. Слушаем
+   вкладку целиком. */
+document.getElementById('eatbody').addEventListener('click', function(e){
   var t=e.target.closest('[data-podfit]');
   if(t){ var i=+t.dataset.podfit; PODFIT = PODFIT===i ? null : i; renderPod(); haptic('light'); return; }
   var a=e.target.closest('[data-podadd]');
@@ -10079,6 +10096,126 @@ document.getElementById('fpod').addEventListener('click', function(e){
     if(i2){ i2.value='Что съесть на '+((POD&&POD['тип'])||'ужин')+'? Не из того, что уже предложено.'; i2.focus(); }
     haptic('light'); return;
   }
+});
+/* ── ВКЛАДКА «ЧТО СЪЕСТЬ» ─────────────────────────────────────────────
+   17.09, его просьба: вынести подбор в отдельную вкладку и дать фильтры по
+   кухне и главному ингредиенту. Каталог — 93 блюда — приходит с сервера
+   один раз и лежит здесь, пока не сменится версия: фильтры считаются на
+   телефоне и потому отвечают мгновенно, а не через сеть на каждое нажатие.
+   Своя еда идёт первой и помечена: её числа человек проверял сам. */
+var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN=null, CATBUSY=false;
+function catПрочесть(){
+  try{ var r=JSON.parse(localStorage.getItem('gf_dishes')||'null');
+       if(r && r.v && r.блюда) return r; }catch(e){}
+  return null;
+}
+function catПодтянуть(){
+  var было=catПрочесть();
+  if(было){ CAT=было; renderEat(); }
+  return fGet('/dishes?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(!d||!d.ok) return;
+    if(!было || было.v!==d.v){ CAT=d; try{ localStorage.setItem('gf_dishes', JSON.stringify(d)); }catch(e){} renderEat(); }
+  }).catch(function(){});
+}
+function openEat(){ if(!POD) podPull(); else renderEat(); catПодтянуть(); }
+/* Своя еда и база в одном списке. Своё сверху и подписано: человек должен
+   видеть, где числа его собственные, а где подобранные. */
+function catСписок(){
+  var из=[];
+  ((POD&&POD.примерка)||[]).forEach(function(v){
+    из.push({ n:v.text, kp:v.kcal, pp:v.prot, cp:v.fib, свой:1, id:v.id, кух:'своё', осн:'' });
+  });
+  ((CAT&&CAT.блюда)||[]).forEach(function(b){
+    из.push({ n:b.n, g:b.g, kp:b.kp, pp:b.pp, cp:b.cp, свой:0, кух:b.кух, осн:b.осн, точно:b.точно, ттк:b.ттк, url:b.url });
+  });
+  var q=CATQ.toLowerCase().replace(/ё/g,'е');
+  var сп=из.filter(function(x){
+    if(CATKUH && x.кух!==CATKUH) return false;
+    if(CATOSN && x.осн!==CATOSN) return false;
+    if(q && String(x.n).toLowerCase().replace(/ё/g,'е').indexOf(q)<0) return false;
+    return true;
+  });
+  /* Тот же счёт, что у подбора на сервере: перебор калорий дорог, недобор
+     белка дороже, клетчатка следом, за своё небольшая скидка. Список идёт
+     сверху вниз от «подходит сейчас» — иначе первым лежало бы то, что раньше
+     попало в файл, и каталог из ста блюд стал бы свалкой. */
+  var ц=(POD&&POD.цель)||null;
+  if(ц && ц.kcal>0){
+    var цена=function(x){
+      return Math.max(0, x.kp-ц.kcal)*1 + Math.max(0, ц.prot-x.pp)*8
+           + Math.max(0, ц.fib-x.cp)*3 + Math.max(0, ц.kcal-x.kp)*0.25
+           - (x.свой?40:0);
+    };
+    сп.sort(function(a,b){ return цена(a)-цена(b); });
+  }
+  return сп;
+}
+function catРяд(имя, ключ, знач, список){
+  return '<div class="eatf"><p class="fl">'+имя+'</p><div class="row">'+
+    '<button type="button" data-'+ключ+'="" aria-pressed="'+(!знач)+'">все</button>'+
+    список.map(function(x){ return '<button type="button" data-'+ключ+'="'+esc(x)+'" aria-pressed="'+(знач===x)+'">'+esc(x)+'</button>'; }).join('')+
+    '</div></div>';
+}
+function renderEat(){
+  var box=document.getElementById('eatbody'); if(!box) return;
+  var h='<div id="fpod"></div>';
+  var кухни=((CAT&&CAT.кухни)||[]).slice(); if(POD&&(POD.примерка||[]).length) кухни.unshift('своё');
+  h+=catРяд('Кухня','ckuh',CATKUH,кухни);
+  h+=catРяд('Основа','cosn',CATOSN,((CAT&&CAT.основы)||[]));
+  h+='<input type="search" class="eatq" id="eatq" placeholder="Найти блюдо" autocomplete="off" value="'+esc(CATQ)+'">';
+  var сп=catСписок(), ц=(POD&&POD.цель)||{kcal:0,prot:0,fib:0};
+  h+='<p class="eatcount">'+сп.length+' '+plural(сп.length,['блюдо','блюда','блюд'])+
+     (CATKUH||CATOSN||CATQ ? ' · <button type="button" class="lnk" id="catclear">сбросить</button>' : '')+'</p>';
+  h+=сп.map(function(x,i){
+    var от=CATOPEN===String(i);
+    var s='<button type="button" class="eatrow" data-cat="'+i+'" aria-expanded="'+от+'">'+
+      '<span class="en"><b>'+esc(x.n)+'</b>'+(x.свой?'<s>своё</s>':'<s>'+esc(x.кух)+'</s>')+'</span>'+
+      '<span class="em"><span>ккал <i>'+зпт(x.kp)+'</i></span><span>белок <i>'+зпт(x.pp)+'</i></span><span>клетчатка <i>'+зпт(x.cp)+'</i></span></span></button>';
+    if(от){
+      s+='<div class="eatopen"><p>'+(x.g?'<b>Порция '+x.g+' г.</b> ':'')+esc(подКак(
+            {kcal:x.kp,prot:x.pp,fib:x.cp}, ц))+'</p>'+
+        '<p class="src">'+(x.свой
+          ? 'Ты это уже ел — числа из твоей записи.'
+          : (x.точно
+             ? 'Состав по технологической карте '+esc(x.ттк||'')+(x.url?' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">карта</a>':'')
+             : 'Прикидка: нормативной карты на это блюдо нет, состав подобран.'))+'</p>'+
+        '<button type="button" class="btn prim" data-catadd="'+i+'">Записать</button></div>';
+    }
+    return s;
+  }).join('');
+  if(!сп.length) h+='<p class="podall">Ничего не нашлось. Сбрось фильтры или напиши блюдо тренеру — он посчитает.</p>';
+  box.innerHTML=h;
+  renderPod();
+}
+document.getElementById('eatbody').addEventListener('click', function(e){
+  var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN=null; renderEat(); haptic('light'); return; }
+  var o=e.target.closest('[data-cosn]'); if(o){ CATOSN=o.dataset.cosn||''; CATOPEN=null; renderEat(); haptic('light'); return; }
+  if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATOPEN=null; renderEat(); haptic('light'); return; }
+  var a=e.target.closest('[data-catadd]');
+  if(a){
+    if(CATBUSY) return;
+    var x=catСписок()[+a.dataset.catadd]; if(!x) return;
+    CATBUSY=true; a.disabled=true; a.textContent='Записываю…';
+    /* Своё кладётся повтором записи, блюдо базы — новой записью с его числами:
+       у базы нет id приёма, и притворяться, что есть, нельзя. */
+    var путь = x.свой ? '/meal/repeat' : '/meal/add';
+    var тело = x.свой ? {uid:syncUid(), id:x.id, date:fDate()}
+                      : {uid:syncUid(), date:fDate(), kind:kindNow(),
+                         text:x.n+(x.g?' '+x.g+' г':''), kcal:x.kp, prot:x.pp, fib:x.cp};
+    fPost(путь, тело).then(function(d){
+      CATBUSY=false; if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); }
+      haptic('ok'); CATOPEN=null; podPull(); loadDayScore();
+    }).catch(function(err){ CATBUSY=false; a.disabled=false; a.textContent='Записать'; say(humanErr(err)); });
+    return;
+  }
+  var r=e.target.closest('[data-cat]');
+  if(r){ CATOPEN = CATOPEN===r.dataset.cat ? null : r.dataset.cat; renderEat(); haptic('light'); return; }
+});
+document.getElementById('eatbody').addEventListener('input', function(e){
+  if(e.target.id!=='eatq') return;
+  CATQ=e.target.value||''; CATOPEN=null;
+  var п=e.target.selectionStart; renderEat();
+  var сн=document.getElementById('eatq'); if(сн){ сн.focus(); try{ сн.setSelectionRange(п,п); }catch(_){} }
 });
 function renderRecent(){
   var box=document.getElementById('frecent'); if(!box) return;
