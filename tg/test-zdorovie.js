@@ -43,9 +43,9 @@ async function жми(page, sel, текст) {
   дано(await page.$eval('#zdbody', e => e.hidden), 'свёрнут — одна строка, а не простыня');
 
   /* стоит под целью: здоровье меняет норму, а не дополняет её */
-  const порядок = await page.$$eval('#profm .goalcard, #profm #zdbox, #profm #invbox',
-    ns => ns.map(n => n.id || n.className));
-  дано(порядок.indexOf('zdbox') === 1, 'стоит сразу под целью: ' + порядок.join(' → '));
+  const порядок = await page.$$eval('#profm .goalcard, #profm #zdbox, #profm .psec',
+    ns => ns.map(n => n.id || n.className.split(' ')[0]));
+  дано(порядок.indexOf('zdbox') === 1, 'стоит сразу под целью, до всех разделов: ' + порядок.join(' → '));
 
   await page.click('#zdtoggle'); await page.waitForTimeout(400);
   дано(!(await page.$eval('#zdbody', e => e.hidden)), 'раскрывается');

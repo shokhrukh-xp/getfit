@@ -152,16 +152,19 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
      карточку «под что собрана». */
   await page.click('#profbtn');
   await page.waitForTimeout(700);
+  /* 17.09: «часть про зал упрости». Семь строк с ярлыками схлопнулись в одну
+     строку условий — факты те же, ярлыков нет. */
   const карт = (await page.textContent('#progcard')).replace(/\s+/g, ' ');
-  дано(/дни/.test(карт) && /минут/.test(карт) && /упор/.test(карт),
-    'в профиле карточка «под что собрана»: ' + карт.slice(0, 80));
-  for (const id of ['pf-place', 'pf-plate', 'pf-lim'])
+  дано(/дней в неделю/.test(карт) && /мин/.test(карт) && /тело ровно|упор/.test(карт),
+    'в профиле карточка «под что собрана»: ' + карт.slice(0, 90));
+  дано(карт.split('·').length <= 8, 'и она короткая, а не список из семи строк: ' + карт.slice(0, 90));
+  for (const id of ['pf-place', 'pf-plate', 'pf-lim', 'pf-level'])
     дано(!(await page.isVisible('#' + id)), 'россыпь в профиле убрана: #' + id);
 
-  await page.click('#profai');
+  await page.click('#progedit');
   await page.waitForTimeout(600);
   дано(await page.isVisible('#sborm'), 'кнопка открывает лист сборки, а не собирает молча');
-  for (const id of ['sb-wd', 'sb-min', 'sb-place', 'sb-focus', 'sb-plate', 'sb-lim', 'sb-dis'])
+  for (const id of ['sb-wd', 'sb-min', 'sb-level', 'sb-place', 'sb-focus', 'sb-plate', 'sb-lim', 'sb-dis'])
     дано(await page.isVisible('#' + id), 'в листе спрашивается ' + id);
   const дней = await page.$$eval('#sb-wd button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').length);
   дано(дней >= 2, 'дни подставлены из расписания: ' + дней);

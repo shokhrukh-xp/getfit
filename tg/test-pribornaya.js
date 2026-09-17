@@ -18,7 +18,11 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   await чужой.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   const ош0 = await M.поднять(чужой, { theme: 'dark', wait: 2800 });
   дано(ош0.length === 0, 'у обычного человека страница поднялась без ошибок ' + (ош0[0] || ''));
-  дано(await чужой.$eval('#l1boss', e => e.hidden), 'вкладки «Приборная» у него нет');
+  /* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
+     навигации». Владелец один, а пятая вкладка стояла у него внизу всегда. */
+  дано(!(await чужой.$('#l1boss')), 'в нижней полосе вкладки «Приборная» нет вовсе');
+  await чужой.click('#profbtn'); await чужой.waitForTimeout(700);
+  дано(await чужой.$eval('#profboss', e => e.hidden), 'и в профиле её обычный человек не видит');
   дано(!(await чужой.evaluate(() => document.body.classList.contains('boss'))), 'и панель осталась на три кнопки');
   await чужой.close();
 
@@ -27,9 +31,11 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   const ош = await M.поднять(page, { theme: 'dark', wait: 2800, admin: true });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
-  дано(!(await page.$eval('#l1boss', e => e.hidden)), 'у владельца вкладка есть');
-  await page.click('#l1boss');
+  await page.click('#profbtn'); await page.waitForTimeout(700);
+  дано(!(await page.$eval('#profboss', e => e.hidden)), 'у владельца строка «Приборная» в профиле есть');
+  await page.click('#profboss');
   await page.waitForTimeout(1300);
+  дано(!(await page.$eval('#profm', e => e.classList.contains('show'))), 'нажатие закрывает профиль и уводит на приборную');
 
   /* порядок блоков — это и есть выбранный эскиз */
   const порядок = await page.evaluate(() => Array.from(document.querySelectorAll('#admbody > *')).map(e => e.className.split(' ')[0]));

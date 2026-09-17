@@ -843,6 +843,22 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .invbox .btn.small{padding:9px 12px;font-size:13px;flex:0 0 auto}
 .invbox .invnote{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
 /* Здоровье: тот же блок в знакомстве и в профиле, поэтому правила общие */
+/* Разделы профиля: 17.09 — «страница стала выглядеть беспорядочно». Было
+   девять разнородных блоков подряд без единой зацепки для глаза. */
+.psec{margin:26px 0 10px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.psec:first-of-type{margin-top:22px}
+.pcond{margin:8px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.seghint2{margin:8px 0 0;font-size:12px;line-height:1.4;color:var(--muted)}
+.refsum{margin:9px 0 0;font-size:12.5px;color:var(--muted)}
+#refwhat{margin:0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+#profm .invcode{display:flex;align-items:center;gap:10px;margin-top:10px}
+#profm .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:11px;border:.5px solid var(--line);
+  background:var(--card-solid);color:var(--text);font:inherit;font-size:14px}
+#profm .invcode .btn.small{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:13.5px}
+.pfrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;
+  padding:0 14px;border-radius:12px;border:.5px solid var(--line-soft);background:var(--card-2);
+  color:var(--text);font:inherit;font-size:14px;text-align:left}
+.pfrow i{font-style:normal;font-size:18px;color:var(--dim)}
 .zdbox .pf{margin-top:13px}
 .zdbox .pf:first-child{margin-top:4px}
 .zdbox .seg.multi button{font-size:12.5px}
@@ -1218,8 +1234,6 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .btn.wide{display:block;width:100%}
 /* главное действие экрана — заливкой, как в iOS; остальные остаются тихими */
 .btn.prim{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:500}
-#profai{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:500}
-#profai:disabled{opacity:.45}
 #finish{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:500;transition:background .2s,color .2s,border-color .2s}
 #finish.ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:600}
 #finish.bad{background:rgba(var(--warn-rgb),.14);border-color:var(--warn-txt);color:var(--warn-txt)}
@@ -2228,7 +2242,6 @@ body.onb #picker .modalbox::before{display:none}
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
     <!-- Владельцу — четвёртая. Скрыта до тех пор, пока сервер не подтвердит,
          что это он: угадывать такое по номеру на устройстве нельзя. -->
-    <button role="tab" data-page="admin" aria-selected="false" id="l1boss" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M9.5 19V5M15 19v-7M20.5 19v-4"/></svg><span>Приборная</span></button>
   </div>
 </nav>
 
@@ -2562,6 +2575,10 @@ body.onb #picker .modalbox::before{display:none}
       <p class="sbhint" id="sb-wdh"></p></div>
     <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sb-min"></div>
       <p class="sbhint" id="sb-minh"></p></div>
+    <!-- Опыт — условие сборки, как дни и минуты, и жить ему здесь, а не
+         отдельной строкой в профиле: там он стоял рядом с настройками
+         приложения и читался как что-то ещё. -->
+    <div class="sbrow"><span class="sblab">ОПЫТ</span><div class="seg" id="sb-level"></div></div>
     <div class="sbrow"><span class="sblab">ГДЕ</span><div class="seg" id="sb-place"></div></div>
     <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">ЧТО ЕСТЬ ДОМА</span><div class="seg multi" id="sb-eq"></div></div>
     <div class="sbrow"><span class="sblab">УПОР</span><div class="seg multi" id="sb-focus"></div>
@@ -2587,56 +2604,52 @@ body.onb #picker .modalbox::before{display:none}
     <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его меняешь на «Еде», в разделе «Весы».</p>
     <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
     <p class="subrow" id="subrow" hidden></p>
+
+    <!-- Про человека: цель и здоровье. Без заголовка — это не настройки. -->
     <div class="goalcard" id="goalcard"></div>
-    <!-- Здоровье стоит сразу под целью, а не внизу: оно меняет норму и темп,
-         а не дополняет их. Свёрнуто — одна строка; в сводке справа видно,
-         что внутри, чтобы не открывать ради проверки. -->
     <div class="invbox zdbox" id="zdbox">
       <button type="button" class="invhead" id="zdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="zdsum">не заполнено</span><i class="invchev">›</i></button>
       <div class="invbody" id="zdbody" hidden></div>
     </div>
+    <!-- «Веду» решает, будет ли вообще раздел про зал, поэтому стоит выше
+         него. 17.09, его слова: «нужно показать выше». -->
     <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
     <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
+
+    <h4 class="psec gymonly">Зал</h4>
     <div class="progcard gymonly" id="progcard"></div>
-    <div class="pf gymonly"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
     <div class="pf gymonly hide" id="pf-place"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
     <div class="pf gymonly hide" id="pf-eq"><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
     <div class="pf gymonly hide" id="pf-lim"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
     <div class="pf gymonly hide" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
+    <div class="pf gymonly hide" id="pf-level"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
     <div class="pf gymonly" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
-    <p class="seghint gymonly">«сам меняет» — правки встают сразу, ты видишь карточку; «спрашивает» — каждая под кнопкой</p>
-    <label class="mlab gymonly">что нравится<input id="me-likes" type="text" autocomplete="off" placeholder="тренажёры, тяги, ходьба"></label>
-    <label class="mlab gymonly hide"><input id="me-dis" type="text" autocomplete="off"></label>
-    <div class="pf pfcol"><span class="pfl">спорт вне зала</span><div class="plan" id="me-plan"></div></div>
-    <p class="seghint">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
-    <div class="invbox" id="invbox" hidden>
-      <button type="button" class="invhead" id="invtoggle" aria-expanded="false"><span class="invl">круги</span><span class="invsum" id="invsum"></span><i class="invchev">›</i></button>
-      <div class="invbody" id="invbody" hidden>
-      <div id="invlist"></div>
-      <div class="invcode" id="invedit" hidden><select id="invcirc" aria-label="какой круг"></select><input id="invcodei" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код"><button type="button" class="btn small prim" id="invsave">Сохранить</button></div>
-      <p class="invnote" id="invnote">Скажи код тому, кого зовёшь, или отправь ссылку — по ней код введётся сам. Круги считаются отдельно: у семьи своя таблица, у друзей своя.</p>
-      <div class="invcode" id="invjoin"><input id="invjoini" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="код другого круга"><button type="button" class="btn small" id="invjoinb">Войти</button></div>
-      <!-- Круг заводит каждый сам: своё имя, свой код, свои люди. -->
-      <div class="invcode" id="invmake"><input id="invnewi" type="text" autocomplete="off" maxlength="24" placeholder="название своего круга"><button type="button" class="btn small prim" id="invnewb">Завести</button></div>
-      <div id="memlist"></div>
-      </div>
-    </div>
-    <!-- Приглашения и баллы. Своя ссылка есть у каждого, а не только у владельца. -->
-    <div class="invbox" id="refbox" hidden>
-      <button type="button" class="invhead" id="reftoggle" aria-expanded="false"><span class="invl">пригласить</span><span class="invsum" id="refsum"></span><i class="invchev">›</i></button>
-      <div class="invbody" id="refbody" hidden>
-        <p class="invnote" id="refwhat"></p>
-        <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
-        <div id="reflist"></div>
-        <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
-      </div>
-    </div>
-    <p class="mtext bline" id="buildline"></p>
-    <div class="pfprog" id="pfprog"></div>
+    <p class="seghint gymonly">«сам меняет» — правки встают сразу; «спрашивает» — каждая под кнопкой</p>
     <div id="recobox"></div>
-    <button class="btn wide" id="profai">Собрать программу заново</button>
-    <p class="aistate" id="aistate" hidden></p>
+    <!-- Одна кнопка про сборку, а не две. Есть программа — «изменить и
+         пересобрать» живёт на карточке; нет — эта. -->
+    <p class="aistate gymonly" id="aistate" hidden></p>
     <div id="aibox"></div>
+
+    <h4 class="psec">Спорт вне зала</h4>
+    <div class="plan" id="me-plan"></div>
+    <p class="seghint2">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
+
+    <!-- 17.09, его слова: «не понимаю секцию друзья, оставь там только ссылку
+         поделиться». Круги переехали целиком на вкладку «Рейтинг», где они и
+         живут: там и код, и кто внутри, и приглашение. Здесь осталась одна
+         ссылка — её можно отправить кому угодно, она не про круг. -->
+    <h4 class="psec">Поделиться</h4>
+    <p class="invnote" id="refwhat"></p>
+    <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
+    <p class="refsum" id="refsum2"></p>
+    <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
+
+    <h4 class="psec">Приложение</h4>
+    <button type="button" class="pfrow" id="profboss" hidden><span>Приборная</span><i>›</i></button>
+    <!-- Карточка «программа …» отсюда убрана: то же самое стоит выше, в
+         разделе «Зал», и третьим местом об одном факте быть незачем. -->
+    <p class="mtext bline" id="buildline"></p>
     <button class="btn wide danger" id="profreset">Начать заново</button>
     <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
   </div>
@@ -4504,8 +4517,6 @@ function fillMe(){
   var AU=document.getElementById('me-auto');  if(AU) AU.innerHTML=segHtml('auto',AUTOKEYS,me.auto||'ask');
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
-  var lk=document.getElementById('me-likes'); if(lk) lk.value=(me.likes||[]).join(', ');
-  var ds=document.getElementById('me-dis');   if(ds) ds.value=(me.dislikes||[]).join(', ');
   renderPlanEditor();
 }
 /* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
@@ -4534,8 +4545,12 @@ function readMeForm(){
           only:pick('me-only')||old.only||'all',
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25), auto:pick('me-auto')||old.auto||'ask',
           min:old.min||null, about:old.about||'',
-          likes:csv((document.getElementById('me-likes')||{}).value),
-          dislikes:csv((document.getElementById('me-dis')||{}).value),
+          /* 17.09, его слова: «кнопки нравится и не нравится теперь прямо на
+             карточках упражнений, с профиля эти поля можно убрать». Убрал —
+             а данные остались: их собирает знакомство и лист сборки. Читать
+             из несуществующих полей значило бы стереть их при первом же
+             сохранении профиля. */
+          likes:old.likes||[], dislikes:old.dislikes||[],
           plan:(readPlanEditor()||old.plan||[]), plan_at:old.plan_at||null, sports:old.sports||'',
           med:здRead('zd')||old.med||null};
 }
@@ -4724,6 +4739,9 @@ function renderZdNudge(){
   el.hidden = !(готов && !спросили && !gget('zd_seen', 0));
   if(!el.hidden) el.innerHTML='<b>Приложение научилось учитывать здоровье.</b> Если есть диабет, давление или что-то, чего тебе нельзя, — скажи, и норма с программой это учтут. Полминуты.';
 }
+document.getElementById('profboss').addEventListener('click', function(){
+  closeProf(); goPage('admin'); haptic('light');
+});
 document.getElementById('zdnudge').addEventListener('click', function(){
   gset('zd_seen', 1);
   openProf();
@@ -4740,8 +4758,6 @@ function renderProfProg(){
      массы при цели похудеть) — рядом всегда стоит, на что она нацелена */
   /* 10.09: «сменить» (готовые программы) убрано — вторая дорога рядом с «Собрать под меня» путала; готовые остались внутри «Начать заново» */
   el.innerHTML='<span>программа <b>'+PROF.name+'</b>'+(PROF.goal?'<i>'+PROF.goal.toLowerCase()+'</i>':'')+'</span>';
-  /* кнопка под карточкой: когда программа уже есть, «собрать» читалось как «а моя куда денется?» */
-  var b=document.getElementById('profai'); if(b && !b.disabled) b.textContent = PROF.custom ? 'Собрать заново под меня' : 'Собрать программу под меня';
 }
 
 /* ══════════ ПРАВИЛА: ПОДХОДИТ ЛИ ПРОГРАММА ══════════
@@ -4966,7 +4982,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 14:11';
+var BUILD = '17.09 14:54';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6348,94 +6364,11 @@ function gateJoin(){
 }
 document.getElementById('gjoin').addEventListener('click', gateJoin);
 document.getElementById('gcode').addEventListener('keydown', function(e){ if (e.key === 'Enter') gateJoin(); });
-/* круги в профиле: коды видит любой участник, меняет — владелец; войти в
-   другой круг по коду может каждый */
-var INV = null;
-function renderInvite(){
-  var box = document.getElementById('invbox'); if (!box) return;
-  circlePull().then(function(d){
-    if (!d || !d.ok) { box.hidden = true; return; }
-    INV = d; box.hidden = false;
-    var list = d.circles || [], owner = list.some(function(c){ return c.owner; });
-    document.getElementById('invsum').textContent = list.length ? list.map(function(c){ return c.name + ' ' + c.n; }).join(' · ') : 'не в круге';
-    /* Свой круг держишь ты: имя, код, кого убрать, когда закрыть. Из чужого
-       можно только выйти — вот и вся разница в строке. */
-    document.getElementById('invlist').innerHTML = list.map(function(c){
-      return '<div class="invrow"><span class="invn">' + esc(c.name) + '<i>код ' + esc(c.code) + ' · внутри ' + c.n + (c.owner ? ' · твой' : '') + '</i></span>' +
-             '<button type="button" class="btn small" data-cshare="' + esc(c.id) + '">Поделиться</button>' +
-             (c.owner
-               ? '<button type="button" class="btn small danger" data-cdrop="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Закрыть</button>'
-               : '<button type="button" class="btn small" data-cleave="' + esc(c.id) + '" data-cname="' + esc(c.name) + '">Выйти</button>') +
-             '</div>';
-    }).join('') || '<p class="invnote">Ты пока не в круге. Заведи свой и позови своих — или войди в чужой по коду.</p>';
-    var свои = list.filter(function(c){ return c.owner; });
-    var ed = document.getElementById('invedit'); ed.hidden = !свои.length;
-    if (свои.length) document.getElementById('invcirc').innerHTML = свои.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('');
-    if (свои.length) renderMembers(свои); else document.getElementById('memlist').innerHTML = '';
-  });
-}
-function renderMembers(list){
-  var ml = document.getElementById('memlist'); ml.innerHTML = '';
-  (list || []).forEach(function(c){
-    tgFetch(SYNCURL + '/circle/members?uid=' + encodeURIComponent(syncUid()) + '&id=' + encodeURIComponent(c.id)).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
-      if (!d || !d.ok) return;
-      var a = d.members || [];
-      ml.insertAdjacentHTML('beforeend', '<div class="invl" style="margin-top:12px">' + esc(c.name) + ' · кто внутри · ' + a.length + '</div>' +
-        a.map(function(m){
-          return '<div class="mem"><span class="memn">' + esc(m.me ? 'ты' : m.name) + (m.owner ? ' <i>· владелец</i>' : '') + '</span>' +
-                 (m.owner ? '' : '<button type="button" class="memx" data-mdel="' + esc(m.uid) + '" data-cid="' + esc(c.id) + '" aria-label="Убрать">×</button>') + '</div>';
-        }).join(''));
-    }).catch(function(){});
-  });
-}
-document.getElementById('invtoggle').addEventListener('click', function(){
-  var b = document.getElementById('invbody'), t = document.getElementById('invtoggle');
-  b.hidden = !b.hidden; t.setAttribute('aria-expanded', String(!b.hidden)); haptic('light');
-});
-var кругЖдёт = false;
-function кругПост(path, body, после){
-  if (кругЖдёт) return; кругЖдёт = true;
-  tgFetch(SYNCURL + path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ uid: syncUid() }, body)) })
-    .then(function(r){ return r.json(); })
-    .then(function(d){ кругЖдёт = false;
-      if (d && d.ok) { haptic('ok'); CIRCACHE = {}; renderInvite(); circlePull(); if (после) после(d); }
-      else { haptic('err'); say((d && d.error) || 'Не вышло.'); } })
-    .catch(function(){ кругЖдёт = false; haptic('err'); });
-}
-document.getElementById('invlist').addEventListener('click', function(e){
-  var b = e.target.closest('[data-cshare]'); if (b) { circleShare(b.dataset.cshare); return; }
-  var l = e.target.closest('[data-cleave]');
-  if (l) { if (l.textContent !== 'Точно?') { l.textContent = 'Точно?'; setTimeout(function(){ l.textContent = 'Выйти'; }, 4000); return; }
-    кругПост('/circle/leave', { id: l.dataset.cleave }); return; }
-  var d0 = e.target.closest('[data-cdrop]');
-  if (d0) { if (d0.textContent !== 'Точно?') { d0.textContent = 'Точно?'; setTimeout(function(){ d0.textContent = 'Закрыть'; }, 4000); return; }
-    кругПост('/circle/drop', { id: d0.dataset.cdrop }); return; }
-});
-document.getElementById('invnewb').addEventListener('click', function(){
-  var i = document.getElementById('invnewi'), имя = (i.value || '').trim();
-  if (имя.length < 2) { i.focus(); return; }
-  кругПост('/circle/new', { name: имя }, function(d){ i.value = ''; if (d.circle) shareCircle(d.circle); });
-});
-document.getElementById('invsave').addEventListener('click', function(){
-  var inp = document.getElementById('invcodei'), code = (inp.value || '').trim(), id = document.getElementById('invcirc').value;
-  if (code.length < 4) { inp.focus(); return; }
-  tgFetch(SYNCURL + '/circle/code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), id: id, code: code }) })
-    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.ok) { inp.value = ''; haptic('ok'); renderInvite(); } else { haptic('err'); if (d && d.error) say(d.error); } })
-    .catch(function(){ haptic('err'); });
-});
-document.getElementById('invjoinb').addEventListener('click', function(){
-  var inp = document.getElementById('invjoini'), code = (inp.value || '').trim();
-  if (code.length < 4) { inp.focus(); return; }
-  tgFetch(SYNCURL + '/circle/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), code: code }) })
-    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.ok) { inp.value = ''; haptic('ok'); renderInvite(); } else { haptic('err'); if (d && d.error) say(d.error); } })
-    .catch(function(){ haptic('err'); });
-});
-document.getElementById('memlist').addEventListener('click', function(e){
-  var b = e.target.closest('[data-mdel]'); if (!b) return;
-  tgFetch(SYNCURL + '/circle/del', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ uid: syncUid(), id: b.dataset.cid, who: b.dataset.mdel }) })
-    .then(function(r){ return r.json(); }).then(function(d){ if (d && d.ok) { haptic('light'); renderInvite(); } })
-    .catch(function(){});
-});
+/* Управление кругами целиком живёт на вкладке «Рейтинг»: там полоса кругов,
+   шестерёнка с кодом и приглашением, «+» и вход по коду. В профиле оно было
+   вторым таким же местом — 17.09 его слова: «не понимаю секцию друзья».
+   Осталась одна ссылка «поделиться», и она не про круг. */
+function renderInvite(){}
 function syncPost(path, body){
   return tgFetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)}).then(function(r){
@@ -8625,6 +8558,7 @@ function openSbor(){
   set('sb-focus', FOCUSKEYS, (me.focus&&me.focus.length)?me.focus:['even'], true);
   set('sb-plate', SBPLATE, String(me.plate||'2.5'));
   set('sb-lim', LIMKEYS, me.lim||[], true);
+  segSet('sb-level', segHtml('level',LEVELS,me.level));
   var d=document.getElementById('sb-dis'); if(d) d.value=(me.dislikes||[]).join(', ');
   var g=document.getElementById('sborgoal');
   if(g){ var gt=goalObj();
@@ -8673,6 +8607,7 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.plate=+(sbPick('sb-plate')||2.5);
   me.lim=sbMulti('sb-lim');
   me.dislikes=csv((document.getElementById('sb-dis')||{}).value);
+  me.level=sbPick('sb-level')||me.level||null;
   gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
   closeSbor(); openProf(); renderProgCard();
   aiBuild();
@@ -8685,15 +8620,15 @@ function renderProgCard(){
   var me=myData()||{}, дни=WEEK.filter(function(d){ return GYM_DAYS[d]; });
   var уп=(me.focus&&me.focus.length) ? me.focus.map(function(k){ return (FOCUSKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', ') : 'всё тело ровно';
   var стр=function(l,v){ return '<div class="pl"><s>'+l+'</s><b>'+esc(v)+'</b></div>'; };
+  /* 17.09, его слова: «часть про зал упрости как выглядит». Было семь строк
+     подряд, каждая со своим ярлыком, и все они повторяли то, что и так
+     открывается кнопкой ниже. Осталось имя, дни и одна строка условий. */
+  var усл=[уп, (me.place==='home'?'дома':'в зале'), (me.min||45)+' мин'];
+  if(me.place!=='home') усл.push('блин '+String(me.plate||2.5).replace('.',',')+' кг');
+  if((me.lim||[]).length) усл.push('беречь: '+me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', '));
   box.innerHTML='<h4>'+esc((PROF&&PROF.name)||'Программа')+'</h4>'+
-    '<i>'+(дни.length?дни.length+' '+plural(дни.length,['день','дня','дней'])+' в неделю':'дни не выбраны')+'</i>'+
-    стр('дни', дни.length?дни.map(function(d){ return WD[d]; }).join(', '):'—')+
-    стр('минут', String(me.min||45))+
-    стр('где', me.place==='home'?'дома':'в зале')+
-    стр('упор', уп)+
-    (me.place==='home'?'':стр('блин', String(me.plate||2.5).replace('.',',')+' кг'))+
-    ((me.lim||[]).length?стр('беречь', me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', ')):'')+
-    ((me.dislikes||[]).length?стр('не хочу', me.dislikes.join(', ')):'')+
+    '<i>'+(дни.length?дни.map(function(d){ return WD[d]; }).join(', ')+' · '+дни.length+' '+plural(дни.length,['день','дня','дней'])+' в неделю':'дни не выбраны')+'</i>'+
+    '<p class="pcond">'+esc(усл.join(' · '))+'</p>'+
     '<button type="button" class="btn wide" id="progedit" style="margin-top:12px">Изменить и пересобрать</button>';
   var b=document.getElementById('progedit');
   if(b) b.addEventListener('click', function(){ closeProf(); openSbor(); haptic('light'); });
@@ -8713,12 +8648,17 @@ function aiPayload(){
 var AIPROG=null;
 function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
 var aiWait=null;
+/* Раньше «занят» держался на кнопке: btn.disabled был и флагом, и видом.
+   Кнопки в профиле больше нет — сборка живёт в своём листе, — и флаг стал
+   переменной. Если бы он остался на кнопке, сборка молча не запускалась бы
+   вовсе: первая же строка выходила по !btn. */
+var AIBUSY=false;
 function aiBuild(снова){
-  var btn=document.getElementById('profai'); if(!btn || (btn.disabled && !снова)) return;
+  if(AIBUSY && !снова) return;
   clearInterval(aiWait); aiWait=null;
   var me=myData()||{};
   if(!hasGoal(me)){ aiState('Сначала выбери цель — вес и зал: от этого зависит вся схема.', true); return; }
-  btn.disabled=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
+  AIBUSY=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
   document.getElementById('aibox').innerHTML='';
   var ctl = ('AbortController' in window) ? new AbortController() : null;
   var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
@@ -8742,10 +8682,10 @@ function aiBuild(снова){
       }
       aiState(humanErr(e), true);
     })
-    .then(function(){ clearTimeout(tm); if(!aiWait) btn.disabled=false; });
+    .then(function(){ clearTimeout(tm); if(!aiWait) AIBUSY=false; });
 }
 /* закрыли профиль — отменяем отложенную попытку, иначе она заговорит в пустоту */
-function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); var b=document.getElementById('profai'); if(b) b.disabled=false; } }
+function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); } AIBUSY=false; }
 function renderAiPreview(prog){
   var box=document.getElementById('aibox'); if(!box) return;
   var h='<div class="aiprev"><h4>'+prog.name+'</h4><p class="aisub">'+prog.note+'</p>';
@@ -8787,8 +8727,6 @@ function aiApply(){
   document.getElementById('aibox').innerHTML='';
   closeProf(); haptic('ok');
 }
-/* обработчик передал бы в аргумент событие клика, а там ждут флаг «повтор» */
-document.getElementById('profai').addEventListener('click', function(){ closeProf(); openSbor(); haptic('light'); });
 document.getElementById('aibox').addEventListener('click', function(e){
   if(e.target.closest('#aiapply')) aiApply();
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
@@ -9699,8 +9637,14 @@ function renderKrug(){
     if(t) t.textContent = 'Новый круг';
     box.innerHTML = '<p class="mtext">Круг — это своя таблица: кто как попадает в свою норму. ' +
       'Сравнивается не еда, а попадание в свою.</p>' +
-      '<p class="klab">НАЗВАНИЕ</p><div class="kcode"><input id="k-new" type="text" autocomplete="off" maxlength="24" placeholder="зал, беговой клуб, семья"></div>' +
-      '<button type="button" class="btn prim wide" id="k-make" style="margin-top:14px">Завести</button>';
+      '<p class="klab">ЗАВЕСТИ СВОЙ</p><div class="kcode"><input id="k-new" type="text" autocomplete="off" maxlength="24" placeholder="зал, беговой клуб, семья">' +
+      '<button type="button" class="btn small prim" id="k-make">Завести</button></div>' +
+      /* Вход по коду жил только в профиле, и тот, кто уже был в одном круге,
+         не мог войти во второй с этой вкладки вовсе. 17.09: круги целиком
+         переехали сюда, значит и вход тоже. */
+      '<p class="klab">ИЛИ ВОЙТИ В ЧУЖОЙ</p><div class="kcode">' +
+      '<input id="k-join" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="код круга">' +
+      '<button type="button" class="btn small" id="k-joinb">Войти</button></div>';
     return;
   }
   var c = KRUG.c, моё = !!c.owner;
@@ -9754,7 +9698,18 @@ document.addEventListener('click', function(e){
   var ks = e.target.closest('#krugm [data-cshare]');
   if(ks){ if(KRUG && KRUG.c) shareCircle(KRUG.c); else circleShare(ks.dataset.cshare); return; }
   if(e.target.closest('#cirnew') || e.target.closest('#cirmake')){ openKrugНовый(); haptic('light'); return; }
-  if(e.target.closest('#cirgo')){ openProf(); haptic('light'); return; }
+  if(e.target.closest('#cirgo')){ openKrugНовый(); haptic('light'); return; }
+  if(e.target.closest('#k-joinb')){
+    var j = document.getElementById('k-join'), код = (j.value || '').trim();
+    if(код.length < 4){ j.focus(); return; }
+    if(KRUGBUSY) return; KRUGBUSY = true;
+    fPost('/circle/join', { uid: syncUid(), code: код }).then(function(d){
+      KRUGBUSY = false;
+      if(d && d.ok){ haptic('ok'); closeKrug(); CIRCACHE = {}; circlePull(); }
+      else { haptic('err'); say((d && d.error) || 'Не вышло.'); }
+    }).catch(function(err){ KRUGBUSY = false; say(humanErr(err)); });
+    return;
+  }
   if(e.target.closest('#k-make')){
     var i = document.getElementById('k-new'), имя = (i.value || '').trim();
     if(имя.length < 2){ i.focus(); return; }
@@ -9975,10 +9930,12 @@ function subPull(){
     .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
+/* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
+   навигации». Владелец у приложения один, а пятая вкладка стояла у него в
+   нижней полосе постоянно и занимала место наравне с едой и залом. */
 function admВкладка(){
-  var b=document.getElementById('l1boss'); if(!b) return;
   var он = !!(SUB && SUB.boss);
-  b.hidden = !он;
+  var b=document.getElementById('profboss'); if(b) b.hidden = !он;
   document.body.classList.toggle('boss', он);
 }
 function renderSub(){
@@ -10187,29 +10144,22 @@ function refPull(){
   return fGet('/ref?uid='+encodeURIComponent(syncUid()))
     .then(function(d){ if(d&&d.ok){ REF=d; renderRef(); } return d; }).catch(function(){ return null; });
 }
+/* Раньше это был свёрнутый список со всеми, кто пришёл. 17.09: осталась
+   ссылка, одна строка итога и кнопка оплаты баллами, когда их хватает. */
 function renderRef(){
-  var box=document.getElementById('refbox'); if(!box||!REF) return;
-  box.hidden=false;
-  var было=(REF.people||[]).length, оплатили=(REF.people||[]).filter(function(x){ return x.paid; }).length;
-  document.getElementById('refsum').textContent = REF.points ? REF.points+' баллов' : (было? было+' приглашено' : 'своя ссылка');
-  document.getElementById('refwhat').textContent =
-    'Кто придёт по твоей ссылке и оформит подписку — тебе '+REF.perRef+' баллов. '+REF.month+' баллов = месяц тренера.';
+  if(!REF) return;
+  var w=document.getElementById('refwhat');
+  if(w) w.textContent='Кто придёт по твоей ссылке и оформит подписку — тебе '+REF.perRef+' баллов. '+REF.month+' баллов = месяц тренера.';
   var i=document.getElementById('reflink'); if(i) i.value=REF.link||'';
-  document.getElementById('reflist').innerHTML = было
-    ? '<div class="invl" style="margin-top:12px">по ссылке пришли · '+было+', оплатили · '+оплатили+'</div>'+
-      (REF.people||[]).map(function(x){
-        return '<div class="mem"><span class="memn">'+esc(x.name||'кто-то')+(x.paid?' <i>· оплатил</i>':' <i>· пока без подписки</i>')+'</span></div>';
-      }).join('')
-    : '';
+  var было=(REF.people||[]).length, оплатили=(REF.people||[]).filter(function(x){ return x.paid; }).length;
+  var s2=document.getElementById('refsum2');
+  if(s2) s2.textContent = было
+    ? 'по ссылке пришли ' + было + ' · оформили подписку ' + оплатили + ' · у тебя ' + (REF.points||0) + ' баллов'
+    : 'пока никто не пришёл';
   var b=document.getElementById('refspend');
   if(b){ b.hidden = REF.points < REF.month; b.disabled=REFBUSY;
          b.textContent = REFBUSY ? 'Оплачиваю…' : 'Оплатить месяц баллами ('+REF.points+')'; }
 }
-document.getElementById('reftoggle').addEventListener('click', function(){
-  var b=document.getElementById('refbody'), t=document.getElementById('reftoggle');
-  b.hidden=!b.hidden; t.setAttribute('aria-expanded', String(!b.hidden)); haptic('light');
-  if(!b.hidden) refPull();
-});
 document.getElementById('refshare').addEventListener('click', function(){
   if(!REF||!REF.link) return;
   var text='Веду еду и зал в GetFit — тренер прямо в Telegram. Заходи по ссылке.';

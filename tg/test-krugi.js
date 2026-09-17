@@ -15,6 +15,13 @@ async function профиль(page) {
   await page.click("#profbtn");
   await page.waitForTimeout(900);
 }
+async function рейтинг(page) {
+  const f = await page.$('.l1 button[data-page="food"]');
+  if (f) { await f.click(); await page.waitForTimeout(600); }
+  for (const кн of await page.$$('.zseg button'))
+    if ((await кн.textContent()).trim() === 'Рейтинг' && await кн.isVisible()) { await кн.click(); break; }
+  await page.waitForTimeout(1400);
+}
 
 (async () => {
   const br = await chromium.launch();
@@ -23,19 +30,18 @@ async function профиль(page) {
   const ош = await M.поднять(page, { theme: 'dark', wait: 2800, circle: M.круг() });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
 
+  /* 17.09, его слова: «не понимаю секцию друзья, оставь там только ссылку
+     поделиться». Круги целиком переехали на вкладку «Рейтинг» — в профиле
+     их быть не должно вовсе, иначе это снова два места про одно. */
   await профиль(page);
-  await page.click('#invtoggle');
-  await page.waitForTimeout(900);
-
-  const круги = await page.$$eval('#invlist .invrow', rs => rs.map(r => ({
-    текст: (r.querySelector('.invn') || {}).textContent || '',
-    кнопки: Array.from(r.querySelectorAll('button')).map(b => b.textContent.trim())
-  })));
-  дано(круги.length === 2, 'в списке оба круга: ' + круги.length);
-  const свой = круги.filter(k => /твой/.test(k.текст))[0], чужой = круги.filter(k => !/твой/.test(k.текст))[0];
-  дано(!!свой && /Закрыть|Поделиться/.test(свой.кнопки.join(' ')), 'свой круг подписан «твой»: ' + (свой || {}).текст);
-  дано(!!чужой && чужой.кнопки.indexOf('Выйти') >= 0, 'из чужого можно выйти: ' + (чужой || {}).кнопки.join(' · '));
-  дано(!!чужой && чужой.кнопки.indexOf('Закрыть') < 0, 'а закрыть чужой нечем — это не твой круг');
+  дано(!(await page.$('#invbox')), 'кругов в профиле больше нет — они живут на своей вкладке');
+  дано(!(await page.$('#invjoini')), 'и вход по коду оттуда тоже убран');
+  await page.click('#profclose').catch(() => {});
+  await page.waitForTimeout(400);
+  await рейтинг(page);
+  const чипы = await page.$$eval('.cirsw .mchip', bs => bs.map(b => b.innerText.replace(/\s+/g, ' ').trim()));
+  дано(чипы.length >= 2, 'круги видны полосой на вкладке: ' + чипы.join(' | '));
+  дано(чипы.some(t => /\+$/.test(t)) || !!(await page.$('#cirnew')), 'и рядом «+», чтобы завести новый');
 
   /* ── ЛИСТ КРУГА: «Отправить приглашение» ──
      17.09, его слова: «кнопка приглашения не работает». Она и правда не
@@ -48,15 +54,6 @@ async function профиль(page) {
     if (window.Telegram && window.Telegram.WebApp)
       window.Telegram.WebApp.openTelegramLink = u => { window.поймал = u; };
   });
-  {
-    await page.click('#profclose').catch(() => {});
-    await page.waitForTimeout(500);
-    const f = await page.$('.l1 button[data-page="food"]');
-    if (f) { await f.click(); await page.waitForTimeout(600); }
-    for (const кн of await page.$$('.zseg button'))
-      if ((await кн.textContent()).trim() === 'Рейтинг' && await кн.isVisible()) { await кн.click(); break; }
-    await page.waitForTimeout(1400);
-  }
   const шестерня = await page.$('[data-krug]');
   дано(!!шестерня, 'в круге есть, чем открыть его настройки');
   if (шестерня) {
@@ -69,30 +66,25 @@ async function профиль(page) {
       await page.waitForTimeout(500);
       const ссылка = await page.evaluate(() => window.поймал);
       дано(!!ссылка && /t\.me\/share/.test(ссылка), 'нажатие открывает шаринг, а не молчит: ' + (ссылка || 'ничего не произошло'));
-      дано(!!ссылка && /Код/.test(decodeURIComponent(ссылка || '')), 'в приглашении есть код круга');
+      дано(!!ссылка && /%D0%9A%D0%BE%D0%B4|Код/.test(decodeURIComponent(ссылка || '')), 'в приглашении есть код круга');
     }
     await page.click('#krugclose').catch(() => {});
     await page.waitForTimeout(400);
   }
-  await профиль(page);
-  /* «Приглашения» — переключатель: если раздел уже раскрыт, второе нажатие
-     его свернёт, и дальше ничего не найдётся. Смотрим, а не нажимаем вслепую. */
-  for (let i = 0; i < 2; i++) {
-    const видно = await page.$eval('#invnewi', el => !!(el.offsetParent || el.getClientRects().length)).catch(() => false);
-    if (видно) break;
-    await page.click('#invtoggle').catch(() => {});
-    await page.waitForTimeout(800);
-  }
-
-  /* завести свой круг */
-  дано(!!(await page.$('#invnewi')), 'есть поле «завести круг»');
-  await page.fill('#invnewi', 'зал');
-  const до = await page.$eval('#invnewi', e => e.value);
+  /* завести свой круг и войти в чужой — обе двери на вкладке, а не в профиле */
+  await рейтинг(page);
+  await page.click('#cirnew').catch(() => {});
+  await page.waitForTimeout(700);
+  дано(!!(await page.$('#k-new')), 'на вкладке есть, где завести свой круг');
+  дано(!!(await page.$('#k-join')), 'и где войти в чужой по коду — раньше это было только в профиле');
+  await page.fill('#k-new', 'зал');
+  const до = await page.$eval('#k-new', e => e.value);
   дано(до === 'зал', 'имя вводится: ' + до);
+  await page.click('#krugclose').catch(() => {});
+  await page.waitForTimeout(400);
 
-  /* ── приглашения и баллы ── */
-  await page.click('#reftoggle');
-  await page.waitForTimeout(900);
+  /* ── ссылка «поделиться»: одна, без свёрнутых списков ── */
+  await профиль(page);
   const что = await page.$eval('#refwhat', e => e.textContent.trim());
   дано(/500 баллов/.test(что), 'сказано, сколько даёт приглашение: ' + что);
   const ссылка = await page.$eval('#reflink', e => e.value);
@@ -106,14 +98,11 @@ async function профиль(page) {
   await M.поднять(богатый, { theme: 'dark', wait: 2800, circle: M.круг(),
     ref: { points: 1000, earned: 1000, spent: 0, people: [{ name: 'Фируз', paid: true }, { name: 'Пётр', paid: false }] } });
   await профиль(богатый);
-  await богатый.click('#reftoggle');
-  await богатый.waitForTimeout(900);
+  await богатый.waitForTimeout(600);
   const кн = await богатый.$eval('#refspend', e => ({ скрыта: e.hidden, текст: e.textContent.trim() }));
   дано(!кн.скрыта && /1000/.test(кн.текст), 'с баллами кнопка есть и показывает счёт: ' + кн.текст);
-  const люди = await богатый.$$eval('#reflist .mem', ms => ms.map(m => m.textContent.trim()));
-  дано(люди.length === 2, 'видно, кто пришёл по ссылке: ' + люди.join(' · '));
-  дано(люди.some(t => /оплатил/.test(t)) && люди.some(t => /без подписки/.test(t)),
-    'и кто из них уже платит, а кто нет');
+  const люди = [await богатый.$eval('#refsum2', e => e.textContent.trim())];
+  дано(/пришли 2/.test(люди[0]) && /подписку 1/.test(люди[0]), 'итог одной строкой вместо списка: ' + люди[0]);
   await богатый.close();
 
   /* ── промокод живёт там же, где цена ── */

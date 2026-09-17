@@ -137,7 +137,7 @@ const ОКНА = [
   ['профиль', async p => { await p.click('#profbtn'); }, '#profm'],
   ['мои дни', async p => { await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(400); await p.click('#schedbtn'); }, '#schedm'],
   ['чат', async p => { await p.click('#coachfab'); }, '#coachm'],
-  ['сборка', async p => { await p.click('#profbtn'); await p.waitForTimeout(500); await p.click('#profai'); }, '#sborm'],
+  ['сборка', async p => { await p.click('#profbtn'); await p.waitForTimeout(500); await p.click('#progedit'); }, '#sborm'],
   /* 16.09: кнопки «Заменить» больше нет — её место занял палец вниз, а
      каталог открывается ссылкой «выбрать самому» из строки после замены. */
   ['каталог замены', async p => {
