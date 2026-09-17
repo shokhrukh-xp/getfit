@@ -967,6 +967,12 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .eatf .row button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
 .eatq{width:100%;margin-top:12px;padding:11px 13px;border-radius:11px;border:1px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:14px;min-height:44px}
+.eatsort{display:flex;gap:6px;overflow-x:auto;margin:12px 0 0;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.eatsort button{flex:0 0 auto;padding:9px 12px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;min-height:44px}
+.eatsort button[aria-pressed="true"]{background:var(--accent-soft,var(--card-solid));border-color:var(--accent);color:var(--text);font-weight:600}
+.eatsort button i{font-style:normal;margin-left:4px;opacity:.75}
+.eatf .row button s{text-decoration:none;opacity:.6;margin-left:4px;font-size:11px}
 .eatcount{color:var(--muted);font-size:12.5px;margin:14px 0 8px}
 .lnk{border:0;background:none;padding:0;font:inherit;font-size:12.5px;color:var(--accent);text-decoration:underline;min-height:0}
 .eatrow{width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card-2);
@@ -4743,7 +4749,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 08:44';
+var BUILD = '17.09 09:12';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10120,21 +10126,27 @@ function catПодтянуть(){
 function openEat(){ if(!POD) podPull(); else renderEat(); catПодтянуть(); }
 /* Своя еда и база в одном списке. Своё сверху и подписано: человек должен
    видеть, где числа его собственные, а где подобранные. */
-function catСписок(){
+function catБаза(){
   var из=[];
   ((POD&&POD.примерка)||[]).forEach(function(v){
-    из.push({ n:v.text, kp:v.kcal, pp:v.prot, cp:v.fib, свой:1, id:v.id, кух:'своё', осн:'' });
+    из.push({ n:v.text, kp:v.kcal, pp:v.prot, cp:v.fib, fp:v.fat||0, свой:1, id:v.id, кух:'своё', осн:'своё' });
   });
   ((CAT&&CAT.блюда)||[]).forEach(function(b){
-    из.push({ n:b.n, g:b.g, kp:b.kp, pp:b.pp, cp:b.cp, свой:0, кух:b.кух, осн:b.осн, точно:b.точно, ттк:b.ттк, url:b.url });
+    из.push({ n:b.n, g:b.g, kp:b.kp, pp:b.pp, cp:b.cp, fp:b.fp||0, свой:0, кух:b.кух, осн:b.осн, точно:b.точно, ттк:b.ттк, url:b.url });
   });
   var q=CATQ.toLowerCase().replace(/ё/g,'е');
-  var сп=из.filter(function(x){
-    if(CATKUH && x.кух!==CATKUH) return false;
-    if(CATOSN && x.осн!==CATOSN) return false;
+  return из.filter(function(x){
     if(q && String(x.n).toLowerCase().replace(/ё/g,'е').indexOf(q)<0) return false;
     return true;
   });
+}
+function catСписок(){
+  var сп=catБаза().filter(function(x){
+    if(CATKUH && x.кух!==CATKUH) return false;
+    if(CATOSN && x.осн!==CATOSN) return false;
+    return true;
+  });
+  if(CATSORT) return catСорт(сп);
   /* Тот же счёт, что у подбора на сервере: перебор калорий дорог, недобор
      белка дороже, клетчатка следом, за своё небольшая скидка. Список идёт
      сверху вниз от «подходит сейчас» — иначе первым лежало бы то, что раньше
@@ -10150,27 +10162,62 @@ function catСписок(){
   }
   return сп;
 }
-function catРяд(имя, ключ, знач, список){
+/* Число рядом с фишкой — не украшение: без него не видно, что «морепродукты»
+   это четыре блюда, а «говядина» сорок одно, и человек жмёт вслепую. */
+function catРяд(имя, ключ, знач, список, счёт, всего){
   return '<div class="eatf"><p class="fl">'+имя+'</p><div class="row">'+
-    '<button type="button" data-'+ключ+'="" aria-pressed="'+(!знач)+'">все</button>'+
-    список.map(function(x){ return '<button type="button" data-'+ключ+'="'+esc(x)+'" aria-pressed="'+(знач===x)+'">'+esc(x)+'</button>'; }).join('')+
+    '<button type="button" data-'+ключ+'="" aria-pressed="'+(!знач)+'">все<s>'+всего+'</s></button>'+
+    список.map(function(x){
+      var c=счёт[x]||0;
+      return '<button type="button" data-'+ключ+'="'+esc(x)+'" aria-pressed="'+(знач===x)+'">'+esc(x)+'<s>'+c+'</s></button>';
+    }).join('')+
     '</div></div>';
+}
+/* Сортировка. У белка и клетчатки «больше» значит лучше, у калорий и жира —
+   «меньше»: направление по умолчанию разное, и навязывать одно на всех было бы
+   неверно. Повторное нажатие переворачивает. */
+var CATSORT='', CATDIR=0;
+var СОРТ=[['','подходит',0],['k','калории',1],['p','белок',-1],['c','клетчатка',-1],['f','жир',1]];
+function catСорт(сп){
+  if(!CATSORT) return сп;
+  var поле={k:'kp',p:'pp',c:'cp',f:'fp'}[CATSORT];
+  /* Направление по умолчанию у каждого поля своё: белка и клетчатки хочется
+     больше, калорий и жира — меньше. CATDIR==0 значит «по умолчанию», и
+     подставлять сюда единицу нельзя: белок поехал бы от меньшего. */
+  var зн=CATDIR || (СОРТ.filter(function(x){ return x[0]===CATSORT; })[0]||[0,0,1])[2];
+  return сп.slice().sort(function(a,b){
+    var av=+a[поле]||0, bv=+b[поле]||0;
+    return зн*(av-bv);
+  });
 }
 function renderEat(){
   var box=document.getElementById('eatbody'); if(!box) return;
   var h='<div id="fpod"></div>';
   var кухни=((CAT&&CAT.кухни)||[]).slice(); if(POD&&(POD.примерка||[]).length) кухни.unshift('своё');
-  h+=catРяд('Кухня','ckuh',CATKUH,кухни);
-  h+=catРяд('Основа','cosn',CATOSN,((CAT&&CAT.основы)||[]));
+  /* Счёт по каждому значению фильтра — с учётом ДРУГОГО фильтра и поиска:
+     иначе «рыба 16» врёт, когда уже выбрана итальянская кухня. */
+  var база=catБаза();
+  var сКух={}, сОсн={};
+  база.forEach(function(x){
+    if(!CATOSN || x.осн===CATOSN) сКух[x.кух]=(сКух[x.кух]||0)+1;
+    if(!CATKUH || x.кух===CATKUH) сОсн[x.осн]=(сОсн[x.осн]||0)+1;
+  });
+  h+=catРяд('Кухня','ckuh',CATKUH,кухни,сКух,база.filter(function(x){return !CATOSN||x.осн===CATOSN;}).length);
+  h+=catРяд('Основа','cosn',CATOSN,((CAT&&CAT.основы)||[]),сОсн,база.filter(function(x){return !CATKUH||x.кух===CATKUH;}).length);
   h+='<input type="search" class="eatq" id="eatq" placeholder="Найти блюдо" autocomplete="off" value="'+esc(CATQ)+'">';
+  h+='<div class="eatsort">'+СОРТ.map(function(x){
+      var он=CATSORT===x[0];
+      var стрелка = (он && x[0]) ? '<i>'+((CATDIR||x[2])>0?'↑':'↓')+'</i>' : '';
+      return '<button type="button" data-csort="'+x[0]+'" aria-pressed="'+он+'">'+x[1]+стрелка+'</button>';
+    }).join('')+'</div>';
   var сп=catСписок(), ц=(POD&&POD.цель)||{kcal:0,prot:0,fib:0};
   h+='<p class="eatcount">'+сп.length+' '+plural(сп.length,['блюдо','блюда','блюд'])+
-     (CATKUH||CATOSN||CATQ ? ' · <button type="button" class="lnk" id="catclear">сбросить</button>' : '')+'</p>';
+     (CATKUH||CATOSN||CATQ||CATSORT ? ' · <button type="button" class="lnk" id="catclear">сбросить</button>' : '')+'</p>';
   h+=сп.map(function(x,i){
     var от=CATOPEN===String(i);
     var s='<button type="button" class="eatrow" data-cat="'+i+'" aria-expanded="'+от+'">'+
       '<span class="en"><b>'+esc(x.n)+'</b>'+(x.свой?'<s>своё</s>':'<s>'+esc(x.кух)+'</s>')+'</span>'+
-      '<span class="em"><span>ккал <i>'+зпт(x.kp)+'</i></span><span>белок <i>'+зпт(x.pp)+'</i></span><span>клетчатка <i>'+зпт(x.cp)+'</i></span></span></button>';
+      '<span class="em"><span>ккал <i>'+зпт(x.kp)+'</i></span><span>белок <i>'+зпт(x.pp)+'</i></span><span>жир <i>'+зпт(x.fp)+'</i></span><span>клетч. <i>'+зпт(x.cp)+'</i></span></span></button>';
     if(от){
       s+='<div class="eatopen"><p>'+(x.g?'<b>Порция '+x.g+' г.</b> ':'')+esc(подКак(
             {kcal:x.kp,prot:x.pp,fib:x.cp}, ц))+'</p>'+
@@ -10190,7 +10237,14 @@ function renderEat(){
 document.getElementById('eatbody').addEventListener('click', function(e){
   var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN=null; renderEat(); haptic('light'); return; }
   var o=e.target.closest('[data-cosn]'); if(o){ CATOSN=o.dataset.cosn||''; CATOPEN=null; renderEat(); haptic('light'); return; }
-  if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATOPEN=null; renderEat(); haptic('light'); return; }
+  var ст=e.target.closest('[data-csort]');
+  if(ст){
+    var v=ст.dataset.csort;
+    if(CATSORT===v && v){ CATDIR = -(CATDIR || (СОРТ.filter(function(x){return x[0]===v;})[0]||[0,0,1])[2]); }
+    else { CATSORT=v; CATDIR=0; }
+    CATOPEN=null; renderEat(); haptic('light'); return;
+  }
+  if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATSORT=''; CATDIR=0; CATOPEN=null; renderEat(); haptic('light'); return; }
   var a=e.target.closest('[data-catadd]');
   if(a){
     if(CATBUSY) return;

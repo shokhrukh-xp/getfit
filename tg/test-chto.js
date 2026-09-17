@@ -81,8 +81,9 @@ async function вкладка(page) {
   дано(своё.indexOf('японская') >= 0 || своё.indexOf('итальянская') >= 0, 'у блюд базы подписана кухня');
 
   /* фильтр по кухне */
+  /* у фишки теперь есть счётчик — сравнивать на точное равенство нельзя */
   for (const b of await page.$$('[data-ckuh]'))
-    if ((await b.textContent()).trim() === 'японская') { await b.click(); break; }
+    if ((await b.textContent()).trim().indexOf('японская') === 0) { await b.click(); break; }
   await page.waitForTimeout(400);
   const яп = await page.$$eval('.eatrow .en b', bs => bs.map(b => b.innerText));
   дано(яп.length === 1 && /Роллы/.test(яп[0]), 'фильтр по кухне сужает список: ' + яп.join(' | '));
@@ -98,6 +99,62 @@ async function вкладка(page) {
   await page.waitForTimeout(700);
   дано(!!добавил && /Роллы/.test(добавил.text || ''), 'блюдо базы уходит в /meal/add: ' + ((добавил || {}).text || 'ничего не ушло'));
   дано(!!добавил && добавил.kcal === 317 && добавил.prot === 17, 'и уходит с теми числами, что показаны: ' + ((добавил || {}).kcal) + '/' + ((добавил || {}).prot));
+
+  /* ── сортировка ── */
+  const имена = () => page.$$eval('.eatrow .en b', bs => bs.map(b => b.innerText));
+  const числа = () => page.$$eval('.eatrow .em', es => es.map(e => {
+    const m = e.innerText.replace(/\s+/g, ' ');
+    const n = k => { const r = new RegExp(k + ' ([\\d,]+)').exec(m); return r ? +r[1].replace(',', '.') : null; };
+    return { k: n('ккал'), p: n('белок'), f: n('жир'), c: n('клетч\\.') };
+  }));
+  const жми = async им => {
+    for (const b of await page.$$('[data-csort]'))
+      if ((await b.textContent()).trim().indexOf(им) === 0) { await b.click(); break; }
+    await page.waitForTimeout(400);
+  };
+  await page.click('#catclear'); await page.waitForTimeout(400);
+
+  await жми('белок');
+  let ч = await числа();
+  дано(ч.length > 3 && ч[0].p >= ч[1].p && ч[1].p >= ч[2].p,
+    'по белку сверху больше, а не меньше: ' + ч.slice(0, 3).map(x => x.p).join(' → '));
+  await жми('белок');
+  ч = await числа();
+  дано(ч[0].p <= ч[1].p, 'повторное нажатие переворачивает: ' + ч.slice(0, 3).map(x => x.p).join(' → '));
+
+  await жми('калории');
+  ч = await числа();
+  дано(ч[0].k <= ч[1].k && ч[1].k <= ч[2].k,
+    'по калориям сверху меньше: ' + ч.slice(0, 3).map(x => x.k).join(' → '));
+
+  await жми('жир');
+  ч = await числа();
+  дано(ч[0].f <= ч[1].f && ч[1].f <= ч[2].f,
+    'по жиру сверху меньше: ' + ч.slice(0, 3).map(x => x.f).join(' → '));
+  дано(ч.every(x => x.f !== null), 'жир виден в каждой строке — сортировать по невидимому нечестно');
+
+  await жми('клетчатка');
+  ч = await числа();
+  дано(ч[0].c >= ч[1].c && ч[1].c >= ч[2].c,
+    'по клетчатке сверху больше: ' + ч.slice(0, 3).map(x => x.c).join(' → '));
+
+  /* ── счётчики на фильтрах ── */
+  await page.click('#catclear'); await page.waitForTimeout(400);
+  const фишки = await page.$$eval('[data-ckuh]', bs => bs.map(b => b.innerText.replace(/\s+/g, ' ').trim()));
+  дано(фишки.every(t => /\d+$/.test(t)), 'у каждой фишки кухни написано, сколько там блюд: ' + фишки.join(' | '));
+  const былоРыб = await page.$$eval('[data-cosn]', bs => {
+    const b = bs.filter(x => /^рыба/.test(x.innerText.trim()))[0];
+    return b ? +(/(\d+)\s*$/.exec(b.innerText.replace(/\s+/g, ' ')) || [])[1] : null;
+  });
+  for (const b of await page.$$('[data-ckuh]'))
+    if ((await b.textContent()).trim().indexOf('японская') === 0) { await b.click(); break; }
+  await page.waitForTimeout(400);
+  const сталоРыб = await page.$$eval('[data-cosn]', bs => {
+    const b = bs.filter(x => /^рыба/.test(x.innerText.trim()))[0];
+    return b ? +(/(\d+)\s*$/.exec(b.innerText.replace(/\s+/g, ' ')) || [])[1] : null;
+  });
+  дано(былоРыб !== null && сталоРыб !== null && сталоРыб < былоРыб,
+    'счётчик основы считает с учётом выбранной кухни: рыба ' + былоРыб + ' → ' + сталоРыб);
 
   /* сброс возвращает весь каталог */
   await page.click('#catclear'); await page.waitForTimeout(400);
