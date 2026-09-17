@@ -942,6 +942,27 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fchips button{flex:0 0 auto;max-width:220px;padding:8px 11px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px}
 .fchips button b{color:var(--text);font-weight:500}
+/* ── «Что съесть»: цель приёма, варианты и примерка ── */
+.podc{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:2px 0 4px}
+.podc b{font-size:20px;font-weight:650;letter-spacing:-.01em}
+.podc s{text-decoration:none;color:var(--muted);font-size:12px;margin-left:3px}
+.podsub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+.podv{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;background:var(--card-2)}
+.podv.best{border-color:var(--accent)}
+.podv h4{margin:0 0 3px;font-size:14.5px;font-weight:600}
+.podv .pn{display:flex;gap:12px;font-size:12.5px;color:var(--muted);margin-bottom:7px}
+.podv .pn i{font-style:normal;color:var(--text);font-weight:600}
+.podv p{margin:0 0 9px;font-size:12.5px;color:var(--muted);line-height:1.4}
+.podv .pb{display:flex;gap:7px}
+.podv .pb button{flex:1;min-height:36px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:13px;font-weight:600}
+.podv.best .pb button:first-child{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d)}
+.podall{color:var(--muted);font-size:13px;margin:0;line-height:1.45}
+.podall b{color:var(--text)}
+.podtry{margin-top:12px}
+.podtry .tl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.podfit{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+.podfit b{color:var(--text)}
+.fchips button[aria-pressed="true"]{border-color:var(--accent);color:var(--text)}
 .fweek{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px;margin-top:8px}
 .fweek .fd{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
 .fweek .fd .fb{width:100%;max-width:34px;border-radius:6px 6px 2px 2px;background:var(--accent);opacity:.85;min-height:2px}
@@ -2187,6 +2208,10 @@ body.onb #picker .modalbox::before{display:none}
         <div class="fchips" id="frecent"></div>
         <p class="freply" id="freply" hidden></p>
 
+        </div>
+        <h3 class="lh">Что съесть</h3>
+        <div class="group">
+        <div id="fpod"></div>
         </div>
         <h3 class="lh">Неделя</h3>
         <div class="group">
@@ -4692,7 +4717,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 07:40';
+var BUILD = '17.09 08:01';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9966,6 +9991,7 @@ function openFood(){
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
   fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
+  podPull();
 }
 /* «повторить» — то, что ел в прошлые дни, одним нажатием и без модели */
 /* Кому и когда приписать приём, добавленный одним нажатием: первое за день
@@ -9976,6 +10002,84 @@ function kindNow(){
   var есть=(FOOD.day&&FOOD.day.meals||[]).some(function(m){ return m.kind===осн; });
   return есть ? 'перекус' : осн;
 }
+/* ── ЧТО СЪЕСТЬ ───────────────────────────────────────────────────────
+   23 сообщения из 167 написанных руками — это «чем набрать остаток» и
+   «влезет ли плов». Отвечал на них только чат, полным вызовом модели, а на
+   экране ответа не было вовсе. Варианты считает сервер из того, что человек
+   уже ел: его же приёмы, его же числа. Примерка — вторая половина: тыкаешь
+   блюдо и сразу видишь, как оно ляжет, не спрашивая никого. */
+var POD=null, PODFIT=null, PODBUSY=false;
+function podPull(){
+  fGet('/eat?uid='+encodeURIComponent(syncUid())+'&date='+fDate())
+    .then(function(d){ if(d&&d.ok){ POD=d; PODFIT=null; renderPod(); } })
+    .catch(function(){});
+}
+function подЧисло(v,ед){ return '<b>'+Math.round(v)+'</b><s>'+ед+'</s>'; }
+/* Та же арифметика, что на сервере, и та же, что человек видит числами рядом:
+   считается вычитанием, и проверить её можно глазами. */
+function подКак(v, ц){
+  var дк=Math.round(v.kcal-ц.kcal), дб=Math.round(v.prot-ц.prot), дф=Math.round((v.fib-ц.fib)*10)/10;
+  var ч=[];
+  if(дк>40) ч.push('перебор '+дк+' ккал');
+  else if(дк<-120) ч.push('останется '+(-дк)+' ккал в запасе');
+  else ч.push('в калории попадает');
+  ч.push(дб>=0 ? 'белок закрывает целиком' : 'белка не хватит '+(-дб)+' г');
+  if(дф<-3) ч.push('клетчатки не хватит '+String(-дф).replace('.',','));
+  return ч.join(', ')+'.';
+}
+function renderPod(){
+  var box=document.getElementById('fpod'); if(!box) return;
+  if(!POD){ box.innerHTML='<p class="podall">Загружаю…</p>'; return; }
+  if(fDate()!==TODAY){ box.innerHTML='<p class="podall">Подбор — про сегодня. Вернись на сегодняшний день.</p>'; return; }
+  var ц=POD['цель']||{kcal:0,prot:0,fib:0}, h='';
+  if(POD['всё']){
+    h+='<p class="podall"><b>На сегодня всё.</b> Калории и белок закрыты — дальше только если правда голоден.</p>';
+  } else {
+    h+='<div class="podc">'+подЧисло(ц.kcal,'ккал')+подЧисло(ц.prot,'г белка')+подЧисло(ц.fib,'г клетчатки')+'</div>'+
+       '<p class="podsub">На этот приём'+(POD['впереди']>1?', впереди ещё '+POD['впереди']:'')+'. За день осталось '+
+       Math.round((POD['ост']||{}).kcal||0)+' ккал из '+Math.round((POD['норма']||{}).kcal||0)+'.</p>';
+    h+=(POD['варианты']||[]).map(function(v,i){
+      return '<div class="podv'+(i?'':' best')+'"><h4>'+esc(v.text)+'</h4>'+
+        '<div class="pn"><span>ккал <i>'+v.kcal+'</i></span><span>белок <i>'+v.prot+'</i></span><span>клетчатка <i>'+v.fib+'</i></span></div>'+
+        '<p>'+esc(v['как']||'')+'</p>'+
+        '<div class="pb"><button type="button" data-podadd="'+esc(v.id)+'">Записать</button>'+
+        (i?'':'<button type="button" data-podelse="1">Другое</button>')+'</div></div>';
+    }).join('');
+    if(!(POD['варианты']||[]).length) h+='<p class="podall">'+esc(POD['нет']||'Пока не из чего выбирать — запиши несколько дней еды.')+'</p>';
+  }
+  if((POD['примерка']||[]).length){
+    h+='<div class="podtry"><p class="tl">Примерить</p><div class="fchips" id="podchips">'+
+      POD['примерка'].map(function(v,i){
+        /* обрезает CSS многоточием; резать ещё и в коде значило бы получить
+           два многоточия подряд — так и вышло на первой сборке */
+        return '<button type="button" data-podfit="'+i+'"'+(PODFIT===i?' aria-pressed="true"':'')+' title="'+esc(v.text)+'"><b>'+
+          esc(v.text)+'</b> · '+v.kcal+' · '+v.prot+' б</button>';
+      }).join('')+'</div>';
+    if(PODFIT!=null && POD['примерка'][PODFIT]){
+      var f=POD['примерка'][PODFIT];
+      h+='<p class="podfit"><b>'+esc(f.text)+'</b> — '+f.kcal+' ккал, '+f.prot+' г белка, '+f.fib+' г клетчатки. '+esc(подКак(f,ц))+'</p>';
+    }
+    h+='</div>';
+  }
+  box.innerHTML=h;
+}
+document.getElementById('fpod').addEventListener('click', function(e){
+  var t=e.target.closest('[data-podfit]');
+  if(t){ var i=+t.dataset.podfit; PODFIT = PODFIT===i ? null : i; renderPod(); haptic('light'); return; }
+  var a=e.target.closest('[data-podadd]');
+  if(a){
+    if(PODBUSY) return; PODBUSY=true; a.disabled=true; a.textContent='Записываю…';
+    fPost('/meal/repeat', {uid:syncUid(), id:a.dataset.podadd, date:fDate()}).then(function(d){
+      PODBUSY=false; FOOD.day=d.day; renderFoodDay(); haptic('ok'); podPull(); loadDayScore();
+    }).catch(function(err){ PODBUSY=false; a.disabled=false; a.textContent='Записать'; fReply(humanErr(err),'bad'); });
+    return;
+  }
+  if(e.target.closest('[data-podelse]')){
+    var i2=document.getElementById('ftext');
+    if(i2){ i2.value='Что съесть на '+((POD&&POD['тип'])||'ужин')+'? Не из того, что уже предложено.'; i2.focus(); }
+    haptic('light'); return;
+  }
+});
 function renderRecent(){
   var box=document.getElementById('frecent'); if(!box) return;
   var чип=function(a){ return '<button type="button" '+a.attr+' title="'+esc(a.t)+'">'+a.ic+' <b>'+
