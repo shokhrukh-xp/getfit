@@ -947,21 +947,23 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .podc b{font-size:20px;font-weight:650;letter-spacing:-.01em}
 .podc s{text-decoration:none;color:var(--muted);font-size:12px;margin-left:3px}
 .podsub{color:var(--muted);font-size:12.5px;margin:0 0 12px}
-.podv{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:8px;background:var(--card-2)}
-.podv.best{border-color:var(--accent)}
-.podv h4{margin:0 0 3px;font-size:14.5px;font-weight:600}
-.podv .pn{display:flex;gap:12px;font-size:12.5px;color:var(--muted);margin-bottom:7px}
-.podv .pn i{font-style:normal;color:var(--text);font-weight:600}
-.podv p{margin:0 0 9px;font-size:12.5px;color:var(--muted);line-height:1.4}
-.podv .pb{display:flex;gap:7px}
-.podv .pb button{flex:1;min-height:44px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:13px;font-weight:600}
-.podv.best .pb button:first-child{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d)}
+.podraz{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.podraz button{flex:0 0 auto;min-height:44px;padding:0 13px;border-radius:99px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--muted);font:inherit;font-size:13px}
+.podraz button s{text-decoration:none;opacity:.65;margin-left:5px;font-size:11.5px}
+.podraz button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
+.podraz button[aria-pressed="true"] s{opacity:.8}
+.podplot{color:var(--muted);font-size:12.5px;line-height:1.45;margin:0 0 12px;padding:9px 11px;
+  border-radius:10px;background:var(--card-2);border:1px solid var(--line)}
+.podplot b{color:var(--text)}
 .podall{color:var(--muted);font-size:13px;margin:0;line-height:1.45}
 .podall b{color:var(--text)}
 /* фильтры и каталог вкладки «Что съесть» */
 .eatf{margin:16px 0 4px}
 .eatf .fl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
-.eatf .row{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.eatf .row{display:flex;flex-wrap:nowrap;gap:6px;margin-top:0;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none}
+.eatf .row::-webkit-scrollbar{display:none}
 .eatf .row button{flex:0 0 auto;padding:9px 13px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:12.5px;white-space:nowrap;min-height:44px}
 .eatf .row button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
@@ -988,6 +990,11 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .eatopen p b{color:var(--text)}
 .eatopen .src{font-size:11.5px}
 .eatopen .btn{width:100%;min-height:44px}
+.eatopen .warn{color:var(--warn-txt)}
+.eatbtns{display:flex;gap:7px}
+.eatbtns .btn{flex:1;width:auto}
+.eatrow.brk{opacity:.72}
+.eatrow .ebrk{display:block;margin-top:5px;font-size:11.5px;color:var(--warn-txt)}
 .podtry{margin-top:12px}
 .podtry .tl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .podfit{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
@@ -4749,7 +4756,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 09:12';
+var BUILD = '17.09 10:26';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10041,10 +10048,10 @@ function kindNow(){
    экране ответа не было вовсе. Варианты считает сервер из того, что человек
    уже ел: его же приёмы, его же числа. Примерка — вторая половина: тыкаешь
    блюдо и сразу видишь, как оно ляжет, не спрашивая никого. */
-var POD=null, PODFIT=null, PODBUSY=false;
+var POD=null;
 function podPull(){
   fGet('/eat?uid='+encodeURIComponent(syncUid())+'&date='+fDate())
-    .then(function(d){ if(d&&d.ok){ POD=d; PODFIT=null; renderPod(); } })
+    .then(function(d){ if(d&&d.ok){ POD=d; renderEat(); } })
     .catch(function(){});
 }
 function подЧисло(v,ед){ return '<b>'+Math.round(v)+'</b><s>'+ед+'</s>'; }
@@ -10061,25 +10068,73 @@ function подКак(v, ц){
   if(дф<-3) ч.push('клетчатки не хватит '+String(-дф).replace('.',',')+' г');
   return ч.join(', ')+'.';
 }
+/* 17.09, его вопрос: «если ты рекомендуешь блюдо на 750 ккал на обед, то на
+   ужин что останется?» Остаток дня и цель одного приёма — разные числа, и
+   раскладку по приёмам считает сервер по его собственным долям. Здесь только
+   показ и переключение: можно смотреть не на ближайший приём, а на любой. */
+var PODK='';
+function подЦель(){
+  var р=(POD&&POD['раскладка'])||[];
+  if(!р.length) return (POD&&POD['цель'])||{kcal:0,prot:0,fib:0,kind:''};
+  for(var i=0;i<р.length;i++) if(р[i].kind===PODK) return р[i];
+  return р[0];
+}
+/* Слова о плотности белка приходят с сервера одной шкалой: и шапка, и строка
+   под блюдом берут их отсюда, чтобы одно и то же число не получило на экране
+   двух разных названий. */
+function подПлотСлово(d){
+  var п=(POD&&POD['плотность'])||{}, ш=п['шкала']||[];
+  if(!(d>0)) return п['пусто']||'';
+  for(var i=0;i<ш.length;i++) if(d<=ш[i][0]) return ш[i][1];
+  return ш.length ? ш[ш.length-1][1] : '';
+}
+/* Что останется на остальные приёмы, если съесть это. Считается от остатка
+   ДНЯ, а не приёма: блюдо съедено сегодня, на какой бы приём его ни записать. */
+function подПосле(v){
+  var ост=(POD&&POD['ост'])||null, р=(POD&&POD['раскладка'])||[];
+  if(!ост || р.length<2) return null;
+  /* Когда калории на день уже кончились, «после него день не закрыть» верно
+     для всего подряд и потому не значит ничего: там разговор другой, и он
+     идёт в шапке. */
+  if(POD['пусто']) return null;
+  var потолок=((POD&&POD['плотность'])||{})['потолок']||22;
+  var k=Math.round(ост.kcal-(+v.kcal||0)), p=Math.round(ост.prot-(+v.prot||0));
+  if(!(p>0)) return {kcal:k, prot:0, 'плот':0, 'ломает':0};
+  if(k<=0) return {kcal:k, prot:p, 'плот':0, 'ломает':1, 'нет':1};
+  var d=Math.round(p/k*1000)/10;
+  return {kcal:k, prot:p, 'плот':d, 'ломает':d>потолок?1:0};
+}
+function подПослеТекст(п){
+  if(!п) return '';
+  if(п['нет']) return 'После него калорий на день не останется, а белка не хватит '+п.prot+' г — день так не закрыть.';
+  if(!(п.prot>0)) return 'После него белок на день закрыт, останется '+п.kcal+' ккал.';
+  return 'После него на день останется '+п.kcal+' ккал и '+п.prot+' г белка — это '+зпт(п['плот'])+' г на 100 ккал, '+подПлотСлово(п['плот'])+'.';
+}
 function renderPod(){
   var box=document.getElementById('fpod'); if(!box) return;
   if(!POD){ box.innerHTML='<p class="podall">Загружаю…</p>'; return; }
   if(fDate()!==TODAY){ box.innerHTML='<p class="podall">Подбор — про сегодня. Вернись на сегодняшний день.</p>'; return; }
-  var ц=POD['цель']||{kcal:0,prot:0,fib:0}, h='';
-  if(POD['всё']){
-    h+='<p class="podall"><b>На сегодня всё.</b> Калории и белок закрыты — дальше только если правда голоден.</p>';
-  } else {
-    h+='<div class="podc">'+подЧисло(ц.kcal,'ккал')+подЧисло(ц.prot,'г белка')+подЧисло(ц.fib,'г клетчатки')+'</div>'+
-       '<p class="podsub">На этот приём'+(POD['впереди']>1?', впереди ещё '+POD['впереди']:'')+'. За день осталось '+
-       Math.round((POD['ост']||{}).kcal||0)+' ккал из '+Math.round((POD['норма']||{}).kcal||0)+'.</p>';
-    h+=(POD['варианты']||[]).map(function(v,i){
-      return '<div class="podv'+(i?'':' best')+'"><h4>'+esc(v.text)+'</h4>'+
-        '<div class="pn"><span>ккал <i>'+v.kcal+'</i></span><span>белок <i>'+v.prot+'</i></span><span>клетчатка <i>'+v.fib+'</i></span></div>'+
-        '<p>'+esc(v['как']||'')+'</p>'+
-        '<div class="pb"><button type="button" data-podadd="'+esc(v.id)+'">Записать</button>'+
-        (i?'':'<button type="button" data-podelse="1">Другое</button>')+'</div></div>';
-    }).join('');
-    if(!(POD['варианты']||[]).length) h+='<p class="podall">'+esc(POD['нет']||'Пока не из чего выбирать — запиши несколько дней еды.')+'</p>';
+  if(POD['безНормы']){ box.innerHTML='<p class="podall">Норма ещё не посчитана — заполни анкету на главной, и подбор заработает.</p>'; return; }
+  if(POD['всё']){ box.innerHTML='<p class="podall"><b>На сегодня всё.</b> Калории и белок закрыты — дальше только если правда голоден.</p>'; return; }
+  var ц=подЦель(), р=POD['раскладка']||[], ост=POD['ост']||{kcal:0,prot:0}, н=POD['норма']||{}, h='';
+  /* Приёмы впереди — не подпись, а переключатель: остаток дня делится на них
+     сразу весь, и видно, что останется на вечер, ещё до выбора блюда. */
+  if(р.length>1){
+    h+='<div class="podraz">'+р.map(function(x){
+      return '<button type="button" data-podk="'+esc(x.kind)+'" aria-pressed="'+(x.kind===ц.kind)+'">'+
+        esc(x.kind)+'<s>'+Math.round(x.kcal)+'</s></button>';
+    }).join('')+'</div>';
+  }
+  h+='<div class="podc">'+подЧисло(ц.kcal,'ккал')+подЧисло(ц.prot,'г белка')+подЧисло(ц.fib,'г клетчатки')+'</div>';
+  h+='<p class="podsub">'+(р.length>1
+      ? 'Это '+(ц['доля']||0)+'% от остатка дня: '+Math.round(ост.kcal)+' ккал из '+Math.round(н.kcal||0)+'. Делёж '+esc(POD['откуда']||'')+'.'
+      : 'За день осталось '+Math.round(ост.kcal)+' ккал из '+Math.round(н.kcal||0)+'.')+'</p>';
+  var пл=POD['плотность']||{};
+  if(POD['пусто']){
+    h+='<p class="podplot"><b>Калории на сегодня кончились</b>, а белка не хватает '+Math.round(ост.prot)+' г. '+
+       'Недобрать белок на дефиците хуже небольшого перебора — бери самое постное.</p>';
+  } else if(пл['надо']>8){
+    h+='<p class="podplot">На остаток дня нужно <b>'+зпт(пл['надо'])+' г белка на 100 ккал</b> — '+esc(пл['слово']||'')+'.</p>';
   }
   box.innerHTML=h;
 }
@@ -10087,19 +10142,12 @@ function renderPod(){
    вешать слушатель на него при загрузке — это обращение к null. Слушаем
    вкладку целиком. */
 document.getElementById('eatbody').addEventListener('click', function(e){
-  var t=e.target.closest('[data-podfit]');
-  if(t){ var i=+t.dataset.podfit; PODFIT = PODFIT===i ? null : i; renderPod(); haptic('light'); return; }
-  var a=e.target.closest('[data-podadd]');
-  if(a){
-    if(PODBUSY) return; PODBUSY=true; a.disabled=true; a.textContent='Записываю…';
-    fPost('/meal/repeat', {uid:syncUid(), id:a.dataset.podadd, date:fDate()}).then(function(d){
-      PODBUSY=false; FOOD.day=d.day; renderFoodDay(); haptic('ok'); podPull(); loadDayScore();
-    }).catch(function(err){ PODBUSY=false; a.disabled=false; a.textContent='Записать'; fReply(humanErr(err),'bad'); });
-    return;
-  }
+  var t=e.target.closest('[data-podk]');
+  if(t){ PODK=t.dataset.podk||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   if(e.target.closest('[data-podelse]')){
+    goPage('food');
     var i2=document.getElementById('ftext');
-    if(i2){ i2.value='Что съесть на '+((POD&&POD['тип'])||'ужин')+'? Не из того, что уже предложено.'; i2.focus(); }
+    if(i2){ i2.value='Что съесть на '+(подЦель().kind||'ужин')+'? Не из того, что уже предложено.'; i2.focus(); }
     haptic('light'); return;
   }
 });
@@ -10109,7 +10157,7 @@ document.getElementById('eatbody').addEventListener('click', function(e){
    один раз и лежит здесь, пока не сменится версия: фильтры считаются на
    телефоне и потому отвечают мгновенно, а не через сеть на каждое нажатие.
    Своя еда идёт первой и помечена: её числа человек проверял сам. */
-var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN=null, CATBUSY=false;
+var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN='0', CATBUSY=false;
 function catПрочесть(){
   try{ var r=JSON.parse(localStorage.getItem('gf_dishes')||'null');
        if(r && r.v && r.блюда) return r; }catch(e){}
@@ -10146,17 +10194,25 @@ function catСписок(){
     if(CATOSN && x.осн!==CATOSN) return false;
     return true;
   });
+  /* Метка «после него день не закрыть» считается для всех строк и при любой
+     сортировке: если человек сам попросил «по белку», порядок он получит по
+     белку, но предупреждение всё равно увидит. */
+  сп.forEach(function(x){
+    x._п = подПосле({kcal:x.kp, prot:x.pp});
+    x._л = (x._п && x._п['ломает']) ? 1 : 0;
+  });
   if(CATSORT) return catСорт(сп);
   /* Тот же счёт, что у подбора на сервере: перебор калорий дорог, недобор
      белка дороже, клетчатка следом, за своё небольшая скидка. Список идёт
      сверху вниз от «подходит сейчас» — иначе первым лежало бы то, что раньше
      попало в файл, и каталог из ста блюд стал бы свалкой. */
-  var ц=(POD&&POD.цель)||null;
+  var ц=подЦель();
   if(ц && ц.kcal>0){
     var цена=function(x){
       return Math.max(0, x.kp-ц.kcal)*1 + Math.max(0, ц.prot-x.pp)*8
            + Math.max(0, ц.fib-x.cp)*3 + Math.max(0, ц.kcal-x.kp)*0.25
-           - (x.свой?40:0);
+           - (x.свой?40:0)
+           + x._л*5000;
     };
     сп.sort(function(a,b){ return цена(a)-цена(b); });
   }
@@ -10177,7 +10233,7 @@ function catРяд(имя, ключ, знач, список, счёт, всег�
    «меньше»: направление по умолчанию разное, и навязывать одно на всех было бы
    неверно. Повторное нажатие переворачивает. */
 var CATSORT='', CATDIR=0;
-var СОРТ=[['','подходит',0],['k','калории',1],['p','белок',-1],['c','клетчатка',-1],['f','жир',1]];
+var СОРТ=[['','по цели',0],['k','калории',1],['p','белок',-1],['c','клетчатка',-1],['f','жир',1]];
 function catСорт(сп){
   if(!CATSORT) return сп;
   var поле={k:'kp',p:'pp',c:'cp',f:'fp'}[CATSORT];
@@ -10210,23 +10266,26 @@ function renderEat(){
       var стрелка = (он && x[0]) ? '<i>'+((CATDIR||x[2])>0?'↑':'↓')+'</i>' : '';
       return '<button type="button" data-csort="'+x[0]+'" aria-pressed="'+он+'">'+x[1]+стрелка+'</button>';
     }).join('')+'</div>';
-  var сп=catСписок(), ц=(POD&&POD.цель)||{kcal:0,prot:0,fib:0};
+  var сп=catСписок(), ц=подЦель();
   h+='<p class="eatcount">'+сп.length+' '+plural(сп.length,['блюдо','блюда','блюд'])+
      (CATKUH||CATOSN||CATQ||CATSORT ? ' · <button type="button" class="lnk" id="catclear">сбросить</button>' : '')+'</p>';
   h+=сп.map(function(x,i){
     var от=CATOPEN===String(i);
-    var s='<button type="button" class="eatrow" data-cat="'+i+'" aria-expanded="'+от+'">'+
+    var s='<button type="button" class="eatrow'+(x._л?' brk':'')+'" data-cat="'+i+'" aria-expanded="'+от+'">'+
       '<span class="en"><b>'+esc(x.n)+'</b>'+(x.свой?'<s>своё</s>':'<s>'+esc(x.кух)+'</s>')+'</span>'+
-      '<span class="em"><span>ккал <i>'+зпт(x.kp)+'</i></span><span>белок <i>'+зпт(x.pp)+'</i></span><span>жир <i>'+зпт(x.fp)+'</i></span><span>клетч. <i>'+зпт(x.cp)+'</i></span></span></button>';
+      '<span class="em"><span>ккал <i>'+зпт(x.kp)+'</i></span><span>белок <i>'+зпт(x.pp)+'</i></span><span>жир <i>'+зпт(x.fp)+'</i></span><span>клетч. <i>'+зпт(x.cp)+'</i></span></span>'+
+      (x._л?'<span class="ebrk">после него день не закрыть</span>':'')+'</button>';
     if(от){
       s+='<div class="eatopen"><p>'+(x.g?'<b>Порция '+x.g+' г.</b> ':'')+esc(подКак(
             {kcal:x.kp,prot:x.pp,fib:x.cp}, ц))+'</p>'+
+        (x._п ? '<p'+(x._л?' class="warn"':'')+'>'+esc(подПослеТекст(x._п))+'</p>' : '')+
         '<p class="src">'+(x.свой
           ? 'Ты это уже ел — числа из твоей записи.'
           : (x.точно
              ? 'Состав по технологической карте '+esc(x.ттк||'')+(x.url?' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">карта</a>':'')
              : 'Прикидка: нормативной карты на это блюдо нет, состав подобран.'))+'</p>'+
-        '<button type="button" class="btn prim" data-catadd="'+i+'">Записать</button></div>';
+        '<div class="eatbtns"><button type="button" class="btn prim" data-catadd="'+i+'">Записать</button>'+
+        (i?'':'<button type="button" class="btn" data-podelse="1">Другое</button>')+'</div></div>';
     }
     return s;
   }).join('');
@@ -10235,16 +10294,16 @@ function renderEat(){
   renderPod();
 }
 document.getElementById('eatbody').addEventListener('click', function(e){
-  var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN=null; renderEat(); haptic('light'); return; }
-  var o=e.target.closest('[data-cosn]'); if(o){ CATOSN=o.dataset.cosn||''; CATOPEN=null; renderEat(); haptic('light'); return; }
+  var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
+  var o=e.target.closest('[data-cosn]'); if(o){ CATOSN=o.dataset.cosn||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var ст=e.target.closest('[data-csort]');
   if(ст){
     var v=ст.dataset.csort;
     if(CATSORT===v && v){ CATDIR = -(CATDIR || (СОРТ.filter(function(x){return x[0]===v;})[0]||[0,0,1])[2]); }
     else { CATSORT=v; CATDIR=0; }
-    CATOPEN=null; renderEat(); haptic('light'); return;
+    CATOPEN='0'; renderEat(); haptic('light'); return;
   }
-  if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATSORT=''; CATDIR=0; CATOPEN=null; renderEat(); haptic('light'); return; }
+  if(e.target.closest('#catclear')){ CATKUH=''; CATOSN=''; CATQ=''; CATSORT=''; CATDIR=0; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var a=e.target.closest('[data-catadd]');
   if(a){
     if(CATBUSY) return;
@@ -10258,7 +10317,7 @@ document.getElementById('eatbody').addEventListener('click', function(e){
                          text:x.n+(x.g?' '+x.g+' г':''), kcal:x.kp, prot:x.pp, fib:x.cp};
     fPost(путь, тело).then(function(d){
       CATBUSY=false; if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); }
-      haptic('ok'); CATOPEN=null; podPull(); loadDayScore();
+      haptic('ok'); CATOPEN='0'; podPull(); loadDayScore();
     }).catch(function(err){ CATBUSY=false; a.disabled=false; a.textContent='Записать'; say(humanErr(err)); });
     return;
   }
@@ -10267,7 +10326,7 @@ document.getElementById('eatbody').addEventListener('click', function(e){
 });
 document.getElementById('eatbody').addEventListener('input', function(e){
   if(e.target.id!=='eatq') return;
-  CATQ=e.target.value||''; CATOPEN=null;
+  CATQ=e.target.value||''; CATOPEN='0';
   var п=e.target.selectionStart; renderEat();
   var сн=document.getElementById('eatq'); if(сн){ сн.focus(); try{ сн.setSelectionRange(п,п); }catch(_){} }
 });
