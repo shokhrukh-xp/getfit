@@ -53,7 +53,9 @@ const СНИМОК = () => {
   async function наЭкран(таб, сег) {
     await page.evaluate(() => {
       document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
-      document.body.classList.remove('coach');
+      /* знакомство прячет всё приложение (body.onb) — закрываем его так же,
+         как закрываем модальные окна: у него своя проверка, test-znakomstvo */
+      document.body.classList.remove('coach', 'onb');
       window.scrollTo(0, 0);
     });
     await page.waitForTimeout(250);

@@ -65,15 +65,13 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   дано(await page.isVisible('#wz-only'), 'на первом шаге знакомства спрашивают, что ведём');
   await page.click('#wz-only button[data-v="food"]');
   await page.fill('#wz-age', '33'); await page.fill('#wz-ht', '168'); await page.fill('#wz-bw', '61');
-  дано(/шаг 1 из 2/.test(await page.textContent('#wzstep')), 'счётчик шагов честный: ' + await page.textContent('#wzstep'));
   дано(!(await page.isVisible('#wzhave').catch(() => false)), 'готовые программы не предлагаются');
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(900);
-  /* второй и последний шаг — цель; про зал в нём не спрашивают */
-  дано(await page.isVisible('#wzgoal'), 'второй шаг — цель');
+  await page.waitForTimeout(1200);
+  /* цель — на той же странице; про зал в ней не спрашивают */
+  дано(await page.isVisible('#wzgoal'), 'цель на той же странице');
   дано(!(await page.isVisible('#g-gymrow').catch(() => false)), 'вопроса «что важнее в зале» у них нет');
-  await page.click('#g-go');
-  await page.waitForTimeout(1400);
+  await page.click('#wz-one');
+  await page.waitForTimeout(1700);
   дано(!(await page.isVisible('#picker .modalbox').catch(() => false)) || !(await page.$eval('#picker', e => e.classList.contains('show'))),
     'знакомство закончилось на цели, без вопросов про зал');
   const в3 = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));

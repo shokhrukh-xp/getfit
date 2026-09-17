@@ -32,7 +32,11 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   const ош = await M.поднять(page, { theme: 'dark', wait: 2800, admin: true });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   await page.click('#profbtn'); await page.waitForTimeout(700);
-  дано(!(await page.$eval('#profboss', e => e.hidden)), 'у владельца строка «Приборная» в профиле есть');
+  дано(!(await page.$eval('#profboss', e => e.hidden)), 'у владельца строка в профиле есть');
+  /* 17.09, его слова: «переименуй Приборную в Админ панель». Имя одно на
+     весь экран: и в строке профиля, и в шапке самой страницы. */
+  дано(await page.$eval('#profboss', e => /Админ панель/.test(e.textContent)),
+    'и называется «Админ панель»: ' + (await page.$eval('#profboss', e => e.textContent.trim())));
   await page.click('#profboss');
   await page.waitForTimeout(1300);
   дано(!(await page.$eval('#profm', e => e.classList.contains('show'))), 'нажатие закрывает профиль и уводит на приборную');

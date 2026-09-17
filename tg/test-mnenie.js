@@ -90,19 +90,56 @@ async function раскрыть(page, i) {
   await page.waitForTimeout(500);
   дано(await page.evaluate(() => document.body.classList.contains('ordmode')),
     'долгое удержание включило режим порядка');
-  const группы = await page.$$eval('.ordrow .ordn', ns => ns.map(n => n.firstChild.textContent.trim()));
+  /* 16.09, его слова: «режим полностью меняет, как выглядит экран». Теперь не
+     меняет: те же строки с фото и весами, только каждая группа в рамке. */
+  const ИМГРУПП = p => p.$$eval('#list .ordg', gs => gs.map(g =>
+    Array.prototype.map.call(g.querySelectorAll('.exrn b'), b2 => b2.textContent.replace(/^[АБ]/, '').trim()).join(' + ')));
+  const группы = await ИМГРУПП(page);
   дано(группы.length >= 2, 'список для перестановки собран: ' + группы.length);
-  дано(группы.some(t => / \+ /.test(t)), 'суперсет стоит одной строкой, парой: ' + (группы.filter(t => / \+ /.test(t))[0] || '—'));
+  дано(группы.some(t => / \+ /.test(t)), 'суперсет стоит одной рамкой, парой: ' + (группы.filter(t => / \+ /.test(t))[0] || '—'));
+  дано((await page.$$('#list .ordg .exrow .exph img, #list .ordg .exrow .exph svg')).length >= 2,
+    'фото упражнений остались на месте — экран не подменён');
+  дано(/из/.test(await page.$eval('#list .ordg .exrv', e => e.textContent)),
+    'и счёт подходов тоже: ' + (await page.$eval('#list .ordg .exrv', e => e.textContent.replace(/\s+/g, ' ').trim())));
 
   const вниз = await page.$$('[data-orddn]');
   await вниз[0].click(); await page.waitForTimeout(500);
-  const после = await page.$$eval('.ordrow .ordn', ns => ns.map(n => n.firstChild.textContent.trim()));
+  const после = await ИМГРУПП(page);
   дано(после[0] === группы[1] && после[1] === группы[0], 'стрелка поменяла местами: ' + после[0]);
+
+  /* ── перенос пальцем: тащим третью строку в начало ──
+     16.09, его просьба с самого начала была про палец, а не про стрелки.
+     Стрелки меняют местами соседей; палец ПЕРЕНОСИТ через несколько строк,
+     и остальные должны сдвинуться, а не перемешаться. */
+  let финал = после;
+  const доТаски = await ИМГРУПП(page);
+  if (доТаски.length >= 3) {
+    const ряды = await page.$$('#list .ordg');
+    const р3 = await (await ряды[2].$('.ordgrip')).boundingBox();
+    const верх = await ряды[0].boundingBox();
+    дано(!!р3 && !!верх, 'у каждой строки есть ручка для пальца');
+    await page.mouse.move(р3.x + р3.width / 2, р3.y + р3.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(р3.x + р3.width / 2, р3.y + р3.height / 2 - 12, { steps: 3 });
+    дано(await page.evaluate(() => !!document.querySelector('.ordg.drag')), 'карточка поднялась под пальцем');
+    /* тащим ВЫШЕ середины первой группы — иначе карточка встанет второй, и
+       это правильно: перенос считается по серединам, а группы разной высоты */
+    await page.mouse.move(р3.x + р3.width / 2, верх.y + 4, { steps: 12 });
+    await page.waitForTimeout(200);
+    await page.mouse.up();
+    await page.waitForTimeout(800);
+    const послеТаски = await ИМГРУПП(page);
+    дано(послеТаски[0] === доТаски[2], 'третья строка встала первой: ' + послеТаски[0]);
+    дано(послеТаски[1] === доТаски[0] && послеТаски[2] === доТаски[1],
+      'остальные сдвинулись, а не поменялись местами: ' + послеТаски.slice(0, 3).join(' · '));
+    дано(!(await page.evaluate(() => !!document.querySelector('.ordg.drag'))), 'после отпускания ничего не зависло');
+    финал = послеТаски;
+  }
 
   await page.click('#orddone'); await page.waitForTimeout(700);
   дано(!(await page.evaluate(() => document.body.classList.contains('ordmode'))), 'режим выключается «Готово»');
   const всписке = await ИМЕНА(page);
-  дано(всписке[0] === после[0].split(' + ')[0], 'и порядок применился к дню: ' + всписке[0]);
+  дано(всписке[0] === финал[0].split(' + ')[0], 'и порядок применился к дню: ' + всписке[0]);
 
   /* ── порядок пережил перезагрузку ── */
   await page.reload({ waitUntil: 'domcontentloaded' });

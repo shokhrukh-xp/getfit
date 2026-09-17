@@ -18,13 +18,12 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   let page = await br.newPage({ viewport: { width: 390, height: 1300 } });
   const ош = await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500 });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
+  дано(await page.isVisible('#wzgoal'), 'цель стоит на той же странице, что рост и вес');
+  дано(!(await page.isVisible('#wzstep').catch(() => false)), 'счётчика шагов у одной страницы нет');
+  дано(/Заполни возраст, рост и вес/.test(await page.textContent('#g-body')),
+    'пока веса нет — темп не считаем и «не получилось» не показываем: ' + (await page.textContent('#g-body')).trim());
   await page.fill('#wz-age', '34'); await page.fill('#wz-ht', '176'); await page.fill('#wz-bw', '88');
-  дано(/шаг 1 из 4/.test(await page.textContent('#wzstep')), 'счётчик: ' + await page.textContent('#wzstep'));
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(900);
-
-  дано(await page.isVisible('#wzgoal'), 'после «о себе» идёт шаг цели, а не анкета');
-  дано(/шаг 2 из 4/.test(await page.textContent('#wzstep')), 'цель — второй шаг: ' + await page.textContent('#wzstep'));
+  await page.waitForTimeout(1200);
   дано(await page.isVisible('#g-rng'), 'шкала на месте');
   дано(await page.isVisible('#g-gymrow'), 'у того, кто ходит в зал, спрашивают, что важнее');
 
@@ -54,16 +53,15 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
 
   /* «держать» — шкала не нужна */
   await page.click('#g-wt button[data-v="keep"]');
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(700);
   дано(!(await page.isVisible('#g-rng').catch(() => false)), 'у «держать» шкалы нет');
   await page.click('#g-wt button[data-v="down"]');
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(700);
   дано(await page.isVisible('#g-rng'), 'вернулись к «похудеть» — шкала снова на месте');
 
-  await page.click('#g-go');
-  await page.waitForTimeout(1200);
-  дано(await page.isVisible('#wzform'), 'после цели идёт анкета «где и когда»');
-  дано(/шаг 3 из 4/.test(await page.textContent('#wzstep')), 'счётчик пошёл дальше: ' + await page.textContent('#wzstep'));
+  дано(await page.isVisible('#wzform'), 'анкета «где и когда» тут же, ниже цели');
+  дано(await page.isVisible('#wz-one'), 'и одна кнопка на всё: ' + (await page.textContent('#wz-one')).trim());
+  дано(!(await page.isVisible('#g-go').catch(() => false)), 'своей кнопки у шага цели больше нет');
   await page.close();
 
   /* ── только питание: цель тоже обязательна, но зала в ней нет ── */
@@ -71,14 +69,13 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500 });
   await page.click('#wz-only button[data-v="food"]');
   await page.fill('#wz-age', '19'); await page.fill('#wz-ht', '180'); await page.fill('#wz-bw', '79');
-  дано(/шаг 1 из 2/.test(await page.textContent('#wzstep')), 'у «только еды» два шага: ' + await page.textContent('#wzstep'));
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(1200);
   дано(await page.isVisible('#wzgoal'), 'цель спрашивают и у тех, кто ведёт одну еду');
   дано(!(await page.isVisible('#g-gymrow').catch(() => false)), 'вопроса про зал у них нет');
-  дано(/шаг 2 из 2/.test(await page.textContent('#wzstep')), 'счётчик: ' + await page.textContent('#wzstep'));
-  await page.click('#g-go');
-  await page.waitForTimeout(1400);
+  дано(!(await page.isVisible('#wzform').catch(() => false)), 'и анкеты про зал на странице нет вовсе');
+  дано(/Начать/.test(await page.textContent('#wz-one')), 'кнопка не обещает программу: ' + (await page.textContent('#wz-one')).trim());
+  await page.click('#wz-one');
+  await page.waitForTimeout(1700);
   const вкладки = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
   дано(вкладки.join(',') === 'Сегодня,Еда', 'знакомство кончилось, две вкладки: ' + вкладки.join(' · '));
   await page.close();
@@ -88,8 +85,7 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500,
     safe: { w: 79, max: 0.39, limit: 'обмен', floor: 57.3, upMax: 0.35 } });
   await page.fill('#wz-age', '19'); await page.fill('#wz-ht', '180'); await page.fill('#wz-bw', '79');
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(1200);
   const почему = await page.textContent('#g-why');
   дано(/0,39 кг в неделю/.test(почему), 'на экране достижимый темп, а не 1 % веса: ' + почему);
   дано(/ниже основного обмена/.test(почему), 'сказано, что упирается в пол нормы');
@@ -101,8 +97,7 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500,
     safe: { w: 58, max: 0, limit: 'обмен', floor: 57.3, upMax: 0.35 } });
   await page.fill('#wz-age', '29'); await page.fill('#wz-ht', '161'); await page.fill('#wz-bw', '58');
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(1200);
   дано(!(await page.isVisible('#g-rng').catch(() => false)), 'шкалы нет: снижать нечем');
   дано(/снижать сейчас нечем/.test(await page.textContent('#g-body')),
     'сказано прямо: ' + await page.textContent('#g-body'));
@@ -118,13 +113,13 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   page.on('request', r => { if (/\/goal/.test(r.url())) запросы.push({ м: r.method(), u: r.url(), т: r.postData() }); });
   await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500 });
   await page.fill('#wz-age', '19'); await page.fill('#wz-ht', '180'); await page.fill('#wz-bw', '79');
-  await page.click('#wz-me-go');
-  await page.waitForTimeout(1100);
+  await page.waitForSelector('#g-rng', { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(500);
   const гет = запросы.filter(r => r.м === 'GET').pop();
   дано(!!гет && /bw=79/.test(гет.u), 'вес из анкеты ушёл вместе с запросом границ: ' + (гет ? гет.u.split('?')[1] : 'запроса нет'));
   дано(!!гет && /ht=180/.test(гет.u) && /age=19/.test(гет.u), 'рост и возраст тоже');
-  await page.click('#g-go');
-  await page.waitForTimeout(1200);
+  await page.click('#wz-one');
+  await page.waitForTimeout(1600);
   const пост = запросы.filter(r => r.м === 'POST').pop();
   дано(!!пост && /"bw":79/.test(пост.т || ''), 'и при записи цели тоже: ' + (пост ? (пост.т||'').slice(0, 90) : 'запроса нет'));
 
@@ -137,8 +132,8 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
     day: { meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }, score: null, circle: null, wait: 2500 });
   await page.click('#wz-only button[data-v="food"]');
   await page.fill('#wz-age', '19'); await page.fill('#wz-ht', '180'); await page.fill('#wz-bw', '79');
-  await page.click('#wz-me-go'); await page.waitForTimeout(1100);
-  await page.click('#g-go'); await page.waitForTimeout(1600);
+  await page.waitForTimeout(1200);
+  await page.click('#wz-one'); await page.waitForTimeout(1900);
   const тело = await page.evaluate(() => {
     const b = document.querySelector('.htile.hwide');
     return b ? b.textContent.replace(/\s+/g, ' ').trim() : 'плитки нет';

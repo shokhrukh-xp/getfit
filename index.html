@@ -270,16 +270,15 @@ select.week{
 }
 /* режим «только питание»: всё, что про зал, с экранов уходит */
 body.nogym .l1-in button[data-page="gym"]{display:none}
+body.nogym .l1-in{grid-template-columns:repeat(2,1fr)}
 /* На приборной плавающая кнопка тренера только закрывает таблицу людей */
 body.onadmin .coachfab{display:none!important}
 body.nogym .gymonly{display:none!important}
 .l1-in{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;margin:0 auto}
-/* Четвёртая вкладка появляется только у владельца — и только тогда сетка
-   становится четырёхколоночной. Иначе три кнопки поделили бы место на
-   четверых и висела бы пустая колонка. */
-body.boss .l1-in{grid-template-columns:repeat(4,1fr)}
-body.boss .l1 button{padding-left:2px;padding-right:2px;font-size:9.5px}
-body.boss .l1 button svg{width:22px;height:22px}
+/* Три колонки на всех. Раньше у владельца сетка становилась
+   четырёхколоночной под «Приборную», и когда кнопку убрали, три оставшиеся
+   жались влево, оставив пустую четверть. 17.09, его слова: «почему нижняя
+   навигация смещена всё ещё налево». */
 .l1 button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:8px 4px 7px;color:var(--muted);font-size:10.5px;letter-spacing:0;
@@ -2240,8 +2239,9 @@ body.onb #picker .modalbox::before{display:none}
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
-    <!-- Владельцу — четвёртая. Скрыта до тех пор, пока сервер не подтвердит,
-         что это он: угадывать такое по номеру на устройстве нельзя. -->
+    <!-- Вкладок ровно три, у всех одинаково. Четвёртая, «Админ панель»,
+         стояла здесь у владельца и занимала место наравне с едой и залом —
+         17.09 она уехала строкой в профиль. -->
   </div>
 </nav>
 
@@ -2274,6 +2274,19 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button></p>
       </div>
+      <!-- 17.09, его слова: «зачем нужна часть "Спорт вне зала" в профиле,
+           если мы её можем фиксировать на странице тренировки». План переехал
+           сюда, к кнопке «+ Занятие вне зала»: одно место про спорт вне зала,
+           а не два. Свёрнут — это настройка, а не действие дня. У тех, кто
+           ведёт только еду, зала нет вовсе, и блок переезжает к еде — см.
+           applyOnly(). -->
+      <div id="planslot-gym"><div class="invbox" id="planwrap">
+        <button type="button" class="invhead" id="pltoggle" aria-expanded="false"><span class="invl">спорт вне зала</span><span class="invsum" id="plsum">не задан</span><i class="invchev">›</i></button>
+        <div class="invbody" id="plbody" hidden>
+          <div class="plan" id="me-plan"></div>
+          <p class="seghint2">Регулярные занятия — теннис по средам, бассейн по субботам. Войдут в норму еды в эти дни сами. Разовое записывай кнопкой «Занятие вне зала» выше.</p>
+        </div>
+      </div></div>
       </section>
     <section class="page hide" id="p-log">
       <div class="sec" style="padding-top:18px">
@@ -2339,6 +2352,7 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <p class="freply" id="fmreply" hidden></p>
         </div>
+        <div id="planslot-food"></div>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -2366,7 +2380,7 @@ body.onb #picker .modalbox::before{display:none}
         <div id="cirbody"><p class="empt">Загружаю…</p></div>
       </div>
     </section>
-    <!-- Приборная владельца. Сверху ответ на «я в плюсе?», потом то, что
+    <!-- Админ панель владельца. Сверху ответ на «я в плюсе?», потом то, что
          требует действия, и только потом числа и люди: экран должен говорить,
          что делать, а не просто показывать данные. -->
     <section class="page hide" id="p-admin">
@@ -2623,17 +2637,11 @@ body.onb #picker .modalbox::before{display:none}
     <div class="pf gymonly hide" id="pf-lim"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
     <div class="pf gymonly hide" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
     <div class="pf gymonly hide" id="pf-level"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
-    <div class="pf gymonly" id="pf-auto"><span class="pfl">тренер</span><div class="seg" id="me-auto"></div></div>
-    <p class="seghint gymonly">«сам меняет» — правки встают сразу; «спрашивает» — каждая под кнопкой</p>
     <div id="recobox"></div>
     <!-- Одна кнопка про сборку, а не две. Есть программа — «изменить и
          пересобрать» живёт на карточке; нет — эта. -->
     <p class="aistate gymonly" id="aistate" hidden></p>
     <div id="aibox"></div>
-
-    <h4 class="psec">Спорт вне зала</h4>
-    <div class="plan" id="me-plan"></div>
-    <p class="seghint2">учитывается в норме еды в эти дни; разовое — тренеру в чат</p>
 
     <!-- 17.09, его слова: «не понимаю секцию друзья, оставь там только ссылку
          поделиться». Круги переехали целиком на вкладку «Рейтинг», где они и
@@ -2646,7 +2654,7 @@ body.onb #picker .modalbox::before{display:none}
     <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
 
     <h4 class="psec">Приложение</h4>
-    <button type="button" class="pfrow" id="profboss" hidden><span>Приборная</span><i>›</i></button>
+    <button type="button" class="pfrow" id="profboss" hidden><span>Админ панель</span><i>›</i></button>
     <!-- Карточка «программа …» отсюда убрана: то же самое стоит выше, в
          разделе «Зал», и третьим местом об одном факте быть незачем. -->
     <p class="mtext bline" id="buildline"></p>
@@ -3683,6 +3691,12 @@ function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
 function applyOnly(){
   var f=foodOnly();
   document.body.classList.toggle('nogym', f);
+  /* «только еда» убирает вкладку зала целиком — вместе с ней исчез бы и план
+     спорта вне зала, а этим людям он нужнее всех: другого учёта движения у
+     них нет. Поэтому блок переезжает на «Еду». Слушатели висят на самом узле
+     и перенос переживают. */
+  var w=document.getElementById('planwrap'), гнездо=document.getElementById(f?'planslot-food':'planslot-gym');
+  if(w && гнездо && w.parentNode!==гнездо) гнездо.appendChild(w);
   if(f && TABOF[gget('page','home')]==='gym') goPage('home');
 }
 /* Без веса, роста, возраста и пола нет ни стартовых весов, ни норм по еде —
@@ -4408,8 +4422,6 @@ function goalPull(){
         gset('deload_srv', d.deload.from);
         if(!deloadOn()){ setDeload(true); paintNote(''); try{ TG && TG.showAlert && TG.showAlert('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
       }
-      /* режим правок, выбранный на сервере (через тренера), — пока человек сам не переключил в профиле */
-      if(d.auto && !(myData()||{}).auto){ var meA=myData()||{}; meA.auto=d.auto; gset('me', meA); }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
       renderGoalCard();
@@ -4456,7 +4468,6 @@ var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опы
 var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var PLATEKEYS=[['1.25','1,25 кг'],['2.5','2,5 кг'],['5','5 кг']];
-var AUTOKEYS=[['all','сам меняет'],['ask','спрашивает']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
 function segHtml(id, list, val, multi){
@@ -4514,7 +4525,6 @@ function fillMe(){
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
   var PL=document.getElementById('me-plate'); if(PL) PL.innerHTML=segHtml('plate',PLATEKEYS,String(me.plate||'1.25'));
-  var AU=document.getElementById('me-auto');  if(AU) AU.innerHTML=segHtml('auto',AUTOKEYS,me.auto||'ask');
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
   renderPlanEditor();
@@ -4543,7 +4553,7 @@ function readMeForm(){
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
           only:pick('me-only')||old.only||'all',
-          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25), auto:pick('me-auto')||old.auto||'ask',
+          place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25),
           min:old.min||null, about:old.about||'',
           /* 17.09, его слова: «кнопки нравится и не нравится теперь прямо на
              карточках упражнений, с профиля эти поля можно убрать». Убрал —
@@ -4982,7 +4992,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 14:54';
+var BUILD = '17.09 16:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6857,7 +6867,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull(); subPull();
+      recoBoot(); pushVolume(); renderReco2(); planMigrate(); renderPlanEditor(); recoPull(); goalPull(); botPull(); subPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -8013,7 +8023,7 @@ function goPage(p){
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<b>'+wd.charAt(0).toUpperCase()+wd.slice(1)+'</b>, '+nd.getDate()+' '+MONTHS[nd.getMonth()]; }
-          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Приборная'}[p]||'')+'</b>'; }
+          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
@@ -9936,7 +9946,6 @@ function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока �
 function admВкладка(){
   var он = !!(SUB && SUB.boss);
   var b=document.getElementById('profboss'); if(b) b.hidden = !он;
-  document.body.classList.toggle('boss', он);
 }
 function renderSub(){
   var w=document.getElementById('sub-what'); if(!w||!SUB) return;
@@ -10876,7 +10885,23 @@ function renderPlanEditor(){
   }).join('');
   h+='<button type="button" class="btn sm" id="pladd">+ занятие</button>';
   el.innerHTML=h;
+  plSum();
 }
+/* Свёрнутая строка должна говорить то же, что раскрытый список: иначе человек
+   читает «не задан» над заданным планом. */
+function plSum(){
+  var el=document.getElementById('plsum'); if(!el) return;
+  var l=planList();
+  if(!l.length){ el.textContent='не задан'; return; }
+  el.textContent=l.map(function(p){
+    var d=(p.d||[]).slice().sort(function(a,b){ return (a||7)-(b||7); }).map(function(x){ return WD[x]; });
+    return p.k+(d.length?' · '+d.join(', '):'');
+  }).join(' · ');
+}
+document.getElementById('pltoggle').addEventListener('click', function(){
+  var b=document.getElementById('plbody'), от=this.getAttribute('aria-expanded')==='true';
+  this.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light');
+});
 function readPlanEditor(){
   var el=document.getElementById('me-plan'); if(!el) return null;
   var out=[];
@@ -10895,9 +10920,9 @@ document.getElementById('me-plan').addEventListener('click', function(e){
          planSave(l2); renderPlanEditor(); planRefresh(); haptic('light'); return; }
   var db=e.target.closest('.pldays button[data-pd]');
   if(db){ db.setAttribute('aria-pressed', String(db.getAttribute('aria-pressed')!=='true'));
-          planSave(readPlanEditor()||[]); planRefresh(); haptic('light'); }
+          planSave(readPlanEditor()||[]); plSum(); planRefresh(); haptic('light'); }
 });
-document.getElementById('me-plan').addEventListener('change', function(){ planSave(readPlanEditor()||[]); planRefresh(); });
+document.getElementById('me-plan').addEventListener('change', function(){ planSave(readPlanEditor()||[]); plSum(); planRefresh(); });
 /* норма дня зависит от плана — после правки просим сервер пересчитать */
 function planRefresh(){
   fGet('/reco?uid='+encodeURIComponent(syncUid())).then(function(d){
@@ -11717,10 +11742,11 @@ function takeChanges(d){
      раньше отклонял: «Понятно» на прошлой неделе не должно прятать кнопку сегодня */
   gset('reco2_seen', null);
   var показать=function(){
-    /* режим «всё само»: тренер сказал «встанет само» — значит, встаёт сейчас,
-       а карточка показывает картинками, что именно встало. Раньше здесь была
-       кнопка при словах «кнопка не нужна» — два места спорили. */
-    if((myData()||{}).auto==='all' && (c.what==='swap'||c.what==='sets') && recoCan(c) && (c.what!=='swap' || recoPick(c, recoCan(c).hit))){
+    /* 17.09, его слова: «у всех сам меняет, если пользователь просит». Выбора
+       «спрашивает» больше нет ни у кого: правка встаёт сейчас, а карточка
+       показывает картинками, что именно встало. Раньше здесь была кнопка при
+       словах «кнопка не нужна» — два места спорили. */
+    if((c.what==='swap'||c.what==='sets') && recoCan(c) && (c.what!=='swap' || recoPick(c, recoCan(c).hit))){
       applyAuto([c], {quiet:true});
       c.applied=true;
     }
