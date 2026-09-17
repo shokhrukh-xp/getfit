@@ -61,72 +61,106 @@ const полоса = page => page.evaluate(() => {
   await page.keyboard.press('Escape').catch(() => {});
   await page.evaluate(() => { const m = document.getElementById('profm'); if (m) m.classList.remove('show'); });
 
-  /* ══ 3. план спорта живёт на «Тренировке» ══ */
+  /* ══ 3. про спорт вне зала — одна кнопка, а не две ══ */
   await page.click('.l1-in button[data-page="gym"]');
   await page.waitForTimeout(1100);
-  const дом = await page.evaluate(() => {
-    const w = document.getElementById('planwrap');
-    return { где: w && w.parentNode ? w.parentNode.id : null,
-      виден: !!(w && w.getBoundingClientRect().height > 10),
-      свёрнут: (document.getElementById('plbody') || {}).hidden,
-      сводка: ((document.getElementById('plsum') || {}).textContent || '').trim(),
-      послеКнопки: !!(document.getElementById('addsport') && w &&
-        (document.getElementById('addsport').compareDocumentPosition(w) & Node.DOCUMENT_POSITION_FOLLOWING)) };
-  });
-  дано(дом.где === 'planslot-gym', 'блок стоит на странице тренировки: ' + дом.где);
-  дано(дом.виден, 'и он на экране виден');
-  дано(дом.свёрнут === true, 'свёрнут — это настройка, а не действие дня');
-  дано(дом.послеКнопки, 'и стоит ниже кнопки «Занятие вне зала», рядом с ней');
-  дано(/теннис/.test(дом.сводка) && /ср/.test(дом.сводка) && /сб/.test(дом.сводка),
-    'свёрнутая строка говорит то же, что список внутри: ' + дом.сводка);
+  const кнопок = await page.evaluate(() => Array.from(document.querySelectorAll('button'))
+    .filter(b => b.offsetParent && /занятие вне зала/i.test(b.textContent)).length);
+  дано(кнопок === 1, 'на странице тренировки ровно одна кнопка про занятие вне зала: ' + кнопок);
+  дано(await page.$('#me-plan') === null && await page.$('#planwrap') === null,
+    'отдельного редактора расписания больше нет нигде');
 
-  await page.click('#pltoggle'); await page.waitForTimeout(500);
-  const внутри = await page.evaluate(() => ({
-    открыт: !(document.getElementById('plbody') || {}).hidden,
-    строк: document.querySelectorAll('#me-plan .plrow').length,
-    вид: (document.querySelector('#me-plan .plk') || {}).value,
-    дни: Array.from(document.querySelectorAll('#me-plan .pldays button[aria-pressed="true"]')).map(b => b.textContent),
-    добавить: !!document.getElementById('pladd'),
-    подпись: ((document.querySelector('#plbody .seghint2') || {}).textContent || '').replace(/\s+/g, ' ')
+  await page.click('#addsport'); await page.waitForTimeout(900);
+  const лист = await page.evaluate(() => ({
+    открыт: !!document.querySelector('#sportm.show'),
+    повторы: Array.from(document.querySelectorAll('#sp-plan .splr')).map(e => e.textContent.replace(/\s+/g, ' ').trim()),
+    дни: Array.from(document.querySelectorAll('#sp-days button')).map(b => b.textContent),
+    горят: Array.from(document.querySelectorAll('#sp-days button[aria-pressed="true"]')).map(b => b.textContent),
+    вид: (document.querySelector('#sp-kind button[aria-pressed="true"]') || {}).textContent,
+    кнопка: (document.getElementById('sp-save') || {}).textContent,
+    втораяСкрыта: (document.getElementById('sp-only') || {}).hidden
   }));
-  дано(внутри.открыт, 'раскрывается по нажатию');
-  дано(внутри.строк === 1 && внутри.вид === 'теннис', 'внутри — план человека: ' + внутри.вид);
-  дано(внутри.дни.join(',') === 'ср,сб', 'с его днями: ' + внутри.дни.join(', '));
-  дано(внутри.добавить, 'и кнопка «+ занятие» на месте');
-  дано(/норму еды/.test(внутри.подпись) && /Занятие вне зала/.test(внутри.подпись),
-    'подпись говорит, куда план идёт и чем записать разовое: ' + внутри.подпись.slice(0, 90));
+  дано(лист.открыт, 'лист занятия открылся');
+  дано(лист.дни.join('') === 'пнвтсрчтптсбвс', 'в листе появилась строка дней: ' + лист.дни.join(' '));
+  дано(лист.повторы.length === 1 && /теннис/.test(лист.повторы[0]) && /ср, сб/.test(лист.повторы[0]),
+    'заведённое повторение видно сверху: ' + (лист.повторы[0] || ''));
+  дано(лист.вид === 'теннис' && лист.горят.join(',') === 'ср,сб',
+    'и его дни уже горят у выбранного вида: ' + лист.горят.join(', '));
+  дано(лист.кнопка === 'Записать и повторять', 'кнопка говорит про оба дела: ' + лист.кнопка);
+  дано(лист.втораяСкрыта === true, 'пока ничего не поменяли — второй кнопки нет');
 
-  /* день недели снимается и сразу сохраняется — слушатели перенос пережили */
-  await page.click('#me-plan .pldays button[data-pd="6"]');
-  await page.waitForTimeout(700);
+  /* снимаем субботу: расписание меняется, появляется вторая дорога */
+  await page.click('#sp-days button[data-spd="6"]');
+  await page.waitForTimeout(400);
   const после = await page.evaluate(() => ({
-    вПамяти: (JSON.parse(localStorage.getItem('shp_v1_me') || '{}').plan || [])[0],
-    сводка: ((document.getElementById('plsum') || {}).textContent || '').trim()
+    вторая: (document.getElementById('sp-only') || {}).hidden === false,
+    текст: (document.getElementById('sp-only') || {}).textContent,
+    вПамяти: (JSON.parse(localStorage.getItem('shp_v1_me') || '{}').plan || [])[0]
   }));
-  дано(!!после.вПамяти && (после.вПамяти.d || []).join(',') === '3',
-    'снятый день сохранился: ' + JSON.stringify(после.вПамяти && после.вПамяти.d));
-  дано(/ср/.test(после.сводка) && !/сб/.test(после.сводка), 'и сводка пересчиталась: ' + после.сводка);
+  дано(после.вторая && после.текст === 'Только в расписание',
+    'появилась вторая дорога: ' + после.текст);
+  дано((после.вПамяти.d || []).join(',') === '3,6', 'но пока ничего не сохранилось — нажатия не было');
+
+  await page.click('#sp-only'); await page.waitForTimeout(700);
+  const сохр = await page.evaluate(() => ({
+    закрыт: !document.querySelector('#sportm.show'),
+    план: JSON.parse(localStorage.getItem('shp_v1_me') || '{}').plan || []
+  }));
+  дано(сохр.закрыт, '«только в расписание» закрывает лист');
+  дано(сохр.план.length === 1 && (сохр.план[0].d || []).join(',') === '3',
+    'и сохраняет одно повторение с новыми днями: ' + JSON.stringify(сохр.план[0].d));
+
+  /* крестик убирает повторение целиком */
+  await page.click('#addsport'); await page.waitForTimeout(800);
+  await page.click('#sp-plan [data-splx]'); await page.waitForTimeout(600);
+  const пусто = await page.evaluate(() => ({
+    план: JSON.parse(localStorage.getItem('shp_v1_me') || '{}').plan || [],
+    списокСкрыт: (document.getElementById('sp-planrow') || {}).hidden,
+    горят: document.querySelectorAll('#sp-days button[aria-pressed="true"]').length
+  }));
+  дано(пусто.план.length === 0, 'крестик убрал повторение');
+  дано(пусто.списокСкрыт === true, 'список повторений пропал вместе с последним');
+  дано(пусто.горят === 0, 'и дни у вида погасли');
+
+  /* запись занятия заводит повторение вместе с записью */
+  await page.click('#sp-days button[data-spd="1"]');
+  await page.waitForTimeout(300);
+  дано(await page.$eval('#sp-save', e => e.textContent) === 'Записать и повторять',
+    'кнопка снова про оба дела');
+  await page.click('#sp-save'); await page.waitForTimeout(1400);
+  const итог = await page.evaluate(() => ({
+    закрыт: !document.querySelector('#sportm.show'),
+    план: JSON.parse(localStorage.getItem('shp_v1_me') || '{}').plan || []
+  }));
+  дано(итог.закрыт, 'запись закрыла лист');
+  дано(итог.план.length === 1 && (итог.план[0].d || []).join(',') === '1',
+    'и повторение завелось тем же нажатием: ' + JSON.stringify(итог.план[0]));
   await page.close();
 
-  /* ══ 4. «только еда»: блок переезжает к еде ══ */
+  /* ══ 4. «только еда»: кнопка есть и там ══ */
   const еда = await br.newPage({ viewport: { width: 390, height: 900 } });
   await еда.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   const ош2 = await M.поднять(еда, { theme: 'dark', page: 'food', wait: 2800,
     me: Object.assign({}, ЧЕЛОВЕК, { only: 'food' }) });
   дано(ош2.length === 0, 'у «только еды» страница поднялась без ошибок ' + (ош2[0] || ''));
-  await еда.waitForTimeout(700);
+  await еда.waitForTimeout(800);
   const п2 = await полоса(еда);
   дано(п2.n === 2 && Math.abs(п2.слева - п2.справа) <= 2,
-    'у него в полосе две вкладки и они тоже не смещены: ' + п2.слева + ' / ' + п2.справа);
-  const дом2 = await еда.evaluate(() => {
-    const w = document.getElementById('planwrap');
-    return { где: w && w.parentNode ? w.parentNode.id : null,
-      виден: !!(w && w.getBoundingClientRect().height > 10),
-      сводка: ((document.getElementById('plsum') || {}).textContent || '').trim() };
+    'у него в полосе две вкладки и они не смещены: ' + п2.слева + ' / ' + п2.справа);
+  const кн2 = await еда.evaluate(() => {
+    const b = document.getElementById('addsport2');
+    return { есть: !!b, виден: !!(b && b.offsetParent), зал: !!(document.getElementById('addsport') || {}).offsetParent };
   });
-  дано(дом2.где === 'planslot-food', 'блок переехал на «Еду»: ' + дом2.где);
-  дано(дом2.виден, 'и виден — у этих людей другого учёта движения нет');
-  дано(/теннис/.test(дом2.сводка), 'с тем же планом: ' + дом2.сводка);
+  дано(кн2.есть && кн2.виден, 'кнопка занятия вне зала есть на «Еде» — зала у него нет');
+  дано(!кн2.зал, 'и она там одна: кнопки со страницы зала не видно');
+  await еда.click('#addsport2'); await еда.waitForTimeout(900);
+  const л2 = await еда.evaluate(() => ({
+    открыт: !!document.querySelector('#sportm.show'),
+    повторы: Array.from(document.querySelectorAll('#sp-plan .splr')).map(e => e.textContent.replace(/\s+/g, ' ').trim())
+  }));
+  дано(л2.открыт, 'тот же лист открывается с «Еды»');
+  дано(л2.повторы.length === 1 && /теннис/.test(л2.повторы[0]),
+    'и расписание ему доступно: ' + (л2.повторы[0] || ''));
   await еда.close();
 
   await br.close();

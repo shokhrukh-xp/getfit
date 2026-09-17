@@ -946,16 +946,23 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .planc .rb button.go{border-color:transparent;background:var(--accent);color:var(--on-accent);font-weight:500}
 .pf.pfcol{display:block}
 .pf.pfcol + .seghint{margin-left:0}
-.plan{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-.plrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.plrow select{flex:1 1 120px;min-width:110px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font-size:13px;padding:0 6px}
-.plrow .plm{flex:0 0 56px;width:56px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font-size:13px;text-align:center}
-.plrow em{font-style:normal;font-size:11px;color:var(--dim)}
-.plrow .plx{flex:none;width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:15px}
-.pldays{flex:1 1 100%;display:flex;gap:4px}
-.pldays button{flex:1 1 0;min-width:0;height:30px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:11px}
+.pldays{display:flex;gap:4px}
+.pldays button{flex:1 1 0;min-width:0;height:34px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--dim);font-size:11px}
 .pldays button[aria-pressed="true"]{border-color:var(--accent-txt);background:var(--accent-ghost);color:var(--accent-txt);font-weight:600}
-#pladd{align-self:flex-start;font-size:12px;min-height:32px;padding:0 12px}
+/* Уже заведённые повторения — строками в начале листа занятия. Нажатие
+   кладёт строку в поля, крестик убирает. */
+.splan{display:flex;flex-direction:column;gap:6px}
+.splr{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border-radius:11px;
+  border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.splr b{font-size:13px;font-weight:500}
+.splr i{flex:1 1 auto;min-width:0;font-style:normal;font-size:12px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.splr .splx{flex:0 0 auto;width:26px;height:26px;line-height:26px;text-align:center;border-radius:8px;color:var(--dim);font-size:15px}
+.spdn{margin:7px 0 0;font-size:12px;line-height:1.4;color:var(--muted);min-height:1px}
+/* Кнопка занятия на «Еде» — только тем, у кого нет вкладки зала. */
+.foodadd{display:none}
+body.nogym .foodadd{display:block;margin-top:10px;color:var(--done-txt)}
+#sp-only{margin-top:8px}
 .catnoimg{display:block;width:64px;height:48px;border-radius:8px;background:var(--accent-ghost);flex:none}
 .fmeal.fact .fk{color:var(--accent-txt)}
 .fparts{margin:6px 0 0;font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -2274,19 +2281,6 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button></p>
       </div>
-      <!-- 17.09, его слова: «зачем нужна часть "Спорт вне зала" в профиле,
-           если мы её можем фиксировать на странице тренировки». План переехал
-           сюда, к кнопке «+ Занятие вне зала»: одно место про спорт вне зала,
-           а не два. Свёрнут — это настройка, а не действие дня. У тех, кто
-           ведёт только еду, зала нет вовсе, и блок переезжает к еде — см.
-           applyOnly(). -->
-      <div id="planslot-gym"><div class="invbox" id="planwrap">
-        <button type="button" class="invhead" id="pltoggle" aria-expanded="false"><span class="invl">спорт вне зала</span><span class="invsum" id="plsum">не задан</span><i class="invchev">›</i></button>
-        <div class="invbody" id="plbody" hidden>
-          <div class="plan" id="me-plan"></div>
-          <p class="seghint2">Регулярные занятия — теннис по средам, бассейн по субботам. Войдут в норму еды в эти дни сами. Разовое записывай кнопкой «Занятие вне зала» выше.</p>
-        </div>
-      </div></div>
       </section>
     <section class="page hide" id="p-log">
       <div class="sec" style="padding-top:18px">
@@ -2307,6 +2301,10 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
+        <!-- Тем, кто ведёт только еду, вкладки зала нет вовсе, а кнопка занятия
+             живёт в конце дня на «Тренировке». Единственный учёт движения не
+             должен пропадать у тех, кому он нужнее всех. -->
+        <button type="button" class="btn wide sportbtn sportadd foodadd" id="addsport2">+ Занятие вне зала</button>
         <div class="attbox" id="fattach" hidden></div>
         <div class="fask">
           <button type="button" class="fbtn fshot" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
@@ -2352,7 +2350,6 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <p class="freply" id="fmreply" hidden></p>
         </div>
-        <div id="planslot-food"></div>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -2522,13 +2519,22 @@ body.onb #picker .modalbox::before{display:none}
 <div class="modal" id="sportm" role="dialog" aria-modal="true" aria-labelledby="sporttitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="sporttitle">Занятие вне зала</h3><button class="xbtn" id="sportclose" aria-label="Закрыть">✕</button></div>
-    <div class="sbrow"><span class="sblab">ЧТО БЫЛО</span><div class="seg multi" id="sp-kind"></div>
+    <!-- 17.09, его слова: «теперь на странице тренировок + занятие вне зала в
+         двух местах». Кнопки было две: одна записывала занятие, другая
+         заводила повторение — читались они одинаково. Осталась одна, а
+         повторение стало свойством занятия, как и должно быть. -->
+    <div class="sbrow" id="sp-planrow" hidden><span class="sblab">УЖЕ ПОВТОРЯЕТСЯ</span>
+      <div class="splan" id="sp-plan"></div></div>
+    <div class="sbrow"><span class="sblab">ЧТО</span><div class="seg multi" id="sp-kind"></div>
       <label class="mlab" id="sp-ownrow" hidden>своё название<input id="sp-own" type="text" autocomplete="off" maxlength="24" placeholder="джиу-джитсу"></label></div>
     <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sp-min"></div>
       <label class="mlab" id="sp-minrow" hidden>минут<input id="sp-minown" type="number" inputmode="numeric" min="1" max="600" placeholder="75"></label></div>
     <div class="sbrow"><span class="sblab">КАК ШЛО</span><div class="seg" id="sp-int"></div></div>
+    <div class="sbrow"><span class="sblab">ПОВТОРЯТЬ</span><div class="pldays" id="sp-days"></div>
+      <p class="spdn" id="sp-dayn"></p></div>
     <p class="rec" id="sp-itog"></p>
     <button class="btn prim wide" id="sp-save">Записать</button>
+    <button class="btn wide" id="sp-only" hidden>Только в расписание</button>
   </div>
 </div>
 <!-- Сколько шло занятие. Открывается редко: только когда таймер насчитал
@@ -3691,12 +3697,6 @@ function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
 function applyOnly(){
   var f=foodOnly();
   document.body.classList.toggle('nogym', f);
-  /* «только еда» убирает вкладку зала целиком — вместе с ней исчез бы и план
-     спорта вне зала, а этим людям он нужнее всех: другого учёта движения у
-     них нет. Поэтому блок переезжает на «Еду». Слушатели висят на самом узле
-     и перенос переживают. */
-  var w=document.getElementById('planwrap'), гнездо=document.getElementById(f?'planslot-food':'planslot-gym');
-  if(w && гнездо && w.parentNode!==гнездо) гнездо.appendChild(w);
   if(f && TABOF[gget('page','home')]==='gym') goPage('home');
 }
 /* Без веса, роста, возраста и пола нет ни стартовых весов, ни норм по еде —
@@ -4527,7 +4527,6 @@ function fillMe(){
   var PL=document.getElementById('me-plate'); if(PL) PL.innerHTML=segHtml('plate',PLATEKEYS,String(me.plate||'1.25'));
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
-  renderPlanEditor();
 }
 /* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
    строкой, модели — списком */
@@ -4561,7 +4560,9 @@ function readMeForm(){
              из несуществующих полей значило бы стереть их при первом же
              сохранении профиля. */
           likes:old.likes||[], dislikes:old.dislikes||[],
-          plan:(readPlanEditor()||old.plan||[]), plan_at:old.plan_at||null, sports:old.sports||'',
+          /* расписание в профиле не редактируется — оно живёт в листе занятия;
+             читать его отсюда значило бы стирать при каждом сохранении */
+          plan:old.plan||[], plan_at:old.plan_at||null, sports:old.sports||'',
           med:здRead('zd')||old.med||null};
 }
 /* ══════════ ЗДОРОВЬЕ ══════════
@@ -4992,7 +4993,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 16:10';
+var BUILD = '17.09 17:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5513,7 +5514,7 @@ function bumpSets(di, d){
    ПРИБАВКУ СЧИТАЕТ СЕРВЕР. Формула (MET − 1) × вес × часы живёт в воркере
    одна; повторить её здесь — значит завести второе место про один факт,
    которое однажды разойдётся с первым. */
-var SPORT = { kind:'', own:'', min:60, int:'mod', all:false };
+var SPORT = { kind:'', own:'', min:60, int:'mod', all:false, days:[] };
 var SPKINDS = null, SPTODAY = null, spWait = 0, spBusy = false;
 /* виды, которыми человек пользовался: они встают первыми — свой теннис
    искать в алфавитном списке из тридцати восьми не нужно */
@@ -5582,10 +5583,15 @@ function spItog(){
     }).catch(function(){ el.innerHTML='<i>Не удалось посчитать — запишу, прибавку увидишь в дне.</i>'; });
   }, 260);
 }
-function spDraw(){ spChips(); spMin(); spInt(); spItog(); }
+function spDraw(){ spChips(); spMin(); spInt(); spДни(); spItog(); spПланРисуй(); }
+/* Дни берём у уже заведённого повторения этого вида: выбрал «теннис» — и
+   видно, что он у тебя по средам. Иначе человек завёл бы второе. */
+function spДниВида(){ var p=planFor(spName().trim()); SPORT.days=(p&&p.d||[]).slice(); }
 function openSport(){
   var m=document.getElementById('sportm'); if(!m) return;
-  SPORT={ kind:(spRecent()[0]||'теннис'), own:'', min:60, int:'mod', all:false };
+  SPORT={ kind:(spRecent()[0]||'теннис'), own:'', min:60, int:'mod', all:false, days:[] };
+  spДниВида();
+  var p0=planFor(spName().trim()); if(p0){ SPORT.min=+p0.min||60; SPORT.int=p0.i||'mod'; }
   spDraw(); m.classList.add('show');
   if(!SPKINDS) fGet('/acts?uid='+encodeURIComponent(syncUid())).then(function(d){
     if(d&&d.kinds&&d.kinds.length){ SPKINDS=d.kinds; spChips(); }
@@ -5697,17 +5703,19 @@ function spLoadToday(){
   }).catch(function(){});
 }
 document.addEventListener('click', function(e){
-  if(e.target.closest('#addsport')){ openSport(); haptic('light'); return; }
+  if(e.target.closest('.sportadd')){ openSport(); haptic('light'); return; }
   if(e.target.closest('#sportclose')){ closeSport(); return; }
   var ad=e.target.closest('[data-actdel]');
   if(ad){ spDel(ad.dataset.actdel); return; }
   var m=document.getElementById('sportm');
   if(m && m.classList.contains('show') && e.target===m){ closeSport(); return; }
   var k=e.target.closest('[data-spk]');
-  if(k){ SPORT.kind=k.dataset.spk; SPORT.own=''; spDraw(); haptic('light'); return; }
+  if(k){ SPORT.kind=k.dataset.spk; SPORT.own=''; spДниВида();
+         var pk=planFor(SPORT.kind); if(pk){ SPORT.min=+pk.min||60; SPORT.int=pk.i||'mod'; }
+         spDraw(); haptic('light'); return; }
   if(e.target.closest('[data-spmore]')){ SPORT.all=true; spChips(); return; }
   if(e.target.closest('[data-spown]')){
-    SPORT.own='1'; spChips();
+    SPORT.own='1'; SPORT.days=[]; spChips(); spДни();
     var i=document.getElementById('sp-own'); if(i){ i.focus(); }
     spItog(); return;
   }
@@ -5720,15 +5728,37 @@ document.addEventListener('click', function(e){
   }
   var ii=e.target.closest('[data-spi]');
   if(ii){ SPORT.int=ii.dataset.spi; spInt(); spItog(); haptic('light'); return; }
+  var dd=e.target.closest('[data-spd]');
+  if(dd){ var d=+dd.dataset.spd, i=SPORT.days.indexOf(d);
+          if(i>=0) SPORT.days.splice(i,1); else SPORT.days.push(d);
+          spДни(); haptic('light'); return; }
+  /* крестик у заведённого повторения — раньше строки: иначе нажатие на
+     строку перехватит его и вместо удаления откроет вид в полях */
+  var px=e.target.closest('[data-splx]');
+  if(px){ planPut(px.dataset.splx, [], 60, 'mod');
+          /* поля надо перечитать из плана, а не оставить как были: иначе дни
+             удалённого повторения остаются гореть и первое же «Записать»
+             заводит его обратно. Нашлось проверкой 17.09. */
+          spДниВида(); spДни(); haptic('light'); return; }
+  var pr=e.target.closest('[data-splk]');
+  if(pr){ var им=pr.dataset.splk, p=planFor(им);
+          SPORT.kind=им; SPORT.own='';
+          SPORT.days=(p&&p.d||[]).slice(); SPORT.min=+(p&&p.min)||60; SPORT.int=(p&&p.i)||'mod';
+          spDraw(); haptic('light'); return; }
 });
 document.addEventListener('input', function(e){
-  if(e.target.id==='sp-own'){ spItog(); return; }
+  if(e.target.id==='sp-own'){ spДниВида(); spДни(); spItog(); return; }
   if(e.target.id==='sp-minown'){ SPORT.min=Math.max(0, Math.min(600, parseInt(e.target.value,10)||0)); spItog(); }
 });
+/* Одна кнопка на два дела: записать то, что было сегодня, и завести (или
+   убрать) повторение. Расписание сохраняем ДО запроса — оно живёт на
+   устройстве и в сервере не нуждается, а норма дня всё равно перечитывается
+   после записи. */
 document.getElementById('sp-save').addEventListener('click', function(){
   if(spBusy) return;
   var имя=spName().trim();
   if(!имя || !(SPORT.min>0)) return;
+  planPut(имя, SPORT.days, SPORT.min, SPORT.int);
   spBusy=true; var b=this; b.disabled=true; b.textContent='Записываю…';
   fPost('/act/add', {uid:syncUid(), date:TODAY, kind:имя, min:SPORT.min, intensity:SPORT.int})
     .then(function(d){
@@ -5744,6 +5774,16 @@ document.getElementById('sp-save').addEventListener('click', function(){
       if(el) el.innerHTML='<i>'+esc(humanErr(err))+'</i>';
       haptic('err');
     });
+});
+/* «Сегодня не было, но по средам будет» — отдельная дорога, иначе расписание
+   заводилось бы только через выдуманную запись в дне. Кнопка показывается
+   только когда повторение меняется, — в остальное время её нет. */
+document.getElementById('sp-only').addEventListener('click', function(){
+  if(spBusy) return;
+  var имя=spName().trim(); if(!имя) return;
+  planPut(имя, SPORT.days, SPORT.min, SPORT.int);
+  if(SPORT.days.length) spRemember(имя);
+  closeSport(); haptic('ok');
 });
 
 /* ── РЕЖИМ «ПОРЯДОК» ──────────────────────────────────────────────────
@@ -5888,7 +5928,7 @@ function renderList(){
      '<button type="button" class="btn wide" id="addex">+ Добавить упражнение</button>'+
      /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить». Искал
         он здесь, в конце дня зала — сюда кнопку и ставим. */
-     '<button type="button" class="btn wide sportbtn" id="addsport">+ Занятие вне зала</button>'+
+     '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
      '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>'+
      (пр.skip||пр.add ? '<p class="dayeditn">В этом дне'+
         (пр.add?' добавлено '+пр.add:'')+(пр.add&&пр.skip?' ·':'')+(пр.skip?' убрано '+пр.skip:'')+
@@ -6867,7 +6907,7 @@ function initDb(){
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-      recoBoot(); pushVolume(); renderReco2(); planMigrate(); renderPlanEditor(); recoPull(); goalPull(); botPull(); subPull();
+      recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull(); subPull();
     });
   }).catch(function(e){ reportErr('store', e); });
 }
@@ -10840,14 +10880,14 @@ function planMigrate(){
   var me=myData()||{};
   if((me.plan&&me.plan.length) || !me.sports) return;
   var pl=planFromText(me.sports);
-  if(pl){ planSave(pl); renderPlanEditor(); }
+  if(pl){ planSave(pl); }
 }
 /* план, записанный тренером в разговоре: забираем в профиль */
 function takePlan(sp){
   if(!sp || !Array.isArray(sp.plan) || !sp.plan.length) return;
   var me=myData()||{};
   if(me.plan_at && sp.at<=me.plan_at) return;
-  planSave(sp.plan, sp.at); renderPlanEditor();
+  planSave(sp.plan, sp.at); spПланРисуй();
 }
 var SRVBUILD=null;
 function renderBuild(){
@@ -10870,59 +10910,58 @@ function updApp(){
 }
 document.getElementById('newver').addEventListener('click', updApp);
 document.getElementById('profm').addEventListener('click', function(e){ if(e.target.closest('#bupd')) updApp(); });
-function renderPlanEditor(){
-  var el=document.getElementById('me-plan'); if(!el) return;
-  var list=planList();
-  var h=list.map(function(p,i){
-    return '<div class="plrow" data-pi="'+i+'">'+
-      '<select class="plk" aria-label="вид спорта">'+SPORTS.map(function(k){
-        return '<option'+(k===p.k?' selected':'')+'>'+k+'</option>'; }).join('')+'</select>'+
-      '<input class="plm" type="number" inputmode="numeric" min="5" max="300" step="5" value="'+(+p.min||60)+'" aria-label="минут">'+
-      '<em>мин</em><button type="button" class="plx" aria-label="Убрать">×</button>'+
-      '<div class="pldays">'+[1,2,3,4,5,6,0].map(function(d){
-        return '<button type="button" data-pd="'+d+'" aria-pressed="'+((p.d||[]).indexOf(d)>=0)+'">'+WD[d]+'</button>'; }).join('')+'</div>'+
-      '</div>';
-  }).join('');
-  h+='<button type="button" class="btn sm" id="pladd">+ занятие</button>';
-  el.innerHTML=h;
-  plSum();
-}
-/* Свёрнутая строка должна говорить то же, что раскрытый список: иначе человек
-   читает «не задан» над заданным планом. */
-function plSum(){
-  var el=document.getElementById('plsum'); if(!el) return;
+/* ПОВТОРЕНИЕ — СВОЙСТВО ЗАНЯТИЯ, А НЕ ОТДЕЛЬНЫЙ СПИСОК.
+   17.09, его слова: «теперь на странице тренировок + занятие вне зала в двух
+   местах». Кнопок было две — «Занятие вне зала» записывала то, что уже было,
+   «+ занятие» заводила строку в расписании, — и читались они одинаково.
+   Осталась одна: в листе занятия появилась строка «повторять» с днями.
+   Расписание хранится там же, где хранилось: me.plan, одно повторение на вид.
+   Поэтому «сохранить» для вида — это заменить его повторение, а не добавить
+   второе: иначе два теннисa по средам подняли бы норму дважды. */
+function planFor(имя){
   var l=planList();
-  if(!l.length){ el.textContent='не задан'; return; }
-  el.textContent=l.map(function(p){
-    var d=(p.d||[]).slice().sort(function(a,b){ return (a||7)-(b||7); }).map(function(x){ return WD[x]; });
-    return p.k+(d.length?' · '+d.join(', '):'');
-  }).join(' · ');
+  for(var i=0;i<l.length;i++) if(String(l[i].k||'')===имя) return l[i];
+  return null;
 }
-document.getElementById('pltoggle').addEventListener('click', function(){
-  var b=document.getElementById('plbody'), от=this.getAttribute('aria-expanded')==='true';
-  this.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light');
-});
-function readPlanEditor(){
-  var el=document.getElementById('me-plan'); if(!el) return null;
-  var out=[];
-  Array.prototype.forEach.call(el.querySelectorAll('.plrow'), function(r){
-    var k=(r.querySelector('.plk')||{}).value, min=+(r.querySelector('.plm')||{}).value||60;
-    var d=Array.prototype.map.call(r.querySelectorAll('.pldays button[aria-pressed="true"]'),function(b){ return +b.dataset.pd; });
-    if(k && d.length) out.push({k:k, d:d, min:Math.max(5,Math.min(300,min)), i:'mod'});
-  });
-  return out;
+function planPut(имя, дни, min, int){
+  var l=planList().filter(function(p){ return String(p.k||'')!==имя; });
+  if(дни && дни.length) l.push({k:имя, d:дни.slice().sort(function(a,b){ return (a||7)-(b||7); }),
+                                min:Math.max(5,Math.min(300,+min||60)), i:int||'mod'});
+  planSave(l.slice(0,6));
+  planRefresh(); spПланРисуй();
 }
-document.getElementById('me-plan').addEventListener('click', function(e){
-  var add=e.target.closest('#pladd');
-  if(add){ var l=planList().slice(); l.push({k:'теннис', d:[], min:60, i:'mod'}); planSave(l); renderPlanEditor(); haptic('light'); return; }
-  var x=e.target.closest('.plx');
-  if(x){ var row=x.closest('.plrow'); var l2=readPlanEditor()||[]; l2.splice(+row.dataset.pi,1);
-         planSave(l2); renderPlanEditor(); planRefresh(); haptic('light'); return; }
-  var db=e.target.closest('.pldays button[data-pd]');
-  if(db){ db.setAttribute('aria-pressed', String(db.getAttribute('aria-pressed')!=='true'));
-          planSave(readPlanEditor()||[]); plSum(); planRefresh(); haptic('light'); }
-});
-document.getElementById('me-plan').addEventListener('change', function(){ planSave(readPlanEditor()||[]); plSum(); planRefresh(); });
+function planДни(p){
+  return (p&&p.d||[]).slice().sort(function(a,b){ return (a||7)-(b||7); }).map(function(x){ return WD[x]; }).join(', ');
+}
+/* Уже заведённые повторения — в том же листе, сверху. Нажатие на строку
+   кладёт её в поля: чтобы поменять дни, не надо удалять и заводить заново. */
+function spПланРисуй(){
+  var el=document.getElementById('sp-plan'); if(!el) return;
+  var l=planList();
+  var row=document.getElementById('sp-planrow'); if(row) row.hidden = !l.length;
+  el.innerHTML = l.map(function(p){
+    return '<button type="button" class="splr" data-splk="'+esc(String(p.k||''))+'">'+
+      '<b>'+esc(String(p.k||''))+'</b><i>'+esc(planДни(p))+' · '+(+p.min||60)+' мин</i>'+
+      '<span class="splx" data-splx="'+esc(String(p.k||''))+'" aria-label="Убрать">×</span></button>';
+  }).join('');
+}
+function spДни(){
+  var box=document.getElementById('sp-days'); if(!box) return;
+  box.innerHTML=[1,2,3,4,5,6,0].map(function(d){
+    return '<button type="button" data-spd="'+d+'" aria-pressed="'+(SPORT.days.indexOf(d)>=0)+'">'+WD[d]+'</button>';
+  }).join('');
+  var было=planFor(spName().trim()), стало=SPORT.days.slice().sort(function(a,b){ return a-b; }).join(',');
+  var раньше=(было&&было.d||[]).slice().sort(function(a,b){ return a-b; }).join(',');
+  var n=document.getElementById('sp-dayn');
+  if(n) n.textContent = SPORT.days.length
+    ? 'В эти дни занятие встанет в норму еды само — останется отметить «Было».'
+    : (было ? 'Дни сняты — повторение уберётся.' : '');
+  var s=document.getElementById('sp-save');
+  if(s && !spBusy) s.textContent = SPORT.days.length ? 'Записать и повторять' : 'Записать';
+  var o=document.getElementById('sp-only');
+  if(o){ o.hidden = (стало===раньше);
+         o.textContent = SPORT.days.length ? 'Только в расписание' : 'Только убрать повторение'; }
+}
 /* норма дня зависит от плана — после правки просим сервер пересчитать */
 function planRefresh(){
   fGet('/reco?uid='+encodeURIComponent(syncUid())).then(function(d){
