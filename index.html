@@ -865,13 +865,27 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .glchip.gl-low b{color:var(--warn-txt)}
 .glempt{margin:0 0 12px;font-size:13px;color:var(--muted)}
 .glh{margin:14px 0 8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.glpost{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
-.glpost b{flex:0 0 auto;font-size:15px;font-weight:650}
+.glpost{display:flex;align-items:baseline;gap:10px;padding:9px 0;border-top:1px solid var(--line-soft);font-size:13px}
+.glpost b{flex:0 0 auto;min-width:42px;font-size:15px;font-weight:650}
 .glpost b.gl-hi{color:var(--warn-txt)} .glpost b.gl-ok{color:var(--done-txt)} .glpost b.gl-low{color:var(--warn-txt)}
 .glpost span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .glpost s{flex:0 0 auto;text-decoration:none;font-size:11.5px;color:var(--muted)}
+.glpi{flex:1 1 auto;min-width:0}
+.glpi span{display:block;white-space:normal}
+.glpi s{display:block;margin-top:2px;text-decoration:none;font-size:11.5px;color:var(--muted)}
 .glunote{margin:14px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .glwarn{margin:10px 0 0;font-size:12px;line-height:1.5;color:var(--warn-txt)}
+.glsum{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.glsum span{display:flex;align-items:baseline;gap:5px}
+.glsum b{font-size:19px;font-weight:650}
+.glsum .gl-hi b{color:var(--warn-txt)} .glsum .gl-ok b{color:var(--done-txt)} .glsum .gl-low b{color:var(--warn-txt)}
+.gltrend{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.gltrend b{color:var(--text);font-size:14px}
+.gldelta{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.gldelta b{color:var(--text)}
+.glwalk{margin:12px 0 0;padding:10px 12px;border-radius:11px;background:var(--card-2);border:1px solid var(--line);
+  font-size:12.5px;line-height:1.5;color:var(--muted)}
+.glwalk b{color:var(--text)}
 .mem{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .mem .memn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mem .memn i{font-style:normal;color:var(--dim)}
@@ -4952,7 +4966,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 13:47';
+var BUILD = '17.09 14:11';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10249,7 +10263,8 @@ function gluВидно(){
 }
 function gluPull(){
   return fGet('/glu?uid='+encodeURIComponent(syncUid())+'&days=14')
-    .then(function(d){ if(d&&d.ok){ GLU.list=d.list||[]; renderGlu(); } }).catch(function(){});
+    .then(function(d){ if(d&&d.ok){ GLU.list=d.list||[]; GLU.итог=d['итог']||null;
+      GLU.тренд=d['тренд']||null; GLU.ходьба=d['ходьба']||null; renderGlu(); } }).catch(function(){});
 }
 function глЗпт(v){ return String(Math.round(v*10)/10).replace('.',','); }
 function глКласс(где){ return где==='низко'||где==='оченьнизко' ? 'gl-low' : где==='высоко' ? 'gl-hi' : 'gl-ok'; }
@@ -10275,26 +10290,88 @@ function renderGlu(){
           '<b>'+глЗпт(x.v)+'</b><s>'+esc(x.t)+(x.kind==='fast'?' натощак':x.kind==='post'?' после еды':x.kind==='night'?' ночью':'')+'</s></button>';
       }).join('')+'</div>'
     : '<p class="glempt">За сегодня замеров нет.</p>';
-  /* Ради чего всё и делалось: после какой еды сахар выше. */
-  var после=(GLU.list||[]).filter(function(x){ return x['после'] && x['после'].text; })
-    .sort(function(a,b){ return b.v-a.v; }).slice(0,5);
-  var pb=document.getElementById('glupost');
-  var ph = после.length
-    ? '<p class="glh">Выше всего было после этой еды, за 14 дней</p>'+после.map(function(x){
-        return '<div class="glpost"><b class="'+глКласс(x['где'])+'">'+глЗпт(x.v)+'</b>'+
-          '<span>'+esc(x['после'].text)+'</span><s>через '+глСпустя(x['после']['спустя'])+'</s></div>';
-      }).join('')
-    : '';
-  /* Низкие замеры не попадают в список «выше всего», а они и есть то, что
-     важнее всего заметить: повторяющаяся гипогликемия — это разговор с
-     врачом о лечении, и приложение должно его подтолкнуть, а не вести. */
+  var ph='';
+  /* СВОДКА. 17.09, его вопрос: «а на высокий сахар что?» Про низкий
+     приложение говорило, про высокий — только красило число красным. Это
+     была отписка: устойчиво высокий сахар — такой же повод пересмотреть
+     лечение, как повторяющийся низкий. Теперь обе стороны названы. */
+  var ит=GLU.итог, тр=GLU.тренд;
+  if(ит && ит.n){
+    ph += '<p class="glh">За 14 дней — '+ит.n+' '+plural(ит.n,['замер','замера','замеров'])+'</p>'+
+      '<div class="glsum">'+
+      '<span class="gl-hi"><b>'+ит['высоко']+'</b> выше коридора</span>'+
+      '<span class="gl-ok"><b>'+ит['вкоридоре']+'</b> в коридоре</span>'+
+      (ит['низко'] ? '<span class="gl-low"><b>'+ит['низко']+'</b> низких</span>' : '')+
+      '</div>';
+    if(тр) ph += '<p class="gltrend">Среднее за неделю <b>'+глЗпт(тр['эта'])+'</b> против '+глЗпт(тр['та'])+
+      ' неделей раньше — '+(тр['д']<0 ? 'ниже на '+глЗпт(-тр['д']) : тр['д']>0 ? 'выше на '+глЗпт(тр['д']) : 'без изменений')+'.</p>';
+    /* Высокие названы так же прямо, как низкие: половина и больше — это
+       разговор о лечении, а не о том, что человек «плохо старается». */
+    if(ит['высоко'] >= 3 && ит['высоко'] >= ит.n/2)
+      ph += '<p class="glwarn">Больше половины замеров выше коридора. Это повод показать эти числа врачу: так же, как с низкими, лечение подбирает он.</p>';
+  }
+  /* Низкие: повторяющаяся гипогликемия — разговор с врачом о лечении. */
   var низ=(GLU.list||[]).filter(function(x){ return x['где']==='низко'||x['где']==='оченьнизко'; });
-  if(низ.length) ph = '<p class="glh">Низкий сахар за 14 дней — '+низ.length+' '+plural(низ.length,['раз','раза','раз'])+'</p>'+
+  if(низ.length) ph += '<p class="glh">Низкий сахар — '+низ.length+' '+plural(низ.length,['раз','раза','раз'])+'</p>'+
     низ.slice(-4).map(function(x){
       return '<div class="glpost"><b class="gl-low">'+глЗпт(x.v)+'</b><span>'+esc(датаКратко(x.date))+', '+esc(x.t)+'</span></div>';
     }).join('')+
-    '<p class="glwarn">Если низкий сахар повторяется — это повод показать эти числа врачу: лечение подбирает он.</p>' + ph;
+    '<p class="glwarn">Если низкий сахар повторяется — это повод показать эти числа врачу: лечение подбирает он.</p>';
+  /* Ради чего всё и делалось: после какой еды сахар выше — и чем эта еда
+     отличается. На подъём после еды сильнее всего влияют углеводы приёма,
+     и их человек может двигать сам. */
+  var после=(GLU.list||[]).filter(function(x){ return x['после'] && x['после'].text; })
+    .sort(function(a,b){ return b.v-a.v; });
+  if(после.length){
+    var верх=после.slice(0,5);
+    ph += '<p class="glh">После какой еды сахар был выше</p>'+verhHTML(верх);
+    if(после.length>=2){
+      var лучш=после[после.length-1], худш=после[0];
+      if(худш.v-лучш.v>=1) ph += '<p class="gldelta">Разница между '+esc(корот(худш['после'].text))+' и '+
+        esc(корот(лучш['после'].text))+' — <b>'+глЗпт(худш.v-лучш.v)+'</b> ммоль/л'+
+        (худш['после'].carb!=null && лучш['после'].carb!=null
+          ? '. Углеводов в них '+Math.round(худш['после'].carb)+' г и '+Math.round(лучш['после'].carb)+' г — на подъём после еды это влияет сильнее всего остального.'
+          : '.')+'</p>';
+    }
+    /* Прогулка — единственный рычаг, который приложение имеет право
+       предлагать при высоком сахаре. Когда его собственных замеров хватает,
+       говорим ЕГО числами, а не чужим исследованием. */
+    var хо=GLU.ходьба;
+    if(хо) ph += '<p class="glwalk">Твои замеры после еды: с прогулкой в первый час <b>'+глЗпт(хо['с'])+
+      '</b>, без неё '+глЗпт(хо['без'])+'.'+(хо['д']>0 ? ' Разница '+глЗпт(хо['д'])+' ммоль/л.' : '')+'</p>';
+    else if(после.some(function(x){ return x['где']==='высоко'; }))
+      ph += '<p class="glwalk">Короткая прогулка сразу после еды срезает подъём — это самое простое, что можно попробовать.'+
+        (gluГипо() ? ' Возьми с собой быстрые углеводы: на инсулине и при низком сахаре нагрузка может уронить его ещё.' : '')+
+        ' Записывай прогулки, и я покажу, как это выходит у тебя.</p>';
+  }
+  var pb=document.getElementById('glupost');
   if(pb) pb.innerHTML = ph;
+}
+/* Обрезаем по слову, а не по букве: «Плов с говядиной полпорци…» в середине
+   фразы читается как опечатка. */
+function корот(t){
+  t=String(t||'').trim();
+  if(t.length<=22) return t;
+  var ч=t.slice(0,22), п=ч.lastIndexOf(' ');
+  return (п>10 ? ч.slice(0,п) : ч)+'…';
+}
+/* Углеводы приёма — то самое число, которым человек может двигать подъём, и
+   обрезать его многоточием нельзя. Поэтому они стоят отдельной строкой под
+   названием, а не внутри него. */
+function verhHTML(сп){
+  return сп.map(function(x){
+    var п=x['после'];
+    var низ=[];
+    if(п.carb!=null) низ.push(Math.round(п.carb)+' г углеводов');
+    низ.push('через '+глСпустя(п['спустя']));
+    if(п['двигался']) низ.push('ходил после');
+    return '<div class="glpost"><b class="'+глКласс(x['где'])+'">'+глЗпт(x.v)+'</b>'+
+      '<div class="glpi"><span>'+esc(п.text)+'</span><s>'+esc(низ.join(' · '))+'</s></div></div>';
+  }).join('');
+}
+function gluГипо(){
+  var m=(myData()||{}).med||{};
+  return m.ins===1 || m.low===1 || m.low==='?' || m.dia==='?';
 }
 function датаКратко(d){ var a=String(d||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : d; }
 function gluSave(){
