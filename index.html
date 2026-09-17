@@ -4692,7 +4692,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '16.09 21:53';
+var BUILD = '17.09 07:40';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9470,6 +9470,14 @@ document.addEventListener('click', function(e){
   var m = document.getElementById('krugm');
   if(m && m.classList.contains('show') && e.target === m){ closeKrug(); return; }
   var g = e.target.closest('[data-krug]'); if(g){ openKrug(g.dataset.krug); haptic('light'); return; }
+  /* 17.09, его слова: «кнопка приглашения не работает». И правда не работала —
+     вообще ничего не делала. Лист круга живёт в своём окне #krugm, а
+     обработчик [data-cshare] висел на #cirbody, соседнем поддереве: клик до
+     него просто не доходил. Круг берём из самого листа — он там уже открыт,
+     и это надёжнее поиска по списку экрана кругов, которого в этот момент
+     может не быть загружено. */
+  var ks = e.target.closest('#krugm [data-cshare]');
+  if(ks){ if(KRUG && KRUG.c) shareCircle(KRUG.c); else circleShare(ks.dataset.cshare); return; }
   if(e.target.closest('#cirnew') || e.target.closest('#cirmake')){ openKrugНовый(); haptic('light'); return; }
   if(e.target.closest('#cirgo')){ openProf(); haptic('light'); return; }
   if(e.target.closest('#k-make')){

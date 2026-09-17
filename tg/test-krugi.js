@@ -37,6 +37,53 @@ async function профиль(page) {
   дано(!!чужой && чужой.кнопки.indexOf('Выйти') >= 0, 'из чужого можно выйти: ' + (чужой || {}).кнопки.join(' · '));
   дано(!!чужой && чужой.кнопки.indexOf('Закрыть') < 0, 'а закрыть чужой нечем — это не твой круг');
 
+  /* ── ЛИСТ КРУГА: «Отправить приглашение» ──
+     17.09, его слова: «кнопка приглашения не работает». Она и правда не
+     делала ничего: разметку листа положили в своё окно #krugm, а обработчик
+     [data-cshare] остался на #cirbody — соседнем поддереве, и клик до него
+     не доходил. Проверка ловит именно это: нажатие обязано открыть ссылку
+     на шаринг с кодом круга внутри. */
+  await page.evaluate(() => {
+    window.поймал = null;
+    if (window.Telegram && window.Telegram.WebApp)
+      window.Telegram.WebApp.openTelegramLink = u => { window.поймал = u; };
+  });
+  {
+    await page.click('#profclose').catch(() => {});
+    await page.waitForTimeout(500);
+    const f = await page.$('.l1 button[data-page="food"]');
+    if (f) { await f.click(); await page.waitForTimeout(600); }
+    for (const кн of await page.$$('.zseg button'))
+      if ((await кн.textContent()).trim() === 'Рейтинг' && await кн.isVisible()) { await кн.click(); break; }
+    await page.waitForTimeout(1400);
+  }
+  const шестерня = await page.$('[data-krug]');
+  дано(!!шестерня, 'в круге есть, чем открыть его настройки');
+  if (шестерня) {
+    await шестерня.click();
+    await page.waitForTimeout(700);
+    const естьКнопка = await page.$('#krugm [data-cshare]');
+    дано(!!естьКнопка, 'в листе круга есть «Отправить приглашение»');
+    if (естьКнопка) {
+      await естьКнопка.click();
+      await page.waitForTimeout(500);
+      const ссылка = await page.evaluate(() => window.поймал);
+      дано(!!ссылка && /t\.me\/share/.test(ссылка), 'нажатие открывает шаринг, а не молчит: ' + (ссылка || 'ничего не произошло'));
+      дано(!!ссылка && /Код/.test(decodeURIComponent(ссылка || '')), 'в приглашении есть код круга');
+    }
+    await page.click('#krugclose').catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  await профиль(page);
+  /* «Приглашения» — переключатель: если раздел уже раскрыт, второе нажатие
+     его свернёт, и дальше ничего не найдётся. Смотрим, а не нажимаем вслепую. */
+  for (let i = 0; i < 2; i++) {
+    const видно = await page.$eval('#invnewi', el => !!(el.offsetParent || el.getClientRects().length)).catch(() => false);
+    if (видно) break;
+    await page.click('#invtoggle').catch(() => {});
+    await page.waitForTimeout(800);
+  }
+
   /* завести свой круг */
   дано(!!(await page.$('#invnewi')), 'есть поле «завести круг»');
   await page.fill('#invnewi', 'зал');
