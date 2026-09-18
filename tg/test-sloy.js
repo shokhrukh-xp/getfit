@@ -23,7 +23,7 @@ const БЫЛО = { name: 'Мышцы · 4 дня', note: 'Четыре дня.',
   дн('Низ', 'квадрицепс и ягодицы', [у('Barbell_Full_Squat', 'Присед (штанга, глубокий)', 'quadriceps', 'Приседания'), у('Leg_Press', 'Жим ногами', 'quadriceps', 'Жим'), у('Seated_Leg_Curl', 'Сгибание ног', 'hamstrings', 'Сгибание')]),
   дн('Верх', 'грудь и спина', [у('Barbell_Bench_Press_Medium_Grip', 'Жим лёжа', 'chest', 'Жим'), у('Wide-Grip_Lat_Pulldown', 'Тяга сверху', 'lats', 'Тяга')]),
   дн('Плечи', 'плечи', [у('Standing_Military_Press', 'Жим стоя', 'shoulders', 'Жим'), у('Side_Lateral_Raise', 'Махи', 'shoulders', 'Махи')]),
-  дн('Низ 2', 'ноги ещё раз', [у('Barbell_Lunge', 'Выпады', 'quadriceps', 'Выпады'), у('Standing_Calf_Raises', 'Носки', 'calves', 'Носки'), у('Romanian_Deadlift', 'Румынская', 'hamstrings', 'Тяга'), у('Crunches', 'Скручивания', 'abdominals', 'Пресс'), у('Plank', 'Планка', 'abdominals', 'Планка')]) ] };
+  дн('Низ 2', 'ноги ещё раз', [у('Barbell_Lunge', 'Выпады', 'quadriceps', 'Выпады'), у('Standing_Calf_Raises', 'Носки', 'calves', 'Носки'), у('Romanian_Deadlift', 'Румынская', 'hamstrings', 'Тяга'), у('Crunches', 'Скручивания', 'abdominals', 'Пресс'), у('Hanging_Leg_Raise', 'Подъём ног в висе', 'abdominals', 'Пресс')]) ] };
 /* пересобранный день 4 — ровно то, что тренер перечислит в чате */
 const СТАЛО = JSON.parse(JSON.stringify(БЫЛО));
 СТАЛО.days[3] = дн('Руки', 'руки, предплечья и пресс', [
@@ -69,6 +69,8 @@ async function день(page, n) {
   дано(await день(page, 4), 'день 4 открыт');
   const до = await ИМЕНА(page);
   дано(до.some(n => /Присед \(штанга, классический\)/.test(n)), 'до пересборки замена видна: ' + до.join(' · ').slice(0, 70));
+  /* дописанные — те, которых в самом дне нет: повтор программы сюда не кладём,
+     его теперь снимает отдельная проверка (tg/test-povtor.js) */
   дано(до.some(n => /Планка/.test(n)) && до.some(n => /Ролик/.test(n)), 'и дописанные им упражнения тоже');
   дано(до.length === 5, 'а спрятанные строки не показываются: ' + до.length);
 

@@ -3188,6 +3188,10 @@ function applyProfile(p, silent){
   ORD  = get('ord', {});
   NOPE = get('nope', {});
   LIKE = get('like', {});
+  /* Слой правок только что прочитан — здесь и подметаем повторы в добавленных
+     руками. Раньше этот вызов стоял при запуске, до applyProfile, и подметал
+     пустоту: EXTRA на тот момент ещё не загружен. */
+  try{ var _чист=0; Object.keys(DAYS).forEach(function(k){ _чист+=чиститьДобавленные(k); }); if(_чист) saveSubs(); }catch(e){}
   lastDone = get('lastdone', null);
   var pick = get('pick_'+TODAY, null);
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
@@ -3269,6 +3273,31 @@ function subKey(dk, di){ return dk+':'+di; }
 /* Правки дня живут по КЛЮЧУ, а не по месту в списке: убрал одно упражнение —
    и позиции поехали бы, утащив за собой замены и число подходов (его просьба
    11.09 про «добавить/убрать упражнение»). */
+/* Один и тот же id каталога в трёх разных полях: у встроенной программы это
+   `id`, у собранной тренером — `cat`, у добавленного руками — `i`. Одна
+   функция на все три, иначе сверять их между собой невозможно. */
+function катId(x){ return (x && (x.cat || x.id)) || ''; }
+/* ОДНО УПРАЖНЕНИЕ — ОДНА СТРОКА В ДНЕ.
+   18.09, его слова: «на день 2 поставил аж 3 одинаковых упражнения». Сгибание
+   ног стояло трижды: раз в самой программе и дважды среди добавленных руками.
+   Добавленные живут отдельным слоем и переживают смену программы: он когда-то
+   дописал движение в старый день 2, программа сменилась — и то же движение
+   оказалось в ней самой, а дописанные остались рядом. Ни сервер, ни экран
+   этого не сверяли: сервер чистит повторы внутри своей программы и про
+   добавленные руками не знает.
+   Чиним в двух местах. Здесь — чтобы человек этого не увидел никогда, чем бы
+   ни был вызван повтор. Ниже, в installAiProg, — чтобы лишнее не осталось
+   лежать в памяти телефона. */
+function безПовторов(rows){
+  var был={}, out=[];
+  rows.forEach(function(r){
+    var k=катId(r);
+    if(k && был[k]) return;
+    if(k) был[k]=1;
+    out.push(r);
+  });
+  return out;
+}
 function exList(dk){
   var base=(DAYS[dk]||{}).ex||[], out=[];
   base.forEach(function(e,di){
@@ -3284,7 +3313,7 @@ function exList(dk){
                rest:x.rest||90, cat:x.i, add:true, cues:x.cues||[], why:x.why||'', ph:null, fig:null,
                k:dk+':x'+(x.id||xi), xi:xi });
   });
-  return упорядочить(dk, out);
+  return упорядочить(dk, безПовторов(out));
 }
 /* что в этом дне поправлено руками — для строки «вернуть как было» */
 function dayEdits(dk){
@@ -5009,7 +5038,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.09 11:30';
+var BUILD = '18.09 11:50';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8592,6 +8621,20 @@ function incFor(q){ return {barbell:2.5, dumbbell:2, kettlebells:4, machine:5, c
    Сравниваем по id каталога, а не по имени: каталог переименовывался, и по
    именам чистка сработала бы там, где менять нечего. */
 var ПРОГ_СЧИЩЕНО = 0;
+/* Добавленное руками, которое уже есть в самой программе, — это повтор, а не
+   выбор человека: он добавлял его, когда в дне этого движения не было. */
+function чиститьДобавленные(dk){
+  var сп=EXTRA[dk]; if(!сп || !сп.length) return 0;
+  var есть={}; ((DAYS[dk]||{}).ex||[]).forEach(function(e){ var k=катId(e); if(k) есть[k]=1; });
+  var было=сп.length;
+  EXTRA[dk]=сп.filter(function(x){
+    var k=x && x.i; if(!k) return true;
+    if(есть[k]) return false;                    /* уже стоит в программе */
+    есть[k]=1; return true;                      /* и сам себя не повторяет */
+  });
+  if(!EXTRA[dk].length) delete EXTRA[dk];
+  return было-((EXTRA[dk]||[]).length);
+}
 function сброситьСлоты(dk, былоEx, сталоEx){
   var было=былоEx||[], стало=сталоEx||[], n=Math.max(было.length, стало.length), убрано=0;
   for(var i=0;i<n;i++){
@@ -8622,6 +8665,7 @@ function installAiProg(prog){
     }) };
     /* Первый заход в приложение — сравнивать не с чем, и чистить нечего. */
     if(былоEx) счищено += сброситьСлоты(k, былоEx, DAYS[k].ex);
+    счищено += чиститьДобавленные(k);
   });
   if(счищено) saveSubs();
   ПРОГ_СЧИЩЕНО = счищено;
@@ -12081,6 +12125,7 @@ document.getElementById('cattach').addEventListener('click', function(e){ if(e.t
 
 /* ── init ── */
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
+
 var _saved = gget('profile', null);
 if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
 else {
