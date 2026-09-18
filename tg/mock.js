@@ -26,7 +26,10 @@ function день(o) {
        строка компендиума 5,0, и (5 − 1) × 88,1 × 1 ч = 350 ккал. */
     targets: o.targets || { kcal: 2110, prot: 165, fat: { min: 52, max: 78 }, fib: 30, sug: 50,
       parts: { base: 1760, gym: 350, acts: 0, plan: 0, delta: 0, k: 1,
-               gymMin: 60, gymSets: 24, gymMet: 5, gymTempo: 'плотный' } }
+               gymMin: 60, gymSets: 24, gymMet: 5, gymTempo: 'плотный' } },
+    /* 18.09: зал входит в норму по факту. Флаг «сегодня день зала, но
+       тренировки ещё нет» приходит с сервера отдельным полем. */
+    gymPlan: o.gymPlan !== undefined ? o.gymPlan : false
   };
 }
 function неделя(o) {
