@@ -4993,7 +4993,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '17.09 18:00';
+var BUILD = '18.09 07:25';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -11744,7 +11744,13 @@ function applyRebuild(rb){
   gset('rebuilt_at', rb.at);
   AIPROG=rb.prog; aiApply();
   try{ fPost('/reco', {uid:syncUid(), rebuilt:1}).catch(function(){}); }catch(e){}
-  try{ if(TG && TG.showAlert) TG.showAlert('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.'); }catch(e){}
+  /* Пересборка одного дня по просьбе — это не «новый блок». Человек знает,
+     что попросил, и ждёт подтверждения фактом: какой день и что стало с
+     объёмом. Общие слова здесь читаются как отписка. */
+  var т = rb.day
+    ? ('День '+rb.day+' пересобран.'+((rb.vol&&rb.vol.length)?' Подходов в неделю: '+rb.vol.join('; ')+'.':'')+' Веса из истории на месте.')
+    : ('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.');
+  try{ if(TG && TG.showAlert) TG.showAlert(т); }catch(e){}
 }
 function recoPull(){
   var сразу = /[?&]r=1(&|$)/.test(location.search||'');
@@ -11785,8 +11791,15 @@ document.getElementById('chatlog').addEventListener('click', recoClick);
 /* ответ тренера может принести правку программы — кладём её на видное место */
 function takeChanges(d){
   if(d && d.goal && d.goal.text) takeGoal(d.goal, null);
+  /* 18.09: пересобранный день приходит целой программой прямо в ответе чата.
+     Ждать следующего опроса /reco нельзя — человек только что попросил и
+     смотрит на экран. */
+  if(d && d.rebuild) applyRebuild(d.rebuild);
   if(!d || !d.changes || !d.changes.length) return;
   var c=d.changes[0]; if(!c || !c.text) return;
+  /* правка дня уже применена программой целиком: карточка с кнопкой «Другое»
+     здесь предложила бы отменить то, чего в ней нет */
+  if(c.what==='day') return;
   c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
   /* человек попросил сейчас — показываем, даже если такое же предложение
      раньше отклонял: «Понятно» на прошлой неделе не должно прятать кнопку сегодня */

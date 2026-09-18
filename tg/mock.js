@@ -110,7 +110,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -135,6 +135,10 @@ async function поднять(page, o) {
       /* Внешние ссылки мини-апп открывает сам — проверка смотрит, ЧТО ушло. */
       openLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
       openTelegramLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
+      /* showAlert раньше не было вовсе, и проверка не видела ни одного окна.
+         Пересборка дня сообщает о себе именно окном — записываем их все. */
+      showAlert(t, cb){ (window.__окна = window.__окна || []).push(String(t)); if (cb) cb(); },
+      showConfirm(t, cb){ (window.__окна = window.__окна || []).push(String(t)); if (cb) cb(true); },
       HapticFeedback: { impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
       MainButton: { show(){}, hide(){}, setText(){}, onClick(){}, offClick(){} },
       BackButton: { show(){}, hide(){}, onClick(){}, offClick(){} },
@@ -158,6 +162,7 @@ async function поднять(page, o) {
       /* профиль человека: без него экраны, которые от него зависят (здоровье,
          норма, цель), в проверках пустые */
       if (профиль) localStorage.setItem('shp_v1_me', JSON.stringify(профиль));
+      if (прог) localStorage.setItem('shp_v1_ai_prog', JSON.stringify(прог));
       localStorage.setItem('shp_v1_page', JSON.stringify(сеанс));
       /* журнал тренировок кладём туда же, откуда приложение его читает */
       if (видел != null) localStorage.setItem('shp_v1_chat_seen', String(видел));
@@ -168,7 +173,7 @@ async function поднять(page, o) {
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
@@ -281,7 +286,7 @@ async function поднять(page, o) {
         свои: { kind: 'grand' },
         список: [
           { uid: '11', name: 'Пётр Смирнов', by: 'ref', created: Date.now() - 864e5, kind: 'sub', until: Date.now() + 20 * 864e5, приёмов: 4, последний: '2026-09-15', привёл: 0 },
-          { uid: '12', name: 'Нигора', by: 'code', created: Date.now() - 3 * 864e5, kind: 'grand', until: 0, приёмов: 22, последний: '2026-09-15', привёл: 0 },
+          { uid: '12', name: 'Своя', by: 'code', created: Date.now() - 3 * 864e5, kind: 'grand', until: 0, приёмов: 22, последний: '2026-09-15', привёл: 0 },
           { uid: '13', name: 'Andrew Nee', by: 'bot', created: Date.now() - 2 * 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0 }
         ]
       }, o.admin === true ? {} : o.admin));
@@ -342,6 +347,7 @@ async function поднять(page, o) {
       return route.fulfill({ status: 402, contentType: 'application/json',
         body: JSON.stringify({ error: 'Тренер работает по подписке.', code: 'sub', stars: 500,
           sub: { ok: false, kind: 'none', until: 0 } }) });
+    if (p === '/coach')      return дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })
@@ -402,21 +408,21 @@ async function поднять(page, o) {
     }
     /* сахар в крови: список за период, запись, удаление */
     if (p === '/glu' && route.request().method() === 'GET') {
-      if (o.glu) return дать(Object.assign({ ok: true, from: '2026-09-04', to: '2026-09-17',
+      if (o.glu) return дать(Object.assign({ ok: true, from: Д(13), to: TODAY,
         'коридор': { 'низ2': 3, 'низ': 3.9, 'доНиз': 4.4, 'доВерх': 7.2, 'после': 10 } }, o.glu));
-      return дать({ ok: true, from: '2026-09-04', to: '2026-09-17',
+      return дать({ ok: true, from: Д(13), to: TODAY,
         'коридор': { 'низ2': 3, 'низ': 3.9, 'доНиз': 4.4, 'доВерх': 7.2, 'после': 10 },
         'итог': { n: 8, 'низко': 1, 'вкоридоре': 3, 'высоко': 4 },
         'тренд': { 'эта': 9.1, 'та': 10.4, 'д': -1.3, 'nЭта': 4, 'nТа': 4 },
         'ходьба': o.walk === undefined ? null : o.walk,
         list: [
-          { id: 'g1', date: '2026-09-17', t: '07:30', v: 5.6, kind: 'fast', meal: null, 'где': 'вкоридоре' },
-          { id: 'g2', date: '2026-09-17', t: '14:45', v: 12.4, kind: 'post', meal: 'm3', 'где': 'высоко',
+          { id: 'g1', date: TODAY, t: '07:30', v: 5.6, kind: 'fast', meal: null, 'где': 'вкоридоре' },
+          { id: 'g2', date: TODAY, t: '14:45', v: 12.4, kind: 'post', meal: 'm3', 'где': 'высоко',
             'после': { text: 'Плов с говядиной полпорции, салат, лепёшка', kcal: 612, carb: 78, t: '13:10', 'спустя': 95, 'двигался': 0 } },
-          { id: 'g3', date: '2026-09-16', t: '21:00', v: 8.9, kind: 'post', meal: 'm9', 'где': 'вкоридоре',
+          { id: 'g3', date: Д(1), t: '21:00', v: 8.9, kind: 'post', meal: 'm9', 'где': 'вкоридоре',
             'после': { text: 'Куриное филе на гриле с капустным салатом', kcal: 372, carb: 12, t: '19:40', 'спустя': 80, 'двигался': 1 } },
-          { id: 'g4', date: '2026-09-15', t: '03:20', v: 3.4, kind: 'night', meal: null, 'где': 'низко' },
-          { id: 'g5', date: '2026-09-14', t: '15:10', v: 11.2, kind: 'post', meal: 'm7', 'где': 'высоко',
+          { id: 'g4', date: Д(2), t: '03:20', v: 3.4, kind: 'night', meal: null, 'где': 'низко' },
+          { id: 'g5', date: Д(3), t: '15:10', v: 11.2, kind: 'post', meal: 'm7', 'где': 'высоко',
             'после': { text: 'Лагман', kcal: 540, carb: 66, t: '13:30', 'спустя': 100, 'двигался': 0 } }
         ] });
     }
