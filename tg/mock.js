@@ -357,6 +357,16 @@ async function поднять(page, o) {
       return route.fulfill({ status: 402, contentType: 'application/json',
         body: JSON.stringify({ error: 'Тренер работает по подписке.', code: 'sub', stars: 500,
           sub: { ok: false, kind: 'none', until: 0 } }) });
+    /* Предложение пересобрать программу под изменившуюся цель и сама сборка.
+       o.aiDelay — задержка ответа: без неё состояние «собираю» не поймать. */
+    if (p === '/reco') return дать({ ok: true, reco: o.reco || null, auto: [],
+      rebuild: o.rebuild || null, rebuild_offer: o.rbo || null, plan: null,
+      build: '00.00 00:00', today: { date: TODAY, plan: [] } });
+    if (p === '/ai') {
+      const отдать = () => дать(o.onAi ? o.onAi(route) : { ok: true, prog: o.prog || null });
+      if (o.aiDelay) return new Promise(r => setTimeout(() => r(отдать()), o.aiDelay));
+      return отдать();
+    }
     if (p === '/coach')      return дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',

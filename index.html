@@ -1214,6 +1214,9 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   background:none;color:var(--text);font:inherit;font-size:13px;padding:0 10px}
 .reco2 .rb button.go{border-color:var(--accent-2);color:var(--accent-txt)}
 .reco2 .rb button:active{opacity:.6}
+/* сборка идёт — это видно на кнопке, а не только строкой ниже карточки */
+.reco2 .rb button.busy{border-color:var(--line);color:var(--muted)}
+.reco2 .rb button[disabled]{opacity:.55}
 .reco2.inchat{align-self:stretch;max-width:100%;margin:6px 0 0;background:var(--accent-ghost);border-color:transparent}
 /* что именно встанет: два кадра из каталога и имя — чтобы решать глазами, а не по названию */
 .reco2 .rtarget{display:flex;align-items:center;gap:12px;margin:8px 0 6px;padding:10px;border-radius:12px;background:var(--card-solid);border:.5px solid var(--line-soft)}
@@ -5006,7 +5009,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.09 11:05';
+var BUILD = '18.09 11:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8782,12 +8785,17 @@ function aiBuild(снова){
   if(!hasGoal(me)){ aiState('Сначала выбери цель — вес и зал: от этого зависит вся схема.', true); return; }
   AIBUSY=true; aiState('Собираю программу под тебя… обычно полминуты, иногда до минуты');
   document.getElementById('aibox').innerHTML='';
+  try{ renderReco(); }catch(e){}                 /* карточка предложения показывает, что сборка идёт */
   var ctl = ('AbortController' in window) ? new AbortController() : null;
   var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
   tgFetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
-    .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog); haptic('ok'); })
+    .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog); haptic('ok');
+      /* Программа на экране — предложение собрать больше не нужно. */
+      try{ renderReco(); }catch(e){}
+      var el=document.getElementById('aibox');
+      if(el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'}); })
     .catch(function(e){
       haptic('err');
       /* «Занят» — не тупик: пробуем сами через минуту, а человеку говорим,
@@ -8800,11 +8808,12 @@ function aiBuild(снова){
           сек--;
         };
         шаг(); aiWait=setInterval(шаг, 1000);
+        try{ renderReco(); }catch(e2){}
         return;
       }
       aiState(humanErr(e), true);
     })
-    .then(function(){ clearTimeout(tm); if(!aiWait) AIBUSY=false; });
+    .then(function(){ clearTimeout(tm); if(!aiWait) AIBUSY=false; try{ renderReco(); }catch(e){} });
 }
 /* закрыли профиль — отменяем отложенную попытку, иначе она заговорит в пустоту */
 function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); } AIBUSY=false; }
@@ -11680,11 +11689,31 @@ function recoCard(где){
    сегодняшней цели. Разошлись — карточка: тренер соберёт новую и покажет,
    человек решит. Число и срок цели программу не трогают — это еда. */
 var RBO=null;
+/* 18.09, его слова: «нажимаю "Собрать и показать", но ничего не происходит».
+   Кнопка не была мёртвой: сборка запускалась, и строка «Собираю программу…»
+   появлялась НИЖЕ карточки, за краем экрана. Сама карточка при этом не
+   менялась ничем — ни до сборки, ни во время, ни после. А второе нажатие
+   гасилось первой же строкой aiBuild (`if(AIBUSY) return`) молча, без единого
+   слова. Кнопка, которая на нажатие не отвечает, — сломанная кнопка, даже
+   если под ней всё работает.
+   Теперь состояние сборки видно на самой кнопке, а когда программа собрана
+   и ждёт решения — предложение уходит с экрана: решать надо по ней, а не по
+   карточке, которая всё ещё зовёт собрать. */
+function aiПревьюЕсть(){
+  var b=document.getElementById('aibox');
+  return !!(b && b.innerHTML && b.innerHTML.trim());
+}
 function rbCard(){
   if(!RBO || !RBO.stamp || profile!=='ai' || gget('rb_seen',null)===RBO.stamp) return '';
+  if(aiПревьюЕсть()) return '';
+  /* Ждём повтора после «тренер занят» — на кнопке должно стоять то же, что в
+     строке состояния, а не «собираю». Два места об одном факте не спорят. */
+  var занят = AIBUSY, ждём = !!aiWait;
   return '<div class="reco2 rbc"><u>программа и цель</u><p>Программа собрана не под ту цель, что сейчас. '+esc(RBO.why||'')+'</p>'+
     (RBO.phase?'<p><i>Фаза сейчас: '+esc(RBO.phase)+'. Тренер соберёт программу под цель целиком и покажет — ты решишь, ставить ли. Веса и история останутся.</i></p>':'')+
-    '<div class="rb"><button type="button" class="go" data-rb="go">Собрать и показать</button><button type="button" data-rb="no">Не сейчас</button></div></div>';
+    '<div class="rb"><button type="button" class="go'+(занят?' busy':'')+'" data-rb="go"'+(занят?' disabled':'')+'>'+
+      (ждём?'Тренер занят — пробую снова':занят?'Собираю… полминуты':'Собрать и показать')+'</button>'+
+      '<button type="button" data-rb="no"'+(занят?' disabled':'')+'>Не сейчас</button></div></div>';
 }
 function renderRb(){
   var h=rbCard(), el=document.getElementById('rbbox');
@@ -11696,7 +11725,13 @@ function rbClick(e){
   if(b.dataset.rb==='go'){
     var m=document.getElementById('profm'); if(!m || !m.classList.contains('show')) openProf();
     aiBuild(); haptic('medium');
-    setTimeout(function(){ var a=document.getElementById('aistate'); if(a && a.scrollIntoView) a.scrollIntoView({block:'center', behavior:'smooth'}); }, 300);
+    /* Довести глаз до того, что происходит: пока идёт сборка — до строки
+       состояния, как только программа готова — до неё самой. */
+    setTimeout(function(){
+      var a=document.getElementById('aibox');
+      if(!aiПревьюЕсть()) a=document.getElementById('aistate');
+      if(a && a.scrollIntoView) a.scrollIntoView({block:'center', behavior:'smooth'});
+    }, 300);
     return;
   }
   if(RBO) gset('rb_seen', RBO.stamp);
