@@ -133,6 +133,22 @@ const ЭКРАНЫ = [
   ['ref', 'Каталог'], ['food', 'Еда'], ['circle', 'Рейтинг']
 ];
 /* окна: [имя, как открыть, что должно быть внутри] */
+/* Раскрывает карточку, у которой есть палец вниз. Просто «первая строка» не
+   годится: в дне бывает суперсет, у него подвал другой и пальцев нет, — а от
+   того, сколько сценариев отработало до этого, зависит, какая карточка сейчас
+   раскрыта. Обход не должен зависеть от своего же порядка. */
+async function сПальцем(p) {
+  await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(600);
+  for (let i = 0; i < 6; i++) {
+    if (await p.$('.card.exact [data-nope]')) return true;
+    const rows = await p.$$('#list .exrow');
+    if (!rows[0]) return false;
+    await rows[Math.min(i, rows.length - 1)].click();
+    await p.waitForTimeout(600);
+  }
+  return !!(await p.$('.card.exact [data-nope]'));
+}
+
 const ОКНА = [
   ['профиль', async p => { await p.click('#profbtn'); }, '#profm'],
   ['мои дни', async p => { await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(400); await p.click('#schedbtn'); }, '#schedm'],
@@ -141,9 +157,11 @@ const ОКНА = [
   /* 16.09: кнопки «Заменить» больше нет — её место занял палец вниз, а
      каталог открывается ссылкой «выбрать самому» из строки после замены. */
   ['каталог замены', async p => {
-    await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(500);
-    const r = await p.$('#list .exrow'); if (r) { await r.click(); await p.waitForTimeout(400); }
+    await сПальцем(p);
     const n = await p.$('.card.exact [data-nope]'); if (n) await n.click();
+    await p.waitForTimeout(400);
+    /* 18.09: палец вниз открывает шторку с выбором, замена — во втором касании */
+    const nd = await p.$('.card.exact [data-noped]'); if (nd) await nd.click();
     await p.waitForTimeout(1600);
     const s = await p.$('[data-selfpick]'); if (s) await s.click();
   }, '#catalog'],
@@ -162,10 +180,16 @@ const ГЛУБЖЕ = [
     await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(600);
     const r = await p.$('#list .exrow'); if (r) { await r.click(); await p.waitForTimeout(600); }
   }],
-  ['описание упражнения', async p => {
+  /* 18.09: «Описание» в подвале больше нет. Техника, когда она в каталоге есть,
+     открывается картинкой; шторка выбора — пальцем вниз. Смотрим обе. */
+  ['техника за картинкой', async p => {
     await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(600);
     const r = await p.$('#list .exrow'); if (r) { await r.click(); await p.waitForTimeout(500); }
-    const i = await p.$('.card.exact [data-info]'); if (i) { await i.click(); await p.waitForTimeout(600); }
+    const i = await p.$('.card.exact button.exthumb[data-info]'); if (i) { await i.click(); await p.waitForTimeout(600); }
+  }],
+  ['шторка под пальцем вниз', async p => {
+    await сПальцем(p);
+    const n = await p.$('.card.exact [data-nope]'); if (n) { await n.click(); await p.waitForTimeout(600); }
   }],
   ['карта тела с выбранной мышцей', async p => {
     await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(500);
@@ -192,6 +216,11 @@ async function закрытьВсё(page) {
   await page.evaluate(() => {
     document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
     document.body.classList.remove('coach');
+    /* 18.09: шторка под пальцем вниз — переключатель. Оставленная открытой от
+       прошлого сценария, она от следующего нажатия ЗАКРОЕТСЯ, и обход решит,
+       что окно не открылось. Сбрасываем её вместе с окнами. */
+    document.querySelectorAll('.exnope').forEach(n => { n.hidden = true; });
+    document.querySelectorAll('[data-nope]').forEach(b => b.setAttribute('aria-expanded', 'false'));
   }).catch(() => {});
   await page.waitForTimeout(300);
 }

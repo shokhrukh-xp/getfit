@@ -438,7 +438,7 @@ body.nogym .gymonly{display:none!important}
   border-right:1.8px solid var(--dim);border-bottom:1.8px solid var(--dim);
   transform:rotate(-135deg);border-radius:0 0 2px 0}
 .exttl:active{opacity:.6}
-.exthumb{flex:0 0 76px;width:76px;padding:0;border:none;background:none;border-radius:10px;
+.exthumb{display:block;flex:0 0 76px;width:76px;padding:0;border:none;background:none;border-radius:10px;
   -webkit-tap-highlight-color:transparent}
 .exthumb .fig2{flex:none;width:76px;border-radius:10px}
 .exthumb .fig{width:76px;height:57px;flex:none}
@@ -1521,8 +1521,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:13px}
 .adcode input.nn{flex:0 0 74px}
 /* ── ПАЛЬЦЫ И РЕЖИМ ПОРЯДКА ── */
-.exfoot .ebtn.th{padding:0 13px;font-size:16px;line-height:1}
+.exfoot .ebtn.th{width:44px;padding:0;font-size:17px;line-height:1}
 .exfoot .ebtn.th.on{border-color:var(--accent-txt);color:var(--accent-txt);background:var(--accent-ghost)}
+/* сустав уже отмечен — видно, не открывая шторку */
+.exfoot .ebtn.th.hrt{border-color:var(--warn-txt);color:var(--warn-txt)}
 .ordbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
   margin:0 0 10px;padding:10px 12px;border-radius:14px;background:var(--accent-ghost);
   border:.5px solid var(--line);font-size:13px;color:var(--text)}
@@ -1649,7 +1651,7 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .cyc{border:1px solid var(--line-soft);border-radius:12px;padding:8px 8px 6px;margin-bottom:8px}
 .cychead{font-weight:500;font-family:inherit;font-size:12px;
   color:var(--dim);margin:0 0 6px 2px}
-.sscard .exfoot{margin-top:10px}
+.sscard .exfoot{margin-top:10px;grid-template-columns:1fr 1fr}
 .rec{font-size:13px;line-height:1.38;color:var(--muted);margin:9px 0 9px;
   padding:7px 10px;border-radius:10px;background:var(--card-2);
   border-left:3px solid var(--line)}
@@ -1660,11 +1662,19 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .rec.warn b{color:var(--warn-txt)}
 .rec.start{border-left-color:var(--accent-txt)}
 .rec.wait{opacity:.6}
-.exfoot{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:11px}
+.exfoot{display:grid;grid-template-columns:auto auto 1fr auto;gap:8px;margin-top:11px}
 .ebtn{border:.5px solid var(--line);background:var(--card-2);border-radius:10px;
   padding:9px 8px;font-size:13px;color:var(--muted);transition:border-color .18s,color .18s}
 .ebtn:active,.ebtn[aria-expanded="true"]{border-color:var(--accent-txt);color:var(--accent-txt)}
 .ebtn.on{color:var(--accent-txt);border-color:var(--accent-2)}
+a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none}
+/* палец вниз спрашивает: просто не нравится или мешает суставу. Рядом —
+   довод тренера: он нужен ровно здесь, когда человек решает отказаться. */
+.exnope{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
+.exnope .whytext{margin:0 0 10px}
+.nope2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nope2 .ebtn.on{border-color:var(--warn-txt);color:var(--warn-txt)}
+.hurthint2{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.35}
 .exinfo{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
 /* «мешает»: дискомфорт в суставе — сигнал тренеру, который числа не видят */
 .hurt{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:.5px solid var(--line-soft)}
@@ -2187,7 +2197,7 @@ body.onb #picker .modalbox::before{display:none}
 .zseg button, .todaybar .tsedit, .dayseg button, .exfoot .ebtn,
 .resetline .linkbtn, .timer-in .tbtn, .fday .fbar.fbtap,
 .catitem .catpick, .hweek .hwd, .seg button, .goalcard #goaltalk,
-.mlchk, .hurt .hurtbtn{min-height:44px}
+.mlchk, .hurt .hurtbtn, .nope2 .ebtn{min-height:44px}
 /* ссылка на видео техники — такая же цель нажатия, как кнопка рядом */
 .cues .vid, a.vid{display:inline-flex;align-items:center;min-height:44px}
 /* тяжёлый вариант того же движения — строкой под подписью, не отдельной записью */
@@ -2807,9 +2817,12 @@ if(location.protocol==='file:'){
   var _fn=document.getElementById('filenote'); if(_fn) _fn.hidden=false;
 }
 
+function ytHref(name){
+  return 'https://www.youtube.com/results?search_query='+
+    encodeURIComponent(String(name||'')+' техника выполнения');
+}
 function ytLink(name){
-  return '<a class="vid" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
-    encodeURIComponent(name+' техника выполнения')+'">▶ Видео техники</a>';
+  return '<a class="vid" target="_blank" rel="noopener" href="'+ytHref(name)+'">▶ Видео техники</a>';
 }
 
 var DAYS={
@@ -4993,7 +5006,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.09 07:25';
+var BUILD = '18.09 08:15';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5946,22 +5959,34 @@ function renderList(){
   /* строка занятий живёт внутри дня и пропадает вместе с ним */
   try{ spToday(); if(SPTODAY===null) spLoadToday(); }catch(e){}
 }
-function низКарточки(e,di,метка){
+function низКарточки(e,di){
   /* 16.09: вместо «Заменить» — два пальца. Палец вниз и есть замена, только
-     он не спрашивает «чем», а помнит, что человек уже отверг. */
-  var нрав = !!LIKE[мнКлюч(e)];
+     он не спрашивает «чем», а помнит, что человек уже отверг.
+     18.09: кнопка «Описание» ушла. У упражнений из программы тренера cues
+     пустые — техники там нет вовсе, и человек открывал пустую шторку. Вместо
+     неё ссылка на видео прямо из ряда, одним касанием. Что жило в шторке —
+     довод тренера и «мешает суставу» — переехало под палец вниз: там оно и
+     нужно, в секунду, когда человек решает от упражнения отказаться.
+     Техника, если она в каталоге есть, осталась за картинкой (см. шапку). */
+  var нрав = !!LIKE[мнКлюч(e)], больно = hurtOn(e.n), техника = !!(e.cues && e.cues.length);
   return '<div class="exfoot">'+
       '<button type="button" class="ebtn th'+(нрав?' on':'')+'" data-like="'+di+'" aria-pressed="'+нрав+'" aria-label="Нравится">👍</button>'+
-      '<button type="button" class="ebtn th" data-nope="'+di+'" aria-label="Не нравится, заменить">👎</button>'+
-      '<button type="button" class="ebtn" data-info="'+di+'" aria-expanded="false">'+(метка?метка+' · ':'')+'Описание</button>'+
+      '<button type="button" class="ebtn th'+(больно?' hrt':'')+'" data-nope="'+di+'" aria-expanded="false" aria-label="Не нравится или мешает">👎</button>'+
+      '<a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'" aria-label="Видео: как делать '+e.n+'">▶ Видео</a>'+
       '<button type="button" class="ebtn drop" data-drop="'+di+'" aria-label="Убрать упражнение из этого дня">Убрать</button>'+
     '</div>'+
-    '<div class="exinfo" id="exinfo'+di+'" hidden>'+
+    '<div class="exnope" id="exnope'+di+'" hidden>'+
+      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+
+      '<div class="nope2">'+
+        '<button type="button" class="ebtn" data-noped="'+di+'">Не нравится</button>'+
+        '<button type="button" class="ebtn'+(больно?' on':'')+'" data-hurt="'+esc(e.n)+'" data-hdi="'+di+'" aria-pressed="'+(больно?'true':'false')+'">'+(больно?'Мешает · отмечено':'Мешает суставу')+'</button>'+
+      '</div>'+
+      (больно?'<p class="hurthint2">Тренер учтёт это при замене. Нажми ещё раз, если прошло.</p>':'')+
+    '</div>'+
+    (техника ? '<div class="exinfo" id="exinfo'+di+'" hidden>'+
       (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
-      '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+
-      '<li class="nb">'+ytLink(e.en||e.n)+'</li></ul>'+
-      (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+hurtHtml(e)+
-    '</div>';
+      '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul>'+
+    '</div>' : '');
 }
 /* «Мешает» — дискомфорт в суставе, а не в мышце. Числа прогрессии этого не
    видят, а для замены это важнее чисел. Копится по имени упражнения, уходит
@@ -5973,11 +5998,18 @@ function hurtHtml(e){
   return '<div class="hurt"><button type="button" class="hurtbtn" data-hurt="'+esc(e.n)+'" aria-pressed="'+(on?'true':'false')+'">'+(on?'Мешает · отмечено':'Мешает суставу')+'</button>'+
          (on?'<span class="hurthint">тренер учтёт при замене; нажми ещё раз, если прошло</span>':'')+'</div>';
 }
-function hurtToggle(n){
+function hurtToggle(n, di){
   var h=hurtAll();
   if(h[n]) delete h[n]; else h[n]={last:TODAY, n:((h[n]&&h[n].n)||0)+1};
   gset('hurt', h); try{ syncPush('state/hurt', h); }catch(e){}
-  renderList(); haptic(h[n]?'medium':'light');
+  renderList();
+  /* перерисовка закрывает шторку, а человек ещё в ней и ждёт, что отметка
+     встала. Возвращаем её открытой — иначе нажатие выглядит холостым. */
+  if(di!=null){
+    var nb=document.getElementById('exnope'+di), tb=document.querySelector('button[data-nope="'+di+'"]');
+    if(nb){ nb.hidden=false; if(tb) tb.setAttribute('aria-expanded','true'); }
+  }
+  haptic(h[n]?'medium':'light');
 }
 /* Шапка карточки: слева движущаяся миниатюра (два кадра), справа название и
    схема одной строкой. Раньше картинка пряталась в «Описание», и человек её
@@ -5986,7 +6018,9 @@ function hurtToggle(n){
 function шапка(e, di, метка){
   var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
   return '<div class="exhead">'+
-    '<button type="button" class="exthumb" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
+    ((e.cues && e.cues.length)
+      ? '<button type="button" class="exthumb" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'
+      : '<a class="exthumb" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'" aria-label="Видео: как делать '+e.n+'">'+mediaFor(e)+'</a>')+
     '<button type="button" class="exttl" data-shut="'+di+'" aria-expanded="true" aria-label="Свернуть '+e.n+'">'+
       '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</span>'+
       '<span class="exname">'+e.n+'</span>'+
@@ -5998,7 +6032,7 @@ function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
   return '<article class="card exact">'+
      шапка(e,di,'')+ lastLine(e)+
-     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di,'')+
+     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di)+
    '</article>';
 }
 /* ── суперсет: одна карточка, круги ── */
@@ -8453,7 +8487,7 @@ document.getElementById('list').addEventListener('click', function(e){
     haptic('light');
     return;
   }
-  var hb2=e.target.closest('button[data-hurt]'); if(hb2){ hurtToggle(hb2.dataset.hurt); return; }
+  var hb2=e.target.closest('button[data-hurt]'); if(hb2){ hurtToggle(hb2.dataset.hurt, hb2.dataset.hdi!=null?+hb2.dataset.hdi:null); return; }
   /* ── режим порядка ── */
   if(e.target.closest('#orddone')){ ordВыкл(); return; }
   if(e.target.closest('#ordreset')){ ordСброс(); return; }
@@ -8461,7 +8495,15 @@ document.getElementById('list').addEventListener('click', function(e){
   var od=e.target.closest('[data-orddn]'); if(od){ ordСдвиг(+od.dataset.orddn, 1); return; }
   /* ── пальцы ── */
   var lk=e.target.closest('button[data-like]'); if(lk){ нравится(+lk.dataset.like); return; }
-  var np=e.target.closest('button[data-nope]'); if(np){ неНравится(+np.dataset.nope); return; }
+  var np=e.target.closest('button[data-nope]');
+  if(np){
+    /* палец вниз больше не меняет упражнение молча: сначала спрашиваем, это
+       «не нравится» или «мешает суставу» — разница решает, что делать дальше */
+    var nb=document.getElementById('exnope'+np.dataset.nope), рас=np.getAttribute('aria-expanded')==='true';
+    if(nb){ nb.hidden=рас; np.setAttribute('aria-expanded', String(!рас)); haptic('light'); }
+    return;
+  }
+  var nd=e.target.closest('button[data-noped]'); if(nd){ неНравится(+nd.dataset.noped); return; }
   var dr=e.target.closest('button[data-drop]');
   if(dr){ dropEx(+dr.dataset.drop); return; }
   if(e.target.closest('#addex')){ openCatalog({dk:day, add:true}); return; }

@@ -50,7 +50,10 @@ const открытьФильтры = async page => {
     if (rows[0]) { await rows[0].click(); await page.waitForTimeout(700); }
   }
   const было = await page.$eval('.card.exact .exname', e => e.textContent.trim());
+  /* 18.09: палец вниз сначала спрашивает — «не нравится» или «мешает суставу» */
   await page.click('.card.exact [data-nope]');
+  await page.waitForTimeout(400);
+  await page.click('.card.exact [data-noped]');
   await page.waitForTimeout(1800);
   const стало = await page.$$eval('#list .exrow .exrn b, #list .card.exact .exname', ns => ns.map(n => n.textContent.trim()))
     .then(a2 => a2[0] || '');

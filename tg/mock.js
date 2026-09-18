@@ -110,7 +110,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -158,7 +158,7 @@ async function поднять(page, o) {
       }
     } };
     try {
-      if (!новичок) localStorage.setItem('shp_v1_profile', '"shp"');
+      if (!новичок) localStorage.setItem('shp_v1_profile', JSON.stringify(профильПрог || 'shp'));
       /* профиль человека: без него экраны, которые от него зависят (здоровье,
          норма, цель), в проверках пустые */
       if (профиль) localStorage.setItem('shp_v1_me', JSON.stringify(профиль));
@@ -173,7 +173,7 @@ async function поднять(page, o) {
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при

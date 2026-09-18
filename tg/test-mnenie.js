@@ -12,6 +12,15 @@ let плохо = 0;
 const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') + т); if (!у) плохо++; };
 const ИМЕНА = p => p.$$eval('#list .exrow .exrn b, #list .card.exact .exname', ns => ns.map(n => n.textContent.trim()));
 
+/* 18.09: палец вниз больше не меняет упражнение молча — сначала спрашивает,
+   «не нравится» или «мешает суставу». Отказ теперь в два касания. */
+async function отказ(page) {
+  await page.click('.card.exact [data-nope]');
+  await page.waitForTimeout(400);
+  await page.click('.card.exact [data-noped]');
+  await page.waitForTimeout(1800);
+}
+
 async function раскрыть(page, i) {
   if (await page.$('.card.exact [data-nope]')) {
     const имя = await page.$eval('.card.exact .exname', e => e.textContent.trim());
@@ -36,8 +45,7 @@ async function раскрыть(page, i) {
 
   /* ── палец вниз меняет упражнение ── */
   const было = await page.$eval('.card.exact .exname', e => e.textContent.trim());
-  await page.click('.card.exact [data-nope]');
-  await page.waitForTimeout(1800);
+  await отказ(page);
   const стало1 = (await ИМЕНА(page))[0];
   дано(стало1 && стало1 !== было, 'упражнение заменилось: «' + было + '» → «' + стало1 + '»');
   const нота = await page.$eval('#dbnote', e => e.textContent.trim());
@@ -56,8 +64,7 @@ async function раскрыть(page, i) {
 
   /* ── второй отказ не возвращает первое ── */
   await раскрыть(page, 0);
-  await page.click('.card.exact [data-nope]');
-  await page.waitForTimeout(1800);
+  await отказ(page);
   const стало2 = (await ИМЕНА(page))[0];
   дано(стало2 !== стало1 && стало2 !== было,
     'второй отказ дал третье движение, а не вернул отвергнутое: ' + стало2);
