@@ -283,6 +283,50 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
   await стереть(ЛА); await стереть(ЛБ);
   await З('/svc/mates', { uid: ЛА, uids: [ЛА, ЛБ, 'svc_t_lk_c'], drop: true });
 
+  console.log('\n═══ 11.5 · день пересобран РОВНО под то, что просили ═══');
+  /* 18.09, его скриншот: день назывался «Руки, предплечья и пресс», а первым
+     упражнением в нём стоял ПРИСЕД СО ШТАНГОЙ. Подсказка просила упор
+     словами, и этого не хватило: модель вернула id от другого движения,
+     tidyProg честно подставил каталожное имя по этому id, и присед встал в
+     день рук, не встретив ни одной проверки.
+     Починка структурная: каталог для этого запроса режется до мышц упора,
+     плюс проверка после. Но словарь «руки → бицепс, трицепс» сам по себе
+     ломается тихо — первая версия использовала \b, который в JavaScript
+     по-русски не срабатывает НИКОГДА, и день собрался из одних предплечий.
+     Поэтому проверяем не «упало ли», а КАЖДУЮ мышцу получившегося дня. */
+  const ДУ = 'svc_t_den';
+  const уу = (id, n, m, pp) => ({ id, n, en: n, m, q: 'barbell', p: pp, sets: 3, reps: '8–12', rest: 90, ss: null, why: 'по каталогу' });
+  await З('/s', { uid: ДУ, key: 'me', data: { sex: 'm', age: 38, ht: 178, bw: 88.5, goal: 'muscle',
+    wt: 'keep', gym: 'muscle', level: 'mid', place: 'gym', only: 'all', min: 45, lim: [], eq: [], dislikes: [] } });
+  await З('/s', { uid: ДУ, key: 'aiprog', data: { name: 'Мышцы · 4 дня', note: 'Четыре дня.',
+    focus: ['quadriceps', 'chest'], days: [
+      { s: 'Низ', sub: 'квадрицепс и ягодицы', ex: [уу('Barbell_Full_Squat', 'Присед', 'quadriceps', 'Приседания'), уу('Leg_Press', 'Жим ногами', 'quadriceps', 'Жим'), уу('Seated_Leg_Curl', 'Сгибание ног', 'hamstrings', 'Сгибание')] },
+      { s: 'Верх', sub: 'грудь и спина', ex: [уу('Barbell_Bench_Press_Medium_Grip', 'Жим лёжа', 'chest', 'Жим'), уу('Wide-Grip_Lat_Pulldown', 'Тяга сверху', 'lats', 'Тяга'), уу('Dumbbell_Flyes', 'Разведения', 'chest', 'Разведения')] },
+      { s: 'Плечи', sub: 'плечи и спина', ex: [уу('Standing_Military_Press', 'Жим стоя', 'shoulders', 'Жим'), уу('Bent_Over_Barbell_Row', 'Тяга в наклоне', 'middle back', 'Тяга'), уу('Side_Lateral_Raise', 'Махи', 'shoulders', 'Махи')] },
+      { s: 'Низ 2', sub: 'ноги ещё раз', ex: [уу('Barbell_Lunge', 'Выпады', 'quadriceps', 'Выпады'), уу('Standing_Calf_Raises', 'Носки', 'calves', 'Носки'), уу('Romanian_Deadlift', 'Румынская', 'hamstrings', 'Тяга')] }] } });
+  const КАТ = JSON.parse(fs.readFileSync(os.homedir() + '/getfit/catalog.json', 'utf8'));
+  const ПОID = {}; (КАТ.ex || []).forEach(e => ПОID[e.i] = e);
+  const МОЖНО = ['biceps', 'triceps', 'forearms', 'abdominals', 'obliques'];
+  const дот = await З('/coach', { uid: ДУ, text: 'Собери программу дня 4 на руки, предплечья и пресс' });
+  const деньЧ = дот && дот.rebuild && дот.rebuild.prog && дот.rebuild.prog.days[3];
+  дано(!!деньЧ, 'день 4 пересобран' + sb_err(дот));
+  if (деньЧ) {
+    const мышцы = (деньЧ.ex || []).map(x => (ПОID[x.id] || {}).m || '?');
+    console.log('    ' + (деньЧ.sub || '') + ': ' + (деньЧ.ex || []).map((x, k) => x.n.replace(/\s*\(.*/, '') + ' [' + мышцы[k] + ']').join(' · '));
+    const мимо = мышцы.filter(m => !МОЖНО.includes(m));
+    дано(!мимо.length, 'ни одной чужой мышцы в дне рук' + (мимо.length ? ': ' + мимо.join(', ') : ''));
+    дано(мышцы.includes('biceps') || мышцы.includes('triceps'), 'руки в дне рук ЕСТЬ — словарь упора живой');
+    дано(мышцы.includes('forearms'), 'предплечья на месте');
+    дано(мышцы.includes('abdominals') || мышцы.includes('obliques'), 'пресс на месте');
+    /* надкласс — слово над названием, а не обрезанный совет по технике */
+    const фразы = (деньЧ.ex || []).filter(x => String(x.p || '').length > 18 || String(x.p || '').split(/\s+/).length > 3);
+    дано(!фразы.length, 'надкласс везде остался надклассом' + (фразы.length ? ': «' + фразы.map(x => x.p).join('», «') + '»' : ''));
+    /* и день не повторяет то, что уже стоит в других днях */
+    const чужие = {}; [0, 1, 2].forEach(k => (дот.rebuild.prog.days[k].ex || []).forEach(x => чужие[x.id] = 1));
+    дано(!(деньЧ.ex || []).some(x => чужие[x.id]), 'и ни одного движения из других дней');
+  }
+  await стереть(ДУ);
+
   console.log('\n═══ 12 · никто не потерян между участниками и кругами ═══');
   /* 13.09: сестра перешла по ссылке «семья», прошла весь онбординг — и не
      появилась в рейтинге. Ссылка открывает ЧАТ С БОТОМ, а ветка бота заводила
