@@ -5006,7 +5006,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.09 10:45';
+var BUILD = '18.09 11:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8576,11 +8576,37 @@ function csGetBig(k){
 function incFor(q){ return {barbell:2.5, dumbbell:2, kettlebells:4, machine:5, cable:2.5, 'e-z curl bar':2.5}[q] || 2.5; }
 /* имя из истории, если это то же движение под другим именем: так прогрессия
    не обнуляется при переходе на новую программу */
+/* ПРАВКИ РУКАМИ ЖИВУТ В НОМЕРЕ СЛОТА, А НЕ В УПРАЖНЕНИИ.
+   18.09, его слова: «снова врёт, говорит что сделал, но не сделал». Тренер как
+   раз не врал: в чате стоял правильный день — узкий жим, бицепс, трицепс,
+   скручивания, запястья. А на экране в том же дне первым висел ПРИСЕД.
+   Причина в ключе: замена хранится как «A4:0» — день и НОМЕР СТРОКИ. Когда
+   день пересобирается, в строке 0 оказывается другое упражнение, а старая
+   замена продолжает его закрашивать; SKIP прячет новые строки, ADJ навязывает
+   им чужое число подходов. Подходы при этом считались по настоящей программе —
+   отсюда «0 / 14 подходов» при пяти чужих упражнениях на экране.
+   Поэтому слот, содержимое которого сменилось, теряет свою ручную правку.
+   Сравниваем по id каталога, а не по имени: каталог переименовывался, и по
+   именам чистка сработала бы там, где менять нечего. */
+var ПРОГ_СЧИЩЕНО = 0;
+function сброситьСлоты(dk, былоEx, сталоEx){
+  var было=былоEx||[], стало=сталоEx||[], n=Math.max(было.length, стало.length), убрано=0;
+  for(var i=0;i<n;i++){
+    var a=(было[i]||{}).cat, b=(стало[i]||{}).cat;
+    if(a!=null && a===b) continue;                 /* то же движение — правка про него и остаётся */
+    var k=subKey(dk,i);
+    if(SUBS[k]||SKIP[k]||ADJ[k]!=null) убрано++;
+    delete SUBS[k]; delete SKIP[k]; delete ADJ[k];
+  }
+  if(убрано) delete ORD[dk];                       /* порядок был про другие строки */
+  return убрано;
+}
 function installAiProg(prog){
   if(!prog || !prog.days || !prog.days.length) return null;
-  var keys=[];
+  var keys=[], счищено=0;
   prog.days.forEach(function(d,i){
     var k='A'+(i+1); keys.push(k);
+    var былоEx=(DAYS[k]||{}).ex||null;
     var sLabel=(d.s && !/^день/i.test(d.s.trim())) ? d.s : (String(d.sub||'').split(/[:·,]/)[0].split(' ').slice(0,2).join(' ') || 'День '+(i+1));
     DAYS[k]={ name:'День '+(i+1), s:sLabel.slice(0,10), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
       var time=/ с$/.test(x.reps||'');
@@ -8591,7 +8617,11 @@ function installAiProg(prog){
                ph:ph0, fig:null, ai:true,
                nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
     }) };
+    /* Первый заход в приложение — сравнивать не с чем, и чистить нечего. */
+    if(былоEx) счищено += сброситьСлоты(k, былоEx, DAYS[k].ex);
   });
+  if(счищено) saveSubs();
+  ПРОГ_СЧИЩЕНО = счищено;
   var me=myData()||{}, gp=goalPair(me), fit={wt:{},gym:{},level:{},place:{},days:keys.length};
   if(gp.wt) fit.wt[gp.wt]=3; if(gp.gym) fit.gym[gp.gym]=3; if(me.level) fit.level[me.level]=3; fit.place[me.place||'gym']=3;
   var t=new Date();
@@ -11798,14 +11828,25 @@ function applyRebuild(rb){
   if(!rb || !rb.prog || !rb.prog.days || gget('rebuilt_at',null)===rb.at) return;
   gset('rebuilt_at', rb.at);
   AIPROG=rb.prog; aiApply();
+  var счищено = ПРОГ_СЧИЩЕНО;
+  /* День просили переделать ЦЕЛИКОМ — значит и добавленные в него руками
+     упражнения были про прежний день. Оставить их — это снова показать не ту
+     программу, о которой тренер только что отчитался в чате. */
+  if(rb.day){ var dk='A'+rb.day;
+    if((EXTRA[dk]||[]).length){ счищено += EXTRA[dk].length; delete EXTRA[dk]; }
+    delete ORD[dk];
+  }
+  if(счищено) saveSubs();
   try{ fPost('/reco', {uid:syncUid(), rebuilt:1}).catch(function(){}); }catch(e){}
   /* Пересборка одного дня по просьбе — это не «новый блок». Человек знает,
      что попросил, и ждёт подтверждения фактом: какой день и что стало с
      объёмом. Общие слова здесь читаются как отписка. */
+  var правки = счищено ? ' Твои прежние правки в этом дне сняты — они были про другие упражнения.' : '';
   var т = rb.day
-    ? ('День '+rb.day+' пересобран.'+((rb.vol&&rb.vol.length)?' Подходов в неделю: '+rb.vol.join('; ')+'.':'')+' Веса из истории на месте.')
-    : ('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.');
+    ? ('День '+rb.day+' пересобран.'+((rb.vol&&rb.vol.length)?' Подходов в неделю: '+rb.vol.join('; ')+'.':'')+' Веса из истории на месте.'+правки)
+    : ('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.'+правки);
   try{ if(TG && TG.showAlert) TG.showAlert(т); }catch(e){}
+  try{ renderList(); }catch(e){}
 }
 function recoPull(){
   var сразу = /[?&]r=1(&|$)/.test(location.search||'');

@@ -113,7 +113,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -171,12 +171,19 @@ async function поднять(page, o) {
       if (видел != null) localStorage.setItem('shp_v1_chat_seen', String(видел));
       /* замены упражнений на день: {'D1:2': {n, e, i}} — как их пишет приложение */
       if (замены) localStorage.setItem('shp_v1_shp_subs', JSON.stringify(замены));
+      /* Ручной слой поверх программы, под ТЕМ ЖЕ профилем, что и программа:
+         замены, спрятанные строки, добавленные упражнения и свой порядок.
+         Ключи — «день:номер строки», ровно как их пишет приложение. */
+      if (слой) { const пр = профильПрог || 'shp';
+        ['subs', 'skip', 'extra', 'adj', 'ord'].forEach(function (k) {
+          if (слой[k]) localStorage.setItem('shp_v1_' + пр + '_' + k, JSON.stringify(слой[k]));
+        }); }
       (журнал || []).forEach(w => {
         localStorage.setItem('cs_workouts_' + w.id, JSON.stringify(w));
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
