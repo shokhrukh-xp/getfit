@@ -113,7 +113,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -157,10 +157,12 @@ async function поднять(page, o) {
           for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i);
             if (k && k.indexOf('cs_') === 0) out.push(k.slice(3)); }
           cb(null, out); },
-        removeItem(k, cb){ localStorage.removeItem('cs_' + k); cb && cb(null, true); }
+        removeItem(k, cb){ if(localStorage.getItem('__mock_fail_cloud')){cb && cb('temporary failure',false);return;} localStorage.removeItem('cs_' + k); cb && cb(null, true); }
       }
     } };
     try {
+      if(одинРаз && sessionStorage.getItem('__mock_seeded'))return;
+      if(одинРаз)sessionStorage.setItem('__mock_seeded','1');
       if (!новичок) localStorage.setItem('shp_v1_profile', JSON.stringify(профильПрог || 'shp'));
       /* профиль человека: без него экраны, которые от него зависят (здоровье,
          норма, цель), в проверках пустые */
@@ -183,7 +185,7 @@ async function поднять(page, o) {
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null, !!o.preserveReload]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
@@ -197,8 +199,10 @@ async function поднять(page, o) {
   await page.route('**://telegram.org/**', r => r.abort().catch(() => {}));
 
   await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
+    if(o.handleRoute && await o.handleRoute(route))return;
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
+    if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
     if (p === '/s')          return дать({ ok: true });
     if (p === '/day')        return дать(день_ ? { ok: true, day: день_ } : { ok: true, day: день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }) });
@@ -206,7 +210,14 @@ async function поднять(page, o) {
     if (p === '/week')       return дать({ ok: true, week: неделя(o.week || {}) });
     if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
-    if (p === '/circle')     return дать(o.circle === null ? { ok: false } : круг());
+    /* проверка может подать свой круг (например, с me.open = false) —
+       раньше объект служил только флажком «круг есть / круга нет» */
+    if (p === '/circle')     return дать(o.circle === null ? { ok: false } : (o.circle && o.circle.ok ? o.circle : круг()));
+    /* что видно соседям: сервер возвращает то, что ему прислали */
+    if (p === '/circle/vid') {
+      const bv = JSON.parse(route.request().postData() || '{}');
+      return дать({ ok: true, open: bv.open !== false });
+    }
     /* заведён ли бот: o.bot === false — человек вошёл по коду в приложении
        и остался без напоминаний; undefined — неизвестно, полоски нет */
     /* разговор с тренером: o.chat — реплики, которые уже лежат на сервере
@@ -244,8 +255,12 @@ async function поднять(page, o) {
     if (p === '/feed') {
       const who = u.searchParams.get('who') || '';
       if (!who) return дать({ ok: true, circle: 'family', today: TODAY, feed: o.feed || [] });
+      /* закрытый сосед: балл есть, тарелок нет (19.09) */
+      if (o.open === false) return дать({ ok: true, circle: 'family', today: TODAY, who, name: 'жена',
+        date: u.searchParams.get('date') || TODAY, streak: 4, open: false, meals: [],
+        day: { r: 7.2, closed: false, why: [], n: 2, counts: true, going: true } });
       return дать({ ok: true, circle: 'family', today: TODAY, who, name: 'жена',
-        date: u.searchParams.get('date') || TODAY, streak: 4,
+        date: u.searchParams.get('date') || TODAY, streak: 4, open: true,
         day: { r: 7.2, closed: false, why: [], n: 2, counts: true, going: true },
         meals: o.meals === null ? [] : (o.meals || [
           { ref: who + ':m1', uid: who, name: 'жена', me: false, date: TODAY, t: '09:05',
@@ -326,10 +341,14 @@ async function поднять(page, o) {
       return дать({ ok: true, circle: { id: 'c_new', name: b5.name, code: 'fit4242',
         link: 'https://t.me/GetFit_MyBot?start=fit4242', n: 1, owner: true } });
     }
-    if (p === '/circle/leave' || p === '/circle/drop' || p === '/circle/rename') return дать({ ok: true });
+    if (p === '/circle/leave' || p === '/circle/drop' || p === '/circle/rename' ||
+        p === '/circle/del' || p === '/circle/unban' || p === '/circle/code' ||
+        p === '/circle/owner') return дать({ ok: true });
+    /* кого не пускают — отдельным списком, как и у сервера (19.09) */
     if (p === '/circle/members') return дать({ ok: true, id: u.searchParams.get('id') || '', mine: true,
       members: [{ uid: '308687648', name: 'Ты', owner: true, me: true },
-                { uid: '850965787', name: 'жена', owner: false, me: false }] });
+                { uid: '850965787', name: 'жена', owner: false, me: false }],
+      banned: o.banned || [] });
     if (p === '/acts') {
       const виды = o.kinds || ['теннис', 'бег', 'ходьба', 'плавание', 'велосипед', 'футбол',
         'бадминтон', 'сквош', 'йога', 'танцы', 'гребля', 'лыжи', 'коньки', 'бокс'];
@@ -458,6 +477,7 @@ async function поднять(page, o) {
       return дать({ ok: true, id: 'new', v, kind: b.kind, meal: null, 'где': где, list: [] });
     }
     if (p === '/glu/del') return дать({ ok: true, list: [] });
+    if (p === '/recent') return дать({ok:true,recent:o.recent||[],often:o.often||[]});
     if (p === '/srez') {
       if (o.srez === null) return дать({ ok: true, есть: false, n: 0 });
       if (o.srez) return дать(Object.assign({ ok: true, есть: true }, o.srez));
@@ -473,18 +493,18 @@ async function поднять(page, o) {
         b: { w: 88.3, fat: 24.2, pct: 27.4, prot: 16.2, lean: 64.1, visc: 13, waist: null },
         'д': { w: -4, fat: -2.1, pct: -1.1, prot: 0.1, lean: -1.9, visc: -1, waist: null },
         неЖир: -1.9,
-        шапка: 'За 15 дней ушло 4,0 кг. Жиром — 2,1.',
+        шапка: 'За 15 дней ушло 4,0 кг. По оценке весов, жиром — 2,1.',
         текст: ['Остальное — не жир: сухая масса просела на 1,9 кг.',
-                'Белковая масса осталась на месте — мышцы не тронуты.'],
+                'Расчётная белковая масса почти не изменилась; по ней одной нельзя судить о сохранности мышц.'],
         значит: ['С 01.09 вышло больше плана, но первая неделя дефицита — это гликоген и вода, а не жир. Смотреть надо на темп последней недели.',
                  'За последние 7 дней вес 88,7 → 88,3 (−0,4 кг в неделю), жир 24,6 → 24,2 (−0,4). Сейчас уходит именно жир.',
-                 'Верить здесь можно белковой массе: её прибор меряет напрямую, а жир весы считают остатком от воды.'],
+                 'Жир и белковая масса — расчётные оценки весов, чувствительные к воде и условиям замера.'],
         план: { from: '2026-09-01', w0: 92.3, now: 88.3, fact: -4, plan: -1.8, gap: -2.2, onTrack: false, rate: -0.82,
                 text: '75 кг к концу января · старт 1 сентября · мышцы и силу сохраняем' },
         дальше: { text: 'С 01.09 ушло 4,0 кг вместо плановых 1,8 — опережение на 2,2 кг. Еду сильнее резать не нужно; следить надо за силой и белковой массой.',
                   ask: 'Иду с опережением плана. Не слишком ли быстро?' },
-        ряд: ряд, порог: 1.7,
-        источник: 'Vázquez-Bautista 2025: изменением состава считается сдвиг от 1,7 кг' });
+        ряд: ряд, порог: null,
+        источник: 'InBody: состав тела рассчитывается по биоимпедансу; это оценка, а не прямое измерение мышц' });
     }
     if (p === '/onboard') {
       const b = JSON.parse(route.request().postData() || '{}');
@@ -510,7 +530,9 @@ async function поднять(page, o) {
       return дать({ ok: true, prog: вторая, wt: 'down', gym: 'muscle', goal: 'lose_muscle', goalObj: null,
         ask: null, options: [], left: 0, hint: 'Всё учёл — программа твоя.', dislikes: ['колени беречь', 'кардио'] });
     }
-    return дать({ ok: true });
+    if (['/w','/w/del','/forget','/join','/reco','/day/close','/recipe','/react','/meal/del','/act/del','/glu/del'].includes(p)) return дать({ ok: true });
+    ошибки.push('Неизвестный маршрут mock: ' + p);
+    return route.fulfill({status:501,contentType:'application/json',body:JSON.stringify({error:'Unknown mock route: '+p})});
   });
 
   const ошибки = [];

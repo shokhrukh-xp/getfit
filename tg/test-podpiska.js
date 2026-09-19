@@ -29,7 +29,8 @@ const ЛИСТ = () => {
   const ош = await M.поднять(свой, { theme: 'dark', wait: 2800, hist: M.журнал() });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   дано(!(await свой.evaluate(ЛИСТ)).открыт, 'своему лист с ценой не показан');
-  await свой.click('#avatar').catch(() => {});
+  await свой.click('#profbtn');
+  дано(await свой.isVisible('#profm'), 'профиль действительно открыт');
   await свой.waitForTimeout(800);
   const строка = await свой.$eval('#subrow', e => ({ скрыта: e.hidden, текст: e.textContent })).catch(() => null);
   дано(строка && строка.скрыта, 'и в профиле про подписку ни слова: ' + JSON.stringify(строка));
@@ -59,7 +60,8 @@ const ЛИСТ = () => {
 
   /* в профиле у гостя строка есть */
   await гость.evaluate(() => { const m = document.getElementById('subm'); if (m) m.classList.remove('show'); });
-  await гость.click('#avatar').catch(() => {});
+  await гость.click('#profbtn');
+  дано(await гость.isVisible('#profm'), 'профиль действительно открыт');
   await гость.waitForTimeout(800);
   const стр2 = await гость.$eval('#subrow', e => ({ скрыта: e.hidden, текст: e.textContent.trim() })).catch(() => null);
   дано(стр2 && !стр2.скрыта && /500/.test(стр2.текст), 'в профиле у гостя строка с ценой: ' + (стр2 || {}).текст);
@@ -69,7 +71,8 @@ const ЛИСТ = () => {
   const платит = await br.newPage({ viewport: { width: 390, height: 900 } });
   await платит.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(платит, { theme: 'dark', wait: 2800, sub: 'платит' });
-  await платит.click('#avatar').catch(() => {});
+  await платит.click('#profbtn');
+  дано(await платит.isVisible('#profm'), 'профиль действительно открыт');
   await платит.waitForTimeout(800);
   const стр3 = await платит.$eval('#subrow', e => ({ скрыта: e.hidden, текст: e.textContent.trim() })).catch(() => null);
   дано(стр3 && !стр3.скрыта && /подключён/.test(стр3.текст), 'у платящего видно состояние: ' + (стр3 || {}).текст);

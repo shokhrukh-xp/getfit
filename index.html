@@ -1880,6 +1880,7 @@ body.onb #picker .modalbox::before{display:none}
 .rsbtn.bad b{color:var(--warn-txt)}
 .rsbtn.bad:active{border-color:var(--warn-txt)}
 #resetstate{margin:0 0 12px}
+#cleanupnotice{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));left:16px;right:16px;z-index:10005;padding:12px;border-radius:12px;background:var(--card);color:var(--text);border:1px solid var(--line);box-shadow:0 4px 20px #0003;pointer-events:none}
 .phrow{display:block;width:100%;text-align:left;margin-bottom:8px;padding:12px 14px;
   border:1px solid var(--line);border-radius:12px;background:var(--card-2);color:var(--text);
   font:inherit;cursor:pointer;position:relative}
@@ -2687,7 +2688,7 @@ body.onb #picker .modalbox::before{display:none}
     <p class="mtext">Знакомство пройдёт с самого начала: тренер снова спросит о тебе и соберёт программу. Выбери, что делать с записями.</p>
     <div class="rsopts">
       <button type="button" class="rsbtn" data-reset="prog"><b>Пересобрать программу</b><i>Профиль и программа сбросятся, знакомство начнётся заново. Тренировки, еда и замеры останутся — веса подхватятся в новой программе.</i></button>
-      <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть всё</b><i>Профиль, программа, журнал тренировок, еда, замеры и переписка с тренером. Вернуть это будет нельзя.</i></button>
+      <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть дневник</b><i>Удалятся профиль, программа, тренировки, еда, замеры, фото и переписка в приложении. Другие устройства очистятся при подключении. Подписка и участие в кругах сохранятся. Уже отправленные сообщения и сохранённые копии фото у получателей останутся.</i></button>
     </div>
     <p class="mtext" id="resetstate" hidden></p>
     <button class="btn wide" id="resetclose">Отмена</button>
@@ -5038,7 +5039,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.09 11:50';
+var BUILD = '19.09 19:16';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5173,7 +5174,8 @@ function pad2(n){ return ('0'+n).slice(-2); }
 function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function ruDate(x){ var a=(x||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : (x||''); }
 
-var TODAY = ymd(new Date());
+function dayNow(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tashkent'}); }
+var TODAY = dayNow();
 var LAST  = {};                      /* имя упражнения -> {w,r,s:[[w,r]...],d} */
 var DB=null, sess=null, ctimer=null;
 
@@ -6305,7 +6307,7 @@ var MAXVAL = 4000;                       /* запас до лимита 4096 */
    иначе уже сохранённые по нему тренировки перестали бы находиться. */
 function csKey(path){
   var pre = (profile==='wife') ? 'w_' : '';
-  return (pre+String(path)).replace(/[^A-Za-z0-9_-]/g,'_');
+  return (sessionNamespace()+pre+String(path)).replace(/[^A-Za-z0-9_-]/g,'_');
 }
 function mGet(k){ try{ return localStorage.getItem('tgcs_'+k); }catch(e){ return null; } }
 function mSet(k,v){ try{ localStorage.setItem('tgcs_'+k,v); }catch(e){} }
@@ -6341,10 +6343,10 @@ function csGet(k){
 function csDel(k){
   try{ localStorage.removeItem('tgcs_'+k); }catch(e){}
   if(!CS || !CS.removeItem) return Promise.resolve();
-  return new Promise(function(res){
+  return new Promise(function(res,rej){
     var done=false;
-    CS.removeItem(k, function(){ if(!done){ done=true; res(); } });
-    setTimeout(function(){ if(!done){ done=true; res(); } },8000);
+    CS.removeItem(k, function(err,ok){if(done)return;done=true;if(err||ok===false)rej(new Error('Telegram пока не удалил копию'));else res();});
+    setTimeout(function(){if(!done){done=true;rej(new Error('Telegram не ответил на удаление'));}},8000);
   });
 }
 function csKeys(){
@@ -6437,19 +6439,104 @@ function syncUid(){
    сервер не пустил — показываем экран: код приглашения, «открой через
    Telegram» или «переоткрой». Всё остальное приложение об этом не знает. */
 var GATE = { shown:false };
+/* Read the reset generation before touching old CloudStorage or uploading a
+   local queue. Older generations are never promoted to a new diary. */
+var DATASESSION={uid:null,promise:null,blocked:false}, SESSIONBASE={};
+function dataSessionKey(){return 'data_session_'+syncUid();}
+function localDataSession(){var key=dataSessionKey();return SESSIONBASE[key]||(SESSIONBASE[key]=gget(key,{epoch:0,full_epoch:0}));}
+function sessionNamespace(){
+  var s=localDataSession();return s.epoch?'g'+s.epoch+'_':'';
+}
+function adoptDataSession(d){
+  if(!d || !d.session || !Number.isSafeInteger(d.session.epoch))return Promise.reject(new Error('Не удалось проверить состояние дневника.'));
+  var s=d.session,old=localDataSession(),key=dataSessionKey();
+  if(s.epoch<old.epoch)return Promise.reject(new Error('Сервер вернул устаревшее состояние дневника.'));
+  if(s.epoch===old.epoch){gset(key,s);return retryCloudCleanup().then(function(pending){cleanupNotice(d.cleanupPending||pending);return s;});}
+  DATASESSION.blocked=true;clearTimeout(ctimer);clearPrivatePhotos();
+  var all=old.epoch<s.full_epoch;
+  return wipeCloud(all,s.epoch).then(function(pending){
+    wipeLocal(all);gset(key,s);gset('cloud_cleanup',pending?{all:all,cutoff:s.epoch}:null);
+    gset('reset_notice','Дневник сброшен на другом устройстве. Устаревшая копия удалена.');
+    location.reload();throw new Error('Дневник обновляется после сброса.');
+  });
+}
+function cleanupNotice(pending){
+  var el=document.getElementById('cleanupnotice');
+  if(!el){el=document.createElement('p');el.id='cleanupnotice';el.className='mtext';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.appendChild(el);}
+  var notice=gget('reset_notice','');
+  el.hidden=!pending&&!notice;
+  el.textContent=pending?'Дневник удалён. Очистка оставшихся копий в хранилищах продолжается; они не вернутся в дневник.':notice;
+  if(!pending)gset('reset_notice','');
+}
+function ensureDataSession(force){
+  var uid=syncUid();
+  if(DATASESSION.blocked)return Promise.reject(new Error('Дневник обновляется после сброса.'));
+  if(force || DATASESSION.uid!==uid){DATASESSION.promise=null;DATASESSION.uid=uid;}
+  if(!DATASESSION.promise){
+    var headers={};if(TG && TG.initData)headers['x-tg-init']=TG.initData;
+    DATASESSION.promise=fetch(SYNCURL+'/session?uid='+encodeURIComponent(uid),{headers:headers,cache:'no-store'})
+      .then(function(r){return r.json().then(function(d){
+        if(!r.ok){if(d.code==='auth'||d.code==='stale'||d.code==='invite')gateShow(d.code,d.error);throw new Error(d.error||'Не удалось проверить дневник.');}
+        return adoptDataSession(d);
+      });}).catch(function(e){DATASESSION.promise=null;throw e;});
+  }
+  return DATASESSION.promise;
+}
 function tgFetch(url, opts){
   opts = opts || {};
   var h = Object.assign({}, opts.headers || {});
   var init = (TG && TG.initData) ? TG.initData : '';
   if (init) h['x-tg-init'] = init;
   opts.headers = h;
-  return fetch(url, opts).then(function(r){
+  var entering=new URL(url,location.href).pathname==='/join';
+  return (entering?Promise.resolve():ensureDataSession()).then(function(){
+    if(DATASESSION.blocked)throw new Error('Дневник обновляется.');
+    h['x-data-epoch']=String(localDataSession().epoch);opts.cache='no-store';
+    return fetch(url,opts);
+  }).then(function(r){
+    if(r.status===409)return r.clone().json().then(function(d){
+      if(d.code!=='data_reset')return r;
+      DATASESSION.promise=null;
+      return ensureDataSession(true).then(function(){throw new Error('Дневник сброшен. Повтори действие после обновления.');});
+    });
     if ((r.status === 401 || r.status === 403) && !GATE.shown) {
       r.clone().json().then(function(d){ if (d && (d.code === 'invite' || d.code === 'auth' || d.code === 'stale')) gateShow(d.code, d.error); }).catch(function(){});
     }
     return r;
   });
 }
+/* Private image URLs are fetched with Telegram headers, never embedded as
+   public src/href. Blob URLs live only while their elements are on screen. */
+var PRIVATEPHOTOS=new Map();
+function photoAttr(url,svg){
+  try{
+    var u=new URL(url,location.href),api=new URL(SYNCURL);
+    if(u.origin===api.origin && (u.pathname==='/photo'||u.pathname.indexOf('/p/')===0)){
+      var key=u.pathname==='/photo'?u.searchParams.get('key'):u.pathname.slice(3).replace(/\.jpe?g$/,'');
+      return 'data-private-photo="'+esc(key)+'"';
+    }
+  }catch(e){}
+  return (svg?'href':'src')+'="'+esc(url)+'"';
+}
+function clearPrivatePhotos(){
+  PRIVATEPHOTOS.forEach(function(value,el){
+    if(value.url)URL.revokeObjectURL(value.url);
+    el.removeAttribute('src');el.removeAttribute('href');el.removeAttribute('data-photo-loading');
+  });PRIVATEPHOTOS.clear();
+}
+function loadPrivatePhotos(){
+  PRIVATEPHOTOS.forEach(function(value,el){if(!el.isConnected){if(value.url)URL.revokeObjectURL(value.url);PRIVATEPHOTOS.delete(el);}});
+  document.querySelectorAll('[data-private-photo]:not([data-photo-loading])').forEach(function(el){
+    var entry={url:null};el.setAttribute('data-photo-loading','1');PRIVATEPHOTOS.set(el,entry);
+    tgFetch(SYNCURL+'/photo?uid='+encodeURIComponent(syncUid())+'&key='+encodeURIComponent(el.getAttribute('data-private-photo')),{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('Фото недоступно');return r.blob();})
+      .then(function(blob){
+        if(!el.isConnected || PRIVATEPHOTOS.get(el)!==entry)return;
+        entry.url=URL.createObjectURL(blob);el.setAttribute(el.tagName.toLowerCase()==='image'?'href':'src',entry.url);
+      }).catch(function(){if(PRIVATEPHOTOS.get(el)===entry)el.setAttribute('aria-label','Фото недоступно');});
+  });
+}
+new MutationObserver(loadPrivatePhotos).observe(document.body,{childList:true,subtree:true});
 function gateShow(code, msg){
   var g = document.getElementById('gate'); if (!g) return;
   GATE.shown = true; GATE.code = code;
@@ -6489,7 +6576,7 @@ function syncPost(path, body){
   return tgFetch(SYNCURL+path, {method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify(body)}).then(function(r){
       SYNCOK = r.ok; paintSync();
-      return r.json().then(function(d){ return r.ok ? (d||{ok:true}) : null; }).catch(function(){ return r.ok?{ok:true}:null; });
+      return r.json().then(function(d){ return d || null; }).catch(function(){ return null; });
     }).catch(function(){ SYNCOK=false; paintSync(); return null; });
 }
 function syncPush(path, body){
@@ -6497,8 +6584,7 @@ function syncPush(path, body){
     var uid=syncUid(), p=String(path);
     if(p.indexOf('workouts/')===0){
       var id=p.slice(9);
-      return syncPost('/w', {uid:uid, id:id, date:body.date||id.slice(0,10),
-                             day:body.day, name:body.name, sub:body.sub, data:body});
+      return workQueue(id, body, false);
     }
     if(p.indexOf('state/')===0){
       var key=p.slice(6);
@@ -6515,10 +6601,121 @@ function syncPush(path, body){
 }
 function paintSync(){
   var el=document.getElementById('syncst'); if(!el) return;
+  var ws=workState(syncUid()), ids=Object.keys(ws.pending), conflicts=ids.filter(function(id){return ws.pending[id].conflict;});
+  if(ids.length){
+    el.textContent=conflicts.length ? 'Тренировка изменена на двух устройствах. Выбери версию.' : 'Есть записи на этом устройстве, которые ещё не отправлены.';
+    el.className='syncst bad';
+    var b=document.createElement('button'); b.type='button'; b.className='btn small';
+    b.textContent=conflicts.length?'Выбрать версию':'Повторить';
+    b.onclick=function(){ if(conflicts.length) workResolve(conflicts[0]); else cloudPull(true); };
+    el.appendChild(b); return;
+  }
   el.textContent = SYNCOK===null ? '' :
     (SYNCOK ? 'Журнал синхронизирован — тренер видит его сам, копировать не нужно.'
-            : 'Синхронизация недоступна, данные сохранены в Telegram. Попробую позже.');
+            : 'Синхронизация недоступна. Записи на этом устройстве сохранены; подтверждения сервера пока нет.');
   el.className = 'syncst' + (SYNCOK ? ' ok' : SYNCOK===false ? ' bad' : '');
+}
+/* Очередь привязана к аккаунту, хранится до подтверждения сервера и не
+   теряет более свежую правку, поступившую во время отправки предыдущей. */
+var WORKFLIGHT={};
+function workState(uid){
+  var s=gget('work_sync_'+uid,null)||{};
+  s.versions=s.versions||{}; s.pending=s.pending||{}; return s;
+}
+function workStore(uid,s){ gset('work_sync_'+uid,s); }
+function workOperation(){ return Date.now().toString(36)+'_'+Math.random().toString(36).slice(2); }
+function workQueue(id,body,deleted){
+  var uid=syncUid(),s=workState(uid);
+  s.pending[id]={body:body?JSON.parse(JSON.stringify(body)):null,deleted:!!deleted,
+    version:s.versions[id]||0,operation:workOperation()};
+  workStore(uid,s); return workSend(uid,id);
+}
+function workSend(uid,id){
+  var key=uid+':'+id;
+  if(WORKFLIGHT[key]) return WORKFLIGHT[key];
+  function next(){
+    var job=workState(uid).pending[id];
+    if(!job || job.conflict) return Promise.resolve();
+    var body=job.body||{};
+    return syncPost(job.deleted?'/w/del':'/w',{uid:uid,id:id,version:job.version,operation:job.operation,
+      date:body.date||id.slice(0,10),day:body.day,name:body.name,sub:body.sub,data:body}).then(function(res){
+      var s=workState(uid),cur=s.pending[id];
+      if(res && res.ok){
+        s.versions[id]=res.version||res.updated||0;
+        if(cur && cur.operation===job.operation) delete s.pending[id];
+        else if(cur) cur.version=s.versions[id];
+        workStore(uid,s); return next();
+      }
+      if(res && res.code==='conflict' && cur){cur.conflict=res;workStore(uid,s);}
+    });
+  }
+  WORKFLIGHT[key]=next().catch(function(){SYNCOK=false;}).then(function(){delete WORKFLIGHT[key];paintSync();});
+  return WORKFLIGHT[key];
+}
+function workFlush(){
+  var uid=syncUid();
+  return Promise.all(Object.keys(workState(uid).pending).map(function(id){return workSend(uid,id);}));
+}
+function workResolve(id){
+  var uid=syncUid(),s=workState(uid),job=s.pending[id]; if(!job || !job.conflict)return;
+  var choose=function(keep){
+    s=workState(uid); var current=s.pending[id]; if(!current || current.operation!==job.operation)return;
+    if(keep){current.version=job.conflict.version;current.operation=workOperation();delete current.conflict;}
+    else {
+      var copies=gget('work_conflicts_'+uid,[])||[];
+      copies.push({id:id,at:Date.now(),job:job});gset('work_conflicts_'+uid,copies.slice(-20));
+      delete s.pending[id];
+    }
+    workStore(uid,s);cloudPull(true);
+  };
+  var text='Тренировка '+id.slice(0,10)+': оставить версию с этого устройства? Отмена — принять серверную версию. Резервная копия локальной правки останется на этом устройстве.';
+  if(TG && TG.showConfirm)TG.showConfirm(text,choose);else choose(window.confirm(text));
+}
+function fetchCloudSnapshot(){
+  var data=null,seen={};
+  function page(cursor){
+    var url=SYNCURL+'/all?uid='+encodeURIComponent(syncUid())+(cursor?'&cursor='+encodeURIComponent(cursor):'');
+    return tgFetch(url).then(function(r){if(!r.ok)throw new Error('sync '+r.status);return r.json();}).then(function(d){
+      if(!d || !Array.isArray(d.state) || !Array.isArray(d.workouts))throw new Error('sync response');
+      if(!data)data=d;else{data.workouts=data.workouts.concat(d.workouts);data.deleted=(data.deleted||[]).concat(d.deleted||[]);}
+      if(d.next){if(seen[d.next])throw new Error('sync cursor');seen[d.next]=1;return page(d.next);}
+      return data;
+    });
+  }
+  return page(null);
+}
+function adoptWorkouts(d){
+  var uid=syncUid(),pre=csKey('workouts')+'_',changed=0;
+  return csKeys().then(function(keys){return csGetMany(keys.filter(function(k){return k.indexOf(pre)===0;}));}).then(function(vals){
+    var s=workState(uid),jobs=[];
+    (d.deleted||[]).forEach(function(w){
+      if(s.pending[w.id])return;
+      s.versions[w.id]=w.version;
+      if(vals[pre+w.id]){changed++;jobs.push(csDel(pre+w.id));}
+    });
+    (d.workouts||[]).forEach(function(w){
+      if(s.pending[w.id])return;
+      s.versions[w.id]=w.version||w.updated||0;
+      var v=fit(w.data);
+      if(vals[pre+w.id]!==v){changed++;jobs.push(csSet(pre+w.id,v).catch(function(){}));}
+    });
+    /* Однократно переносим старые офлайн-записи. Версия 0 разрешает только
+       создание: параллельная запись или удаление на сервере дадут конфликт. */
+    if(d.syncVersion>=2){
+      var known={};
+      (d.workouts||[]).concat(d.deleted||[]).forEach(function(w){known[w.id]=true;});
+      Object.keys(vals).forEach(function(k){
+        var id=k.slice(pre.length);
+        if(known[id] || s.pending[id] || s.versions[id])return;
+        try{
+          var body=JSON.parse(vals[k]);
+          if(body && typeof body==='object')s.pending[id]={body:body,deleted:false,version:0,operation:workOperation()};
+        }catch(e){}
+      });
+    }
+    workStore(uid,s);
+    return Promise.all(jobs);
+  }).then(function(){return changed?loadHist(true):null;}).then(function(){return changed;});
 }
 /* При запуске: выгружаем наверх всё, что уже лежит локально. Если локально
    пусто, а в базе что-то есть — восстанавливаем. */
@@ -6626,11 +6823,8 @@ function cloudPull(force){
   if(pulling) return Promise.resolve();
   if(!force && Date.now()-lastPull < 20000) return Promise.resolve();
   pulling=true; lastPull=Date.now();
-  return pushDirty().then(function(){
-    return tgFetch(SYNCURL+'/all?uid='+encodeURIComponent(syncUid())).then(function(r){ return r.json(); });
-  }).then(function(d){
-    if(!d) return;
-    SYNCOK=true; paintSync();
+  return ensureDataSession().then(function(){return Promise.all([pushDirty(),workFlush()]);}).then(fetchCloudSnapshot).then(function(d){
+    SYNCOK=Object.keys(workState(syncUid()).pending).length===0 && Object.keys(DIRTY).length===0; paintSync();
     var сост={}; (d.state||[]).forEach(function(st){ сост[st.key]=st; });
     /* указатель на программу до сегодняшнего дня жил только в CloudStorage —
        если в базе его нет или он старее нашего, отправляем свой */
@@ -6655,57 +6849,53 @@ function cloudPull(force){
       if(r){ взято.push(k); }
       markSet(k, +st.updated);             /* не подошло нам — но версию видели */
     });
-    /* тренировки: чего нет у этого устройства — дописываем в локальный журнал */
-    var pre=csKey('workouts')+'_';
-    return csKeys().then(function(keys){
-      var есть={}; (keys||[]).forEach(function(k){ if(k.indexOf(pre)===0) есть[k.slice(pre.length)]=1; });
-      var новых=(d.workouts||[]).filter(function(w){ return !есть[w.id]; });
-      var чужих=Object.keys(есть).filter(function(id){
-        return !(d.workouts||[]).some(function(w){ return w.id===id; }); });
-      /* и наоборот: что есть только здесь — отправляем наверх */
-      if(чужих.length) csGetMany(чужих.map(function(id){ return pre+id; })).then(function(vals){
-        чужих.forEach(function(id){ var v=vals[pre+id]; if(!v) return;
-          try{ syncPush('workouts/'+id, JSON.parse(v)); }catch(e){} });
+    return adoptWorkouts(d).then(function(n){
+      if(n){
+        var s2=suggestedDay();
+        if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){day=s2;set('day',day);loadSess();}
+        refillIfUntouched();renderDayseg();renderDayHead();renderTodaybar();renderList();
+        renderProgress();
+      }
+      return workFlush().then(function(){
+        SYNCOK=Object.keys(workState(syncUid()).pending).length===0 && Object.keys(DIRTY).length===0;
+        paintSync();return взято.length+n;
       });
-      /* ПОЧИНКА РАЗМЕТКИ. Записи, сделанные до 12.09, хранят только имя
-         упражнения. На сервере они уже размечены id каталога, но сюда это
-         никогда не доезжало: раньше бралось только то, чего нет локально.
-         Без id тренер не узнаёт упражнение — в журнале пустой квадрат вместо
-         фото, а одно движение двоится под старым и новым именем. */
-      var сId=(d.workouts||[]).filter(function(w){
-        return есть[w.id] && (((w.data||{}).ex)||[]).some(function(x){ return x && x.id; }); });
-      if(сId.length) csGetMany(сId.map(function(w){ return pre+w.id; })).then(function(vals){
-        var чинить=сId.filter(function(w){
-          var v=vals[pre+w.id]; if(!v) return false;
-          try{ return ((JSON.parse(v).ex)||[]).some(function(x){ return x && !x.id; }); }catch(e){ return false; }
-        });
-        if(!чинить.length) return;
-        return Promise.all(чинить.map(function(w){ return csSet(pre+w.id, fit(w.data)).catch(function(){}); }))
-          .then(function(){ return loadHist(true); })
-          .then(function(){ try{ renderProgress(); }catch(e){} });
-      }).catch(function(){});
-      if(!новых.length) return взято.length;
-      return Promise.all(новых.map(function(w){ return csSet(pre+w.id, fit(w.data)).catch(function(){}); }))
-        .then(function(){ return loadHist(true); })
-        .then(function(){
-          var s2=suggestedDay();
-          if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
-          refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
-          return взято.length+новых.length;
-        });
     });
   }).catch(function(){ SYNCOK=false; paintSync(); })
     .then(function(n){ pulling=false; return n; });
 }
-/* приложение открыто сутками — забираем свежее ещё и при возврате к нему */
-document.addEventListener('visibilitychange', function(){ if(!document.hidden) cloudPull(); });
-window.addEventListener('focus', function(){ cloudPull(); });
+/* Полночь: сначала сохраняем вчерашний ввод под вчерашней датой. Затем
+   открываем новый день, не перенося в него старые подходы. */
+function refreshDay(){
+  var next=dayNow();if(next===TODAY)return false;
+  clearTimeout(ctimer);
+  if(sess){
+    harvestDom();saveSess();
+    if(DB && countDone()>0){
+      var body=sessionBody();
+      DB.doc('workouts/'+TODAY+'_'+day).set(body).catch(function(){});
+    }
+  }
+  stopTimer();TODAY=next;
+  if(FOOD){FOOD.date=null;FOOD.day=null;FOOD.week=null;}
+  if(HOME){HOME.day=null;HOME.sc=null;HOME.at=0;}
+  DAYSC=null;SPTODAY=null;CIRC=null;CIRCACHE={};
+  day=suggestedDay();loadSess();renderList();renderDayseg();renderDayHead();renderTodaybar();
+  renderFoodNav();loadDay();homePull();
+  return true;
+}
+function resumeApp(){clearPrivatePhotos();ensureDataSession(true).then(function(){refreshDay();cloudPull();loadPrivatePhotos();}).catch(function(){SYNCOK=false;paintSync();});}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)resumeApp();});
+window.addEventListener('focus',resumeApp);
+window.addEventListener('online',resumeApp);
+window.addEventListener('storage',function(e){if(e.key===LS+dataSessionKey())resumeApp();});
+setInterval(function(){if(!document.hidden)refreshDay();},30000);
 function syncBoot(){ cloudPull(true); }
 
 var STORE = { doc:mkDoc, collection:mkCollection };
 
 /* ── тренировка 06.09, перенесённая из старой версии ── */
-var PROFKEY='app_profile';
+var PROFKEY=sessionNamespace()+'app_profile';
 
 /* ── тактильная отдача Telegram ── */
 function haptic(kind){
@@ -6897,7 +7087,7 @@ function initDb(){
   DB = STORE;
   paintNote('local');
   setTimeout(syncBoot, 1500);   /* после того как профиль применён */
-  csGetBig(AIKEY).then(function(str){
+  ensureDataSession().then(function(){return csGetBig(AIKEY);}).then(function(str){
     /* своя программа приезжает из облака раньше указателя на неё */
     if(str){ try{ var pr=JSON.parse(str); if(pr && pr.days){ gset('ai_prog', pr); installAiProg(pr); if(profile==='ai') applyProfile('ai'); } }catch(e){} }
     return csGet(PROFKEY);
@@ -7001,7 +7191,7 @@ function стеретьЗапись(){
   try{ if(HIST) HIST=HIST.filter(function(w){ return !(w.date===TODAY && dayHere(w.day)===day); }); }catch(e){}
   try{ set(wDurKey(), null); set(wtLastKey(), null); }catch(e){}
   try{ csDel(csKey('workouts/'+id)); }catch(e){}
-  try{ syncPost('/w/del', {uid:syncUid(), id:id}); }catch(e){}
+  try{ workQueue(id, null, true); }catch(e){}
   try{ if(lastDone && lastDone.date===TODAY && lastDone.day===day){ lastDone=null; set('lastdone', null); } }catch(e){}
   try{ pushVolume(); }catch(e){}
   try{ renderMus(); }catch(e){}
@@ -7716,7 +7906,7 @@ function renderMeasSummary(){
     };
     box.innerHTML = row('вес','w','кг',true,true) + row('жир','fat','%',true,true) + row('белок','prot','кг',false,true) + row('талия','waist','см',true,true) +
       /* пояснение — только когда есть что сказать: белковая масса упала */
-      ((last.prot!=null && first!==last && first.prot!=null && last.prot-first.prot<-0.3) ? '<p class="fline" style="margin-top:8px">Белковая масса ниже старта — мышцы уходят: сначала еда и сон, не программа.</p>' : '');
+      ((last.prot!=null && first!==last && first.prot!=null && last.prot-first.prot<-0.3) ? '<p class="fline" style="margin-top:8px">Расчётная белковая масса ниже старта. Это не доказывает потерю мышц — сравни условия замеров, питание и силу.</p>' : '');
   };
   if(FOOD.meas){ draw(FOOD.meas); }
   else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
@@ -8587,7 +8777,7 @@ if(_ps) _ps.addEventListener('click', function(){ showPicker(); });
    Worker (ключ API лежит там секретом, приложение его не видит). Результат
    становится четвёртой программой «ai» с теми же карточками, кругами и
    прогрессией, что и остальные. */
-var AIKEY='app_aiprog';
+var AIKEY=sessionNamespace()+'app_aiprog';
 function csSetBig(k, str){
   /* CloudStorage: значение до 4096 символов — режем на куски */
   var parts=[]; for(var i=0;i<str.length;i+=3800) parts.push(str.slice(i,i+3800));
@@ -8913,7 +9103,7 @@ document.getElementById('aibox').addEventListener('click', function(e){
    дневник — в D1 под uid. Жена Шохруха удалила бота, зашла заново и снова
    попала в старую программу, знакомства не увидела. Отсюда кнопка.
    'prog' — сбросить профиль и программу, дневник не трогать;
-   'all'  — стереть весь след человека. Оба варианта необратимы. */
+   'all' — стереть дневник; членство и платёжные права сохраняются. Оба варианта необратимы. */
 function openReset(){ resetState(''); var m=document.getElementById('resetm'); if(m) m.classList.add('show'); }
 function closeReset(){ var m=document.getElementById('resetm'); if(m) m.classList.remove('show'); }
 function resetState(t, плохо){
@@ -8923,7 +9113,7 @@ function resetState(t, плохо){
 /* Общие ключи (gset) и ключи с префиксом программы (set). При «пересобрать»
    стираем только то, что задаёт человека и его программу; журнал тренировок
    в облаке и в D1 не трогаем, чтобы веса подхватились в новой программе. */
-var RESET_G=['me','goal','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
+var RESET_G=['sync_dirty','sync_marks','onbdraft','hurt','deload_srv','reco2_seen','rebuilt_at','me','goal','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
 var RESET_P=['sched','subs','adj','last','lastdone','day','extra','deload','ai_sched'];
 function wipeLocal(всё){
   try{
@@ -8943,18 +9133,29 @@ function wipeLocal(всё){
     убрать.forEach(function(k){ localStorage.removeItem(k); });
   }catch(e){}
 }
-function wipeCloud(всё){
-  return csKeys().then(function(keys){
-    var список=(keys||[]).filter(function(k){
-      if(всё) return true;
-      return k===PROFKEY || k.indexOf(AIKEY)===0 || /^state_/.test(k);
+function wipeCloud(всё,cutoff){
+  if(!CS)return Promise.resolve(false);
+  return new Promise(function(resolve,reject){
+    var done=false;
+    CS.getKeys(function(err,keys){if(done)return;done=true;if(err||!keys)reject(new Error('Telegram не ответил'));else resolve(keys);});
+    setTimeout(function(){if(!done){done=true;reject(new Error('Telegram не ответил'));}},8000);
+  }).then(function(keys){
+    var list=keys.filter(function(k){
+      var match=/^g(\d+)_/.exec(k),epoch=match?+match[1]:0;
+      if(epoch>=cutoff)return false;
+      return всё || /(^|_)app_profile$/.test(k) || /(^|_)app_aiprog/.test(k) || /(^|_)state_/.test(k);
     });
-    return Promise.all(список.map(function(k){ return csDel(k).catch(function(){}); }));
-  }).catch(function(){});
+    return Promise.all(list.map(function(k){return csDel(k).then(function(){return false;},function(){return true;});}))
+      .then(function(failed){return failed.some(Boolean);});
+  }).catch(function(){return true;});
 }
-function wipeServer(всё){
+function retryCloudCleanup(){
+  var job=gget('cloud_cleanup',null);if(!job)return Promise.resolve(false);
+  return wipeCloud(job.all,job.cutoff).then(function(pending){if(!pending)gset('cloud_cleanup',null);return pending;});
+}
+function wipeServer(всё,operation){
   return tgFetch(SYNCURL+'/forget', { method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({uid:syncUid(), scope: всё ? 'all' : 'prog'}) })
+    body:JSON.stringify({uid:syncUid(), scope: всё ? 'all' : 'prog',operation:operation}) })
     .then(function(r){ return r.json(); })
     .then(function(d){ if(!d || !d.ok) throw new Error((d&&d.error)||'сервер'); return d; });
 }
@@ -8962,22 +9163,18 @@ var resetBusy=false;
 function doReset(scope){
   if(resetBusy) return;
   var всё = scope==='all';
-  resetBusy=true; resetState(всё ? 'Стираю всё…' : 'Сбрасываю профиль и программу…');
+  resetBusy=true; resetState(всё ? 'Стираю дневник…' : 'Сбрасываю профиль и программу…');
   haptic('medium');
-  wipeServer(всё)
-    .catch(function(e){
-      /* сервер не ответил — локально всё равно чистим, иначе человек снова
-         упрётся в старую программу; скажем честно, что в облаке могло остаться */
-      resetState('Сервер не ответил, чищу на устройстве. '+humanErr(e), true);
-    })
-    .then(function(){ return wipeCloud(всё); })
-    .then(function(){
-      wipeLocal(всё);
-      resetBusy=false;
-      closeReset();
-      /* перезагрузка — самый честный способ вернуться к первому запуску:
-         в памяти страницы иначе остаются HIST, SUBS, PROFILES.ai и прочее */
-      location.reload();
+  var uid=syncUid(),key=dataSessionKey(),opKey='reset_operation_'+uid;
+  var op=gget(opKey,null)||workOperation();gset(opKey,op);
+  wipeServer(всё,op).then(function(result){
+      if(!result.session)throw new Error('Сервер не подтвердил сброс. Данные на устройстве сохранены.');
+      DATASESSION.blocked=true;clearTimeout(ctimer);clearPrivatePhotos();
+      return wipeCloud(всё,result.session.epoch).then(function(pending){
+        wipeLocal(всё);gset(key,result.session);gset(opKey,null);gset('cloud_cleanup',pending?{all:всё,cutoff:result.session.epoch}:null);
+        gset('reset_notice',result.cleanupPending?'Дневник удалён. Фотографии недоступны; очистка хранилища продолжается.':'Дневник сброшен.');
+        location.reload();
+      });
     })
     .catch(function(e){ resetBusy=false; resetState(humanErr(e), true); });
 }
@@ -9261,7 +9458,7 @@ function hcBub(e, i, lab){
   var ico=function(d){ return '<g class="hbi" transform="translate(-9.6 -9.6) scale(.8)"><path d="'+d+'"/></g>'; };
   if(e.cls==='meal'){
     if(e.img) h+='<clipPath id="hbc'+i+'"><circle r="'+r+'"/></clipPath><circle r="'+r+'" class="hbph"/>'+
-                 '<image href="'+esc(e.img)+'" x="-'+r+'" y="-'+r+'" width="'+(2*r)+'" height="'+(2*r)+'" preserveAspectRatio="xMidYMid slice" clip-path="url(#hbc'+i+')"/><circle r="'+r+'" class="hbring"/>';
+                 '<image '+photoAttr(e.img,true)+' x="-'+r+'" y="-'+r+'" width="'+(2*r)+'" height="'+(2*r)+'" preserveAspectRatio="xMidYMid slice" clip-path="url(#hbc'+i+')"/><circle r="'+r+'" class="hbring"/>';
     else h+='<circle r="'+r+'" class="hbbg"/>'+ico('M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8');
   } else if(e.cls==='gym'||e.cls==='gymon'){
     h+='<circle r="'+r+'" class="hbbg"/>'+ico('M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10');
@@ -9416,14 +9613,9 @@ function homeRating(){
    У каждой линии свой масштаб — 60 кг мышц и 27 % жира на одной оси
    несопоставимы; график показывает форму, а ответ «растёт или падает»
    дают три числа с дельтой за неделю под ним. */
-/* Строка «мышцы» ушла 11.09. Весы не меряют мышцы: они меряют сопротивление
-   тела току, а главная переменная в этой формуле — вода. На старте дефицита
-   уходит гликоген и с ним вода, и прибор списывает её в «мышцы»: у него за
-   10 дней «мышцы» 62,5 → 60,5, а белковая масса при этом 16,1 → 17,2.
-   Наименьшее изменение сухой массы, которое на бытовых весах вообще можно
-   считать реальным, — 1,7–2,4 кг (Vázquez-Bautista 2025); пол-литра воды
-   двигает оценку жира на 2–4 % (Uğraş 2020). Поэтому на главной — жир в
-   килограммах (то, что убираем) и белковая масса (то, что бережём). */
+/* Весы рассчитывают жир и белковую массу по импедансу. Эти оценки зависят
+   от воды и условий измерения и сами по себе не доказывают потерю мышц.
+   Пороги ниже лишь приглушают мелкие изменения в интерфейсе. */
 function bodySeries(){
   return [
     {k:'w',    n:'вес',   f:function(m){ return m.w!=null?+m.w:null; }, вниз:true,  порог:0.3},
@@ -9434,7 +9626,7 @@ function bodySeries(){
       под:function(m){ return m.fat!=null ? fmtKg(+m.fat)+' %' : null; },
       f:function(m){
       return m.fatkg!=null ? +m.fatkg : ((m.w!=null && m.fat!=null) ? Math.round(+m.w*+m.fat)/100 : null); }},
-    {k:'prot', n:'белок', вниз:false, порог:0.3, f:function(m){
+    {k:'prot', n:'белок', нейтр:true, вниз:false, порог:0.3, f:function(m){
       return m.prot!=null ? +m.prot : null; }},
     /* Талия — единственное здесь, что меряет сантиметр, а не весы. На дефиците
        она врёт меньше веса: вода и гликоген её почти не двигают. Строки нет,
@@ -9491,10 +9683,10 @@ function homeBody(){
     h+='<span class="hbr"><u>'+sr.n+(под?'<em>'+esc(под)+'</em>':'')+'</u><b>'+f1(v)+'<s> '+(sr.ед||'кг')+'</s></b>'+
        BODY_VIEWS.map(function(вид){
          var d=bodyDelta(ms, sr, вид);
-         /* изменение меньше порога — шум прибора: число показываем, но серым,
-            чтобы человек не читал его как факт */
+         /* Мелкие изменения приглушаем; расчёт белка не оцениваем как
+            сохранение или потерю мышц. Это не порог точности прибора. */
          var шум = d==null || Math.abs(d)<sr.порог;
-         var хорошо = шум ? null : (sr.вниз ? d<0 : d>0);
+         var хорошо = шум || sr.нейтр ? null : (sr.вниз ? d<0 : d>0);
          return '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+
            (d==null ? '—' : (d>0?'+':'−')+f1(Math.abs(d)))+'</s>';
        }).join('')+'</span>';
@@ -9505,7 +9697,7 @@ function homeBody(){
      было жиром — в них нет, а это ровно то, ради чего человек встаёт на
      весы. Поэтому под таблицей отдельная дверь в срез. */
   return '<button type="button" class="hbody" data-hgo="food">'+h+
-    '<p class="hbnote">изменение за неделю</p></button>'+
+    '<p class="hbnote">жир и белок — оценки весов, зависят от условий замера</p></button>'+
     '<button type="button" class="srgo" data-srez>Срез: сколько из этого — жир →</button>';
 }
 function homeNext(){
@@ -9682,11 +9874,26 @@ function renderCircle(){
       var число = неделя ? (r.ravg!=null?fmtR(r.ravg):'—') : (has?fmtR(t.r):'—');
       var класс = неделя ? (r.ravg!=null?'':' dim') : (has?(t.closed?'':' live'):' dim');
       var под = неделя ? (has?'сегодня '+fmtR(t.r):'') : (r.ravg!=null?'неделя '+fmtR(r.ravg):'');
-      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(i+1)+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
+      /* 19.09: пришёдший только что стоял в таблице пустой строкой с местом —
+         выглядело как проигрыш, хотя он ещё не играл. Место даётся за записи. */
+      var пусто = !has && r.ravg==null;
+      if(пусто && !под) под = 'пока без записей';
+      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+класс+'">'+число+'</span></div>';
     }).join('')+'</div>'+
     '<p class="lbkey">Точки — дни недели, с понедельника: <i><s class="lbd-ok"></s>оценка 7 и выше</i>, <i><s class="lbd-low"></s>ниже 7</i>, <i><s class="lbd-today"></s>сегодня</i>, <i><s></s>не в зачёте</i> — еды не записано или только один приём.</p>';
   }
+  /* 19.09, его решение: каждый решает за себя. В таблице человек есть
+     всегда — балл и есть смысл круга; тарелки с фото показывает тот, кто
+     хочет. Строка стоит под таблицей, а не в профиле: решение принимается
+     там, где видно, о чём оно. */
+  var откр = me.open !== false;
+  h+='<p class="klab" style="margin-top:18px">ЧТО ВИДНО СОСЕДЯМ</p>'+
+     '<div class="lbseg" style="margin-top:0"><button type="button" data-vid="1" aria-pressed="'+откр+'">Тарелки и фото</button>'+
+     '<button type="button" data-vid="0" aria-pressed="'+(!откр)+'">Только балл</button></div>'+
+     '<p class="lbkey">'+(откр
+       ? 'Соседи по кругам открывают твой день и видят еду с фото — и могут её оценить. Отдельную тарелку можно спрятать на «Еде».'
+       : 'В таблице ты остаёшься — балл, дни недели и серия видны. Еду и фото соседи не увидят, и оценить их нельзя.')+'</p>';
   h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар в еде. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
   if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
     'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
@@ -9739,6 +9946,8 @@ function udayHtml(){
   if(day && day.r!=null) h+='<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(day.r)+' / 10</b>'+(fin?' · итог дня':' · день идёт')+(d.streak?' · '+streakText(d.streak):'')+
     '<br><small>'+esc(whyText(day.why))+(!fin && day.counts===false ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
   var meals=d.meals||[];
+  /* закрылся — это не «ничего не записано», и путать одно с другим нельзя */
+  if(d.open===false) return h+'<p class="plempty">'+esc(u.name||'Человек')+' показывает в круге только балл — еда и фото закрыты.</p>';
   if(!meals.length) return h+'<p class="plempty">'+(u.date===TODAY?'Сегодня ещё ничего не записано.':'В этот день ничего не записано.')+'</p>';
   var order=['завтрак','обед','ужин','перекус'], groups={};
   meals.forEach(function(m){ var k=order.indexOf(m.kind)>=0?m.kind:'другое'; (groups[k]=groups[k]||[]).push(m); });
@@ -9755,7 +9964,7 @@ function plateHtml(m){
   var who = '<b class="plwho">'+(m.t?esc(m.t):esc(m.kind||'приём'))+(m.likes?' · 👍 '+m.likes:'')+'</b>';
   var nums = '<i class="plnum">'+m.kcal+' ккал · белок '+m.prot+' г'+(m.stars?' · '+starsHtml(m.stars):'')+'</i>';
   var items = (m.items||[]).map(function(x){ return esc(x.name)+(x.g?' '+Math.round(x.g)+' г':''); });
-  var ph = m.img ? '<img loading="lazy" src="'+esc(m.img)+'" alt="">' : 'без фото';
+  var ph = m.img ? '<img loading="lazy" '+photoAttr(m.img,false)+' alt="">' : 'без фото';
   if(!open) return '<div class="plate" data-pl="'+esc(m.ref)+'"><div class="plph">'+ph+'</div><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+
     (items.length?'<u>'+items.slice(0,4).join(' · ')+(items.length>4?' · …':'')+'</u>':'')+'</div></div>';
   return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
@@ -9790,6 +9999,18 @@ document.getElementById('cirbody').addEventListener('click', function(e){
   }
   var pl=e.target.closest('[data-pl]'); if(pl){ UDOPEN = UDOPEN===pl.dataset.pl ? null : pl.dataset.pl; renderCircle(); haptic('light'); return; }
   var lw=e.target.closest('[data-lbwho]'); if(lw){ openUserDay(lw.dataset.lbwho, lw.dataset.lbname||''); haptic('light'); return; }
+  var vd=e.target.closest('[data-vid]');
+  if(vd){
+    var хочу = vd.dataset.vid==='1';
+    haptic('light');
+    if(!CIRC || !CIRC.me || (CIRC.me.open!==false)===хочу) return;
+    CIRC.me.open=хочу; CIRCACHE={}; renderCircle();   /* сразу, не дожидаясь сервера */
+    fPost('/circle/vid',{uid:syncUid(), open:хочу}).then(function(d){
+      if(d && d.ok) return;
+      if(CIRC && CIRC.me) CIRC.me.open=!хочу; renderCircle(); say((d&&d.error)||'Не вышло.');
+    }).catch(function(err){ if(CIRC && CIRC.me) CIRC.me.open=!хочу; renderCircle(); say(humanErr(err)); });
+    return;
+  }
   var lm=e.target.closest('[data-lbmode]'); if(lm){ if(lm.dataset.lbmode!==LBMODE){ LBMODE=lm.dataset.lbmode; gset('lbmode',LBMODE); renderCircle(); } haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
@@ -9808,7 +10029,7 @@ function openKrug(id){
   var m = document.getElementById('krugm'); if(!m) return;
   renderKrug(); m.classList.add('show');
   fGet('/circle/members?uid=' + encodeURIComponent(syncUid()) + '&id=' + encodeURIComponent(c.id))
-    .then(function(d){ if(d && d.ok && KRUG && KRUG.c.id === c.id){ KRUG.люди = d.members || []; renderKrug(); } })
+    .then(function(d){ if(d && d.ok && KRUG && KRUG.c.id === c.id){ KRUG.люди = d.members || []; KRUG.непуск = d.banned || []; renderKrug(); } })
     .catch(function(){});
 }
 function openKrugНовый(){
@@ -9848,10 +10069,20 @@ function renderKrug(){
   if(!KRUG.люди) h += '<p class="mtext">Загружаю…</p>';
   else h += KRUG.люди.map(function(m){
     return '<div class="krow"><span class="kn">' + esc(m.me ? 'Ты' : m.name) + (m.owner ? '<i>завёл круг</i>' : '') + '</span>' +
+      (моё && !m.owner ? '<button type="button" class="btn small" data-kboss="' + esc(m.uid) + '">Передать</button>' : '') +
       (моё && !m.owner ? '<button type="button" class="memx" data-kdel="' + esc(m.uid) + '" aria-label="Убрать">×</button>' : '') + '</div>';
   }).join('');
+  /* 19.09: крестик рядом с человеком до сегодня ничего не решал: код
+     круга у него оставался, и он возвращался тем же шагом. Теперь убранные
+     видны списком — и видно, что их можно вернуть. */
+  if(моё && KRUG.непуск && KRUG.непуск.length){
+    h += '<p class="klab">НЕ ПУСКАЮ · ' + KRUG.непуск.length + '</p>' + KRUG.непуск.map(function(m){
+      return '<div class="krow"><span class="kn">' + esc(m.name) + '</span>' +
+        '<button type="button" class="btn small" data-kunban="' + esc(m.uid) + '">Вернуть</button></div>';
+    }).join('');
+  }
   if(моё){
-    h += '<p class="kmine">Круг твой: имя, код и состав меняешь только ты. Закроешь — таблица исчезнет у всех, записи людей останутся при них.</p>';
+    h += '<p class="kmine">Круг твой: имя, код и состав меняешь только ты. Убранный крестиком больше не войдёт по коду, пока ты его не вернёшь. «Передать» отдаёт круг человеку целиком: дальше имя, код и состав меняет он, а ты останешься участником и сможешь выйти. Закроешь — таблица исчезнет у всех, записи людей останутся при них.</p>';
     h += '<button type="button" class="btn wide danger" id="k-drop" style="margin-top:10px">Закрыть круг</button>';
   } else {
     h += '<p class="kmine">Круг завёл кто-то другой — имя и состав меняет он. Ты можешь выйти в любой момент.</p>' +
@@ -9918,6 +10149,12 @@ document.addEventListener('click', function(e){
     if(код.length < 4) return;
     кругДействие('/circle/code', { id: KRUG.c.id, code: код }); return;
   }
+  var kb = e.target.closest('[data-kboss]');
+  if(kb){ if(kb.textContent !== 'Точно передать?'){ kb.textContent = 'Точно передать?';
+      setTimeout(function(){ if(kb) kb.textContent = 'Передать'; }, 4000); return; }
+    кругДействие('/circle/owner', { id: KRUG.c.id, who: kb.dataset.kboss }, true); return; }
+  var ku = e.target.closest('[data-kunban]');
+  if(ku){ кругДействие('/circle/unban', { id: KRUG.c.id, who: ku.dataset.kunban }); return; }
   var kd = e.target.closest('[data-kdel]');
   if(kd){ кругДействие('/circle/del', { id: KRUG.c.id, who: kd.dataset.kdel }); return; }
   var kl = e.target.closest('#k-leave');
@@ -10354,10 +10591,11 @@ document.getElementById('refshare').addEventListener('click', function(){
 });
 document.getElementById('refspend').addEventListener('click', function(){
   if(REFBUSY) return; REFBUSY=true; renderRef();
-  fPost('/ref/spend', {uid:syncUid()}).then(function(d){
+  var key='ref_spend_'+syncUid(),op=gget(key,null)||workOperation();gset(key,op);
+  fPost('/ref/spend', {uid:syncUid(),operation:op}).then(function(d){
     REFBUSY=false;
-    if(d&&d.ok){ haptic('ok'); say('Месяц тренера оплачен баллами.'); refPull(); subPull(); }
-    else { renderRef(); say((d&&d.error)||'Не вышло.'); }
+    if(d&&d.ok){gset(key,null);haptic('ok');say('Месяц тренера оплачен баллами.');refPull();subPull();}
+    else {gset(key,null);renderRef();say((d&&d.error)||'Не вышло.');}
   }).catch(function(e){ REFBUSY=false; renderRef(); say(humanErr(e)); });
 });
 function humanErr(e){
@@ -11198,7 +11436,7 @@ function renderFoodDay(){
     /* фото приёма — первым: на часах день человек узнаёт по снимкам, и список
        за тот же день обязан выглядеть так же. Имя приёма ушло подписью над
        текстом, чтобы строка не росла третьей колонкой */
-    var ф = m.img ? '<img class="fmth" src="'+esc(m.img)+'" alt="" loading="lazy">'
+    var ф = m.img ? '<img class="fmth" '+photoAttr(m.img,false)+' alt="" loading="lazy">'
                   : '<span class="fmth fmno"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg></span>';
     return '<div class="fmeal" data-mid="'+m.id+'">'+ф+
            '<span class="ft">'+(m.kind?'<i>'+esc(m.kind)+'</i>':'')+m.text+'</span>'+
