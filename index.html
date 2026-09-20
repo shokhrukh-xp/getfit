@@ -5039,7 +5039,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '20.09 12:30';
+var BUILD = '20.09 13:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -11443,24 +11443,13 @@ function renderFoodDay(){
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
-  if((d.meals||[]).length && (d.date||fDate()) < TODAY) box.innerHTML += '<p class="fline">Если вся еда за этот день записана, подтверди полноту для уточнения нормы.</p><button type="button" class="btn" data-confirm-food="'+esc(d.date||fDate())+'">Вся еда за день записана</button>';
+  if((d.meals||[]).length) box.innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
   if(!ml.innerHTML) ml.innerHTML='<p class="empt">'+((d.date||fDate())===TODAY?'За сегодня записей нет.':'За этот день записей нет.')+
     '<br>Напиши, что ел, или пришли фото — посчитаю и покажу, сколько до нормы.</p>';
 }
 document.getElementById('fday').addEventListener('click', function(e){
-  var confirmDay=e.target.closest('[data-confirm-food]');
-  if(confirmDay){
-    confirmDay.disabled=true;
-    fPost('/day/close', {uid:syncUid(), date:confirmDay.dataset.confirmFood}).then(function(r){
-      if(!r.ok) throw new Error(r.why||'Не удалось подтвердить день');
-      confirmDay.textContent='Полнота питания подтверждена';
-      fReply('День подтверждён. Если изменишь записи, подтверди его снова.');
-    }).catch(function(err){ confirmDay.disabled=false; fReply(humanErr(err),'bad'); });
-    return;
-  }
-
   if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
   var b=e.target.closest('.fbar[data-fk]'); if(!b) return;
   var k=b.dataset.fk; FBOPEN = FBOPEN===k ? null : k;
