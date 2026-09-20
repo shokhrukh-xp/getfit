@@ -12,14 +12,38 @@ if (!КЛЮЧ) { console.error('Нет ~/.getfit-svc — запусти на м�
 
 let плохо = 0, всего = 0;
 const дано = (у, т) => { всего++; console.log((у ? '  ok  ' : '  ПРОВАЛ  ') + т); if (!у) плохо++; };
-const З = (p, тело) => fetch(БАЗА + p, {
-  method: тело ? 'POST' : 'GET',
-  headers: Object.assign({ 'x-svc': КЛЮЧ }, тело ? { 'content-type': 'application/json' } : {}),
-  body: тело ? JSON.stringify(тело) : undefined
-}).then(r => r.json());
+/* 19.09 сервер завёл ЭПОХУ дневника: после сброса каждый запрос обязан
+   присылать x-data-epoch, иначе 409. А сам сброс требует operation —
+   ключ идемпотентности. Старый стереть() без него молча получал
+   {ok:false} и ничего не стирал: следующий прогон начинался на чужом
+   состоянии, и 20.09 сценарий 8 увидел «норма до разбора: 1850». */
+const ЭПОХА = {};
+const uidИз = (p, тело) => (тело && тело.uid) || decodeURIComponent((p.match(/[?&]uid=([^&]+)/) || [])[1] || '');
+async function эпоха(uid){
+  if (!uid) return 0;
+  if (ЭПОХА[uid] == null) {
+    const r = await fetch(БАЗА + '/session?uid=' + encodeURIComponent(uid), { headers: { 'x-svc': КЛЮЧ } }).then(r => r.json()).catch(() => null);
+    ЭПОХА[uid] = (r && r.session && r.session.epoch) || 0;
+  }
+  return ЭПОХА[uid];
+}
+const З = async (p, тело) => {
+  const uid = uidИз(p, тело), ep = await эпоха(uid);
+  const j = await fetch(БАЗА + p, {
+    method: тело ? 'POST' : 'GET',
+    headers: Object.assign({ 'x-svc': КЛЮЧ, 'x-data-epoch': String(ep) }, тело ? { 'content-type': 'application/json' } : {}),
+    body: тело ? JSON.stringify(тело) : undefined
+  }).then(r => r.json());
+  if (uid && j && j.session && j.session.epoch != null) ЭПОХА[uid] = j.session.epoch;
+  return j;
+};
 
 const анкета = (uid, me) => З('/s', { uid, key: 'me', data: { me } });
-const стереть = uid => З('/forget', { uid, scope: 'all' });
+const стереть = async uid => {
+  const r = await З('/forget', { uid, scope: 'all', operation: 'svc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) });
+  if (!(r && r.ok)) console.log('    (не стёрлось ' + uid + ': ' + ((r && (r.error || r.code)) || '?') + ')');
+  return r;
+};
 const чат = (uid, text) => З('/food', { uid, text });
 const sb_err = o => (o && o.error) ? (': ' + o.error) : '';
 
@@ -128,12 +152,18 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
      разбор сам, без кнопки, меняет норму еды. Проверяем не формулировку, а
      то, что названное в разборе число совпадает с нормой, которую потом
      покажет приложение, а «вместо» — с той, что была до разбора. */
+  await стереть('svc_t_cal');            /* чистый старт: поправка прошлого прогона иначе доживает до этого */
   await анкета('svc_t_cal', { sex: 'm', age: 34, ht: 176, bw: 88, only: 'food', wt: 'down', gym: 'health' });
   for (const i of [21, 18, 15, 12, 9, 6, 3, 1])
     await З('/measure', { uid: 'svc_t_cal', date: дн0(i), w: Math.round((88 + (i - 1) * 0.075) * 10) / 10 });
-  for (let i = 21; i >= 1; i--)
-    await З('/meal/add', { uid: 'svc_t_cal', date: дн0(i), kind: 'обед', text: 'день целиком',
-      kcal: 2200, prot: 150, fat: 70, carb: 220, fib: 25, sug: 40 });
+  /* 20.09: день с одной записью сверка больше не считает днём наблюдения —
+     тот же порог, что у оценки дня: два приёма */
+  for (let i = 21; i >= 1; i--) {
+    await З('/meal/add', { uid: 'svc_t_cal', date: дн0(i), kind: 'обед', text: 'половина дня',
+      kcal: 1100, prot: 75, fat: 35, carb: 110, fib: 12, sug: 20 });
+    await З('/meal/add', { uid: 'svc_t_cal', date: дн0(i), kind: 'ужин', text: 'вторая половина',
+      kcal: 1100, prot: 75, fat: 35, carb: 110, fib: 13, sug: 20 });
+  }
   const было = (((await З('/day?uid=svc_t_cal')).day || {}).targets || {}).kcal;
   const о8 = await З('/review?uid=svc_t_cal&end=' + вчера);
   дано(о8.ok === true, 'разбор со сверкой собрался' +
@@ -156,6 +186,92 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
   дано(ка.k > 0 && Math.abs(ка.k - 1) <= 0.1001, 'за неделю норма двинулась не больше чем на 10 %: k = ' + ка.k);
   дано(ка.kraw != null, 'полная поправка сохранена для следующих разборов: ' + ка.kraw);
   дано(Math.abs(ка.k - 1) < Math.abs((ка.kraw || 1) - 1) + 0.0001, 'шаг не перепрыгнул саму сверку');
+
+  console.log('\n═══ 8.5 · сверка не советует есть больше на воде ═══');
+  /* 20.09, его вопрос: «талия как была 95, так и осталась — ты уверен, что
+     мне надо есть на 200 больше? есть научное обоснование?» Обоснования не
+     было: сверка вела тренд через старт цели, где вес падает на гликогене и
+     воде, считала его точным числом без ошибки и не смотрела на талию,
+     которая уже лежала в базе. Четыре случая: рано после старта цели; провал
+     воды в окне при стоящей талии; тот же провал, но талия ушла (контроль —
+     подъём разрешён, шаг не больше 100 ккал); зигзаг веса — шум. */
+  const ЕДА = async (uid, ккал) => { for (let i = 21; i >= 1; i--) {
+    await З('/meal/add', { uid, date: дн0(i), kind: 'обед', text: 'половина дня', kcal: ккал / 2, prot: 70, fat: 30, carb: 90, fib: 12, sug: 15 });
+    await З('/meal/add', { uid, date: дн0(i), kind: 'ужин', text: 'вторая половина', kcal: ккал / 2, prot: 70, fat: 30, carb: 90, fib: 12, sug: 15 }); } };
+  const НОРМА = async uid => (((await З('/day?uid=' + uid)).day || {}).targets || {}).kcal;
+  const ПОПРАВКА = async uid => ((await З('/all?uid=' + uid)).state || []).filter(x => x.key === 'kcal_adj')[0];
+  const ЛОГ = async uid => (((await З('/all?uid=' + uid)).state || []).filter(x => x.key === 'kcal_adj_log')[0] || {}).data || [];
+  const Ч = { sex: 'm', age: 38, ht: 178, bw: 88.5, only: 'food', wt: 'down', gym: 'health' };
+  /* провал воды: 88,5 → 85,5 за первые пять дней окна (гликоген и вода при
+     срезании углеводов), дальше −0,3 кг/нед — жир. Наклон за всё окно выходит
+     около −1 кг/нед, и по нему одному сверка сказала бы «ешь больше». */
+  const ВОДА = i => i >= 16 ? 88.5 - (21 - i) * 0.6 : 85.5 - (16 - i) * 0.043;
+
+  for (const u of ['svc_t_rano', 'svc_t_talia', 'svc_t_kontrol', 'svc_t_shum']) await стереть(u);
+  /* а) цель стартовала 10 дней назад — сверять рано, и сказано почему */
+  await анкета('svc_t_rano', Ч);
+  await З('/s', { uid: 'svc_t_rano', key: 'goal', data: { text: 'сбросить до 82 кг', rate: -0.7, to: 82, from: дн0(10), wt: 'down', gym: 'health' } });
+  for (const i of [21, 18, 15, 12, 9, 6, 3, 1]) await З('/measure', { uid: 'svc_t_rano', date: дн0(i), w: Math.round(ВОДА(i) * 10) / 10 });
+  await ЕДА('svc_t_rano', 1800);
+  const норР = await НОРМА('svc_t_rano');
+  const оР = await З('/review?uid=svc_t_rano&end=' + вчера);
+  дано(оР.ok === true, 'разбор при свежей цели собрался' + sb_err(оР));
+  дано(/старта цели/.test(String(оР.ctx || '')), 'сверка отказалась: рано после старта цели');
+  дано(/вода/.test(String(оР.ctx || '')), 'и назвала причину — вода первой недели');
+  дано(!(await ПОПРАВКА('svc_t_rano')), 'поправки нет');
+  дано((await НОРМА('svc_t_rano')) === норР, 'норма не двинулась: ' + норР);
+
+  /* б) провал воды в окне, талия стоит — вето на подъём */
+  await анкета('svc_t_talia', Ч);
+  for (const i of [21, 18, 15, 12, 9, 6, 3, 1]) await З('/measure', { uid: 'svc_t_talia', date: дн0(i), w: Math.round(ВОДА(i) * 10) / 10, waist: (i === 18 || i === 1) ? 95 : undefined });
+  await ЕДА('svc_t_talia', 1800);
+  const норТ = await НОРМА('svc_t_talia');
+  const оТ = await З('/review?uid=svc_t_talia&end=' + вчера);
+  дано(оТ.ok === true, 'разбор с провалом воды собрался' + sb_err(оТ));
+  const кТ = String(оТ.ctx || ''), рТ = String(оТ.reply || '');
+  const мТ = кТ.match(/наклон веса (-?[\d,.]+) кг\/нед/);
+  console.log('    наклон по весу: ' + (мТ ? мТ[1] : '—') + ' кг/нед при цели −0,6; талия 95 → 95');
+  дано(/ВЕТО НА ПОДЪЁМ/.test(кТ), 'талия наложила вето на подъём нормы');
+  дано(/талия 95 → 95/.test(кТ), 'и вето названо числами: талия не двинулась');
+  дано(!(await ПОПРАВКА('svc_t_talia')), 'поправка НЕ записана');
+  дано((await НОРМА('svc_t_talia')) === норТ, 'норма осталась ' + норТ);
+  дано(/[Нн]орму не трогаю/.test(рТ) && /талия/.test(рТ), 'человеку сказано, что норму не трогают и почему: ' + (рТ.match(/Норму не трогаю[^.]*/) || ['—'])[0].slice(0, 80));
+  const лТ = await ЛОГ('svc_t_talia');
+  дано(лТ.length === 1 && !!лТ[0].skip && /талия/.test(лТ[0].skip), 'в журнале поправок — отказ с причиной');
+
+  /* в) контроль: та же кривая, но талия ушла 95 → 92 — подъём разрешён, шаг ≤ 100 ккал */
+  await анкета('svc_t_kontrol', Ч);
+  for (const i of [21, 18, 15, 12, 9, 6, 3, 1]) await З('/measure', { uid: 'svc_t_kontrol', date: дн0(i), w: Math.round(ВОДА(i) * 10) / 10, waist: i === 18 ? 95 : i === 1 ? 92 : undefined });
+  await ЕДА('svc_t_kontrol', 1800);
+  const норК = await НОРМА('svc_t_kontrol');
+  const оК = await З('/review?uid=svc_t_kontrol&end=' + вчера);
+  дано(оК.ok === true, 'контрольный разбор собрался' + sb_err(оК));
+  дано(!/ВЕТО/.test(String(оК.ctx || '')), 'талия ушла — вето нет');
+  const пК = await ПОПРАВКА('svc_t_kontrol');
+  const сталоК = await НОРМА('svc_t_kontrol');
+  console.log('    контроль: норма ' + норК + ' → ' + сталоК + (пК ? ', k = ' + пК.data.k + ' (по сверке ' + пК.data.kraw + ')' : ', поправки нет'));
+  if (пК) {
+    дано(пК.data.k > 1, 'поправка вверх, как и просила сверка');
+    дано(пК.data.se != null, 'у поправки записана ошибка наклона: ±' + пК.data.se);
+    const модель = пК.data.model || 2500;
+    дано(Math.abs(пК.data.k - 1) * модель <= 100 + 1, 'шаг не больше 100 ккал: ' + Math.round(Math.abs(пК.data.k - 1) * модель));
+  } else дано(/шум|две недели/.test(String(оК.reply || '')), 'если не поднял — сказал почему: ' + (String(оК.reply || '').match(/Норму не трогаю[^.]*/) || ['—'])[0].slice(0, 70));
+
+  /* г) зигзаг ±0,6 кг вокруг −0,9 кг/нед — ошибка большая, это шум, не темп */
+  await анкета('svc_t_shum', Ч);
+  const ЗИГ = i => 88.5 - (21 - i) * 0.9 / 7 + ((21 - i) % 2 ? 0.7 : -0.7);
+  for (const i of [21, 18, 15, 12, 9, 6, 3, 1]) await З('/measure', { uid: 'svc_t_shum', date: дн0(i), w: Math.round(ЗИГ(i) * 10) / 10 });
+  await ЕДА('svc_t_shum', 1800);
+  const норШ = await НОРМА('svc_t_shum');
+  const оШ = await З('/review?uid=svc_t_shum&end=' + вчера);
+  дано(оШ.ok === true, 'разбор на зигзаге собрался' + sb_err(оШ));
+  const мШ = String(оШ.ctx || '').match(/шибка наклона ±([\d,.]+)/);
+  console.log('    зигзаг: ошибка наклона ±' + (мШ ? мШ[1] : '—') + ' кг/нед');
+  дано(!!мШ && +мШ[1].replace(',', '.') >= 0.2, 'ошибка наклона большая, как и должна быть на зигзаге');
+  дано(/В ПРЕДЕЛАХ ШУМА/.test(String(оШ.ctx || '')), 'сверка признала: расхождение в пределах шума');
+  дано(!(await ПОПРАВКА('svc_t_shum')), 'и поправку не записала');
+  дано((await НОРМА('svc_t_shum')) === норШ, 'норма на месте: ' + норШ);
+  for (const u of ['svc_t_rano', 'svc_t_talia', 'svc_t_kontrol', 'svc_t_shum']) await стереть(u);
 
   console.log('\n═══ 9 · разбор с залом: прогрессия и пропуски ═══');
   /* Тот же понедельничный разбор, но у человека есть программа и занятия.
