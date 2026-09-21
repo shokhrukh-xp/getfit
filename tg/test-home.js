@@ -31,7 +31,7 @@ async function часы(page){
 (async () => {
   const br = await chromium.launch();
   const page = await br.newPage({ viewport: { width: 390, height: 844 } });
-  const ош = await M.поднять(page, { theme: 'dark', time: '19:40', day: { meals: ЕДА } });
+  const ош = await M.поднять(page, { theme: 'dark', time: '19:40', day: { meals: ЕДА }, meas: M.замеры() });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
 
   const ч = await часы(page);

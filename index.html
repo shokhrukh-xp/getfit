@@ -5039,7 +5039,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '20.09 13:00';
+var BUILD = '21.09 16:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9780,12 +9780,11 @@ function renderHome(){
 /* ══════════ КРУГ: серия, балл дня, таблица недели ══════════
    Всё социальное живёт на одной вкладке; на остальных — чип серии в шапке и
    оценка дня на «Еде». Считает сервер (/circle, /day/score). */
-var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false, LBMODE=gget('lbmode','day')||'day';
+var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
 function fmtR(x){ return x==null ? '—' : (Math.round(x*10)/10).toFixed(1).replace('.',','); }
 function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
 function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
 var CIRCACHE={};
-function cirName(x){ return (x && x.uid && String(x.uid)===String(syncUid()).replace(/_w$/,'')) ? 'Ты' : (x&&x.name||''); }
 function circlePull(id){
   if(id!=null) CIRCID=id;
   var want=CIRCID;
@@ -9850,7 +9849,7 @@ function renderCircle(){
   }
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
      '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'день идёт') : 'ещё ничего не записано')+'</i></div>'+
-     '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+weekSub(me)+'</i></div></div>'+
+     '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+(me.lastr!=null?'прошлая '+fmtR(me.lastr):weekSub(me))+'</i></div></div>'+
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
 
@@ -9860,22 +9859,18 @@ function renderCircle(){
       '<button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button>'+
       '<button type="button" class="btn small" data-krug="'+esc(cur.id)+'">Настроить</button></div>';
   } else {
-    var неделя = LBMODE==='week';
-    /* один и тот же список, два взгляда: за сегодня и за неделю — сортировка и
-       главное число меняются на клиенте, данные уже пришли (его просьба 11.09) */
-    var глав = function(r){ return неделя ? (r.ravg==null?-1:r.ravg) : (r.today&&r.today.r!=null?r.today.r:-1); };
-    var втор = function(r){ return неделя ? (r.today&&r.today.r!=null?r.today.r:-1) : (r.ravg==null?-1:r.ravg); };
+    /* 20.09, его просьба: не делить на «Сегодня» и «Неделю». Таблица всегда
+       за сегодня, а балл недели стоит у каждого второй строкой — одно место,
+       где виден и день, и неделя. Переключателя больше нет. */
+    var глав = function(r){ return r.today&&r.today.r!=null?r.today.r:-1; };
+    var втор = function(r){ return r.ravg==null?-1:r.ravg; };
     var список = b.slice().sort(function(x,y){ return (глав(y)-глав(x)) || (втор(y)-втор(x)) || ((y.streak||0)-(x.streak||0)); });
-    h+='<div class="lbseg"><button type="button" data-lbmode="day" aria-pressed="'+(!неделя)+'">Сегодня</button>'+
-       '<button type="button" data-lbmode="week" aria-pressed="'+неделя+'">Неделя</button></div>';
-    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>'+(неделя?'неделя':'сегодня')+'</span></div>'+список.map(function(r,i){
+    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+список.map(function(r,i){
       var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
-      var число = неделя ? (r.ravg!=null?fmtR(r.ravg):'—') : (has?fmtR(t.r):'—');
-      var класс = неделя ? (r.ravg!=null?'':' dim') : (has?(t.closed?'':' live'):' dim');
-      var под = неделя ? (has?'сегодня '+fmtR(t.r):'') : (r.ravg!=null?'неделя '+fmtR(r.ravg):'');
-      /* 19.09: пришёдший только что стоял в таблице пустой строкой с местом —
-         выглядело как проигрыш, хотя он ещё не играл. Место даётся за записи. */
+      var число = has?fmtR(t.r):'—';
+      var класс = has?(t.closed?'':' live'):' dim';
+      var под = r.ravg!=null?'неделя '+fmtR(r.ravg):'';
       var пусто = !has && r.ravg==null;
       if(пусто && !под) под = 'пока без записей';
       return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
@@ -9900,10 +9895,6 @@ function renderCircle(){
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
     'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
     'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
-  var L=CIRC.last;
-  if(L && (L.best||L.grow)) h+='<h3 class="lh">Прошлая неделя</h3><div class="tiles" style="margin-top:0">'+
-    (L.best?'<div class="tile"><u>точность</u><b>'+esc(cirName(L.best))+'</b><i>'+fmtR(L.best.v)+' из 10 в среднем</i></div>':'')+
-    (L.grow?'<div class="tile"><u>рост</u><b>'+esc(cirName(L.grow))+'</b><i>+'+fmtR(L.grow.v)+' к своей прошлой неделе</i></div>':'')+'</div>';
   box.innerHTML=h;
 }
 /* ── страница человека: его еда за день с фото, по приёмам (вместо ленты) ── */
@@ -10011,7 +10002,6 @@ document.getElementById('cirbody').addEventListener('click', function(e){
     }).catch(function(err){ if(CIRC && CIRC.me) CIRC.me.open=!хочу; renderCircle(); say(humanErr(err)); });
     return;
   }
-  var lm=e.target.closest('[data-lbmode]'); if(lm){ if(lm.dataset.lbmode!==LBMODE){ LBMODE=lm.dataset.lbmode; gset('lbmode',LBMODE); renderCircle(); } haptic('light'); return; }
   if(e.target.closest('#cirhow')){ CIRCRULES=!CIRCRULES; renderCircle(); return; }
   var sh=e.target.closest('[data-cshare]'); if(sh){ circleShare(sh.dataset.cshare); return; }
 });
@@ -11388,7 +11378,7 @@ function renderFoodDay(){
   if(pr && !pr.gym && d.gymPlan){
     состав='<p class="fparts">норма '+t.kcal+' = база '+Math.round(pr.base)+
       (pr.acts?' + спорт '+pr.acts:'')+(pr.plan?' + спорт по плану '+pr.plan:'')+
-      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
+      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по '+(t.floorWhy==='жир'?'жиру':'основному обмену'):' по цели'):'')+
       '<br>сегодня день зала — он войдёт в норму после тренировки, по её минутам и темпу</p>';
   }
   else if(pr && (pr.gym||pr.acts||pr.plan)){
@@ -11411,7 +11401,7 @@ function renderFoodDay(){
          а пол бывает двух видов: по мобилизации жира (нужен замер состава) и
          по основному обмену (когда замера нет). У человека без замера экран
          объяснял верное число неверной причиной. */
-      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
+      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · это пол по '+(t.floorWhy==='жир'?'жиру':'основному обмену'):' по цели'):'')+
       (pr.gym&&зал?'<br>'+зал:'')+
       (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
   }

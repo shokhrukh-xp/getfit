@@ -3,7 +3,13 @@
    сервера. Всё, что приложение спрашивает у воркера, отвечает этот файл.
    Даты СЧИТАЮТСЯ ОТ СЕГОДНЯ (тест с захардкоженной датой разваливается в
    полночь — так и вышло 11.09 с test-circle). */
-const Д = n => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+/* Приложение считает сутки по Ташкенту (dayNow с timeZone), а стенд жил по
+   UTC — и это расходилось молча: при time 19:40 приложение уже считало
+   завтрашний день, а данные приходили за вчерашний. Взвешивание «за
+   сегодня» не попадало на дугу, и проверка винила экран. Один часовой
+   пояс на стенд и на браузер, который он запускает. */
+process.env.TZ = 'Asia/Tashkent';
+const Д = n => new Date(Date.now() - n * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
 const TODAY = Д(0);
 const БАЗА = 'http://127.0.0.1:8899/';
 
@@ -62,7 +68,8 @@ function стартовый() {
    списка circles приложение честно решает, что человек ни в каком кругу не
    состоит, и рисует «Круг ещё не собран» вместо таблицы — на этом 14.09
    и споткнулась первая проверка страницы человека. */
-function круг() {
+function круг(o) {
+  o = o || {};
   return {
     ok: true, today: TODAY, circle: 'family',
     circles: [{ id: 'family', name: 'семья', n: 2, code: 'семья7', link: 'https://t.me/GetFit_MyBot?start=semya7', owner: true },
@@ -73,9 +80,10 @@ function круг() {
       { uid: '850965787', name: 'жена', me: false, days: ['ok', 'ok', 'ok', 'ok', 'today', '', ''],
         avg: 8.3, ravg: 8.3, pts: 45, closed: false, today: { r: 9.1, closed: false, why: [], n: 2, counts: true, going: true }, streak: 9, level: 3 }
     ],
-    last: { monday: Д(7), best: null, grow: null },
     me: { streak: 6, week: ['ok', 'ok', 'low', 'ok', 'today', '', ''], pts: 41, avg: 7.9, ravg: 7.9,
-          elapsed: 5, level: 2, closed: false, score: null, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true } }
+          elapsed: 5, level: 2, closed: false, score: null,
+          /* балл прошлой недели: сервер считает его только для себя и кладёт в me */
+          lastr: o.lastr !== undefined ? o.lastr : 7.2, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true } }
   };
 }
 
@@ -212,7 +220,7 @@ async function поднять(page, o) {
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
     /* проверка может подать свой круг (например, с me.open = false) —
        раньше объект служил только флажком «круг есть / круга нет» */
-    if (p === '/circle')     return дать(o.circle === null ? { ok: false } : (o.circle && o.circle.ok ? o.circle : круг()));
+    if (p === '/circle')     return дать(o.circle === null ? { ok: false } : (o.circle && o.circle.ok ? o.circle : круг(o)));
     /* что видно соседям: сервер возвращает то, что ему прислали */
     if (p === '/circle/vid') {
       const bv = JSON.parse(route.request().postData() || '{}');
@@ -478,6 +486,11 @@ async function поднять(page, o) {
     }
     if (p === '/glu/del') return дать({ ok: true, list: [] });
     if (p === '/recent') return дать({ok:true,recent:o.recent||[],often:o.often||[]});
+    /* Итог блока. Маршрут появился в воркере позже мока — и запрос уходил
+       мимо подмены, в живой сервер, а обходчик экранов видел ошибку 501.
+       По умолчанию блока нет: чтобы подвал «программа идёт N недель»
+       рисовался, проверка подаёт свой o.block. */
+    if (p === '/block') return дать({ ok: true, block: o.block !== undefined ? o.block : null });
     if (p === '/srez') {
       if (o.srez === null) return дать({ ok: true, есть: false, n: 0 });
       if (o.srez) return дать(Object.assign({ ok: true, есть: true }, o.srez));
@@ -504,7 +517,7 @@ async function поднять(page, o) {
         дальше: { text: 'С 01.09 ушло 4,0 кг вместо плановых 1,8 — опережение на 2,2 кг. Еду сильнее резать не нужно; следить надо за силой и белковой массой.',
                   ask: 'Иду с опережением плана. Не слишком ли быстро?' },
         ряд: ряд, порог: null,
-        источник: 'InBody: состав тела рассчитывается по биоимпедансу; это оценка, а не прямое измерение мышц' });
+        источник: 'Метод BIA: InBody, What is Body Composition? Состав тела рассчитывается по импедансу; точность зависит от прибора и условий замера.' });
     }
     if (p === '/onboard') {
       const b = JSON.parse(route.request().postData() || '{}');
