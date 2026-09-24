@@ -42,6 +42,8 @@ async function жми(page, sel, текст) {
   дано(!/\d+\s*мкг|таблет|принимай/i.test(await page.$eval('#grpg', e => e.innerText)), 'доз и таблеток на экране нет');
   const ссылок = await page.$$eval('#grpg .srcs button', ns => ns.map(n => n.getAttribute('data-src')));
   дано(ссылок.length === 4 && ссылок.every(u => /^https:\/\//.test(u)), 'ссылки — значками, как в чате: ' + ссылок.length);
+  const знак = await page.$eval('#grpg .gx .srcs button', b => b.textContent.replace(/\s+/g, ' ').trim());
+  дано(/Rimm 2018$/.test(знак) && !/обзор/.test(знак), 'значки короткие — «автор год», чтобы не вставали столбиком (снимок 24.09): ' + знак);
   await page.close();
   /* мало полных дней — статусов нет, так и сказано */
   page = await br.newPage({ viewport: { width: 390, height: 1400 } });

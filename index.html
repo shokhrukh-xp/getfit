@@ -5434,7 +5434,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 22:10';
+var BUILD = '24.09 22:13';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -12124,9 +12124,9 @@ function renderGroups(){
       '<div class="gbar"><i class="'+esc(r.st||'')+'" style="width:'+w+'%"></i>'+(м!=null?'<s style="left:'+м+'%"></s>':'')+'</div></div>';
   }).join('')+
   '<p class="gnote">'+(гр.полных<5 ? 'Полных дней в дневнике '+гр.полных+' из 7 — судить о разнообразии рано. ' : 'По дневнику за 7 дней, полных '+гр.полных+'. ')+
-    'Черта — ориентир: рыба 2 раза, бобовые 3, овощи и фрукты 400 г в день, молочное 2 порции, красного мяса до 500 г.</p>'+источникиHTML(гр.src)+'</div>';
+    'Черта — ориентир: рыба 2 раза, бобовые 3, овощи и фрукты 400 г в день, молочное 2 порции, красного мяса до 500 г.</p>'+источникиHTML(гр.src, true)+'</div>';
   h+=(гр.флаги||[]).map(function(f){
-    return '<div class="gflag" data-flag="'+esc(f.k)+'"><h4>'+esc(f.h)+'</h4><p>'+esc(f.t)+'</p>'+(f.врач?'<p class="doc">'+esc(f.врач)+'</p>':'')+источникиHTML(f.src)+'</div>';
+    return '<div class="gflag" data-flag="'+esc(f.k)+'"><h4>'+esc(f.h)+'</h4><p>'+esc(f.t)+'</p>'+(f.врач?'<p class="doc">'+esc(f.врач)+'</p>':'')+источникиHTML(f.src, true)+'</div>';
   }).join('');
   b.innerHTML=h;
   b.querySelectorAll('.srcs button').forEach(function(x){
@@ -12589,12 +12589,14 @@ function ответТренера(текст, время, cls, src, menu){
     (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+'</div>';
 }
 /* значки источников: только https-ссылки из ответа сервера */
-function источникиHTML(src){
+/* коротко=true — только «Автор год»: под строками групп четыре полных
+   значка вставали столбиком (снимок 24.09) */
+function источникиHTML(src, коротко){
   var ок=(src||[]).filter(function(x){ return x && x.k && /^https:\/\//.test(x.u||''); });
   if(!ок.length) return '';
   var q=function(t){ return esc(t).replace(/"/g,'&quot;'); };
   return '<div class="srcs">'+ок.map(function(x){
-    return '<button type="button" data-src="'+q(x.u)+'" title="'+q(x.p||'')+'" aria-label="'+q(x.k+(x.t?', '+x.t:'')+(x.p?': '+x.p:''))+'">📄 <b>'+esc(x.k)+'</b>'+(x.t?' '+esc(x.t):'')+'</button>';
+    return '<button type="button" data-src="'+q(x.u)+'" title="'+q(x.p||'')+'" aria-label="'+q(x.k+(x.t?', '+x.t:'')+(x.p?': '+x.p:''))+'">📄 <b>'+esc(x.k)+'</b>'+(x.t&&!коротко?' '+esc(x.t):'')+'</button>';
   }).join('')+'</div>';
 }
 function renderChat(scroll){
