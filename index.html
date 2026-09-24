@@ -1661,6 +1661,17 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .cychead{font-weight:500;font-family:inherit;font-size:12px;
   color:var(--dim);margin:0 0 6px 2px}
 .sscard .exfoot{margin-top:10px;grid-template-columns:1fr 1fr}
+.sscard .exfoot.ss3{grid-template-columns:1fr 1fr 1fr}
+/* свой суперсет (24.09): кнопка под подвалом карточки и выбор партнёра */
+.ssmk{display:block;width:100%;margin-top:8px;min-height:44px}
+.ssmake{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
+.ssmake .ebtn{min-height:44px}
+.ssq{margin:0 0 8px;font-size:12.5px;color:var(--muted);line-height:1.4}
+.sslist{display:grid;grid-template-columns:1fr;gap:6px}
+.sslist .ebtn{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;padding:10px 12px;color:var(--text)}
+.sslist .ebtn:disabled{opacity:.45;color:var(--dim)}
+.sslist .ebtn i{font-style:normal;font-size:11px;color:var(--dim);flex:0 0 auto}
+.ssnote{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.4}
 .rec{font-size:13px;line-height:1.38;color:var(--muted);margin:9px 0 9px;
   padding:7px 10px;border-radius:10px;background:var(--card-2);
   border-left:3px solid var(--line)}
@@ -3193,6 +3204,7 @@ function applyProfile(p, silent){
   EXTRA= get('extra', {});
   SKIP = get('skip', {});
   ORD  = get('ord', {});
+  PAIRS= get('pairs', {});
   NOPE = get('nope', {});
   LIKE = get('like', {});
   /* Слой правок только что прочитан — здесь и подметаем повторы в добавленных
@@ -3273,6 +3285,56 @@ function упорядочить(dk, out){
     return ai-bi;
   });
 }
+/* ── СВОЙ СУПЕРСЕТ ─────────────────────────────────────────────────────
+   24.09, его слова: «иногда делаю суперсетом сразу 2 упражнения, но не знаю,
+   как это отметить». Пару задавала только программа (ss). Теперь её собирает
+   и сам человек — кнопкой «Суперсет с…» на карточке. Его решения: каждый раз
+   спрашивать, только сегодня или всегда в этом дне; две базовые в пару не
+   ставить — как у тренера (сила на такой паре растёт хуже).
+   Хранится рядом с заменами: {день: [{a: ключ, b: ключ, d: дата | null}]}.
+   d — «только сегодня»: пара живёт до полуночи, потом подметается.
+   Пара — это общий номер ss у двух упражнений, поэтому дальше всё работает
+   как у суперсета программы: одна карточка, круги, отдых после круга,
+   перестановка парой. Номера свои — от 100, чтобы не совпасть с номерами
+   программы; пара программы главнее своей. */
+var PAIRS = {};
+var СВОЙ_SS = 100;
+function спарить(dk, out){
+  var пары=(PAIRS[dk]||[]).filter(function(p){ return !p.d || p.d===TODAY; });
+  if(!пары.length) return out;
+  var поК={}; out.forEach(function(e){ поК[e.k]=e; });
+  пары.forEach(function(p,i){
+    var a=поК[p.a], b=поК[p.b];
+    if(!a || !b || a.ss || b.ss) return;
+    a.ss=b.ss=СВОЙ_SS+i; a.свой=b.свой=(p.d?'сегодня':'всегда');
+  });
+  return out;
+}
+function спаритьЗаписать(dk, ka, kb, сегодня){
+  var list=(PAIRS[dk]||[]).filter(function(p){ return p.a!==ka && p.b!==ka && p.a!==kb && p.b!==kb; });
+  list.push({ a:ka, b:kb, d:сегодня?TODAY:null });
+  PAIRS[dk]=list;
+}
+function разобратьПару(dk, k){
+  var list=(PAIRS[dk]||[]).filter(function(p){ return p.a!==k && p.b!==k; });
+  if(list.length) PAIRS[dk]=list; else delete PAIRS[dk];
+}
+/* «только сегодня» живёт до полуночи: вчерашние пары подметаем при сохранении */
+function парыПодмести(){
+  Object.keys(PAIRS).forEach(function(dk){
+    var list=(PAIRS[dk]||[]).filter(function(p){ return p && p.a && p.b && (!p.d || p.d>=TODAY); });
+    if(list.length) PAIRS[dk]=list; else delete PAIRS[dk];
+  });
+}
+/* Базовое (многосуставное) движение — по каталогу: mc = 'c'. Не знаем
+   (каталог не загрузился, упражнения в нём нет) — не запрещаем: запрет по
+   догадке хуже, чем пара, которую тренер бы не поставил. */
+var CATMC=null;
+function базовое(e){
+  if(!CAT || !CAT.ex || !e) return false;
+  if(!CATMC){ CATMC={}; CAT.ex.forEach(function(x){ CATMC[x.i]=x.mc; }); }
+  return CATMC[катId(e)]==='c';
+}
 function subKey(dk, di){ return dk+':'+di; }
 /* Действующий список упражнений дня: программа плюс сделанные замены.
    Замена наследует схему подходов и отдых у того упражнения, которое заменила —
@@ -3320,20 +3382,21 @@ function exList(dk){
                rest:x.rest||90, cat:x.i, add:true, cues:x.cues||[], why:x.why||'', ph:null, fig:null,
                k:dk+':x'+(x.id||xi), xi:xi });
   });
-  return упорядочить(dk, безПовторов(out));
+  return спарить(dk, упорядочить(dk, безПовторов(out)));
 }
 /* что в этом дне поправлено руками — для строки «вернуть как было» */
 function dayEdits(dk){
   var base=((DAYS[dk]||{}).ex||[]).length, убрано=0;
   for(var i=0;i<base;i++) if(SKIP[subKey(dk,i)]) убрано++;
-  return { skip:убрано, add:(EXTRA[dk]||[]).length };
+  return { skip:убрано, add:(EXTRA[dk]||[]).length, pair:(PAIRS[dk]||[]).filter(function(p){ return !p.d || p.d===TODAY; }).length };
 }
 /* Сколько подходов человек оставил себе в конкретном упражнении. Живёт рядом
    с заменами и в том же облачном ключе: иначе пересборка дня затирала правку. */
 var ADJ = {};
 function saveSubs(){
-  set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD);
-  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, at:new Date().toISOString()}).catch(function(){});
+  парыПодмести();
+  set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD); set('pairs', PAIRS);
+  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}).catch(function(){});
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
@@ -3485,7 +3548,7 @@ function addEx(item){
 }
 function resetDay(){
   ((DAYS[day]||{}).ex||[]).forEach(function(x,i){ delete SKIP[subKey(day,i)]; });
-  delete EXTRA[day];
+  delete EXTRA[day]; delete PAIRS[day];
   saveSubs(); rebuildSess(); renderList(); paintNote('Вернул день из программы'); haptic('medium');
 }
 
@@ -5045,7 +5108,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 12:53';
+var BUILD = '24.09 13:07';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5983,8 +6046,9 @@ function renderList(){
         он здесь, в конце дня зала — сюда кнопку и ставим. */
      '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
      '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>'+
-     (пр.skip||пр.add ? '<p class="dayeditn">В этом дне'+
-        (пр.add?' добавлено '+пр.add:'')+(пр.add&&пр.skip?' ·':'')+(пр.skip?' убрано '+пр.skip:'')+
+     (пр.skip||пр.add||пр.pair ? '<p class="dayeditn">В этом дне '+
+        [пр.add?'добавлено '+пр.add:'', пр.skip?'убрано '+пр.skip:'', пр.pair?'своих суперсетов '+пр.pair:'']
+          .filter(Boolean).join(' · ')+
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+
      '</div>';
   box.innerHTML=h;
@@ -6072,8 +6136,60 @@ function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
   return '<article class="card exact">'+
      шапка(e,di,'')+ lastLine(e)+
-     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di)+
+     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di)+ ssMakeHtml(e,di)+
    '</article>';
+}
+/* «Суперсет с…» — только когда есть с кем: в дне есть упражнение без пары */
+function ssMakeHtml(e,di){
+  var есть=exList(day).some(function(x,i){ return i!==di && !x.ss; });
+  if(!есть) return '';
+  return '<button type="button" class="ebtn ssmk" data-ssmake="'+di+'" aria-expanded="false">Суперсет с…</button>'+
+         '<div class="ssmake" id="ssmake'+di+'" hidden></div>';
+}
+function ssMakeOpen(btn){
+  var di=+btn.dataset.ssmake, box=document.getElementById('ssmake'+di); if(!box) return;
+  var open=btn.getAttribute('aria-expanded')==='true';
+  btn.setAttribute('aria-expanded', open?'false':'true');
+  if(open){ box.hidden=true; box.innerHTML=''; return; }
+  box.hidden=false; box.innerHTML='<p class="ssq">Загружаю…</p>';
+  /* базовое или нет — знает каталог; без него список всё равно покажем */
+  loadCatalog().catch(function(){}).then(function(){ ssMakeList(di); });
+}
+function ssMakeList(di){
+  var box=document.getElementById('ssmake'+di); if(!box) return;
+  var сп=exList(day), e=сп[di]; if(!e) return;
+  var база=базовое(e), нельзя=0;
+  var кн=сп.map(function(x,i){
+    if(i===di || x.ss) return '';
+    var обе = база && базовое(x); if(обе) нельзя++;
+    return '<button type="button" class="ebtn sspart" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
+           '<span class="ssnm">'+esc(x.n)+'</span>'+(обе?'<i>тоже базовое</i>':'')+'</button>';
+  }).join('');
+  box.innerHTML='<p class="ssq">С чем делать по кругу — без отдыха между ними?</p>'+
+    '<div class="sslist">'+кн+'</div>'+
+    (нельзя?'<p class="ssnote">Две базовые в пару не ставим — как у тренера: сила на таком суперсете растёт хуже.</p>':'');
+}
+function ssMakeWhen(di, pi){
+  var box=document.getElementById('ssmake'+di); if(!box) return;
+  var сп=exList(day), a=сп[di], b=сп[pi]; if(!a || !b) return;
+  box.innerHTML='<p class="ssq">«'+esc(a.n)+'» + «'+esc(b.n)+'» — на сколько?</p>'+
+    '<div class="nope2">'+
+      '<button type="button" class="ebtn" data-sswhen="day" data-a="'+di+'" data-b="'+pi+'">Только сегодня</button>'+
+      '<button type="button" class="ebtn" data-sswhen="always" data-a="'+di+'" data-b="'+pi+'">Всегда в этом дне</button>'+
+    '</div>';
+}
+function ssMakeSave(di, pi, сегодня){
+  var сп=exList(day), a=сп[di], b=сп[pi]; if(!a || !b || a.ss || b.ss) return;
+  if(базовое(a) && базовое(b)) return;          /* кнопка и так закрыта — на всякий случай */
+  спаритьЗаписать(day, a.k, b.k, сегодня);
+  saveSubs(); renderList();
+  /* подтверждение — сама карточка: она тут же становится суперсетом */
+  paintNote(''); haptic('ok');
+}
+function ssBreak(di){
+  var e=exList(day)[di]; if(!e || !e.свой) return;
+  разобратьПару(day, e.k);
+  saveSubs(); renderList(); paintNote(''); haptic('medium');
 }
 /* ── суперсет: одна карточка, круги ── */
 /* Суперсет по той же модели: раскрыто то упражнение круга, которое делаешь
@@ -6093,7 +6209,7 @@ function ssCard(a,dia,b,dib){
     (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div>';
   return '<article class="card exact sscard'+(готово?' full':'')+'">'+
     '<div class="sshead"><b>суперсет</b>между А и Б не отдыхаешь, отдых '+
-      Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга</div>'+
+      Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга'+(a.свой==='сегодня'?' · только сегодня':'')+'</div>'+
     шапка(e,di,первый?'А':'Б')+ lastLine(e)+ adviceLine(e)+ setGrid(e,di,круги)+
     exRow(o,odi,первый?'Б':'А')+
     ssFoot(a,dia,b,dib)+
@@ -6111,10 +6227,11 @@ function ssFoot(a,dia,b,dib){
       (e.why ? '<p class="whytext">'+e.why+'</p>' : '')+hurtHtml(e)+
     '</div>';
   }
-  var заменено = a.sub || b.sub;
-  return '<div class="exfoot">'+
+  var заменено = a.sub || b.sub, свой = a.свой || b.свой;
+  return '<div class="exfoot'+(свой?' ss3':'')+'">'+
       '<button type="button" class="ebtn" data-sspick="info" data-a="'+dia+'" data-b="'+dib+'" aria-expanded="false">Описание</button>'+
       '<button type="button" class="ebtn'+(заменено?' on':'')+'" data-sspick="swap" data-a="'+dia+'" data-b="'+dib+'" aria-expanded="false">'+(заменено?'Заменено':'Заменить')+'</button>'+
+      (свой?'<button type="button" class="ebtn" data-ssbreak="'+dia+'">Разобрать</button>':'')+
     '</div>'+
     '<div class="sschoice" id="sschoice'+dia+'" hidden></div>'+
     блок(a,dia)+блок(b,dib);
@@ -7150,6 +7267,7 @@ function initDb(){
         if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
         if(b.sk && typeof b.sk==='object'){ SKIP=b.sk; set('skip',SKIP); }
         if(b.ord && typeof b.ord==='object'){ ORD=b.ord; set('ord',ORD); }
+        if(b.pr && typeof b.pr==='object'){ PAIRS=b.pr; set('pairs',PAIRS); }
         if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
         renderList();
       }
@@ -8685,6 +8803,14 @@ if(_pfr) _pfr.addEventListener('click', function(){
   L.addEventListener('lostpointercapture', ordБросить);
 })();
 document.getElementById('list').addEventListener('click', function(e){
+  var smk=e.target.closest('button[data-ssmake]');
+  if(smk){ ssMakeOpen(smk); haptic('light'); return; }
+  var spt=e.target.closest('button[data-sspart]');
+  if(spt){ if(!spt.disabled){ ssMakeWhen(+spt.dataset.ssof, +spt.dataset.sspart); haptic('light'); } return; }
+  var swn=e.target.closest('button[data-sswhen]');
+  if(swn){ ssMakeSave(+swn.dataset.a, +swn.dataset.b, swn.dataset.sswhen==='day'); return; }
+  var sbr=e.target.closest('button[data-ssbreak]');
+  if(sbr){ ssBreak(+sbr.dataset.ssbreak); return; }
   var sp=e.target.closest('button[data-sspick]');
   if(sp){ ssChoice(sp); haptic('light'); return; }
   var ib=e.target.closest('button[data-info]');
