@@ -691,6 +691,9 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .card.exact .exthumb{flex:0 0 88px;width:88px}
 .card.exact .exthumb .fig2,.card.exact .exthumb .fig{width:88px}
 .card.exact .exthumb .fig{height:66px}
+/* 24.09: картинка теперь всегда кнопка шторки «Как делать» — без кадра (свои
+   упражнения, кадр не загрузился) она не должна схлопываться в ноль */
+.card.exact .exthumb{min-height:66px;background:var(--card-2);border-radius:10px}
 /* ── Таблица подходов (13.09) ──
    «Очень неудобно и непонятно записывать подходы». До этого в карточке жил
    ровно ОДИН подход крупными числами, а остальные — чипами внизу: чтобы
@@ -1204,6 +1207,15 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .gflag p{margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--muted)}
 .gflag p.doc{color:var(--text)}
 .gmenu{font-size:12.5px;color:var(--muted);margin:4px 0 8px;line-height:1.5}
+/* шаги и сон со скриншота (24.09, этап 3) */
+.wrrow{display:grid;grid-template-columns:44px repeat(7,1fr);gap:4px;align-items:center;padding:6px 0;border-top:1px solid var(--line-soft)}
+.wrrow.wrd{border-top:0;padding-top:0}
+.wrl{font-size:12px;color:var(--muted)}
+.wrc{text-align:center;font-size:13px;font-variant-numeric:tabular-nums;color:var(--dim)}
+.wrd .wrc{font-size:11px}
+.wrc.ok{color:var(--done-txt)} .wrc.lo{color:var(--warn-txt)}
+.wrsum{font-size:12.5px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+.wrnone{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.5}
 .gmenu b{color:var(--done-txt);font-weight:600}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
 .msg.intro{align-self:stretch;max-width:100%;background:none;border:none;padding:2px 0;
@@ -1772,6 +1784,28 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
 .nope2 .ebtn.on{border-color:var(--warn-txt);color:var(--warn-txt)}
 .hurthint2{margin:8px 0 0;font-size:11.5px;color:var(--dim);line-height:1.35}
 .exinfo{margin-top:10px;border-top:.5px solid var(--line-soft);padding-top:10px}
+/* техника — шторка по нажатию на картинку (24.09, его выбор «А») */
+#techm .tsub{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
+#techm .tfr{display:flex;gap:8px;margin:0 0 14px}
+#techm .tfr img{width:50%;min-width:0;border-radius:12px;background:#fff;aspect-ratio:4/3;object-fit:cover}
+#techm .tfr .fig,#techm .tfr .fig2{width:100%}
+.tsteps{margin:0;padding:0;list-style:none;counter-reset:tst}
+.tsteps li{counter-increment:tst;position:relative;padding:0 0 10px 30px;font-size:14px;line-height:1.5;color:var(--text)}
+.tsteps li:before{content:counter(tst);position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;
+  background:var(--card-2);color:var(--muted);font-size:12px;display:flex;align-items:center;justify-content:center;font-weight:600}
+.tsteps li.tip{padding-left:0;color:var(--muted);font-size:13px}
+.tsteps li.tip:before{display:none}
+#techm .tbtns{display:flex;gap:8px;margin:12px 0 0}
+#techm .tbtns .ebtn{flex:1;justify-content:center;text-align:center;min-height:44px;display:inline-flex;align-items:center}
+#techm .tsrc{font-size:11.5px;color:var(--dim);margin:10px 0 0;line-height:1.45}
+#techm .tnone{font-size:14px;color:var(--muted);margin:0 0 6px}
+/* разминочные подходы — кнопками над таблицей (24.09, его выбор «Б») */
+.wuline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 0 10px;font-size:13px;color:var(--muted)}
+.wuline b{font-weight:600;color:var(--text);margin-right:2px}
+.wuline button{min-height:44px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--text);font:inherit;font-size:13px;font-variant-numeric:tabular-nums;cursor:pointer}
+.wuline button[aria-pressed="true"]{background:rgba(var(--done-rgb),.16);border-color:var(--done);color:var(--done-txt)}
+.wuline i{font-style:normal;color:var(--dim);font-size:12px;width:100%;line-height:1.4}
 /* «мешает»: дискомфорт в суставе — сигнал тренеру, который числа не видят */
 .hurt{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:.5px solid var(--line-soft)}
 .hurt .hurtbtn{flex:0 0 auto;border:.5px solid var(--line);background:var(--card-2);border-radius:10px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--muted)}
@@ -2477,6 +2511,8 @@ body.onb #picker .modalbox::before{display:none}
         </div>
         <h3 class="lh" id="grph" hidden>Разнообразие недели</h3>
         <div class="group" id="grpg" hidden></div>
+        <h3 class="lh" id="wrh" hidden>Шаги и сон</h3>
+        <div class="group" id="wrg" hidden></div>
         <h3 class="lh">Весы</h3>
         <div class="group">
         <div class="fchart" id="fchart"></div>
@@ -2730,6 +2766,12 @@ body.onb #picker .modalbox::before{display:none}
   <div class="modalbox">
     <div class="cathead"><h3 id="krugtitle">Круг</h3><button class="xbtn" id="krugclose" aria-label="Закрыть">✕</button></div>
     <div id="krugbody"></div>
+  </div>
+</div>
+<div class="modal" id="techm" role="dialog" aria-modal="true" aria-labelledby="techtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="techtitle">Как делать</h3><button class="xbtn" id="techclose" aria-label="Закрыть">✕</button></div>
+    <div id="techbody"></div>
   </div>
 </div>
 <div class="modal" id="durm" role="dialog" aria-modal="true" aria-labelledby="durtitle">
@@ -5434,7 +5476,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 22:13';
+var BUILD = '24.09 23:11';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6405,7 +6447,7 @@ function низКарточки(e,di){
      довод тренера и «мешает суставу» — переехало под палец вниз: там оно и
      нужно, в секунду, когда человек решает от упражнения отказаться.
      Техника, если она в каталоге есть, осталась за картинкой (см. шапку). */
-  var нрав = !!LIKE[мнКлюч(e)], больно = hurtOn(e.n), техника = !!(e.cues && e.cues.length);
+  var нрав = !!LIKE[мнКлюч(e)], больно = hurtOn(e.n);
   return '<div class="exfoot">'+
       '<button type="button" class="ebtn th'+(нрав?' on':'')+'" data-like="'+di+'" aria-pressed="'+нрав+'" aria-label="Нравится">👍</button>'+
       '<button type="button" class="ebtn th'+(больно?' hrt':'')+'" data-nope="'+di+'" aria-expanded="false" aria-label="Не нравится или мешает">👎</button>'+
@@ -6420,10 +6462,124 @@ function низКарточки(e,di){
       '</div>'+
       (больно?'<p class="hurthint2">Тренер учтёт это при замене. Нажми ещё раз, если прошло.</p>':'')+
     '</div>'+
-    (техника ? '<div class="exinfo" id="exinfo'+di+'" hidden>'+
-      (e.en ? '<div class="exen">'+e.en+'</div>' : '')+
-      '<ul class="cues">'+e.cues.map(function(c){return '<li>'+c+'</li>';}).join('')+'</ul>'+
-    '</div>' : '');
+    '';
+  /* 24.09: подсказки cues встроенной программы живут в шторке «Как делать»
+     (см. техHTML) — здесь их больше нечем было бы открыть */
+}
+/* ══════════ ТЕХНИКА И РАЗМИНКА ══════════
+   24.09, этап 3 плана «тренер + нутрициолог». Его выбор из снимков
+   (docs/reviews/2026-09-24-vybor-11-tehnika.png, -12-razminka.png):
+   техника — шторка по нажатию на картинку, разминка — кнопки над таблицей.
+
+   Тексты техники — инструкции free-exercise-db (лицензия Unlicense), переведены
+   и сокращены моделью по одному правилу (docs/sources/tech-perevod-GUIDE.md),
+   проверены кодом (2–5 шагов, без латиницы), первые 150 самых ходовых
+   вычитаны. Своего в них нет; убран только миф «колени не за носки» —
+   запрет смещает нагрузку на таз и поясницу (Fry 2003). tech.json грузится
+   один раз, при первом открытии шторки, не при старте. */
+var TECH=null, techЖдём=null;
+function loadTech(){
+  if(TECH) return Promise.resolve(TECH);
+  if(techЖдём) return techЖдём;
+  techЖдём=fetch(BASEDIR+'tech.json?v='+encodeURIComponent(BUILD)).then(function(r){ return r.json(); })
+    .then(function(j){ TECH=j; techЖдём=null; return j; })
+    .catch(function(err){ techЖдём=null; throw err; });
+  return techЖдём;
+}
+function техШаги(e){
+  var id=(e && (e.cat||e.id||e.i))||'';
+  return (TECH && TECH.ex && id && TECH.ex[id]) || null;
+}
+/* два кадра крупно: берём их из той же миниатюры, что на карточке */
+function техКадры(e){
+  var d=document.createElement('div'); d.innerHTML=mediaFor(e);
+  var im=[].slice.call(d.querySelectorAll('img')).map(function(x){ return x.getAttribute('src'); }).filter(Boolean);
+  /* кадр не пришёл (CDN, сеть) — убираем его, а не показываем белую рамку */
+  if(im.length) return '<div class="tfr">'+im.slice(0,2).map(function(u){ return '<img src="'+u+'" alt="" loading="lazy" onerror="this.remove()">'; }).join('')+'</div>';
+  return '<div class="tfr">'+mediaFor(e)+'</div>';
+}
+function техHTML(e){
+  var шаги=техШаги(e), свои=!шаги && e.cues && e.cues.length ? e.cues : null, список=шаги||свои;
+  var h=техКадры(e);
+  if(список){
+    h='<p class="tsub">Как делать · '+список.length+' '+plural(список.length,['шаг','шага','шагов'])+'</p>'+h+
+      '<ol class="tsteps">'+список.map(function(t){
+        return '<li'+(/^(Совет|Осторожно|Вариант):/.test(t)?' class="tip"':'')+'>'+esc(t)+'</li>'; }).join('')+'</ol>';
+  } else h+='<p class="tnone">Описания этого упражнения пока нет — посмотри видео.</p>';
+  h+='<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'">▶ Видео</a>'+
+     '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div>';
+  if(шаги) h+='<p class="tsrc">Текст — free-exercise-db (общественное достояние), перевод и сокращение GetFit.</p>';
+  return h;
+}
+function openTech(di){
+  var e=exList(day)[di]; if(!e) return;
+  var m=document.getElementById('techm'), b=document.getElementById('techbody'), t=document.getElementById('techtitle');
+  if(!m||!b) return;
+  t.textContent=e.n;
+  b.innerHTML=TECH ? техHTML(e) : '<p class="tnone">Загружаю…</p>';
+  m.classList.add('show');
+  if(!TECH) loadTech().then(function(){ if(m.classList.contains('show')) b.innerHTML=техHTML(e); })
+    .catch(function(){ if(m.classList.contains('show')) b.innerHTML=техHTML(e); });
+}
+function closeTech(){ var m=document.getElementById('techm'); if(m) m.classList.remove('show'); }
+document.addEventListener('click', function(e){
+  if(e.target.closest('#techclose') || e.target.closest('[data-techclose]')){ closeTech(); return; }
+  var m=document.getElementById('techm');
+  if(m && m.classList.contains('show') && e.target===m){ closeTech(); return; }
+});
+
+/* ── Разминочные подходы ──
+   Код, а не модель: 40 % рабочего веса × 6 и 80 % × 6 (Ribeiro 2020 — один
+   лёгкий подход работу не готовит, нужен и близкий к рабочему); повторов у
+   второго не больше, чем в рабочем подходе, чтобы не утомить. Только
+   базовые упражнения с весом, только первое на свою мышцу в дне (дальше
+   мышца уже тёплая) и только когда вес заметный: гриф от 30 кг, гантели
+   от 8, тренажёр от 20. Вес — кратный шагу снаряда, гриф не легче 20.
+   Отметки живут отдельно от подходов: в объём и журнал разминка не идёт. */
+var CATMM=null;
+function мышцаКат(e){
+  if(CAT && CAT.ex){
+    if(!CATMM){ CATMM={}; CAT.ex.forEach(function(x){ CATMM[x.i]=x.m; }); }
+    var id=катId(e); if(id && CATMM[id]) return CATMM[id];
+  }
+  return мышцаЕго(e) || e.p || '';
+}
+function разминка(e, di){
+  if(!e || !hasW(e) || isTime(e)) return null;
+  /* базовое или нет — знает каталог; у встроенной программы он сам не грузится
+     (кадры свои), поэтому просим его здесь — придёт и перерисует список */
+  if(!CAT){ катНадо(); return null; }
+  if(!базовое(e)) return null;
+  var t=targetOf(e), W=t && t.tw; if(!(W>0)) return null;
+  var шт=e.eq==='штанга', гант=e.eq==='гантели';
+  if(W < (шт?30:(гант?8:20))) return null;
+  var сп=exList(day), м=мышцаКат(e);
+  for(var i=0;i<di;i++){ var x=сп[i]; if(x && базовое(x) && мышцаКат(x)===м) return null; }
+  var шаг=шт ? 2.5 : (гант ? (W>=20?2:1) : (stepOf(e)||2.5)), мин=шт ? 20 : шаг;
+  var окр=function(v){ return Math.max(мин, Math.round(v/шаг)*шаг); };
+  var a=окр(W*0.4), b=окр(W*0.8), out=[];
+  if(a<b) out.push({w:a, r:6});
+  if(b<W) out.push({w:b, r:Math.min(6, botReps(e))});
+  return out.length ? out : null;
+}
+function wuКлюч(e, di){ return TODAY+'|'+day+'|'+di+'|'+e.n; }
+function wuОтм(e, di){ var a=gget('wu', {})||{}; return a[wuКлюч(e,di)]||{}; }
+function разминкаHTML(e, di){
+  var w=разминка(e, di); if(!w) return '';
+  var отм=wuОтм(e, di), видел=!!gget('wu_seen', false);
+  return '<div class="wuline" data-wuex="'+di+'"><b>Разминка</b>'+w.map(function(x,k){
+      return '<button type="button" data-wu="'+di+':'+k+'" aria-pressed="'+(!!отм[k])+'">'+fmtKg(x.w)+' кг × '+x.r+'</button>'; }).join('')+
+    (видел ? '' : '<i>Лёгкие подходы перед рабочими — в подходы и объём не идут. Нажми, когда сделал.</i>')+'</div>';
+}
+function wuЖми(btn){
+  var p=btn.dataset.wu.split(':'), di=+p[0], k=+p[1], e=exList(day)[di]; if(!e) return;
+  var все=gget('wu', {})||{}, ключ=wuКлюч(e,di), о=все[ключ]||{};
+  о[k]=!о[k]; все[ключ]=о;
+  /* храним только сегодняшнее: вчерашняя разминка никому не нужна */
+  Object.keys(все).forEach(function(kk){ if(kk.indexOf(TODAY+'|')!==0) delete все[kk]; });
+  gset('wu', все); gset('wu_seen', true);
+  btn.setAttribute('aria-pressed', String(!!о[k]));
+  haptic('light');
 }
 /* «Мешает» — дискомфорт в суставе, а не в мышце. Числа прогрессии этого не
    видят, а для замены это важнее чисел. Копится по имени упражнения, уходит
@@ -6455,9 +6611,10 @@ function hurtToggle(n, di){
 function шапка(e, di, метка){
   var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
   return '<div class="exhead">'+
-    ((e.cues && e.cues.length)
-      ? '<button type="button" class="exthumb" data-info="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'
-      : '<a class="exthumb" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'" aria-label="Видео: как делать '+e.n+'">'+mediaFor(e)+'</a>')+
+    /* 24.09, этап 3: картинка открывает шторку «Как делать» — кадры крупно,
+       шаги из free-exercise-db в переводе, видео. Раньше без cues она вела
+       сразу на YouTube, а с cues раскрывала их в карточке. */
+    '<button type="button" class="exthumb" data-tech="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
     '<button type="button" class="exttl" data-shut="'+di+'" aria-expanded="true" aria-label="Свернуть '+e.n+'">'+
       '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</span>'+
       '<span class="exname">'+e.n+'</span>'+
@@ -6469,7 +6626,7 @@ function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
   return '<article class="card exact">'+
      шапка(e,di,'')+ lastLine(e)+
-     adviceLine(e)+ setGrid(e,di)+ низКарточки(e,di)+ ssMakeHtml(e,di)+
+     adviceLine(e)+ разминкаHTML(e,di)+ setGrid(e,di)+ низКарточки(e,di)+ ssMakeHtml(e,di)+
    '</article>';
 }
 /* «Суперсет с…» — только когда есть с кем: в дне есть упражнение без пары */
@@ -9160,6 +9317,10 @@ if(_pfr) _pfr.addEventListener('click', function(){
   L.addEventListener('lostpointercapture', ordБросить);
 })();
 document.getElementById('list').addEventListener('click', function(e){
+  var tch=e.target.closest('button[data-tech]');
+  if(tch){ openTech(+tch.dataset.tech); haptic('light'); return; }
+  var wub=e.target.closest('button[data-wu]');
+  if(wub){ wuЖми(wub); return; }
   var smk=e.target.closest('button[data-ssmake]');
   if(smk){ ssMakeOpen(smk); haptic('light'); return; }
   var spt=e.target.closest('button[data-sspart]');
@@ -12133,6 +12294,38 @@ function renderGroups(){
     x.addEventListener('click', function(){ haptic('light'); вебОткрыть(x.getAttribute('data-src')); });
   });
 }
+/* ── Шаги и сон (24.09, этап 3; его выбор — только скриншот) ──
+   Тренер читает числа со скриншота «Здоровья», Samsung Health или Mi Fitness,
+   сервер хранит их по дням и отдаёт в /week. Здесь — неделя строкой шагов и
+   строкой сна. К норме еды шаги не прибавляются: обычная ходьба уже в ней. */
+function renderWear(){
+  var hd=document.getElementById('wrh'), b=document.getElementById('wrg'); if(!b) return;
+  var w=FOOD&&FOOD.week;
+  if(!w || !Array.isArray(w.days)){ hd.hidden=true; b.hidden=true; b.innerHTML=''; return; }
+  hd.hidden=false; b.hidden=false;
+  var н=w.шагиСон;
+  if(!н || (!н.днейШаги && !н.ночей)){
+    b.innerHTML='<p class="wrnone">Шаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p>'+
+      '<button type="button" class="btn wide" data-wrcoach="1">Отправить скриншот тренеру</button>';
+    return;
+  }
+  var возр=+((myData()||{}).age)||0, цельШ=возр>=60?6000:8000;
+  var кшаг=function(v){ return v==null?'·':(v>=10000?Math.round(v/1000):String(Math.round(v/100)/10).replace('.',','))+'к'; };
+  var ксон=function(v){ return v==null?'·':Math.floor(v/60)+':'+pad2(Math.round(v%60)); };
+  var ряд=function(имя, f, ок){ return '<div class="wrrow"><span class="wrl">'+имя+'</span>'+н.дни.map(function(d){
+      var v=f(d), кл=v==null?'':(ок(v)?' ok':' lo');
+      return '<span class="wrc'+кл+'">'+(имя==='шаги'?кшаг(v):ксон(v))+'</span>'; }).join('')+'</div>'; };
+  var тыс=function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); };
+  b.innerHTML='<div class="wrrow wrd"><span class="wrl"></span>'+н.дни.map(function(d){ return '<span class="wrc">'+ruDate(d.date).slice(0,5)+'</span>'; }).join('')+'</div>'+
+    ряд('шаги', function(d){ return d.steps; }, function(v){ return v>=цельШ; })+
+    ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
+    '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — ориентир '+тыс(цельШ)+' и больше':'',
+      н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':'')+' — нужно от 7 часов':''].filter(Boolean).join(' · ')+
+    '. Новые числа — скриншотом тренеру; к норме еды шаги не прибавляются.</p>';
+}
+document.addEventListener('click', function(e){
+  if(e.target.closest('[data-wrcoach]')){ openCoach(); haptic('light'); }
+});
 /* строка над меню недели: что закрывает само меню */
 function грМенюHTML(g){
   if(!g || !(g.дней>=5)) return '';
@@ -12144,7 +12337,7 @@ function грМенюHTML(g){
 }
 function renderFoodWeek(){
   var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
-  renderGroups();
+  renderGroups(); renderWear();
   var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
   var tg=w.targets||{};
   /* Норма у каждого дня СВОЯ: в день зала она выше, а неделю назад был другой

@@ -107,33 +107,36 @@ async function раскрыть(page) {
   const стало = await page.$$eval('#list .exrow .exrn b, #list .card.exact .exname', ns => ns.map(n => n.textContent.trim()));
   дано(стало[0] && стало[0] !== было, 'второй ответ меняет упражнение, как раньше: ' + было + ' → ' + стало[0]);
 
-  /* ── 8. картинка у упражнения без техники ведёт на видео, а не в пустоту ── */
+  /* ── 8. картинка открывает шторку «Как делать» (24.09, его выбор «А»):
+         шаги из tech.json, кадры крупно, видео — внутри шторки ── */
   await раскрыть(page);
-  const кар = await page.$eval('.card.exact .exthumb', n => ({ тег: n.tagName, href: n.href || '', инфо: n.getAttribute('data-info') }));
-  дано(кар.тег === 'A' && /youtube\.com/.test(кар.href),
-    'у упражнения из программы тренера техники нет — картинка ведёт прямо на видео');
-  дано(кар.инфо === null, 'и мёртвой кнопки-шторки под ней не осталось');
-  дано(await page.$('.card.exact .exinfo') === null, 'пустая шторка не рисуется вовсе');
+  const кар = await page.$eval('.card.exact .exthumb', n => ({ тег: n.tagName, тех: n.getAttribute('data-tech') }));
+  дано(кар.тег === 'BUTTON' && кар.тех !== null, 'картинка — кнопка шторки «Как делать»');
+  дано(await page.$('.card.exact .exinfo') === null, 'пустой шторки в карточке нет');
+  await page.click('.card.exact .exthumb'); await page.waitForTimeout(900);
+  const ш = await page.$eval('#techm', n => ({ видно: n.classList.contains('show'), шагов: n.querySelectorAll('.tsteps li').length,
+    видео: /youtube\.com/.test((n.querySelector('.tbtns a') || {}).href || ''), нет: !!n.querySelector('.tnone') }));
+  дано(ш.видно, 'нажал на картинку — шторка открылась');
+  дано(ш.шагов >= 2 || ш.нет, 'в ней шаги (' + ш.шагов + ') или честное «описания пока нет»');
+  дано(ш.видео, 'видео — в шторке');
+  await page.click('#techclose'); await page.waitForTimeout(300);
+  дано(!(await page.$eval('#techm', n => n.classList.contains('show'))), 'крестик закрывает');
 
   await br.close();
 
-  /* ── 9. встроенная программа: техника есть, и она никуда не делась ── */
+  /* ── 9. встроенная программа: подсказки cues не пропали — они в шторке ── */
   const br2 = await chromium.launch();
   const p2 = await br2.newPage({ viewport: { width: 390, height: 900 } });
   await p2.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(p2, { theme: 'dark', page: 'gym', wait: 2800 });
   await раскрыть(p2);
-  const кар2 = await p2.$eval('.card.exact .exthumb', n => ({ тег: n.tagName, инфо: n.getAttribute('data-info') }));
-  дано(кар2.тег === 'BUTTON' && кар2.инфо !== null, 'у встроенной программы картинка открывает технику');
-  дано(await p2.$eval('.card.exact .exinfo', n => n.hidden) === true, 'и по умолчанию она свёрнута');
-  await p2.click('.card.exact .exthumb');
-  await p2.waitForTimeout(500);
-  const тех = await p2.$eval('.card.exact .exinfo', n => ({ видно: !n.hidden,
-    подсказки: n.querySelectorAll('.cues li').length,
-    текст: (n.querySelector('.cues li') || {}).textContent || '' }));
-  дано(тех.видно, 'нажал на картинку — техника раскрылась');
-  дано(тех.подсказки >= 2, 'подсказок по технике на месте: ' + тех.подсказки);
-  дано(тех.текст.length > 12, 'и это настоящий текст, а не пустая строка: ' + тех.текст.slice(0, 46));
+  await p2.click('.card.exact .exthumb'); await p2.waitForTimeout(900);
+  const тех = await p2.$eval('#techm', n => ({ видно: n.classList.contains('show'), шагов: n.querySelectorAll('.tsteps li').length,
+    текст: (n.querySelector('.tsteps li') || {}).textContent || '' }));
+  дано(тех.видно, 'у встроенной программы картинка тоже открывает шторку');
+  дано(тех.шагов >= 2, 'шагов на месте: ' + тех.шагов);
+  дано(тех.текст.length > 12, 'и это настоящий текст: ' + тех.текст.slice(0, 46));
+  await p2.click('#techclose'); await p2.waitForTimeout(300);
   const ряд2 = await p2.$$eval('.card.exact .exfoot > *', ns => ns.map(n => (n.textContent || '').trim()));
   дано(ряд2.length === 4 && /Видео/.test(ряд2[2]), 'подвал у встроенной программы такой же: ' + ряд2.join(' · '));
 

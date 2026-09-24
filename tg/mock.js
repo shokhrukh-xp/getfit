@@ -47,7 +47,7 @@ function неделя(o) {
   дни.forEach(function (d, i) { d.prot = [150, 132, 171, 158, 146, 160, 128][i]; });
   const было = дни.filter(d => d.date < TODAY);
   /* 24.09, этап 2: группы продуктов и риски — o.группы (иначе их нет, блок скрыт) */
-  return { targets: { kcal: 2110, prot: 165 }, days: o.days || дни, группы: o.группы || null,
+  return { targets: { kcal: 2110, prot: 165 }, days: o.days || дни, группы: o.группы || null, шагиСон: o.шагиСон || null,
     avg: { kcal: Math.round(было.reduce((a, d) => a + d.kcal, 0) / (было.length || 1)),
            prot: Math.round(было.reduce((a, d) => a + d.prot, 0) / (было.length || 1)) } };
 }

@@ -44,10 +44,11 @@ const ФАЙЛЫ = new Map();
 const положить = (url, файл) => { try { ФАЙЛЫ.set(url, fs.readFileSync(файл)); } catch (e) {} };
 положить('/index.html', path.join(ROOT, ИСХОДНИК));
 положить('/catalog.json', path.join(ROOT, 'catalog.json'));
+положить('/tech.json', path.join(ROOT, 'tech.json'));          /* 24.09: техника упражнений */
 const из = (папка, rx, куда) => { try { fs.readdirSync(папка).filter(f => rx.test(f)).forEach(f => положить(куда + f, path.join(папка, f))); } catch (e) {} };
 из(path.join(ROOT, 'fonts'), /\.woff2$/, '/fonts/');
 из(path.join(TG, 'fixtures'), /\.jpg$/, '/p/');
-из(path.join(ROOT, 'img'), /\.png$/, '/img/');
+из(path.join(ROOT, 'img'), /\.(png|jpg)$/, '/img/');   /* jpg — кадры упражнений: шторка «Как делать» (24.09) */
 const ТИПЫ = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.png': 'image/png' };
 const сервер = http.createServer((req, res) => {
   let u = decodeURIComponent(req.url.split('?')[0]);

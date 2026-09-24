@@ -10,6 +10,7 @@ if [ -f "$ROOT/getfit-tg.html" ]; then SRC="$ROOT/getfit-tg.html"; else SRC="$RO
 cp "$SRC" "$SITE/index.html" || exit 1
 cp "$ROOT"/fonts/*.woff2 "$SITE/fonts/" 2>/dev/null
 cp "$ROOT"/catalog.json "$SITE/" 2>/dev/null
+cp "$ROOT"/tech.json "$SITE/" 2>/dev/null
 cp "$ROOT"/tg/fixtures/*.jpg "$SITE/p/" 2>/dev/null
 mkdir -p "$SITE/img"
 cp "$ROOT"/img/*.png "$SITE/img/" 2>/dev/null   # логотип на плавающей кнопке

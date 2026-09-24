@@ -185,7 +185,7 @@ const ГЛУБЖЕ = [
   ['техника за картинкой', async p => {
     await p.click('.l1 button[data-page="gym"]'); await p.waitForTimeout(600);
     const r = await p.$('#list .exrow'); if (r) { await r.click(); await p.waitForTimeout(500); }
-    const i = await p.$('.card.exact button.exthumb[data-info]'); if (i) { await i.click(); await p.waitForTimeout(600); }
+    const i = await p.$('.card.exact button.exthumb[data-tech]'); if (i) { await i.click(); await p.waitForTimeout(600); }
   }],
   ['шторка под пальцем вниз', async p => {
     await сПальцем(p);
