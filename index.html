@@ -575,6 +575,9 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .tlabel{font-size:11px;color:var(--muted);flex:1;line-height:1.3}
 .tbtn{border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:12.5px;color:var(--muted)}
 .tbtn.primary{border-color:var(--accent-txt);color:var(--accent-txt)}
+.tmode{display:block;width:100%;max-width:640px;margin:0 auto;padding:0 16px 12px;border:none;background:none;
+  text-align:left;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent-txt)}
+.tmode[hidden]{display:none}
 
 .foot{color:var(--dim);font-size:11.5px;text-align:center;margin:34px 0 10px;line-height:1.6}
 .hide{display:none}
@@ -2468,6 +2471,9 @@ body.onb #picker .modalbox::before{display:none}
     <button class="tbtn" id="tskip">Пропустить</button>
     <button class="tbtn primary" id="tplus">+30с</button>
   </div>
+  <!-- 24.09, его выбор: таймер показывается после первого подхода тренировки,
+       а дальше — только если включить его на всю тренировку -->
+  <button type="button" class="tmode" id="tmode" hidden></button>
 </div>
 
 <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gatetitle">
@@ -5164,7 +5170,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 17:14';
+var BUILD = '24.09 18:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -7065,7 +7071,7 @@ function refreshDay(){
   renderFoodNav();loadDay();homePull();
   return true;
 }
-function resumeApp(){clearPrivatePhotos();ensureDataSession(true).then(function(){refreshDay();cloudPull();loadPrivatePhotos();}).catch(function(){SYNCOK=false;paintSync();});}
+function resumeApp(){try{ автоОбновить(); проверитьВерсию(); }catch(e){}clearPrivatePhotos();ensureDataSession(true).then(function(){refreshDay();cloudPull();loadPrivatePhotos();}).catch(function(){SYNCOK=false;paintSync();});}
 document.addEventListener('visibilitychange',function(){if(!document.hidden)resumeApp();});
 window.addEventListener('focus',resumeApp);
 window.addEventListener('online',resumeApp);
@@ -8422,7 +8428,7 @@ function watchStart(di,si){
   WATCH={di:di, si:si, t0:Date.now(), label:e.n+' · подход '+(si+1)+' · цель '+repsOf(e)};
   TMODE='watch';
   tSkipB.textContent='Отмена'; tPlusB.textContent='Готово';
-  tEl.classList.add('show');
+  tEl.classList.add('show'); tmodePaint();
   try{ document.documentElement.style.setProperty('--tmr-h', (tEl.offsetHeight||70)+'px'); document.body.classList.add('tmr'); }catch(e2){}
   clearInterval(tick); watchPaint(); watchBtns();
   tick=setInterval(watchPaint, 250);
@@ -8442,9 +8448,33 @@ function watchStop(save){
   } else { haptic('light'); }   /* отмена: в поле ничего не писали, восстанавливать нечего */
   watchBtns();
 }
+/* ТАЙМЕР ОТДЫХА — ПО ЖЕЛАНИЮ (24.09). Его слова: «я отмечаю по ходу,
+   обычно просто игнорирую таймер для отдыха». Выбор: таймер появляется после
+   ПЕРВОГО подхода тренировки с кнопкой «включить на всю тренировку»; не
+   включил — до конца этой тренировки он больше не всплывает. Включил — после
+   каждого подхода, и там же его можно выключить. Режим — на день программы
+   сегодня: завтрашняя тренировка снова начинает с вопроса. Отдых в шапке
+   карточки («отдых 2:30») и секундомер для планки — как были. */
+function tmrKey(){ return 'tmrmode_'+TODAY+'_'+day; }
+function tmrMode(){ return get(tmrKey(), null); }            /* null — ещё не спрашивали, 'on', 'off' */
+var tModeB=document.getElementById('tmode');
+function tmodePaint(){
+  var m=tmrMode();
+  tModeB.hidden = TMODE!=='rest';
+  tModeB.textContent = m==='on' ? 'Не показывать таймер до конца тренировки' : 'Включить таймер на всю тренировку';
+}
+tModeB.addEventListener('click', function(){
+  var on = tmrMode()==='on';
+  set(tmrKey(), on ? 'off' : 'on');
+  haptic('light');
+  if(on) stopTimer(); else tmodePaint();
+});
 function startTimer(sec){
+  var m=tmrMode();
+  if(m==='off') return;                    /* уже показали и не включил — не мешаем */
+  if(m===null) set(tmrKey(), 'off');       /* первый подход: показываем один раз, дальше — по кнопке */
   WATCH=null; TMODE='rest'; tSkipB.textContent='Пропустить'; tPlusB.textContent='+30с'; watchBtns();
-  left = sec; tEl.classList.add('show'); paint();
+  left = sec; tEl.classList.add('show'); paint(); tmodePaint();
   try{ document.documentElement.style.setProperty('--tmr-h', (tEl.offsetHeight||70)+'px'); document.body.classList.add('tmr'); }catch(e){}
   clearInterval(tick);
   tick = setInterval(function(){ left--; paint(); if(left<=-60){ stopTimer(); } }, 1000);
@@ -11574,12 +11604,43 @@ function renderBuild(){
    Telegram отдаёт ту же страницу, что и была. */
 function updApp(){
   try{
-    /* хэш несёт initData Telegram — без него сервер после обновления не узнает, кто это */
-    var u=location.pathname+'?v='+encodeURIComponent(SRVBUILD||Date.now())+(location.hash||'');
+    /* хэш несёт initData Telegram — без него сервер после обновления не узнает, кто это.
+       p — экран, на котором человек был: после обновления он там же, а не на главной */
+    var стр=gget('page','home');
+    var u=location.pathname+'?v='+encodeURIComponent(SRVBUILD||Date.now())+(стр&&стр!=='home'?'&p='+encodeURIComponent(стр):'')+(location.hash||'');
     location.replace(u);
   }catch(e){ location.reload(); }
 }
 document.getElementById('newver').addEventListener('click', updApp);
+/* ── НОВАЯ ВЕРСИЯ — САМА ──
+   24.09: после каждой выкладки его приходилось просить «закрой и открой».
+   Теперь приложение само перезагружается на новую версию — при запуске и
+   когда человек возвращается в него из фона. Не трогаем его, если он что-то
+   делает: открыт лист, идёт ввод, ждём ответа тренера, тикает таймер отдыха.
+   Записи не теряются: подходы и правки лежат на телефоне и на сервере, а
+   экран после перезагрузки тот же (updApp несёт его в адресе). GitHub Pages
+   выкладывает страницу на минуту-две позже воркера: если после перезагрузки
+   версия всё ещё старая, второй раз пять минут не пробуем — только полоска
+   «Вышла новая версия». */
+function автоОбновить(){
+  if(!SRVBUILD || SRVBUILD===BUILD || document.hidden) return;
+  if(document.querySelector('.modal.show')) return;
+  var a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
+  try{ if(CHAT.busy || FOOD.busy) return; }catch(e){}
+  if(document.body.classList.contains('tmr')) return;
+  var был=gget('upd_try', null);
+  if(был && был.b===SRVBUILD && Date.now()-был.at < 5*60000) return;
+  gset('upd_try', {b:SRVBUILD, at:Date.now()});
+  updApp();
+}
+var ВЕРСИЯ_СПРОШЕНА=0;
+function проверитьВерсию(){
+  if(Date.now()-ВЕРСИЯ_СПРОШЕНА < 60000) return;
+  ВЕРСИЯ_СПРОШЕНА=Date.now();
+  fetch(SYNCURL+'/build', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
+    if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); автоОбновить(); }
+  }).catch(function(){});
+}
 document.getElementById('profm').addEventListener('click', function(e){ if(e.target.closest('#bupd')) updApp(); });
 /* ПОВТОРЕНИЕ — СВОЙСТВО ЗАНЯТИЯ, А НЕ ОТДЕЛЬНЫЙ СПИСОК.
    17.09, его слова: «теперь на странице тренировок + занятие вне зала в двух
@@ -12515,7 +12576,7 @@ function recoPull(){
   return tgFetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid())+'&b='+encodeURIComponent(BUILD))
     .then(function(r){ return r.json(); })
     .then(function(d){
-      if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); }
+      if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); автоОбновить(); }
       if(d && d.plan) takePlan(d.plan);
       TODAYPLAN=(d && d.today && d.today.plan)||[]; renderPlanBox();
       if(d && d.rebuild) applyRebuild(d.rebuild);

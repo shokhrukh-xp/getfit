@@ -391,7 +391,9 @@ async function поднять(page, o) {
        o.aiDelay — задержка ответа: без неё состояние «собираю» не поймать. */
     if (p === '/reco') return дать({ ok: true, reco: o.reco || null, auto: [],
       rebuild: o.rebuild || null, rebuild_offer: o.rbo || null, plan: null,
-      build: '00.00 00:00', today: { date: TODAY, plan: [] } });
+      build: o.srvBuild || null, today: { date: TODAY, plan: [] } });
+    /* 24.09: метка сборки для автообновления; по умолчанию — не знаем */
+    if (p === '/build') return дать({ ok: true, build: o.srvBuild || null });
     if (p === '/ai') {
       const отдать = () => дать(o.onAi ? o.onAi(route) : { ok: true, prog: o.prog || null });
       if (o.aiDelay) return new Promise(r => setTimeout(() => r(отдать()), o.aiDelay));
