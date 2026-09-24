@@ -969,6 +969,12 @@ body.nogym .foodadd{display:block;margin-top:10px;color:var(--done-txt)}
 .fmeal .fk{font-weight:500;flex:0 0 58px;font-family:inherit;font-size:12px;color:var(--dim)}
 .fmeal .ft{flex:1 1 auto;min-width:0;color:var(--text);line-height:1.35}
 .fmeal .ft i{display:block;font-style:normal;font-size:12px;color:var(--dim);font-weight:500;margin-bottom:1px}
+/* 24.09: балл приёма и совет — мелкой строкой под названием, строка не растёт
+   вширь. Цвет у числа: зелёный — без вычетов, красный — только перебор. */
+.fmeal .ft small.fms{display:block;margin-top:3px;font-size:11.5px;color:var(--muted);line-height:1.35}
+.fmeal .ft small.fms b{font-weight:700;color:var(--text)}
+.fmeal .ft small.fms b.fms-ok{color:var(--done-txt)}
+.fmeal .ft small.fms b.fms-bad{color:var(--warn-txt)}
 .fmth{flex:0 0 38px;width:38px;height:38px;border-radius:11px;object-fit:cover;border:1px solid var(--line)}
 .fmno{display:grid;place-items:center;background:var(--field);border-color:transparent;color:var(--dim)}
 .fmno svg{width:19px;height:19px}
@@ -5039,7 +5045,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '21.09 16:10';
+var BUILD = '24.09 11:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9538,10 +9544,16 @@ function homeClock(){
   }
   /* показываем ГЛАВНУЮ причину, а не весь список: `why` отсортирован по весу,
      а три причины в строку не влезают и красят пол-экрана коралловым */
-  var гл = (sc && sc.why && sc.why.length) ? String(sc.why[0].t).split(':')[0] : null;
+  /* 24.09, его слова: «только позавтракал — и вижу красным „недобрал
+     калории“, звучит негативно». Пока день идёт, вместо причины — совет,
+     что делать дальше, спокойным цветом. Красный — только перебор (калории,
+     сахар, жир). Итог дня говорит причиной, как раньше. */
+  var гw = (sc && sc.why && sc.why.length) ? sc.why[0] : null;
+  var гл = гw ? String(гw.t).split(':')[0] : null;
+  var совет = (гw && !sc.closed && гw.совет) ? (/^дальше/.test(гw.совет) ? гw.совет : 'дальше '+гw.совет) : null;
   var line = (!sc||sc.r==null) ? 'оценка — с первой записью'
-    : (sc.closed?'итог дня':'день идёт')+' · <em class="'+(гл?'hbad':'hgood')+'">'+
-      esc(гл || 'всё в норме')+'</em>';
+    : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+
+      esc(совет || гл || 'всё в норме')+'</em>';
   return '<div class="hclk">'+s+'<div class="hctr">'+c+'<i class="hcl">'+line+'</i></div></div>';
 }
 /* неделя одной строкой: точка — попал ли день в коридор; будущие дни пустые.
@@ -9891,7 +9903,7 @@ function renderCircle(){
        : 'В таблице ты остаёшься — балл, дни недели и серия видны. Еду и фото соседи не увидят, и оценить их нельзя.')+'</p>';
   h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар в еде. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
   if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
-    'Оценка считается всё время, пока день идёт, и растёт с каждым приёмом; в полночь фиксируется итог.<br>'+
+    'Пока день идёт, оценивается съеденное: каждый приём — своей долей дня, недобор не штраф, перебор — да. В полночь фиксируется итог по всей норме.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
     'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
     'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
@@ -10174,8 +10186,23 @@ function closeHtml(){
   var fin = d.closed || d.date<TODAY;
   /* до первой записи числа нет: «3,0 / 10» с утра — это не оценка, а пустой день */
   if(d.r==null) return fin ? '' : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>';
-  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':' · день идёт')+(d.streak?' · '+streakText(d.streak):'')+
-    '<br><small>'+esc(whyText(d.why))+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
+  /* 24.09: пока день идёт, сервер судит съеденное — каждый приём своей долей
+     дня, — а не весь день полной нормой. Так и подписываем, иначе «5,8» в
+     10 утра читается как приговор дню. Итог по всей норме — в полночь. */
+  var пока = !fin && !!d.вместе;
+  return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><b>'+fmtR(d.r)+' / 10</b>'+(fin?' · итог дня':(пока?' · съеденное пока':' · день идёт'))+(d.streak?' · '+streakText(d.streak):'')+
+    '<br><small>'+esc(whyText(d.why))+(пока?'. Итог дня — в полночь, по всей норме':'')+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
+}
+/* 24.09: оценка приёма — балл своей долей дня и одно «что в следующий раз».
+   Совет строит сервер из тех же чисел, что вычет (scoreEaten), здесь его
+   только показываем. Красным — лишь перебор: калории, сахар, жир — его уже не
+   отыграть. Недобор днём не ошибка: день ещё идёт, его судит полночь. */
+function перебор(w){ return !!w && (w.k==='sug' || w.k==='fat' || (w.k==='kcal' && !/недобр/.test(w.t||''))); }
+function приёмHtml(p){
+  if(!p || p.r==null) return '';
+  var w=(p.why||[])[0];
+  return '<small class="fms"><b class="'+(!w?'fms-ok':(перебор(w)?'fms-bad':''))+'">'+fmtR(p.r)+'</b>'+
+         (w ? (w.совет?' · '+esc(w.совет):'') : ' · всё в норме')+'</small>';
 }
 function loadDayScore(){
   var date=fDate();
@@ -11412,6 +11439,10 @@ function renderFoodDay(){
     (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
     closeHtml();
+  /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:
+     прошлый день судит полная формула, и делить её на приёмы нечестно */
+  var оцП={};
+  if(DAYSC && DAYSC.date===fDate() && DAYSC.приёмы) DAYSC.приёмы.forEach(function(p){ оцП[p.id]=p; });
   ml.innerHTML = (d.plan||[]).map(function(pp){
     return '<div class="fmeal fact fplan"><span class="fk">план</span><span class="ft">'+esc(planLine(pp))+'</span>'+
            '<span class="fn"><b>+'+Math.round(pp.kcal)+'</b> ккал<i>в норме</i></span>'+
@@ -11429,7 +11460,7 @@ function renderFoodDay(){
     var ф = m.img ? '<img class="fmth" '+photoAttr(m.img,false)+' alt="" loading="lazy">'
                   : '<span class="fmth fmno"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg></span>';
     return '<div class="fmeal" data-mid="'+m.id+'">'+ф+
-           '<span class="ft">'+(m.kind?'<i>'+esc(m.kind)+'</i>':'')+m.text+'</span>'+
+           '<span class="ft">'+(m.kind?'<i>'+esc(m.kind)+'</i>':'')+m.text+приёмHtml(оцП[m.id])+'</span>'+
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
