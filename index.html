@@ -1188,6 +1188,23 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .srcs button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 11px;border-radius:99px;
   border:1px solid var(--line);background:var(--card-2);font:inherit;font-size:12px;color:var(--muted);text-align:left}
 .srcs button b{color:var(--text);font-weight:600}
+/* группы продуктов за неделю и риски (24.09, этап 2, его выбор «А + строка в Б») */
+.gx .grow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line-soft)}
+.gx .grow:first-child{border-top:0}
+.gx .grow b{font-size:14px;font-weight:600;color:var(--text)}
+.gx .grow span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.gx .grow span.ok{color:var(--done-txt)} .gx .grow span.lo,.gx .grow span.hi{color:var(--warn-txt)}
+.gx .gbar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--card-2);overflow:hidden;position:relative;margin-top:4px}
+.gx .gbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.gx .gbar i.ok{background:var(--done)} .gx .gbar i.hi{background:var(--warn)}
+.gx .gbar s{position:absolute;top:0;bottom:0;width:2px;background:var(--text);opacity:.7}
+.gx .gnote{font-size:12px;color:var(--dim);margin:8px 0 6px;line-height:1.45}
+.gflag{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0 0;background:var(--card-2)}
+.gflag h4{margin:0 0 4px;font-size:14px;font-weight:650;color:var(--text)}
+.gflag p{margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--muted)}
+.gflag p.doc{color:var(--text)}
+.gmenu{font-size:12.5px;color:var(--muted);margin:4px 0 8px;line-height:1.5}
+.gmenu b{color:var(--done-txt);font-weight:600}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
 .msg.intro{align-self:stretch;max-width:100%;background:none;border:none;padding:2px 0;
   color:var(--muted);font-size:12.5px;line-height:1.5}
@@ -2458,6 +2475,8 @@ body.onb #picker .modalbox::before{display:none}
         <div class="fweek" id="fweek"></div>
         <p class="fweekt" id="fweekt"></p>
         </div>
+        <h3 class="lh" id="grph" hidden>Разнообразие недели</h3>
+        <div class="group" id="grpg" hidden></div>
         <h3 class="lh">Весы</h3>
         <div class="group">
         <div class="fchart" id="fchart"></div>
@@ -4873,7 +4892,7 @@ function menuHTML(){
       ? 'Меню на неделю — круг из твоих же блюд: 2–3 завтрака и 3–4 обеда и ужина, чтобы готовить два-три раза в неделю. Порции — под норму каждого дня, покупки — списком.'
       : 'Меню на завтра — из того, что ты обычно ешь, с граммами под норму завтрашнего дня.')+'</p>'+
     '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="'+span+'">'+(span==='week'?'Собрать меню на неделю':'Собрать меню на завтра')+'</button></div>';
-  if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>'+(m.note?'<p class="mnote">'+esc(m.note)+'</p>':'');
+  if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>'+грМенюHTML(m.группы)+(m.note?'<p class="mnote">'+esc(m.note)+'</p>':'');
   h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
   h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="'+span+'">Другое меню</button>'+
      '<button type="button" class="btn" data-msend="'+span+':menu">'+(MENUSENT===span+':menu'?'Отправил ✓':'В Telegram')+'</button></div>';
@@ -4994,6 +5013,7 @@ document.getElementById('btbox').addEventListener('change', function(e){ if(/^bt
 var ЗД_DIA=[['','нет'],['t1','1 тип'],['t2','2 тип'],['pre','преддиабет'],['?','не знаю']];
 var ЗД_INS=[['1','колю'],['0','нет']];
 var ЗД_LOW=[['1','бывает'],['0','нет'],['?','не знаю']];
+var ЗД_MET=[['1','да'],['0','нет']];
 var ЗД_ОСЛ=[['eyes','диабет задел глаза'],['feet','стопы немеют'],['kid','почки хуже']];
 var ЗД_ЕЩЁ=[['bp','высокое давление'],['preg','беременность']];
 function здSeg(id, пары, знач, мульти){
@@ -5011,6 +5031,8 @@ function здBody(pfx, med){
        ряд('колешь инсулин', здSeg(pfx+'-ins', ЗД_INS, med.ins==null?'':String(med.ins), false)) +
        ряд('сахар в крови падает низко', здSeg(pfx+'-low', ЗД_LOW, med.low==null?'':String(med.low), false)) +
        '<p class="seghint zdwhy">От этих двух ответов зависит, насколько осторожно приложение считает норму.</p>' +
+       ряд('пьёшь метформин (Сиофор, Глюкофаж)', здSeg(pfx+'-met', ЗД_MET, med.met==null?'':String(med.met), false)) +
+       '<p class="seghint zdwhy">Метформин с годами снижает B12 — тренер напомнит, какой анализ спросить у врача.</p>' +
        ряд('врач говорил', здSeg(pfx+'-osl', ЗД_ОСЛ, {eyes:med.eyes===1,feet:med.feet===1,kid:med.kid===1}, true)) +
        '</div>';
   h += ряд('ещё', здSeg(pfx+'-more', ЗД_ЕЩЁ, {bp:med.bp===1,preg:med.preg===1}, true));
@@ -5029,11 +5051,12 @@ function здRead(pfx){
   var m={ dia:dia, no:String(no).slice(0,200).trim(),
           bp:есть(pfx+'-more','bp'), preg:есть(pfx+'-more','preg') };
   if(dia){
-    var ins=один(pfx+'-ins'), low=один(pfx+'-low');
+    var ins=один(pfx+'-ins'), low=один(pfx+'-low'), met=один(pfx+'-met');
     m.ins = ins==='1'?1:ins==='0'?0:null;
+    m.met = met==='1'?1:met==='0'?0:null;
     m.low = low===''?null:(low==='?'?'?':(low==='1'?1:0));
     m.eyes=есть(pfx+'-osl','eyes'); m.feet=есть(pfx+'-osl','feet'); m.kid=есть(pfx+'-osl','kid');
-  } else { m.ins=null; m.low=null; m.eyes=0; m.feet=0; m.kid=0; }
+  } else { m.ins=null; m.low=null; m.met=null; m.eyes=0; m.feet=0; m.kid=0; }
   m.at=new Date().toISOString();
   return m;
 }
@@ -5047,6 +5070,7 @@ function здSum(m){
   var ч=[];
   if(m.dia) ч.push(m.dia==='t1'?'диабет 1 типа':m.dia==='t2'?'диабет 2 типа':m.dia==='pre'?'преддиабет':'диабет');
   if(m.ins===1) ч.push('инсулин');
+  if(m.met===1) ч.push('метформин');
   if(m.kid===1) ч.push('почки');
   if(m.bp===1) ч.push('давление');
   if(m.preg===1) ч.push('беременность');
@@ -5410,7 +5434,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 21:26';
+var BUILD = '24.09 22:05';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -12082,8 +12106,45 @@ document.getElementById('fday').addEventListener('click', function(e){
   var k=b.dataset.fk; FBOPEN = FBOPEN===k ? null : k;
   haptic('light'); renderFoodDay();
 });
+/* ══════════ ГРУППЫ ПРОДУКТОВ И РИСКИ ══════════
+   24.09, этап 2 плана, второй заход. Его выбор из трёх снимков — «А +
+   строка в Б» (docs/reviews/2026-09-24-vybor-10-gruppy.png): в «Моём дне»
+   под неделей — пять строк с чертой ориентира и карточки рисков; над меню
+   недели — строка «в этом меню». Считает сервер (/week → группы), здесь
+   только вид. Флаг — еда и анализ у врача; доз добавок нет нигде. */
+function renderGroups(){
+  var hd=document.getElementById('grph'), b=document.getElementById('grpg'); if(!b) return;
+  var гр=FOOD&&FOOD.week&&FOOD.week.группы;
+  if(!гр || !гр.дней || !Array.isArray(гр.строки)){ hd.hidden=true; b.hidden=true; b.innerHTML=''; return; }
+  hd.hidden=false; b.hidden=false;
+  var h='<div class="gx">'+гр.строки.map(function(r){
+    var мх = !r.из ? Math.max(1,r.v)*1.25 : (r.max ? Math.max(r.из*1.6, r.v*1.05) : Math.max(r.из*1.25, r.v));
+    var w=Math.min(100, Math.round(r.v/мх*1000)/10), м=r.из ? Math.round(r.из/мх*1000)/10 : null;
+    return '<div class="grow" data-g="'+esc(r.k)+'"><b>'+esc(r.t)+'</b><span class="'+esc(r.st||'')+'">'+esc(r.txt)+'</span>'+
+      '<div class="gbar"><i class="'+esc(r.st||'')+'" style="width:'+w+'%"></i>'+(м!=null?'<s style="left:'+м+'%"></s>':'')+'</div></div>';
+  }).join('')+
+  '<p class="gnote">'+(гр.полных<5 ? 'Полных дней в дневнике '+гр.полных+' из 7 — судить о разнообразии рано. ' : 'По дневнику за 7 дней, полных '+гр.полных+'. ')+
+    'Черта — ориентир: рыба 2 раза, бобовые 3, овощи и фрукты 400 г в день, молочное 2 порции, красного мяса до 500 г.</p>'+источникиHTML(гр.src)+'</div>';
+  h+=(гр.флаги||[]).map(function(f){
+    return '<div class="gflag" data-flag="'+esc(f.k)+'"><h4>'+esc(f.h)+'</h4><p>'+esc(f.t)+'</p>'+(f.врач?'<p class="doc">'+esc(f.врач)+'</p>':'')+источникиHTML(f.src)+'</div>';
+  }).join('');
+  b.innerHTML=h;
+  b.querySelectorAll('.srcs button').forEach(function(x){
+    x.addEventListener('click', function(){ haptic('light'); вебОткрыть(x.getAttribute('data-src')); });
+  });
+}
+/* строка над меню недели: что закрывает само меню */
+function грМенюHTML(g){
+  if(!g || !(g.дней>=5)) return '';
+  var ч=[['рыба '+g.рыба+' '+plural(g.рыба,['раз','раза','раз']), g.рыба>=2], ['бобовые '+g.бобовые, g.бобовые>=3],
+    ['овощи и фрукты '+g.овощиФрукты+' г в день', g.овощиФрукты>=400], ['молочное '+String(g.молочное).replace('.',',')+' порции в день', g.молочное>=2],
+    ['красное мясо '+g.красное+' г', g.красное<=500]];
+  if(g.колбаса) ч.push(['колбасы '+g.колбаса+' г', false]);
+  return '<p class="gmenu">В этом меню: '+ч.map(function(x){ return x[1]?'<b>'+esc(x[0])+'</b>':esc(x[0]); }).join(' · ')+'</p>';
+}
 function renderFoodWeek(){
   var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
+  renderGroups();
   var w=FOOD.week; if(!w){ box.innerHTML=''; t.textContent=''; return; }
   var tg=w.targets||{};
   /* Норма у каждого дня СВОЯ: в день зала она выше, а неделю назад был другой
