@@ -420,7 +420,8 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
       { s: 'Верх', sub: 'грудь и спина', ex: [уу('Barbell_Bench_Press_Medium_Grip', 'Жим лёжа', 'chest', 'Жим'), уу('Wide-Grip_Lat_Pulldown', 'Тяга сверху', 'lats', 'Тяга'), уу('Dumbbell_Flyes', 'Разведения', 'chest', 'Разведения')] },
       { s: 'Плечи', sub: 'плечи и спина', ex: [уу('Standing_Military_Press', 'Жим стоя', 'shoulders', 'Жим'), уу('Bent_Over_Barbell_Row', 'Тяга в наклоне', 'middle back', 'Тяга'), уу('Side_Lateral_Raise', 'Махи', 'shoulders', 'Махи')] },
       { s: 'Низ 2', sub: 'ноги ещё раз', ex: [уу('Barbell_Lunge', 'Выпады', 'quadriceps', 'Выпады'), уу('Standing_Calf_Raises', 'Носки', 'calves', 'Носки'), уу('Romanian_Deadlift', 'Румынская', 'hamstrings', 'Тяга')] }] } });
-  const КАТ = JSON.parse(fs.readFileSync(os.homedir() + '/getfit/catalog.json', 'utf8'));
+  /* каталог — из этого же репозитория: клона ~/getfit на маке с 24.09 нет */
+  const КАТ = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', 'catalog.json'), 'utf8'));
   const ПОID = {}; (КАТ.ex || []).forEach(e => ПОID[e.i] = e);
   const МОЖНО = ['biceps', 'triceps', 'forearms', 'abdominals', 'obliques'];
   const дот = await З('/coach', { uid: ДУ, text: 'Собери программу дня 4 на руки, предплечья и пресс' });
