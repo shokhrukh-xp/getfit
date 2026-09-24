@@ -48,8 +48,10 @@ const ЛИСТ = () => {
   дано(/Калории/.test(день), 'дневник и нормы при стене работают: ' + день.slice(0, 40));
 
   /* просим тренера — сервер отвечает 402 с кодом sub */
-  await гость.fill('#ftext', 'плов с говядиной');
-  await гость.click('#fsend');
+  /* 24.09: строки записи на «Еде» нет — просим тренера в чате */
+  await гость.click('#coachfab'); await гость.waitForTimeout(400);
+  await гость.fill('#ctext', 'плов с говядиной');
+  await гость.click('#csend');
   await гость.waitForTimeout(1400);
   const л = await гость.evaluate(ЛИСТ);
   дано(л.открыт, 'на просьбу к тренеру поднялся лист с ценой');
@@ -59,7 +61,8 @@ const ЛИСТ = () => {
   дано(/500/.test(л.кнопка), 'кнопка с ценой: ' + л.кнопка.trim());
 
   /* в профиле у гостя строка есть */
-  await гость.evaluate(() => { const m = document.getElementById('subm'); if (m) m.classList.remove('show'); });
+  await гость.evaluate(() => { const m = document.getElementById('subm'); if (m) m.classList.remove('show');
+    const c = document.getElementById('coachclose'); if (c) c.click(); });   /* просили в чате — закрываем и его */
   await гость.click('#profbtn');
   дано(await гость.isVisible('#profm'), 'профиль действительно открыт');
   await гость.waitForTimeout(800);

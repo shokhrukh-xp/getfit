@@ -975,8 +975,6 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .splr .splx{flex:0 0 auto;width:26px;height:26px;line-height:26px;text-align:center;border-radius:8px;color:var(--dim);font-size:15px}
 .spdn{margin:7px 0 0;font-size:12px;line-height:1.4;color:var(--muted);min-height:1px}
 /* Кнопка занятия на «Еде» — только тем, у кого нет вкладки зала. */
-.foodadd{display:none}
-body.nogym .foodadd{display:block;margin-top:10px;color:var(--done-txt)}
 #sp-only{margin-top:8px}
 .catnoimg{display:block;width:64px;height:48px;border-radius:8px;background:var(--accent-ghost);flex:none}
 .fmeal.fact .fk{color:var(--accent-txt)}
@@ -2355,18 +2353,10 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group">
         <div class="fday" id="fday"></div>
         <div class="fmeals" id="fmeals"></div>
-        <!-- Тем, кто ведёт только еду, вкладки зала нет вовсе, а кнопка занятия
-             живёт в конце дня на «Тренировке». Единственный учёт движения не
-             должен пропадать у тех, кому он нужнее всех. -->
-        <button type="button" class="btn wide sportbtn sportadd foodadd" id="addsport2">+ Занятие вне зала</button>
-        <div class="attbox" id="fattach" hidden></div>
-        <div class="fask">
-          <button type="button" class="fbtn fshot" id="fphoto" aria-label="Фото еды"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
-          <input id="ftext" type="text" placeholder="Напиши, что съел, или спроси" autocomplete="off">
-          <button type="button" class="fbtn go" id="fsend" aria-label="Отправить">→</button>
-          <input id="ffile" type="file" accept="image/*" hidden>
-        </div>
-        <div class="fchips" id="frecent"></div>
+        <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
+             с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
+             разу не пользовался. Еда и занятия записываются в чате с тренером
+             (кнопка справа внизу), занятие — ещё и на «Тренировке». -->
         <p class="freply" id="freply" hidden></p>
 
         </div>
@@ -5147,7 +5137,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 15:11';
+var BUILD = '24.09 15:31';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8609,7 +8599,7 @@ document.getElementById('profm').addEventListener('click', function(e){
   if(e.target.closest('#pfswitch')){ closeProf(); showPicker(); return; }
   if(e.target.closest('#goaltalk')){
     closeProf(); openCoach();
-    var ct=document.getElementById('ftext');
+    var ct=document.getElementById('ctext');
     if(ct && !ct.value){ ct.value = goalObj() ? 'Хочу обсудить цель: ' : 'Моя цель: '; try{ ct.focus(); ct.setSelectionRange(ct.value.length, ct.value.length); }catch(_){} }
     haptic('light'); return;
   }
@@ -9947,12 +9937,9 @@ function renderHome(){
        12.09 вместе с кнопкой фото на главной: атрибут на пузыре остался, а
        обработчик уехал в плавающую кнопку тренера. Нажатие ведёт туда, где
        еда и записывается, и ставит палец в строку — фото там же рядом. */
-    if(e.target.closest('[data-hact]')){
-      FOOD.date=null; FOOD.day=null; goPage('food');
-      setTimeout(function(){ var i=document.getElementById('ftext');
-        if(i){ try{ i.focus(); }catch(e2){} } }, 320);
-      haptic('light'); return;
-    }
+    /* 24.09: строки записи на «Еде» больше нет — плюс ведёт в чат с
+       тренером, где еда и записывается (и фото там же). */
+    if(e.target.closest('[data-hact]')){ openCoach(); haptic('light'); return; }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
   });
 })();
@@ -10801,7 +10788,6 @@ function openFood(){
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
   fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
-  fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.recent){ FOOD.recent=d.recent; FOOD.often=d.often||[]; renderRecent(); } }).catch(function(){});
   podPull();
 }
 /* ── САХАР В КРОВИ ─────────────────────────────────────────────────────
@@ -11293,29 +11279,6 @@ document.getElementById('eatbody').addEventListener('input', function(e){
   var п=e.target.selectionStart; renderEat();
   var сн=document.getElementById('eatq'); if(сн){ сн.focus(); try{ сн.setSelectionRange(п,п); }catch(_){} }
 });
-function renderRecent(){
-  var box=document.getElementById('frecent'); if(!box) return;
-  var чип=function(a){ return '<button type="button" '+a.attr+' title="'+esc(a.t)+'">'+a.ic+' <b>'+
-    esc(String(a.t).slice(0,26))+(String(a.t).length>26?'…':'')+'</b> · '+Math.round(a.k)+' ккал</button>'; };
-  var h=(FOOD.often||[]).map(function(f,i){
-    return чип({attr:'data-ffood="'+i+'"', ic:'+', t:f.name+(f.g?' '+f.g+' г':''), k:f.kcal});
-  }).join('');
-  h+=(FOOD.recent||[]).map(function(m){ return чип({attr:'data-frep="'+m.id+'"', ic:'↻', t:m.text, k:m.kcal}); }).join('');
-  box.innerHTML=h;
-}
-document.getElementById('frecent').addEventListener('click', function(e){
-  var b=e.target.closest('[data-frep],[data-ffood]'); if(!b) return;
-  var готово=function(d, имя){ FOOD.day=d.day; renderFoodDay(); fReply('Записал: '+имя+'. '+(d.day.line||'')); haptic('ok'); };
-  var беда=function(err){ fReply(humanErr(err),'bad'); };
-  if(b.dataset.ffood!=null){
-    var f=(FOOD.often||[])[+b.dataset.ffood]; if(!f) return;
-    fPost('/meal/add', {uid:syncUid(), date:fDate(), kind:kindNow(), text:f.name+(f.g?' '+f.g+' г':''),
-      kcal:f.kcal, prot:f.prot, fib:f.fib}).then(function(d){ готово(d, f.name); }).catch(беда);
-    return;
-  }
-  fPost('/meal/repeat', {uid:syncUid(), id:b.dataset.frep, date:fDate()})
-    .then(function(d){ готово(d, b.textContent.replace('↻','').trim()); }).catch(беда);
-});
 /* mode:'range' — перебор плохой (калории); 'min' — перебор нормален (белок,
    клетчатка): «больше нормы» там не ошибка, и красным это красить нельзя.
    Норма набрана — полоса заполнена целиком и покрашена; никакой штриховки:
@@ -11640,7 +11603,7 @@ function renderFoodDay(){
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
   if(!ml.innerHTML) ml.innerHTML='<p class="empt">'+((d.date||fDate())===TODAY?'За сегодня записей нет.':'За этот день записей нет.')+
-    '<br>Напиши, что ел, или пришли фото — посчитаю и покажу, сколько до нормы.</p>';
+    '<br>Напиши тренеру, что ел, или пришли фото — кнопка справа внизу. Посчитает и покажет, сколько до нормы.</p>';
 }
 document.getElementById('fday').addEventListener('click', function(e){
   if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
@@ -11752,21 +11715,6 @@ function fReply(text, cls, thumb){
   el.innerHTML=(thumb?'<img class="fthumb" src="data:image/jpeg;base64,'+thumb+'" alt="">':'')+
     '<span>'+esc(text||'')+(cls==='wait'?'<span class="dots"><i></i><i></i><i></i></span>':'')+'</span>';
 }
-function foodSend(text, image, mime){
-  if(FOOD.busy) return; FOOD.busy=true;
-  var sb=document.getElementById('fsend'), pb=document.getElementById('fphoto'); sb.disabled=true; pb.disabled=true;
-  fReply(image ? 'Фото ушло, считаю — обычно 20–30 секунд' : 'Считаю', 'wait', image);
-  haptic('medium');
-  fPost('/food', {uid:syncUid(), text:text||'', image:image||null, mime:mime||null, date:fDate()})
-    .then(function(d){ if(d.day) FOOD.day=d.day; renderFoodDay();
-      /* если снимок не лёг в хранилище — сказать сразу, а не оставлять пустой
-         значок вместо тарелки и гадать, куда делось фото */
-      var потеря = image && d['фото']==='нет' ? '\n\nФото не сохранилось — запись осталась без снимка.' : '';
-      fReply((d.reply||'Записал.')+потеря, '', image); haptic('ok'); takeChanges(d);
-      fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){}); })
-    .catch(function(e){ fReply(humanErr(e),'bad'); haptic('err'); })
-    .then(function(){ FOOD.busy=false; sb.disabled=false; pb.disabled=false; });
-}
 /* Фото ужимаем до 1280 px и JPEG, но главное — до размера, а не до качества.
    Один проход с 0,82 на детальном кадре давал больше мегабайта: такой снимок
    дольше идёт, тяжелее для модели и упирается в пределы хранилища. Снижаем
@@ -11801,25 +11749,6 @@ function renderAtt(box, b64, hint){
   el.innerHTML = b64 ? '<img src="data:image/jpeg;base64,'+b64+'" alt=""><span>'+esc(hint)+'</span>'+
     '<button type="button" data-att="off" aria-label="Убрать фото">×</button>' : '';
 }
-function fAttSet(b64){ FOOD.att=b64||null; renderAtt('fattach', FOOD.att, 'фото прикреплено — допиши, что это, и отправь'); }
-document.getElementById('fattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ fAttSet(null); haptic('light'); } });
-function fGo(){
-  var el=document.getElementById('ftext'), t=el.value.trim();
-  if(!t && !FOOD.att) return;
-  var img=FOOD.att; fAttSet(null); el.value='';
-  foodSend(t, img, img?'image/jpeg':null);
-}
-document.getElementById('fsend').addEventListener('click', fGo);
-document.getElementById('ftext').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); fGo(); } });
-document.getElementById('fphoto').addEventListener('click', function(){ document.getElementById('ffile').click(); });
-document.getElementById('ffile').addEventListener('change', function(e){
-  var f=e.target.files&&e.target.files[0]; if(!f) return;
-  fReply('Читаю фото', 'wait');
-  shrink(f).then(function(b64){ fAttSet(b64); fReply(''); haptic('light');
-    var el=document.getElementById('ftext'); if(el && window.innerWidth>700) el.focus();
-  }).catch(function(err){ fReply(humanErr(err),'bad'); });
-  e.target.value='';
-});
 /* ── Правка приёма ──
    Модель ошибается в весе, человек помнит его лучше — значит запись должна
    открываться и правиться, а не только удаляться. Здесь же заводится приём

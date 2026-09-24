@@ -109,8 +109,10 @@ async function рейтинг(page) {
   const гость = await br.newPage({ viewport: { width: 390, height: 900 } });
   await гость.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(гость, { theme: 'dark', page: 'food', wait: 2800, sub: 'нет' });
-  await гость.fill('#ftext', 'плов');
-  await гость.click('#fsend');
+  /* 24.09: строки записи на «Еде» нет — просим тренера в чате */
+  await гость.click('#coachfab'); await гость.waitForTimeout(400);
+  await гость.fill('#ctext', 'плов');
+  await гость.click('#csend');
   await гость.waitForTimeout(1400);
   дано(await гость.$eval('#sub-promo', e => !!e.offsetParent), 'в листе с ценой есть поле промокода');
   await гость.fill('#sub-code', 'нетакого');

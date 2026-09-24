@@ -21,14 +21,14 @@ const ЕДА = [
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   await page.waitForTimeout(600);
 
-  /* 1. запись еды выглядит так же, как в панели на «Сегодня» */
-  const ряд = await page.evaluate(() => Array.from(document.querySelector('.fask').children)
-    .filter(e => e.id).map(e => e.id));
-  дано(ряд.slice(0, 3).join(',') === 'fphoto,ftext,fsend',
-    'порядок тот же, что в разговоре с тренером: камера, поле, отправка — ' + ряд.join(','));
-  const фон = await page.$eval('#fphoto', e => getComputedStyle(e).backgroundColor);
-  const фонПоля = await page.$eval('#ftext', e => getComputedStyle(e).backgroundColor);
-  дано(фон !== фонПоля, 'кнопка съёмки выделена фоном, а не сливается с полем');
+  /* 1. 24.09, его просьба: строку «Напиши, что съел» с камерой, кнопки
+     повтора и «+ Занятие вне зала» с «Еды» убрать совсем — записывает он
+     в чате с тренером. Сторожим, чтобы не вернулись. */
+  const есть = await page.evaluate(() => ['ftext', 'fsend', 'fphoto', 'ffile', 'frecent', 'fattach', 'addsport2']
+    .filter(id => document.getElementById(id)));
+  дано(!есть.length, 'на «Еде» нет строки записи, камеры, кнопок повтора и «+ Занятие вне зала»' + (есть.length ? ': ' + есть.join(',') : ''));
+  дано(!/Занятие вне зала|Напиши, что съел/.test(await page.textContent('#p-food')), 'и их надписей на странице нет');
+  дано(await page.isVisible('#coachfab'), 'кнопка чата с тренером — на месте: запись идёт через неё');
 
   /* 2. третья полоса графика — белковая масса, а не «мышцы» */
   const текст = await page.textContent('#p-food');

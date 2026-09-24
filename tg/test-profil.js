@@ -137,7 +137,7 @@ const полоса = page => page.evaluate(() => {
     'и повторение завелось тем же нажатием: ' + JSON.stringify(итог.план[0]));
   await page.close();
 
-  /* ══ 4. «только еда»: кнопка есть и там ══ */
+  /* ══ 4. «только еда»: кнопки занятия на «Еде» нет (24.09) ══ */
   const еда = await br.newPage({ viewport: { width: 390, height: 900 } });
   await еда.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   const ош2 = await M.поднять(еда, { theme: 'dark', page: 'food', wait: 2800,
@@ -151,16 +151,11 @@ const полоса = page => page.evaluate(() => {
     const b = document.getElementById('addsport2');
     return { есть: !!b, виден: !!(b && b.offsetParent), зал: !!(document.getElementById('addsport') || {}).offsetParent };
   });
-  дано(кн2.есть && кн2.виден, 'кнопка занятия вне зала есть на «Еде» — зала у него нет');
-  дано(!кн2.зал, 'и она там одна: кнопки со страницы зала не видно');
-  await еда.click('#addsport2'); await еда.waitForTimeout(900);
-  const л2 = await еда.evaluate(() => ({
-    открыт: !!document.querySelector('#sportm.show'),
-    повторы: Array.from(document.querySelectorAll('#sp-plan .splr')).map(e => e.textContent.replace(/\s+/g, ' ').trim())
-  }));
-  дано(л2.открыт, 'тот же лист открывается с «Еды»');
-  дано(л2.повторы.length === 1 && /теннис/.test(л2.повторы[0]),
-    'и расписание ему доступно: ' + (л2.повторы[0] || ''));
+  /* 24.09, его решение «для всех»: кнопки занятия на «Еде» больше нет и у
+     тех, кто без зала, — занятие записывается в чате с тренером */
+  дано(!кн2.есть, 'кнопки «+ Занятие вне зала» на «Еде» нет');
+  дано(!кн2.зал, 'и кнопки со страницы зала у него не видно');
+  дано(await еда.isVisible('#coachfab'), 'чат с тренером на месте — занятие записывается там');
   await еда.close();
 
   await br.close();

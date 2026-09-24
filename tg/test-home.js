@@ -78,12 +78,9 @@ async function часы(page){
     дано(где.свой, 'палец в середину пузыря попадает по нему, а не мимо');
     await page.mouse.click(где.x, где.y);
     await page.waitForTimeout(700);
-    const куда = await page.evaluate(() => ({
-      еда: !document.getElementById('p-food').classList.contains('hide'),
-      вполе: document.activeElement && document.activeElement.id === 'ftext'
-    }));
-    дано(куда.еда, 'нажатие на «+» открыло «Еду», а не осталось ничем');
-    дано(куда.вполе, 'и палец сразу в строке записи');
+    /* 24.09: строки записи на «Еде» больше нет — «+» ведёт в чат с тренером */
+    const куда = await page.evaluate(() => ({ чат: document.getElementById('coachm').classList.contains('show') }));
+    дано(куда.чат, 'нажатие на «+» открыло чат с тренером, где еда и записывается');
   }
   await page.close();
 
