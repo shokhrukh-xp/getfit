@@ -84,6 +84,26 @@ try { было = JSON.parse(fs.readFileSync(ВРЕМЕНА, 'utf8')); } catch (e
 const оценка = з => было[з.метка] || (ЧАСТЕЙ[з.f] ? 1e6 : 0);
 список.sort((a, b) => оценка(b) - оценка(a));
 
+/* ── метка сборки ──
+   BUILD в index.html и APP_BUILD в воркере — одна метка, и меняются они
+   вместе (README). 24.09 предыдущий чат поднял только одну из них, и это
+   ничто не поймало. Сверяем в каждом прогоне, когда воркер лежит рядом. */
+const метка = (файл, rx) => { try { return (fs.readFileSync(файл, 'utf8').match(rx) || [])[1] || null; } catch (e) { return null; } };
+const ВОРКЕР = path.join(ROOT, '..', 'getfit-sync', 'src', 'index.js');
+const мПрил = метка(path.join(ROOT, ИСХОДНИК), /^var BUILD = '([^']*)'/m);
+const мСерв = fs.existsSync(ВОРКЕР) ? метка(ВОРКЕР, /^const APP_BUILD = '([^']*)'/m) : undefined;
+const меткаОк = мСерв === undefined || (мПрил && мПрил === мСерв);
+/* AGENTS.md одинаковый в обоих репозиториях — разошлись, значит кто-то
+   поправил правила только в одном */
+const агенты = [path.join(ROOT, 'AGENTS.md'), path.join(ROOT, '..', 'getfit-sync', 'AGENTS.md')];
+const агентыРазные = агенты.every(f => fs.existsSync(f)) && fs.readFileSync(агенты[0], 'utf8') !== fs.readFileSync(агенты[1], 'utf8');
+
+/* ── известные красные (tg/krasnye.txt): ждут его решения, push не держат ── */
+const КРАСНЫЕ = {};
+try { fs.readFileSync(path.join(TG, 'krasnye.txt'), 'utf8').split('\n').forEach(l => {
+  const m = l.match(/^([^#\s][^ ]*)\s+—\s+(.+)$/); if (m) КРАСНЫЕ[m[1]] = m[2]; }); } catch (e) {}
+const известный = з => КРАСНЫЕ[имя(з.f)];
+
 const ЛОГИ = path.join(os.tmpdir(), 'getfit-tg-logs');
 fs.mkdirSync(ЛОГИ, { recursive: true });
 const env = Object.assign({}, process.env);
@@ -96,6 +116,10 @@ const сек = мс => (мс / 1000).toFixed(1).padStart(5) + ' с';
   env.GF_PORT = String(порт);
   const старт = Date.now();
   console.log('Прогон: ' + список.length + ' наборов, потоков ' + потоков + ', сайт на ' + порт + ' (' + ИСХОДНИК + ')');
+  if (мСерв === undefined) console.log('Метка сборки: ' + мПрил + ' (воркера рядом нет — не сверяю)');
+  else console.log(меткаОк ? 'Метка сборки: ' + мПрил + ' — у приложения и воркера одна'
+    : '  ✗ МЕТКИ СБОРКИ РАЗНЫЕ: приложение «' + мПрил + '», воркер «' + мСерв + '». Меняются вместе (README).');
+  if (агентыРазные) console.log('  ! AGENTS.md в getfit и getfit-sync разошлись — правила меняются в обоих');
   const итоги = [];
   let i = 0, идут = 0;
   const следующий = () => {
@@ -110,10 +134,11 @@ const сек = мс => (мс / 1000).toFixed(1).padStart(5) + ' с';
       clearTimeout(таймер);
       const мс = Date.now() - t0, текст = Buffer.concat(вывод).toString('utf8');
       fs.writeFileSync(path.join(ЛОГИ, з.метка.replace(/[ \/]/g, '-') + '.log'), текст);
-      const ок = code === 0;
-      итоги.push({ метка: з.метка, мс, ок });
-      console.log((ок ? '  ✓ ' : '  ✗ ') + з.метка.padEnd(22) + сек(мс));
-      if (!ок) текст.split('\n').filter(l => /ПРОВАЛ|УПАЛО|Error|ПРОГОН:/.test(l)).slice(0, 8)
+      const ок = code === 0, ждёт = известный(з);
+      итоги.push({ метка: з.метка, мс, ок, ждёт });
+      console.log((ок ? '  ✓ ' : ждёт ? '  ~ ' : '  ✗ ') + з.метка.padEnd(22) + сек(мс) + (ок && ждёт ? '  — снова зелёный, убери его из tg/krasnye.txt' : ''));
+      if (!ок && ждёт) console.log('        известный красный: ' + ждёт);
+      else if (!ок) текст.split('\n').filter(l => /ПРОВАЛ|УПАЛО|Error|ПРОГОН:/.test(l)).slice(0, 8)
         .forEach(l => console.log('        ' + l.trim().slice(0, 160)));
       идут--; следующий();
     });
@@ -123,9 +148,11 @@ const сек = мс => (мс / 1000).toFixed(1).padStart(5) + ' с';
     итоги.forEach(r => { было[r.метка] = r.мс; });
     try { fs.writeFileSync(ВРЕМЕНА, JSON.stringify(было)); } catch (e) {}
     const всего = Date.now() - старт, подряд = итоги.reduce((a, r) => a + r.мс, 0);
-    const упали = итоги.filter(r => !r.ок);
+    const упали = итоги.filter(r => !r.ок && !r.ждёт), ждут = итоги.filter(r => !r.ок && r.ждёт);
     console.log('\nЗа ' + сек(всего).trim() + ' (по очереди было бы ' + сек(подряд).trim() + '). Логи: ' + ЛОГИ);
-    console.log(упали.length ? 'УПАЛО НАБОРОВ: ' + упали.length + ' — ' + упали.map(r => r.метка).join(', ') : 'ВСЕ НАБОРЫ ПРОЙДЕНЫ');
+    if (ждут.length) console.log('Известные красные (ждут решения, см. tg/krasnye.txt): ' + ждут.map(r => r.метка).join(', '));
+    if (!меткаОк) упали.push({ метка: 'метка сборки' });
+    console.log(упали.length ? 'УПАЛО: ' + упали.length + ' — ' + упали.map(r => r.метка).join(', ') : 'ВСЕ НАБОРЫ ПРОЙДЕНЫ');
     process.exit(Math.min(упали.length, 255));
   };
   for (let k = 0; k < потоков; k++) следующий();

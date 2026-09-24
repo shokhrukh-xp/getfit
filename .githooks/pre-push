@@ -1,0 +1,15 @@
+#!/bin/sh
+# Перед push приложения: все проверки (tg/run.sh, ~1 минута) и сверка метки
+# сборки с воркером. Красное — push не уходит.
+# Включается один раз на копию:  git config core.hooksPath .githooks
+# Обойти только с его согласия:  git push --no-verify
+cd "$(git rev-parse --show-toplevel)" || exit 1
+export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+echo "pre-push: проверки приложения…"
+if sh tg/run.sh > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
+  grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
+  exit 0
+fi
+grep -E "✗|ПРОВАЛ|УПАЛО|МЕТКИ|^За " "${TMPDIR:-/tmp}/getfit-pre-push.log" | head -40
+echo "pre-push: красное — push остановлен. Весь вывод: ${TMPDIR:-/tmp}/getfit-pre-push.log"
+exit 1
