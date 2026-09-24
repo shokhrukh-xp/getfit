@@ -390,7 +390,7 @@ async function поднять(page, o) {
     /* Предложение пересобрать программу под изменившуюся цель и сама сборка.
        o.aiDelay — задержка ответа: без неё состояние «собираю» не поймать. */
     if (p === '/reco') return дать({ ok: true, reco: o.reco || null, auto: [],
-      rebuild: o.rebuild || null, rebuild_offer: o.rbo || null, plan: null,
+      rebuild: o.rebuild || null, rebuild_offer: o.rbo || null, plan: null, byt: o.bytSrv || null,
       build: o.srvBuild || null, today: { date: TODAY, plan: [] } });
     /* 24.09: метка сборки для автообновления; по умолчанию — не знаем */
     if (p === '/build') return дать({ ok: true, build: o.srvBuild || null });
@@ -400,6 +400,16 @@ async function поднять(page, o) {
       return отдать();
     }
     if (p === '/coach')      return дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
+    /* 24.09, этап 2: меню наперёд. o.menu — что лежит на сервере, o.onMenu —
+       сборка (с задержкой o.menuDelay, чтобы поймать «собираю»). */
+    if (p === '/menu' && route.request().method() === 'GET') return дать(Object.assign({ ok: true, day: null, week: null }, o.menu || {}));
+    if (p === '/menu') {
+      const отдать = () => дать(o.onMenu ? o.onMenu(route) : { ok: false, нет: 'нет меню на стенде' });
+      if (o.menuDelay) return new Promise(r => setTimeout(() => r(отдать()), o.menuDelay));
+      return отдать();
+    }
+    if (p === '/menu/recipe') return дать(o.onRecipe ? o.onRecipe(route) : { ok: false, нет: 'нет' });
+    if (p === '/menu/send') { (o.sent = o.sent || []).push(JSON.parse(route.request().postData() || '{}')); return дать({ ok: true }); }
     if (p === '/food')       return дать(o.onFood ? o.onFood(route) : {
       ok: true, reply: 'Записал: плов с говядиной, 650 ккал, белка 32 г. До нормы осталось 430 ккал.',
       day: день({ meals: (день_ ? день_.meals : []).concat([{ id: 9, t: '14:03', kind: 'обед', kcal: 650, prot: 32, img: '/p/c.jpg', text: 'плов' }]) })

@@ -1137,6 +1137,34 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
    #coachm ниже. */
 .chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:10px;padding:4px 0 8px;min-height:160px}
+/* меню наперёд и покупки (24.09, этап 2; его выбор — вкладка «Что съесть») */
+.eseg{display:flex;gap:6px;margin:0 0 12px}
+.eseg button{flex:1 1 0;min-height:44px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
+  color:var(--muted);font:inherit;font-size:13px;padding:0 6px}
+.eseg button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:600}
+.mdh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:16px 0 2px}
+.mdh.top{margin-top:2px}
+.mdh b{font-size:16px;color:var(--text);font-weight:650}
+.mdh span{font-size:12px;color:var(--muted)}
+.mdh .mzal{color:var(--accent-txt)}
+.mitog{font-size:12.5px;color:var(--muted);margin:2px 0 6px;line-height:1.45}
+.mnote{font-size:13px;color:var(--muted);margin:6px 0 2px;line-height:1.45}
+.mwarn{font-size:12.5px;color:var(--warn-txt);margin:4px 0;line-height:1.45}
+.mrow{padding:10px 0;border-top:1px solid var(--line-soft)}
+.mhd{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.mtx{font-size:14.5px;line-height:1.45;margin-top:3px;color:var(--text)}
+.msost{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.45}
+.mrecb{display:block;margin-top:2px;min-height:36px;text-align:left}
+.mrec{margin:6px 0 0 18px;padding:0;font-size:13.5px;line-height:1.5;color:var(--text)}
+.mbtns{margin-top:16px}
+.botd{margin:16px 0 2px;font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.bitem{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;border:0;border-top:1px solid var(--line-soft);
+  background:none;font:inherit;font-size:14.5px;color:var(--text);text-align:left;padding:0}
+.bitem i{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);flex:none}
+.bitem[aria-pressed="true"] i{background:var(--accent);border-color:transparent}
+.bitem[aria-pressed="true"] span{color:var(--dim);text-decoration:line-through}
+.chatmenu{align-self:flex-start;margin-top:6px;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--accent-txt);
+  background:none;color:var(--accent-txt);font:inherit;font-size:13.5px;font-weight:600}
 .chatmore{align-self:center;background:none;border:none;font:inherit;font-size:12.5px;font-weight:600;
   color:var(--accent-txt);padding:6px 10px;min-height:44px}
 .chatsep{align-self:center;font-size:11px;color:var(--dim);padding:2px 0}
@@ -2736,6 +2764,11 @@ body.onb #picker .modalbox::before{display:none}
     <div class="invbox zdbox" id="zdbox">
       <button type="button" class="invhead" id="zdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="zdsum">не заполнено</span><i class="invchev">›</i></button>
       <div class="invbody" id="zdbody" hidden></div>
+    </div>
+    <!-- 24.09, этап 2: быт — из него тренер собирает меню -->
+    <div class="invbox zdbox" id="btbox">
+      <button type="button" class="invhead" id="bttoggle" aria-expanded="false"><span class="invl">быт и еда</span><span class="invsum" id="btsum">не заполнено</span><i class="invchev">›</i></button>
+      <div class="invbody" id="btbody" hidden></div>
     </div>
     <!-- «Веду» решает, будет ли вообще раздел про зал, поэтому стоит выше
          него. 17.09, его слова: «нужно показать выше». -->
@@ -4757,8 +4790,195 @@ function readMeForm(){
           /* расписание в профиле не редактируется — оно живёт в листе занятия;
              читать его отсюда значило бы стирать при каждом сохранении */
           plan:old.plan||[], plan_at:old.plan_at||null, sports:old.sports||'',
-          med:здRead('zd')||old.med||null};
+          med:здRead('zd')||old.med||null,
+          byt:бтПрочесть(old).byt, byt_at:бтПрочесть(old).at};
 }
+/* ══════════ МЕНЮ НАПЕРЁД И ПОКУПКИ ══════════
+   24.09, этап 2 плана «тренер + нутрициолог». Его выбор из трёх снимков
+   (docs/reviews/2026-09-24-vybor-9-menu.png): во вкладке «Что съесть»
+   переключатель Сейчас / Завтра / Неделя / Покупки; «Сейчас» — то, что было
+   (подбор приёма и каталог). Меню собирается только по нажатию или по
+   просьбе в разговоре — сам тренер его не присылает (его ответ). Числа —
+   норма дня, подгонка порций, покупки в сырых весах — считает сервер,
+   здесь только показ. Отметки в списке покупок — в этом телефоне. */
+var EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='';
+var ESEG=[['now','Сейчас'],['day','Завтра'],['week','Неделя'],['buy','Покупки']];
+function eatSegHTML(){
+  return '<div class="eseg">'+ESEG.map(function(x){
+    return '<button type="button" data-eseg="'+x[0]+'" aria-pressed="'+(EATSEG===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
+}
+var MENUPULL=false;
+function menuPull(){
+  if(MENUPULL) return; MENUPULL=true;
+  fGet('/menu?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.ok){ MENU=d; } else MENU={day:null,week:null}; })
+    .catch(function(){ MENU={day:null,week:null}; }).then(function(){ MENUPULL=false; renderEat(); });
+}
+function menuЗавтра(){ var d=new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+function menuСвежее(span){
+  if(!MENU) return null; var m=span==='week'?MENU.week:MENU.day;
+  return (m && m.from===(MENU.завтра||menuЗавтра()) && Array.isArray(m.дни)) ? m : null;
+}
+function menuСобрать(span){
+  if(MENUBUSY) return;
+  MENUBUSY=span; MENUERR=''; renderEat();
+  fPost('/menu', {uid:syncUid(), span:span}).then(function(d){
+    if(!d || !d.ok){ MENUERR=(d&&d.нет)||'Меню не сложилось — попробуй ещё раз.'; haptic('err'); return; }
+    MENU=MENU||{}; MENU[span==='week'?'week':'day']=d; if(!MENU.завтра) MENU.завтра=d.from; MENUREC={};
+    haptic('ok');
+  }).catch(function(e){ MENUERR=humanErr(e); haptic('err'); })
+  .then(function(){ MENUBUSY=''; renderEat(); });
+}
+function menuРецепт(key){
+  if(MENURECBUSY) return; var p=key.split(':'); MENURECBUSY=key; renderEat();
+  fPost('/menu/recipe', {uid:syncUid(), span:p[0], id:p.slice(1).join(':')}).then(function(d){
+    if(d&&d.ok) MENUREC[key]=d; else MENUERR=(d&&d.нет)||'Рецепт не сложился — попробуй ещё раз.'; })
+  .catch(function(e){ MENUERR=humanErr(e); }).then(function(){ MENURECBUSY=''; renderEat(); });
+}
+function menuОтправить(v){
+  var p=v.split(':');
+  fPost('/menu/send', {uid:syncUid(), span:p[0], what:p[1]}).then(function(){ MENUSENT=v; haptic('ok'); renderEat(); })
+    .catch(function(e){ MENUERR=humanErr(e); haptic('err'); renderEat(); });
+}
+function menuДата(iso){ var d=new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]; }
+function menuПриём(x, span, m){
+  var key=span+':'+x.id, r=MENUREC[key]||((m&&m.рецепты)||{})[x.id];
+  var состав=(x.items||[]).filter(function(i){return i.g;}).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.g+' г'; }).join(' · ');
+  var рец = (r && r.шаги)
+    ? '<ol class="mrec">'+r.шаги.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ol>'+
+      (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
+      (r.совет ? '<p class="msost">'+esc(r.совет)+'</p>' : '')
+    : '<button type="button" class="lnk mrecb" data-mrec="'+esc(key)+'">'+(MENURECBUSY===key?'Пишу рецепт…':'Рецепт'+(x.мин?' · '+x.мин+' мин':'')+' ›')+'</button>';
+  return '<div class="mrow"><div class="mhd"><span>'+esc(x.kind)+'</span><span>'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</span></div>'+
+    '<div class="mtx">'+esc(x.text)+'</div>'+(состав?'<div class="msost">'+состав+'</div>':'')+рец+'</div>';
+}
+function menuДень(д, span, m){
+  var шапка = span==='day'
+    ? '<div class="mdh top"><b>Меню на завтра</b><span>'+menuДата(д.date)+'</span></div>'
+    : '<div class="mdh"><b>'+menuДата(д.date)+'</b>'+(д.зал?'<span class="mzal">зал</span>':'')+'</div>';
+  return шапка+'<p class="mitog">'+д.kcal+' из '+д.норма.kcal+' ккал · белок '+д.prot+' из '+д.норма.prot+' г'+
+      (span==='day'&&д.зал?' · день зала':'')+((д.спорт||[]).length?' · '+esc(д.спорт.join(', ')):'')+'</p>'+
+    (span==='day'&&m.note?'<p class="mnote">'+esc(m.note)+'</p>':'')+
+    (д.белокМало?'<p class="mwarn">Белка не хватает '+д.белокМало+' г — добери перекусом.</p>':'')+
+    д.приёмы.map(function(x){ return menuПриём(x, span, m); }).join('');
+}
+function menuHTML(){
+  if(EATSEG==='buy') return buyHTML();
+  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  var span = EATSEG==='week'?'week':'day', m=menuСвежее(span), h='';
+  if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю из твоей же еды — это до минуты':'Собираю меню на завтра из твоей же еды — секунд 20')+'<span class="dots"><i></i><i></i><i></i></span></p>';
+  if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
+  if(!m) return h+'<p class="podall">'+(span==='week'
+      ? 'Меню на неделю — круг из твоих же блюд: 2–3 завтрака и 3–4 обеда и ужина, чтобы готовить два-три раза в неделю. Порции — под норму каждого дня, покупки — списком.'
+      : 'Меню на завтра — из того, что ты обычно ешь, с граммами под норму завтрашнего дня.')+'</p>'+
+    '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="'+span+'">'+(span==='week'?'Собрать меню на неделю':'Собрать меню на завтра')+'</button></div>';
+  if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>'+(m.note?'<p class="mnote">'+esc(m.note)+'</p>':'');
+  h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
+  h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="'+span+'">Другое меню</button>'+
+     '<button type="button" class="btn" data-msend="'+span+':menu">'+(MENUSENT===span+':menu'?'Отправил ✓':'В Telegram')+'</button></div>';
+  return h;
+}
+function buyHTML(){
+  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  var m=menuСвежее('week')||menuСвежее('day');
+  if(!m) return '<p class="podall">Список покупок собирается из меню. Собери меню на завтра или на неделю — покупки появятся здесь.</p>'+
+    '<div class="btnrow mbtns"><button type="button" class="btn" data-mgo="day">Меню на завтра</button><button type="button" class="btn prim" data-mgo="week">Меню на неделю</button></div>';
+  var p=m.покупки||{отделы:[],дома:[]}, span=m.span, отм=gget('buy_'+span+'_'+m.from,{})||{};
+  var h='<div class="mdh top"><b>Покупки '+(span==='week'?'на неделю':'на завтра')+'</b><span>'+(span==='week'?'с ':'')+menuДата(m.from)+'</span></div>';
+  h+='<p class="mitog">'+(p.семья>1?'На '+p.семья+' чел., примерно · ':'')+'в сырых весах'+((p.дома||[]).length?' · дома уже есть: '+esc(p.дома.join(', ')):'')+'</p>';
+  (p.отделы||[]).forEach(function(o){
+    h+='<div class="botd">'+esc(o.отдел)+'</div>'+o.список.map(function(x){
+      return '<button type="button" class="bitem" data-buy="'+esc(x.имя)+'" aria-pressed="'+(!!отм[x.имя])+'"><i></i><span>'+esc(x.имя)+' — '+esc(x.сколько)+'</span></button>'; }).join('');
+  });
+  h+='<div class="btnrow mbtns"><button type="button" class="btn prim" data-msend="'+span+':buy">'+(MENUSENT===span+':buy'?'Отправил ✓':'В Telegram')+'</button></div>';
+  return h;
+}
+function menuКлик(e){
+  var es=e.target.closest('[data-eseg]'); if(es){ EATSEG=es.dataset.eseg; MENUERR=''; renderEat(); haptic('light'); return true; }
+  var mg=e.target.closest('[data-mgen]'); if(mg){ menuСобрать(mg.dataset.mgen); haptic('light'); return true; }
+  var mo=e.target.closest('[data-mgo]'); if(mo){ EATSEG=mo.dataset.mgo; if(!menuСвежее(EATSEG)) menuСобрать(EATSEG); else renderEat(); haptic('light'); return true; }
+  var mr=e.target.closest('[data-mrec]'); if(mr){ menuРецепт(mr.dataset.mrec); haptic('light'); return true; }
+  var ms=e.target.closest('[data-msend]'); if(ms){ menuОтправить(ms.dataset.msend); haptic('light'); return true; }
+  var bi=e.target.closest('[data-buy]');
+  if(bi){ var m=menuСвежее('week')||menuСвежее('day'); if(!m) return true;
+    var k='buy_'+m.span+'_'+m.from, о=gget(k,{})||{}; if(о[bi.dataset.buy]) delete о[bi.dataset.buy]; else о[bi.dataset.buy]=1; gset(k,о);
+    bi.setAttribute('aria-pressed', String(!!о[bi.dataset.buy])); haptic('light'); return true; }
+  return false;
+}
+/* из разговора: «составь меню» — кнопка под ответом открывает нужный вид */
+var ЧАТ_МЕНЮ={day:'Открыть меню на завтра ›', week:'Открыть меню на неделю ›', buy:'Открыть список покупок ›'};
+function чатМенюОткрыть(v){
+  EATSEG=v; closeCoach(); goPage('eat');
+  if(v!=='buy' && MENU && !menuСвежее(v)) menuСобрать(v);
+  else if(v!=='buy' && !MENU){ fGet('/menu?uid='+encodeURIComponent(syncUid())).then(function(d){ MENU=(d&&d.ok)?d:{day:null,week:null}; if(!menuСвежее(v)) menuСобрать(v); else renderEat(); }).catch(function(){ MENU={day:null,week:null}; menuСобрать(v); }); }
+}
+/* ══════════ БЫТ И ЕДА ══════════
+   24.09, этап 2 плана. Его выбор — «и то, и другое»: блок в профиле, и
+   тренер заполняет его сам со слов в разговоре (сервер хранит state/byt с
+   отметкой времени, приложение забирает его, как план спорта). Из этого
+   тренер собирает меню и советует еду в рамках быта человека. */
+var БТ_COOK=[['сам','сам(а)'],['семья','кто-то в семье'],['не готовлю','почти не готовлю']];
+var БТ_WHERE=[['дом','дома'],['доставка','доставка'],['столовая','столовая'],['в гостях','в гостях']];
+var БТ_BUD=[['эконом','экономно'],['обычно','обычно'],['не важно','не важно']];
+var БТ_RULES=[['халяль','халяль'],['без свинины','без свинины'],['вегетарианство','вегетарианство']];
+function бтМн(a){ var o={}; (a||[]).forEach(function(x){ o[x]=1; }); return o; }
+function бтBody(b){
+  b=b||{};
+  var ряд=function(имя, вн){ return '<div class="pf pfcol"><span class="pfl">'+имя+'</span>'+вн+'</div>'; };
+  var q=function(t){ return esc(t).replace(/"/g,'&quot;'); };
+  var h=ряд('кто готовит', здSeg('bt-cook', БТ_COOK, b.cook||'', false));
+  h+='<label class="mlab">на сколько человек готовится<input id="bt-family" type="number" inputmode="numeric" min="1" max="10" step="1" placeholder="1" value="'+(b.family||'')+'"></label>';
+  h+='<label class="mlab">минут на готовку в день<input id="bt-min" type="number" inputmode="numeric" min="0" max="240" step="5" placeholder="30" value="'+(b.min||'')+'"></label>';
+  h+=ряд('где обычно ешь', здSeg('bt-where', БТ_WHERE, бтМн(b.where), true));
+  h+='<label class="mlab">что всегда есть дома<input id="bt-home" type="text" autocomplete="off" maxlength="300" placeholder="рис, яйца, творог, курица" value="'+q(b.home||'')+'"></label>';
+  h+=ряд('бюджет на еду', здSeg('bt-bud', БТ_BUD, b.budget||'', false));
+  h+=ряд('в еде', здSeg('bt-rules', БТ_RULES, бтМн(b.rules), true));
+  h+='<p class="invnote">Из этого тренер собирает меню и советует еду. Он заполняет это и сам — со слов в разговоре; поправить можно здесь.</p>';
+  return h;
+}
+function бтRead(){
+  if(!document.getElementById('bt-cook')) return null;
+  var один=function(id){ var x=document.querySelector('#'+id+' button[aria-pressed="true"]'); return x?x.dataset.v:''; };
+  var мн=function(id){ return Array.prototype.map.call(document.querySelectorAll('#'+id+' button[aria-pressed="true"]'), function(x){ return x.dataset.v; }); };
+  var ч=function(id,max){ var v=Math.round(+((document.getElementById(id)||{}).value||0)); return v>0?Math.min(max,v):null; };
+  var b={cook:один('bt-cook')||null, family:ч('bt-family',10), min:ч('bt-min',240), where:мн('bt-where'),
+    home:String((document.getElementById('bt-home')||{}).value||'').slice(0,300).trim()||null, budget:один('bt-bud')||null, rules:мн('bt-rules')};
+  Object.keys(b).forEach(function(k){ if(b[k]==null || (Array.isArray(b[k])&&!b[k].length)) delete b[k]; });
+  return b;
+}
+/* Если блока на экране нет, быт не трогаем: иначе профиль, сохранённый с
+   другого экрана, молча стёр бы то, что записал тренер. */
+function бтПрочесть(old){
+  var b=бтRead(); if(!b) return {byt:old.byt||null, at:old.byt_at||null};
+  var тот=JSON.stringify(b)===JSON.stringify(old.byt||{});
+  return {byt:b, at:тот?(old.byt_at||null):Date.now()};
+}
+function бтSum(b){
+  b=b||{}; var ч=[];
+  if(b.cook) ч.push('готовит '+b.cook); if(b.family>1) ч.push('на '+b.family); if(b.budget) ч.push(b.budget);
+  if((b.rules||[]).length) ч.push(b.rules.join(', ')); if(b.home) ч.push('дома: '+String(b.home).split(',')[0].trim()+'…');
+  return ч.length ? ч.join(' · ') : 'не заполнено';
+}
+function бтРендер(){
+  var box=document.getElementById('btbody'); if(!box) return;
+  var b=(myData()||{}).byt, s=document.getElementById('btsum'); if(s) s.textContent=бтSum(b);
+  if(document.activeElement && box.contains(document.activeElement)) return;
+  box.innerHTML=бтBody(b);
+}
+/* быт, записанный тренером в разговоре: забираем в профиль, если он свежее */
+function takeByt(bs){
+  if(!bs || !bs.byt) return;
+  var me=myData()||{}; if(me.byt_at && bs.at<=me.byt_at) return;
+  me.byt=Object.assign({}, me.byt||{}, bs.byt); me.byt_at=bs.at;
+  gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  бтРендер();
+}
+document.getElementById('btbox').addEventListener('click', function(e){
+  var t=e.target.closest('#bttoggle');
+  if(t){ var b=document.getElementById('btbody'), от=t.getAttribute('aria-expanded')==='true';
+    t.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light'); return; }
+  /* кнопки .seg переключает и сохраняет общий обработчик профиля (#profm) */
+});
+document.getElementById('btbox').addEventListener('change', function(e){ if(/^bt-/.test(e.target.id||'')) saveMe(); });
 /* ══════════ ЗДОРОВЬЕ ══════════
    17.09, его просьба: у сестры диабет, и советы приложения обязаны это
    учитывать. Спрашиваем не диагнозы, а то, что человек про себя знает:
@@ -4866,9 +5086,10 @@ function saveMe(){
   renderReco(); renderProfProg(); paintProfBtn(); renderNudge();
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
   var zs=document.getElementById('zdsum'); if(zs) zs.textContent=здSum(me.med);
+  var bs=document.getElementById('btsum'); if(bs) bs.textContent=бтSum(me.byt);
 }
 function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
-  здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med);
+  здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med); бтРендер();
   try{ renderProgCard(); }catch(e){}
   var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
@@ -5187,7 +5408,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 20:50';
+var BUILD = '24.09 21:17';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -11408,7 +11629,9 @@ function catСорт(сп){
 }
 function renderEat(){
   var box=document.getElementById('eatbody'); if(!box) return;
-  var h='<div id="fpod"></div>';
+  /* 24.09, этап 2: Завтра / Неделя / Покупки — меню наперёд; «Сейчас» — как было */
+  if(EATSEG!=='now'){ box.innerHTML=eatSegHTML()+menuHTML(); return; }
+  var h=eatSegHTML()+'<div id="fpod"></div>';
   /* «Своё» было неточным словом: это не «сам приготовил», а прошлые записи —
      еда оттуда вполне могла быть из доставки или заведения. Его замечание
      17.09. Поэтому и «Где поесть» у таких строк теперь есть. */
@@ -11460,6 +11683,7 @@ function renderEat(){
    слушатель на него при загрузке — это обращение к null. Слушаем вкладку
    целиком, одним обработчиком на все её кнопки. */
 document.getElementById('eatbody').addEventListener('click', function(e){
+  if(menuКлик(e)) return;
   var пр=e.target.closest('[data-podk]');
   if(пр){ PODK=пр.dataset.podk||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
   var k=e.target.closest('[data-ckuh]'); if(k){ CATKUH=k.dataset.ckuh||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
@@ -12296,9 +12520,10 @@ function chatДень(ts){
   if(день===вчера) return 'вчера';
   return d.getDate()+' '+MONTHS[d.getMonth()];
 }
-function ответТренера(текст, время, cls, src){
+function ответТренера(текст, время, cls, src, menu){
   return '<div class="turn"><div class="who"><img src="img/logo-64.png" alt="">тренер'+
-    (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+'</div>';
+    (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
+    (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+'</div>';
 }
 /* значки источников: только https-ссылки из ответа сервера */
 function источникиHTML(src){
@@ -12324,7 +12549,7 @@ function renderChat(scroll){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
       if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
-      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '', c.src);
+      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '', c.src, c.menu);
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
@@ -12336,6 +12561,9 @@ function renderChat(scroll){
   box.innerHTML=h;
   var mb=document.getElementById('chatmore');
   if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
+  box.querySelectorAll('[data-cmenu]').forEach(function(b){
+    b.addEventListener('click', function(){ haptic('light'); чатМенюОткрыть(b.getAttribute('data-cmenu')); });
+  });
   box.querySelectorAll('.srcs button').forEach(function(b){
     b.addEventListener('click', function(){ haptic('light'); вебОткрыть(b.getAttribute('data-src')); });
   });
@@ -12627,6 +12855,7 @@ function recoPull(){
     .then(function(d){
       if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); автоОбновить(); }
       if(d && d.plan) takePlan(d.plan);
+      if(d && d.byt) takeByt(d.byt);
       TODAYPLAN=(d && d.today && d.today.plan)||[]; renderPlanBox();
       if(d && d.rebuild) applyRebuild(d.rebuild);
       RBO = (d && d.rebuild_offer) || null; renderRb();
@@ -12703,7 +12932,7 @@ function coachSend(text, image){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
         {role:'user', text:(text||'')+(image?' [фото]':''), ts:сейчас},
-        {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[]}]);
+        {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null}]);
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
       if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
       renderChat(); renderHome(); haptic('ok');
@@ -12712,6 +12941,7 @@ function coachSend(text, image){
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
       if(!чатОткрыт()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
+      if(d.byt) takeByt(d.byt);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
