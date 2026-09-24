@@ -2137,6 +2137,32 @@ body.onb #picker .modalbox::before{display:none}
 .hline span{color:var(--muted);font-size:13px}
 .hline b{font-size:14px;font-weight:600;white-space:nowrap}
 .hline b em{font-style:normal;color:var(--dim);font-weight:500;margin-left:6px}
+/* 24.09: неделя зала и занятий на главной */
+.hwg{padding:14px 0 4px;border-top:1px solid var(--line-soft);cursor:pointer}
+.hwg-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.hwg-h span{color:var(--muted);font-size:13px}
+.hwg-h b{font-size:14px;font-weight:600;white-space:nowrap}
+.hwg-h b em{font-style:normal;color:var(--dim);font-weight:500;margin-left:6px}
+.hwg-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.hwg-d u{display:block;text-decoration:none;font-size:11px;color:var(--dim);margin-bottom:5px}
+.hwg-d.on u{color:var(--text);font-weight:800}
+.hwg-c{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;
+  font-style:normal;font-size:14px;font-weight:600;color:var(--dim);font-variant-numeric:tabular-nums;box-sizing:border-box}
+.hwg-d.on .hwg-c{background:var(--field);color:var(--text)}
+.hwg-c.plan{border:2px solid var(--accent);color:var(--text);background:none}
+.hwg-d.on .hwg-c.plan{background:none}
+.hwg-c.miss{border:1.5px dashed var(--line);color:var(--dim);background:none}
+.hwg-c.done,.hwg-d.on .hwg-c.done{background:var(--done);color:#0b1a12}
+.hwg-c.done:after{content:'✓';position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:50%;
+  background:var(--text);color:var(--bg,#0b0c0e);font-size:10px;line-height:15px;font-weight:800}
+.hwg-a{display:block;width:6px;height:6px;border-radius:50%;margin:5px auto 0;box-sizing:border-box;border:1.5px solid var(--accent);text-decoration:none}
+.hwg-a.on{background:var(--accent)}
+.hwg-a.none{visibility:hidden}
+.hwg-sub{margin:10px 0 0;font-size:12.5px;color:var(--dim)}
+.hwg-leg{margin:6px 0 0;font-size:11.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
+.hwg-leg .hwg-a{display:inline-block;margin:0 0 0 6px}
+.hwg-leg .hwg-a:first-child{margin-left:0}
+.hsport{margin-top:14px}
 
 /* ── «Еда» по системе ── */
 .fnav{margin:0 0 18px;justify-content:space-between}
@@ -5137,7 +5163,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 15:31';
+var BUILD = '24.09 16:38';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5838,7 +5864,7 @@ function spDel(id){
   fPost('/act/del', {uid:syncUid(), id:id}).then(function(d){
     if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e){} }
     SPTODAY=(SPTODAY||[]).filter(function(a){ return a.id!==id; });
-    spToday(); haptic('light');
+    spToday(); homeActsPull(true); haptic('light');
   }).catch(function(){ SPTODAY=null; spLoadToday(); });
 }
 function spLoadToday(){
@@ -5910,7 +5936,7 @@ document.getElementById('sp-save').addEventListener('click', function(){
       spBusy=false; b.disabled=false; b.textContent='Записать';
       if(d && d.act) spRemember(d.act.kind);
       if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e2){} }
-      SPTODAY=null; spLoadToday();
+      SPTODAY=null; spLoadToday(); homeActsPull(true);
       closeSport(); haptic('ok');
     })
     .catch(function(err){
@@ -9762,20 +9788,23 @@ function homeWeight(){
   if(!стар && ms.length>1) стар=ms[ms.length-1];
   return {w:+last.w, d:(стар && стар.date!==last.date) ? (+last.w - +стар.w) : null};
 }
+/* 24.09, его слова: «непонятно написано, что я 2-й из 4 22 дня подряд — это
+   же не так». Это два разных факта в одной строке: место — СЕГОДНЯ, а серия —
+   дни подряд с записью еды (streakOf: закрытые дни). Разводим по строкам и
+   подписываем каждую (его выбор из двух вариантов). */
 function homeRating(){
-  var b=(CIRC&&CIRC.board)||[], me=(CIRC&&CIRC.me)||{}, streak=+me.streak||0, val, sub='';
+  var b=(CIRC&&CIRC.board)||[], me=(CIRC&&CIRC.me)||{}, streak=+me.streak||0, h='';
   if(b.length>1){
     var гл=function(r){ return (r.today && r.today.r!=null) ? r.today.r : -1; };
     var вт=function(r){ return r.ravg==null ? -1 : r.ravg; };
     var сп=b.slice().sort(function(x,y){ return (гл(y)-гл(x)) || (вт(y)-вт(x)); });
     var i=0; сп.forEach(function(r,j){ if(r.me) i=j+1; });
-    val = i ? i+'-й из '+b.length : '—';
-    if(streak) sub='🔥 '+streakText(streak);
-  } else {
-    val = streak ? streak+' '+plural(streak,['день','дня','дней'])+' подряд' : '—';
-    if(!streak) sub='записывай еду каждый день';
+    h+='<button type="button" class="hline" data-hgo="circle"><span>Рейтинг</span><b>'+(i ? i+'-й из '+b.length : '—')+'<em>сегодня</em></b></button>';
   }
-  return '<button type="button" class="hline" data-hgo="circle"><span>Рейтинг</span><b>'+esc(val)+(sub?'<em>'+esc(sub)+'</em>':'')+'</b></button>';
+  h+='<button type="button" class="hline" data-hgo="circle"><span>Серия</span><b>'+
+    (streak ? '🔥 '+streak+' '+plural(streak,['день','дня','дней'])+'<em>подряд с записью еды</em>'
+            : '—<em>записывай еду каждый день</em>')+'</b></button>';
+  return h;
 }
 /* ══ тело за три недели: вес, жир и мышцы ══
    Его просьба 11.09: «блок весы заменить на линейный график и сюда ещё
@@ -9870,18 +9899,82 @@ function homeBody(){
     '<p class="hbnote">жир и белок — оценки весов, зависят от условий замера</p></button>'+
     '<button type="button" class="srgo" data-srez>Срез: сколько из этого — жир →</button>';
 }
-function homeNext(){
-  var lw=lastWorkout(), закрыт=!!(lw && lw.date===TODAY);
-  var wd=(new Date().getDay()+1)%7;
-  var залЗавтра = hasSched() ? (wd in GYM_DAYS) : true;
-  var val, sub='';
-  if(залЗавтра){
-    var dk = закрыт ? nextAfter(lw.day) : homeDayKey(), d=DAYS[dk];
-    val='Зал'; if(d) sub=d.sub.toLowerCase();
-  } else val='Отдых';
-  var сп=homePlanOn(wd);
-  if(сп.length) sub = (sub?sub+' · ':'')+сп.join(', ');
-  return '<div class="hline"><span>Завтра</span><b>'+esc(val)+(sub?'<em>'+esc(sub)+'</em>':'')+'</b></div>';
+/* ── НЕДЕЛЯ ЗАЛА И ЗАНЯТИЙ ВМЕСТО «ЗАВТРА» ──
+   24.09, его просьба: «вместо текста „завтра в зал“ показать красивую линию
+   недели с датами: галочки за завершённые тренировки, без галочек — те, что
+   ещё не сделаны». Выбрал кружки с датами (из двух снимков) и занятия вне
+   зала на той же неделе. Кружок — день недели с датой: зелёный с галочкой —
+   тренировка записана; обведён — зал по расписанию впереди; пунктиром —
+   день зала прошёл без тренировки. Точка под датой — занятие вне зала:
+   закрашена — было, пустая — по плану. Подпись — следующая тренировка. */
+var HWACTS=null, HWACTSKEY='';
+function homeMonday(){
+  var nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7;
+  return ymd(new Date(nd.getTime()-dow*864e5));
+}
+function homeActsPull(force){
+  var key=homeMonday()+'|'+TODAY;
+  if(!force && HWACTSKEY===key) return;
+  HWACTSKEY=key;
+  fGet('/acts?uid='+encodeURIComponent(syncUid())+'&from='+homeMonday()+'&date='+TODAY).then(function(d){
+    if(d && d.ok){ HWACTS=d.acts||[]; renderHome(); }
+  }).catch(function(){ HWACTSKEY=''; });
+}
+function homeWeekGym(){
+  var еда=foodOnly(), sched=!еда && hasSched();
+  var nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, дни=[];
+  for(var i=0;i<7;i++){ var dt=new Date(nd.getTime()+(i-dow)*864e5); дни.push({iso:ymd(dt), wd:dt.getDay(), n:dt.getDate()}); }
+  var пн=дни[0].iso, вс=дни[6].iso;
+  homeActsPull();
+  var сделан={}, занят={};
+  if(!еда){
+    (HIST||[]).forEach(function(w){ if(w && w.date>=пн && w.date<=вс) сделан[w.date]=1; });
+    if(lastDone && lastDone.date>=пн && lastDone.date<=вс) сделан[lastDone.date]=1;
+  }
+  (HWACTS||[]).forEach(function(a){ if(a && a.date>=пн && a.date<=вс) занят[a.date]=1; });
+  var план=0, было=0, занятий=0, точки=false;
+  var ряд=дни.map(function(д){
+    var залПлан = sched && (д.wd in GYM_DAYS), готов = !!сделан[д.iso];
+    if(залПлан) план++; if(готов) было++;
+    var cls = готов ? 'done' : (залПлан ? (д.iso<TODAY ? 'miss' : 'plan') : '');
+    var спортБыл=!!занят[д.iso], спортПлан=homePlanOn(д.wd).length>0 && д.iso>=TODAY;
+    if(спортБыл) занятий++;
+    if(спортБыл||спортПлан) точки=true;
+    return '<div class="hwg-d'+(д.iso===TODAY?' on':'')+'" data-wgday="'+д.iso+'"><u>'+WD[д.wd]+'</u>'+
+      '<i class="hwg-c'+(cls?' '+cls:'')+'">'+д.n+'</i>'+
+      '<s class="hwg-a'+(спортБыл?' on':(спортПлан?'':' none'))+'"></s></div>';
+  }).join('');
+  if(еда && !точки) return '';
+  var итог;
+  if(еда) итог = занятий+'<em>'+plural(занятий,['занятие','занятия','занятий'])+'</em>';
+  else if(sched) итог = было+' из '+Math.max(план,было)+'<em>'+plural(Math.max(план,было),['тренировки','тренировок','тренировок'])+'</em>';
+  else итог = было+'<em>'+plural(было,['тренировка','тренировки','тренировок'])+' на неделе</em>';
+  var след='';
+  if(!еда){
+    var lw=lastWorkout(), закрыт=!!(lw && lw.date===TODAY);
+    var dk = закрыт ? nextAfter(lw.day) : homeDayKey(), dd=DAYS[dk], имя = dd && dd.sub ? dd.sub.toLowerCase() : '';
+    if(sched){
+      for(var k=(закрыт?1:0); k<14; k++){
+        var x=new Date(nd.getTime()+k*864e5);
+        if(!(x.getDay() in GYM_DAYS)) continue;
+        var сп=homePlanOn(x.getDay());
+        след = (k===0 ? 'Сегодня' : 'Следующая — '+(k===1 ? 'завтра' : WD[x.getDay()]+' '+x.getDate())) +
+               (имя ? ': '+имя : '') + (сп.length ? ' · '+сп.join(', ') : '');
+        break;
+      }
+    } else if(имя) след = 'Следующая: '+имя;
+  }
+  return '<div class="hwg"'+(еда?'':' data-hgo="gym"')+'>'+
+    '<div class="hwg-h"><span>'+(еда?'Занятия на неделе':'Зал на неделе')+'</span><b>'+итог+'</b></div>'+
+    '<div class="hwg-row">'+ряд+'</div>'+
+    (след ? '<p class="hwg-sub">'+esc(след)+'</p>' : '')+
+    (точки ? '<p class="hwg-leg"><s class="hwg-a on"></s>занятие было<s class="hwg-a"></s>по плану</p>' : '')+
+    '</div>';
+}
+/* 24.09, его просьба: кнопка занятия — внизу главной, у всех. С «Еды» она
+   ушла; лист тот же (sportadd → openSport). */
+function homeSport(){
+  return '<button type="button" class="btn wide sportbtn sportadd hsport" id="addsport3">+ Занятие вне зала</button>';
 }
 /* перерисовываем одну панель, а не весь экран: дорожки не должны заново
    ехать из нуля каждый раз, когда сменилось состояние записи */
@@ -9907,7 +10000,7 @@ function renderHome(){
     homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
-    (foodOnly()?'':homeAct())+homeRating()+(foodOnly()?'':homeNext());
+    (foodOnly()?'':homeAct())+homeRating()+homeWeekGym()+homeSport();
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
@@ -12499,7 +12592,8 @@ function fabFit(){
          вообще. Уступаем ей так же, как закреплённой мебели. Спискам не
          уступаем намеренно: строк много, кнопка прыгала бы при каждом
          касании экрана. */
-      if(п==='fixed' || п==='sticky' || el.classList.contains('fask')){
+      /* 24.09: и кнопке занятия внизу главной — кнопка чата садилась ей на край */
+      if(п==='fixed' || п==='sticky' || el.classList.contains('fask') || el.classList.contains('hsport')){
         var b=el.getBoundingClientRect();
         /* только то, что закреплено ВНИЗУ: шапка сверху кнопке не мешает */
         if(b.top>верх-200 && b.top<низ) подъём=Math.max(подъём, Math.ceil(низ-b.top+10));
