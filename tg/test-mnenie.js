@@ -97,6 +97,8 @@ async function раскрыть(page, i) {
   await page.waitForTimeout(500);
   дано(await page.evaluate(() => document.body.classList.contains('ordmode')),
     'долгое удержание включило режим порядка');
+  дано(await page.evaluate(() => !document.getElementById('addsport')),
+    'в режиме порядка «+ Занятие вне зала» под «Завершить» не мешает');
   /* 16.09, его слова: «режим полностью меняет, как выглядит экран». Теперь не
      меняет: те же строки с фото и весами, только каждая группа в рамке. */
   const ИМГРУПП = p => p.$$eval('#list .ordg', gs => gs.map(g =>
@@ -145,6 +147,8 @@ async function раскрыть(page, i) {
 
   await page.click('#orddone'); await page.waitForTimeout(700);
   дано(!(await page.evaluate(() => document.body.classList.contains('ordmode'))), 'режим выключается «Готово»');
+  дано(await page.evaluate(() => !!(document.getElementById('addsport') || {}).offsetParent),
+    'после «Готово» кнопка занятия вернулась');
   const всписке = await ИМЕНА(page);
   дано(всписке[0] === финал[0].split(' + ')[0], 'и порядок применился к дню: ' + всписке[0]);
 

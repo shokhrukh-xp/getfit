@@ -659,6 +659,10 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .dayedit{margin:18px 0 4px}
 /* занятие вне зала — не зал, и цвет другой намеренно */
 .dayedit .sportbtn{margin-top:9px;color:var(--done-txt)}
+.sportlow{margin-top:12px}
+.sportlow:empty{display:none}
+/* цвет — как был в конце дня (синий, как «+ Добавить упражнение»): просьба была только о месте */
+.sportlow .sportbtn{color:var(--accent-txt);border-color:var(--line)}
 .sptoday{margin:9px 2px 0;font-size:11.5px;color:var(--dim);line-height:1.5}
 .actcard{border-color:rgba(var(--done-rgb),.35)}
 .acthead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -2361,6 +2365,10 @@ body.onb #picker .modalbox::before{display:none}
         <div class="btnrow one">
           <button class="btn" id="finish">Завершить и сохранить</button>
         </div>
+        <!-- 24.09, его просьба: «+ Занятие вне зала» — под «Завершить и
+             сохранить», чтобы не путать с «+ Добавить упражнение».
+             Наполняет renderList (в режиме порядка — пусто). -->
+        <div class="sportlow" id="sportlow"></div>
         <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button></p>
       </div>
       </section>
@@ -5170,7 +5178,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 18:00';
+var BUILD = '24.09 18:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -6086,7 +6094,9 @@ function ordБросить(e){
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
-  if(ORDMODE){ box.innerHTML = ordСписок(); return; }
+  if(ORDMODE){ box.innerHTML = ordСписок();
+    var sl0=document.getElementById('sportlow'); if(sl0) sl0.innerHTML='';
+    return; }
   var список = exList(day);
   /* Суперсет — это один снаряд времени, а не два упражнения подряд. Раньше
      пара жила в двух отдельных карточках с текстовой пометкой: было непонятно,
@@ -6106,16 +6116,19 @@ function renderList(){
   h+='<div id="sporttoday"></div>'+
      '<div class="dayedit">'+
      '<button type="button" class="btn wide" id="addex">+ Добавить упражнение</button>'+
-     /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить». Искал
-        он здесь, в конце дня зала — сюда кнопку и ставим. */
-     '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
-     '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>'+
      (пр.skip||пр.add||пр.pair ? '<p class="dayeditn">В этом дне '+
         [пр.add?'добавлено '+пр.add:'', пр.skip?'убрано '+пр.skip:'', пр.pair?'своих суперсетов '+пр.pair:'']
           .filter(Boolean).join(' · ')+
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+
      '</div>';
   box.innerHTML=h;
+  /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить» — искал
+     в конце дня зала. 24.09 он же: рядом с «+ Добавить упражнение» путается,
+     поэтому — под «Завершить и сохранить». */
+  var sl=document.getElementById('sportlow');
+  if(sl) sl.innerHTML=
+     '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
+     '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>';
   /* дорожка в шапке считает закрытые подходы — она меняется вместе со списком */
   var hh=document.getElementById('nexthint');
   if(hh && typeof suggestedDay==='function'){

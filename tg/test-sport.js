@@ -37,10 +37,20 @@ const лист = page => page.evaluate(() => ({
   /* ── кнопка там, где он её искал ── */
   const кн = await page.$('#addsport');
   дано(!!кн, 'кнопка «Занятие вне зала» стоит в конце дня на «Тренировке»');
-  const рядом = await page.$eval('.dayedit', e => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
-  дано(/Добавить упражнение/.test(рядом) && /Занятие вне зала/.test(рядом),
-    'рядом с «Добавить упражнение»: ' + рядом.slice(0, 80));
-  дано(/поднимает норму еды/.test(рядом), 'и подписано, куда занятие идёт');
+  /* 24.09, его просьба: не рядом с «+ Добавить упражнение» (путается),
+     а под «Завершить и сохранить», над «Очистить день» */
+  const место = await page.evaluate(() => {
+    const b = document.getElementById('addsport'), f = document.getElementById('finish'),
+          r = document.getElementById('reset'), d = document.querySelector('.dayedit');
+    const после = (x, y) => !!(x && y && (x.compareDocumentPosition(y) & 4));
+    return { вДне: !!(d && d.contains(b)), подЗавершить: после(f, b), надОчистить: после(b, r),
+      ниже: b && f ? Math.round(b.getBoundingClientRect().top - f.getBoundingClientRect().bottom) : null,
+      подпись: (document.getElementById('sportlow') || {}).textContent || '' };
+  });
+  дано(!место.вДне, 'не в блоке «+ Добавить упражнение»');
+  дано(место.подЗавершить && место.надОчистить && место.ниже >= 0,
+    'под «Завершить и сохранить» и над «Очистить день»: ' + JSON.stringify(место).slice(0, 120));
+  дано(/поднимает норму еды/.test(место.подпись), 'и подписано, куда занятие идёт');
   дано(await page.$('#sporttoday .actcard') === null, 'пока занятий нет — пусто, без лишней карточки');
 
   await кн.scrollIntoViewIfNeeded();
