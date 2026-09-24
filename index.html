@@ -5164,7 +5164,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 16:54';
+var BUILD = '24.09 17:14';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5864,6 +5864,7 @@ function spDel(id){
   if(!id) return;
   fPost('/act/del', {uid:syncUid(), id:id}).then(function(d){
     if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e){} }
+    освежить(d && d.day);
     SPTODAY=(SPTODAY||[]).filter(function(a){ return a.id!==id; });
     spToday(); homeActsPull(true); haptic('light');
   }).catch(function(){ SPTODAY=null; spLoadToday(); });
@@ -5937,6 +5938,7 @@ document.getElementById('sp-save').addEventListener('click', function(){
       spBusy=false; b.disabled=false; b.textContent='Записать';
       if(d && d.act) spRemember(d.act.kind);
       if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e2){} }
+      освежить(d && d.day);
       SPTODAY=null; spLoadToday(); homeActsPull(true);
       closeSport(); haptic('ok');
     })
@@ -10474,6 +10476,38 @@ function приёмHtml(p){
   return '<small class="fms"><b class="'+(!w?'fms-ok':(перебор(w)?'fms-bad':''))+'">'+fmtR(p.r)+'</b>'+
          (w ? (w.совет?' · '+esc(w.совет):'') : ' · всё в норме')+'</small>';
 }
+/* ── ОДНА ЗАПИСЬ — ВСЕ ЭКРАНЫ ──
+   24.09, его слова: «когда я что-то обновляю внутри приложения, изменения не
+   отображаются сразу — приходится закрыть и открыть приложение». День живёт
+   в двух местах (HOME.day на главной, FOOD.day на «Еде»), оценка дня — тоже
+   в двух (HOME.sc и DAYSC), плюс неделя и рейтинг. Правка приёма обновляла
+   только FOOD.day: балл под записью, главная, неделя и рейтинг оставались
+   прежними до перезапуска. Теперь любая запись (приём, занятие, план, вес,
+   ответ тренера) зовёт освежить(): день из ответа кладём сразу в оба места,
+   остальное перечитываем одним залпом. */
+var ОСВЕЖ=0;
+function освежить(day){
+  if(day && day.date){
+    if(day.date===TODAY){ HOME.day=day; homeSave(); }
+    if(day.date===fDate()) FOOD.day=day;
+  }
+  try{ renderFoodDay(); }catch(e){}
+  homeDirty();
+  clearTimeout(ОСВЕЖ);
+  ОСВЕЖ=setTimeout(function(){
+    var u=encodeURIComponent(syncUid()), есть=day && day.date;
+    if(!есть || day.date!==TODAY)
+      fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; homeSave();
+        if(fDate()===TODAY){ FOOD.day=d.day; renderFoodDay(); } homeDirty(); } }).catch(function(){});
+    if(fDate()!==TODAY && (!есть || day.date!==fDate()))
+      fGet('/day?uid='+u+'&date='+fDate()).then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
+    fGet('/day/score?uid='+u+'&date='+TODAY).then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; homeSave();
+      if(fDate()===TODAY){ DAYSC=x; renderFoodDay(); } homeDirty(); } }).catch(function(){});
+    if(fDate()!==TODAY) loadDayScore();
+    fGet('/week?uid='+u).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); homeDirty(); } }).catch(function(){});
+    circlePull().then(function(){ homeDirty(); });
+  }, 250);
+}
 function loadDayScore(){
   var date=fDate();
   fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+date).then(function(d){
@@ -11621,12 +11655,12 @@ function renderPlanBox(){
 function planDo(k, min, int, date){
   return fPost('/act/add', {uid:syncUid(), date:date||TODAY, kind:k, min:min, intensity:int||'mod', note:'по плану'})
     .then(function(d){ if(d&&d.day){ FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[]; renderFoodDay(); renderPlanBox(); }
-      haptic('ok'); }).catch(function(err){ fReply(humanErr(err),'bad'); });
+      haptic('ok'); освежить(d && d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); });
 }
 function planOff(k, date){
   return fPost('/act/off', {uid:syncUid(), date:date||TODAY, kind:k})
     .then(function(d){ if(d&&d.day){ FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[]; renderFoodDay(); renderPlanBox(); }
-      haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); });
+      haptic('light'); освежить(d && d.day); }).catch(function(err){ fReply(humanErr(err),'bad'); });
 }
 document.getElementById('planbox').addEventListener('click', function(e){
   var b=e.target.closest('button[data-plan]'); if(!b) return;
@@ -12005,20 +12039,19 @@ function mealSave(){
   fPost('/meal/upd', body).then(function(d){
     /* запись могла уехать в другой день — открываем тот, куда она легла */
     if(body.date!==fDate()){ FOOD.date = body.date===TODAY ? null : body.date; renderFoodNav(); }
-    FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('ok');
-    fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); } }).catch(function(){});
+    FOOD.day=d.day; closeMeal(); haptic('ok'); освежить(d.day);
   }).catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); })
     .then(function(){ btn.disabled=false; });
 }
 document.getElementById('fmeals').addEventListener('click', function(e){
   var b=e.target.closest('[data-fdel]');
-  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
   var pd=e.target.closest('[data-pdo]');
   if(pd){ planDo(pd.dataset.pdo, +pd.dataset.m, pd.dataset.i, fDate()); return; }
   var po=e.target.closest('[data-poff]');
   if(po){ planOff(po.dataset.poff, fDate()); return; }
   var ab=e.target.closest('[data-adel]');
-  if(ab){ fPost('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; renderFoodDay(); haptic('light'); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  if(ab){ fPost('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
   if(e.target.closest('.fact')) return;
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
@@ -12027,14 +12060,14 @@ document.getElementById('fmeals').addEventListener('click', function(e){
 document.getElementById('mv-edit').addEventListener('click', function(){ if(MEAL) openMeal(MEAL); haptic('light'); });
 document.getElementById('mv-del').addEventListener('click', function(){
   if(!MEAL||!MEAL.id) return;
-  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('light'); })
+  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; closeMeal(); haptic('light'); освежить(d.day); })
     .catch(function(err){ closeMeal(); fReply(humanErr(err),'bad'); });
 });
 document.getElementById('mealclose').addEventListener('click', closeMeal);
 document.getElementById('ml-save').addEventListener('click', mealSave);
 document.getElementById('ml-del').addEventListener('click', function(){
   if(!MEAL||!MEAL.id) return;
-  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('light'); })
+  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; closeMeal(); haptic('light'); освежить(d.day); })
     .catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); });
 });
 document.getElementById('ml-items').addEventListener('input', function(e){
@@ -12067,7 +12100,7 @@ document.getElementById('fmfile').addEventListener('change', function(e){
 document.getElementById('fmsave').addEventListener('click', function(){
   var w=дробь(document.getElementById('fw').value)||0, f=дробь(document.getElementById('ffat').value)||0, ws=дробь(document.getElementById('fwaist').value)||0;
   if(!(w>20)) return;
-  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderMeas(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
+  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderMeas(); освежить(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
     fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
     .catch(function(err){ fReply(humanErr(err),'bad'); });
 });
@@ -12564,8 +12597,8 @@ function coachSend(text, image){
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
       if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
       renderChat(); renderHome(); haptic('ok');
-      fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+TODAY)
-        .then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; if(!FOOD.date) DAYSC=x; renderHome(); } }).catch(function(){});
+      /* оценка, неделя, рейтинг и занятия — всем экранам сразу */
+      освежить(d.day); if(d.acts && d.acts.length) homeActsPull(true);
       /* окно могли закрыть, не дождавшись: точка на кнопке — что ответ пришёл */
       if(!чатОткрыт()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
