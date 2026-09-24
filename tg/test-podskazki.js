@@ -40,6 +40,7 @@ const БОЛЬШАЯ = () => {
   const все = await page.$('.card.exact .allb');
   if (все) { await все.click(); await page.waitForTimeout(700); }
   await page.click('#finish');
+  await M.ответитьДлительность(page, 45);   /* занятие на стенде — секунды */
   await page.waitForTimeout(2400);
 
   const после = await page.evaluate(k => JSON.parse(localStorage.getItem(k) || '{}'), КЛЮЧ);

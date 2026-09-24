@@ -42,6 +42,8 @@ const ЗАПИСЬ = () => {
   await page.click('.card.exact .allb');
   await page.waitForTimeout(900);
   await page.click('#finish');
+  /* занятие на стенде длится секунды — приложение спросит минуты (test-minuty) */
+  дано(await M.ответитьДлительность(page, 45), 'на слишком короткое занятие спрошены минуты');
   await page.waitForTimeout(2200);
 
   const записи = await page.evaluate(ЗАПИСЬ);

@@ -11,7 +11,9 @@
 process.env.TZ = 'Asia/Tashkent';
 const Д = n => new Date(Date.now() - n * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tashkent' });
 const TODAY = Д(0);
-const БАЗА = 'http://127.0.0.1:8899/';
+/* Порт стенда: быстрый прогон (tg/run-fast.js) поднимает сайт сам, на
+   свободном порту, и передаёт его сюда. Без него — старые 8899 от srv.sh. */
+const БАЗА = 'http://127.0.0.1:' + (process.env.GF_PORT || 8899) + '/';
 
 /* ── данные «обжитого» дня: он смотрит на реальные экраны, а не на пустые ── */
 function день(o) {
@@ -557,8 +559,49 @@ async function поднять(page, o) {
   if (o.page && o.page !== 'home' && !/[?&]p=/.test(адрес))
     адрес += (адрес.indexOf('?') >= 0 ? '&' : '?') + 'p=' + o.page;
   await page.goto(адрес, { waitUntil: 'domcontentloaded' });   /* o.base — эскиз на другом порту */
-  await page.waitForTimeout(o.wait || 1400);
+  await успокоиться(page, o.wait || 1400);
   return ошибки;
 }
 
-module.exports = { Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };
+/* Ждём не вслепую, а пока приложение успокоится (24.09, его вопрос «как
+   ускорить?»). Раньше после загрузки стояла пауза 1,4–2,8 с. Замер по всем
+   115 загрузкам показал: последняя правка страницы случается не позже
+   0,4 с после старта, дальше до конца паузы не меняется ничего. Поэтому
+   ждём 600 мс тишины — ни одной правки DOM и ни одной конечной анимации, —
+   но не дольше прежней паузы. GF_SLOW=1 возвращает старые паузы, если
+   какой-то набор вдруг начнёт вести себя иначе. */
+async function успокоиться(page, потолок) {
+  if (process.env.GF_SLOW) return page.waitForTimeout(потолок);
+  const t0 = Date.now();
+  const дождались = await page.evaluate(потолок => new Promise(res => {
+    const s = performance.now(); let last = s;
+    const mo = new MutationObserver(() => { last = performance.now(); });
+    mo.observe(document, { subtree: true, childList: true, attributes: true, characterData: true });
+    (function tick() {
+      const now = performance.now();
+      const идёт = document.getAnimations().some(a => a.playState === 'running' && isFinite(a.effect.getComputedTiming().endTime));
+      if ((now - last > 600 && !идёт) || now - s > потолок) { mo.disconnect(); return res(true); }
+      setTimeout(tick, 50);
+    })();
+  }), потолок).catch(() => false);
+  /* страница перезагрузилась посреди ожидания (замер оборвался) — досидим по-старому */
+  const осталось = потолок - (Date.now() - t0);
+  if (!дождались && осталось > 0) await page.waitForTimeout(осталось);
+}
+
+/* С 15.09 «Завершить» после слишком короткого занятия (меньше двух минут на
+   подход) сначала спрашивает, сколько оно шло, — это проверяет test-minuty.
+   На стенде занятие длится секунды, и лист открывается всегда. Проверки,
+   которые смотрят не на лист, а на саму запись, отвечают на него, как ответил
+   бы человек: выбирают минуты и жмут «Записать». Без этого запись не уходила
+   вовсе, и test-zapis с test-podskazki падали, хотя приложение было исправно. */
+async function ответитьДлительность(page, мин) {
+  await page.waitForTimeout(300);
+  const есть = await page.$eval('#durm', m => m.classList.contains('show')).catch(() => false);
+  if (!есть) return false;
+  await page.click('#durm [data-dm="' + (мин || 45) + '"]');
+  await page.click('#dur-save');
+  return true;
+}
+
+module.exports = { ответитьДлительность, Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };
