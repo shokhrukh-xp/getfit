@@ -2167,6 +2167,14 @@ body.onb #picker .modalbox::before{display:none}
 .fweek .fd .fb{border-radius:4px;opacity:1;max-width:30px}
 .fweek .fd u,.fweek .fd i{font-size:11px}
 .fweekt{font-size:13px}
+/* 24.09: у столбика — полоса коридора его нормы ±10 % */
+.fweek{height:auto}
+.fweek .fd{height:auto}
+.fweek .fbw{position:relative;width:100%;height:146px;display:flex;justify-content:center;align-items:flex-end}
+.fweek .fbw .fb{position:relative;z-index:1}
+.fweek .fbw i{position:absolute;left:0;right:0;text-align:center;z-index:2}
+.fweek .fbw .nb{position:absolute;left:0;right:0;background:var(--text);opacity:.2;border-radius:3px;z-index:0;
+  border-top:1px dashed var(--text);border-bottom:1px dashed var(--text);text-decoration:none}
 .fmeasq{align-items:flex-end;gap:8px}
 .fld{flex:1 1 0;min-width:0;display:grid;gap:5px}
 .fld span{font-size:12px;color:var(--dim);font-weight:500;padding-left:2px}
@@ -5112,7 +5120,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 14:40';
+var BUILD = '24.09 14:53';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -11621,15 +11629,28 @@ function renderFoodWeek(){
      вес. Сервер отдаёт её в d.tg — сохранённую вместе с днём. Раньше все семь
      столбиков мерились сегодняшней нормой, и цвет прошлого дня мог врать. */
   var норма=function(d){ return (d.tg && d.tg.kcal) ? d.tg : tg; };
-  var mx=Math.max(tg.kcal||0, Math.max.apply(null, w.days.map(function(d){ return Math.max(d.kcal, (норма(d).kcal)||0); })), 1);
+  /* 24.09, его выбор из трёх снимков: у каждого дня — полоса коридора его
+     нормы ±10 %, то самое правило, по которому столбик зелёный или
+     красный. Раньше нормы на графике не было вовсе, и сравнить день с его
+     нормой было не с чем. Высота 128 px: при прежних 76 коридор в 20 %
+     нормы занимал ~7 px и не читался. */
+  var H=128;
+  var mx=Math.max((tg.kcal||0)*1.1, Math.max.apply(null, w.days.map(function(d){ return Math.max(d.kcal, ((норма(d).kcal)||0)*1.1); })), 1);
+  var px=function(v){ return Math.round(v/mx*H); };
+  var естьНорма=false;
   box.innerHTML = w.days.map(function(d){
     /* цвет — по тому же коридору, что и оценка дня: в ±10 % от нормы зелёный,
        мимо — красный. Раньше красили «ниже пола», и день на 10 из 10 выходил
        красным, а перебор на 40 % — зелёным (его вопрос 11.09).
        Сегодня ещё идёт: недобор не красим, перебор — уже факт. */
     var t=норма(d), откл = t.kcal ? (d.kcal-t.kcal)/t.kcal : 0;
-    var h=Math.round(d.kcal/mx*76), cls = !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
-    return '<div class="fd"><i>'+(d.n?d.kcal:'')+'</i><div class="fb '+cls+'" style="height:'+(d.n?Math.max(3,h):3)+'px"></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
+    var h=d.n?Math.max(3,px(d.kcal)):3, cls = !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
+    var низ=t.kcal?px(t.kcal*0.9):0, верх=t.kcal?px(t.kcal*1.1):0;
+    if(t.kcal) естьНорма=true;
+    return '<div class="fd"><div class="fbw">'+
+      (t.kcal?'<s class="nb" data-norm="'+t.kcal+'" style="bottom:'+низ+'px;height:'+(верх-низ)+'px"></s>':'')+
+      '<i style="bottom:'+(Math.max(h,верх)+4)+'px">'+(d.n?d.kcal:'')+'</i>'+
+      '<div class="fb '+cls+'" style="height:'+h+'px"></div></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
   /* одна строка: среднее против нормы и сколько дней попали в коридор */
   var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
@@ -11638,9 +11659,9 @@ function renderFoodWeek(){
   var ср=function(f){ return logged.length ? Math.round(logged.reduce(function(a,d){ return a+(f(норма(d))||0); },0)/logged.length) : 0; };
   var нк=ср(function(t){ return t.kcal; }), нб=ср(function(t){ return t.prot; });
   var разные=logged.some(function(d){ return норма(d).kcal!==норма(logged[0]).kcal; });
-  t.textContent = logged.length
+  t.textContent = (естьНорма ? 'Полоса — коридор нормы дня ±10 %. ' : '') + (logged.length
     ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(нк?(разные?' при средней норме ':' при норме ')+нк+' / '+нб:'')+(нк?' · в норме '+вНорме+' '+plural(вНорме,['день','дня','дней'])+' из '+logged.length:'')
-    : 'За неделю записей нет.';
+    : 'За неделю записей нет.');
 }
 /* вес и % жира двумя линиями, каждая в своём масштабе; ИМТ — линейная функция
    веса, отдельной линией он бы лёг ровно на вес, поэтому пишем его подписью
