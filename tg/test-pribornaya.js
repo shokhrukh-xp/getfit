@@ -72,6 +72,16 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   дано(люди.some(t => /Пётр Смирнов/.test(t) && /платит/.test(t)), 'в списке видно, кто платит');
   дано(люди.some(t => /Andrew Nee/.test(t) && /не платит/.test(t)), 'и кто нет');
   дано(люди.some(t => /по ссылке/.test(t)), 'и откуда человек пришёл');
+  /* 24.09, его выбор Б: когда заходил — отдельной строкой, неделя и дольше — красным */
+  const заход = await page.$$eval('.adrow', rs => rs.filter(r => r.querySelector('.adseen')).map(r => ({
+    кто: r.querySelector('.adn b').textContent, т: r.querySelector('.adseen').textContent,
+    красн: r.querySelector('.adseen').classList.contains('old'),
+    отдельно: r.querySelector('.adseen').previousElementSibling && r.querySelector('.adseen').previousElementSibling.tagName === 'I' })));
+  const з = кто => заход.find(x => x.кто === кто) || {};
+  дано(заход.length === 3 && заход.every(x => x.отдельно), 'строка «заходил» у каждого, отдельной строкой: ' + заход.length);
+  дано(/^заходил (сегодня|вчера) в \d\d:\d\d$/.test(з('Пётр Смирнов').т) && !з('Пётр Смирнов').красн, 'недавний — со временем: ' + з('Пётр Смирнов').т);
+  дано(з('Своя').т === 'заходил 3 дня назад' && !з('Своя').красн, 'несколько дней назад: ' + з('Своя').т);
+  дано(з('Andrew Nee').т === 'не заходил 12 дней' && з('Andrew Nee').красн, 'неделя и дольше — красным: ' + з('Andrew Nee').т);
 
   /* промокоды заводятся отсюда же */
   дано(!!(await page.$('#adm-code')) && !!(await page.$('#adm-add')), 'промокод заводится здесь же');

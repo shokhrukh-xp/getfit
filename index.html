@@ -1538,6 +1538,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adrow .adn{flex:1;min-width:0}
 .adrow .adn b{display:block;font-size:13.5px;font-weight:500}
 .adrow .adn i{display:block;font-style:normal;color:var(--dim);font-size:11px;margin-top:2px}
+.adrow .adn i.adseen{margin-top:3px;color:var(--muted)}
+.adrow .adn i.adseen.old{color:var(--warn-txt)}
 .adpill{font-size:10.5px;padding:4px 8px;border-radius:99px;white-space:nowrap}
 .adpill.pay{background:rgba(var(--done-rgb),.14);color:var(--done-txt)}
 .adpill.free{background:var(--accent-ghost);color:var(--accent-txt)}
@@ -5178,7 +5180,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 18:30';
+var BUILD = '24.09 19:00';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10889,13 +10891,28 @@ function admПолоски(a){
   var max=Math.max.apply(null, a.concat([1]));
   return a.map(function(v,i){ return '<i class="'+(i===a.length-1?'hi':'')+'" style="height:'+Math.max(2, Math.round(v/max*100))+'%"></i>'; }).join('');
 }
+/* 24.09, его просьба и выбор (Б): когда человек заходил в последний раз —
+   отдельной строкой; неделя и дольше — красным. Заход — приложение или бот,
+   что позже (сервер, admСписок). Время — по часам этого телефона. */
+function admБыл(ms){
+  var д2=function(n){ return (n<10?'0':'')+n; };
+  if(!ms) return '<i class="adseen old">не заходил ни разу</i>';
+  var d=new Date(+ms), с=new Date();
+  var дн=Math.round((new Date(с.getFullYear(),с.getMonth(),с.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
+  var чм=д2(d.getHours())+':'+д2(d.getMinutes());
+  if(дн<=0) return '<i class="adseen">заходил сегодня в '+чм+'</i>';
+  if(дн===1) return '<i class="adseen">заходил вчера в '+чм+'</i>';
+  var сл=дн+' '+plural(дн,['день','дня','дней']);
+  if(дн<7) return '<i class="adseen">заходил '+сл+' назад</i>';
+  return '<i class="adseen old">не заходил '+сл+'</i>';
+}
 function admЧеловек(x){
   var вечный=x.kind==='grand', платит=x.kind==='sub' && (x.until||0)>Date.now();
   var кто={ref:'по ссылке',bot:'через бота',code:'по коду',open:'сам',owner:'вручную',svc:'служебный'}[x.by]||x.by||'—';
   var тихо = x.последний ? '' : ' · ничего не записал';
   return '<div class="adrow"><span class="adn"><b>'+esc(x.name||('id '+x.uid))+'</b><i>'+
     admДата(x.created)+' · '+esc(кто)+' · '+(x.приёмов||0)+' '+plural(x.приёмов||0,['приём','приёма','приёмов'])+
-    (x.привёл?' · привёл '+x.привёл:'')+тихо+'</i></span>'+
+    (x.привёл?' · привёл '+x.привёл:'')+тихо+'</i>'+admБыл(x.был)+'</span>'+
     '<span class="adpill '+(платит?'pay':вечный?'free':'off')+'">'+
     (платит?'платит':вечный?'бессрочно':'не платит')+'</span></div>';
 }

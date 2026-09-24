@@ -321,9 +321,9 @@ async function поднять(page, o) {
         промо: [{ code: 'zalfriends', uses: 20, used: 7, note: 'для зала', created: Date.now() }],
         свои: { kind: 'grand' },
         список: [
-          { uid: '11', name: 'Пётр Смирнов', by: 'ref', created: Date.now() - 864e5, kind: 'sub', until: Date.now() + 20 * 864e5, приёмов: 4, последний: '2026-09-15', привёл: 0 },
-          { uid: '12', name: 'Своя', by: 'code', created: Date.now() - 3 * 864e5, kind: 'grand', until: 0, приёмов: 22, последний: '2026-09-15', привёл: 0 },
-          { uid: '13', name: 'Andrew Nee', by: 'bot', created: Date.now() - 2 * 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0 }
+          { uid: '11', name: 'Пётр Смирнов', by: 'ref', created: Date.now() - 864e5, kind: 'sub', until: Date.now() + 20 * 864e5, приёмов: 4, последний: '2026-09-15', привёл: 0, был: Date.now() - 2 * 36e5 },
+          { uid: '12', name: 'Своя', by: 'code', created: Date.now() - 3 * 864e5, kind: 'grand', until: 0, приёмов: 22, последний: '2026-09-15', привёл: 0, был: Date.now() - 3 * 864e5 },
+          { uid: '13', name: 'Andrew Nee', by: 'bot', created: Date.now() - 2 * 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0, был: Date.now() - 12 * 864e5 }
         ]
       }, o.admin === true ? {} : o.admin));
     }
