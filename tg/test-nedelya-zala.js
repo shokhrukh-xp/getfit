@@ -33,8 +33,8 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     return { строки, текст: box.textContent,
       неделя: w ? { шапка: w.querySelector('.hwg-h').textContent.replace(/\s+/g, ' ').trim(),
         дни: Array.from(w.querySelectorAll('.hwg-d')).map(e => ({ d: e.dataset.wgday, on: e.classList.contains('on'),
-          c: e.querySelector('.hwg-c').className, n: e.querySelector('.hwg-c').textContent, a: e.querySelector('.hwg-a').className })),
-        подпись: (w.querySelector('.hwg-sub') || {}).textContent || '', легенда: !!w.querySelector('.hwg-leg') } : null,
+          c: e.querySelector('.hwg-c').className, n: e.querySelector('.hwg-c').textContent, a: e.querySelector('.hwg-e').className, зн: e.querySelector('.hwg-e').textContent })),
+        подпись: (w.querySelector('.hwg-sub') || {}).textContent || '', легенда: (w.querySelector('.hwg-leg') || {}).textContent || '' } : null,
       кнопка: (() => { const b = document.getElementById('addsport3'); return b ? { видна: !!b.offsetParent, после: !!(w && (w.compareDocumentPosition(b) & 4)) } : null; })() };
   });
   /* рейтинг и серия — два факта, две строки */
@@ -55,9 +55,11 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     дано(мимо.every(x => /miss/.test(x.c)), 'прошедший день зала без тренировки — пунктиром' + (мимо.length ? '' : ' (сегодня таких нет)'));
     дано(н.дни.filter((x, i) => ![0, 2, 4].includes(i)).every(x => !/plan|miss|done/.test(x.c)), 'дни отдыха — просто дата');
     дано(/^Зал на неделе\s*1 из 3\s*тренировок$/.test(н.шапка), 'в шапке — сколько сделано из запланированного: ' + н.шапка);
-    дано(/ on/.test(н.дни[0].a), 'теннис в понедельник — закрашенная точка под датой');
-    дано(dow > 5 || !/none/.test(н.дни[5].a), 'теннис по плану в субботу — пустая точка' + (dow > 5 ? ' (суббота уже прошла)' : ''));
-    дано(н.легенда, 'под неделей сказано, что значат точки');
+    /* 24.09: точки он не понял («можно путать с занятием в зале») — значок вида */
+    дано(н.дни[0].зн === '🎾' && !/ p| none/.test(н.дни[0].a), 'теннис в понедельник — яркий 🎾 под датой');
+    дано(dow > 5 || (н.дни[5].зн === '🎾' && / p/.test(н.дни[5].a)), 'теннис по плану в субботу — бледный 🎾' + (dow > 5 ? ' (суббота уже прошла)' : ''));
+    дано(н.дни.filter((x, i) => i !== 0 && i !== 5).every(x => / none/.test(x.a)), 'в дни без занятий значка нет');
+    дано(/🎾 теннис/.test(н.легенда) && (dow > 5 || /по плану/.test(н.легенда)), 'под неделей — какой значок что значит: ' + н.легенда);
     дано(/^(Сегодня|Следующая — )/.test(н.подпись), 'подпись — следующая тренировка: ' + н.подпись);
   }
   дано(!!в.кнопка && в.кнопка.видна && в.кнопка.после, '«+ Занятие вне зала» — внизу главной, под неделей');

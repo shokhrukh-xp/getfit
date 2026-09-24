@@ -2155,13 +2155,14 @@ body.onb #picker .modalbox::before{display:none}
 .hwg-c.done,.hwg-d.on .hwg-c.done{background:var(--done);color:#0b1a12}
 .hwg-c.done:after{content:'✓';position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:50%;
   background:var(--text);color:var(--bg,#0b0c0e);font-size:10px;line-height:15px;font-weight:800}
-.hwg-a{display:block;width:6px;height:6px;border-radius:50%;margin:5px auto 0;box-sizing:border-box;border:1.5px solid var(--accent);text-decoration:none}
-.hwg-a.on{background:var(--accent)}
-.hwg-a.none{visibility:hidden}
+.hwg-e{display:block;height:18px;margin-top:3px;font-size:14px;line-height:18px;text-decoration:none;letter-spacing:-2px}
+.hwg-e b{font-weight:400}
+.hwg-e.p{opacity:.45;filter:grayscale(1)}
+.hwg-e.none{visibility:hidden}
 .hwg-sub{margin:10px 0 0;font-size:12.5px;color:var(--dim)}
-.hwg-leg{margin:6px 0 0;font-size:11.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
-.hwg-leg .hwg-a{display:inline-block;margin:0 0 0 6px}
-.hwg-leg .hwg-a:first-child{margin-left:0}
+.hwg-leg{margin:6px 0 0;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.hwg-leg .p{color:var(--dim)}
+.hwg-leg .p b{font-weight:400;opacity:.45;filter:grayscale(1)}
 .hsport{margin-top:14px}
 
 /* ── «Еда» по системе ── */
@@ -5163,7 +5164,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 16:38';
+var BUILD = '24.09 16:54';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9905,9 +9906,22 @@ function homeBody(){
    ещё не сделаны». Выбрал кружки с датами (из двух снимков) и занятия вне
    зала на той же неделе. Кружок — день недели с датой: зелёный с галочкой —
    тренировка записана; обведён — зал по расписанию впереди; пунктиром —
-   день зала прошёл без тренировки. Точка под датой — занятие вне зала:
-   закрашена — было, пустая — по плану. Подпись — следующая тренировка. */
+   день зала прошёл без тренировки. Под датой — значок занятия вне зала
+   (🎾 теннис, 🏃 бег…): яркий — было, бледный серый — по плану. Точки он
+   не понял («это можно путать с занятием в зале») и выбрал значок из трёх
+   снимков. Подпись — следующая тренировка. */
 var HWACTS=null, HWACTSKEY='';
+/* значок вида занятия; неизвестное — медаль. Порядок важен: «настольный
+   теннис» раньше «тенниса». */
+var ВИД_ЗНАЧОК=[['настольн','🏓'],['теннис','🎾'],['падел','🎾'],['сквош','🎾'],['бадминтон','🏸'],['бег','🏃'],['ходьб','🚶'],
+  ['поход','🥾'],['плаван','🏊'],['велосипед','🚴'],['вело','🚴'],['футбол','⚽'],['баскетбол','🏀'],['волейбол','🏐'],['йог','🧘'],
+  ['пилатес','🧘'],['растяжк','🤸'],['стретч','🤸'],['танц','💃'],['гребл','🚣'],['лыж','⛷️'],['конь','⛸️'],['бокс','🥊'],
+  ['единоборств','🥋'],['борьб','🥋'],['скалолаз','🧗']];
+function видЗначок(k){
+  var t=String(k||'').toLowerCase();
+  for(var i=0;i<ВИД_ЗНАЧОК.length;i++) if(t.indexOf(ВИД_ЗНАЧОК[i][0])>=0) return ВИД_ЗНАЧОК[i][1];
+  return '🏅';
+}
 function homeMonday(){
   var nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7;
   return ymd(new Date(nd.getTime()-dow*864e5));
@@ -9931,18 +9945,23 @@ function homeWeekGym(){
     (HIST||[]).forEach(function(w){ if(w && w.date>=пн && w.date<=вс) сделан[w.date]=1; });
     if(lastDone && lastDone.date>=пн && lastDone.date<=вс) сделан[lastDone.date]=1;
   }
-  (HWACTS||[]).forEach(function(a){ if(a && a.date>=пн && a.date<=вс) занят[a.date]=1; });
-  var план=0, было=0, занятий=0, точки=false;
+  (HWACTS||[]).forEach(function(a){ if(a && a.date>=пн && a.date<=вс){ (занят[a.date]=занят[a.date]||[]); if(занят[a.date].indexOf(a.kind)<0) занят[a.date].push(a.kind); } });
+  var план=0, было=0, занятий=0, точки=false, виды=[], естьПлан=false;
+  var вид=function(k){ k=String(k||'').toLowerCase(); if(k && виды.indexOf(k)<0) виды.push(k); };
   var ряд=дни.map(function(д){
     var залПлан = sched && (д.wd in GYM_DAYS), готов = !!сделан[д.iso];
     if(залПлан) план++; if(готов) было++;
     var cls = готов ? 'done' : (залПлан ? (д.iso<TODAY ? 'miss' : 'plan') : '');
-    var спортБыл=!!занят[д.iso], спортПлан=homePlanOn(д.wd).length>0 && д.iso>=TODAY;
-    if(спортБыл) занятий++;
-    if(спортБыл||спортПлан) точки=true;
+    var были=занят[д.iso]||[], впереди = д.iso>=TODAY && !были.length ? homePlanOn(д.wd) : [];
+    if(были.length) занятий+=были.length;
+    были.forEach(вид); впереди.forEach(вид);
+    if(впереди.length) естьПлан=true;
+    if(были.length||впереди.length) точки=true;
+    var зн = были.length ? были.slice(0,2).map(function(k){ return '<b data-k="'+esc(k)+'">'+видЗначок(k)+'</b>'; }).join('')
+           : впереди.slice(0,2).map(function(k){ return '<b data-k="'+esc(k)+'">'+видЗначок(k)+'</b>'; }).join('');
     return '<div class="hwg-d'+(д.iso===TODAY?' on':'')+'" data-wgday="'+д.iso+'"><u>'+WD[д.wd]+'</u>'+
       '<i class="hwg-c'+(cls?' '+cls:'')+'">'+д.n+'</i>'+
-      '<s class="hwg-a'+(спортБыл?' on':(спортПлан?'':' none'))+'"></s></div>';
+      '<s class="hwg-e'+(были.length?'':(впереди.length?' p':' none'))+'">'+(зн||'·')+'</s></div>';
   }).join('');
   if(еда && !точки) return '';
   var итог;
@@ -9968,7 +9987,8 @@ function homeWeekGym(){
     '<div class="hwg-h"><span>'+(еда?'Занятия на неделе':'Зал на неделе')+'</span><b>'+итог+'</b></div>'+
     '<div class="hwg-row">'+ряд+'</div>'+
     (след ? '<p class="hwg-sub">'+esc(след)+'</p>' : '')+
-    (точки ? '<p class="hwg-leg"><s class="hwg-a on"></s>занятие было<s class="hwg-a"></s>по плану</p>' : '')+
+    (точки ? '<p class="hwg-leg">'+виды.slice(0,4).map(function(k){ return '<span>'+видЗначок(k)+' '+esc(k)+'</span>'; }).join('')+
+      (естьПлан ? '<span class="p"><b>'+видЗначок(виды[виды.length-1])+'</b> по плану</span>' : '')+'</p>' : '')+
     '</div>';
 }
 /* 24.09, его просьба: кнопка занятия — внизу главной, у всех. С «Еды» она
