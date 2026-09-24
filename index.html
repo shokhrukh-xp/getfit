@@ -5045,7 +5045,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 12:36';
+var BUILD = '24.09 12:53';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -9793,7 +9793,9 @@ function renderHome(){
    Всё социальное живёт на одной вкладке; на остальных — чип серии в шапке и
    оценка дня на «Еде». Считает сервер (/circle, /day/score). */
 var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
-function fmtR(x){ return x==null ? '—' : (Math.round(x*10)/10).toFixed(1).replace('.',','); }
+/* Балл с одной цифрой после запятой: 8,4 / 10. Кроме высшего — «10», а не
+   «10,0» (24.09): идеальный приём с хвостом «,0» читается как недоделанный. */
+function fmtR(x){ if(x==null) return '—'; var r=Math.round(x*10)/10; return r>=10 ? '10' : r.toFixed(1).replace('.',','); }
 function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
 function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
 var CIRCACHE={};
