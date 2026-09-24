@@ -217,6 +217,7 @@ async function поднять(page, o) {
     if (p === '/s')          return дать({ ok: true });
     if (p === '/day')        return дать(день_ ? { ok: true, day: день_ } : { ok: true, day: день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }) });
     if (p === '/day/score')  return дать(оценка || { ok: true, r: null });
+    if (p === '/meal/better') return дать(o.better || { ok: true, советы: [] });
     if (p === '/week')       return дать({ ok: true, week: неделя(o.week || {}) });
     if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }

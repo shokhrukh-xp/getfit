@@ -922,6 +922,21 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
   border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:15px;
   font-variant-numeric:tabular-nums;text-align:center}
 #mealm .btnrow{margin-top:16px}
+/* 24.09: разбор приёма — почему такая оценка и что было бы лучше */
+#ml-view .mvtext{margin:2px 0 14px;font-size:15px;line-height:1.4;color:var(--text)}
+#ml-view .mvtext small{display:block;margin-top:3px;font-size:12.5px;color:var(--dim)}
+.pz{padding:12px 14px;border-radius:14px;background:var(--field);font-size:13.5px;color:var(--text)}
+.pz-h{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;font-weight:600}
+.pz-h b{color:var(--text);font-size:13px;letter-spacing:0}
+.pz-h2{margin-top:14px}
+.pz-r{display:grid;grid-template-columns:84px 1fr 44px;gap:6px;padding:6px 0;border-top:1px solid var(--line-soft);align-items:baseline}
+.pz-r span:first-child{color:var(--muted)}
+.pz-r em{font-style:normal;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.pz-r em.ok{color:var(--done)}
+.pz-r.pz-no span:nth-child(2){color:var(--dim)}
+.pz-l{margin:0;padding-left:18px;line-height:1.45}
+.pz-l li{margin:5px 0}
+.pz-wait{margin:0;color:var(--dim)}
 #ml-date{flex:1;padding:9px 10px;border-radius:9px;border:.5px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:13px}
 .fline{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0}
@@ -2536,6 +2551,17 @@ body.onb #picker .modalbox::before{display:none}
 <div class="modal" id="mealm" role="dialog" aria-modal="true" aria-labelledby="mealtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="mealtitle">Приём</h3><button class="xbtn" id="mealclose" aria-label="Закрыть">✕</button></div>
+    <!-- 24.09, его просьба: по нажатию на запись — почему такая оценка и что
+         было бы лучше, а правка — кнопкой «Изменить». Одна шторка, два вида. -->
+    <div id="ml-view" hidden>
+      <p class="mvtext" id="mv-text"></p>
+      <div class="pz" id="mv-razbor" hidden></div>
+      <div class="btnrow">
+        <button class="btn prim" id="mv-edit">Изменить</button>
+        <button class="btn" id="mv-del">Удалить</button>
+      </div>
+    </div>
+    <div id="ml-form">
     <div class="pf"><span class="pfl">когда</span><div class="seg" id="ml-kind"></div></div>
     <div class="pf"><span class="pfl">день</span><input id="ml-date" type="date"></div>
     <label class="mlab">что съел<textarea id="ml-text" rows="2" placeholder="творог 200 г и 2 яйца"></textarea></label>
@@ -2552,6 +2578,7 @@ body.onb #picker .modalbox::before{display:none}
     <div class="btnrow">
       <button class="btn prim" id="ml-save">Сохранить</button>
       <button class="btn" id="ml-del">Удалить</button>
+    </div>
     </div>
   </div>
 </div>
@@ -5120,7 +5147,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 14:53';
+var BUILD = '24.09 15:11';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -11845,9 +11872,65 @@ function mealNums(){
     ? 'Итог — сумма состава: поправь вес любой строки или убери лишнее, и числа сойдутся сами.'
     : 'Числа считал тренер по фото — если знаешь точнее, поправь здесь.';
 }
-function openMeal(m){
+/* 24.09, его просьба: нажатие на запись показывает, почему у приёма такой
+   балл и что было бы лучше; правка — кнопкой «Изменить» в той же шторке.
+   Разбор (пять пунктов с числами) приходит с оценкой дня — /day/score, тот же
+   расчёт, что балл под записью. «Что было бы лучше» пишет тренер под это
+   блюдо (/meal/better): сколько сдвинуть — число сервера, тренер даёт только
+   правку. Пишется при первом открытии и хранится с записью. */
+var MEALVIEW=0;
+function mealВид(разбор){
+  document.getElementById('ml-view').hidden = !разбор;
+  document.getElementById('ml-form').hidden = !!разбор;
+}
+function разборHtml(p){
+  if(!p || p.r==null || !(p.разбор||[]).length) return '';
+  var ряды = p.разбор.map(function(x){
+    return '<div class="pz-r'+(x.нет?' pz-no':'')+'" data-k="'+esc(x.k)+'"><span>'+esc(x.имя)+'</span><span>'+esc(x.т)+'</span>'+
+      (x.v>0 ? '<em>−'+fmtR(x.v)+'</em>' : (x.нет ? '<em>—</em>' : '<em class="ok">✓</em>'))+'</div>';
+  }).join('');
+  return '<div class="pz-h">Почему <b>'+fmtR(p.r)+'</b> из 10</div>'+ряды+
+    '<div class="pz-h pz-h2">Что было бы лучше</div>'+
+    ((p.why||[]).length ? '<div id="mv-better"><p class="pz-wait">Тренер подбирает правку под это блюдо…</p></div>'
+                        : '<p class="pz-wait" id="mv-better">Ничего — приём в норме.</p>');
+}
+function советыHtml(сс){
+  if(!сс || !сс.length) return '<p class="pz-wait">Ничего — приём в норме.</p>';
+  /* «200 г» не рвём по строкам: число и единица — одно слово */
+  var нр=function(t){ return esc(t).replace(/(\d) (?=(г|кг|мл|ккал)(?![а-яё]))/g, '$1\u00a0'); };
+  /* после двоеточия — со строчной: тренер иногда пишет «Добавь…» с заглавной */
+  var стр=function(t){ t=String(t||''); return t.charAt(0).toLowerCase()+t.slice(1); };
+  return '<ul class="pz-l">'+сс.map(function(x){ return '<li data-k="'+esc(x.k)+'"><b>'+нр(x.голова)+':</b> '+нр(стр(x.как))+'</li>'; }).join('')+'</ul>';
+}
+function openMealView(m){
   if(!m) return;
   MEAL = m;
+  var мой = ++MEALVIEW;
+  var p = (DAYSC && DAYSC.date===fDate() && DAYSC.приёмы || []).filter(function(x){ return String(x.id)===String(m.id); })[0];
+  var вид = (m.kind ? m.kind.charAt(0).toUpperCase()+m.kind.slice(1) : 'Приём') + (m.t ? ' · '+m.t : '');
+  document.getElementById('mealtitle').textContent = вид;
+  document.getElementById('mv-text').innerHTML = esc(m.text||'')+'<small>'+Math.round(m.kcal||0)+' ккал · белок '+Math.round(m.prot||0)+' г'+
+    (m.fat!=null?' · жир '+Math.round(m.fat)+' г':'')+(m.fib!=null?' · клетчатка '+Math.round(m.fib)+' г':'')+'</small>';
+  var box = document.getElementById('mv-razbor'), html = разборHtml(p);
+  box.innerHTML = html; box.hidden = !html;
+  mealВид(true);
+  document.getElementById('mealm').classList.add('show');
+  if(p && (p.why||[]).length){
+    fPost('/meal/better', {uid:syncUid(), id:m.id}).then(function(d){
+      if(мой!==MEALVIEW) return;                    /* пока ждали, открыли другой приём */
+      var b=document.getElementById('mv-better'); if(b) b.innerHTML = советыHtml(d && d.советы);
+    }).catch(function(){
+      if(мой!==MEALVIEW) return;
+      /* тренер недоступен — показываем совет из чисел, он уже был под записью */
+      var b=document.getElementById('mv-better');
+      if(b) b.innerHTML = советыHtml((p.why||[]).map(function(w){ return {k:w.k, голова:w.совет, как:w.t}; }));
+    });
+  }
+}
+function openMeal(m){
+  if(!m) return;
+  MEAL = m; MEALVIEW++;
+  mealВид(false);
   MEAL.its = mealItems(m);
   document.getElementById('mealtitle').textContent = 'Правка приёма';
   document.getElementById('ml-kind').innerHTML = segHtml('mlkind', KINDS, MEAL.kind||'');
@@ -11897,7 +11980,13 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   if(e.target.closest('.fact')) return;
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
-  if(m){ openMeal(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
+  if(m){ openMealView(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
+});
+document.getElementById('mv-edit').addEventListener('click', function(){ if(MEAL) openMeal(MEAL); haptic('light'); });
+document.getElementById('mv-del').addEventListener('click', function(){
+  if(!MEAL||!MEAL.id) return;
+  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; renderFoodDay(); closeMeal(); haptic('light'); })
+    .catch(function(err){ closeMeal(); fReply(humanErr(err),'bad'); });
 });
 document.getElementById('mealclose').addEventListener('click', closeMeal);
 document.getElementById('ml-save').addEventListener('click', mealSave);
