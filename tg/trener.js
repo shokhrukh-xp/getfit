@@ -294,8 +294,18 @@ const ЗАЛ = /зал|подход|упражнен|программ|трени
   await З('/s', { uid: 'svc_t_zal', key: 'aiprog', data: прог });
   await З('/measure', { uid: 'svc_t_zal', date: дн0(7), w: 84.6 });
   await З('/measure', { uid: 'svc_t_zal', date: вчера, w: 84 });
-  const зан = (д, day, sub, ex) => З('/w', { uid: 'svc_t_zal', id: дн0(д) + '_' + day, date: дн0(д),
-    day, name: day, sub, data: { date: дн0(д), day, sub, dur: 50, ex } });
+  /* 24.09: второй прогон за день падал — стирание оставляет на id занятия
+     метку удаления с версией, а запись без версии сервер принимает только
+     как новую и молча отвечает конфликтом. Приложение берёт версию из
+     /all (deleted), так же делаем и здесь. */
+  const удалённые = ((await З('/all?uid=svc_t_zal')).deleted || []);
+  const зан = async (д, day, sub, ex) => {
+    const id = дн0(д) + '_' + day, была = удалённые.filter(x => x.id === id)[0];
+    const r = await З('/w', { uid: 'svc_t_zal', id, date: дн0(д), version: была ? была.version : 0,
+      operation: 'svc-' + id + '-' + Date.now(), day, name: day, sub, data: { date: дн0(д), day, sub, dur: 50, ex } });
+    if (!(r && r.ok)) console.log('    (занятие ' + id + ' не записалось: ' + ((r && (r.code || r.error)) || '?') + ')');
+    return r;
+  };
   /* первое занятие — под СТАРЫМИ именами, но с id каталога: так выглядят
      записи, сделанные до переименования 11.09 и размеченные 12.09. Имя в
      записи остаётся прежним, сойтись с программой они обязаны по id. */
