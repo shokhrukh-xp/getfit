@@ -1137,7 +1137,9 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
    #coachm ниже. */
 .chatlog{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
   display:flex;flex-direction:column;gap:10px;padding:4px 0 8px;min-height:160px}
-/* меню наперёд и покупки (24.09, этап 2; его выбор — вкладка «Что съесть») */
+/* меню наперёд и покупки (24.09, этап 2; его выбор — вкладка «Что съесть»).
+   Классы с приставкой m…/mn…: .mrow уже занят строками замеров — 24.09 снимок
+   показал меню, разложенное их сеткой в четыре колонки. */
 .eseg{display:flex;gap:6px;margin:0 0 12px}
 .eseg button{flex:1 1 0;min-height:44px;border-radius:99px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:13px;padding:0 6px}
@@ -1150,7 +1152,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .mitog{font-size:12.5px;color:var(--muted);margin:2px 0 6px;line-height:1.45}
 .mnote{font-size:13px;color:var(--muted);margin:6px 0 2px;line-height:1.45}
 .mwarn{font-size:12.5px;color:var(--warn-txt);margin:4px 0;line-height:1.45}
-.mrow{padding:10px 0;border-top:1px solid var(--line-soft)}
+.mnrow{padding:10px 0;border-top:1px solid var(--line-soft)}
 .mhd{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
 .mtx{font-size:14.5px;line-height:1.45;margin-top:3px;color:var(--text)}
 .msost{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.45}
@@ -4848,7 +4850,7 @@ function menuПриём(x, span, m){
       (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
       (r.совет ? '<p class="msost">'+esc(r.совет)+'</p>' : '')
     : '<button type="button" class="lnk mrecb" data-mrec="'+esc(key)+'">'+(MENURECBUSY===key?'Пишу рецепт…':'Рецепт'+(x.мин?' · '+x.мин+' мин':'')+' ›')+'</button>';
-  return '<div class="mrow"><div class="mhd"><span>'+esc(x.kind)+'</span><span>'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</span></div>'+
+  return '<div class="mnrow"><div class="mhd"><span>'+esc(x.kind)+'</span><span>'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</span></div>'+
     '<div class="mtx">'+esc(x.text)+'</div>'+(состав?'<div class="msost">'+состав+'</div>':'')+рец+'</div>';
 }
 function menuДень(д, span, m){
@@ -4926,8 +4928,8 @@ function бтBody(b){
   var ряд=function(имя, вн){ return '<div class="pf pfcol"><span class="pfl">'+имя+'</span>'+вн+'</div>'; };
   var q=function(t){ return esc(t).replace(/"/g,'&quot;'); };
   var h=ряд('кто готовит', здSeg('bt-cook', БТ_COOK, b.cook||'', false));
-  h+='<label class="mlab">на сколько человек готовится<input id="bt-family" type="number" inputmode="numeric" min="1" max="10" step="1" placeholder="1" value="'+(b.family||'')+'"></label>';
-  h+='<label class="mlab">минут на готовку в день<input id="bt-min" type="number" inputmode="numeric" min="0" max="240" step="5" placeholder="30" value="'+(b.min||'')+'"></label>';
+  h+='<label class="mlab">на сколько человек готовится<input id="bt-family" type="text" inputmode="numeric" autocomplete="off" maxlength="2" placeholder="1" value="'+(b.family||'')+'"></label>';
+  h+='<label class="mlab">минут на готовку в день<input id="bt-min" type="text" inputmode="numeric" autocomplete="off" maxlength="3" placeholder="30" value="'+(b.min||'')+'"></label>';
   h+=ряд('где обычно ешь', здSeg('bt-where', БТ_WHERE, бтМн(b.where), true));
   h+='<label class="mlab">что всегда есть дома<input id="bt-home" type="text" autocomplete="off" maxlength="300" placeholder="рис, яйца, творог, курица" value="'+q(b.home||'')+'"></label>';
   h+=ряд('бюджет на еду', здSeg('bt-bud', БТ_BUD, b.budget||'', false));
@@ -5408,7 +5410,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 21:24';
+var BUILD = '24.09 21:26';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
