@@ -401,6 +401,12 @@ async function поднять(page, o) {
       return отдать();
     }
     if (p === '/coach')      return дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
+    /* 25.09, этап 3: самочувствие и боль в разговоре. o.спрошено — вопросы
+       в день зала, o.нажато — нажатые кнопки; o.onAsk / o.onAct — ответы. */
+    if (p === '/coach/ask') { (o.спрошено = o.спрошено || []).push(JSON.parse(route.request().postData() || '{}'));
+      return дать(o.onAsk ? o.onAsk(route) : { ok: true, pushed: false }); }
+    if (p === '/coach/act') { const ба = JSON.parse(route.request().postData() || '{}'); (o.нажато = o.нажато || []).push(ба);
+      return дать(o.onAct ? o.onAct(ба) : { ok: true, user: ба.k, reply: 'Понял.', src: [], act: [], ts: Date.now() }); }
     /* 24.09, этап 2: меню наперёд. o.menu — что лежит на сервере, o.onMenu —
        сборка (с задержкой o.menuDelay, чтобы поймать «собираю»). */
     if (p === '/menu' && route.request().method() === 'GET') return дать(Object.assign({ ok: true, day: null, week: null }, o.menu || {}));

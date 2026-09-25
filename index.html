@@ -1170,6 +1170,15 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .bitem[aria-pressed="true"] span{color:var(--dim);text-decoration:line-through}
 .chatmenu{align-self:flex-start;margin-top:6px;min-height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--accent-txt);
   background:none;color:var(--accent-txt);font:inherit;font-size:13.5px;font-weight:600}
+.chatacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;max-width:100%}
+.chatacts button{min-height:44px;padding:0 13px;border-radius:12px;border:1px solid var(--accent-txt);background:none;
+  color:var(--accent-txt);font:inherit;font-size:13.5px;font-weight:600;text-align:left;line-height:1.25}
+.chatacts button[disabled]{border-color:var(--line);color:var(--dim)}
+.chatacts button.warn{border-color:var(--warn-txt);color:var(--warn-txt)}
+.chatacts.pick{padding-top:6px;border-top:.5px solid var(--line-soft)}
+.chatacts.pick button{font-weight:500;color:var(--text);border-color:var(--line)}
+/* кнопка на своей строке: встроенная в текст, 44 точки раздували межстрочье (снимок 25.09) */
+.phaseline .easyoff{display:block;min-height:44px;padding:0;margin-top:2px}
 .chatmore{align-self:center;background:none;border:none;font:inherit;font-size:12.5px;font-weight:600;
   color:var(--accent-txt);padding:6px 10px;min-height:44px}
 .chatsep{align-self:center;font-size:11px;color:var(--dim);padding:2px 0}
@@ -3581,6 +3590,8 @@ function setsFor(e, di, dk){
   else if(isTime(e)) base = e.sets;
   else { var ph=phaseNow(); base = e.sets + ((ph && typeof ph.ds==='number') ? ph.ds : 0); }
   if(deloadOn() && !isTime(e)) base = Math.round(base/2);
+  /* «Облегчить сегодня» (25.09): только сегодня на подход меньше */
+  if(легчеВкл() && !isTime(e) && base>1) base = base-1;
   return Math.max(1, Math.min(8, base));
 }
 /* «ЗАМЕНЕНО» — ЭТО ПОДТВЕРЖДЕНИЕ, А НЕ СОСТОЯНИЕ.
@@ -3623,12 +3634,14 @@ function мышцаЕго(e){
 /* Кандидаты на замену: та же мышца, тот же род движения (силовое на силовое —
    велотренажёр вместо приседа формально та же мышца, но это не замена),
    ничего отвергнутого и ничего, что уже стоит в этом дне. */
-function кандидаты(e){
+function кандидаты(e, dk){
   if(!CAT || !CAT.ex) return [];
   var м = мышцаЕго(e); if(!м) return [];
-  var свой = (CAT.ex||[]).filter(function(y){ return y.i===e.cat; })[0];
+  /* у готовых программ id каталога лежит в e.id, у замен — в e.cat; без
+     второго «свой» не находился, и ближний снаряд не шёл первым (25.09) */
+  var свой = (CAT.ex||[]).filter(function(y){ return y.i===(e.cat||e.id); })[0];
   var род = catKind(свой || {c:'strength'});
-  var сегодня = {}; exList(day).forEach(function(x){ if(x.cat) сегодня[x.cat]=1; });
+  var сегодня = {}; exList(dk||day).forEach(function(x){ var i=x.cat||x.id; if(i) сегодня[i]=1; });
   return CAT.ex.filter(function(x){
     if(x.m!==м && x.m2!==м) return false;
     if(catKind(x)!==род) return false;
@@ -5476,7 +5489,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.09 23:18';
+var BUILD = '25.09 08:06';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -5506,6 +5519,14 @@ function phaseFor(w){
 }
 function renderPhase(){
   var el=document.getElementById('phaseline'); if(!el) return;
+  if(легчеВкл()){
+    var ж=(myData()||{}).sex==='f';
+    el.innerHTML='<b>Облегчено на сегодня</b> · в каждом упражнении на подход меньше, веса те же, заканчивай подход, когда '+(ж?'могла':'мог')+' бы сделать ещё 3–4 повтора. Программа прежняя, завтра всё как было. '+
+      '<button type="button" class="linkbtn easyoff" id="easyoff">Вернуть как было</button>';
+    var b=document.getElementById('easyoff');
+    if(b) b.addEventListener('click', function(){ легчеПоставить(false); haptic('light'); });
+    return;
+  }
   if(deloadOn()){
     el.innerHTML='<b>Лёгкая неделя</b> · половина подходов, те же веса, запас 4 повтора. Это не отдых из слабости — так возвращается тяга к следующей неделе.';
     return;
@@ -7679,9 +7700,12 @@ function sessionBody(){
      на экран. Заодно терялась длительность: траты зала и недельная нагрузка
      считались по заявленным минутам из профиля вместо фактических. */
   var t0=wStart();
-  return { date:TODAY, day:day, name:d.name, sub:d.sub, week:week,
+  var тело={ date:TODAY, day:day, name:d.name, sub:d.sub, week:week,
            updated:new Date().toISOString(), ex:ex,
            t0:t0?new Date(t0).toISOString():null, dur:wDur() };
+  /* облегчённая по кнопке — сервер не считает её падением весов (25.09) */
+  if(легчеВкл()) тело.easy=1;
+  return тело;
 }
 var lastSavedAt=null, dirty=false;
 function pushDb(){
@@ -9906,6 +9930,7 @@ function homePull(){
   /* журнал нужен часам дня: у закрытой тренировки время старта лежит в записи */
   if(DB && !HIST) loadHist().then(function(){ homeDirty(); }).catch(function(){});
   try{ chatWatch(); }catch(e){}
+  try{ самочувствиеСпросить(); }catch(e){}
 }
 /* расписание зала может быть не задано — тогда дни программы идут по очереди
    и «сегодня отдых» было бы неправдой */
@@ -12776,10 +12801,10 @@ function chatДень(ts){
   if(день===вчера) return 'вчера';
   return d.getDate()+' '+MONTHS[d.getMonth()];
 }
-function ответТренера(текст, время, cls, src, menu){
+function ответТренера(текст, время, cls, src, menu, кнопки){
   return '<div class="turn"><div class="who"><img src="img/logo-64.png" alt="">тренер'+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
-    (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+'</div>';
+    (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+(кнопки||'')+'</div>';
 }
 /* значки источников: только https-ссылки из ответа сервера */
 /* коротко=true — только «Автор год»: под строками групп четыре полных
@@ -12802,12 +12827,13 @@ function renderChat(scroll){
     var все=CHAT.items, скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
     if(CHAT.intro && !скрыто) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     if(скрыто) h+='<button type="button" class="chatmore" id="chatmore">Показать, что было раньше ('+скрыто+')</button>';
-    var день='';
+    var день='', живая=чатЖивая(все);
+    CACT=[];
     h+=(скрыто?все.slice(-6):все).map(function(c){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
       if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
-      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '', c.src, c.menu);
+      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '', c.src, c.menu, (c===живая && !CHAT.pending)?кнопкиHTML(c.act):'');
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
@@ -12821,6 +12847,9 @@ function renderChat(scroll){
   if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
   box.querySelectorAll('[data-cmenu]').forEach(function(b){
     b.addEventListener('click', function(){ haptic('light'); чатМенюОткрыть(b.getAttribute('data-cmenu')); });
+  });
+  box.querySelectorAll('[data-cact]').forEach(function(b){
+    b.addEventListener('click', function(){ haptic('light'); чатДействие(CACT[+b.getAttribute('data-cact')]); });
   });
   box.querySelectorAll('.srcs button').forEach(function(b){
     b.addEventListener('click', function(){ haptic('light'); вебОткрыть(b.getAttribute('data-src')); });
@@ -12843,6 +12872,144 @@ function chatScroll(){
   вниз();
   if(window.requestAnimationFrame) requestAnimationFrame(function(){ вниз(); requestAnimationFrame(вниз); });
   setTimeout(вниз,120); setTimeout(вниз,320);
+}
+/* ══════════ САМОЧУВСТВИЕ И БОЛЬ — В РАЗГОВОРЕ ══════════
+   25.09, остаток этапа 3. Его выбор: всё внутри разговора с тренером.
+   • В день зала тренер сам спрашивает «Как ты?» — пять кнопок, раз в день,
+     отвечать не обязательно. Спрашивает, пока тренировка не начата.
+   • Плохо спал, устал, боль 3–5 — «Облегчить сегодня»: только сегодня на
+     подход меньше в каждом упражнении и запас 3–4 повтора; программа та же.
+   • Боль выше 5 или растущая — «Отметить и заменить»: отметка «Мешает
+     суставу» (та же, что под 👎) и замена на ту же мышцу по каталогу.
+   Какие кнопки и что ответить, решает сервер (код, не модель); здесь —
+   показать кнопки у последней реплики и сделать то, что они обещают.
+   Кнопки живые только у последней реплики разговора и только сегодня:
+   вчерашнее «Облегчить сегодня» ничего бы не облегчило. */
+var CACT=[];
+function чатЖивая(все){
+  var c=все && все[все.length-1];
+  if(!c || c.role!=='assistant' || !c.act || !c.act.length) return null;
+  return c.act.every(function(a){ return a && a.d===TODAY; }) ? c : null;
+}
+function кнопкиHTML(acts){
+  if(!acts || !acts.length) return '';
+  var h='', выбор=false;
+  acts.forEach(function(a){
+    if(a.k==='easy' && легчеВкл()){ h+='<button type="button" disabled>Облегчено на сегодня ✓</button>'; return; }
+    if(a.k==='pick') выбор=true;
+    var i=CACT.push(a)-1;
+    h+='<button type="button" data-cact="'+i+'"'+(a.v==='red'?' class="warn"':'')+
+      (a.k==='pick'?' aria-expanded="'+(CHAT.pick?'true':'false')+'"':'')+'>'+esc(a.t)+'</button>';
+  });
+  h='<div class="chatacts">'+h+'</div>';
+  if(выбор && CHAT.pick){
+    var dk=homeDayKey(), сп=(dk && DAYS[dk]) ? exList(dk) : [];
+    if(сп.length) h+='<div class="chatacts pick">'+сп.map(function(e){
+      var i=CACT.push({k:'hurt', ex:e.n, t:e.n})-1;
+      return '<button type="button" data-cact="'+i+'">'+esc(e.n)+'</button>';
+    }).join('')+'</div>';
+  }
+  return h;
+}
+function чатДействие(a){
+  if(!a || CHAT.busy) return;
+  if(a.k==='pick'){ CHAT.pick=!CHAT.pick; renderChat(); return; }
+  if(a.k==='hurt'){ болитЗаменить(a.ex); return; }
+  CHAT.pick=false;
+  if(a.k==='easy') легчеПоставить(true);
+  послатьДействие({k:a.k, v:a.v||'', ex:a.ex||'', where:a.where||''}, a.k==='pain' ? 'Боль: '+a.t : a.t);
+}
+/* Нажатие уходит на сервер: он пишет обе реплики в историю и отвечает
+   без модели — быстро и одинаково. */
+function послатьДействие(body, подпись){
+  CHAT.busy=true; CHAT.err=''; CHAT.pending=подпись||''; CHAT.pendingImg=null; renderChat(); haptic('medium');
+  fPost('/coach/act', Object.assign({uid:syncUid(), date:TODAY}, body)).then(function(d){
+    if(!d || !d.ok) throw new Error((d && d.error) || 'Не получилось — попробуй ещё раз.');
+    var ts=d.ts||Date.now();
+    CHAT.items=(CHAT.items||[]).concat([
+      {role:'user', text:d.user||подпись, ts:ts},
+      {role:'assistant', text:d.reply||'', ts:ts, src:d.src||[], act:(d.act&&d.act.length)?d.act:null}]);
+    CHAT.pending=''; renderChat(); haptic('ok');
+    if(чатОткрыт()) gset('chat_seen', CHAT.items.length); else coachAttn(true);
+  }).catch(function(e){ CHAT.pending=''; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
+    .then(function(){ CHAT.busy=false; });
+}
+/* «Мешает суставу» по кнопке тренера: отметка — та же, что под 👎, замена —
+   тот же подбор, что у 👎 «Не нравится» (та же мышца, тот же род, ближе по
+   снаряду), только без «не нравится»: упражнение не разонравилось, оно болит.
+   Отмеченные «мешает» в замену не идут. */
+function hurtОтметить(n){
+  var h=hurtAll(), п=h[n];
+  h[n]={last:TODAY, n:((п&&п.n)||0)+1};
+  gset('hurt', h); try{ syncPush('state/hurt', h); }catch(e){}
+}
+function болитНайти(имя){
+  var ключ=String(имя||'').toLowerCase().replace(/ё/g,'е'), дни=[homeDayKey()].concat(CYCLE||[]);
+  for(var i=0;i<дни.length;i++){
+    var dk=дни[i]; if(!dk || !DAYS[dk]) continue;
+    var сп=exList(dk);
+    for(var j=0;j<сп.length;j++) if(String(сп[j].n).toLowerCase().replace(/ё/g,'е')===ключ) return {dk:dk, e:сп[j]};
+  }
+  return null;
+}
+function болитЗаменить(имя){
+  if(CHAT.busy || !имя) return;
+  CHAT.pick=false;
+  var сделать=function(){
+    var hit=болитНайти(имя), to='';
+    hurtОтметить(hit ? hit.e.n : имя);
+    if(hit && !hit.e.add){
+      /* При боли — попроще по технике и из того, что в зале точно есть.
+         Взятие на грудь вместо румынской тяги (стенд 25.09) — та же мышца и
+         те же гантели, но это не то, что ставят на больной сустав:
+         «экспертные» движения идут, только если других нет. Снаряд: сначала
+         тренажёр и блок — путь задан, вес меняется по шагу, баланс держать не
+         надо (приседу со штангой стенд подбирал выпады в движении — на
+         больном колене это хуже); потом тот же снаряд, штанга, гантели, свой
+         вес — и только потом резинки и прочее, чего в зале может не быть
+         (стенд подсунул «наклон с резинкой» вместо румынской тяги). */
+      var ранг={beginner:0, intermediate:1, expert:2}, снаряд=['machine','cable','СВОЙ','barbell','dumbbell','body only'];
+      var свой=(CAT && CAT.ex || []).filter(function(y){ return y.i===(hit.e.cat||hit.e.id); })[0];
+      var сп=кандидаты(hit.e, hit.dk).filter(function(x){ return !hurtOn(x.n); });
+      var проще=сп.filter(function(x){ return x.l!=='expert'; }); if(проще.length) сп=проще;
+      var qр=function(q){ if(q==='machine') return 0; if(q==='cable') return 1; if(свой && q===свой.q) return 2; var i=снаряд.indexOf(q); return i<0 ? 9 : i; };
+      сп=сп.map(function(x,i){ return {x:x, i:i, q:qр(x.q)}; })
+        .sort(function(a,b){ return (a.q-b.q) || ((ранг[a.x.l]||0)-(ранг[b.x.l]||0)) || (a.i-b.i); })
+        .map(function(o){ return o.x; });
+      if(сп.length){ applySub(hit.e.k, сп[0]); to=сп[0].n; }
+    }
+    try{ renderList(); }catch(e){}
+    послатьДействие({k:'swap', ex:hit ? hit.e.n : имя, to:to}, 'Мешает суставу: «'+(hit ? hit.e.n : имя)+'»');
+  };
+  loadCatalog().then(сделать, сделать);
+}
+/* ОБЛЕГЧИТЬ СЕГОДНЯ. Живёт один день: ключ — сегодняшняя дата, завтра
+   условие само ложно. Число подходов режет setsFor, строку над днём рисует
+   renderPhase, пометку в запись тренировки ставит sessionBody. */
+function легчеВкл(){ return get('easy', null)===TODAY; }
+function легчеПоставить(on){
+  set('easy', on ? TODAY : null);
+  if(sess && anyTouched()){ try{ harvestDom(); saveSess(); }catch(e){} loadSess(); }
+  else if(sess){ sess=blankSess(); saveSess(); }
+  try{ renderPhase(); renderList(); paintNote(''); }catch(e){}
+  if(!on){ fPost('/coach/act', {uid:syncUid(), date:TODAY, k:'easyoff'}).catch(function(){}); try{ renderChat(false); }catch(e){} }
+}
+/* Вопрос в день зала: расписание говорит «сегодня зал», тренировка ещё не
+   начата, сегодня ещё не спрашивали. Сервер тоже держит «раз в день» —
+   два устройства не спросят дважды. */
+function самочувствиеСпросить(){
+  if(foodOnly() || !hasSched() || !todayLetter()) return;
+  if(gget('wb_ask', null)===TODAY) return;
+  var ч=new Date().getHours(); if(ч<6 || ч>=22) return;
+  var lw=lastWorkout(); if(lw && lw.date===TODAY) return;
+  var dk=homeDayKey(); if(!dk || !DAYS[dk]) return;
+  if(homeSess(dk).done>0) return;
+  gset('wb_ask', TODAY);
+  fPost('/coach/ask', {uid:syncUid(), date:TODAY}).then(function(d){
+    if(!d || !d.pushed || !d.turn) return;
+    if(CHAT.items && !CHAT.busy) CHAT.items=CHAT.items.concat([d.turn]);
+    if(чатОткрыт()){ renderChat(); gset('chat_seen', (CHAT.items||[]).length); } else coachAttn(true);
+  }).catch(function(){ gset('wb_ask', null); });
 }
 function esc(t){ return String(t||'').replace(/[&<>]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
 /* ══════════ РАЗБОР ОБЪЁМА: ЧТО ПРЕДЛАГАЕТ ТРЕНЕР ══════════
@@ -13190,7 +13357,8 @@ function coachSend(text, image){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
         {role:'user', text:(text||'')+(image?' [фото]':''), ts:сейчас},
-        {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null}]);
+        {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null, act:(d.act&&d.act.length)?d.act:null}]);
+      CHAT.pick=false;
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
       if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
       renderChat(); renderHome(); haptic('ok');

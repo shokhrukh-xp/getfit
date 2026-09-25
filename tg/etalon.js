@@ -1,5 +1,5 @@
 'use strict';
-/* ЭТАЛОННЫЙ НАБОР ТРЕНЕРА — 47 вопросов (41–44 — этап 2, 45–47 — этап 3), 24.09 (план «тренер + нутрициолог»,
+/* ЭТАЛОННЫЙ НАБОР ТРЕНЕРА — 51 вопрос (41–44 — этап 2, 45–51 — этап 3), 24.09 (план «тренер + нутрициолог»,
    этап 1). Запускать РУКАМИ НА МАКЕ, как trener.js (нужен ~/.getfit-svc):
      node tg/etalon.js до       — до выкладки, на живом сервере
      node tg/etalon.js после    — после выкладки
@@ -110,7 +110,12 @@ const В = [
   // J. зал: разминка, техника, шаги и сон (этап 3)
   [ЗАЛ, 'к', 'Нужна ли разминка перед приседом и какая?', 'ист разм'],
   [ЗАЛ, 'к', 'Можно ли коленям выходить за носки в приседе?', 'ист колени'],
-  [ГРП, 'к', 'Сколько шагов в день мне нужно и прибавляются ли они к калориям?', 'ист шаги']
+  [ГРП, 'к', 'Сколько шагов в день мне нужно и прибавляются ли они к калориям?', 'ист шаги'],
+  // K. самочувствие и боль (этап 3, остаток, 25.09): кнопки ставит код (поле act)
+  [ЗАЛ, 'к', 'На приседе болит колено, где-то на 7 из 10', 'боль7'],
+  [ЗАЛ, 'к', 'Колено опухло после вчерашней тренировки и болит даже в покое', 'врач отёк'],
+  [ЗАЛ, 'з', 'Не выспался, спал 4 часа, а сегодня зал', 'сон'],
+  [ЗАЛ, 'к', 'Побаливает плечо в суставе, когда жму лёжа', 'шкала']
 ];
 
 const предл = t => String(t || '').split(/[.!?…]+(?:\s|$)/).map(x => x.trim()).filter(x => x.length > 2).length;
@@ -141,6 +146,12 @@ function оценить(в, о){
   if (н.includes('разм')) оц.разминка = /40\s*%/.test(r) && /80\s*%/.test(r);
   if (н.includes('колени')) оц.колени = /(можно|могут|нормально|допустимо)/i.test(r) && !/не должны выходить/i.test(r);
   if (н.includes('шаги')) оц.шаги = /\d[\d\s]*000|тысяч/.test(r) && /(не прибавля|не добавля|не учитыва|уже учтен|уже учтён)/i.test(r);
+  /* 25.09, самочувствие и боль: кнопки под ответом — поле act */
+  const act = (о && Array.isArray(о.act)) ? о.act : [];
+  if (н.includes('боль7')) оц.боль = act.some(a => a.k === 'hurt' || a.k === 'pick') && /мешает сустав|замен/i.test(r) && !/(ибупрофен|диклофенак|нимесулид|мазь)/i.test(r);
+  if (н.includes('отёк')) оц.отёк = !act.length && /врач/i.test(r);
+  if (н.includes('сон')) оц.облегчить = act.some(a => a.k === 'easy') && /облегч|подход меньше/i.test(r);
+  if (н.includes('шкала')) оц.шкала = act.some(a => a.k === 'pain') || /от\s*0\s*до\s*10/i.test(r);
   if (н.includes('быт')) оц.быт = !!(о && о.byt && о.byt.byt && о.byt.byt.family === 4);
   /* голод, кето, дозы: в правилах работы под это нет — чужой не подставлять */
   if (н.includes('стоп') || н.includes('доз')) оц.безЧужих = !(src && src.length);
@@ -157,6 +168,8 @@ async function засеять(){
     await З('/meal/add', { uid: ГРП, date: дн(d), kind, text, kcal: text === text0 ? kcal : 600, prot, fat: Math.round(kcal / 30), carb: Math.round(kcal / 9) });
   }
   await З('/s', { uid: ЗАЛ, key: 'me', data: { me: { sex: 'm', age: 34, ht: 178, bw: 88, only: 'all', wt: 'down', gym: 'muscle', level: 'mid', place: 'gym', min: 60 } } });
+  /* зал каждый день — чтобы «Облегчить сегодня» было к чему прикладывать (25.09) */
+  await З('/s', { uid: ЗАЛ, key: 'sched', data: { s: { 0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1 }, p: 'shp', at: new Date().toISOString() } });
   await З('/s', { uid: ДИА, key: 'me', data: { me: { sex: 'f', age: 55, ht: 162, bw: 80, only: 'food', wt: 'down', gym: 'health',
     med: { dia: 't2', ins: 1, low: 1, met: 1, bp: 1, at: Date.now() } } } });
   let k = 1;
@@ -181,7 +194,7 @@ function отчёт(МЕТКА, итог, файл){
 }
 if (process.argv[2] === '--оценить') {
   const файл = process.argv[3].replace(/\.json$/, ''), д = JSON.parse(fs.readFileSync(файл + '.json', 'utf8'));
-  const итог = д.итог.map(x => { if (!x.n) return x; const { оц, предл: n } = оценить(В[x.n - 1], { reply: x.reply, src: x.src, menu: x.menu, byt: x.byt }); return Object.assign({}, x, { оц, предл: n }); });
+  const итог = д.итог.map(x => { if (!x.n) return x; const { оц, предл: n } = оценить(В[x.n - 1], { reply: x.reply, src: x.src, menu: x.menu, byt: x.byt, act: x.act }); return Object.assign({}, x, { оц, предл: n }); });
   отчёт(д.метка, итог, файл); process.exit(0);
 }
 (async () => {
@@ -198,7 +211,7 @@ if (process.argv[2] === '--оценить') {
     const о = await З('/food', { uid: в[0], text: в[2] });
     const { оц, предл: n } = оценить(в, о);
     итог.push({ n: i + 1, uid: в[0], тип: в[1], q: в[2], reply: (о && о.reply) || ('ОШИБКА ' + JSON.stringify(о).slice(0, 200)),
-      src: (о && о.src) || null, намерение: (о && о.намерение) || null, menu: (о && о.menu) || null, byt: (о && о.byt) || null, предл: n, оц, мс: Date.now() - t0 });
+      src: (о && о.src) || null, намерение: (о && о.намерение) || null, menu: (о && о.menu) || null, byt: (о && о.byt) || null, act: (о && о.act) || null, предл: n, оц, мс: Date.now() - t0 });
     const знаки = Object.entries(оц).map(([k, v]) => (v ? '✓' : '✗') + k).join(' ');
     console.log(String(i + 1).padStart(2) + '. ' + в[2].slice(0, 46).padEnd(46) + ' ' + знаки);
   }
