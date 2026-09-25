@@ -77,6 +77,31 @@ const еда = async page => {
   дано(!!ч && (+ч[2] + +ч[3] - +ч[4]) === +ч[1], 'и сходится: ' + (ч ? ч[2] + ' + ' + ч[3] + ' − ' + ч[4] + ' = ' + ч[1] : '—'));
   await p3.close();
 
+  /* ── 5. спорт по плану — тоже по факту (25.09, его выбор «как зал») ──
+     Утром 2100 уже держали несыгранный теннис; если игра срывалась, а «Не
+     было» не нажато, день съедал лишнее. Теперь план не слагаемое, а обещание
+     с числом; карточка в зале говорит «после «Было»». */
+  const ТЕН = [{ kind: 'теннис', min: 90, intensity: 'mod', kcal: 640, plan: 1 }];
+  const p4 = await br.newPage({ viewport: { width: 390, height: 900 } });
+  await p4.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+  await M.поднять(p4, { theme: 'dark', wait: 2600, todayPlan: ТЕН, day: { gymPlan: false, plan: ТЕН,
+    targets: { kcal: 2050, prot: 160, fib: 30,
+      parts: { base: 2270, gym: 270, acts: 0, plan: 0, delta: -490, floor: 0, k: 1,
+               gymMin: 45, gymSets: 18, gymMet: 5, gymTempo: 'плотный' } } } });
+  const карточка = await p4.$eval('#planbox', e => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
+  дано(/\+640 ккал к норме после «Было»/.test(карточка), 'карточка тенниса: прибавка — после «Было»: ' + карточка.slice(0, 70));
+  const тен = await еда(p4);
+  дано(/теннис по плану добавит \+640 ккал, когда отметишь «Было»/.test(тен), 'в раскладке — обещание с числом: ' + (тен.match(/теннис[^<]*/) || ['—'])[0].slice(0, 70));
+  дано(!/\+ теннис по плану/.test(тен) && /норма 2050 = база 2270 \+ зал 270 − 490/.test(тен), 'а слагаемым теннис не стоит, сумма сходится без него');
+  await p4.close();
+  const p5 = await br.newPage({ viewport: { width: 390, height: 900 } });
+  await p5.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+  await M.поднять(p5, { theme: 'dark', wait: 2600, day: { gymPlan: false, plan: ТЕН,
+    targets: { kcal: 1800, prot: 160, fib: 30, parts: { base: 2270, gym: 0, acts: 0, plan: 0, delta: -470, floor: 0, k: 1 } } } });
+  const толькоПлан = await еда(p5);
+  дано(/норма 1800 = база 2270 − 470 по цели/.test(толькоПлан) && /добавит \+640/.test(толькоПлан), 'день без зала: раскладка и обещание тоже видны: ' + толькоПлан.slice(0, 60));
+  await p5.close();
+
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);

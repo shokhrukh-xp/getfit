@@ -5489,7 +5489,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.09 08:13';
+var BUILD = '25.09 08:30';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -12159,7 +12159,7 @@ function spДни(){
   var раньше=(было&&было.d||[]).slice().sort(function(a,b){ return a-b; }).join(',');
   var n=document.getElementById('sp-dayn');
   if(n) n.textContent = SPORT.days.length
-    ? 'В эти дни занятие встанет в норму еды само — останется отметить «Было».'
+    ? 'В эти дни появится карточка — нажмёшь «Было», и занятие встанет в норму еды.'
     : (было ? 'Дни сняты — повторение уберётся.' : '');
   var s=document.getElementById('sp-save');
   if(s && !spBusy) s.textContent = SPORT.days.length ? 'Записать и повторять' : 'Записать';
@@ -12181,7 +12181,8 @@ function renderPlanBox(){
   if(!pl.length){ el.hidden=true; el.innerHTML=''; return; }
   el.hidden=false;
   el.innerHTML=pl.map(function(p){
-    return '<div class="planc"><b>'+esc(p.kind.charAt(0).toUpperCase()+p.kind.slice(1))+' сегодня</b><i>'+p.min+' мин по плану · +'+Math.round(p.kcal)+' ккал к норме еды</i>'+
+    /* 25.09, его выбор «как зал — по факту»: до «Было» план в норме не сидит */
+    return '<div class="planc"><b>'+esc(p.kind.charAt(0).toUpperCase()+p.kind.slice(1))+' сегодня</b><i>'+p.min+' мин по плану · +'+Math.round(p.kcal)+' ккал к норме после «Было»</i>'+
       '<div class="rb"><button type="button" class="go" data-plan="do" data-k="'+esc(p.kind)+'" data-m="'+p.min+'" data-i="'+esc(p.intensity||'mod')+'">Было</button>'+
       '<button type="button" data-plan="no" data-k="'+esc(p.kind)+'">Не было</button></div></div>';
   }).join('');
@@ -12213,6 +12214,10 @@ function renderFoodDay(){
      их сумма плюс дефицит даёт ровно норму. Личная поправка сидит внутри
      слагаемых — отдельным множителем в строке она бы ломала сложение. */
   var состав='';
+  /* 25.09: спорт по плану — тоже по факту; пока «Было» не нажато, говорим,
+     сколько он добавит, чтобы рост нормы вечером не был загадкой */
+  var пл=(d.plan||[]), планК=пл.reduce(function(a,p){ return a+(+p.kcal||0); },0);
+  var планСлово = пл.length ? ((пл.length===1 ? пл[0].kind : 'спорт')+' по плану добавит +'+Math.round(планК)+' ккал, когда отметишь «Было»') : '';
   /* 18.09: зал входит в норму по факту, а не по расписанию. Пока тренировки
      нет, слагаемого «зал» нет тоже — и это надо сказать, иначе норма молча
      подрастёт в середине дня и человек снова спросит почему. */
@@ -12220,7 +12225,8 @@ function renderFoodDay(){
     состав='<p class="fparts">норма '+t.kcal+' = база '+Math.round(pr.base)+
       (pr.acts?' + спорт '+pr.acts:'')+(pr.plan?' + спорт по плану '+pr.plan:'')+
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
-      '<br>сегодня день зала — он войдёт в норму после тренировки, по её минутам и темпу</p>';
+      '<br>сегодня день зала — он войдёт в норму после тренировки, по её минутам и темпу'+
+      (планСлово?'<br>'+планСлово:'')+'</p>';
   }
   else if(pr && (pr.gym||pr.acts||pr.plan)){
     var части=['база '+Math.round(pr.base)];
@@ -12246,7 +12252,13 @@ function renderFoodDay(){
          Вид пола сервер по-прежнему присылает в t.floorWhy. */
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
       (pr.gym&&зал?'<br>'+зал:'')+
-      (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+'</p>';
+      (pr.k&&pr.k!==1?'<br>в тратах учтена поправка по твоим весам ×'+String(pr.k).replace('.',','):'')+
+      (планСлово?'<br>'+планСлово:'')+'</p>';
+  }
+  else if(pr && планСлово){
+    состав='<p class="fparts">норма '+t.kcal+' = база '+Math.round(pr.base)+
+      (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
+      '<br>'+планСлово+'</p>';
   }
   box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
     fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot') +

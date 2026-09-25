@@ -24,7 +24,7 @@ function день(o) {
   ];
   const сумма = k => приёмы.reduce((s, m) => s + (+m[k] || 0), 0);
   return {
-    date: o.date || TODAY, meals: приёмы, acts: o.acts || [],
+    date: o.date || TODAY, meals: приёмы, acts: o.acts || [], plan: o.plan || [],
     kcal: o.kcal !== undefined ? o.kcal : сумма('kcal'),
     prot: o.prot !== undefined ? o.prot : сумма('prot'),
     fat: o.fat || 48, fib: o.fib || 17, sug: o.sug || 32,
@@ -392,7 +392,7 @@ async function поднять(page, o) {
        o.aiDelay — задержка ответа: без неё состояние «собираю» не поймать. */
     if (p === '/reco') return дать({ ok: true, reco: o.reco || null, auto: [],
       rebuild: o.rebuild || null, rebuild_offer: o.rbo || null, plan: null, byt: o.bytSrv || null,
-      build: o.srvBuild || null, today: { date: TODAY, plan: [] } });
+      build: o.srvBuild || null, today: { date: TODAY, plan: o.todayPlan || [] } });
     /* 24.09: метка сборки для автообновления; по умолчанию — не знаем */
     if (p === '/build') return дать({ ok: true, build: o.srvBuild || null });
     if (p === '/ai') {
