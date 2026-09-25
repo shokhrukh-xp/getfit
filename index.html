@@ -4929,7 +4929,13 @@ function menuДата(iso){ var d=new Date(iso+'T12:00:00'); return WD[d.getDay(
 function menuПриём(x, span, m){
   var key=span+':'+x.id, r=MENUREC[key]||((m&&m.рецепты)||{})[x.id];
   var состав=(x.items||[]).filter(function(i){return i.g;}).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.g+' г'; }).join(' · ');
-  var рец = (r && r.шаги)
+  /* 25.09, его слова: «некоторые рецепты просто говорят возьми готовую еду
+     и разогрей — это же глупо писать как рецепт». Всё готовое (куплено или
+     едят как есть) — кнопки «Рецепт» нет (его выбор из трёх). Меню до 25.09
+     пометок не знает: там сервер скажет «готовое» по нажатию. */
+  var рец = (x.готовое || (r && r.готовое))
+    ? '<p class="msost mgot">Готовить не нужно</p>'
+    : (r && r.шаги)
     ? '<ol class="mrec">'+r.шаги.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ol>'+
       (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
       (r.совет ? '<p class="msost">'+esc(r.совет)+'</p>' : '')
@@ -5574,7 +5580,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.09 09:22';
+var BUILD = '25.09 21:10';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
