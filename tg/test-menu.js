@@ -29,7 +29,10 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   const о = { theme: 'dark', wait: 2400, page: 'eat', menuDelay: 700, menu: { завтра: ЗАВТРА },
     /* часы стенда стоят на сегодняшнем утре — метка тренера должна быть раньше */
     bytSrv: { byt: { family: 3, home: 'рис, яйца' }, at: Date.now() - 2 * 864e5 },
-    onMenu: route => { о.просили = JSON.parse(route.request().postData() || '{}'); return о.просили.span === 'week' ? Object.assign({}, МЕНЮ, { span: 'week' }) : МЕНЮ; },
+    onMenu: route => { const б = JSON.parse(route.request().postData() || '{}');
+      /* «Сегодня» собирает само при входе (25.09) — его проверяет test-segodnya */
+      if (б.span === 'today') { о.сегодня = (о.сегодня || 0) + 1; return { ok: false, нет: 'на стенде меню на сегодня нет' }; }
+      о.просили = б; return б.span === 'week' ? Object.assign({}, МЕНЮ, { span: 'week' }) : МЕНЮ; },
     onRecipe: () => ({ ok: true, id: 'b4', семья: 2, мин: 30, шаги: ['Натри грудку специями.', 'Запеки 25 минут при 200°.', 'Отвари гречку.'], совет: 'Масло не нужно.',
       состав: [{ name: 'Куриная грудка запечённая', g: 220, наСемью: 440 }] }),
     onCoach: () => ({ ok: true, reply: 'Соберу меню на неделю из твоих блюд.', menu: 'week' }) };
@@ -37,8 +40,11 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   await page.waitForTimeout(500);
   const сег = await page.$$eval('#eatbody .eseg button', bs => bs.map(b => b.textContent + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')));
-  дано(сег.join(',') === 'Сейчас*,Завтра,Неделя,Покупки', 'переключатель: ' + сег.join(','));
-  дано(!!(await page.$('#eatbody #fpod')), '«Сейчас» — прежний экран подбора');
+  дано(сег.join(',') === 'Сегодня*,Завтра,Неделя,Покупки', 'переключатель: ' + сег.join(','));
+  дано(о.сегодня === 1, '«Сегодня» само попросило меню на остаток дня — один раз');
+  дано(!!(await page.$('#eatbody #catopen')) && !(await page.$('#eatbody #fpod')), 'каталог с подбором — под кнопкой');
+  await page.click('#eatbody #catopen'); await page.waitForTimeout(300);
+  дано(!!(await page.$('#eatbody #fpod')) && !!(await page.$('#eatbody .eatrow')), 'по кнопке — прежний подбор и каталог');
 
   await page.click('#eatbody [data-eseg="day"]'); await page.waitForTimeout(300);
   дано(/Меню на завтра — из того, что ты обычно ешь/.test(await page.textContent('#eatbody')), 'меню ещё нет — объяснено, что это будет');

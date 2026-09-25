@@ -26,6 +26,9 @@ async function вкладка(page) {
   for (const b of await page.$$('#fseg-food button'))
     if ((await b.textContent()).trim() === 'Что съесть') { await b.click(); break; }
   await page.waitForTimeout(1200);
+  /* 25.09: подбор и каталог — под кнопкой во вкладке «Сегодня» */
+  const к = await page.$('#eatbody #catopen');
+  if (к && (await к.getAttribute('aria-expanded')) !== 'true') { await к.click(); await page.waitForTimeout(400); }
 }
 
 (async () => {

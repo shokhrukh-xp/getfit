@@ -1156,6 +1156,13 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .mnote{font-size:13px;color:var(--muted);margin:6px 0 2px;line-height:1.45}
 .mwarn{font-size:12.5px;color:var(--warn-txt);margin:4px 0;line-height:1.45}
 .mnrow{padding:10px 0;border-top:1px solid var(--line-soft)}
+/* 25.09: меню на остаток дня — съеденное приглушено, каталог под кнопкой */
+.mnrow.mdone{opacity:.55}
+.catopen{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;margin:18px 0 10px;padding:10px 14px;
+  border:1px solid var(--line);border-radius:12px;background:var(--card-2);font:inherit;color:var(--text);text-align:left}
+.catopen b{display:block;font-size:14.5px;font-weight:600}
+.catopen s{display:block;text-decoration:none;font-size:12px;color:var(--dim);margin-top:2px}
+.catopen i{font-style:normal;color:var(--dim);font-size:18px}
 .mhd{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
 .mtx{font-size:14.5px;line-height:1.45;margin-top:3px;color:var(--text)}
 .msost{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.45}
@@ -4878,7 +4885,10 @@ function readMeForm(){
    норма дня, подгонка порций, покупки в сырых весах — считает сервер,
    здесь только показ. Отметки в списке покупок — в этом телефоне. */
 var EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='';
-var ESEG=[['now','Сейчас'],['day','Завтра'],['week','Неделя'],['buy','Покупки']];
+/* 25.09, его выбор (vybor-13-segodnya.png, «Б»): «Сейчас» → «Сегодня» — меню на
+   остаток дня сверху, каталог под кнопкой. Ключ 'now' оставлен: на него
+   ссылаются чат и проверки. */
+var ESEG=[['now','Сегодня'],['day','Завтра'],['week','Неделя'],['buy','Покупки']];
 function eatSegHTML(){
   return '<div class="eseg">'+ESEG.map(function(x){
     return '<button type="button" data-eseg="'+x[0]+'" aria-pressed="'+(EATSEG===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
@@ -4899,7 +4909,7 @@ function menuСобрать(span){
   MENUBUSY=span; MENUERR=''; renderEat();
   fPost('/menu', {uid:syncUid(), span:span}).then(function(d){
     if(!d || !d.ok){ MENUERR=(d&&d.нет)||'Меню не сложилось — попробуй ещё раз.'; haptic('err'); return; }
-    MENU=MENU||{}; MENU[span==='week'?'week':'day']=d; if(!MENU.завтра) MENU.завтра=d.from; MENUREC={};
+    MENU=MENU||{}; MENU[span==='week'?'week':span==='today'?'today':'day']=d; if(span!=='today' && !MENU.завтра) MENU.завтра=d.from; MENUREC={};
     haptic('ok');
   }).catch(function(e){ MENUERR=humanErr(e); haptic('err'); })
   .then(function(){ MENUBUSY=''; renderEat(); });
@@ -4937,6 +4947,78 @@ function menuДень(д, span, m){
     (д.белокМало?'<p class="mwarn">Белка не хватает '+д.белокМало+' г — добери перекусом.</p>':'')+
     д.приёмы.map(function(x){ return menuПриём(x, span, m); }).join('');
 }
+/* ══════════ МЕНЮ НА ОСТАТОК ДНЯ ══════════
+   25.09, его вопрос: «на завтра предложение есть, а на сегодня нет». Его
+   выбор: только приёмы впереди, под то, что осталось от нормы; пересобирать
+   целиком после каждой записи и смены нормы (зал, «Было» у тенниса).
+   Сервер отдаёт подпись дня (sig): дата, норма, съеденное, число записей и
+   окно часов. Разошлась с нашим днём — просим собрать заново, один раз на
+   подпись: если сервер видит день иначе, круга запросов не будет. */
+var MENUTRY='', CATSHOW=false;
+function меню_окно(ч){ return ч<11?0:ч<16?1:2; }
+function деньСегодня(){
+  if(FOOD.day && FOOD.day.date===TODAY) return FOOD.day;
+  if(HOME.day && HOME.day.date===TODAY) return HOME.day;
+  return null;
+}
+function подписьДня(d){
+  var ч=+new Date().toLocaleString('en-GB',{timeZone:'Asia/Tashkent', hour:'2-digit', hour12:false});
+  return [d.date, Math.round(+((d.targets||{}).kcal)||0), Math.round(+d.kcal||0), (d.meals||[]).length, меню_окно(ч%24)].join('|');
+}
+function сегодняСвежее(){ return (MENU && MENU.today && MENU.today.date===TODAY) ? MENU.today : null; }
+/* фон=true — после записи еды или смены нормы: только если меню на сегодня
+   уже есть (человек им пользуется); открытая вкладка собирает и с нуля */
+var ДЕНЬЖДЁМ=false;
+function сегодняПроверить(фон){
+  if(!MENU || MENUBUSY) return;
+  var d=деньСегодня();
+  /* вкладку открыли раньше, чем пришёл день (сразу на «Еде» или по кнопке из
+     разговора) — сначала день, потом сверка */
+  if(!d){
+    if(фон || ДЕНЬЖДЁМ) return; ДЕНЬЖДЁМ=true;
+    fGet('/day?uid='+encodeURIComponent(syncUid())+'&date='+TODAY).then(function(x){
+      if(x && x.day && x.day.date===TODAY){ HOME.day=x.day; homeSave(); сегодняПроверить(false); } })
+      .catch(function(){}).then(function(){ ДЕНЬЖДЁМ=false; });
+    return;
+  }
+  if(!((d.targets||{}).kcal>0)) return;
+  var sig=подписьДня(d), m=сегодняСвежее();
+  if(m && m.sig===sig) return;
+  if(фон && !m) return;
+  if(MENUTRY===sig) return;
+  MENUTRY=sig; menuСобрать('today');
+}
+function сегодняHTML(){
+  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  var m=сегодняСвежее(), занят=MENUBUSY==='today', h='';
+  var точки='<span class="dots"><i></i><i></i><i></i></span>';
+  if(!m){
+    if(занят) return '<p class="podall">Собираю меню на остаток дня из твоей же еды — секунд 20'+точки+'</p>';
+    return (MENUERR?'<p class="mwarn">'+esc(MENUERR)+'</p>':'')+
+      '<p class="podall">Меню на остаток дня — из того, что ты обычно ешь, с граммами под то, что осталось от нормы.</p>'+
+      '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="today">Собрать меню на сегодня</button></div>';
+  }
+  h+='<div class="mdh top"><b>Меню на остаток дня</b><span>'+menuДата(m.date)+'</span></div>';
+  if(занят) h+='<p class="mnote">Пересобираю под новый остаток — секунд 20'+точки+'</p>';
+  else if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
+  h+='<p class="mitog">Съедено '+m.съел.kcal+' из '+m.норма.kcal+' ккал · осталось '+m.ост.kcal+' ккал и '+m.ост.prot+' г белка'+(m.зал?' · день зала':'')+'</p>';
+  (m.съедено||[]).forEach(function(x){
+    h+='<div class="mnrow mdone"><div class="mhd"><span>'+esc(x.kind)+' · съедено</span><span>'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</span></div>'+
+       '<div class="msost">'+esc(x.text)+'</div></div>';
+  });
+  if(m.всё) h+='<p class="podall"><b>На сегодня всё.</b> Калории и белок закрыты — дальше только если правда голоден.</p>';
+  else {
+    var д=(m.дни||[])[0]||{приёмы:[]};
+    if(m.пусто) h+='<p class="mnote">Калории на сегодня кончились, а белка не хватает — вот самое постное из твоей еды.</p>';
+    else if(m.note) h+='<p class="mnote">'+esc(m.note)+'</p>';
+    if(д.белокМало) h+='<p class="mwarn">Белка не хватает '+д.белокМало+' г — добери перекусом.</p>';
+    h+=д.приёмы.map(function(x){ return menuПриём(x, 'today', m); }).join('');
+  }
+  h+='<p class="mnote">Пересоберу сам, когда запишешь еду или изменится норма.</p>';
+  if(!m.всё) h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="today">Другое меню</button>'+
+     '<button type="button" class="btn" data-msend="today:menu">'+(MENUSENT==='today:menu'?'Отправил ✓':'В Telegram')+'</button></div>';
+  return h;
+}
 function menuHTML(){
   if(EATSEG==='buy') return buyHTML();
   if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
@@ -4970,7 +5052,8 @@ function buyHTML(){
 }
 function menuКлик(e){
   var es=e.target.closest('[data-eseg]'); if(es){ EATSEG=es.dataset.eseg; MENUERR=''; renderEat(); haptic('light'); return true; }
-  var mg=e.target.closest('[data-mgen]'); if(mg){ menuСобрать(mg.dataset.mgen); haptic('light'); return true; }
+  var mg=e.target.closest('[data-mgen]');
+  if(mg){ if(mg.dataset.mgen==='today'){ var дс=деньСегодня(); MENUTRY=дс?подписьДня(дс):''; } menuСобрать(mg.dataset.mgen); haptic('light'); return true; }
   var mo=e.target.closest('[data-mgo]'); if(mo){ EATSEG=mo.dataset.mgo; if(!menuСвежее(EATSEG)) menuСобрать(EATSEG); else renderEat(); haptic('light'); return true; }
   var mr=e.target.closest('[data-mrec]'); if(mr){ menuРецепт(mr.dataset.mrec); haptic('light'); return true; }
   var ms=e.target.closest('[data-msend]'); if(ms){ menuОтправить(ms.dataset.msend); haptic('light'); return true; }
@@ -4981,8 +5064,10 @@ function menuКлик(e){
   return false;
 }
 /* из разговора: «составь меню» — кнопка под ответом открывает нужный вид */
-var ЧАТ_МЕНЮ={day:'Открыть меню на завтра ›', week:'Открыть меню на неделю ›', buy:'Открыть список покупок ›'};
+var ЧАТ_МЕНЮ={today:'Открыть меню на сегодня ›', day:'Открыть меню на завтра ›', week:'Открыть меню на неделю ›', buy:'Открыть список покупок ›'};
 function чатМенюОткрыть(v){
+  /* на сегодня вкладка собирает сама — открыть её и всё */
+  if(v==='today'){ EATSEG='now'; closeCoach(); goPage('eat'); return; }
   EATSEG=v; closeCoach(); goPage('eat');
   if(v!=='buy' && MENU && !menuСвежее(v)) menuСобрать(v);
   else if(v!=='buy' && !MENU){ fGet('/menu?uid='+encodeURIComponent(syncUid())).then(function(d){ MENU=(d&&d.ok)?d:{day:null,week:null}; if(!menuСвежее(v)) menuСобрать(v); else renderEat(); }).catch(function(){ MENU={day:null,week:null}; menuСобрать(v); }); }
@@ -5489,7 +5574,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.09 08:30';
+var BUILD = '25.09 09:22';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10976,6 +11061,8 @@ function освежить(day){
     if(day.date===TODAY){ HOME.day=day; homeSave(); }
     if(day.date===fDate()) FOOD.day=day;
   }
+  /* 25.09: меню на остаток дня пересобирается само, если оно уже есть */
+  try{ сегодняПроверить(true); }catch(e){}
   try{ renderFoodDay(); }catch(e){}
   homeDirty();
   clearTimeout(ОСВЕЖ);
@@ -10983,7 +11070,7 @@ function освежить(day){
     var u=encodeURIComponent(syncUid()), есть=day && day.date;
     if(!есть || day.date!==TODAY)
       fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; homeSave();
-        if(fDate()===TODAY){ FOOD.day=d.day; renderFoodDay(); } homeDirty(); } }).catch(function(){});
+        if(fDate()===TODAY){ FOOD.day=d.day; renderFoodDay(); } homeDirty(); try{ сегодняПроверить(true); }catch(e){} } }).catch(function(){});
     if(fDate()!==TODAY && (!есть || day.date!==fDate()))
       fGet('/day?uid='+u+'&date='+fDate()).then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
     fGet('/day/score?uid='+u+'&date='+TODAY).then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; homeSave();
@@ -11761,7 +11848,7 @@ function catПодтянуть(){
     if(!было || было.v!==d.v){ CAT=d; try{ localStorage.setItem('gf_dishes', JSON.stringify(d)); }catch(e){} renderEat(); }
   }).catch(function(){});
 }
-function openEat(){ if(!POD) podPull(); else renderEat(); catПодтянуть(); }
+function openEat(){ if(!POD) podPull(); else { renderEat(); podPull(); } catПодтянуть(); }
 /* Своя еда и база в одном списке. Своё сверху и подписано: человек должен
    видеть, где числа его собственные, а где подобранные. */
 function catБаза(){
@@ -11843,7 +11930,15 @@ function renderEat(){
   var box=document.getElementById('eatbody'); if(!box) return;
   /* 24.09, этап 2: Завтра / Неделя / Покупки — меню наперёд; «Сейчас» — как было */
   if(EATSEG!=='now'){ box.innerHTML=eatSegHTML()+menuHTML(); return; }
-  var h=eatSegHTML()+'<div id="fpod"></div>';
+  /* 25.09: меню на остаток дня сверху; каталог с подбором — под кнопкой.
+     Проверку свежести — после отрисовки: сборка сама перерисует вкладку. */
+  setTimeout(function(){ try{ сегодняПроверить(false); }catch(e){} }, 0);
+  var h=eatSegHTML()+сегодняHTML();
+  var всегоБлюд=CAT ? catБаза().length : 0;
+  h+='<button type="button" class="catopen" id="catopen" aria-expanded="'+CATSHOW+'"><span><b>Каталог блюд</b><s>'+
+     (всегоБлюд ? всегоБлюд+' '+plural(всегоБлюд,['блюдо','блюда','блюд'])+' · ' : '')+'цель приёма, фильтры по кухне и основе</s></span><i>'+(CATSHOW?'⌃':'›')+'</i></button>';
+  if(!CATSHOW){ box.innerHTML=h; return; }
+  h+='<div id="fpod"></div>';
   /* «Своё» было неточным словом: это не «сам приготовил», а прошлые записи —
      еда оттуда вполне могла быть из доставки или заведения. Его замечание
      17.09. Поэтому и «Где поесть» у таких строк теперь есть. */
@@ -11895,6 +11990,7 @@ function renderEat(){
    слушатель на него при загрузке — это обращение к null. Слушаем вкладку
    целиком, одним обработчиком на все её кнопки. */
 document.getElementById('eatbody').addEventListener('click', function(e){
+  if(e.target.closest('#catopen')){ CATSHOW=!CATSHOW; renderEat(); haptic('light'); return; }
   if(menuКлик(e)) return;
   var пр=e.target.closest('[data-podk]');
   if(пр){ PODK=пр.dataset.podk||''; CATOPEN='0'; renderEat(); haptic('light'); return; }
