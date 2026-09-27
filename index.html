@@ -63,6 +63,8 @@
   --field:rgba(20,30,45,.05);
   --track:rgba(20,30,45,.10);
   --corr:rgba(30,158,115,.14);
+  /* 27.09: жёлтая зона сахара — между ориентиром ВОЗ 5 % и потолком 10 % */
+  --mid:#B7791F;       --corr-mid:rgba(183,121,31,.16);
   --sleep:rgba(20,30,45,.055);
   --scrim:rgba(15,20,25,.32);
   --map-bg:#E6E9EE; --map-line:#FFFFFF; --map-line2:#C9CED6; --map-det:#98A1AC;
@@ -94,6 +96,7 @@
   --field:rgba(140,155,175,.10);
   --track:rgba(140,155,175,.18);
   --corr:rgba(95,227,179,.16);
+  --mid:#F2B84B;       --corr-mid:rgba(242,184,75,.16);
   --sleep:rgba(140,155,175,.10);
   --scrim:rgba(0,0,0,.6);
   --map-bg:#12161C; --map-line:#0A0C10; --map-line2:#2A313B; --map-det:#6B7684;
@@ -119,6 +122,7 @@
     --field:rgba(140,155,175,.10);
     --track:rgba(140,155,175,.18);
     --corr:rgba(95,227,179,.16);
+    --mid:#F2B84B; --corr-mid:rgba(242,184,75,.16);
     --sleep:rgba(140,155,175,.10);
     --scrim:rgba(0,0,0,.6);
     --map-bg:#12161C; --map-line:#0A0C10; --map-line2:#2A313B; --map-det:#6B7684;
@@ -1208,11 +1212,17 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   border:1px solid var(--line);background:var(--card-2);font:inherit;font-size:12px;color:var(--muted);text-align:left}
 .srcs button b{color:var(--text);font-weight:600}
 /* группы продуктов за неделю и риски (24.09, этап 2, его выбор «А + строка в Б») */
-.gx .grow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line-soft)}
+.gx .grow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 0;border-top:1px solid var(--line-soft);cursor:pointer}
 .gx .grow:first-child{border-top:0}
 .gx .grow b{font-size:14px;font-weight:600;color:var(--text)}
-.gx .grow span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
-.gx .grow span.ok{color:var(--done-txt)} .gx .grow span.lo,.gx .grow span.hi{color:var(--warn-txt)}
+/* 27.09: строка раскрывается — что такое порция и из чего набралось */
+.gx .grow b::after{content:"▼";font-size:8px;opacity:.5;margin-left:6px;vertical-align:1px}
+.gx .grow.gon b::after{content:"▲"}
+.gx .grow>span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.gx .grow>span.ok{color:var(--done-txt)} .gx .grow>span.lo,.gx .grow>span.hi{color:var(--warn-txt)}
+.gx .grow .gpor{grid-column:1/-1;margin:8px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.gx .grow .fbsplit{grid-column:1/-1}
+.gx .gbar .gcor{position:absolute;top:0;bottom:0;background:var(--corr)}
 .gx .gbar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--card-2);overflow:hidden;position:relative;margin-top:4px}
 .gx .gbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--accent)}
 .gx .gbar i.ok{background:var(--done)} .gx .gbar i.hi{background:var(--warn)}
@@ -2220,6 +2230,7 @@ body.onb #picker .modalbox::before{display:none}
 .htr .hdot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--text);border:3px solid var(--bg);
   transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--accent);transition:left .6s cubic-bezier(.32,.72,0,1)}
 .htr .hdot.hf-ok{box-shadow:0 0 0 1px var(--done)} .htr .hdot.hf-over{box-shadow:0 0 0 1px var(--warn)}
+.htr .hfill.hf-more{background:var(--dim)} .htr .hdot.hf-more{box-shadow:0 0 0 1px var(--dim)}
 .htr.rest{background:repeating-linear-gradient(90deg,var(--track) 0 6px,transparent 6px 10px)}
 .hwrap .fask{margin:0}
 .hwrap .freply{margin-top:10px}
@@ -2300,6 +2311,13 @@ body.onb #picker .modalbox::before{display:none}
 .fbar .tr .fdot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--text);border:3px solid var(--bg);
   transform:translate(-50%,-50%);box-shadow:0 0 0 1px var(--accent)}
 .fbar .tr .fdot.fb-done{box-shadow:0 0 0 1px var(--done)} .fbar .tr .fdot.fb-over{box-shadow:0 0 0 1px var(--warn)}
+/* 27.09: коридор у каждой шкалы. «Больше нужного» у белка и клетчатки —
+   серым (не ошибка, но и пользы нет), жёлтая зона сахара — между 5 и 10 % */
+.fbar .tr i.fb-more{background:var(--dim)} .fbar .tr .fdot.fb-more{box-shadow:0 0 0 1px var(--dim)}
+.fbar .tr i.fb-mid{background:var(--mid)} .fbar .tr .fdot.fb-mid{box-shadow:0 0 0 1px var(--mid)}
+.fbar .tr .fcor.fcor0::before{display:none}
+.fbar .tr .fcor.fmid{background:var(--corr-mid)}
+.fbar .tr .fcor.fmid::before{display:none} .fbar .tr .fcor.fmid::after{background:var(--mid)}
 .fbsplit{margin-top:6px;padding-top:10px;border-top:1px solid var(--line-soft)}
 .fbsplit .fbn{font-size:13px} .fbsplit .fbv{font-size:13px;font-weight:600}
 .fparts{font-size:12px;margin-top:2px}
@@ -5580,7 +5598,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.09 21:10';
+var BUILD = '27.09 19:20';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10080,15 +10098,22 @@ function homeAct(){
    Не кольцо (это Apple) и не полоса «до 100 %», а дорожка, на которой видно
    саму норму: у калорий — зелёный коридор ±10 %, у белка — засечка «от
    нормы», у зала — доля подходов. Точка — где ты сейчас. */
-function htrack(v, t, mode){
+function htrack(v, t, mode, lo, hi, cap){
   if(!t) return '<div class="htr"></div>';
-  var max = mode==='sets' ? t : t*1.4, pos=Math.min(1, v/max)*100;
+  /* 27.09: коридор, как на «Еде»: калории от нижней границы плана (lo), белок
+     — от нормы до края hi; правее края — серое, при почках (cap) — красное */
+  if(mode==='range'){ lo = lo || t*0.9; hi = t*1.1; }
+  if(mode==='min') hi = hi>t ? hi : Math.round(t*1.25);
+  var max = mode==='sets' ? t : Math.max(t*1.4, mode==='min' ? hi*1.1 : 0), pos=Math.min(1, v/max)*100;
+  var P=function(x){ return (Math.min(1, x/max)*100); };
   /* .ok и .over без префикса — чужие: .ok — кнопка «подход сделан» 44 px, и при
      полной дорожке зала вместо линии вырастал зелёный блок (его скриншот 14:03) */
-  var cls = mode==='range' ? (v>t*1.1?'hf-over':(v>=t*0.9?'hf-ok':'')) : (v>=t?'hf-ok':'');
+  var cls = mode==='range' ? (v>hi?'hf-over':(v>=lo?'hf-ok':''))
+          : mode==='min'   ? (v>hi?(cap?'hf-over':'hf-more'):(v>=t?'hf-ok':''))
+          :                  (v>=t?'hf-ok':'');
   var h='<div class="htr">';
-  if(mode==='range') h+='<div class="hcor" style="left:'+(0.9/1.4*100).toFixed(1)+'%;width:'+(0.2/1.4*100).toFixed(1)+'%"></div>';
-  if(mode==='min') h+='<div class="hmin" style="left:'+(100/1.4).toFixed(1)+'%"></div>';
+  if(mode==='range') h+='<div class="hcor" style="left:'+P(lo).toFixed(1)+'%;width:'+(P(hi)-P(lo)).toFixed(1)+'%"></div>';
+  if(mode==='min') h+='<div class="hcor" style="left:'+P(t).toFixed(1)+'%;width:'+(P(hi)-P(t)).toFixed(1)+'%"></div>';
   h+='<div class="hfill '+cls+'" data-w="'+pos.toFixed(1)+'"></div><div class="hdot '+cls+'" data-l="'+pos.toFixed(1)+'"></div></div>';
   return h;
 }
@@ -10096,8 +10121,8 @@ function homeRows(){
   var d=HOME.day||{}, t=d.targets||{}, kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var pr=homeSess(homeDayKey());
   var h='<div class="hrows">'+
-    '<div class="hrow"><u>Калории</u>'+htrack(kc,t.kcal,'range')+'<b>'+kc+(t.kcal?' <s>/ '+t.kcal+'</s>':' <s>ккал</s>')+'</b></div>'+
-    '<div class="hrow"><u>Белок</u>'+htrack(pt,t.prot,'min')+'<b>'+pt+(t.prot?' <s>/ '+t.prot+' г</s>':' <s>г</s>')+'</b></div>';
+    '<div class="hrow"><u>Калории</u>'+htrack(kc,t.kcal,'range',(t.parts&&t.parts.floor)?t.kcal:null)+'<b>'+kc+(t.kcal?' <s>/ '+t.kcal+'</s>':' <s>ккал</s>')+'</b></div>'+
+    '<div class="hrow"><u>Белок</u>'+htrack(pt,t.prot,'min',null,t.protMax,!!t.protCap)+'<b>'+pt+(t.prot?' <s>/ '+t.prot+' г</s>':' <s>г</s>')+'</b></div>';
   /* зал — только когда сегодня есть что считать; в день отдыха и у тех, кто
      ведёт одну еду, строки зала на экране нет вовсе */
   if(pr.total && !foodOnly() && homeGymToday()) h+='<div class="hrow"><u>Зал</u>'+htrack(pr.done,pr.total,'sets')+'<b>'+pr.done+' <s>/ '+pr.total+' '+plural(pr.total,['подход','подхода','подходов'])+'</s></b></div>';
@@ -12037,27 +12062,46 @@ document.getElementById('eatbody').addEventListener('input', function(e){
    любая фактура на конце читается как «не дозаполнено». */
 /* ── дорожка-коридор: тот же знак, что на «Сегодня» ──
    Шкала не «до 100 %», а до 1,4 нормы: норма стоит на 71 %, и видно, что
-   после неё. range — коридор ±10 % (калории); min — засечка «от» (белок,
-   клетчатка); max — засечка «до» (сахар); band — коридор lo…hi (жир).
-   Точка — где ты сейчас. */
-function trackHtml(v, t, mode, lo){
+   после неё. Точка — где ты сейчас.
+   27.09, его вопрос: «тебе не кажется, что у каждой линии должен быть
+   зелёный коридор? или ты уверен, что у некоторых есть чёткая грань?»
+   Чёткой грани нет ни у одной нормы, и коридор теперь у каждой шкалы:
+   range — калории: ±10 %, а когда норма и есть нижняя граница плана (lo),
+     коридор начинается от неё — ниже плана зелёного нет;
+   min — белок, клетчатка: от нормы до края hi (сервер: белок — верх той
+     же полосы, по которой считан; клетчатка — 1,6 нормы); правее — серое
+     «пользы больше нет», не красное. Шкала тянется до 1,1 края;
+   band — жир (и белок при почках): lo…hi, перебор красный;
+   max — сахар: зелёное до ориентира ВОЗ 5 % (lo), жёлтое до потолка 10 %,
+     выше — красное. */
+function trackHtml(v, t, mode, lo, hi){
   if(!t) return '<div class="tr"></div>';
-  var max=t*1.4, pct=Math.min(100, v/max*100);
-  var cls = mode==='range' ? (v>t*1.1?'fb-over':(v>=t*0.9?'fb-done':''))
+  if(mode==='range'){ lo = lo || t*0.9; hi = t*1.1; }
+  if(mode==='min') hi = hi>t ? hi : Math.round(t*1.25);
+  if(mode==='max') lo = lo>0 && lo<t ? lo : Math.floor(t/2);
+  var max=Math.max(t*1.4, mode==='min' ? hi*1.1 : 0), pct=Math.min(100, v/max*100);
+  var P=function(x){ return Math.min(100, x/max*100); }, F=function(x){ return x.toFixed(1); };
+  var cor=function(a, b, c){ return '<em class="fcor'+(c?' '+c:'')+'" style="left:'+F(P(a))+'%;width:'+F(P(b)-P(a))+'%"></em>'; };
+  var cls = mode==='range' ? (v>hi?'fb-over':(v>=lo?'fb-done':''))
           : mode==='band'  ? (v>t?'fb-over':(v>=lo?'fb-done':''))
-          : mode==='max'   ? (v>t?'fb-over':'')
-          :                  (v>=t?'fb-done':'');
+          : mode==='max'   ? (v>t?'fb-over':(v>lo?'fb-mid':'fb-done'))
+          :                  (v>hi?'fb-more':(v>=t?'fb-done':''));
   var h='<div class="tr">';
-  if(mode==='range') h+='<em class="fcor" style="left:'+(0.9/1.4*100).toFixed(1)+'%;width:'+(0.2/1.4*100).toFixed(1)+'%"></em>';
-  if(mode==='band')  h+='<em class="fcor" style="left:'+(lo/max*100).toFixed(1)+'%;width:'+((t-lo)/max*100).toFixed(1)+'%"></em>';
-  if(mode==='min'||mode==='max') h+='<s class="fmk'+(mode==='max'?' fcap':'')+'" style="left:'+(100/1.4).toFixed(1)+'%"></s>';
+  if(mode==='range') h+=cor(lo, hi);
+  if(mode==='band')  h+=cor(lo, t);
+  if(mode==='min')   h+=cor(t, hi);
+  if(mode==='max')   h+=cor(0, lo, 'fcor0')+cor(lo, t, 'fmid');
   h+='<i class="'+cls+'" style="width:'+pct.toFixed(1)+'%"></i><span class="fdot '+cls+'" style="left:'+pct.toFixed(1)+'%"></span></div>';
   return h;
 }
-function fbar(label, v, t, unit, mode, key){
+function fbar(label, v, t, unit, mode, key, lo, hi){
+  var зн = !t ? ' <em>'+unit+'</em>'
+         : mode==='max' ? ' <em>/ до '+t+' '+unit+'</em>'
+         : (mode==='min' && hi>t) ? ' <em>/ '+t+'–'+hi+' '+unit+'</em>'
+         : ' <em>/ '+t+' '+unit+'</em>';
   return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
-         '<b>'+v+(t?' <em>'+(mode==='max'?'/ до ':'/ ')+t+' '+unit+'</em>':' <em>'+unit+'</em>')+'</b></div>'+
-         trackHtml(v, t, mode||'range')+fbOpenHtml(key)+'</div>';
+         '<b>'+v+зн+'</b></div>'+
+         trackHtml(v, t, mode||'range', lo, hi)+fbOpenHtml(key)+'</div>';
 }
 function fband(label, v, lo, hi, unit, key){
   if(!hi) return fbar(label, v, 0, unit, null, key);
@@ -12072,6 +12116,7 @@ function fband(label, v, lo, hi, unit, key){
    складываем и сортируем по вкладу — так сразу видно, кто съел норму.
    У записи без состава продуктом считается сам приём. */
 var FBOPEN=null;
+var FBWHY={};   /* 27.09: что значит коридор этой шкалы — строкой под раскрытым списком */
 var FBUNIT={kcal:'ккал',prot:'г белка',fat:'г жира',fib:'г клетчатки',sug:'г сахара в еде'};
 function fbTap(key){ return key ? ' fbtap'+(FBOPEN===key?' fbon':'') : ''; }
 function fbAttr(key){ return key ? ' data-fk="'+key+'" role="button" tabindex="0" aria-expanded="'+(FBOPEN===key?'true':'false')+'"' : ''; }
@@ -12098,7 +12143,8 @@ function fbNum(v){ return String(v>=10 ? Math.round(v) : Math.round(v*10)/10).re
 function fbOpenHtml(key){
   if(!key || FBOPEN!==key) return '';
   var s=fbSplit(key);
-  if(!s.rows.length) return '<p class="fbcap">Пока нечего разложить — за день нет записей.</p>';
+  var зачем = FBWHY[key] ? '<p class="fbcap">'+FBWHY[key]+'</p>' : '';
+  if(!s.rows.length) return '<p class="fbcap">Пока нечего разложить — за день нет записей.</p>'+зачем;
   var top=s.rows.slice(0,6), tail=s.rows.slice(6);
   var h=top.map(function(r){
     var pct=s.total?Math.round(r.v/s.total*100):0;
@@ -12115,7 +12161,7 @@ function fbOpenHtml(key){
     h+='<li class="fbrest"><span class="fbn">ещё '+tail.length+' '+plural(tail.length,['продукт','продукта','продуктов'])+'</span>'+
        '<span class="fbv">'+fbNum(rest)+'</span></li>';
   }
-  return '<ul class="fbsplit">'+h+'</ul><p class="fbcap">Сколько '+(FBUNIT[key]||'')+' дал каждый продукт за день.</p>';
+  return '<ul class="fbsplit">'+h+'</ul><p class="fbcap">Сколько '+(FBUNIT[key]||'')+' дал каждый продукт за день.</p>'+зачем;
 }
 /* ══ регулярный спорт вне зала ══
    Жена: «Я добавила в профиль про теннис, но ты его не учёл, мне пришлось
@@ -12362,11 +12408,26 @@ function renderFoodDay(){
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
       '<br>'+планСлово+'</p>';
   }
-  box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal') +
-    fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot') +
+  /* 27.09: края коридоров приходят с сервера (protMax, fibMax, sugIdeal);
+     у старых дней их нет — берём тот же запас, что считает сервер */
+  var r5=function(x){ return Math.round(x/5)*5; };
+  var калНиз = (pr && pr.floor && t.kcal) ? t.kcal : null;
+  var белВерх = t.protMax || (t.prot ? r5(t.prot*1.25) : null), белКрай = !!(t.protCap && t.protMax);
+  var клВерх = t.fibMax || (t.fib ? r5(t.fib*1.6) : null);
+  var сахОр = t.sugIdeal || (t.sug ? Math.floor(t.sug/2) : null);
+  FBWHY = {
+    kcal: t.kcal ? (калНиз ? 'Коридор — '+t.kcal+'–'+Math.round(t.kcal*1.1)+' ккал: '+t.kcal+' — нижняя граница плана, ниже неё зелёного нет.'
+                           : 'Коридор — ±10 % от нормы: '+Math.round(t.kcal*0.9)+'–'+Math.round(t.kcal*1.1)+' ккал.') : '',
+    prot: t.prot ? (белКрай ? 'Коридор — '+t.prot+'–'+t.protMax+' г: при почках больше — тоже плохо.'
+                            : 'Коридор — '+t.prot+'–'+белВерх+' г. Больше — не ошибка, но и пользы для мышц уже нет: дальше полоса серая.') : '',
+    fib: t.fib ? 'Коридор — '+t.fib+'–'+клВерх+' г. Больше — не вредно, дальше полоса серая.' : '',
+    sug: t.sug ? 'Зелёное — до '+сахОр+' г (5 % калорий, ориентир ВОЗ), жёлтое — до '+t.sug+' г (10 %, потолок), выше — красное.' : ''
+  };
+  box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+    (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
-    fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib') +
-    (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug') : '') + состав +
+    fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
+    (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
     closeHtml();
   /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:
@@ -12412,19 +12473,36 @@ document.getElementById('fday').addEventListener('click', function(e){
    под неделей — пять строк с чертой ориентира и карточки рисков; над меню
    недели — строка «в этом меню». Считает сервер (/week → группы), здесь
    только вид. Флаг — еда и анализ у врача; доз добавок нет нигде. */
+var GROPEN=null;   /* 27.09: раскрытая строка «Разнообразия недели» */
 function renderGroups(){
   var hd=document.getElementById('grph'), b=document.getElementById('grpg'); if(!b) return;
   var гр=FOOD&&FOOD.week&&FOOD.week.группы;
   if(!гр || !гр.дней || !Array.isArray(гр.строки)){ hd.hidden=true; b.hidden=true; b.innerHTML=''; return; }
   hd.hidden=false; b.hidden=false;
+  /* 27.09, его вопрос: «почему у некоторых „раз“, у других „порция“, у
+     остальных граммы? Нельзя это всё одинаково и понятнее описать?» Его
+     выбор — «всё за неделю»: у всех строк порции за неделю, запись как у
+     шкал дня («1,5 / 3 порции», «10 / до 5 порций»). Черта ориентира — в
+     одной точке у всех строк (71 %, как у шкал дня), и у каждой зелёная
+     зона: у «от» — правее черты, у «до» — левее. Нажатие раскрывает строку:
+     что такое порция и какие продукты её набрали. */
   var h='<div class="gx">'+гр.строки.map(function(r){
-    var мх = !r.из ? Math.max(1,r.v)*1.25 : (r.max ? Math.max(r.из*1.6, r.v*1.05) : Math.max(r.из*1.25, r.v));
+    var мх = r.из ? r.из*1.4 : Math.max(4.2, r.v*1.05);
     var w=Math.min(100, Math.round(r.v/мх*1000)/10), м=r.из ? Math.round(r.из/мх*1000)/10 : null;
-    return '<div class="grow" data-g="'+esc(r.k)+'"><b>'+esc(r.t)+'</b><span class="'+esc(r.st||'')+'">'+esc(r.txt)+'</span>'+
-      '<div class="gbar"><i class="'+esc(r.st||'')+'" style="width:'+w+'%"></i>'+(м!=null?'<s style="left:'+м+'%"></s>':'')+'</div></div>';
+    var зона = м==null ? '' : r.max ? '<em class="gcor" style="left:0;width:'+м+'%"></em>' : '<em class="gcor" style="left:'+м+'%;right:0"></em>';
+    var откр = GROPEN===r.k, из=r.изЧего||[], всего=из.reduce(function(a,x){ return a+(+x.п||0); },0);
+    var раскрыто = !откр ? '' : (r.порция ? '<p class="gpor">'+esc(r.порция)+'</p>' : '') +
+      (из.length ? '<ul class="fbsplit">'+из.map(function(x){
+          return '<li><span class="fbn">'+esc(x.н)+'</span><span class="fbv">'+fbNum(+x.п||0)+'</span>'+
+                 '<span class="fbp"><i style="width:'+Math.max(2, Math.round((+x.п||0)/(всего||1)*100))+'%"></i></span></li>';
+        }).join('')+'</ul><p class="gpor">Порций за неделю от каждого продукта.</p>'
+        : '<p class="gpor">За эту неделю в дневнике — ни одной порции.</p>');
+    return '<div class="grow'+(откр?' gon':'')+'" data-g="'+esc(r.k)+'" role="button" tabindex="0" aria-expanded="'+(откр?'true':'false')+'">'+
+      '<b>'+esc(r.t)+'</b><span class="'+esc(r.st||'')+'">'+esc(r.txt)+'</span>'+
+      '<div class="gbar">'+зона+'<i class="'+esc(r.st||'')+'" style="width:'+w+'%"></i>'+(м!=null?'<s style="left:'+м+'%"></s>':'')+'</div>'+раскрыто+'</div>';
   }).join('')+
   '<p class="gnote">'+(гр.полных<5 ? 'Полных дней в дневнике '+гр.полных+' из 7 — судить о разнообразии рано. ' : 'По дневнику за 7 дней, полных '+гр.полных+'. ')+
-    'Черта — ориентир: рыба 2 раза, бобовые 3, овощи и фрукты 400 г в день, молочное 2 порции, красного мяса до 500 г.</p>'+источникиHTML(гр.src, true)+'</div>';
+    'Всё — в порциях за неделю; черта — ориентир, зелёное — где хорошо. Нажми на строку — покажу, что такое порция и из чего набралось.</p>'+источникиHTML(гр.src, true)+'</div>';
   h+=(гр.флаги||[]).map(function(f){
     return '<div class="gflag" data-flag="'+esc(f.k)+'"><h4>'+esc(f.h)+'</h4><p>'+esc(f.t)+'</p>'+(f.врач?'<p class="doc">'+esc(f.врач)+'</p>':'')+источникиHTML(f.src, true)+'</div>';
   }).join('');
@@ -12433,6 +12511,12 @@ function renderGroups(){
     x.addEventListener('click', function(){ haptic('light'); вебОткрыть(x.getAttribute('data-src')); });
   });
 }
+document.getElementById('grpg').addEventListener('click', function(e){
+  if(e.target.closest('.srcs') || e.target.closest('.fbsplit') || e.target.closest('.gflag')) return;
+  var r=e.target.closest('.grow[data-g]'); if(!r) return;
+  GROPEN = GROPEN===r.dataset.g ? null : r.dataset.g;
+  haptic('light'); renderGroups();
+});
 /* ── Шаги и сон (24.09, этап 3; его выбор — только скриншот) ──
    Тренер читает числа со скриншота «Здоровья», Samsung Health или Mi Fitness,
    сервер хранит их по дням и отдаёт в /week. Здесь — неделя строкой шагов и
@@ -12468,11 +12552,13 @@ document.addEventListener('click', function(e){
 /* строка над меню недели: что закрывает само меню */
 function грМенюHTML(g){
   if(!g || !(g.дней>=5)) return '';
-  var ч=[['рыба '+g.рыба+' '+plural(g.рыба,['раз','раза','раз']), g.рыба>=2], ['бобовые '+g.бобовые, g.бобовые>=3],
-    ['овощи и фрукты '+g.овощиФрукты+' г в день', g.овощиФрукты>=400], ['молочное '+String(g.молочное).replace('.',',')+' порции в день', g.молочное>=2],
-    ['красное мясо '+g.красное+' г', g.красное<=500]];
-  if(g.колбаса) ч.push(['колбасы '+g.колбаса+' г', false]);
-  return '<p class="gmenu">В этом меню: '+ч.map(function(x){ return x[1]?'<b>'+esc(x[0])+'</b>':esc(x[0]); }).join(' · ')+'</p>';
+  /* 27.09: в порциях за неделю, как «Разнообразие недели» (сервер считает) */
+  var п=function(x){ return String(x).replace('.',','); };
+  var ч=[['рыба '+п(g.рыба), g.рыба>=2], ['бобовые '+п(g.бобовые), g.бобовые>=3],
+    ['овощи и фрукты '+п(g.овощиФрукты), g.овощиФрукты>=35], ['молочное '+п(g.молочное), g.молочное>=14],
+    ['красное мясо '+п(g.красное), g.красное<=5]];
+  if(g.колбаса) ч.push(['колбасы '+п(g.колбаса), false]);
+  return '<p class="gmenu">В этом меню, порций за неделю: '+ч.map(function(x){ return x[1]?'<b>'+esc(x[0])+'</b>':esc(x[0]); }).join(' · ')+'</p>';
 }
 function renderFoodWeek(){
   var box=document.getElementById('fweek'), t=document.getElementById('fweekt'); if(!box) return;
