@@ -5627,7 +5627,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '30.09 14:59';
+var BUILD = '30.09 15:13';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10097,32 +10097,11 @@ function homeGymToday(){
   var lw=lastWorkout();
   return !!(lw && lw.date===TODAY) || !hasSched() || !!todayLetter();
 }
-function homeAct(){
-  var lw=lastWorkout(), закрыт=!!(lw && lw.date===TODAY);
-  var dk=homeDayKey(), d=DAYS[dk], pr=homeSess(dk);
-  /* номер дня уходит в надпись сверху: вместе с названием он переносил
-     заголовок на вторую строку, а высота здесь на вес золота */
-  var i=CYCLE.indexOf(dk), номер = i>=0 ? ' · день '+(i+1) : '';
-  var имя = d ? d.sub : 'Тренировка';
-  if(закрыт) return '<button type="button" class="hact hdone" data-hgo="gym">'+
-    '<span class="hk">сегодня закрыт'+номер+'</span><b>'+esc(имя)+'</b>'+
-    '<i>'+pr.done+' '+plural(pr.done,['подход','подхода','подходов'])+' сделано</i>'+
-    '<span class="hgo">Открыть зал</span></button>';
-  if(homeGymToday()){
-    var n = d ? exList(dk).length : 0, мин=(myData()||{}).min, идёт=pr.done>0;
-    return '<button type="button" class="hact" data-hgo="gym">'+
-      '<span class="hk">'+(идёт?'тренировка идёт':(hasSched()?'сегодня зал':'следующий день'))+номер+'</span>'+
-      '<b>'+esc(имя)+'</b>'+
-      '<i>'+n+' '+plural(n,['упражнение','упражнения','упражнений'])+(мин?' · ~'+мин+' мин':'')+'</i>'+
-      (идёт?'<span class="hbar"><s style="width:'+Math.round(pr.done/Math.max(1,pr.total)*100)+'%"></s></span>':'')+
-      '<span class="hgo">'+(идёт?'Продолжить · '+pr.exdone+' из '+pr.ex:'Начать')+'</span></button>';
-  }
-  var nx=nextGymDay(), сп=homePlanOn(new Date().getDay());
-  return '<button type="button" class="hact hrest" data-hgo="gym">'+
-    '<span class="hk">сегодня</span><b>День отдыха</b>'+
-    '<i>'+esc(сп.length ? сп.join(', ')+' по плану' : (nx ? 'зал '+(nx.in===1?'завтра':'в '+nx.d) : 'дни зала не заданы'))+'</i>'+
-    '<span class="hgo">'+(сп.length?'Отметить «было»':'Открыть зал')+'</span></button>';
-}
+/* Карточки тренировки на главной («сегодня зал · день 1 / Начать», «сегодня
+   закрыт / Открыть зал», «День отдыха») больше нет — 30.09, его просьба
+   «вот эту карточку про зал тоже лучше убрать», вслед за кнопкой среза.
+   Про зал на главной остаются дорожка «Зал» (подходы сегодня) и «Зал на
+   неделе» — нажатие на неё ведёт в зал; сама тренировка — вкладкой. */
 /* ── коридор нормы — знак приложения ──
    Не кольцо (это Apple) и не полоса «до 100 %», а дорожка, на которой видно
    саму норму: у калорий — зелёный коридор ±10 %, у белка — засечка «от
@@ -10754,7 +10733,7 @@ function renderHome(){
     homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
     '<div class="hsep"></div>'+
     homeBody()+
-    (foodOnly()?'':homeAct())+homeRating()+homeWeekGym()+homeSport();
+    homeRating()+homeWeekGym()+homeSport();
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
   var гнездо=box.querySelector('#hmeasslot');

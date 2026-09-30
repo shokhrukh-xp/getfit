@@ -55,7 +55,10 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   await page.waitForTimeout(400);
   const в2 = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
   дано(в2.length === 3, 'в обычном режиме три вкладки: ' + в2.join(' · '));
-  дано(await page.$('.hact') !== null, 'карточка тренировки вернулась');
+  /* 30.09, его просьба: карточки тренировки на главной нет ни у кого;
+     зал — вкладкой и нажатием на «Зал на неделе» */
+  дано(await page.$('.hact') === null, 'карточки тренировки на главной нет и в обычном режиме');
+  дано(await page.$('#homebody .hwg[data-hgo="gym"]') !== null, 'а «Зал на неделе» ведёт в зал');
   await page.close();
 
   /* знакомство: «только еда» кончается на первом шаге */
