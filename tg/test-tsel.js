@@ -135,7 +135,8 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await page.waitForTimeout(1200);
   await page.click('#wz-one'); await page.waitForTimeout(1900);
   const тело = await page.evaluate(() => {
-    const b = document.querySelector('.htile.hwide');
+    /* 30.09: блок тела — карточка «Тело» (.vz), а не плитка */
+    const b = document.querySelector('#homebody .vz');
     return b ? b.textContent.replace(/\s+/g, ' ').trim() : 'плитки нет';
   });
   дано(/79/.test(тело), 'вес с первого шага виден в блоке тела: ' + тело);

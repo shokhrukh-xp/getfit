@@ -220,7 +220,14 @@ async function поднять(page, o) {
     if (p === '/day/score')  return дать(оценка || { ok: true, r: null });
     if (p === '/meal/better') return дать(o.better || { ok: true, советы: [] });
     if (p === '/week')       return дать({ ok: true, week: неделя(o.week || {}) });
-    if (p === '/measures')   { const мс = o.meas === null ? [] : замеры();
+    /* 30.09: ввод замера — на главной, под карточкой «Тело». Сервер пишет
+       замер за сегодня и отдаёт ряд заново; стенд делает то же и кладёт
+       присланное в o.замер. o.meas — массив (свой ряд) или null (пусто). */
+    if (p === '/measure') { const b = JSON.parse(route.request().postData() || '{}'); o.замер = b;
+      const мс = (Array.isArray(o.meas) ? o.meas : замеры()).filter(m => m.date !== TODAY);
+      o.meas = [{ date: TODAY, w: b.w, fat: b.fat, waist: b.waist }].concat(мс);
+      return дать({ ok: true, measures: o.meas }); }
+    if (p === '/measures')   { const мс = o.meas === null ? [] : (Array.isArray(o.meas) ? o.meas : замеры());
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
     /* проверка может подать свой круг (например, с me.open = false) —
        раньше объект служил только флажком «круг есть / круга нет» */
@@ -253,7 +260,7 @@ async function поднять(page, o) {
                   text: b.wt === 'keep' ? 'держим 88,1 кг' : t + ' кг · ' + темп + ' кг в неделю',
                   verdict: 'ok', note: 'проверка' } });
       }
-      return дать({ ok: true, goal: o.goal === undefined ? null : o.goal,
+      return дать({ ok: true, goal: o.goal === undefined ? null : o.goal, progress: o.progress || null,
         safe: o.safe === undefined ? { w: 88.1, max: 0.88, limit: 'вес', floor: 70.9, upMax: 0.35 } : o.safe });
     }
     /* спорт вне зала. Прибавку СЧИТАЕТ СЕРВЕР, а не приложение: стенд нарочно

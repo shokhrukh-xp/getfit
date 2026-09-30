@@ -2436,6 +2436,33 @@ body.onb #picker .modalbox::before{display:none}
   .hwd{font-size:11px}
 }
 
+/* ── Тело на главной: карточка с графиком (30.09, его выбор А) ── */
+.vz{display:grid;gap:2px}
+.vzhd{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
+.vzhd u{text-decoration:none;font-size:13px;font-weight:500;color:var(--muted)}
+.vzch{display:flex;gap:2px}
+/* цель нажатия — 44 px, видимая «таблетка» — внутренний span */
+.vzch button{border:0;background:transparent;font:inherit;min-width:44px;min-height:44px;padding:0 1px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.vzch button span{display:block;font-size:12.5px;font-weight:600;color:var(--dim);padding:6px 10px;border-radius:99px;transition:background .2s,color .2s}
+.vzch button.on span{background:var(--field);color:var(--text)}
+.vznum{display:flex;align-items:center;gap:10px;margin-top:2px}
+.vznum b{font-size:34px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05}
+.vznum b s{text-decoration:none;font-size:15px;color:var(--dim);font-weight:500;margin-left:5px;letter-spacing:0}
+.vznum em{font-style:normal;font-size:12.5px;font-weight:600;padding:5px 9px;border-radius:99px;background:var(--field);color:var(--muted);font-variant-numeric:tabular-nums}
+.vznum em.dn{color:var(--done-txt);background:rgba(var(--done-rgb),.13)}
+.vznum em.up{color:var(--warn-txt);background:rgba(var(--warn-rgb),.13)}
+.vzsub{margin:4px 0 0;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;line-height:1.4}
+.vzsvg svg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}
+.vzax{font-family:Manrope,system-ui,sans-serif;font-size:9.5px;fill:var(--dim);font-variant-numeric:tabular-nums}
+.vzlg{display:flex;flex-wrap:wrap;gap:4px 16px;margin:4px 0 0;font-size:11px;color:var(--dim);align-items:center}
+.vzlg span{display:inline-flex;align-items:center}
+.vzlg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px}
+.vzlg i.pt{width:6px;height:6px;border-radius:50%;opacity:.45}
+.vzlg i.pl{background:none;border-top:2px dashed var(--muted);height:0;border-radius:0}
+.vzplan{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.vzplan b{color:var(--warn-txt);font-weight:600} .vzplan b.ok{color:var(--done-txt)}
+#hmeas{margin-top:14px}
+#hmeas .fask{margin:0}
 </style>
 </head>
 <body>
@@ -2468,7 +2495,22 @@ body.onb #picker .modalbox::before{display:none}
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
         <button type="button" class="nudge onb" id="zdnudge" hidden></button>
-        <div class="hwrap" id="homebody"></div></div>
+        <div class="hwrap" id="homebody"></div>
+        <!-- 30.09, его просьба: ввод замера — с «Еды» на главную, под карточку
+             «Тело». Узел один на всё время жизни страницы: renderHome
+             переносит его в гнездо #hmeasslot после каждой пересборки,
+             с набранным числом и обработчиками. -->
+        <div id="hmeashold" hidden><div id="hmeas">
+        <div class="fask fmeasq">
+          <label class="fld"><span>Вес, кг</span><input id="fw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"></label>
+          <label class="fld"><span>Жир, %</span><input id="ffat" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"></label>
+          <label class="fld"><span>Талия</span><input id="fwaist" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"></label>
+          <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
+          <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
+          <input id="fmfile" type="file" accept="image/*" hidden>
+        </div>
+        <p class="freply" id="fmreply" hidden></p>
+        </div></div></div>
     </section>
     <section class="page hide" id="p-gym">
       <div class="zseg" id="zseg-gym"></div>
@@ -2547,19 +2589,6 @@ body.onb #picker .modalbox::before{display:none}
         <div class="group" id="grpg" hidden></div>
         <h3 class="lh" id="wrh" hidden>Шаги и сон</h3>
         <div class="group" id="wrg" hidden></div>
-        <h3 class="lh">Весы</h3>
-        <div class="group">
-        <div class="fchart" id="fchart"></div>
-        <div class="fask fmeasq">
-          <label class="fld"><span>Вес, кг</span><input id="fw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"></label>
-          <label class="fld"><span>Жир, %</span><input id="ffat" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"></label>
-          <label class="fld"><span>Талия</span><input id="fwaist" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"></label>
-          <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
-          <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
-          <input id="fmfile" type="file" accept="image/*" hidden>
-        </div>
-        <p class="freply" id="fmreply" hidden></p>
-        </div>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -2852,7 +2881,7 @@ body.onb #picker .modalbox::before{display:none}
       <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
       <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
     </div>
-    <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его меняешь на «Еде», в разделе «Весы».</p>
+    <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его вписываешь на главной, под карточкой «Тело».</p>
     <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
     <p class="subrow" id="subrow" hidden></p>
 
@@ -4752,7 +4781,7 @@ function goalPull(){
       }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
-      renderGoalCard();
+      renderGoalCard(); homeDirty();   /* 30.09: пунктир плана на карточке «Тело» */
     }).catch(function(){});
 }
 function renderGoalCard(){
@@ -5598,7 +5627,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.09 19:20';
+var BUILD = '30.09 14:45';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -10461,46 +10490,146 @@ function bodyDelta(ms, sr, вид){
   var b=sr.f(стар);
   return b==null ? null : a-b;
 }
+/* ══ ТЕЛО НА ГЛАВНОЙ: карточка с графиком и вводом замера ══
+   30.09, его просьба: «график весов с „Еды“ уберём и покажем на главной,
+   придумай, как красиво». Из трёх снимков рядом
+   (docs/reviews/2026-09-30-vybor-14-vesy.png: карточка с переключателем /
+   таблица с мини-графиками / как было на «Еде») выбрал карточку.
+   До этого (с 11.09) на главной стояла таблица «день / неделя / всего» без
+   графиков, а три полосы с точками жили на «Еде»; теперь это одно место:
+   крупно последний замер и «за неделю», ниже — одна величина графиком
+   (вес / жир / белок / талия — переключатель), под ним ввод замера.
+   НЕДЕЛЯ — средний вес 7 дней против средних 7 днями раньше (его выбор
+   30.09, как «ТЕМП СЕЙЧАС» у тренера — темпНедели на сервере); раньше
+   «неделя» была разницей двух взвешиваний, и экран показывал +0,1, когда
+   тренер говорил −0,3. «День» и «всего» — прежние (bodyDelta). */
+var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['prot','белок'],['waist','талия']];
+function vzВид(){ try{ return localStorage.getItem('gf_vz')||'w'; }catch(e){ return 'w'; } }
+function vzВидЗадать(k){ try{ localStorage.setItem('gf_vz',k); }catch(e){} }
+function vzСерия(k){ var r=null; bodySeries().forEach(function(s){ if(s.k===k) r=s; }); return r; }
+function vzДн(iso, n){ return ymd(new Date(new Date(iso+'T12:00:00').getTime()+n*864e5)); }
+function vzЦвет(k){ return {w:'var(--accent)', fat:'var(--chart-2)', prot:'var(--done)', waist:'var(--warn-txt)'}[k]||'var(--accent)'; }
+function vzF1(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); }
+function vzЗн(d){ return (d>0?'+':d<0?'−':'±')+vzF1(Math.abs(d)); }
+/* цвет «за неделю»: в нужную сторону — зелёный, в обратную — красный;
+   меньше 0,1 и у белка (оценка весов, не сохранность мышц) — без цвета */
+function vzХор(sr, d){ return (d==null || sr.нейтр || Math.abs(d)<0.1) ? '' : ((sr.вниз ? d<0 : d>0) ? 'dn' : 'up'); }
+function vzПоследний(ms, sr){ for(var i=ms.length-1;i>=0;i--) if(sr.f(ms[i])!=null) return ms[i]; return null; }
+function vzСреднее(ms, sr, до){
+  var от=vzДн(до,-6), v=ms.filter(function(m){ return m.date>=от && m.date<=до && sr.f(m)!=null; }).map(sr.f);
+  return v.length ? {v:v.reduce(function(a,b){ return a+b; },0)/v.length, n:v.length} : null;
+}
+/* по 3+ замера в каждой неделе, иначе «за неделю» не показываем: по двум
+   взвешиваниям это шум дня, а не темп */
+function vzНеделя(ms, sr){
+  var a=vzСреднее(ms, sr, TODAY), b=vzСреднее(ms, sr, vzДн(TODAY,-7));
+  return (a && b && a.n>=3 && b.n>=3) ? {d:a.v-b.v, now:a.v, prev:b.v} : null;
+}
+function vzГладко(P){
+  var f=function(n){ return n.toFixed(1); };
+  if(P.length<3) return 'M'+P.map(function(p){ return f(p[0])+','+f(p[1]); }).join(' L');
+  var d='M'+f(P[0][0])+','+f(P[0][1]);
+  for(var i=0;i<P.length-1;i++){
+    var p0=P[i-1]||P[i], p1=P[i], p2=P[i+1], p3=P[i+2]||p2;
+    d+=' C'+f(p1[0]+(p2[0]-p0[0])/6)+','+f(p1[1]+(p2[1]-p0[1])/6)+' '+f(p2[0]-(p3[0]-p1[0])/6)+','+f(p2[1]-(p3[1]-p1[1])/6)+' '+f(p2[0])+','+f(p2[1]);
+  }
+  return d;
+}
+/* План цели для пунктира — тот же, что у тренера и на срезе (goalProgress
+   на сервере, 30.09): от конца первых двух недель (anchor, средний вес той
+   недели — anchorW), дальше темп цели. Первые две недели — вода, плана нет. */
+function vzПлан(){
+  var g=gget('goal',null), p=g && g.progress;
+  return (p && p.anchor && p.anchorW!=null && p.rate && !p.early) ? p : null;
+}
+/* Одна величина за 35 дней: замеры — бледными точками, средний за 7 дней —
+   плавной линией с заливкой (день ко дню вес гуляет на 0,5–1 кг, и ломаная
+   по точкам рисовала шум), у веса — пунктир плана. Талию меряют раз в
+   неделю-две — у неё просто точки и линия через них. */
+function vzГрафик(ms, sr, план){
+  var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
+  var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
+  var pts=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
+  if(pts.length<2) return '';
+  var t0=t(pts[0].d), t1=Math.max(t(TODAY), t0+864e5);
+  var x=function(d){ return L+(W-L-R)*(t(d)-t0)/(t1-t0); };
+  var скольз = sr.k!=='waist';
+  var ср=pts.map(function(p){ var a=t(p.d)-6*864e5, w=pts.filter(function(q){ return t(q.d)>=a && q.d<=p.d; });
+    return {d:p.d, v:w.reduce(function(s,q){ return s+q.v; },0)/w.length}; });
+  var vals=pts.map(function(p){ return p.v; }), плA=null, плB=null;
+  if(план && sr.k==='w'){
+    var нач = план.anchor>pts[0].d ? план.anchor : pts[0].d, в=function(d){ return план.anchorW + план.rate*(t(d)-t(план.anchor))/(7*864e5); };
+    плA={d:нач, v:в(нач)}; плB={d:TODAY, v:в(TODAY)}; vals.push(плA.v, плB.v);
+  }
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(0.25,(mx-mn)*0.12); mn-=pad; mx+=pad;
+  var y=function(v){ return T+(H-T-B)*(1-(v-mn)/(mx-mn)); };
+  var шаг=[0.1,0.2,0.5,1,2,5,10].filter(function(s){ return (mx-mn)/s<=4.2; })[0]||10;
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(sr.n)+' за 35 дней">'+
+    '<defs><linearGradient id="vzg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:'+цв+';stop-opacity:.26"/><stop offset="1" style="stop-color:'+цв+';stop-opacity:0"/></linearGradient></defs>';
+  for(var g=Math.ceil(mn/шаг)*шаг; g<=mx; g+=шаг){
+    var yy=y(g).toFixed(1);
+    svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line-soft)" stroke-width="1"/>'+
+      '<text x="'+(W-2)+'" y="'+(+yy+3.5).toFixed(1)+'" text-anchor="end" class="vzax">'+fmtKg(Math.round(g/шаг)*шаг)+'</text>';
+  }
+  /* плавно — только средний за 7 дней: через редкие точки талии кривая
+     выгибалась выше и ниже замеров, которых не было */
+  var линия=(скольз?ср:pts).map(function(p){ return [x(p.d), y(p.v)]; });
+  var путь=скольз ? vzГладко(линия) : 'M'+линия.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L');
+  svg+='<path d="'+путь+' L'+линия[линия.length-1][0].toFixed(1)+','+(H-B)+' L'+линия[0][0].toFixed(1)+','+(H-B)+' Z" fill="url(#vzg)"/>';
+  if(плA) svg+='<line class="vzpl" x1="'+x(плA.d).toFixed(1)+'" y1="'+y(плA.v).toFixed(1)+'" x2="'+x(плB.d).toFixed(1)+'" y2="'+y(плB.v).toFixed(1)+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round"/>'+
+    '<circle cx="'+x(плB.d).toFixed(1)+'" cy="'+y(плB.v).toFixed(1)+'" r="2.5" fill="var(--muted)"/>';
+  if(скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="'+цв+'" opacity=".38"/>'; });
+  svg+='<path class="vzln" d="'+путь+'" fill="none" stroke="'+цв+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+  if(!скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3" fill="'+цв+'"/>'; });
+  var пос=pts[pts.length-1];
+  svg+='<circle cx="'+x(пос.d).toFixed(1)+'" cy="'+y(пос.v).toFixed(1)+'" r="4.5" fill="var(--bg)" stroke="'+цв+'" stroke-width="2.2"/>'+
+    '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(pts[0].d)+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-5)+'" class="vzax" text-anchor="end">сегодня</text>';
+  return svg+'</svg>';
+}
+function vzПланСтрока(){
+  var p=vzПлан(); if(!p || p.gap==null) return '';
+  var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
+  var сег=p.anchorW + p.rate*(t(TODAY)-t(p.anchor))/(7*864e5);
+  return '<p class="vzplan">План на сегодня '+vzF1(сег)+' кг · '+(p.onTrack ? '<b class="ok">идём по графику</b>'
+    : (p.gap>0 ? '<b>отстаём на '+vzF1(Math.abs(p.gap))+' кг</b>' : '<b class="ok">опережаем на '+vzF1(Math.abs(p.gap))+' кг</b>'))+'</p>';
+}
 function homeBody(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
   if(ms.length<2){
     /* Вес человек назвал на первом шаге знакомства. Просить его снова —
        значит не помнить, что он только что сказал. Показываем его число и
        зовём на весы за трендом, а не за самим весом. */
-    var me0=myData()||{}, w = ms.length ? ms[0].w : (+me0.bw||0);
-    var под = ms.length ? 'нужен второй замер, чтобы увидеть тренд'
-            : (w ? 'с твоих слов · встань на весы — пойдёт тренд' : 'впиши вес на «Еде»');
-    return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
-      (w?fmtKg(w):'—')+'</b><i>'+под+'</i></button>';
+    var me0=myData()||{}, w0 = ms.length ? ms[0].w : (+me0.bw||0);
+    var под0 = ms.length ? 'нужен второй замер, чтобы увидеть тренд' : (w0 ? 'с твоих слов · встань на весы — пойдёт тренд' : 'впиши вес ниже');
+    return '<div class="vz"><div class="vzhd"><u>Тело</u></div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
+      '<p class="vzsub">'+под0+'</p></div><div id="hmeasslot"></div>';
   }
-  /* числа в колонках всегда с одним знаком после запятой: «−3» рядом с «−0,8»
-     ломает табличное выравнивание, ради которого всё и затевалось */
-  var f1=function(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); };
-  /* шапка живёт в той же сетке, что и строки, иначе колонки разъезжаются */
-  var h='<span class="hbr hbh"><u>Тело</u><b></b>'+
-        BODY_VIEWS.map(function(v){ return '<s>'+v+'</s>'; }).join('')+'</span>';
-  bodySeries().forEach(function(sr){
-    var v=sr.f(ms[ms.length-1]);
-    if(v==null) return;
-    var под = sr.под ? sr.под(ms[ms.length-1]) : null;
-    h+='<span class="hbr"><u>'+sr.n+(под?'<em>'+esc(под)+'</em>':'')+'</u><b>'+f1(v)+'<s> '+(sr.ед||'кг')+'</s></b>'+
-       BODY_VIEWS.map(function(вид){
-         var d=bodyDelta(ms, sr, вид);
-         /* Мелкие изменения приглушаем; расчёт белка не оцениваем как
-            сохранение или потерю мышц. Это не порог точности прибора. */
-         var шум = d==null || Math.abs(d)<sr.порог;
-         var хорошо = шум || sr.нейтр ? null : (sr.вниз ? d<0 : d>0);
-         return '<s class="'+(хорошо==null?'':(хорошо?'dn':'up'))+'">'+
-           (d==null ? '—' : (d>0?'+':'−')+f1(Math.abs(d)))+'</s>';
-       }).join('')+'</span>';
-  });
-  if(!h) return '<button type="button" class="htile hwide" data-hgo="food"><u>тело</u><b>'+
-    fmtKg(ms[ms.length-1].w)+'</b><i>встань на весы — появятся жир и белок</i></button>';
-  /* Колонки показывают, НА СКОЛЬКО изменилось. Главного — сколько из этого
-     было жиром — в них нет, а это ровно то, ради чего человек встаёт на
-     весы. Поэтому под таблицей отдельная дверь в срез. */
-  return '<button type="button" class="hbody" data-hgo="food">'+h+
-    '<p class="hbnote">жир и белок — оценки весов, зависят от условий замера</p></button>'+
+  var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
+  var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид='w';
+  var sr=vzСерия(вид), пос=vzПоследний(ms, sr), ед=sr.ед||'кг';
+  /* «за день» и «всего» — от последнего замера ЭТОЙ величины: талию меряют
+     не каждое утро, и от сегодняшнего взвешивания без талии дельты не было */
+  var нед=vzНеделя(ms, sr), свои=ms.filter(function(m){ return sr.f(m)!=null; });
+  var дн = (пос===ms[ms.length-1] && свои.length>1) ? sr.f(пос)-sr.f(свои[свои.length-2]) : null;
+  var старт=(FOOD.first && sr.f(FOOD.first)!=null && FOOD.first.date<свои[0].date) ? FOOD.first : свои[0];
+  var всего = старт.date<пос.date ? sr.f(пос)-sr.f(старт) : null, от=старт.date;
+  var план = вид==='w' ? vzПлан() : null;
+  return '<div class="vz">'+
+    '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
+      return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
+    '<div class="vznum"><b>'+vzF1(sr.f(пос))+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
+    '<p class="vzsub">'+[sr.под?sr.под(пос):null, дн!=null?'за день '+vzЗн(дн):null, нед?'средний за 7 дней '+vzF1(нед.now):null,
+      всего!=null?'с '+ruDate(от)+' '+vzЗн(всего):null, пос.date!==TODAY?'замер '+ruDate(пос.date):null,
+      (sr.k==='prot'||sr.k==='fat')?'оценка весов':null].filter(Boolean).join(' · ')+'</p>'+
+    '<div class="vzsvg">'+vzГрафик(ms, sr, план)+'</div>'+
+    '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
+      (sr.k!=='waist'?'<span><i class="pt" style="background:'+vzЦвет(sr.k)+'"></i>замер</span>':'')+
+      (план?'<span><i class="pl"></i>план цели</span>':'')+'</p>'+
+    (вид==='w'?vzПланСтрока():'')+
+    '</div><div id="hmeasslot"></div>'+
+    /* Главного — сколько из этого было жиром — на карточке нет, а это ровно
+       то, ради чего человек встаёт на весы. Поэтому под ней дверь в срез. */
     '<button type="button" class="srgo" data-srez>Срез: сколько из этого — жир →</button>';
 }
 /* ── НЕДЕЛЯ ЗАЛА И ЗАНЯТИЙ ВМЕСТО «ЗАВТРА» ──
@@ -10603,6 +10732,8 @@ function homeSport(){
    ехать из нуля каждый раз, когда сменилось состояние записи */
 function renderHome(){
   var box=document.getElementById('homebody'); if(!box) return;
+  /* поля замера (30.09) берём ДО пересборки: innerHTML вынимает их из документа */
+  var весы=document.getElementById('hmeas'), вФокусе=(весы && весы.contains(document.activeElement)) ? document.activeElement : null;
   if(!PROF || !CYCLE.length){ box.innerHTML='<p class="empt">Загружаю…</p>'; return; }
   /* набранный текст и уже нарисованные кольца переживают перерисовку: данные
      приходят четырьмя ответами, и каждый раз начинать анимацию с нуля —
@@ -10626,6 +10757,8 @@ function renderHome(){
     (foodOnly()?'':homeAct())+homeRating()+homeWeekGym()+homeSport();
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
+  var гнездо=box.querySelector('#hmeasslot');
+  if(гнездо && весы){ гнездо.parentNode.replaceChild(весы, гнездо); if(вФокусе) try{ вФокусе.focus(); }catch(e){} }
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
@@ -10656,6 +10789,7 @@ function renderHome(){
     /* 24.09: строки записи на «Еде» больше нет — плюс ведёт в чат с
        тренером, где еда и записывается (и фото там же). */
     if(e.target.closest('[data-hact]')){ openCoach(); haptic('light'); return; }
+    var vv=e.target.closest('[data-vzv]'); if(vv){ vzВидЗадать(vv.dataset.vzv); renderHome(); haptic('light'); return; }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
   });
 })();
@@ -12603,61 +12737,12 @@ function renderFoodWeek(){
     ? 'В среднем '+avg.kcal+' ккал и '+avg.prot+' г белка'+(нк?(разные?' при средней норме ':' при норме ')+нк+' / '+нб:'')+(нк?' · в норме '+вНорме+' '+plural(вНорме,['день','дня','дней'])+' из '+logged.length:'')
     : 'За неделю записей нет.');
 }
-/* вес и % жира двумя линиями, каждая в своём масштабе; ИМТ — линейная функция
-   веса, отдельной линией он бы лёг ровно на вес, поэтому пишем его подписью
-   у последней точки. Подписаны первая и последняя точки — на телефоне
-   наводить нечем. */
 function sortMeas(a){ return (a||[]).slice().sort(function(x,y){ return x.date<y.date?1:x.date>y.date?-1:0; }); }
-function renderMeas(){
-  var box=document.getElementById('fchart'); if(!box) return;
-  var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice(0,21).reverse();
-  if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Пришли скриншот отчёта весов — кнопка справа — или впиши вес.</p>'; return; }
-  var ht=(myData()||{}).ht, W=360, H=198, L=10, R=10, T=8, B=22;
-  var last=ms[ms.length-1], bmi = ht ? last.w/((ht/100)*(ht/100)) : null;
-  /* Три показателя — три полосы, а не три линии в одном окне: они меняются
-     одинаково, и наложенные кривые сливались в одну. У каждой полосы свой
-     масштаб и своя подпись слева.
-     Третья полоса — БЕЛКОВАЯ МАССА, а не «мышцы»: на главной мы убрали мышцы
-     как воду, и два места об одном факте не должны расходиться. */
-  var series=[
-    {c:'var(--accent)',  n:'вес',   f:function(m){ return m.w!=null?+m.w:null; }, fmt:function(v){ return fmtKg(v); }},
-    {c:'var(--chart-2)', n:'жир',   f:function(m){ return m.fat!=null?+m.fat:null; }, fmt:function(v){ return fmtKg(v)+' %'; }},
-    {c:'var(--done)',    n:'белок', f:function(m){ return m.prot!=null?+m.prot:null; }, fmt:function(v){ return fmtKg(v); }}
-  ];
-  var xs=ms.map(function(_,i){ return ms.length>1 ? L+(W-L-R)*i/(ms.length-1) : W/2; });
-  var поле=H-T-B, полоса=поле/series.length, отступ=19;   /* отступ — место под подпись полосы */
-  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Вес, жир и белковая масса по дням">';
-  series.forEach(function(sr, si){
-    var верх=T+si*полоса, низ=верх+полоса-6;
-    var vals=ms.map(sr.f), vs=vals.filter(function(v){ return v!=null; });
-    svg+='<text x="'+L+'" y="'+(верх+8).toFixed(1)+'" font-family="Manrope,system-ui,sans-serif" font-size="10" font-weight="600" fill="'+sr.c+'" opacity=".9">'+sr.n.charAt(0).toUpperCase()+sr.n.slice(1)+'</text>';
-    if(vs.length<1){
-      svg+='<text x="'+(W-R)+'" y="'+(верх+8).toFixed(1)+'" text-anchor="end" font-family="Manrope,system-ui,sans-serif" font-size="9" fill="var(--dim)">нет данных</text>';
-      return;
-    }
-    var mn=Math.min.apply(null,vs), mx=Math.max.apply(null,vs), pad=Math.max(0.25,(mx-mn)*0.20);
-    mn-=pad; mx+=pad;
-    var y=function(v){ return (верх+отступ) + (низ-верх-отступ) * (1-(v-mn)/(mx-mn)); };
-    var pts=[]; vals.forEach(function(v,i){ if(v!=null) pts.push([xs[i], y(v), v, i]); });
-    if(pts.length>1) svg+='<polyline fill="none" stroke="'+sr.c+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="'+
-      pts.map(function(q){ return q[0].toFixed(1)+','+q[1].toFixed(1); }).join(' ')+'"/>';
-    pts.forEach(function(q,j){
-      var край = j===0 || j===pts.length-1;
-      svg+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="'+(край?3:2)+'" fill="'+sr.c+'"/>';
-      if(край){
-        /* первая подпись всегда под точкой — сверху там имя полосы, они налезали;
-           последняя над точкой, если у верха полосы есть место */
-        var снизу = (j===0) || (q[1]-9 < верх+отступ);
-        svg+='<text x="'+q[0].toFixed(1)+'" y="'+(q[1]+(снизу?12:-7)).toFixed(1)+'" text-anchor="'+(j===0?'start':'end')+
-          '" font-family="Manrope,system-ui,sans-serif" font-size="9.5" fill="'+sr.c+'">'+sr.fmt(q[2])+'</text>';
-      }
-    });
-  });
-  ms.forEach(function(m,i){ if(i===0 || i===ms.length-1)
-    svg+='<text x="'+xs[i].toFixed(1)+'" y="'+(H-6)+'" text-anchor="'+(i===0?'start':'end')+'" font-family="Manrope,system-ui,sans-serif" font-size="9" fill="var(--dim)">'+ruDate(m.date)+'</text>'; });
-  svg+='</svg>';
-  box.innerHTML = svg + '<div class="lg"><span>'+(bmi?'ИМТ '+fmtKg(bmi)+' на '+ruDate(last.date):'ИМТ появится, когда в профиле будет рост')+'</span></div>';
-}
+/* 30.09: три полосы веса, жира и белка с «Еды» переехали на главную —
+   карточкой «Тело» с одной величиной на выбор (homeBody). Все, кто получил
+   новые замеры (ввод, скриншот весов, тренер), по-прежнему зовут
+   renderMeas — теперь он перерисовывает главную. */
+function renderMeas(){ homeDirty(); }
 
 function fReply(text, cls, thumb){
   var el=document.getElementById('freply'); if(!el) return;
