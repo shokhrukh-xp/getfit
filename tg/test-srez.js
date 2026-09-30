@@ -21,14 +21,12 @@ const текст = async (page, sel) => ((await page.textContent(sel).catch(() =
   const зап = [];
   page.on('request', r => { if (/\/srez/.test(r.url())) зап.push(r.url()); });
 
-  const ош = await M.поднять(page, { theme: 'dark', wait: 2600, meas: M.замеры(), hist: M.журнал() });
+  /* 30.09, его просьба: кнопку «Срез: сколько из этого — жир» с главной
+     убрать. Срез открывается ссылкой из сообщения бота (?srez=1) — так его
+     здесь и поднимаем. */
+  const ош = await M.поднять(page, { theme: 'dark', wait: 2600, meas: M.замеры(), hist: M.журнал(), base: M.БАЗА + '?srez=1' });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
-
-  /* ── дверь с главной ── */
-  дано(await page.isVisible('[data-srez]'), 'под таблицей тела есть дверь в срез');
-  дано(/жир/.test(await текст(page, '[data-srez]')), 'и она обещает именно то, чего в таблице нет: ' + await текст(page, '[data-srez]'));
-
-  await page.click('[data-srez]');
+  дано(!(await page.$('#homebody [data-srez]')), 'на главной кнопки среза больше нет');
   await page.waitForTimeout(1500);
   дано(await page.$eval('#srezm', e => e.classList.contains('show')), 'срез открылся');
   дано(зап.length >= 1 && /days=14/.test(зап[0]), 'срок ушёл на сервер: ' + (зап[0] || '').split('?')[1]);
@@ -79,8 +77,7 @@ const текст = async (page, sel) => ((await page.textContent(sel).catch(() =
   /* ── замеров нет: зовём на весы, а не показываем пустоту ── */
   const p2 = await ctx.newPage();
   await p2.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
-  await M.поднять(p2, { theme: 'dark', wait: 2600, meas: M.замеры(), srez: null });
-  await p2.click('[data-srez]');
+  await M.поднять(p2, { theme: 'dark', wait: 2600, meas: M.замеры(), srez: null, base: M.БАЗА + '?srez=1' });
   await p2.waitForTimeout(1200);
   const пусто = await текст(p2, '#sr-body');
   дано(/два замера/.test(пусто) && /весы/.test(пусто), 'без замеров сказано, что сделать: ' + пусто.slice(0, 80));
