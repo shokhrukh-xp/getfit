@@ -5627,7 +5627,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '30.09 15:13';
+var BUILD = '01.10 08:42';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8012,8 +8012,8 @@ function renderFinSum(body){
     (body.ex||[]).forEach(function(x){
       var cur=bestOf(x); if(!cur || cur.w==null) return;
       var prev=null;
-      var xo={n:x.n, ph:phOfName(x.n)};
-      HIST.forEach(function(w){ if(w.date===TODAY) return; (w.ex||[]).forEach(function(y){ if(!sameMove(y.n, xo)) return; var b=bestOf(y); if(b && b.w!=null && (!prev || b.sc>prev.sc)) prev=b; }); });
+      var xo={n:x.n, ph:phOfName(x.n), cat:x.id||x.cat||''};
+      HIST.forEach(function(w){ if(w.date===TODAY) return; (w.ex||[]).forEach(function(y){ if(!sameMove(y.n, xo, y.id||y.cat)) return; var b=bestOf(y); if(b && b.w!=null && (!prev || b.sc>prev.sc)) prev=b; }); });
       if(prev && cur.sc>prev.sc+0.5) prs.push({n:x.n, cur:cur, prev:prev});
     });
   }
@@ -8721,10 +8721,34 @@ function phOfName(n){
     for(var j=0;j<ex.length;j++){ if(ex[j].n===n && ex[j].ph) return ex[j].ph; } }
   return null;
 }
-function sameMove(name, e){
+/* Что за именем в программах: снаряд, мышца и id каталога (как phOfName). */
+function видИмени(n){
+  var ks=Object.keys(DAYS);
+  for(var i=0;i<ks.length;i++){ var ex=(DAYS[ks[i]]||{}).ex||[];
+    for(var j=0;j<ex.length;j++){ if(ex[j].n===n) return {eq:ex[j].eq||'', m:ex[j].m||'', cat:ex[j].cat||ex[j].id||''}; } }
+  return {eq:'', m:'', cat:''};
+}
+/* ОДНО ЛИ ЭТО УПРАЖНЕНИЕ для веса прошлого раза.
+   01.10, его слова: «на некоторые упражнения рекомендует нереальные веса.
+   Это упражнение я еле делаю с 15 кг. Откуда он взял 30?» Сгибание на
+   бицепс с гантелями на наклонной скамье получило «прошлый раз 30×10,
+   30×12» и «оставь 30 кг» от сгибания СО ШТАНГОЙ 27.09: оба угаданы в
+   шаблон движения 'curl', а шаблон (ph) придуман для стартового веса и
+   картинок. Штанга — общий вес, гантели — вес одной, блок — плитки стека:
+   между снарядами вес не переносится. Так же смешивались кроссовер и
+   разведение гантелей (fly), жим штанги стоя и гантелей (ohp), блок и
+   гантели на трицепс. Теперь: то же имя или тот же id каталога — одно
+   упражнение; по шаблону — только при одном и том же известном снаряде и
+   той же мышце (это и держит «Присед (штанга)» вместе со старыми
+   «Приседаниями со штангой» — ради чего шаблон и появился). */
+function sameMove(name, e, id){
   if(name===e.n) return true;
-  if(!e.ph) return false;
-  return phOfName(name)===e.ph;
+  var cat=e.cat||e.id||'';
+  if(id && cat && id===cat) return true;
+  if(!e.ph || phOfName(name)!==e.ph) return false;
+  var a=видИмени(name), b=видИмени(e.n), eqE=e.eq||b.eq, mE=e.m||b.m;
+  if(!a.eq || a.eq!==eqE) return false;
+  return !(a.m && mE && a.m!==mE);
 }
 /* последний вес по упражнению — по имени, а если имя новое, то по движению */
 function lastFor(e){
@@ -8743,7 +8767,8 @@ function lastFor(e){
   }
   if(!e.ph) return null;
   var ks=Object.keys(LAST), best=null;
-  ks.forEach(function(k){ var v=LAST[k]; if(v && phOfName(k)===e.ph && (!best || String(v.d||'')>String(best.d||''))) best=v; });
+  /* по шаблону — теми же правилами, что журнал: со снарядом (01.10) */
+  ks.forEach(function(k){ var v=LAST[k]; if(v && k.charAt(0)!=='#' && sameMove(k, e) && (!best || String(v.d||'')>String(best.d||''))) best=v; });
   return best;
 }
 function exHistory(e){
@@ -8751,7 +8776,7 @@ function exHistory(e){
   var out=[], eo = (typeof e==='string') ? {n:e, ph:phOfName(e)} : e;
   HIST.forEach(function(w){
     (w.ex||[]).forEach(function(x){
-      if(!sameMove(x.n, eo)) return;
+      if(!sameMove(x.n, eo, x.id||x.cat)) return;
       var sets=(x.sets||[]).filter(function(v){ return v.r!=null; });
       if(sets.length) out.push({date:w.date, unit:x.unit, sets:sets});
     });
@@ -8949,6 +8974,9 @@ var PHNAME=[
   [/lateral raise|side lateral/i,'lateral'],
   [/(rear delt|reverse fly|bent.?over lateral)/i,'reardelt'],
   [/(fly|flye|pec deck|crossover)/i,'fly'],
+  /* сгибание запястий — предплечья, а не бицепс: в шаблоне 'curl' его
+     20 кг на штанге смешивались со сгибанием на бицепс (01.10) */
+  [/wrist/i,'wrist'],
   [/(curl)/i,'curl'],
   [/(triceps|pushdown|skullcrusher|kickback|dip machine|french press)/i,'triceps'],
   [/pallof/i,'pallof'],
