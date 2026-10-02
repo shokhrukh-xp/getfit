@@ -216,8 +216,22 @@ async function поднять(page, o) {
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
     if (p === '/s')          return дать({ ok: true });
-    if (p === '/day')        return дать(день_ ? { ok: true, day: день_ } : { ok: true, day: день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }) });
-    if (p === '/day/score')  return дать(оценка || { ok: true, r: null });
+    /* 02.10: свободный день. o.free — список дат, o.окно — окно и цена, как
+       их считает сервер (свободноеОкно); /free ставит и снимает отметку и
+       кладёт присланное в o.отмечено. */
+    const свобДня = date => ({ on: (o.free || []).includes(date), вода: null, список: (o.free || []).slice(),
+      окно: Object.assign({ шаг: 21, доля: 0, темп: 0, как: 'средние', план: -0.66, прошлый: null, след: date, открыто: true,
+                            цена: { ккал: 2100, кг: 0.27, дней: 3 } }, (o.окно && (o.окно[date] || o.окно['*'])) || {}) });
+    /* дата дня — из проверки, если она её задала (test-food-complete: прошлый день), иначе из запроса */
+    const сДатой = (д, date) => { const д2 = (o.day && o.day.date) || date; return Object.assign({}, д, { date: д2, free: свобДня(д2) }); };
+    if (p === '/day')        { const date = u.searchParams.get('date') || TODAY;
+      return дать(день_ ? { ok: true, day: сДатой(день_, date) } : { ok: true, day: сДатой(день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }), date) }); }
+    if (p === '/day/score')  { const date = u.searchParams.get('date') || TODAY;
+      if ((o.free || []).includes(date)) return дать({ ok: true, free: true, closed: false, r: null, why: [], n: 0, приёмы: [] });
+      return дать(оценка || { ok: true, r: null }); }
+    if (p === '/free') { const b = JSON.parse(route.request().postData() || '{}'); (o.отмечено = o.отмечено || []).push(b);
+      o.free = (o.free || []).filter(d => d !== b.date).concat(b.on === false ? [] : [b.date]).sort();
+      return дать({ ok: true, on: b.on !== false, date: b.date, free: o.free, day: сДатой(день_ || день({ meals: [], kcal: 0, prot: 0 }), b.date) }); }
     if (p === '/meal/better') return дать(o.better || { ok: true, советы: [] });
     if (p === '/week')       return дать({ ok: true, week: неделя(o.week || {}) });
     /* 30.09: ввод замера — на главной, под карточкой «Тело». Сервер пишет
@@ -228,7 +242,7 @@ async function поднять(page, o) {
       o.meas = [{ date: TODAY, w: b.w, fat: b.fat, waist: b.waist }].concat(мс);
       return дать({ ok: true, measures: o.meas }); }
     if (p === '/measures')   { const мс = o.meas === null ? [] : (Array.isArray(o.meas) ? o.meas : замеры());
-      return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null) }); }
+      return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null), free: o.free || [], вода: 3 }); }
     /* проверка может подать свой круг (например, с me.open = false) —
        раньше объект служил только флажком «круг есть / круга нет» */
     if (p === '/circle')     return дать(o.circle === null ? { ok: false } : (o.circle && o.circle.ok ? o.circle : круг(o)));

@@ -76,14 +76,15 @@ const подсказка = async page => {
     const v = document.querySelector('#homebody .vz');
     return v ? { чипы: Array.from(v.querySelectorAll('[data-vzv]')).map(b => b.textContent),
       под: v.querySelector('.vzsub').textContent, графики: v.querySelectorAll('svg').length } : null;
+    /* 02.10, вариант А: «всего» — от среднего за 7 дней, как крупное число */
   });
   дано(!!тело, 'на главной — карточка «Тело»');
   дано(тело && тело.чипы.join(',') === 'вес,жир,белок', 'величины — вес, жир и белок: ' + (тело && тело.чипы));
   дано(тело && !тело.чипы.some(x => /мышц/.test(x)), '«мышц» больше нет — весы считают ими воду');
-  дано(тело && /−4,2/.test(тело.под), 'за всё время вес считается от первого замера, а не от края окна: ' + (тело && тело.под));
+  дано(тело && /−3,7/.test(тело.под), 'за всё время — от первого замера до среднего за 7 дней, а не от края окна: ' + (тело && тело.под));
   дано(тело && тело.графики === 1, 'график один — выбранной величины');
   await page.click('[data-vzv="fat"]'); await page.waitForTimeout(300);
-  const жир = await page.evaluate(() => ({ ч: document.querySelector('#homebody .vznum b').textContent, п: document.querySelector('#homebody .vzsub').textContent }));
+  const жир = await page.evaluate(() => ({ ч: document.querySelector('#homebody .vznum b').textContent, п: (document.querySelector('#homebody .vztd') || {}).textContent || '' }));
   дано(/кг$/.test(жир.ч) && /%/.test(жир.п), 'жир показан в килограммах, процент рядом: ' + жир.ч + ' · ' + жир.п);
   await page.close();
 

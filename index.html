@@ -2463,6 +2463,31 @@ body.onb #picker .modalbox::before{display:none}
 .vzplan b{color:var(--warn-txt);font-weight:600} .vzplan b.ok{color:var(--done-txt)}
 #hmeas{margin-top:14px}
 #hmeas .fask{margin:0}
+/* 02.10, вариант А: сегодняшний замер — мелкой строкой под средним */
+.vztd{margin:2px 0 0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.4}
+.vztd b{font-weight:600;color:var(--text)}
+.vzlg i.cor{height:9px;border-radius:3px;background:var(--field);opacity:1}
+.vzlg i.sv{width:0;height:11px;border-radius:0;border-left:1.5px dashed var(--muted);margin:0 8px 0 4px}
+.vzsv{margin:8px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+/* ── Свободный день (02.10) ── */
+.svrow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;margin:12px 0 0;padding:10px 0 0;
+  border:0;border-top:1px solid var(--line-soft);background:transparent;font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.svrow span{font-size:14px;font-weight:600}
+.svrow small{display:block;font-size:12px;font-weight:500;color:var(--dim);margin-top:2px}
+.svrow em{font-style:normal;font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--field);color:var(--muted);white-space:nowrap}
+.svrow em.ok{color:var(--done-txt);background:rgba(var(--done-rgb),.13)}
+.svcard{margin:2px 0 4px;padding:14px 14px 12px;border-radius:14px;background:var(--card-2);border:1px solid var(--line-soft)}
+.svcard h4{margin:0;font-size:16px;font-weight:700;color:var(--text)}
+.svcard p{margin:6px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+.svcard button{margin-top:10px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--text);cursor:pointer}
+#svm .svp{margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.5}
+#svm .svp b{color:var(--text);font-weight:600}
+#svm .svwin{margin:4px 0 14px;padding:12px 14px;border-radius:12px;background:var(--card-2);font-size:13.5px;color:var(--text);line-height:1.5}
+#svm .svwin small{display:block;margin-top:4px;font-size:12px;color:var(--dim)}
+#svm .svwin b.ok{color:var(--done-txt)}
+.hctr b.hfree{font-size:20px;letter-spacing:-.01em;line-height:1.2;color:var(--text)}
+.hwd b.free{background:transparent;border:1.5px dashed var(--muted);width:7px;height:7px;box-sizing:border-box}
+.fweek .fd .fb.fb-free{background:repeating-linear-gradient(135deg,var(--track) 0 3px,transparent 3px 6px)}
 </style>
 </head>
 <body>
@@ -2768,6 +2793,17 @@ body.onb #picker .modalbox::before{display:none}
       <button class="btn" id="ml-del">Удалить</button>
     </div>
     </div>
+  </div>
+</div>
+<!-- Свободный день (02.10): что это, вода наутро, окно по темпу и цена.
+     Открывается строкой «Свободный день» на «Еде»; отмечает тот день, что
+     открыт на «Еде», — так отмечают и задним числом. -->
+<div class="modal" id="svm" role="dialog" aria-modal="true" aria-labelledby="svtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="svtitle">Свободный день</h3><button class="xbtn" id="svclose" aria-label="Закрыть">✕</button></div>
+    <div id="svbody"></div>
+    <button class="btn prim wide" id="svgo">Отметить</button>
+    <p class="rec" id="svnote" hidden></p>
   </div>
 </div>
 <div class="modal" id="sportm" role="dialog" aria-modal="true" aria-labelledby="sporttitle">
@@ -5627,7 +5663,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '01.10 08:42';
+var BUILD = '02.10 10:31';
 var LS = 'shp_v1_', PFX = '';
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
@@ -8685,7 +8721,7 @@ function renderMeasSummary(){
       ((last.prot!=null && first!==last && first.prot!=null && last.prot-first.prot<-0.3) ? '<p class="fline" style="margin-top:8px">Расчётная белковая масса ниже старта. Это не доказывает потерю мышц — сравни условия замеров, питание и силу.</p>' : '');
   };
   if(FOOD.meas){ draw(FOOD.meas); }
-  else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
+  else { box.innerHTML='<p class="fline">Загружаю…</p>'; fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ замерыВзять(d); } draw(FOOD.meas); }).catch(function(){ box.innerHTML='<p class="fline">Не дотянулся до замеров.</p>'; }); }
 }
 
 /* ══════════ ИСТОРИЯ И РЕКОМЕНДАЦИИ ══════════
@@ -10091,7 +10127,7 @@ function homePull(){
   fGet('/day/score?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.ok){ d.date=TODAY; HOME.sc=d; homeSave(); homeDirty(); } }).catch(function(){});
   fGet('/week?uid='+u).then(function(d){ if(d&&d.week){ FOOD.week=d.week; homeDirty(); } }).catch(function(){});
   if(!(FOOD.meas||[]).length) fGet('/measures?uid='+u)
-    .then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); homeDirty(); } }).catch(function(){});
+    .then(function(d){ if(d&&d.measures){ замерыВзять(d); syncBwFromMeas(); homeDirty(); } }).catch(function(){});
   if(!CIRC) circlePull().then(function(){ homeDirty(); });
   /* журнал нужен часам дня: у закрытой тренировки время старта лежит в записи */
   if(DB && !HIST) loadHist().then(function(){ homeDirty(); }).catch(function(){});
@@ -10153,8 +10189,12 @@ function htrack(v, t, mode, lo, hi, cap){
   h+='<div class="hfill '+cls+'" data-w="'+pos.toFixed(1)+'"></div><div class="hdot '+cls+'" data-l="'+pos.toFixed(1)+'"></div></div>';
   return h;
 }
+/* 02.10: сегодня свободный день — главная не зовёт к столу и не судит:
+   ни остатка до нормы, ни «+» следующего приёма, ни оценки */
+function homeСвоб(){ var d=HOME.day; return !!(d && d.date===TODAY && d.free && d.free.on); }
 function homeRows(){
-  var d=HOME.day||{}, t=d.targets||{}, kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
+  var своб=homeСвоб();
+  var d=HOME.day||{}, t=своб?{}:(d.targets||{}), kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var pr=homeSess(homeDayKey());
   var h='<div class="hrows">'+
     '<div class="hrow"><u>Калории</u>'+htrack(kc,t.kcal,'range',(t.parts&&t.parts.floor)?t.kcal:null)+'<b>'+kc+(t.kcal?' <s>/ '+t.kcal+'</s>':' <s>ккал</s>')+'</b></div>'+
@@ -10162,7 +10202,8 @@ function homeRows(){
   /* зал — только когда сегодня есть что считать; в день отдыха и у тех, кто
      ведёт одну еду, строки зала на экране нет вовсе */
   if(pr.total && !foodOnly() && homeGymToday()) h+='<div class="hrow"><u>Зал</u>'+htrack(pr.done,pr.total,'sets')+'<b>'+pr.done+' <s>/ '+pr.total+' '+plural(pr.total,['подход','подхода','подходов'])+'</s></b></div>';
-  var r=(sc&&sc.r!=null)?sc.r:null, норм=!!(sc&&!(sc.why&&sc.why.length)), w=r==null?0:(r*10).toFixed(1);
+  var r=(!своб&&sc&&sc.r!=null)?sc.r:null, норм=!!(sc&&!(sc.why&&sc.why.length)), w=r==null?0:(r*10).toFixed(1);
+  if(своб) return h+'<div class="hrow"><u>Оценка</u><div class="htr"></div><b>— <s>свободный день</s></b></div></div>';
   h+='<div class="hrow"><u>Оценка</u>'+
      (r==null ? '<div class="htr"></div>'
               : '<div class="htr"><div class="hfill'+(норм?' hf-ok':'')+'" data-w="'+w+'"></div><div class="hdot'+(норм?' hf-ok':'')+'" data-l="'+w+'"></div></div>')+
@@ -10251,7 +10292,7 @@ function hcEvents(){
      а строка под ними говорит «на сегодня хватит» (два места об одном факте). */
   var tg=d.targets||{}, закрыта = !!(tg.kcal && (tg.kcal-(+d.kcal||0))<=0);
   var plan=nextMealPlan(d.meals||[], nowH);
-  if(закрыта) plan={at:null, name:'еда'};
+  if(закрыта || homeСвоб()) plan={at:null, name:'еда'};
   if(plan.at!=null){
     var сейчас=Math.abs(plan.at-nowH)<0.5;
     ev.push({h:plan.at, cls:'next', act:'eat',
@@ -10356,6 +10397,8 @@ function homeClock(){
   }
   s+='</svg>';
   var c;
+  if(homeСвоб()) return '<div class="hclk">'+s+'<div class="hctr"><b class="hfree">свободный<br>день</b><u>без записи и оценки</u>'+
+    '<i class="hcl">завтра — обычная норма</i></div></div>';
   if(!t.kcal) c='<b>'+hNum(kc)+'</b><u>ккал съедено</u><i>заполни профиль — будет норма</i>';
   else {
     var rem=t.kcal-kc, rp=Math.round((t.prot||0)-pt);
@@ -10388,6 +10431,7 @@ function homeClock(){
    грамм — это просто пересчёт граммов белка в граммы мяса или рыбы. */
 function homeNextLine(E){
   var d=HOME.day||{}, t=d.targets||{};
+  if(homeСвоб()) return '<p class="hnext">ешь как решил — записывать не нужно</p>';
   if(!t.kcal) return '';
   if(!E.plan || E.plan.at==null) return '<p class="hnext">на сегодня всё · дальше только если голоден</p>';
   var rem=Math.round(t.kcal-(+d.kcal||0)), rp=Math.round((t.prot||0)-(+d.prot||0));
@@ -10410,7 +10454,8 @@ function homeWeek(){
   var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<div class="hweek">';
   for(var i=0;i<7;i++){
     var dt=new Date(nd.getTime()+(i-dow)*864e5), iso=ymd(dt), d=by[iso], fut=iso>TODAY, cls='';
-    if(!fut && d && d.n){ var t=(d.tg&&d.tg.kcal)?d.tg:tg, off=t.kcal?(d.kcal-t.kcal)/t.kcal:0;
+    if(!fut && d && d.free) cls='free';               /* 02.10: свободный день — пунктиром, не красным */
+    else if(!fut && d && d.n){ var t=(d.tg&&d.tg.kcal)?d.tg:tg, off=t.kcal?(d.kcal-t.kcal)/t.kcal:0;
       cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
     h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'>'+WD[dt.getDay()]+(fut?'':'<b class="'+cls+'"></b>')+'</button>';
   }
@@ -10510,6 +10555,22 @@ function bodyDelta(ms, sr, вид){
    30.09, как «ТЕМП СЕЙЧАС» у тренера — темпНедели на сервере); раньше
    «неделя» была разницей двух взвешиваний, и экран показывал +0,1, когда
    тренер говорил −0,3. «День» и «всего» — прежние (bodyDelta). */
+/* Свободные дни (02.10) — список с сервера (/measures, /free, /day). Три
+   утра после каждого — вода: правило то же, что у сервера (СВОБ_ВОДА). */
+function свобСписок(){ return ((FOOD && FOOD.free) || []).slice().sort(); }
+function свобВода(){
+  var в={}, n=(FOOD && FOOD.вода) || 3;
+  свобСписок().forEach(function(f){ for(var i=1;i<=n;i++){ var d=vzДн(f,i); if(!в[d]) в[d]=f; } });
+  return в;
+}
+/* ответ /measures (и всех, кто отдаёт ряд замеров) — ряд и свободные дни */
+function замерыВзять(d){
+  if(!d) return;
+  if(d.measures) FOOD.meas=sortMeas(d.measures);
+  if(d.first) FOOD.first=d.first;
+  if(Array.isArray(d.free)) FOOD.free=d.free;
+  if(d.вода) FOOD.вода=d.вода;
+}
 var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['prot','белок'],['waist','талия']];
 function vzВид(){ try{ return localStorage.getItem('gf_vz')||'w'; }catch(e){ return 'w'; } }
 function vzВидЗадать(k){ try{ localStorage.setItem('gf_vz',k); }catch(e){} }
@@ -10517,20 +10578,33 @@ function vzСерия(k){ var r=null; bodySeries().forEach(function(s){ if(s.k==
 function vzДн(iso, n){ return ymd(new Date(new Date(iso+'T12:00:00').getTime()+n*864e5)); }
 function vzЦвет(k){ return {w:'var(--accent)', fat:'var(--chart-2)', prot:'var(--done)', waist:'var(--warn-txt)'}[k]||'var(--accent)'; }
 function vzF1(x){ return (Math.round(x*10)/10).toFixed(1).replace('.',','); }
-function vzЗн(d){ return (d>0?'+':d<0?'−':'±')+vzF1(Math.abs(d)); }
-/* цвет «за неделю»: в нужную сторону — зелёный, в обратную — красный;
-   меньше 0,1 и у белка (оценка весов, не сохранность мышц) — без цвета */
-function vzХор(sr, d){ return (d==null || sr.нейтр || Math.abs(d)<0.1) ? '' : ((sr.вниз ? d<0 : d>0) ? 'dn' : 'up'); }
+/* знак — по округлённому: 0,04 — это «±0,0», а не «+0,0» */
+function vzЗн(d){ var r=Math.round(d*10)/10; return (r>0?'+':r<0?'−':'±')+vzF1(Math.abs(r)); }
+/* Цвет «за неделю»: в нужную сторону — зелёный; меньше 0,1 и у белка (оценка
+   весов, не сохранность мышц) — без цвета. 02.10: в обратную сторону красным
+   — ТОЛЬКО если и прошлая неделя шла против цели. Одна неделя вверх бывает от
+   соли, воды и гликогена (тренер говорит то же: «две подряд — повод
+   разбирать еду»), и красная плашка после одного обильного дня пугала. */
+function vzХор(sr, d, dПрош){
+  if(d==null || sr.нейтр || Math.abs(d)<0.1) return '';
+  if(sr.вниз ? d<0 : d>0) return 'dn';
+  var иПрошлая = dПрош!=null && Math.abs(dПрош)>=0.1 && (sr.вниз ? dПрош>0 : dПрош<0);
+  return иПрошлая ? 'up' : '';
+}
 function vzПоследний(ms, sr){ for(var i=ms.length-1;i>=0;i--) if(sr.f(ms[i])!=null) return ms[i]; return null; }
+/* утра с водой после свободного дня (02.10) в средние не идут — тем же
+   правилом, что на сервере (свободные дни и их три утра приходят с /measures) */
 function vzСреднее(ms, sr, до){
-  var от=vzДн(до,-6), v=ms.filter(function(m){ return m.date>=от && m.date<=до && sr.f(m)!=null; }).map(sr.f);
+  var от=vzДн(до,-6), в=свобВода(), v=ms.filter(function(m){ return m.date>=от && m.date<=до && sr.f(m)!=null && !в[m.date]; }).map(sr.f);
   return v.length ? {v:v.reduce(function(a,b){ return a+b; },0)/v.length, n:v.length} : null;
 }
 /* по 3+ замера в каждой неделе, иначе «за неделю» не показываем: по двум
-   взвешиваниям это шум дня, а не темп */
+   взвешиваниям это шум дня, а не темп. dПрош — прошлая неделя к позапрошлой:
+   по ней решается, красить ли эту (vzХор) */
 function vzНеделя(ms, sr){
-  var a=vzСреднее(ms, sr, TODAY), b=vzСреднее(ms, sr, vzДн(TODAY,-7));
-  return (a && b && a.n>=3 && b.n>=3) ? {d:a.v-b.v, now:a.v, prev:b.v} : null;
+  var a=vzСреднее(ms, sr, TODAY), b=vzСреднее(ms, sr, vzДн(TODAY,-7)), c=vzСреднее(ms, sr, vzДн(TODAY,-14));
+  if(!(a && b && a.n>=3 && b.n>=3)) return null;
+  return {d:a.v-b.v, now:a.v, prev:b.v, dПрош:(c && c.n>=3) ? b.v-c.v : null};
 }
 function vzГладко(P){
   var f=function(n){ return n.toFixed(1); };
@@ -10552,20 +10626,39 @@ function vzПлан(){
 /* Одна величина за 35 дней: замеры — бледными точками, средний за 7 дней —
    плавной линией с заливкой (день ко дню вес гуляет на 0,5–1 кг, и ломаная
    по точкам рисовала шум), у веса — пунктир плана. Талию меряют раз в
-   неделю-две — у неё просто точки и линия через них. */
+   неделю-две — у неё просто точки и линия через них.
+   02.10, его слова: «меня пугают такие скачки, если это нормально, что вес
+   так скачет, надо сделать это частью плана, чтобы не пугать людей». Поэтому:
+   • КОРИДОР — полоса вокруг средней линии шириной в его собственный разброс:
+     два стандартных отклонения замеров от средней за последние три недели
+     (у него ±0,8–0,9 кг). Замер внутри полосы — серый: это обычный шум, цвет
+     у него не заслужен; вне полосы — цветом линии, но не красным;
+   • СВОБОДНЫЙ ДЕНЬ — пунктирная вертикаль, а три утра после него — пустые
+     пунктирные кружки: это вода, в среднюю линию и коридор они не идут. */
+function vzКоридор(pts, ср){
+  var r=[], от=vzДн(TODAY,-20);
+  pts.forEach(function(p,i){ if(p.d>=от) r.push(p.v-ср[i].v); });
+  if(r.length<7) return null;
+  var sd=Math.sqrt(r.reduce(function(a,x){ return a+x*x; },0)/r.length);
+  return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
+}
 function vzГрафик(ms, sr, план){
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
-  var pts=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
-  if(pts.length<2) return '';
-  var t0=t(pts[0].d), t1=Math.max(t(TODAY), t0+864e5);
+  var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
+  if(все.length<2) return '';
+  var скольз = sr.k!=='waist', вода = скольз ? свобВода() : {};
+  var pts=все.filter(function(p){ return !вода[p.d]; }), мокрые=все.filter(function(p){ return вода[p.d]; });
+  if(pts.length<2) pts=все, мокрые=[];
+  var t0=t(все[0].d), t1=Math.max(t(TODAY), t0+864e5);
   var x=function(d){ return L+(W-L-R)*(t(d)-t0)/(t1-t0); };
-  var скольз = sr.k!=='waist';
   var ср=pts.map(function(p){ var a=t(p.d)-6*864e5, w=pts.filter(function(q){ return t(q.d)>=a && q.d<=p.d; });
     return {d:p.d, v:w.reduce(function(s,q){ return s+q.v; },0)/w.length}; });
-  var vals=pts.map(function(p){ return p.v; }), плA=null, плB=null;
+  var кор = скольз ? vzКоридор(pts, ср) : null;
+  var vals=все.map(function(p){ return p.v; }), плA=null, плB=null;
+  if(кор) ср.forEach(function(p){ vals.push(p.v+кор, p.v-кор); });
   if(план && sr.k==='w'){
-    var нач = план.anchor>pts[0].d ? план.anchor : pts[0].d, в=function(d){ return план.anchorW + план.rate*(t(d)-t(план.anchor))/(7*864e5); };
+    var нач = план.anchor>все[0].d ? план.anchor : все[0].d, в=function(d){ return план.anchorW + план.rate*(t(d)-t(план.anchor))/(7*864e5); };
     плA={d:нач, v:в(нач)}; плB={d:TODAY, v:в(TODAY)}; vals.push(плA.v, плB.v);
   }
   var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(0.25,(mx-mn)*0.12); mn-=pad; mx+=pad;
@@ -10578,20 +10671,32 @@ function vzГрафик(ms, sr, план){
     svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line-soft)" stroke-width="1"/>'+
       '<text x="'+(W-2)+'" y="'+(+yy+3.5).toFixed(1)+'" text-anchor="end" class="vzax">'+fmtKg(Math.round(g/шаг)*шаг)+'</text>';
   }
+  /* свободные дни — пунктирной вертикалью под всем остальным */
+  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1);
+    svg+='<line class="vzsvl" x1="'+xx+'" x2="'+xx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>'; });
   /* плавно — только средний за 7 дней: через редкие точки талии кривая
      выгибалась выше и ниже замеров, которых не было */
   var линия=(скольз?ср:pts).map(function(p){ return [x(p.d), y(p.v)]; });
   var путь=скольз ? vzГладко(линия) : 'M'+линия.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L');
+  if(кор && ср.length>=2){
+    var верх=vzГладко(ср.map(function(p){ return [x(p.d), y(p.v+кор)]; }));
+    var низ=ср.slice().reverse().map(function(p){ return [x(p.d), y(p.v-кор)]; });
+    svg+='<path class="vzcor" d="'+верх+' L'+низ.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L')+' Z" fill="var(--field)" opacity=".85"/>';
+  }
   svg+='<path d="'+путь+' L'+линия[линия.length-1][0].toFixed(1)+','+(H-B)+' L'+линия[0][0].toFixed(1)+','+(H-B)+' Z" fill="url(#vzg)"/>';
   if(плA) svg+='<line class="vzpl" x1="'+x(плA.d).toFixed(1)+'" y1="'+y(плA.v).toFixed(1)+'" x2="'+x(плB.d).toFixed(1)+'" y2="'+y(плB.v).toFixed(1)+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round"/>'+
     '<circle cx="'+x(плB.d).toFixed(1)+'" cy="'+y(плB.v).toFixed(1)+'" r="2.5" fill="var(--muted)"/>';
-  if(скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="'+цв+'" opacity=".38"/>'; });
+  if(скольз) pts.forEach(function(p,i){
+    var вне = кор!=null && Math.abs(p.v-ср[i].v) > кор;
+    svg+='<circle class="'+(вне?'vzpt vzout':'vzpt')+'" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="'+(кор!=null && !вне ? 'var(--muted)' : цв)+'" opacity="'+(кор!=null && !вне ? '.55' : '.6')+'"/>'; });
+  мокрые.forEach(function(p){ svg+='<circle class="vzwet" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3.4" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="2 2"/>'; });
   svg+='<path class="vzln" d="'+путь+'" fill="none" stroke="'+цв+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
   if(!скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3" fill="'+цв+'"/>'; });
   var пос=pts[pts.length-1];
-  svg+='<circle cx="'+x(пос.d).toFixed(1)+'" cy="'+y(пос.v).toFixed(1)+'" r="4.5" fill="var(--bg)" stroke="'+цв+'" stroke-width="2.2"/>'+
-    '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(pts[0].d)+'</text>'+
+  svg+='<circle cx="'+x(пос.d).toFixed(1)+'" cy="'+y(скольз?ср[ср.length-1].v:пос.v).toFixed(1)+'" r="4.5" fill="var(--bg)" stroke="'+цв+'" stroke-width="2.2"/>'+
+    '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(все[0].d)+'</text>'+
     '<text x="'+(W-R)+'" y="'+(H-5)+'" class="vzax" text-anchor="end">сегодня</text>';
+  vzГрафик.кор=кор;
   return svg+'</svg>';
 }
 function vzПланСтрока(){
@@ -10615,25 +10720,47 @@ function homeBody(){
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
   var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид='w';
   var sr=vzСерия(вид), пос=vzПоследний(ms, sr), ед=sr.ед||'кг';
-  /* «за день» и «всего» — от последнего замера ЭТОЙ величины: талию меряют
-     не каждое утро, и от сегодняшнего взвешивания без талии дельты не было */
+  /* «за день» — от последнего замера ЭТОЙ величины: талию меряют не каждое
+     утро, и от сегодняшнего взвешивания без талии дельты не было */
   var нед=vzНеделя(ms, sr), свои=ms.filter(function(m){ return sr.f(m)!=null; });
   var дн = (пос===ms[ms.length-1] && свои.length>1) ? sr.f(пос)-sr.f(свои[свои.length-2]) : null;
+  /* 02.10, его выбор — вариант А. Его вопрос: «Мой вес 89 кг — это за
+     сегодня, а +0,3 кг — это среднее за неделю? Почему разные шкалы?»
+     Карточка смешивала две базы: крупно — сегодняшний замер, а рядом —
+     «за неделю» по средним. Теперь крупно — средний за 7 дней (та же база,
+     что «за неделю», план цели и тренер), «с 01.09» — тоже от среднего, а
+     сегодняшний замер — мелкой строкой ниже вместе с «за день». «За день»
+     не красится никогда: это вода, соль и еда, а не жир. Талию меряют раз в
+     неделю-две — у неё крупно последний замер, как было. */
+  var ср = sr.k!=='waist' ? vzСреднее(ms, sr, TODAY) : null;
+  var поСред = !!(ср && ср.n>=2);
+  var главное = поСред ? ср.v : sr.f(пос);
   var старт=(FOOD.first && sr.f(FOOD.first)!=null && FOOD.first.date<свои[0].date) ? FOOD.first : свои[0];
-  var всего = старт.date<пос.date ? sr.f(пос)-sr.f(старт) : null, от=старт.date;
+  var всего = старт.date<пос.date ? главное-sr.f(старт) : null, от=старт.date;
+  var вода=свобВода(), мокро=вода[пос.date];
   var план = вид==='w' ? vzПлан() : null;
+  var график=vzГрафик(ms, sr, план), кор=vzГрафик.кор;
+  var под=[поСред ? 'средний за 7 дней' : (пос.date!==TODAY ? 'замер '+ruDate(пос.date) : null),
+    всего!=null ? 'с '+ruDate(от)+' '+vzЗн(всего) : null, (sr.k==='prot'||sr.k==='fat') ? 'оценка весов' : null].filter(Boolean).join(' · ');
+  var сег = поСред ? '<p class="vztd">'+(пос.date===TODAY ? 'сегодня ' : 'замер '+ruDate(пос.date)+' ')+'<b>'+vzF1(sr.f(пос))+'</b>'+
+      (sr.под ? ' ('+sr.под(пос)+')' : '')+(дн!=null ? ' · за день '+vzЗн(дн) : '')+(мокро ? ' — вода' : '')+'</p>' : '';
+  /* скачок после свободного дня объясняем словами под графиком — сразу,
+     а не когда человек испугается и спросит */
+  var свПосл=свобСписок().filter(function(f){ return f<=TODAY && f>=vzДн(TODAY,-((FOOD&&FOOD.вода)||3)); }).pop();
+  var свСтрока = (вид!=='waist' && свПосл) ? '<p class="vzsv">Скачок после свободного дня '+ruDate(свПосл)+' — это вода, гликоген и соль, а не жир: обычно +0,5–2 кг, уходит за 2–4 дня. '+
+      'Три утра после него не идут в средний вес, «за неделю» и план.</p>' : '';
   return '<div class="vz">'+
     '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
-    '<div class="vznum"><b>'+vzF1(sr.f(пос))+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
-    '<p class="vzsub">'+[sr.под?sr.под(пос):null, дн!=null?'за день '+vzЗн(дн):null, нед?'средний за 7 дней '+vzF1(нед.now):null,
-      всего!=null?'с '+ruDate(от)+' '+vzЗн(всего):null, пос.date!==TODAY?'замер '+ruDate(пос.date):null,
-      (sr.k==='prot'||sr.k==='fat')?'оценка весов':null].filter(Boolean).join(' · ')+'</p>'+
-    '<div class="vzsvg">'+vzГрафик(ms, sr, план)+'</div>'+
+    '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
+    '<p class="vzsub">'+под+'</p>'+сег+
+    '<div class="vzsvg">'+график+'</div>'+
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
-      (sr.k!=='waist'?'<span><i class="pt" style="background:'+vzЦвет(sr.k)+'"></i>замер</span>':'')+
-      (план?'<span><i class="pl"></i>план цели</span>':'')+'</p>'+
-    (вид==='w'?vzПланСтрока():'')+
+      (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
+      (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
+      (план?'<span><i class="pl"></i>план цели</span>':'')+
+      (sr.k!=='waist' && свобСписок().some(function(f){ return f>=vzДн(TODAY,-34); })?'<span><i class="sv"></i>свободный день</span>':'')+'</p>'+
+    (вид==='w'?vzПланСтрока():'')+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
        недельного сообщения бота (?srez=1). */
@@ -11195,7 +11322,7 @@ function circleShare(id){
 /* оценка дня на «Еде» — всегда, без закрытия (его правило: «не нужно закрывать
    день, чтобы получить оценку»); итог фиксируется в полночь сам */
 function closeHtml(){
-  var d=DAYSC; if(!d || d.date!==fDate()) return '';
+  var d=DAYSC; if(!d || d.date!==fDate() || d.free) return '';
   var fin = d.closed || d.date<TODAY;
   /* до первой записи числа нет: «3,0 / 10» с утра — это не оценка, а пустой день */
   if(d.r==null) return fin ? '' : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>';
@@ -11692,7 +11819,7 @@ function openFood(){
   renderGlu(); if(gluВидно()) gluPull();
   loadDay();
   fGet('/week?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.week){ FOOD.week=d.week; renderFoodWeek(); } }).catch(function(){});
-  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ FOOD.meas=sortMeas(d.measures); if(d.first) FOOD.first=d.first; syncBwFromMeas(); renderMeas(); } }).catch(function(){});
+  fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.measures){ замерыВзять(d); syncBwFromMeas(); renderMeas(); } }).catch(function(){});
   podPull();
 }
 /* ── САХАР В КРОВИ ─────────────────────────────────────────────────────
@@ -12563,13 +12690,17 @@ function renderFoodDay(){
     fib: t.fib ? 'Коридор — '+t.fib+'–'+клВерх+' г. Больше — не вредно, дальше полоса серая.' : '',
     sug: t.sug ? 'Зелёное — до '+сахОр+' г (5 % калорий, ориентир ВОЗ), жёлтое — до '+t.sug+' г (10 %, потолок), выше — красное.' : ''
   };
-  box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+  /* 02.10: свободный день — вместо шкал и оценки одна карточка; приёмы, если
+     что-то записано, остаются списком, но без баллов */
+  var св=d.free||null;
+  if(св && св.on) box.innerHTML = свобКартаHtml(св, d.date||fDate());
+  else box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
     (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
     (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + состав +
     '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
-    closeHtml();
+    closeHtml() + свобСтрокаHtml(св);
   /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:
      прошлый день судит полная формула, и делить её на приёмы нечестно */
   var оцП={};
@@ -12595,13 +12726,71 @@ function renderFoodDay(){
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
-  if((d.meals||[]).length) box.innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
+  if((d.meals||[]).length && !(св && св.on)) box.innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
+  if(св && св.on && !ml.innerHTML){ ml.innerHTML='<p class="empt">Записей нет — и не нужно.</p>'; return; }
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
   if(!ml.innerHTML) ml.innerHTML='<p class="empt">'+((d.date||fDate())===TODAY?'За сегодня записей нет.':'За этот день записей нет.')+
     '<br>Напиши тренеру, что ел, или пришли фото — кнопка справа внизу. Посчитает и покажет, сколько до нормы.</p>';
 }
+/* ══ СВОБОДНЫЙ ДЕНЬ НА «ЕДЕ» (02.10) ══
+   Его слова: «если объявить день чит-днём, то ничего из еды не просить
+   записывать в этот день, иначе замучает совесть»; «нужна кнопка, которая
+   просто объявит весь день чит-днём, и всё»; отметить — «можно когда
+   угодно». Строка под оценкой дня — для открытого на «Еде» дня (листают
+   стрелкой назад — так отмечают вчера); нажатие — шторка: что это, вода
+   наутро, окно по его темпу и цена вне окна. Окно и цену считает сервер
+   (свободноеОкно), здесь только слова. Кнопка не запрещает никогда. */
+function свобДень(iso){ return iso===TODAY ? 'сегодня' : (iso===vzДн(TODAY,-1) ? 'вчера' : ruDate(iso)); }
+function свобДней(n){ return n+' '+plural(n,['день','дня','дней']); }
+function свобСтрокаHtml(св){
+  if(!св || !св.окно) return '';
+  var о=св.окно, ц=о.цена||{};
+  var под = о.открыто ? 'по твоему темпу сейчас можно' : (ц.дней ? 'вне окна — срок цели +'+свобДней(ц.дней) : 'день без записи еды и оценки');
+  return '<button type="button" class="svrow" data-svob="1"><span>Свободный день<small>'+esc(под)+'</small></span>'+
+    (о.открыто ? '<em class="ok">окно открыто</em>' : '<em>окно с '+ruDate(о.след)+'</em>')+'</button>';
+}
+function свобКартаHtml(св, iso){
+  return '<div class="svcard"><h4>Свободный день</h4><p>'+(iso===TODAY ? 'Сегодня' : 'В этот день')+' еду можно не записывать: нормы и оценки нет, серия не рвётся. '+
+    (iso===TODAY ? 'Завтра' : 'На следующий день')+' — обычная норма, без «отработки».</p>'+
+    '<button type="button" data-svob="1">Подробнее · снять отметку</button></div>';
+}
+function svОткрыть(){
+  var d=FOOD.day; if(!d || !d.free) return;
+  var св=d.free, о=св.окно||{}, ц=о.цена||{}, iso=d.date||fDate(), з=function(x){ return String(x).replace('.',','); };
+  var темп = о.темп!=null ? 'темп за две недели '+vzЗн(о.темп)+' кг/нед'+(о.план ? ' при плане −'+з(Math.abs(о.план))+(о.доля!=null ? ' ('+Math.round(о.доля*100)+' % плана)' : '') : '')
+                          : 'темпа пока нет — мало взвешиваний';
+  var окно = о.открыто
+    ? '<b class="ok">Окно открыто</b> — по твоему темпу такой день сейчас вписывается в план.'+(ц.дней ? '<small>Цена всё равно есть: около '+свобДней(ц.дней)+' срока цели (~'+ц.ккал+' ккал сверх плана).</small>' : '')
+    : 'Следующее окно — <b>'+ruDate(о.след)+'</b>'+(о.прошлый ? ' (прошлый свободный — '+ruDate(о.прошлый)+')' : '')+'.'+
+      (ц.дней ? '<small>Сейчас этот день сдвинет срок цели примерно на '+свобДней(ц.дней)+' (~'+ц.ккал+' ккал сверх плана, ~'+з(ц.кг)+' кг). Отметить всё равно можно.</small>' : '');
+  document.getElementById('svbody').innerHTML =
+    '<p class="svp">День без записи еды: приложение не просит записывать и не ставит оценку, тренер не спрашивает про еду. <b>Серия не рвётся</b>, зал — как обычно.</p>'+
+    '<p class="svp">Наутро весы покажут <b>+0,5–2 кг</b> — это вода, гликоген и соль, а не жир; уходит за 2–4 дня. Три утра после него не идут в средний вес, «за неделю» и план.</p>'+
+    '<p class="svp">Норма следующего дня — обычная. «Отрабатывать» не нужно: голодный день после свободного запускает цикл «переедание → вина → ограничение».</p>'+
+    '<div class="svwin">Как часто: <b>раз в '+свобДней(о.шаг||7)+'</b><small>'+esc(темп)+'. Темп на уровне плана — раз в 7 дней, 70–100 % плана — раз в 14, ниже — раз в 21. Окно открывает темп, а не «заслуга».</small></div>'+
+    '<div class="svwin">'+окно+'</div>';
+  var кн=document.getElementById('svgo');
+  кн.textContent = св.on ? 'Снять отметку с '+(iso===TODAY?'сегодня':ruDate(iso)) : (iso===TODAY ? 'Сегодня — свободный день' : 'Отметить '+свобДень(iso)+' свободным');
+  кн.className = св.on ? 'btn wide' : 'btn prim wide';
+  кн.disabled=false;
+  var нт=document.getElementById('svnote'); нт.textContent=''; нт.hidden=true;
+  document.getElementById('svm').classList.add('show');
+}
+function svЗакрыть(){ document.getElementById('svm').classList.remove('show'); }
+document.getElementById('svclose').addEventListener('click', svЗакрыть);
+document.getElementById('svm').addEventListener('click', function(e){ if(e.target.id==='svm') svЗакрыть(); });
+document.getElementById('svgo').addEventListener('click', function(){
+  var d=FOOD.day; if(!d || !d.free) return;
+  var кн=this; кн.disabled=true;
+  fPost('/free', {uid:syncUid(), date:d.date||fDate(), on:!d.free.on}).then(function(r){
+    if(Array.isArray(r.free)) FOOD.free=r.free;
+    if(r.day){ FOOD.day=r.day; }
+    svЗакрыть(); haptic('ok'); освежить(r.day);
+  }).catch(function(err){ кн.disabled=false; var нт=document.getElementById('svnote'); нт.hidden=false; нт.textContent=humanErr(err); });
+});
 document.getElementById('fday').addEventListener('click', function(e){
+  if(e.target.closest('[data-svob]')){ svОткрыть(); haptic('light'); return; }
   if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
   var b=e.target.closest('.fbar[data-fk]'); if(!b) return;
   var k=b.dataset.fk; FBOPEN = FBOPEN===k ? null : k;
@@ -12724,16 +12913,17 @@ function renderFoodWeek(){
        красным, а перебор на 40 % — зелёным (его вопрос 11.09).
        Сегодня ещё идёт: недобор не красим, перебор — уже факт. */
     var t=норма(d), откл = t.kcal ? (d.kcal-t.kcal)/t.kcal : 0;
-    var h=d.n?Math.max(3,px(d.kcal)):3, cls = !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
+    var h=d.n?Math.max(3,px(d.kcal)):3, cls = d.free ? 'fb-free' : !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
+    if(d.free) h=Math.max(h, 12);                        /* 02.10: свободный день — штриховкой, без числа и коридора */
     var низ=t.kcal?px(t.kcal*0.9):0, верх=t.kcal?px(t.kcal*1.1):0;
     if(t.kcal) естьНорма=true;
     return '<div class="fd"><div class="fbw">'+
-      (t.kcal?'<s class="nb" data-norm="'+t.kcal+'" style="bottom:'+низ+'px;height:'+(верх-низ)+'px"></s>':'')+
-      '<i style="bottom:'+(Math.max(h,верх)+4)+'px">'+(d.n?d.kcal:'')+'</i>'+
+      (t.kcal&&!d.free?'<s class="nb" data-norm="'+t.kcal+'" style="bottom:'+низ+'px;height:'+(верх-низ)+'px"></s>':'')+
+      '<i style="bottom:'+(Math.max(h,d.free?0:верх)+4)+'px">'+(d.free?'своб.':(d.n?d.kcal:''))+'</i>'+
       '<div class="fb '+cls+'" style="height:'+h+'px"></div></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
   }).join('');
   /* одна строка: среднее против нормы и сколько дней попали в коридор */
-  var logged=w.days.filter(function(d){ return d.n && d.date<TODAY; });
+  var logged=w.days.filter(function(d){ return d.n && d.date<TODAY && !d.free; });
   var вНорме=logged.filter(function(d){ var t=норма(d); return t.kcal && Math.abs((d.kcal-t.kcal)/t.kcal)<=0.10; }).length;
   var avg=w.avg||{kcal:Math.round(logged.reduce(function(a,d){ return a+d.kcal; },0)/(logged.length||1)), prot:Math.round(logged.reduce(function(a,d){ return a+(+d.prot||0); },0)/(logged.length||1))};
   var ср=function(f){ return logged.length ? Math.round(logged.reduce(function(a,d){ return a+(f(норма(d))||0); },0)/logged.length) : 0; };
@@ -12987,7 +13177,7 @@ document.getElementById('fmfile').addEventListener('change', function(e){
   var el=document.getElementById('fmreply'); el.hidden=false; el.className='freply wait'; el.innerHTML='<span>Скриншот ушёл, читаю отчёт — секунд 20<span class="dots"><i></i><i></i><i></i></span></span>'; haptic('medium');
   shrink(f, 1600).then(function(b64){ return fPost('/coach', {uid:syncUid(), text:'отчёт весов', image:b64, mime:'image/jpeg'}); })
     .then(function(d){ el.className='freply'; el.textContent=d.reply||'Записал.'; haptic('ok');
-      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }); })
+      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); renderMeas(); } }); })
     .catch(function(err){ el.className='freply bad'; el.textContent=humanErr(err); haptic('err'); });
   e.target.value='';
 });
@@ -13662,7 +13852,7 @@ function coachSend(text, image){
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
-      if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ FOOD.meas=sortMeas(x.measures); renderMeas(); } }).catch(function(){}); }
+      if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
     .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
