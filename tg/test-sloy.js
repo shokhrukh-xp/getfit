@@ -75,7 +75,7 @@ async function день(page, n) {
   дано(до.length === 5, 'а спрятанные строки не показываются: ' + до.length);
 
   /* ── просим пересобрать день ── */
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   await page.fill('#ctext', 'Пересобери программу дня 4 с фокусом на руки, предплечья и пресс');
   await page.click('#csend'); await page.waitForTimeout(1800);
   const окна = (await page.evaluate(() => window.__окна || [])).join(' | ');

@@ -14,7 +14,7 @@ const ЕДА = [
   { id: 2, t: '15:35', kind: 'обед',    kcal: 634, prot: 80, img: '/p/b.jpg' }
 ];
 const часы = page => page.evaluate(() => ({
-  метки: Array.from(document.querySelectorAll('.day-events button')).map(e => e.textContent),
+  метки: Array.from(document.querySelectorAll('.hb[aria-label]')).map(e => e.getAttribute('aria-label')),
   плюс: !!document.querySelector('.hb-next'),
   совет: (document.querySelector('.hnext') || {}).textContent || '',
   /* 12.09: поля на главной больше нет — разговор один, за круглой кнопкой.
@@ -22,7 +22,7 @@ const часы = page => page.evaluate(() => ({
   кнопка: (document.querySelector('#ctext') || {}).placeholder || ''
 }));
 const подсказка = async page => {
-  await page.click('#coachfab');
+  await page.click('#coachnav');
   await page.waitForTimeout(300);
   const t = await page.getAttribute('#ctext', 'placeholder');
   await page.click('#coachclose');

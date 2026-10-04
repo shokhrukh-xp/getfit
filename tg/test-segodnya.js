@@ -85,7 +85,7 @@ const текст = async page => (await page.textContent('#eatbody')).replace(/\
   for (const b of await page.$$('#fseg-food button')) if ((await b.textContent()).trim() === 'Что съесть') { await b.click(); break; }
   await page.waitForTimeout(800);
   дано(!(о3.спаны || []).length, 'меню свежее — пока ничего не записано, не пересобираем');
-  await page.click('#coachfab'); await page.waitForTimeout(500);
+  await page.click('#coachnav'); await page.waitForTimeout(500);
   await page.fill('#ctext', 'съел яблоко'); await page.click('#csend'); await page.waitForTimeout(1500);
   дано((о3.спаны || []).includes('today'), 'после записи в разговоре меню пересобралось само: ' + (о3.спаны || []).join(','));
   await page.close();
@@ -103,7 +103,7 @@ const текст = async page => (await page.textContent('#eatbody')).replace(/\
   /* ── 5. из разговора: «меню на сегодня» ── */
   const о5 = { page: 'home', menu: { today: СЕГ() }, onCoach: () => ({ ok: true, reply: 'Соберу меню на остаток дня.', menu: 'today' }) };
   ({ page } = await открыть(br, о5));
-  await page.click('#coachfab'); await page.waitForTimeout(500);
+  await page.click('#coachnav'); await page.waitForTimeout(500);
   await page.fill('#ctext', 'Составь меню на сегодня'); await page.click('#csend'); await page.waitForTimeout(1200);
   const кн = await page.$('#chatlog [data-cmenu="today"]');
   дано(!!кн && /Открыть меню на сегодня/.test(await кн.textContent()), 'под ответом — «Открыть меню на сегодня»');

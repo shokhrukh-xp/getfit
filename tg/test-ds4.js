@@ -21,8 +21,8 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  ok(await safe('#finish'),'Завершить доступна без таймера '+tag);
  await p.locator('.card.exact .allb').click();await p.locator('#finish').click();await M.ответитьДлительность(p,45);
  await p.locator('#finish.ok').waitFor();ok(await safe('#finish'),'сохранённое занятие доступно '+tag);
- await p.locator('#coachfab').scrollIntoViewIfNeeded();
- ok(await p.locator('#coachfab').evaluate(e=>{const a=e.getBoundingClientRect(),n=document.querySelector('.l1').getBoundingClientRect(),f=document.querySelector('#finish').getBoundingClientRect();return a.top>=f.bottom&&a.bottom<=n.top;}),'тренер после сохранения и выше навигации '+tag);
+ await p.locator('#coachnav').scrollIntoViewIfNeeded();
+ ok(await p.locator('#coachnav').evaluate(e=>{const a=e.getBoundingClientRect(),n=document.querySelector('.l1').getBoundingClientRect(),f=document.querySelector('#finish').getBoundingClientRect();return a.top>=n.top&&a.bottom<=n.bottom&&f.bottom<=n.top;}),'тренер внутри панели, сохранение выше неё '+tag);
  await p.close();
  const q=await b.newPage({viewport:{width,height:844}});await M.поднять(q,{theme,page:'log',hist:M.журнал()});
  const map=await q.locator('.bodymap').evaluateAll(svgs=>svgs.map(svg=>{const box=svg.getBoundingClientRect(),texts=[...svg.querySelectorAll('text')],rects=texts.map(x=>x.getBoundingClientRect()),bad=[];rects.forEach((a,i)=>{if(a.left<box.left-.5||a.right>box.right+.5||a.top<box.top-.5||a.bottom>box.bottom+.5)bad.push('обрезано '+texts[i].textContent);for(let j=i+1;j<rects.length;j++){const c=rects[j];if(Math.min(a.right,c.right)-Math.max(a.left,c.left)>.5&&Math.min(a.bottom,c.bottom)-Math.max(a.top,c.top)>.5)bad.push(texts[i].textContent+' / '+texts[j].textContent);}});return {n:texts.length,bad};}));
@@ -48,6 +48,6 @@ for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){
  const before=await p.locator('#tcount').textContent();await p.locator('#tplus').click();ok(await p.locator('#tcount').textContent()!==before,'+30с работает '+tag);
  await p.locator('#tskip').click();await p.waitForTimeout(400);ok(!await p.locator('#timer').isVisible(),'Пропустить закрывает таймер '+tag);
  await p.locator('#finish').scrollIntoViewIfNeeded();bad=await viewport(p);ok(!bad.length,'границы у сохранения '+tag+' '+JSON.stringify(bad));
- await p.locator('#coachfab').click();await p.waitForTimeout(400);bad=await viewport(p);ok(!bad.length,'границы в чате '+tag+' '+JSON.stringify(bad));await p.close();
+ await p.locator('#coachnav').click();await p.waitForTimeout(400);bad=await viewport(p);ok(!bad.length,'границы в чате '+tag+' '+JSON.stringify(bad));await p.close();
 }
 }finally{await b.close()}if(failures)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');})().catch(e=>{console.error(e);process.exitCode=1});

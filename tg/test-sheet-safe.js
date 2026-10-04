@@ -50,7 +50,7 @@ async function листы(page) {
     дано(под.length === 0, w + ': ни один лист не заходит под кнопки Telegram (' + зона + ' px): ' + JSON.stringify(под));
 
     /* настоящий путь: открыть чат тренера и закрыть его крестиком */
-    await page.click('#coachfab');
+    await page.click('#coachnav');
     await page.waitForTimeout(200);
     const крестик = await page.locator('#coachclose').boundingBox();
     дано(!!крестик && крестик.y >= зона, w + ': крестик чата ниже кнопок Telegram: y=' + (крестик && Math.round(крестик.y)));
@@ -58,7 +58,7 @@ async function листы(page) {
     await page.waitForTimeout(200);
     дано(!(await page.evaluate(() => document.getElementById('coachm').classList.contains('show'))), w + ': чат закрывается крестиком');
     /* поле ввода остаётся внизу экрана */
-    await page.click('#coachfab');
+    await page.click('#coachnav');
     await page.waitForTimeout(200);
     const поле = await page.locator('#ctext').boundingBox();
     дано(!!поле && поле.y + поле.height <= h, w + ': поле ввода в пределах экрана');

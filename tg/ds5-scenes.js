@@ -21,7 +21,7 @@ async function open(p,name,theme){
  if(name==='program')await p.click('#progedit');
  if(name==='reset')await p.click('#profreset');
  if(name==='subscription')await p.click('#sub-on');
- if(name==='coach'){await p.click('#coachfab');await p.fill('#ctext','Что лучше съесть после тренировки?');}
+ if(name==='coach'){await p.click('#coachnav');await p.fill('#ctext','Что лучше съесть после тренировки?');}
  if(name==='meal'||name==='meal-edit'){await p.locator('#fmeals [data-mid]').first().click();if(name==='meal-edit')await p.click('#mv-edit');}
  if(name==='catalog-picker')await p.click('#addex');
  if(name==='schedule')await p.click('#schedbtn');

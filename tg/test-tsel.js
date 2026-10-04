@@ -77,7 +77,7 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await page.click('#wz-one');
   await page.waitForTimeout(1700);
   const вкладки = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
-  дано(вкладки.join(',') === 'Сегодня,Еда', 'знакомство кончилось, две вкладки: ' + вкладки.join(' · '));
+  дано(вкладки.join(',') === 'Сегодня,Еда,Тренер', 'знакомство кончилось, три кнопки: ' + вкладки.join(' · '));
   await page.close();
 
   /* ── предел темпа упирается не в процент веса, а в пол нормы ── */

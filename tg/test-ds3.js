@@ -38,8 +38,8 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
     пустой при переборе. Сегодня залито по правилу дня; отличает его дата. */
  const chart=await p.locator('#fweek .fd-today .fb').evaluate(e=>{const cs=getComputedStyle(e);return {рамка:cs.borderTopStyle,фон:cs.backgroundColor,узор:cs.backgroundImage};});
  дано(chart.рамка!=='dashed'&&(!/rgba\(0, 0, 0, 0\)|transparent/.test(chart.фон)||chart.узор!=='none'),'сегодня в неделе залито, не пустая рамка '+label+' '+JSON.stringify(chart));
- await p.locator('#coachfab').scrollIntoViewIfNeeded();
- дано(await p.locator('#coachfab').evaluate(e=>e.getBoundingClientRect().top>=document.querySelector('main').getBoundingClientRect().bottom),'тренер в потоке после контента '+label);
+ await p.locator('#coachnav').scrollIntoViewIfNeeded();
+ дано(await p.locator('#coachnav').evaluate(e=>e.closest('.l1') && e.getBoundingClientRect().top>=document.querySelector('.l1').getBoundingClientRect().top&&e.getBoundingClientRect().bottom<=innerHeight),'тренер в нижней панели '+label);
  if(state==='сегодня'){await p.locator('#food-add').click();дано(await p.locator('#coachm').isVisible(),'добавить приём открывает прежнего тренера '+label)}
  дано(!errors.length,'нет ошибок JS '+label);await p.close();
 }

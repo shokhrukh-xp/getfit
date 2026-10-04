@@ -49,7 +49,7 @@ const ЛИСТ = () => {
 
   /* просим тренера — сервер отвечает 402 с кодом sub */
   /* 24.09: строки записи на «Еде» нет — просим тренера в чате */
-  await гость.click('#coachfab'); await гость.waitForTimeout(400);
+  await гость.click('#coachnav'); await гость.waitForTimeout(400);
   await гость.fill('#ctext', 'плов с говядиной');
   await гость.click('#csend');
   await гость.waitForTimeout(1400);

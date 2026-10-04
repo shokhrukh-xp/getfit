@@ -27,7 +27,7 @@ const ЧАТ = [
   const ош = await M.поднять(page, { theme: 'dark', wait: 2400, chat: ЧАТ,
     onCoach: () => ({ ok: true, reply: 'Возьми 200 г куриной грудки на ужин.', src: [HELMS] }) });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
-  await page.click('#coachfab'); await page.waitForTimeout(800);
+  await page.click('#coachnav'); await page.waitForTimeout(800);
 
   const ходы = await page.$$eval('#chatlog .turn', ts => ts.map(t => ({
     say: (t.querySelector('.say') || {}).textContent || '',

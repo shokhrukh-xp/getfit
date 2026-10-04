@@ -14,21 +14,21 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  const err=await M.поднять(p,o);const label=theme+'/'+width+'/'+state;
  const d=await p.evaluate(()=>{
   const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],r=e=>e.getBoundingClientRect();
-  const today=q('.hdaycard'),week=q('.hweek-block'),rows=all('.hdaycard .hrow'),fab=q('#coachfab');
+  const today=q('.hdaycard'),week=q('.hweek-block'),rows=all('.hdaycard .hrow'),fab=q('#coachnav');
   return {overflow:document.documentElement.scrollWidth>innerWidth,arc:all('.hdaycard .hclk svg').length,
    rows:rows.length,grid:getComputedStyle(q('.hrows')).gridTemplateColumns.split(' ').length,
    scoreFull:Math.abs(r(rows.at(-1)).width-r(q('.hrows')).width+32)<2,
    week:all('.hweek').length,dates:all('.hwd-date').map(e=>e.textContent),after:r(week).top>=r(today).bottom,
    legend:all('.hdaycard .ds-zone').length,fields:!!q('.vzbottom #hmeas #fw'),
    body:!!q('.vztop .vzhd'),plot:all('.vzsvg svg').length,
-   fabAfter:r(fab).top>=r(q('main')).bottom,fabHeight:r(fab).height,
+   fabAfter:fab.parentElement.classList.contains('l1-in')&&r(fab).bottom<=innerHeight&&r(fab).top>=r(q('.l1')).top,fabHeight:r(fab).height,
    reserve:parseFloat(getComputedStyle(document.body).paddingBottom),nav:r(q('.l1')).height};
  });
  дано(!d.overflow&&d.arc===1&&d.grid===2&&d.legend===1,'дуга, сетка и ширина '+label);
  дано(d.rows===(state==='без зала'?3:4)&&(state!=='без зала'||d.scoreFull),'показатели и широкая оценка без зала '+label);
  дано(d.week===1&&d.dates.length===7&&d.dates.every(x=>/^\d{1,2}$/.test(x))&&d.after,'единственная неделя с датами после Сегодня '+label);
  дано(d.body&&d.fields&&d.plot===(['мало замеров','новичок'].includes(state)?0:1),'Тело и доступный новый замер '+label);
- дано(d.fabAfter&&d.fabHeight>=44&&d.reserve>=d.fabHeight+d.nav,'капсула после контента и запас под навигацию '+label);
+ дано(d.fabAfter&&d.fabHeight>=44&&d.reserve>=d.fabHeight+d.nav,'вход тренера в панели и запас под навигацию '+label);
  if(state==='обычно'){
   дано(await p.locator('.sila-up,.sila-flat,.sila-down').evaluateAll(ns=>ns.length===3&&ns.every(n=>{const r=document.createRange();r.selectNodeContents(n);return getComputedStyle(n).whiteSpace==='nowrap'&&r.getClientRects().length===1})), 'каждая группа силы целиком на одной строке '+label);
   await p.locator('#fw').fill('87.4');

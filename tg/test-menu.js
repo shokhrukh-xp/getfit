@@ -81,7 +81,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
 
   /* из разговора */
   о.просили = null;
-  await page.click('#coachfab'); await page.waitForTimeout(600);
+  await page.click('#coachnav'); await page.waitForTimeout(600);
   await page.fill('#ctext', 'Составь меню на неделю'); await page.click('#csend'); await page.waitForTimeout(1200);
   const кн = await page.$('#chatlog [data-cmenu="week"]');
   дано(!!кн && /Открыть меню на неделю/.test(await кн.textContent()), 'под ответом — кнопка «Открыть меню на неделю»');

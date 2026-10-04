@@ -27,7 +27,7 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   await page.waitForTimeout(500);
 
   const вкладки = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
-  дано(вкладки.join(',') === 'Сегодня,Еда', 'вкладок две, «Тренировки» нет: ' + вкладки.join(' · '));
+  дано(вкладки.join(',') === 'Сегодня,Еда,Тренер', 'вкладок три, «Тренировки» нет: ' + вкладки.join(' · '));
 
   const главная = await page.textContent('#homebody');
   дано(!/подход/.test(главная), 'дорожки зала на главной нет');
@@ -54,7 +54,7 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   await M.поднять(page, { theme: 'dark', time: '16:10', day: { meals: ЕДА, targets: НОРМА }, wait: 2200 });
   await page.waitForTimeout(400);
   const в2 = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
-  дано(в2.length === 3, 'в обычном режиме три вкладки: ' + в2.join(' · '));
+  дано(в2.length === 4, 'в обычном режиме четыре кнопки: ' + в2.join(' · '));
   /* 30.09, его просьба: карточки тренировки на главной нет ни у кого;
      зал — вкладкой и нажатием на «Зал на неделе» */
   дано(await page.$('.hact') === null, 'карточки тренировки на главной нет и в обычном режиме');
@@ -78,7 +78,7 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   дано(!(await page.isVisible('#picker .modalbox').catch(() => false)) || !(await page.$eval('#picker', e => e.classList.contains('show'))),
     'знакомство закончилось на цели, без вопросов про зал');
   const в3 = await page.$$eval('.l1-in button', bs => bs.filter(b => b.offsetParent).map(b => b.textContent.trim()));
-  дано(в3.join(',') === 'Сегодня,Еда', 'после знакомства две вкладки: ' + в3.join(' · '));
+  дано(в3.join(',') === 'Сегодня,Еда,Тренер', 'после знакомства три кнопки: ' + в3.join(' · '));
   await page.close();
 
   await br.close();

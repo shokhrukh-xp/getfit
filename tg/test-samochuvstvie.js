@@ -45,9 +45,9 @@ async function нажать(page, текст){
   const ош = await M.поднять(page, o);
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   дано((o.спрошено || []).length === 1 && o.спрошено[0].date === T, 'в день зала тренер спросил сам — один запрос за сегодня');
-  дано(await page.$eval('#coachfab', n => n.classList.contains('attn')), 'на кнопке тренера точка — пришло новое');
+  дано(await page.$eval('#coachnav', n => n.classList.contains('attn')), 'на кнопке тренера точка — пришло новое');
   o.chat = [ВОПРОС];
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   дано((await кнопки(page)).join(' · ') === 'Отлично · Нормально · Плохо спал · Устал · Что-то болит', 'в разговоре пять кнопок: ' + (await кнопки(page)).join(' · '));
   const высоты = await page.$$eval('#chatlog .chatacts button', ns => ns.map(n => n.getBoundingClientRect().height));
   дано(высоты.every(h => h >= 44), 'кнопки не меньше 44 точек');
@@ -98,7 +98,7 @@ async function нажать(page, текст){
   const о2 = { theme: 'dark', wait: 2400, time: '09:10', chat: [ВОПРОС], onAct: ответ };
   await M.поднять(page, о2);
   const дня = (await page.$$eval('#list .exrow .exrn b', ns => ns.map(b => b.childNodes[b.childNodes.length - 1].textContent.trim())));
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   await нажать(page, 'Что-то болит');
   дано((await кнопки(page)).join(' · ') === '0–2, чуть · 3–5, терпимо · 6–10, сильно · Острая, отёк или онемение', 'шкала боли кнопками');
   дано(await page.$$eval('#chatlog .chatacts button.warn', ns => ns.length === 1 && /Острая/.test(ns[0].textContent)), '«Острая, отёк» выделена предупреждением');
@@ -134,7 +134,7 @@ async function нажать(page, текст){
   const второе = (await page.$$eval('#list .exrow', ns => ns.filter(n => !/\sс$/.test(n.querySelector('.exrn i').textContent.trim()))
     .map(n => { const b = n.querySelector('.exrn b'); return b.childNodes[b.childNodes.length - 1].textContent.trim(); })))[1];
   о3.chat = [{ ts: 1, role: 'assistant', text: 'Это выше 5.', act: [{ k: 'hurt', ex: второе, t: 'Отметить и заменить', d: T }] }];
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   await нажать(page, 'Отметить и заменить'); await page.waitForTimeout(700);
   const п3 = (о3.нажато || [])[0] || {};
   дано(п3.k === 'swap' && п3.ex === второе && !!п3.to, 'кнопка из слов: отметил и заменил «' + второе + '» → «' + п3.to + '»');
@@ -147,11 +147,11 @@ async function нажать(page, текст){
   const о4 = { theme: 'dark', wait: 2400, time: '09:10', chat: [
     { ts: 1, role: 'assistant', text: 'Вчерашнее.', act: [{ k: 'easy', t: 'Облегчить сегодня', d: ВЧЕРА }] }] };
   await M.поднять(page, о4);
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   дано((await кнопки(page)).length === 0, 'вчерашняя кнопка «Облегчить сегодня» не показана');
   await page.click('#coachclose'); await page.waitForTimeout(300);
   о4.chat = [{ ts: 1, role: 'assistant', text: 'Как ты?', act: [{ k: 'wb', v: 'отл', t: 'Отлично', d: T }] }, { ts: 2, role: 'user', text: 'а что с белком?' }];
-  await page.click('#coachfab'); await page.waitForTimeout(700);
+  await page.click('#coachnav'); await page.waitForTimeout(700);
   дано((await кнопки(page)).length === 0, 'после вопроса человека прежние кнопки не висят');
   await page.close();
 

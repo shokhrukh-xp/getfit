@@ -110,7 +110,7 @@ async function рейтинг(page) {
   await гость.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(гость, { theme: 'dark', page: 'food', wait: 2800, sub: 'нет' });
   /* 24.09: строки записи на «Еде» нет — просим тренера в чате */
-  await гость.click('#coachfab'); await гость.waitForTimeout(400);
+  await гость.click('#coachnav'); await гость.waitForTimeout(400);
   await гость.fill('#ctext', 'плов');
   await гость.click('#csend');
   await гость.waitForTimeout(1400);

@@ -52,7 +52,7 @@ const СТАЛО = { name: 'Мышцы · 3 дня', note: 'Три дня.', foc
   дано(/Выпады/.test(до[2] || ''), 'до просьбы день 3 — это ноги: ' + (до[2] || '').slice(0, 60));
 
   /* ── просим заменить весь день ── */
-  await page.click('#coachfab');
+  await page.click('#coachnav');
   await page.waitForTimeout(700);
   дано(await page.$eval('#coachm', e => e.classList.contains('show')).catch(() => false), 'разговор с тренером открылся');
   await page.fill('#ctext', 'Нет, все упражнения дня 3 нужно заменить на руки и пресс');

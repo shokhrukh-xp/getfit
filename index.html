@@ -272,14 +272,10 @@ select.week{
 /* режим «только питание»: всё, что про зал, с экранов уходит */
 body.nogym .l1-in button[data-page="gym"]{display:none}
 body.nogym .l1-in{grid-template-columns:repeat(2,1fr)}
-/* На приборной плавающая кнопка тренера только закрывает таблицу людей */
-body.onadmin .coachfab{display:none!important}
+
 body.nogym .gymonly{display:none!important}
 .l1-in{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;margin:0 auto}
-/* Три колонки на всех. Раньше у владельца сетка становилась
-   четырёхколоночной под «Приборную», и когда кнопку убрали, три оставшиеся
-   жались влево, оставив пустую четверть. 17.09, его слова: «почему нижняя
-   навигация смещена всё ещё налево». */
+/* Все видимые кнопки равномерно занимают нижнюю панель, включая тренера. */
 .l1 button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:8px 4px 7px;color:var(--muted);font-size:12px;letter-spacing:0;
@@ -1111,27 +1107,6 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fchart svg{display:block;width:100%;height:auto}
 .fchart .lg{display:flex;gap:14px;margin-top:6px;font-family:inherit;font-size:12px;color:var(--dim)}
 .fchart .lg i{display:inline-block;width:10px;height:3px;border-radius:12px;margin-right:5px;vertical-align:middle}
-/* ── тренер: плавающая кнопка и окно чата ── */
-.coachfab{position:fixed;right:14px;bottom:calc(84px + var(--pad-bottom,0px) + var(--fab-lift,0px));z-index:60;width:44px;height:44px;border-radius:999px;
-  border:none;background:var(--action);color:var(--on-accent);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(var(--accent-rgb),.26);padding:0;transform-origin:75% 75%;opacity:.92;
-  transition:transform .22s cubic-bezier(.2,.8,.3,1),opacity .22s ease,bottom .3s cubic-bezier(.2,.8,.3,1)}
-/* пока идёт отдых, внизу плашка таймера — кнопка тренера поднимается над ней,
-   иначе она закрывает «+30с» */
-body.tmr .coachfab{bottom:calc(84px + var(--pad-bottom,0px) + var(--tmr-h,70px) + var(--fab-lift,0px))}
-/* 44 точки: свободного места под плавающую кнопку на экранах нет (мерил —
-   ближайшее в 120–260 точках выше), поэтому она не прячется, а занимает
-   меньше места. Полупрозрачной вполсилы её было почти не видно — оставляем
-   чуть приглушённой, а уходит она только тогда, когда страница едет. */
-.coachfab:active{transform:scale(.94);opacity:1}
-.coachfab:focus-visible{opacity:1}
-.coachfab.attn{opacity:1}                 /* тренер ответил — тут прятаться незачем */
-/* страница едет — кнопка отступает: под ней видно то, мимо чего идут глаза */
-.coachfab.away{transform:scale(.82);opacity:.34}
-/* разговор открыт — входа в разговор на экране быть не должно */
-body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
-.coachfab svg{width:24px;height:24px}
-.coachfab.attn::after{content:"";position:absolute;top:1px;right:1px;width:9px;height:9px;border-radius:999px;background:var(--warn);border:2px solid var(--bg)}
 /* ── РАЗГОВОР ──
    12.09: «интерфейс чата выглядит доисторическим». Ответы тренера длинные —
    абзац с числами и разбором; в пузыре шириной 88 % они читались как записка,
@@ -2008,7 +1983,7 @@ body.onb #wz-one{position:sticky;bottom:8px;z-index:3;box-shadow:0 6px 18px rgba
 /* Первый запуск: за окном мастера раньше стояла чужая программа с пустыми
    ячейками — человек видел «пустую главную страницу» и не понимал, чья она.
    Пока знакомимся, приложения не видно вовсе. */
-body.onb .top, body.onb .l1, body.onb .wrap, body.onb .coachfab{visibility:hidden}
+
 body.onb #picker{align-items:stretch}
 body.onb #picker .modalbox{max-height:100%;border-radius:0;padding-top:calc(20px + var(--pad-top,0px))}
 body.onb #picker .modalbox::before{display:none}
@@ -2128,13 +2103,6 @@ body.onb #picker .modalbox::before{display:none}
 .hright{display:flex;align-items:center;gap:8px}
 /* тренер — в шапке, рядом с профилем: плавающий угол закрывал последнюю строку
    «Сегодня», а угол экрана — самое дорогое место на телефоне */
-/* 12.09: единственный вход в разговор — плавающая кнопка с логотипом.
-   56 точек: палец попадает без прицеливания. Внутри — сам логотип, поэтому
-   фона у кнопки нет, только тень и волосяной кант. */
-.coachfab{width:44px;height:44px;overflow:hidden;background:var(--bg-2);
-  box-shadow:0 6px 18px rgba(0,0,0,.34), 0 0 0 1.5px var(--line)}
-.coachfab img{width:100%;height:100%;object-fit:cover;display:block}
-.coachfab.attn::after{top:0;right:0}
 .empt{font-size:15px}
 
 /* ── «Сегодня»: число дня как герой, коридор нормы как знак ── */
@@ -2154,8 +2122,8 @@ body.onb #picker .modalbox::before{display:none}
 .hclk-svg{display:block;width:100%;height:auto}
 .hcring{fill:none;stroke:var(--line);stroke-width:2}
 .hctick{fill:var(--dim);opacity:.55}
-.hcpast{fill:none;stroke:var(--text);stroke-width:2.5;stroke-linecap:round}
-.hchand{stroke:var(--dim);stroke-width:1;stroke-dasharray:3 4}
+
+
 .hch{fill:var(--dim);font-size:10px;font-weight:700;font-family:inherit}
 .hcw{fill:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-family:inherit}
 .hb{cursor:pointer}
@@ -2169,7 +2137,6 @@ body.onb #picker .modalbox::before{display:none}
 .hb-todo .hbbg{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 3} .hb-todo .hbi{stroke:var(--dim)}
 .hb-w .hbbg{stroke:var(--done);stroke-width:2}
 .hbt{fill:var(--text);font-size:9px;font-weight:800;text-anchor:middle;font-family:inherit}
-.hbl{fill:var(--dim);font-size:10px;font-weight:600;font-family:inherit;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
 .hctr{position:absolute;left:20%;right:20%;top:65%;transform:translateY(-50%);text-align:center;pointer-events:none}
 .hctr b{display:block;font-size:42px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums}
 .hctr b.over{color:var(--warn-txt)}
@@ -2551,12 +2518,6 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .hctx{min-width:0}
 .hctx>b{display:block;font-size:32px;font-weight:800;line-height:1.2}
 .hctx .ds-eyebrow{margin-bottom:4px}
-.coachfab{width:auto;height:44px;padding:0 14px;display:flex;gap:6px;align-items:center;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--accent);font-size:13px;font-weight:700}
-.coachfab img{display:none}
-.coachfab::before{content:'✦';font-size:16px}
-.coachfab::after{content:'Тренер'}
-.coachfab.attn::after{content:'Тренер';position:static;width:auto;height:auto;border:0;background:none;border-radius:0}
-.coachfab.attn{border-color:var(--accent)}
 
 /* 04.10 · Этап 2 «Главная»: новые оболочки, прежние данные и обработчики.
    У hdaycard нет бокового padding: ширина и геометрия .hclk не меняются. */
@@ -2618,13 +2579,7 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .hstats .hline>span{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
 .hstats .hline>b{display:block;font-size:17px;text-align:left;white-space:normal;overflow-wrap:anywhere}
 .hstats .hline em{display:block;margin:4px 0 0;font-size:12px;white-space:normal;line-height:1.4}
-/* На главной капсула в потоке после содержимого, как в макете:
-   отступ у fixed-кнопки не предотвращал наложение на промежуточные заголовки.
-   На остальных экранах остаётся существующее поведение FAB. */
-body:has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
-body:not(.coach):has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab{transform:none;opacity:.92}
-body:not(.coach):has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab.attn{opacity:1}
-/* Внизу остаётся запас под капсулу и навигацию, в том числе с таймером. */
+/* Запас снизу оставляет последние действия выше навигации и таймера. */
 body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 @media(max-width:359px){
  /* У журнала дата дельты на второй строке: четыре колонки помещаются в 320 px. */
@@ -2719,9 +2674,6 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 #p-ref .catitem:last-child{border-bottom:0}
 #p-ref .catlist{gap:0}
 #p-ref .catgrp h4{border-radius:24px 24px 0 0}
-body:has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
-body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{transform:none;opacity:.92}
-body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn{opacity:1}
 
 /* 04.10: обе кнопки отдыха должны помещаться даже на 320 px.
    Подпись занимает собственную строку, а не отнимает ширину у действий. */
@@ -2756,8 +2708,6 @@ body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn
 #coachm .attbox{max-height:22%;overflow:auto;flex-shrink:0}
 body.onb #wz-one{position:static;background:var(--action);color:var(--on-accent);box-shadow:none}
 body.onb #picker .modalbox{max-height:100%;border-radius:0}
-/* Капсула в потоке не перехватывает касание закреплённой навигации. */
-.coachfab{z-index:50}
 .modalbox .srsrc{opacity:1}
 .modalbox .wzq .mchip{background:var(--surface);color:var(--text)}
 .plate .plph{color:var(--text)}
@@ -2766,11 +2716,9 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 
 /* 04.10: по снимкам Шохруха — меньше текста и красного, сравнение факт/норма
    с подписями, время в списке, компактные настройки без вложенных рамок. */
-.day-events{margin:0 0 12px;border-bottom:1px solid var(--line);font-size:13px}
-.day-events summary,.body-explain summary,.vzsv summary,.menu-note summary,.week-explain summary,.goal-progress summary{min-height:44px;cursor:pointer;align-content:center;color:var(--text)}
-.day-events summary span{color:var(--muted);margin-left:8px;font-size:12px}
-.day-events>div{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;padding-bottom:12px}
-.day-events button{font:inherit;text-align:left;background:var(--tint);color:var(--text);border:0;border-radius:12px;min-height:44px;padding:8px;white-space:normal}
+
+.body-explain summary,.vzsv summary,.menu-note summary,.week-explain summary,.goal-progress summary{min-height:44px;cursor:pointer;align-content:center;color:var(--text)}
+
 .hctr .hcl .hbad{color:var(--muted)}
 .vzbottom .vzplan b{color:var(--text)}
 .vzbottom .vzverdict{padding:0;background:none;color:var(--text)}
@@ -2839,8 +2787,6 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 #profm .invcode{gap:8px}
 #profm .invcode input{min-width:0}
 
-
-.day-events{margin-left:16px;margin-right:16px}
 .hdaycard .hrow{grid-template-columns:1fr;gap:4px}
 .hdaycard .hrow>u{grid-area:1/1}
 .hdaycard .hrow>b{grid-area:2/1;font-size:22px}
@@ -2882,6 +2828,25 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 #fweek .fd-today .fb{border:0;background:var(--muted)}
 #fweek .fd-today .fb.fb-hi{background:var(--accent)}
 #fweek .fd-today .fb.fb-low{background:var(--warn)}
+
+/* 04.10: «Тренер» всегда в нижней панели; четыре цели касания и три без зала. */
+.l1-in,.l1-in.two,.l1-in.three{grid-template-columns:repeat(4,minmax(0,1fr))}
+body.nogym .l1-in{grid-template-columns:repeat(3,minmax(0,1fr))}
+.l1 button{min-width:0;min-height:60px;padding:8px 2px;font-size:12px;position:relative}
+#coachnav.attn::after{content:'';position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:999px;background:var(--warn);border:2px solid var(--surface)}
+body.coach #coachnav{pointer-events:none}
+body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
+.hbtime rect{fill:var(--surface);stroke:var(--line);stroke-width:1}
+.hbtime text{fill:var(--text);font-size:var(--badge-font,12px);font-weight:700;text-anchor:middle;font-variant-numeric:tabular-nums}
+.hb-next .hbtime text,.hb-todo .hbtime text{fill:var(--muted);font-weight:500}
+.hb:focus-visible{outline:none}.hb:focus-visible .hbcut{stroke:var(--accent);stroke-width:3}
+.hwd-dots .hwd-free{font-size:15px;line-height:18px}
+.hwd-dots{min-height:18px}
+.hweek-legend{flex-wrap:wrap}
+.timer{bottom:calc(61px + var(--pad-bottom,0px))}
+.hctr{top:79%}
+@media(max-width:360px){.hctr{top:83%}}
+.vzlg .water-key{display:inline;line-height:1.5}
 </style>
 </head>
 <body>
@@ -2902,14 +2867,12 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
-    <!-- Вкладок ровно три, у всех одинаково. Четвёртая, «Админ панель»,
-         стояла здесь у владельца и занимала место наравне с едой и залом —
-         17.09 она уехала строкой в профиль. -->
+    <button type="button" id="coachnav" aria-label="Спросить тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span>Тренер</span></button>
   </div>
 </nav>
 
 <main class="wrap">
-    
+
     <section class="page" id="p-home">
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
@@ -3045,7 +3008,7 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
         <div id="admbody"><p class="empt">Загружаю…</p></div>
       </div>
     </section>
-    
+
 
 
 </main>
@@ -3141,7 +3104,7 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 </div>
 <!-- Один вход в разговор на всё приложение: круглая кнопка с логотипом.
      Она поднимается над таймером, когда он идёт, и не лезет под вкладки. -->
-<button type="button" class="coachfab" id="coachfab" aria-label="Спросить тренера"><img src="img/logo-64.png" alt=""></button>
+
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
@@ -9578,14 +9541,13 @@ function plural(n,forms){
   return forms[2];
 }
 function goPage(p){
-  setTimeout(function(){ try{ fabSoon(); }catch(e){} }, 60);
   if(PAGES.indexOf(p)<0) p=PAGES[0];
   /* режим «только питание»: зала нет ни на экране, ни в адресах */
   if(TABOF[p]==='gym' && foodOnly()) p='home';
   PAGES.forEach(function(x){
     var el=document.getElementById('p-'+x); if(el) el.classList.toggle('hide', x!==p);
   });
-  Array.prototype.forEach.call(document.querySelectorAll('.l1 button'), function(b){
+  Array.prototype.forEach.call(document.querySelectorAll('.l1 button[data-page]'), function(b){
     b.setAttribute('aria-selected', String(b.dataset.page===(TABOF[p]||p)));
   });
   gset('page',p);
@@ -10666,10 +10628,10 @@ function nextMealPlan(meals, nowH){
 }
 var HCW=[6,22];
 function hcA(h){ return -90+(h-HCW[0])/Math.max(1,(HCW[1]-HCW[0]))*180; }
-function hcPt(r,h){ var a=hcA(h)*Math.PI/180; return [HC.cx+r*Math.sin(a), HC.cy-r*Math.cos(a)]; }
+function hcPt(r,h){ var a=hcA(h)*Math.PI/180; return [HC.cx+r*Math.sin(a), HC.cy-r*(HC.RY||HC.R)/HC.R*Math.cos(a)]; }
 function hcArc(r,h1,h2){
   var a=hcPt(r,h1), b=hcPt(r,h2);   /* дуга всегда ≤180°, потому large-arc = 0 */
-  return 'M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' A'+r+' '+r+' 0 0 1 '+b[0].toFixed(1)+' '+b[1].toFixed(1);
+  return 'M'+a[0].toFixed(1)+' '+a[1].toFixed(1)+' A'+r+' '+(r*(HC.RY||HC.R)/HC.R)+' 0 0 1 '+b[0].toFixed(1)+' '+b[1].toFixed(1);
 }
 function hcH(t){ var m=String(t||'').match(/^(\d{1,2}):(\d\d)/); return m ? (+m[1])+(+m[2])/60 : null; }
 function hcHM(h){ var hh=Math.floor(h), mm=Math.round((h-hh)*60); if(mm===60){ hh++; mm=0; } return pad2(hh%24)+':'+pad2(mm); }
@@ -10678,9 +10640,9 @@ function hcEvents(){
   var now=new Date(), nowH=now.getHours()+now.getMinutes()/60, d=HOME.day||{}, ev=[];
   (d.meals||[]).forEach(function(m){
     var h=hcH(m.t); if(h==null) return;
-    ev.push({h:h, cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food'});
+    ev.push({h:h, time:hcHM(h), cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food'});
   });
-  (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
+  (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, time:hcHM(h), cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
   /* зал: закрытая тренировка стоит на времени старта; идущая — тоже, если старт известен */
   var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null, конец=false;
   if(закрыт || pr.done>0){
@@ -10691,14 +10653,14 @@ function hcEvents(){
     /* СТАРЫЕ ЗАПИСИ БЕЗ ВРЕМЕНИ СТАРТА. Раньше зал в этом случае вставал на
        «сейчас» — то есть на момент, когда человек смотрит на экран, и один и
        тот же день на двух устройствах выглядел по-разному. Время последнего
-       сохранения — это конец занятия, а не начало, зато это факт. Подпись со
-       временем рисуется только для настоящего старта, ниже. */
+       сохранения — это конец занятия, а не начало, зато это факт. Бейдж показывает
+       известное время записи; неизвестное время не подменяем текущим. */
     if(!t0 && закрыт && зап && зап.updated){ var u=new Date(зап.updated); if(!isNaN(u)){ t0=u; конец=true; } }
   }
   if(закрыт || pr.done>0){
     var gh = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : nowH;
-    ev.push({h:gh, cls: закрыт?'gym':'gymon',
-      lab:((t0&&!конец)?hcHM(gh)+' · ':'')+(закрыт?'зал':'зал идёт'), go:'gym'});
+    ev.push({h:gh, time:t0&&!isNaN(t0)?hcHM(gh):'', cls: закрыт?'gym':'gymon',
+      lab:((t0&&!isNaN(t0))?hcHM(gh)+' · ':'')+(конец?'зал · сохранено':(закрыт?'зал':'зал идёт')), go:'gym'});
   }
   /* «+» стоит там, когда пора есть по рекомендации, а не когда сменилось окно.
      Если норма уже закрыта — приёма не советуем вовсе: иначе часы зовут ужинать,
@@ -10707,10 +10669,9 @@ function hcEvents(){
   var plan=nextMealPlan(d.meals||[], nowH);
   if(закрыта || homeСвоб()) plan={at:null, name:'еда'};
   if(plan.at!=null){
-    var сейчас=Math.abs(plan.at-nowH)<0.5;
-    ev.push({h:plan.at, cls:'next', act:'eat',
-      lab:(сейчас?'сейчас':'≈'+hcHM(plan.at))+' · '+plan.name});
-    if(plan.after!=null) ev.push({h:plan.after, cls:'todo', act:'eat',
+    ev.push({h:plan.at, time:'≈'+hcHM(plan.at), cls:'next', act:'eat',
+      lab:'≈'+hcHM(plan.at)+' · '+plan.name});
+    if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(plan.after), cls:'todo', act:'eat',
       lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
   }
   /* взвешивание стоит на той же дуге, что и всё остальное: второе кольцо
@@ -10719,8 +10680,6 @@ function hcEvents(){
   if(wt){ var ct=wt.created?new Date(+wt.created):null;
     ev.push({h:(ct&&!isNaN(ct))?ct.getHours()+ct.getMinutes()/60:7.5, cls:'w', txt:fmtKg(+wt.w), go:'food'}); }
   ev.sort(function(a,b){ return a.h-b.h; });
-  /* ближе 1,5 ч пузыри налезали бы друг на друга — раздвигаем по дуге; подпись хранит настоящее время */
-  for(var i=1;i<ev.length;i++) if(ev[i].h-ev[i-1].h<1.5) ev[i].h=ev[i-1].h+1.5;
   /* окно дуги: по умолчанию 06→22, раздвигается под то, что реально было */
   var н=6, к=22;
   ev.forEach(function(e){
@@ -10729,15 +10688,29 @@ function hcEvents(){
   });
   н=Math.min(н, Math.floor(nowH)); к=Math.max(к, Math.ceil(nowH+0.01));
   HCW=[Math.max(0,н), Math.min(24,Math.max(к,н+6))];
+  /* 04.10: бейдж хранит настоящее время. Раздвигаем только угол, а не часы.
+     Сначала вперёд, затем назад от края: тесная группа остаётся по порядку
+     и помещается в дуге, вместо того чтобы удлинять день после 24:00. */
+  // В насыщенный день сохраняем одну дугу: добавляем высоту вместо наложений.
+  HC.RY=HC.R+Math.max(0,ev.length-7)*42;HC.cy=88+HC.RY;HC.H=HC.cy+36;
+  var gap=Math.min(27,160/Math.max(1,ev.length-1));
+  ev.forEach(function(e,i){e.radius=ev.length>7?16:20;e.angle=Math.max(-80,Math.min(80,hcA(e.h)));if(i)e.angle=Math.max(e.angle,ev[i-1].angle+gap);});
+  for(var j=ev.length-1;j>=0;j--)ev[j].angle=Math.min(ev[j].angle,j===ev.length-1?80:ev[j+1].angle-gap);
   return {ev:ev, nowH:nowH, plan:plan};
 }
-function hcBub(e, i, lab){
-  var r = e.cls==='w' ? 13 : 20, p=hcPt(HC.R,e.h), x=p[0].toFixed(1), y=p[1].toFixed(1);
+document.addEventListener('keydown',function(e){if(e.target.matches && e.target.matches('.hb') && (e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
+function hcBadgeSize(){
+  var svg=document.querySelector('.hclk-svg');if(!svg)return;
+  var w=svg.getBoundingClientRect().width;
+  if(w)svg.style.setProperty('--badge-font',(10.5*HC.W/w).toFixed(3)+'px');
+}
+window.addEventListener('resize',hcBadgeSize);
+function hcBub(e, i){
+  var r = e.cls==='w' ? 13 : e.radius, a=e.angle*Math.PI/180, p=[HC.cx+HC.R*Math.sin(a),HC.cy-HC.RY*Math.cos(a)], x=p[0].toFixed(1), y=p[1].toFixed(1);
   var tap = e.go ? ' data-hgo="'+e.go+'"' : (e.act ? ' data-hact="'+e.act+'"' : '');
-  /* невидимый круг под меткой — только чтобы палец попадал: сама метка 32 px,
-     а нажимать надо по 44 */
-  var h='<g class="hb hb-'+e.cls+'"'+tap+' transform="translate('+x+' '+y+')">'+
-        (tap ? '<circle r="22" fill="transparent" pointer-events="all"/>' : '')+
+  /* На 320 px круг 56 SVG-единиц даёт >=44 px касания, включая малое фото. */
+  var h='<g class="hb hb-'+e.cls+'"'+tap+' role="button" tabindex="0" aria-label="'+esc(e.lab||('Вес '+e.txt))+'" transform="translate('+x+' '+y+')">'+
+        (tap ? '<circle class="hbtap" r="28" fill="transparent" pointer-events="all"/>' : '')+
         '<circle r="'+(r+3)+'" class="hbcut"/>';
   var ico=function(d){ return '<g class="hbi" transform="translate(-9.6 -9.6) scale(.8)"><path d="'+d+'"/></g>'; };
   if(e.cls==='meal'){
@@ -10755,51 +10728,33 @@ function hcBub(e, i, lab){
   } else if(e.cls==='w'){
     h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5">'+esc(e.txt)+'</text>';
   }
-  if(e.lab && lab){
-    /* подпись всегда НАД пузырём, снаружи дуги: внутри полукруга живёт число */
-    var lx=Math.max(30, Math.min(HC.W-30, p[0])) - p[0];
-    h+='<text class="hbl" x="'+lx.toFixed(1)+'" y="'+(lab.y-p[1]).toFixed(1)+'" text-anchor="middle">'+esc(e.lab)+'</text>';
+  if(e.time){
+    var bw=e.time.charAt(0)==='≈'?50:42;
+    h+='<g class="hbtime"><rect x="'+(-bw/2)+'" y="'+(r-7)+'" width="'+bw+'" height="17" rx="6"/><text y="'+(r+5)+'">'+esc(e.time)+'</text></g>';
   }
   return h+'</g>';
 }
 function homeClock(){
   var E=hcEvents(), d=HOME.day||{}, t=d.targets||{}, kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var н=HCW[0], к=HCW[1];
-  var s='<svg class="hclk-svg" viewBox="0 0 '+HC.W+' '+HC.H+'" aria-hidden="true">';
+  var s='<svg class="hclk-svg" viewBox="0 0 '+HC.W+' '+HC.H+'" aria-label="События дня">';
   s+='<path class="hcring" d="'+hcArc(HC.R,н,к)+'"/>';
-  /* прожитая часть дня — с 07:00 или с начала окна, если день начался раньше */
-  var старт=Math.max(н,7);
-  if(E.nowH>старт+0.02) s+='<path class="hcpast" d="'+hcArc(HC.R,старт,Math.min(E.nowH,к))+'"/>';
   var шаг=(к-н)>13?4:2, часы=[н];
-  var рядом=function(h){ return E.ev.some(function(e){ return Math.abs(e.h-h)<0.9; }) || Math.abs(E.nowH-h)<0.9; };
+  var рядом=function(h){ return E.ev.some(function(e){ return Math.abs(e.angle-hcA(h))<20; }); };
   for(var hh=н+шаг; hh<к-1; hh+=шаг) if(!рядом(hh)) часы.push(hh);
   часы.push(к);   /* края окна подписаны всегда: они говорят, докуда день */
-  var занято=[];
   часы.forEach(function(h){
     var p=hcPt(HC.R+17+(рядом(h)?15:0), h);
     s+='<text class="hch" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" dy="3.5" text-anchor="middle">'+pad2(h%24)+'</text>';
-    занято.push({x:p[0], y:p[1], w:16});
   });
   /* два слова держат стороны света; больше подписей на дуге не нужно */
-  s+='<text class="hcw" x="'+(HC.cx-HC.R)+'" y="'+(HC.cy+18)+'" text-anchor="middle">утро</text>';
-  s+='<text class="hcw" x="'+(HC.cx+HC.R)+'" y="'+(HC.cy+18)+'" text-anchor="middle">вечер</text>';
-  E.ev.forEach(function(e,i){ s+=hcBub(e,i,null); });
-  /* «сейчас» отмечает пузырь следующего приёма, если он там стоит: два
-     маркера на одном месте складывались в непонятный значок */
-  if(!E.ev.some(function(e){ return Math.abs(e.h-E.nowH)<0.45; })){
-    var n1=hcPt(HC.R-9,E.nowH), n2=hcPt(HC.R+7,E.nowH);
-    s+='<line class="hchand" x1="'+n1[0].toFixed(1)+'" y1="'+n1[1].toFixed(1)+'" x2="'+n2[0].toFixed(1)+'" y2="'+n2[1].toFixed(1)+'"/>';
-  }
+  s+='<text class="hcw" x="'+(HC.cx-HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">утро</text>';
+  s+='<text class="hcw" x="'+(HC.cx+HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">вечер</text>';
+  E.ev.forEach(function(e,i){ s+=hcBub(e,i); });
   s+='</svg>';
-  /* 04.10: «время хаотично над дугой». Фото остаются на дуге, настоящие
-     времена — упорядоченным списком, без лесенки подписей поверх фото. */
-  var events=E.ev.filter(function(e){return e.lab;});
-  var timeline=events.length ? '<details class="day-events"><summary>События дня <span>'+events.length+' · время и приёмы</span></summary><div>'+events.map(function(e){
-    return '<button type="button" '+(e.go?'data-hgo="'+e.go+'"':'data-hact="eat"')+'>'+esc(e.lab)+'</button>';
-  }).join('')+'</div></details>' : '';
   var c;
   if(homeСвоб()) return '<div class="hclk">'+s+'<div class="hctr"><b class="hfree">свободный<br>день</b><u>без записи и оценки</u>'+
-    '<i class="hcl">завтра — обычная норма</i></div></div><p class="day-status hnext">'+esc(homeNextLine(E))+'</p>'+timeline;
+    '<i class="hcl">завтра — обычная норма</i></div></div><p class="day-status hnext">'+esc(homeNextLine(E))+'</p>';
   if(!t.kcal) c='<b>'+hNum(kc)+'</b><u>ккал съедено</u><i>заполни профиль — будет норма</i>';
   else {
     var rem=t.kcal-kc, rp=Math.round((t.prot||0)-pt);
@@ -10831,7 +10786,7 @@ function homeClock(){
   }
   var line = (!sc||sc.r==null) ? 'оценка — с первой записью'+(next?' · '+esc(next):'')
     : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+esc(tip)+'</em>';
-  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div></div><p class="day-status hnext">'+line+'</p>'+timeline;
+  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div></div><p class="day-status hnext">'+line+'</p>';
 }
 /* неделя одной строкой: точка — попал ли день в коридор; будущие дни пустые.
    Нажатие открывает этот день на «Еде». */
@@ -10845,7 +10800,7 @@ function homeNextLine(E){
   if(!t.kcal) return '';
   if(!E.plan || E.plan.at==null) return 'на сегодня всё · дальше только если голоден';
   var rem=Math.round(t.kcal-(+d.kcal||0)), rp=Math.round((t.prot||0)-(+d.prot||0));
-  /* время следующего приёма доступно в списке «События дня» — здесь
+  /* время следующего приёма стоит бейджем на пузыре — здесь
      только то, чего на экране ещё нет: чем закрыть остаток.
      Белок делим на ОСТАВШИЕСЯ приёмы, а не валим весь дневной остаток в один:
      утром «~750 г мяса» — это не совет, а насмешка. Доза на приём ≈ 0,4 г/кг
@@ -10860,19 +10815,19 @@ function homeNextLine(E){
   return чем;
 }
 function homeWeek(){
-  var w=FOOD.week, by={}; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
+  var w=FOOD.week, by={}, freeWeek=false; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
   var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<section class="hweek-block"><h3>Неделя</h3><div class="hweek">';
   for(var i=0;i<7;i++){
     var dt=new Date(nd.getTime()+(i-dow)*864e5), iso=ymd(dt), d=by[iso], fut=iso>TODAY, cls='';
-    if(!fut && d && d.free) cls='free';               /* 02.10: свободный день — пунктиром, не красным */
+    if(!fut && d && d.free){ cls='free'; freeWeek=true; }               /* 02.10: свободный день — пунктиром, не красным */
     else if(!fut && d && d.n){ var t=(d.tg&&d.tg.kcal)?d.tg:tg, off=t.kcal?(d.kcal-t.kcal)/t.kcal:0;
       cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
     /* Только уже загруженные записи и расписание; еда по-прежнему ведёт в день. */
     var gymDone=!foodOnly() && ((HIST||[]).some(function(x){return x.date===iso;}) || (lastDone && lastDone.date===iso));
     var gymPlan=!foodOnly() && hasSched() && (dt.getDay() in GYM_DAYS);
-    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':'<b class="'+cls+'"></b>')+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'"></i>':'')+'</span></button>';
+    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':(cls==='free'?'<span class="hwd-free" aria-label="свободный день">🍕</span>':'<b class="'+cls+'"></b>'))+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'"></i>':'')+'</span></button>';
   }
-  return h+'</div><p class="hweek-legend"><span>● еда в норме</span><span>○ вне нормы</span>'+(!foodOnly()?'<span>■ зал · □ план</span>':'')+'</p></section>';
+  return h+'</div><p class="hweek-legend"><span>● еда в норме</span><span>○ вне нормы</span>'+(freeWeek?'<span class="hweek-free">🍕 свободный день</span>':'')+(!foodOnly()?'<span>■ зал · □ план</span>':'')+'</p></section>';
 }
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
@@ -11056,6 +11011,7 @@ function vzКоридор(pts, ср){
   return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
 }
 function vzГрафик(ms, sr, план){
+  vzГрафик.freeVisible=false; vzГрафик.wetVisible=false;
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
   var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
@@ -11085,7 +11041,7 @@ function vzГрафик(ms, sr, план){
       '<text x="'+(W-2)+'" y="'+(+yy+3.5).toFixed(1)+'" text-anchor="end" class="vzax">'+fmtKg(Math.round(g/шаг)*шаг)+'</text>';
   }
   /* свободные дни — пунктирной вертикалью под всем остальным */
-  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1);
+  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1); vzГрафик.freeVisible=true;
     svg+='<line class="vzsvl" x1="'+xx+'" x2="'+xx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>'; });
   /* плавно — только средний за 7 дней: через редкие точки талии кривая
      выгибалась выше и ниже замеров, которых не было */
@@ -11102,13 +11058,14 @@ function vzГрафик(ms, sr, план){
   if(скольз) pts.forEach(function(p,i){
     var вне = кор!=null && Math.abs(p.v-ср[i].v) > кор;
     svg+='<circle class="'+(вне?'vzpt vzout':'vzpt')+'" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="'+(кор!=null && !вне ? 'var(--muted)' : цв)+'" opacity="'+(кор!=null && !вне ? '.55' : '.6')+'"/>'; });
+  vzГрафик.wetVisible=мокрые.length>0;
   мокрые.forEach(function(p){ svg+='<circle class="vzwet" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3.4" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="2 2"/>'; });
   svg+='<path class="vzln" d="'+путь+'" fill="none" stroke="'+цв+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
   if(!скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3" fill="'+цв+'"/>'; });
   var пос=pts[pts.length-1];
   svg+='<circle cx="'+x(пос.d).toFixed(1)+'" cy="'+y(скольз?ср[ср.length-1].v:пос.v).toFixed(1)+'" r="4.5" fill="var(--bg)" stroke="'+цв+'" stroke-width="2.2"/>'+
     '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(все[0].d)+'</text>'+
-    '<text x="'+(W-R)+'" y="'+(H-5)+'" class="vzax" text-anchor="end">сегодня</text>';
+    '<text x="'+(W-2)+'" y="'+(H-5)+'" class="vzax vz-today" text-anchor="end">сегодня</text>';
   vzГрафик.кор=кор;
   return svg+'</svg>';
 }
@@ -11214,7 +11171,7 @@ function homeBody(){
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
       (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
       (план?'<span><i class="pl"></i>план цели</span>':'')+
-      (sr.k!=='waist' && свобСписок().some(function(f){ return f>=vzДн(TODAY,-34); })?'<span><i class="sv"></i>свободный день</span>':'')+'</p>'+
+      (vzГрафик.freeVisible?'<span class="free-key">┆ свободный день</span>':'')+(vzГрафик.wetVisible?'<span class="water-key">◌ утро после него — вода, не в среднем</span>':'')+'</p>'+
     '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():vzСилаСтрока(((gget('goal',null)||{}).progress||{}).sila))+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
@@ -11372,7 +11329,7 @@ function renderHome(){
   }
   var занятиеКнопка=box.querySelector('#addsport3'); if(неделя && занятиеКнопка) неделя.appendChild(занятиеКнопка);
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
-  HCLKHTML=часы;
+  HCLKHTML=часы; hcBadgeSize();
   Array.prototype.forEach.call(box.querySelectorAll('details'),function(e){if(opened.indexOf(e.className)>=0)e.open=true;});
   var гнездо=box.querySelector('#hmeasslot');
   if(гнездо && весы){ гнездо.parentNode.replaceChild(весы, гнездо); if(вФокусе) try{ вФокусе.focus(); }catch(e){} }
@@ -13700,7 +13657,7 @@ var CHAT={items:null, busy:false, att:null};
 /* лист разговора открыт — значит ответ человек видит сразу */
 function чатОткрыт(){ var m=document.getElementById('coachm'); return !!(m && m.classList.contains('show')); }
 function coachAttn(on){
-  var b=document.getElementById('coachfab'); if(b) b.classList.toggle('attn', !!on);
+  var b=document.getElementById('coachnav'); if(b) b.classList.toggle('attn', !!on);
 }
 /* «Тренер» — это не отдельная комната. На сервере запись еды и вопрос идут
    в одну и ту же историю; теперь и в приложении она одна, под днём на
@@ -14373,76 +14330,8 @@ function coachSend(text, image){
     .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
     .then(function(){ CHAT.busy=false; if(sb) sb.disabled=false; });
 }
-/* ── КНОПКА И ЧУЖИЕ КНОПКИ ──
-   Плавающая кнопка висит над страницей и обязательно оказывается над чем-то.
-   Померил на живых экранах, шагая по 20 точек вверх: свободного квадрата
-   56×56 в досягаемости нижнего угла нет ни на одном — «Сегодня» освобождается
-   только на 260 точках выше, «Зал» на 200, «Еда» на 120. Кнопка, которая на
-   каждом экране стоит в своём месте, — уже не кнопка, а сюрприз. Поэтому:
-   1) уступаем только тому, что само не уедет, — закреплённым внизу полоскам
-      (таймер отдыха). Всё остальное человек убирает из-под кнопки прокруткой:
-      на самом низу любой страницы под кнопкой пусто — это проверено;
-   2) пока страница едет, кнопка бледнеет и поджимается, чтобы не закрывать
-      то, мимо чего человек сейчас проходит глазами. */
-function fabFit(){
-  var f=document.getElementById('coachfab'); if(!f) return;
-  var s=getComputedStyle(f);
-  if(s.display==='none' || s.visibility==='hidden') return;
-  /* position:fixed — offsetParent у такого элемента null всегда, поэтому про
-     видимость спрашиваем стиль. И двигать кнопку, чтобы померить, нельзя: на
-     bottom висит переход, прямоугольник вернётся старый. Считаем от базы. */
-  var r=f.getBoundingClientRect();
-  var тек=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fab-lift'))||0;
-  var низ=r.bottom+тек, верх=r.top+тек;
-  var было=f.style.pointerEvents; f.style.pointerEvents='none';
-  var подъём=0;
-  var точки=[[r.left+r.width/2,(верх+низ)/2],[r.left+9,низ-9],[r.right-9,низ-9]];
-  for(var i=0;i<точки.length;i++){
-    var el=document.elementFromPoint(Math.round(точки[i][0]), Math.round(точки[i][1]));
-    while(el && el!==document.body){
-      var п=getComputedStyle(el).position;
-      /* .fask — строка ввода с кнопкой справа («Напиши, что съел» и весы).
-         Она не закреплена, лежит в потоке, и кнопка чата садилась прямо на
-         «Отправить»: на экране «Еда» по ней нельзя было попасть пальцем
-         вообще. Уступаем ей так же, как закреплённой мебели. Спискам не
-         уступаем намеренно: строк много, кнопка прыгала бы при каждом
-         касании экрана. */
-      /* 24.09: и кнопке занятия внизу главной — кнопка чата садилась ей на край */
-      if(п==='fixed' || п==='sticky' || el.classList.contains('fask') || el.classList.contains('hsport')){
-        var b=el.getBoundingClientRect();
-        /* только то, что закреплено ВНИЗУ: шапка сверху кнопке не мешает */
-        if(b.top>верх-200 && b.top<низ) подъём=Math.max(подъём, Math.ceil(низ-b.top+10));
-        break;
-      }
-      el=el.parentElement;
-    }
-  }
-  f.style.pointerEvents=было;
-  if(подъём>160) подъём=160;
-  document.documentElement.style.setProperty('--fab-lift', подъём+'px');
-}
-var fabTick=0;
-function fabSoon(){ if(fabTick) return; fabTick=requestAnimationFrame(function(){ fabTick=0; try{ fabFit(); }catch(e){} }); }
-/* пока палец ведёт страницу — кнопка отступает: видно, что под ней */
-var fabЖдёт=0;
-function fabЕдем(){
-  var f=document.getElementById('coachfab'); if(!f) return;
-  f.classList.add('away');
-  clearTimeout(fabЖдёт);
-  fabЖдёт=setTimeout(function(){ f.classList.remove('away'); fabSoon(); }, 420);
-}
-window.addEventListener('scroll', fabЕдем, {passive:true});
-window.addEventListener('resize', fabSoon);
-/* экраны перерисовываются в разное время: после ответа сервера, после
-   закрытого подхода, после смены дня. Вместо того чтобы помнить про кнопку в
-   каждом из этих мест, слушаем сам поток страницы. */
-try{
-  new MutationObserver(fabSoon).observe(document.querySelector('main.wrap'),
-    {childList:true, subtree:true});
-}catch(e){}
-addEventListener('load', fabSoon);
-setTimeout(fabSoon, 300);
-document.getElementById('coachfab').addEventListener('click', function(){ openCoach(); haptic('light'); });
+/* 04.10: тренер — четвёртая кнопка панели; текущую страницу не меняем. */
+document.getElementById('coachnav').addEventListener('click', function(){ openCoach(); haptic('light'); });
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 function cGo(){

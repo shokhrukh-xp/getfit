@@ -36,7 +36,7 @@ async function нажать(page, текст){
   await M.поднять(page, o);
   await page.waitForTimeout(500);
   o.chat = [ВОПРОС];
-  await page.click('#coachfab'); await page.waitForTimeout(800);
+  await page.click('#coachnav'); await page.waitForTimeout(800);
   await снять(page, '1-vopros');
   await нажать(page, 'Плохо спал');
   await снять(page, '2-legche');
@@ -48,7 +48,7 @@ async function нажать(page, текст){
   page = await нов();
   const о2 = { theme: тема, time: '08:40', chat: [ВОПРОС], onAct: ответ };
   await M.поднять(page, о2);
-  await page.click('#coachfab'); await page.waitForTimeout(800);
+  await page.click('#coachnav'); await page.waitForTimeout(800);
   await нажать(page, 'Что-то болит');
   await нажать(page, '6–10, сильно');
   await нажать(page, 'Выбрать упражнение');

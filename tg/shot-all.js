@@ -36,7 +36,7 @@ const сцены = [
   { имя: 'ref', o: { page: 'ref', time: '19:40', day: день } },
   { имя: 'srez', o: { page: 'home', time: '19:40', day: день, meas: M.замеры(), goal: цель, progress, base: M.БАЗА + '?srez=1' } },
   { имя: 'profile', o: { page: 'home', time: '19:40', day: день }, после: async p => { await p.click('#profbtn'); } },
-  { имя: 'coach', o: { page: 'home', time: '19:40', day: день }, после: async p => { await p.click('#coachfab'); } },
+  { имя: 'coach', o: { page: 'home', time: '19:40', day: день }, после: async p => { await p.click('#coachnav'); } },
   { имя: 'meal', o: { page: 'food', time: '19:40', day: день }, после: async p => { const r = p.locator('#p-food [data-mid], #p-food .meal, #p-food .frow, #p-food li').first(); if (await r.count()) await r.click(); } },
   { имя: 'telo-fat', o: { page: 'home', time: '19:40', day: день, goal: цель, progress, meas: M.замеры() }, после: async p => { const b = p.locator('[data-vzv="fat"]'); if (await b.count()) await b.click(); } },
 ];

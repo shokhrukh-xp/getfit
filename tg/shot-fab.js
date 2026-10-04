@@ -15,7 +15,7 @@ const снять = (page, имя) => page.screenshot({ path: `tg/fab-${тема}
   await M.поднять(page, { theme: тема, time: '19:40', hist: M.журнал() });
   await page.waitForTimeout(700);
   await снять(page, '1-glavnaya');
-  await page.click('#coachfab'); await page.waitForTimeout(600);
+  await page.click('#coachnav'); await page.waitForTimeout(600);
   await снять(page, '2-razgovor');
   await page.close();
 

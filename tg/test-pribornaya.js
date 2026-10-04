@@ -89,8 +89,8 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
   дано(!!код, 'у заведённого кода есть чем его убрать: ' + код);
 
   /* плавающая кнопка тренера не закрывает таблицу */
-  дано(await page.evaluate(() => { const f = document.querySelector('.coachfab');
-    return !f || getComputedStyle(f).display === 'none'; }), 'плавающая кнопка на приборной убрана');
+  дано(await page.evaluate(() => { const f = document.querySelector('#coachnav');
+    return f && f.closest('.l1') && f.getBoundingClientRect().height >= 44; }), 'тренер в панели и не перекрывает приборную');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
