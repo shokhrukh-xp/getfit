@@ -111,4 +111,16 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
  await q.close();
 }
 
+
+// Этап 3: особые состояния нового hero тоже проходят тот же контрастный обход.
+for(const theme of ['light','dark'])for(const width of [320,390])for(const state of ['free','empty','closed']){
+ const q=await b.newPage({viewport:{width,height:844}}),o={theme,page:'food'};
+ if(state==='free')o.free=[M.Д(0)];
+ if(state==='empty'){o.day={meals:[],kcal:0,prot:0};o.score={r:null}}
+ if(state==='closed')o.score={closed:true};
+ await M.поднять(q,o);const r=await контраст(q);
+ дано(!r.failures.length,'контраст hero '+theme+'/'+width+'/'+state+' '+JSON.stringify(r.failures));
+ await q.close();
+}
+
 }finally{await b.close()}if(плохо)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});

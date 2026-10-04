@@ -30,7 +30,7 @@ const СС = { дни, шагов: 8600, днейШаги: 3, сна: 395, но�
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(page, { theme: 'dark', wait: 2400, page: 'food' });
   дано(/скриншот/.test(await page.$eval('#wrg .wrnone', n => n.textContent)), 'нет чисел — сказано, что их присылают скриншотом тренеру');
-  await page.click('#wrg [data-wrcoach]'); await page.waitForTimeout(500);
+  await page.click('#wrh [data-wrcoach]'); await page.waitForTimeout(500);
   дано(await page.$eval('#coachm', n => n.classList.contains('show')), 'кнопка открывает тренера');
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

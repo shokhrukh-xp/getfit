@@ -2621,9 +2621,9 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 /* На главной капсула в потоке после содержимого, как в макете:
    отступ у fixed-кнопки не предотвращал наложение на промежуточные заголовки.
    На остальных экранах остаётся существующее поведение FAB. */
-body:has(.l1 [data-page="home"][aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
-body:not(.coach):has(.l1 [data-page="home"][aria-selected="true"]) .coachfab{transform:none;opacity:.92}
-body:not(.coach):has(.l1 [data-page="home"][aria-selected="true"]) .coachfab.attn{opacity:1}
+body:has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
+body:not(.coach):has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab{transform:none;opacity:.92}
+body:not(.coach):has(.l1 :is([data-page="home"],[data-page="food"])[aria-selected="true"]) .coachfab.attn{opacity:1}
 /* Внизу остаётся запас под капсулу и навигацию, в том числе с таймером. */
 body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 @media(max-width:359px){
@@ -2636,6 +2636,58 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
  .vztop .vzhd{align-items:flex-start;gap:8px;flex-wrap:wrap}
  .hstats{gap:10px;padding:12px}
  .hstats .hline>b{font-size:15px}
+}
+
+/* 04.10 · Этап 3 «Еда»: данные и события прежние, новые поверхности. */
+#fday{display:block;margin:16px 0;padding:0;background:transparent;border-radius:0}
+.food-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;padding:22px 18px;margin-bottom:18px;border-radius:24px;background:var(--action);color:var(--on-accent);--muted:#E1F0F3;--dim:#E1F0F3}
+.food-hero-copy{margin:0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.food-remaining{display:block;font-size:42px;line-height:1.2;font-weight:800;font-variant-numeric:tabular-nums;margin:6px 0}
+.food-hero .fclose{margin:0;align-self:center;min-width:0}
+.food-hero .fdone,.food-hero .fdone.fpend{padding:0;border:0;background:none;color:var(--on-accent)}
+.food-hero .fdone b{font-size:26px;color:var(--on-accent);font-variant-numeric:tabular-nums}
+.food-hero .fdone small{color:var(--muted);line-height:1.5}
+.food-hero.food-free{display:block;background:var(--surface);border:1px solid var(--free);color:var(--text);--muted:var(--faint);--dim:var(--faint)}
+.food-free .svcard{border:0;background:none;padding:0;margin:0}
+.food-free .svcard h4{color:var(--free)}
+.fnorm{display:grid;gap:14px;margin:0}
+.fnorm>.fparts,.fnorm>.fline,.fnorm>.svrow{border-top:1px solid var(--line);padding-top:12px;margin:0;line-height:1.5}
+.fmealgroup{margin:18px 0}
+.fmealgroup h3{font-size:17px;font-weight:700;margin:0 0 8px}
+.fmealgroup .fmeals{margin:0}
+.fmealgroup .fmeal{border-color:var(--line);padding:14px 0;align-items:flex-start;gap:8px}
+.fmealgroup .fmth{border-radius:12px}
+#food-add{margin-top:14px;text-align:left;display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:var(--action);color:var(--on-accent)}
+#food-add[hidden]{display:none}
+.food-add small{font-size:12px;font-weight:400;color:#E1F0F3}
+#fweek .fb.fb-hi{background:var(--accent)}
+#fweek .fb.fb-low{background:var(--warn)}
+#fweek .fbw .nb{background:var(--tint);opacity:1;border-radius:0}
+#fweek .fd-today .fb{border:1px dashed var(--accent);background:transparent;box-sizing:border-box}
+#fweek .fd-today .fb.fb-low{border-color:var(--warn)}
+#fweek .fd-today .fb.fb-free{border-color:var(--free);background:repeating-linear-gradient(135deg,var(--track) 0 3px,transparent 3px 6px)}
+.wear-surface:has(#wrh[hidden]){display:none}
+.wear-surface #wrh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;font-size:17px}
+.wear-surface #wrh[hidden]{display:none}
+.wear-surface .lnk{font-size:13px;min-height:44px;white-space:nowrap}
+#eatbody{background:var(--surface);border-radius:24px;padding:16px}
+#p-eat .mnrow,#p-eat .bitem{border-color:var(--line)}
+#p-eat .mhd{flex-wrap:wrap}
+#p-eat .group,#p-circle .group,#p-circle .tile{background:var(--surface);border-radius:24px;box-shadow:none}
+#p-eat .eatrow,#p-circle .lbrow{border-color:var(--line)}
+#p-eat .seg button,#p-circle .lbseg button{border-radius:12px}
+@media(max-width:359px){
+ #p-eat .eseg{gap:4px}
+ #p-eat .eseg button{font-size:12px;padding:0 4px;min-width:0}
+ .food-hero{padding:18px 16px;gap:14px;grid-template-columns:1fr}
+ .food-hero .fclose{border-top:1px solid rgba(255,255,255,.25);padding-top:12px}
+ .food-hero .fdone b{font-size:24px}
+ .fmealgroup .fmeal{display:grid;grid-template-columns:44px minmax(0,1fr) 32px}
+ .fmealgroup .fmth{width:44px;height:44px;grid-column:1;grid-row:1/3}
+ .fmealgroup .ft{grid-column:2;grid-row:1}
+ .fmealgroup .fn{grid-column:2;grid-row:2;align-items:flex-start;flex-direction:row;gap:4px;flex-wrap:wrap}
+ .fmealgroup .fx{grid-column:3;grid-row:1;width:32px}
+ .fmealgroup .fact{display:flex;flex-wrap:wrap}
 }
 </style>
 </head>
@@ -2728,9 +2780,11 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="fseg-food"></div>
         <div class="fnav" id="fnav"></div>
-        <div class="group">
+        <div class="food-day-shell">
         <div class="fday" id="fday"></div>
+        <div class="group fmealgroup"><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
+        <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов тренеру</small></button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
              с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
              разу не пользовался. Еда и занятия записываются в чате с тренером
@@ -2761,8 +2815,8 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
         </div>
         <h3 class="lh" id="grph" hidden>Разнообразие недели</h3>
         <div class="group" id="grpg" hidden></div>
-        <h3 class="lh" id="wrh" hidden>Шаги и сон</h3>
-        <div class="group" id="wrg" hidden></div>
+        <div class="group wear-surface"><h3 class="lh" id="wrh" hidden>Шаги и сон <button type="button" class="lnk" data-wrcoach="1">Прислать ↗</button></h3>
+        <div id="wrg" hidden></div></div>
       </div>
     </section>
     <section class="page hide" id="p-ref">
@@ -12834,9 +12888,22 @@ document.getElementById('planbox').addEventListener('click', function(e){
   else planOff(b.dataset.k, TODAY);
 });
 
+/* 04.10 · Фокус: перенос готовой строки сервера и прежней оценки в hero.
+   Число выделяем из текста, не пересчитываем: у сервера есть свои пороги.
+   Неизвестная формулировка, прошлый/закрытый день — целиком, без догадок. */
+function foodHeroHtml(d, line){
+  if(d.free && d.free.on) return '<section class="food-hero food-free">'+свобКартаHtml(d.free,d.date||fDate())+'</section>';
+  if(!(d.targets && d.targets.kcal)) return '';
+  var text=esc(line), fin=(d.date||fDate())<TODAY || (DAYSC && DAYSC.date===fDate() && DAYSC.closed);
+  if(!fin) text=text.replace(/(До нормы(?: ещё|:)?) ([\d \u00a0]+)( ккал)/, '$1 <strong class="food-remaining">$2</strong>$3');
+  return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml()+'</section>';
+}
 function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
   var d=FOOD.day;
+  document.getElementById('fmealhead').textContent='Приёмы'+(d?' · '+(d.meals||[]).length:'');
+  var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
+  if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
   if(!d){ box.innerHTML='<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
   /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
@@ -12909,14 +12976,16 @@ function renderFoodDay(){
   /* 02.10: свободный день — вместо шкал и оценки одна карточка; приёмы, если
      что-то записано, остаются списком, но без баллов */
   var св=d.free||null;
-  if(св && св.on) box.innerHTML = свобКартаHtml(св, d.date||fDate());
-  else box.innerHTML = fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+  var строка=d.line.replace(/^За день:[^.]*\.\s*/,'');
+  var hero=foodHeroHtml(d,строка);
+  if(св && св.on) box.innerHTML = hero;
+  else box.innerHTML = hero+'<div class="group fnorm">'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
     (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
     (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + (t.kcal?'<p class="ds-zone">целевая зона</p>':'') + состав +
-    '<p class="fline">'+d.line.replace(/^За день:[^.]*\.\s*/,'')+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>'+
-    closeHtml() + свобСтрокаHtml(св);
+    (hero?'':'<p class="fline">'+esc(строка)+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>')+
+    (hero?'':closeHtml()) + свобСтрокаHtml(св)+'</div>';
   /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:
      прошлый день судит полная формула, и делить её на приёмы нечестно */
   var оцП={};
@@ -12942,7 +13011,7 @@ function renderFoodDay(){
            '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
            '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
   }).join('');
-  if((d.meals||[]).length && !(св && св.on)) box.innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
+  if((d.meals||[]).length && !(св && св.on)) (box.querySelector('.fnorm')||box).innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
   if(св && св.on && !ml.innerHTML){ ml.innerHTML='<p class="empt">Записей нет — и не нужно.</p>'; return; }
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
@@ -13073,8 +13142,7 @@ function renderWear(){
   hd.hidden=false; b.hidden=false;
   var н=w.шагиСон;
   if(!н || (!н.днейШаги && !н.ночей)){
-    b.innerHTML='<p class="wrnone">Шаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p>'+
-      '<button type="button" class="btn wide" data-wrcoach="1">Отправить скриншот тренеру</button>';
+    b.innerHTML='<p class="wrnone">Шаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p>';
     return;
   }
   var возр=+((myData()||{}).age)||0, цельШ=возр>=60?6000:8000;
@@ -13133,7 +13201,7 @@ function renderFoodWeek(){
     if(d.free) h=Math.max(h, 12);                        /* 02.10: свободный день — штриховкой, без числа и коридора */
     var низ=t.kcal?px(t.kcal*0.9):0, верх=t.kcal?px(t.kcal*1.1):0;
     if(t.kcal) естьНорма=true;
-    return '<div class="fd"><div class="fbw">'+
+    return '<div class="fd'+(d.date===TODAY?' fd-today':'')+'"><div class="fbw">'+
       (t.kcal&&!d.free?'<s class="nb" data-norm="'+t.kcal+'" style="bottom:'+низ+'px;height:'+(верх-низ)+'px"></s>':'')+
       '<i style="bottom:'+(Math.max(h,d.free?0:верх)+4)+'px">'+(d.free?'своб.':(d.n?d.kcal:''))+'</i>'+
       '<div class="fb '+cls+'" style="height:'+h+'px"></div></div><u>'+ruDate(d.date).slice(0,5)+'</u></div>';
