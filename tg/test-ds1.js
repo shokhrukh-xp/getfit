@@ -36,10 +36,27 @@ const foodScale=await scalePage.locator('#fday .fbar').evaluateAll(rows=>rows.sl
 дано(await scalePage.locator('.hctx>b').evaluate(e=>getComputedStyle(e).fontSize)==='32px','заголовок страницы 32 px');
 await scalePage.close();
 const p=await b.newPage();await M.поднять(p,{theme:'light',themeParams:{bg_color:'#abcdef',text_color:'#123456',button_color:'#ff0000'}});
-дано(await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(171, 205, 239)','фон Telegram принят');
-дано(await p.evaluate(()=>getComputedStyle(document.body).color)==='rgb(18, 52, 86)','текст Telegram принят');
+дано(await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(234, 240, 241)','фон приложения не зависит от themeParams');
+дано(await p.evaluate(()=>getComputedStyle(document.body).color)==='rgb(31, 45, 48)','текст приложения не зависит от themeParams');
 дано(await p.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())==='#176775','button_color не подменяет свою палитру');
-дано(await p.evaluate(()=>window.__headerColor)==='#abcdef','шапка Telegram совпадает с фоном');
+дано(await p.evaluate(()=>window.__headerColor)==='#EAF0F1','шапка Telegram совпадает с фоном');
 await p.evaluate(()=>{Telegram.WebApp.colorScheme='dark';Telegram.WebApp.themeParams={bg_color:'url(invalid)',text_color:null};window.__tgEvents.themeChanged()});
-дано(await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(11, 18, 21)','смена темы очищает прежнее переопределение, неверный цвет отклоняется');await p.close();
+дано(await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(11, 18, 21)','смена colorScheme включает тёмные токены');дано(await p.evaluate(()=>window.__headerColor)==='#0B1215','тёмная шапка Telegram получает наш фон');
+дано(await p.locator('meta[name="theme-color"]').getAttribute('content')==='#0B1215','meta theme-color совпадает с тёмной темой');
+await p.close();
+// Удаляем только поддерживаемое улучшение, моделируя путь старого WebView.
+for(const theme of ['light','dark']){
+const q=await b.newPage();await M.поднять(q,{theme});
+const fallback=await q.evaluate(()=>{
+ for(const sheet of document.styleSheets){for(let i=sheet.cssRules.length-1;i>=0;i--){const r=sheet.cssRules[i];if(r.conditionText&&r.conditionText.includes('color-mix'))sheet.deleteRule(i)}}
+ return ['--accent-ghost','--corr','--corr-mid'].map(token=>{const d=document.createElement('div');d.style.backgroundColor='var('+token+')';document.body.appendChild(d);const c=getComputedStyle(d).backgroundColor;d.remove();return c});
+});
+дано(JSON.stringify(fallback)===JSON.stringify(theme==='light'?['rgba(23, 103, 117, 0.1)','rgba(51, 116, 89, 0.22)','rgba(224, 160, 48, 0.22)']:['rgba(59, 163, 181, 0.1)','rgba(63, 191, 138, 0.22)','rgba(242, 181, 68, 0.22)']),'без color-mix три полупрозрачных цвета сохраняются: '+theme);
+await q.close();
+}
+for(const [page,label] of [['gym','Зал'],['log','Зал'],['ref','Зал'],['food','Питание'],['eat','Питание'],['circle','Питание'],['admin','']]){
+const q=await b.newPage();await M.поднять(q,{page});
+дано(await q.locator('#hctx .ds-eyebrow').allTextContents().then(a=>a.join(''))===label,'капитель раздела '+page+': '+(label||'нет'));
+await q.close();
+}
 }finally{await b.close()}if(плохо)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});

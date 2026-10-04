@@ -32,7 +32,7 @@
    free/chart-2 -> исходный фиолетовый графика, без новой палитры свободного дня;
    blur/knurl -> none.
    *-rgb — совместимые RGB-каналы тех же accent/ok/warn для rgba() в старом CSS.
-   scrim — нейтральное затемнение поверх темы. Telegram меняет лишь bg/text. */
+   scrim — нейтральное затемнение поверх темы. Telegram выбирает лишь светлую/тёмную тему; цвета берём из токенов. */
 :root{
   color-scheme:light;
   --bg:#EAF0F1;
@@ -47,7 +47,7 @@
   --ok:#337459;
   --warn:#A94E35;
   --warn-bg:#FBF0EB;
-  --amber:#E0A030;
+  --amber:#E0A030; --amber-rgb:224,160,48;
   --free:#6E5BE0;
   --accent-rgb:23,103,117;
   --done-rgb:51,116,89;
@@ -58,9 +58,9 @@
   --prime:var(--accent); --on-prime:#FFFFFF; --on-accent:#FFFFFF;
   --done:var(--ok); --done-txt:var(--ok); --warn-txt:var(--warn);
   --mid:var(--amber); --chart-2:var(--free);
-  --accent-ghost:color-mix(in srgb,var(--accent) 10%,transparent);
-  --corr:color-mix(in srgb,var(--ok) 22%,transparent);
-  --corr-mid:color-mix(in srgb,var(--amber) 22%,transparent);
+  --accent-ghost:rgba(var(--accent-rgb),.10);
+  --corr:rgba(var(--done-rgb),.22);
+  --corr-mid:rgba(var(--amber-rgb),.22);
   --track:var(--line); --sleep:var(--line);
   --map-bg:var(--card); --map-line:var(--bg); --map-line2:var(--line); --map-det:var(--faint);
   --shadow:none; --shadow-sm:var(--shadow);
@@ -80,7 +80,7 @@
   --ok:#3FBF8A;
   --warn:#E07A55;
   --warn-bg:#2A1D16;
-  --amber:#F2B544;
+  --amber:#F2B544; --amber-rgb:242,181,68;
   --free:#B39CFF;
   --accent-rgb:59,163,181;
   --done-rgb:63,191,138;
@@ -102,12 +102,22 @@
   --ok:#3FBF8A;
   --warn:#E07A55;
   --warn-bg:#2A1D16;
-  --amber:#F2B544;
+  --amber:#F2B544; --amber-rgb:242,181,68;
   --free:#B39CFF;
   --accent-rgb:59,163,181;
   --done-rgb:63,191,138;
   --warn-rgb:224,122,85;
     --shadow:none; --scrim:rgba(0,0,0,.6);
+  }
+}
+/* 04.10, ревью Claude: старые WebView должны сохранить rgba.
+   Custom property принимает даже неизвестную функцию: два объявления подряд
+   не дают fallback при подстановке var(). Поэтому улучшение — за @supports. */
+@supports (color:color-mix(in srgb,black,white)){
+  :root{
+    --accent-ghost:color-mix(in srgb,var(--accent) 10%,transparent);
+    --corr:color-mix(in srgb,var(--ok) 22%,transparent);
+    --corr-mid:color-mix(in srgb,var(--amber) 22%,transparent);
   }
 }
 *{box-sizing:border-box}
@@ -9236,7 +9246,7 @@ function goPage(p){
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
-          else hc.innerHTML=({log:'Журнал',ref:'Каталог',circle:'Рейтинг',eat:'Что съесть',food:'Мой день'}[p]?'<span class="ds-eyebrow">'+({log:'Журнал',ref:'Каталог',circle:'Рейтинг',eat:'Что съесть',food:'Мой день'}[p])+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
+          else hc.innerHTML=({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p]?'<span class="ds-eyebrow">'+({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p])+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
@@ -9286,9 +9296,9 @@ function nextGymDay(){
    Приложение живёт внутри Telegram, и переключаться вместе с ним — не
    украшение: светлое окно в тёмном мессенджере бьёт по глазам. Берём
    colorScheme, а вне Telegram — системную настройку. Токены — «Фокус · бирюза»;
-   04.10: themeParams могут переопределить фон и текст, а шапка Telegram
-   получает тот же фон. Остальные роли цвета из нашей палитры. */
-/* 04.10: из themeParams берём только bg_color/text_color, остальное — свои токены. */
+   04.10, после ревью: themeParams у клиентов разные, на них не построить
+   палитру. Шапка Telegram и theme-color получают вычисленный --bg нашей темы. */
+/* Telegram меняет colorScheme; themeParams не меняют фон и текст карточек. */
 function themeNow(){
   if(TG && TG.colorScheme) return TG.colorScheme==='dark' ? 'dark' : 'light';
   try{ return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }catch(e){ return 'dark'; }
@@ -9296,12 +9306,7 @@ function themeNow(){
 function applyTheme(){
   var t=themeNow();
   document.documentElement.setAttribute('data-theme', t);
-  var root=document.documentElement, tp=(TG && TG.themeParams)||{};
-  [['--bg','bg_color'],['--text','text_color']].forEach(function(pair){
-    var v=tp[pair[1]];
-    if(typeof v==='string' && /^#[0-9a-f]{6}$/i.test(v)) root.style.setProperty(pair[0],v);
-    else root.style.removeProperty(pair[0]);
-  });
+  var root=document.documentElement;
   var bg=getComputedStyle(root).getPropertyValue('--bg').trim();
   var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',bg);
   try{
