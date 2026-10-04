@@ -124,7 +124,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз, цвета]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -142,10 +142,11 @@ async function поднять(page, o) {
     /* Telegram: приложение живёт внутри мини-аппа */
     window.Telegram = { WebApp: {
       initData: 'mock', initDataUnsafe: { user: { id: 308687648, first_name: 'Ш' } },
-      colorScheme: тема, themeParams: {}, version: '7.0', platform: 'macos',
+      colorScheme: тема, themeParams: цвета || {}, version: '7.0', platform: 'macos',
       expand(){}, ready(){}, close(){}, disableVerticalSwipes(){}, enableVerticalSwipes(){},
       enableClosingConfirmation(){}, disableClosingConfirmation(){}, requestFullscreen(){},
-      setHeaderColor(){}, setBackgroundColor(){}, onEvent(){}, offEvent(){},
+      setHeaderColor(c){ window.__headerColor=c; }, setBackgroundColor(c){ window.__backgroundColor=c; },
+      onEvent(k,f){ (window.__tgEvents=window.__tgEvents||{})[k]=f; }, offEvent(){},
       /* Внешние ссылки мини-апп открывает сам — проверка смотрит, ЧТО ушло. */
       openLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
       openTelegramLink(u){ (window.__ссылки = window.__ссылки || []).push(u); },
@@ -196,7 +197,7 @@ async function поднять(page, o) {
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null, !!o.preserveReload]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null, !!o.preserveReload, o.themeParams || null]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
