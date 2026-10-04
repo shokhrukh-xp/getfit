@@ -2465,6 +2465,13 @@ body.onb #picker .modalbox::before{display:none}
 .vzverdict.warn{color:var(--warn-txt);font-weight:600}
 .vzverdict.muted,.vzeta{color:var(--muted)}
 .vzeta{display:block;font-weight:400}
+.vzsila{color:var(--text);line-height:1.45;overflow-wrap:anywhere}
+.vzsila.warn{color:var(--warn-txt)} .vzsila.muted{color:var(--muted)}
+.vzsila summary{min-height:44px;box-sizing:border-box;padding:12px 0;cursor:pointer}
+.vzsila summary:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
+.vzsila ul{list-style:none;margin:0;padding:0;color:var(--text)}
+.vzsila li{margin:0 0 8px} .vzsila li span{display:block;color:var(--muted)}
+.vzsila p{margin:0 0 8px;color:var(--muted)}
 #hmeas{margin-top:14px}
 #hmeas .fask{margin:0}
 /* 02.10, вариант А: сегодняшний замер — мелкой строкой под средним */
@@ -10703,6 +10710,29 @@ function vzГрафик(ms, sr, план){
   vzГрафик.кор=кор;
   return svg+'</svg>';
 }
+/* 04.10: «сила как монитор мышц» — показываем сравнение сервера, без
+   своего пересчёта процентов и без вывода о потере мышц. Детали — по тапу. */
+function vzСилаСтрока(s){
+  if(!s || typeof s!=='object') return '';
+  var cls=s.verdict==='падает' ? ' warn' : (s.verdict==='мало' ? ' muted' : '');
+  var n=function(v){ return typeof v==='number' && isFinite(v) && v>=0 && Math.floor(v)===v ? String(v) : '—'; };
+  var title=s.verdict==='мало' ? 'Сила: мало занятий за две недели' : 'Сила за 2 недели: растёт '+n(s.up)+' · стоит '+n(s.flat)+' · падает '+n(s.down);
+  var num=function(v){ return typeof v==='number' && isFinite(v) ? String(v).replace('.',',') : '—'; };
+  var set=function(v){
+    if(!v || typeof v!=='object') return 'нет прошлого сравнения';
+    var date=typeof v.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v.date) ? ' · '+esc(ruDate(v.date)) : '';
+    return num(v.w)+'×'+num(v.r)+date;
+  };
+  var rows=Array.isArray(s.rows) ? s.rows.filter(function(r){ return r && typeof r==='object'; }) : [];
+  var body=rows.map(function(r){
+    var pct=typeof r.pct==='number' && isFinite(r.pct) ? ' ('+(r.pct>0?'+':'')+num(r.pct).replace('-','−')+' %)' : '';
+    return '<li>'+esc(typeof r.name==='string'?r.name:'Упражнение')+'<span>'+set(r.was)+' → '+set(r.now)+pct+'</span></li>';
+  }).join('');
+  if(body) body='<ul>'+body+'</ul>';
+  else if(typeof s.text==='string' && s.text.trim()) body='<p>'+esc(s.text)+'</p>';
+  return body ? '<details class="vzplan vzsila'+cls+'"><summary>'+title+'</summary>'+body+'</details>'
+    : '<p class="vzplan vzsila'+cls+'">'+title+'</p>';
+}
 function vzПланСтрока(){
   var p=vzПлан(), html='';
   if(p && p.gap!=null){
@@ -10723,7 +10753,7 @@ function vzПланСтрока(){
       срок='<span class="vzeta">при текущем темпе — к '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</span>';
   }
   if(text || срок) html+='<p class="vzplan vzverdict'+cls+'">'+esc(text)+срок+'</p>';
-  return html;
+  return html+vzСилаСтрока(progress && progress.sila);
 }
 function homeBody(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
