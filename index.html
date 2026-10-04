@@ -2828,6 +2828,14 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 #fweek .fd-today .fb{border:0;background:var(--muted)}
 #fweek .fd-today .fb.fb-hi{background:var(--accent)}
 #fweek .fd-today .fb.fb-low{background:var(--warn)}
+/* 04.10, его снимок карты тела: «границы мышц сливаются». Шов между мышцами
+   был 0,22 (≈0,7 px), а обводка «норма закрыта» — тем же бирюзовым, что и
+   заливка: у закрывших норму соседей шов пропадал совсем, грудь, дельты и
+   широчайшие сливались в одно пятно. Теперь шов — цвет фона толщиной ≈1,4 px,
+   а «норма закрыта» — светлая (тёмная в светлой теме) обводка поверх. */
+.bodymap .mz{stroke:var(--map-line);stroke-width:.45}
+.bodymap .mz.hit{stroke:var(--text);stroke-width:.4}
+#logmus .muskey .sw2{border-color:var(--text);background:var(--accent)}
 
 /* 04.10: «Тренер» всегда в нижней панели; четыре цели касания и три без зала. */
 .l1-in,.l1-in.two,.l1-in.three{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -8813,8 +8821,12 @@ function renderMus(){
   /* Фигуры одна под другой во всю ширину: так на каждую приходится втрое больше
      места, и рядом с мышцей помещается название, а не только цифра.
      Подписи разведены на две стороны — иначе двадцать выносок наезжают друг на друга. */
-  var W=320, CX=160, SC=3.16, FY=8, HH=304;   /* одна фигура на svg: 8 + 92,5·3,16 */
-  var NX=54, TX=76;                     /* отступ цифры и названия от центра */
+  var W=332, CX=166, SC=3.16, FY=8, HH=304;   /* одна фигура на svg: 8 + 92,5·3,16 */
+  /* 04.10, его снимок: «Груды16,5», «19,5Дельты» — цифра и название стояли в
+     22 единицах друг от друга, а «16,5» шириной 26. Теперь две колонки: цифры
+     от 52 наружу (до 78), названия от 84; самое длинное, «Ромбовидные» (79),
+     кончается на 163 из 166 — поэтому холст шире на 12. */
+  var NX=52, TX=84;                     /* отступ цифры и названия от центра */
   /* подпись, выноска и цифра несут ту же data-m, что и зона: по нажатию
      подсвечивается всё вместе, а не только контур на фигуре */
   function figure(top, set, body, side){
@@ -8827,12 +8839,13 @@ function renderMus(){
         labelY[k]=y; bottom=y+(MNAME[k].split(' ').length-1)*17;
       });
     });
-    Object.keys(set).forEach(function(k){
+    /* закрывшие норму рисуются последними: их обводку не перекроет шов соседа */
+    Object.keys(set).sort(function(a,b){ return ((сет[a]||0)>=MPOROG)-((сет[b]||0)>=MPOROG); }).forEach(function(k){
       var g=set[k], v=сет[k]||0, d=посл[k], sd=g.sd;
       var op=(d==null)?0.05:Math.max(0.08, 1-d/MFADE);
       var ax=r1(g.a[0]*SC), ay=r1(g.a[1]*SC), an=(sd<0?'end':'start');
       var ly=labelY[k];
-      leads+='<line class="lead'+(v>0?'':' off')+'" data-m="'+k+'" x1="'+(sd*(NX+4))+'" y1="'+ly+
+      leads+='<line class="lead'+(v>0?'':' off')+'" data-m="'+k+'" x1="'+(sd*(v>0?NX-3:TX-4))+'" y1="'+ly+
              '" x2="'+ax+'" y2="'+ay+'"/>';
       if(v>0) txt+='<text class="num" data-m="'+k+'" x="'+(sd*NX)+'" y="'+r1(ly+3.8)+'" text-anchor="'+an+'">'+
                    fmtKg(v)+'</text>';
