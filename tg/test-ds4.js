@@ -1,5 +1,6 @@
 'use strict';
 // Геометрия этапа 4: реальные состояния, обе темы и две ширины.
+const viewport=require('./viewport-check');
 const {chromium}=require('playwright'),M=require('./mock');let failures=0;
 const ok=(v,t)=>{console.log((v?'  ok  ':'  ПРОВАЛ  ')+t);if(!v)failures++};
 (async()=>{const b=await chromium.launch();try{
@@ -35,5 +36,18 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  await h.locator('button').click();ok(await r.locator('.catgrp').count()===0,'все N открывает группу '+tag);
  ok(await r.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'каталог без переполнения '+tag);
  ok(!errors.length,'ошибок запуска нет '+tag);await r.close();
+}
+// Все пять ширин: таймер, нижняя навигация, сохранение и чат.
+for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){
+ const p=await b.newPage({viewport:{width,height:844}}),tag=theme+'/'+width;
+ await M.поднять(p,{theme,page:'gym'});await p.locator('#list .exrow').first().click();
+ await p.locator('.setrow .ok').first().click();await p.waitForTimeout(400);
+ const buttons=await p.locator('#tskip,#tplus').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {id:e.id,l:r.left,r:r.right,w:r.width,h:r.height};}));
+ ok(buttons.length===2&&buttons.every(r=>r.l>=0&&r.r<=width&&r.w>=44&&r.h>=44),'обе кнопки таймера целиком и >=44 px '+tag+' '+JSON.stringify(buttons));
+ let bad=await viewport(p);ok(!bad.length,'границы с таймером '+tag+' '+JSON.stringify(bad));
+ const before=await p.locator('#tcount').textContent();await p.locator('#tplus').click();ok(await p.locator('#tcount').textContent()!==before,'+30с работает '+tag);
+ await p.locator('#tskip').click();await p.waitForTimeout(400);ok(!await p.locator('#timer').isVisible(),'Пропустить закрывает таймер '+tag);
+ await p.locator('#finish').scrollIntoViewIfNeeded();bad=await viewport(p);ok(!bad.length,'границы у сохранения '+tag+' '+JSON.stringify(bad));
+ await p.locator('#coachfab').click();await p.waitForTimeout(400);bad=await viewport(p);ok(!bad.length,'границы в чате '+tag+' '+JSON.stringify(bad));await p.close();
 }
 }finally{await b.close()}if(failures)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');})().catch(e=>{console.error(e);process.exitCode=1});

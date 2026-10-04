@@ -2723,6 +2723,13 @@ body:has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{position:relativ
 body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{transform:none;opacity:.92}
 body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn{opacity:1}
 
+/* 04.10: обе кнопки отдыха должны помещаться даже на 320 px.
+   Подпись занимает собственную строку, а не отнимает ширину у действий. */
+.timer-in{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 8px;box-sizing:border-box;width:100%}
+.timer-in .tcount{min-width:0;grid-column:1;grid-row:1;font-variant-numeric:tabular-nums}
+.timer-in .tlabel{grid-column:1 / -1;grid-row:2;min-width:0;overflow-wrap:anywhere}
+.timer-in .tbtn{grid-row:1;min-width:44px;min-height:44px;white-space:nowrap;padding:8px 10px}
+.timer-in #tskip{grid-column:2}.timer-in #tplus{grid-column:3}
 </style>
 </head>
 <body>

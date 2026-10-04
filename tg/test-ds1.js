@@ -1,6 +1,7 @@
 'use strict';
 /* 04.10: выбран «Фокус · бирюза». Проверяем контракт тем/полос/вкладок,
    а не снимок всех деклараций: данные и дуга не должны меняться из-за CSS. */
+const viewport=require('./viewport-check');
 const {chromium}=require('playwright'),M=require('./mock');let плохо=0;
 function дано(ok,t){console.log((ok?'  ok  ':'  ПРОВАЛ  ')+t);if(!ok)плохо++}
 (async()=>{const b=await chromium.launch();try{
@@ -99,12 +100,14 @@ return page.evaluate(root=>{
 for(const theme of ['light','dark'])for(const width of [320,390])for(const name of ['home','gym','food','eat','circle','log','ref']){
  const q=await b.newPage({viewport:{width,height:844}});await M.поднять(q,{theme,page:name,hist:M.журнал()});
  дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'без горизонтальной прокрутки '+theme+'/'+width+'/'+name);
+ const bounds=await viewport(q);дано(!bounds.length,'границы всех видимых элементов '+theme+'/'+width+'/'+name+' '+JSON.stringify(bounds));
  const r=await контраст(q);дано(r.checked>0&&!r.failures.length,'контраст '+theme+'/'+width+'/'+name+' ('+r.checked+' текстов, фон-картинки пропущены: '+r.skipped+') '+JSON.stringify(r.failures.slice(0,12)));
  if(name==='gym'){
   await q.click('#list .exrow');
   const active=await контраст(q);дано(!active.failures.length,'контраст активной тренировки '+theme+'/'+width+' '+JSON.stringify(active.failures));
   дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'активная тренировка помещается '+width);
   await q.locator('.setrow .ok').first().click();await q.waitForTimeout(350);
+  const timerBounds=await viewport(q);дано(!timerBounds.length,'границы активной тренировки и таймера '+theme+'/'+width+' '+JSON.stringify(timerBounds));
   const timer=await контраст(q);дано(!timer.failures.length,'контраст с таймером '+theme+'/'+width+' '+JSON.stringify(timer.failures));
   await q.locator('#tskip').click();
   await q.locator('.card.exact .allb').click();await q.waitForTimeout(350);
