@@ -18,8 +18,9 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  ok(await p.locator('.vzvtext').innerText()===o.progress.verdict.text,'полный ответ сервера сохранён');
  await p.locator('.vzsila summary').click();ok((await p.locator('.vzsila').innerText()).includes('8 повт.'),'подробности силы доступны');
  await check('раскрытое тело');await p.locator('[data-vzv="fat"]').click();await p.locator('[data-vzv="w"]').click();
- ok(await p.locator('.hb-meal .hbtime').allTextContents().then(xs=>xs.join('|')==='09:53|10:26|10:28|14:03|14:48'),'бейджи сохраняют времена после обновления главной');
- await p.locator('.hb-meal').first().click();ok(await p.locator('#p-food').isVisible(),'событие открывает еду');
+ // 04.10, вечер: плашка — у группы (веер почти одновременных), фото стоят на своём времени.
+ ok(await p.locator('.hbtime').allTextContents().then(xs=>['09:53','10:26','10:28','14:03','14:48'].every(tm=>xs.some(x=>{const [a,z]=x.split('–');return tm>=a&&tm<=(z||a)}))),'плашки сохраняют все времена после обновления главной');
+ await p.locator('.hb-meal').last().click();ok(await p.locator('#p-food').isVisible(),'событие открывает еду');
  const rows=await p.locator('#fweek .fd').evaluateAll(es=>es.map(e=>({date:e.querySelector('u').textContent,fact:e.querySelector('.week-fact').textContent,target:e.querySelector('.week-target').textContent})));
  ok(rows.length===7&&rows[0].fact==='2050'&&rows[0].target==='2110','даты, факт и норма отдельными колонками');
  await check('еда');await p.locator('[data-zseg="eat"]:visible').click();await p.locator('[data-eseg="day"]').click();await p.waitForTimeout(400);

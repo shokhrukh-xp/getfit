@@ -10,7 +10,9 @@ async function geometry(p){return p.evaluate(()=>{
  const badges=[...document.querySelectorAll('.hbtime')],bubbles=[...document.querySelectorAll('.hb')],issues=[];
  badges.forEach((e,i)=>{const a=rect(e),name=e.textContent;
   badges.slice(i+1).forEach(f=>{if(over(a,rect(f)))issues.push(name+' / '+f.textContent)});
-  bubbles.filter(b=>b!==e.parentElement).forEach(b=>{const r=rect(b.querySelector('.hbcut')),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2,rad=r.width/2;
+  // 04.10, вечер: плашка — у группы фото (веер); свои фото под ней допустимы, чужие — нет.
+  const own=String(e.getAttribute('data-m')||'').split(',').filter(Boolean).map(Number);
+  bubbles.filter((b,ix)=>own.indexOf(ix)<0).forEach(b=>{const r=rect(b.querySelector('.hbcut')),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2,rad=r.width/2;
    const dx=x-Math.max(a.left,Math.min(x,a.right)),dy=y-Math.max(a.top,Math.min(y,a.bottom));if(dx*dx+dy*dy<(rad-.5)**2)issues.push(name+' / фото '+b.getAttribute('aria-label'))});
   [...document.querySelectorAll('.hctr>b,.hch,.hcw')].forEach(f=>{if(over(a,glyph(f)))issues.push(name+' / '+f.textContent)});
  });
@@ -20,7 +22,30 @@ async function badgeContrast(p){return p.evaluate(()=>{
  const lum=c=>{let a=c.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return a[0]*.2126+a[1]*.7152+a[2]*.0722};
  return [...document.querySelectorAll('.hbtime')].map(e=>{const a=lum(getComputedStyle(e.querySelector('text')).fill),b=lum(getComputedStyle(e.querySelector('rect')).fill);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)});
 })}
-module.exports={fixture,geometry,badgeContrast};
+// 04.10, вечер, его слова: «дуга должна пропорционально показывать отрезки как
+// стрелочные часы». Угол каждого фото = его время; веер почти одновременных
+// (ближе 7°) держит среднее группы на среднем настоящем времени.
+async function clock(p){return p.evaluate(()=>{
+ const svg=document.querySelector('.hclk-svg'),w0=+svg.dataset.w0,w1=+svg.dataset.w1;
+ const bub=[...document.querySelectorAll('.hb')].map((g,ix)=>{const m=g.getAttribute('transform').match(/translate\(([\d.-]+) ([\d.-]+)\)/),h=+g.dataset.h;
+  return {ix,lab:g.getAttribute('aria-label'),h,a:Math.atan2(+m[1]-175,214-+m[2])*180/Math.PI,ex:-90+(h-w0)/(w1-w0)*180}});
+ const badges=[...document.querySelectorAll('.hbtime')].map(e=>({t:e.textContent,m:String(e.dataset.m).split(',').map(Number)}));
+ return {bub,badges};
+})}
+function proportional(c){
+ const s=c.bub.slice().sort((a,b)=>a.ex-b.ex),bad=[];
+ for(let i=0;i<s.length;){let j=i;while(j+1<s.length&&s[j+1].ex-s[j].ex<7)j++;
+  const g=s.slice(i,j+1),ma=g.reduce((x,y)=>x+y.a,0)/g.length,me=g.reduce((x,y)=>x+y.ex,0)/g.length;
+  if(Math.abs(ma-me)>0.6)bad.push('группа '+g.map(x=>x.lab).join(',')+' '+ma.toFixed(1)+'/'+me.toFixed(1));
+  g.forEach(x=>{if(Math.abs(x.a-x.ex)>(g.length===1?0.6:3.5*(g.length-1)+0.6))bad.push(x.lab+' '+x.a.toFixed(1)+'/'+x.ex.toFixed(1))});
+  i=j+1}
+ const timed=c.bub.filter(x=>/^≈?\d\d:\d\d/.test(x.lab));
+ timed.forEach(x=>{const own=c.badges.find(b=>b.m.indexOf(x.ix)>=0);if(!own)bad.push('нет плашки у '+x.lab);
+  else{const tm=x.lab.match(/\d\d:\d\d/)[0],[a,z]=own.t.replace(/≈/g,'').split('–');if(tm<a||tm>(z||a))bad.push(x.lab+' вне плашки '+own.t)}});
+ c.badges.forEach(b=>{if(!/^≈?\d\d:\d\d(–\d\d:\d\d)?$/.test(b.t))bad.push('формат '+b.t)});
+ return bad;
+}
+module.exports={fixture,geometry,badgeContrast,clock,proportional};
 if(require.main===module)(async()=>{const b=await chromium.launch();try{
  // Ревью 18:50: учитываем всю высоту центра, а не только число калорий.
  for(const theme of ['light','dark'])for(const state of ['обычный','плотный','свободный']){
@@ -42,7 +67,9 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
  }
  for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){
   const p=await b.newPage({viewport:{width,height:844}}),tag=theme+'/'+width,o=fixture(theme),err=await M.поднять(p,o);
-  const g=await geometry(p);ok(g.times.join('|')==='08:39|09:53|10:26|10:28|14:03|14:48','время зала и пяти приёмов настоящее '+tag+' '+g.times.join('|'));
+  const g=await geometry(p),cl=await clock(p),pr=proportional(cl);
+  ok(!pr.length,'фото на своём времени, как на стрелочных часах; плашки покрывают все времена '+tag+' '+JSON.stringify(pr)+' '+g.times.join('|'));
+  const обед=cl.bub.find(x=>/^14:48/.test(x.lab));ok(обед&&Math.abs(обед.a-обед.ex)<0.6&&обед.a<20,'обед 14:48 сразу за полуднем, не у 22:00 '+tag+' '+(обед&&обед.a.toFixed(1)));
   ok(!g.issues.length,'бейджи не пересекают фото, друг друга, число и часы '+tag+' '+JSON.stringify(g.issues));
   ok(g.font.every(v=>v>=10&&v<=11)&&g.targets.every(v=>v>=44),'шрифт 10–11 px и касание >=44 '+tag+' '+JSON.stringify({font:g.font,targets:g.targets}));
   ok(g.x.every((v,i)=>!i||v>g.x[i-1]),'хронологический порядок пузырей '+tag);
@@ -66,7 +93,8 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
   const p=await b.newPage({viewport:{width,height:844}}),o=fixture(theme);
   o.day.meals=o.day.meals.map((m,i)=>({...m,t:['10:26','10:28','10:29','10:31','10:32'][i]}));o.day.kcal=1000;
   await M.поднять(p,o);const g=await geometry(p);
-  ok(!g.issues.length&&g.times.slice(1,6).join('|')==='10:26|10:28|10:29|10:31|10:32','плотная группа + планы '+theme+'/'+width+' '+JSON.stringify(g.issues));
+  const pr=proportional(await clock(p));
+  ok(!g.issues.length&&!pr.length,'плотная группа + планы: веер на своём времени, плашки без наложений '+theme+'/'+width+' '+JSON.stringify(g.issues)+' '+JSON.stringify(pr)+' '+g.times.join('|'));
   ok(!(await bounds(p)).length,'насыщенный день внутри экрана '+theme+'/'+width);
   await p.locator('.hb-meal').first().focus();await p.keyboard.press('Enter');ok(await p.locator('#p-food').isVisible(),'пузырь доступен клавиатурой');
   await p.close();

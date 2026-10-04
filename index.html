@@ -2838,7 +2838,8 @@ body.coach #coachnav{pointer-events:none}
 body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 .hbtime rect{fill:var(--surface);stroke:var(--line);stroke-width:1}
 .hbtime text{fill:var(--text);font-size:var(--badge-font,12px);font-weight:700;text-anchor:middle;font-variant-numeric:tabular-nums}
-.hb-next .hbtime text,.hb-todo .hbtime text{fill:var(--muted);font-weight:500}
+.hbtime.hbplan text{fill:var(--muted);font-weight:500}
+.hctk{stroke:var(--dim);stroke-width:1.5;stroke-linecap:round}
 .hb:focus-visible{outline:none}.hb:focus-visible .hbcut{stroke:var(--accent);stroke-width:3}
 .hwd-dots .hwd-free{font-size:15px;line-height:18px}
 .hwd-dots{min-height:18px}
@@ -10691,15 +10692,96 @@ function hcEvents(){
   });
   н=Math.min(н, Math.floor(nowH)); к=Math.max(к, Math.ceil(nowH+0.01));
   HCW=[Math.max(0,н), Math.min(24,Math.max(к,н+6))];
-  /* 04.10: бейдж хранит настоящее время. Раздвигаем только угол, а не часы.
-     Сначала вперёд, затем назад от края: тесная группа остаётся по порядку
-     и помещается в дуге, вместо того чтобы удлинять день после 24:00. */
-  // В насыщенный день сохраняем одну дугу: добавляем высоту вместо наложений.
-  HC.RY=HC.R+Math.max(0,ev.length-7)*42;HC.cy=88+HC.RY;HC.H=HC.cy+36;
-  var gap=Math.min(27,160/Math.max(1,ev.length-1));
-  ev.forEach(function(e,i){e.radius=ev.length>7?16:20;e.angle=Math.max(-80,Math.min(80,hcA(e.h)));if(i)e.angle=Math.max(e.angle,ev[i-1].angle+gap);});
-  for(var j=ev.length-1;j>=0;j--)ev[j].angle=Math.min(ev[j].angle,j===ev.length-1?80:ev[j+1].angle-gap);
+  hcLayout(ev);
   return {ev:ev, nowH:nowH, plan:plan};
+}
+/* 04.10, вечер, его слова: «почему мой обед, который был в 14:48, стоит на
+   уровне 22:00. Дуга должна пропорционально показывать отрезки, как стрелочные
+   часы». Днём бейджи расставили фото равным шагом, и утренние приёмы цепочкой
+   утолкали всё к вечеру. Теперь угол = время, без исключений:
+   1) каждое событие на своём часе окна;
+   2) почти одновременные (ближе 7°, у него 10:26 и 10:28) — веером внахлёст:
+      внутри такой кучки фото разведены на 7°, но СРЕДНЕЕ кучки остаётся на
+      среднем настоящем времени (сдвиг — минуты, не часы);
+   3) время — плашкой под фото; если плашки налезают друг на друга или на
+      чужое фото, соседние сливаются в одну «09:53–10:28» (его выбор кнопкой:
+      «веером внахлёст», одна плашка на группу). Плановые «≈» отдельно от
+      фактических; мешает вес, слова окна или число в центре — плашка над фото. */
+var HC_FAN=7;
+function hcSvgW(){
+  var sv=document.querySelector('.hclk-svg'), w=sv?sv.getBoundingClientRect().width:0;
+  if(w) return w;
+  var iw=window.innerWidth||390; return Math.max(240, iw-(iw<370?32:16));
+}
+function hcLayout(ev){
+  HC.RY=HC.R; HC.cy=214; HC.H=250;
+  var R=HC.R, rr=ev.length>7?16:20, k;
+  ev.forEach(function(e){ e.radius=e.cls==='w'?13:rr; e.angle=hcA(e.h); });
+  /* веер: кучки почти одновременных событий (по НАСТОЯЩЕМУ времени, один
+     проход), среднее кучки = среднее времени. Соседи веера не двигаются —
+     если он их задел, это внахлёст, а не сдвиг часов. */
+  for(var i=0;i<ev.length;){
+    var j=i; while(j+1<ev.length && hcA(ev[j+1].h)-hcA(ev[j].h)<HC_FAN-0.01) j++;
+    if(j>i){
+      var exact=0; for(k=i;k<=j;k++) exact+=hcA(ev[k].h); exact/=(j-i+1);
+      var mid=(j-i)*HC_FAN/2;
+      for(k=i;k<=j;k++) ev[k].angle=exact+(k-i)*HC_FAN-mid;
+    }
+    i=j+1;
+  }
+  /* край окна: веер не уходит за начало и конец дуги */
+  var lo=ev.length?ev[0].angle:0, hi=ev.length?ev[ev.length-1].angle:0, sh=0;
+  if(lo<-90) sh=-90-lo; else if(hi>90) sh=90-hi;
+  ev.forEach(function(e){ e.angle+=sh; var a=e.angle*Math.PI/180; e.x=HC.cx+R*Math.sin(a); e.y=HC.cy-R*Math.cos(a); });
+  /* плашки */
+  HC.lw=hcSvgW(); var fu=10.5*HC.W/HC.lw, cw=0.6*fu, BH=17;
+  var B=[]; ev.forEach(function(e,i){ if(e.time) B.push({m:[i], plan:e.time.charAt(0)==='≈', up:false}); });
+  var txt=function(b){ var a=ev[b.m[0]].time, z=ev[b.m[b.m.length-1]].time; return (b.m.length>1 && a!==z) ? a+'–'+z.replace('≈','') : a; };
+  var place=function(b){
+    var t=txt(b), w=Math.ceil(t.length*cw+12), x=0;
+    b.m.forEach(function(i){ x+=ev[i].x; }); x/=b.m.length;
+    var y=b.up ? Math.min.apply(null,b.m.map(function(i){ return ev[i].y-ev[i].radius; }))-BH+5
+               : Math.max.apply(null,b.m.map(function(i){ return ev[i].y+ev[i].radius; }))-7;
+    b.t=t; b.w=w; b.h=BH; b.x=Math.max(w/2+2, Math.min(HC.W-w/2-2, x)); b.y=y;
+  };
+  var rr2=function(a,b){ return a.x-a.w/2<b.x+b.w/2+2 && a.x+a.w/2+2>b.x-b.w/2 && a.y<b.y+b.h+2 && a.y+a.h+2>b.y; };
+  var hitB=function(b,e){ var r=e.radius+3, nx=Math.max(b.x-b.w/2, Math.min(e.x, b.x+b.w/2)), ny=Math.max(b.y, Math.min(e.y, b.y+b.h));
+    return (nx-e.x)*(nx-e.x)+(ny-e.y)*(ny-e.y) < (r-0.5)*(r-0.5); };
+  /* что плашке закрывать нельзя: слова «утро/вечер» и число в центре */
+  var стоп=[{x:HC.cx-R, y:HC.cy+15, w:40, h:16},{x:HC.cx+R, y:HC.cy+15, w:40, h:16},{x:HC.cx, y:150, w:140, h:100}];
+  /* близко по времени (≤ 45 мин) — одна плашка; далеко — разводим по
+     сторонам дуги (одна под фото, другая над), а не склеиваем часы */
+  var рядом=function(b,c){ return ev[c.m[0]].h-ev[b.m[b.m.length-1]].h<=0.75; };
+  var слить=function(i1){ B[i1].m=B[i1].m.concat(B[i1+1].m); B.splice(i1+1,1); };
+  for(var guard=0; guard<80; guard++){
+    B.forEach(place);
+    var fix=false;
+    for(var a1=0; a1<B.length && !fix; a1++){
+      var b=B[a1];
+      for(var a2=a1+1; a2<B.length && !fix; a2++){
+        var c=B[a2]; if(!rr2(b,c)) continue;
+        if(b.plan!==c.plan){ var p2=b.plan?b:c; if(!p2.up){ p2.up=true; fix=true; } continue; }
+        if(a2===a1+1 && рядом(b,c)){ слить(a1); fix=true; }
+        else if(!c.up){ c.up=true; fix=true; }
+        else if(!b.up){ b.up=true; fix=true; }
+        else if(a2===a1+1){ слить(a1); fix=true; }
+      }
+      if(fix) break;
+      for(var q=0; q<ev.length && !fix; q++){
+        if(b.m.indexOf(q)>=0 || !hitB(b,ev[q])) continue;
+        var nb=-1; B.forEach(function(x,ix){ if(x.m.indexOf(q)>=0) nb=ix; });
+        /* чужое фото под плашкой: соседнюю группу сливаем, если она близко по
+           времени или плашке уже некуда уйти (над фото тоже занято) */
+        if(nb>=0 && B[nb].plan===b.plan && Math.abs(nb-a1)===1 && (b.up || рядом(B[Math.min(a1,nb)],B[Math.max(a1,nb)]))){ слить(Math.min(a1,nb)); fix=true; }
+        else if(!b.up){ b.up=true; fix=true; }
+      }
+      if(fix) break;
+      if(!b.up && стоп.some(function(z){ return rr2(b,z); })){ b.up=true; fix=true; }
+    }
+    if(!fix) break;
+  }
+  B.forEach(place);
+  ev.badges=B;
 }
 document.addEventListener('keydown',function(e){if(e.target.matches && e.target.matches('.hb') && (e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
 function hcBadgeSize(){
@@ -10707,6 +10789,9 @@ function hcBadgeSize(){
   var w=svg.getBoundingClientRect().width;
   if(!w)return;
   svg.style.setProperty('--badge-font',(10.5*HC.W/w).toFixed(3)+'px');
+  /* ширина плашек считалась под ширину дуги; экран стал другим — разложить заново */
+  if(HC.lw && Math.abs(w-HC.lw)>2 && !HC.relay){ HC.relay=true;
+    requestAnimationFrame(function(){ HC.relay=false; try{ renderHome(); }catch(e){} }); }
   var clock=svg.parentElement, center=clock.querySelector('.hctr'), bottom=svg.getBoundingClientRect().bottom;
   if(center)Array.prototype.forEach.call(center.children,function(e){
     var r=e.getBoundingClientRect();if(r.height && getComputedStyle(e).visibility!=='hidden')bottom=Math.max(bottom,r.bottom);
@@ -10716,10 +10801,10 @@ function hcBadgeSize(){
 window.addEventListener('resize',hcBadgeSize);
 if(document.fonts)document.fonts.ready.then(hcBadgeSize);
 function hcBub(e, i){
-  var r = e.cls==='w' ? 13 : e.radius, a=e.angle*Math.PI/180, p=[HC.cx+HC.R*Math.sin(a),HC.cy-HC.RY*Math.cos(a)], x=p[0].toFixed(1), y=p[1].toFixed(1);
+  var r = e.radius, x=e.x.toFixed(1), y=e.y.toFixed(1);
   var tap = e.go ? ' data-hgo="'+e.go+'"' : (e.act ? ' data-hact="'+e.act+'"' : '');
   /* На 320 px круг 56 SVG-единиц даёт >=44 px касания, включая малое фото. */
-  var h='<g class="hb hb-'+e.cls+'"'+tap+' role="button" tabindex="0" aria-label="'+esc(e.lab||('Вес '+e.txt))+'" transform="translate('+x+' '+y+')">'+
+  var h='<g class="hb hb-'+e.cls+'"'+tap+' role="button" tabindex="0" data-h="'+e.h.toFixed(3)+'" aria-label="'+esc(e.lab||('Вес '+e.txt))+'" transform="translate('+x+' '+y+')">'+
         (tap ? '<circle class="hbtap" r="28" fill="transparent" pointer-events="all"/>' : '')+
         '<circle r="'+(r+3)+'" class="hbcut"/>';
   var ico=function(d){ return '<g class="hbi" transform="translate(-9.6 -9.6) scale(.8)"><path d="'+d+'"/></g>'; };
@@ -10738,29 +10823,36 @@ function hcBub(e, i){
   } else if(e.cls==='w'){
     h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5">'+esc(e.txt)+'</text>';
   }
-  if(e.time){
-    var bw=e.time.charAt(0)==='≈'?50:42;
-    h+='<g class="hbtime"><rect x="'+(-bw/2)+'" y="'+(r-7)+'" width="'+bw+'" height="17" rx="6"/><text y="'+(r+5)+'">'+esc(e.time)+'</text></g>';
-  }
   return h+'</g>';
 }
 function homeClock(){
   var E=hcEvents(), d=HOME.day||{}, t=d.targets||{}, kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var н=HCW[0], к=HCW[1];
-  var s='<svg class="hclk-svg" viewBox="0 0 '+HC.W+' '+HC.H+'" aria-label="События дня">';
+  var s='<svg class="hclk-svg" viewBox="0 0 '+HC.W+' '+HC.H+'" aria-label="События дня" data-w0="'+н+'" data-w1="'+к+'">';
   s+='<path class="hcring" d="'+hcArc(HC.R,н,к)+'"/>';
-  var шаг=(к-н)>13?4:2, часы=[н];
-  var рядом=function(h){ return E.ev.some(function(e){ return Math.abs(e.angle-hcA(h))<20; }); };
-  for(var hh=н+шаг; hh<к-1; hh+=шаг) if(!рядом(hh)) часы.push(hh);
-  часы.push(к);   /* края окна подписаны всегда: они говорят, докуда день */
+  /* 04.10, вечер: циферблат — деления каждые 3 часа (06, 09, 12, 15, 18, 21)
+     и края окна. Подпись деления уходит дальше от дуги, если рядом фото или
+     плашка, и не рисуется, если места нет и там. */
+  var часы=[н]; for(var hh=Math.ceil((н+0.01)/3)*3; hh<к; hh+=3) if(hh-н>=1 && к-hh>=1) часы.push(hh); часы.push(к);
+  var занято=E.ev.map(function(e){ return {x:e.x-e.radius-3, y:e.y-e.radius-3, w:2*e.radius+6, h:2*e.radius+6}; })
+    .concat((E.ev.badges||[]).map(function(b){ return {x:b.x-b.w/2, y:b.y, w:b.w, h:b.h}; }));
+  var свободно=function(x,y){ return !занято.some(function(z){ return x+9>z.x && x-9<z.x+z.w && y+6>z.y && y-6<z.y+z.h; }); };
   часы.forEach(function(h){
-    var p=hcPt(HC.R+17+(рядом(h)?15:0), h);
+    var t1=hcPt(HC.R-4,h), t2=hcPt(HC.R+4,h);
+    s+='<line class="hctk" x1="'+t1[0].toFixed(1)+'" y1="'+t1[1].toFixed(1)+'" x2="'+t2[0].toFixed(1)+'" y2="'+t2[1].toFixed(1)+'"/>';
+    var p=hcPt(HC.R+15,h); if(!свободно(p[0],p[1])) p=hcPt(HC.R+32,h);
+    if(!свободно(p[0],p[1]) && h!==н && h!==к){ p=hcPt(HC.R+46,h); if(!свободно(p[0],p[1])) return; }
     s+='<text class="hch" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" dy="3.5" text-anchor="middle">'+pad2(h%24)+'</text>';
   });
   /* два слова держат стороны света; больше подписей на дуге не нужно */
   s+='<text class="hcw" x="'+(HC.cx-HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">утро</text>';
   s+='<text class="hcw" x="'+(HC.cx+HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">вечер</text>';
   E.ev.forEach(function(e,i){ s+=hcBub(e,i); });
+  /* плашки времени — поверх фото, по одной на группу (см. hcLayout) */
+  (E.ev.badges||[]).forEach(function(b){
+    s+='<g class="hbtime'+(b.plan?' hbplan':'')+'" data-n="'+b.m.length+'" data-m="'+b.m.join(',')+'"><rect x="'+(b.x-b.w/2).toFixed(1)+'" y="'+b.y.toFixed(1)+'" width="'+b.w+'" height="'+b.h+'" rx="6"/>'+
+       '<text x="'+b.x.toFixed(1)+'" y="'+(b.y+12).toFixed(1)+'">'+esc(b.t)+'</text></g>';
+  });
   s+='</svg>';
   var c;
   if(homeСвоб()) return '<div class="hclk">'+s+'<div class="hctr"><b class="hfree">свободный<br>день</b><u>без записи и оценки</u>'+
