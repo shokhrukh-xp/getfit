@@ -16,7 +16,7 @@ const ряд=[{name:'Жим лёжа',now:{w:62.5,r:8,date:M.Д(1)},was:{w:60,r:
     progress:{sila:{verdict,up:3,flat:2,down:1,rows:ряд}}});
    const box=p.locator('.vzsila'), summary=box.locator('summary');
    дано(await box.count()===1,'строка силы есть и без линии плана: '+verdict);
-   дано((await summary.innerText())===(verdict==='мало'?'Сила: мало занятий за две недели':'Сила за 2 недели: растёт 3 · стоит 2 · падает 1'),'счётчики и подпись с сервера: '+verdict);
+   дано((await summary.innerText()).replace(/\s+/g,' ').trim()===(verdict==='мало'?'Сила: мало занятий за две недели':'Сила за 2 недели растёт 3 стоит 2 падает 1'),'счётчики и подпись с сервера: '+verdict);
    const cls=await box.getAttribute('class');
    дано(cls.includes('warn')===(verdict==='падает') && cls.includes('muted')===(verdict==='мало'),'цвет состояния: '+verdict);
    дано(!await box.evaluate(e=>e.open),'детали изначально свёрнуты');

@@ -101,7 +101,7 @@ async function часы(page){
   await M.поднять(p3, { theme: 'dark', time: '08:15', day: { meals: [], kcal:0, prot:0, fat:0, fib:0, sug:0 }, score: null });
   const ч3 = await часы(p3);
   дано(ч3.пузыри.filter(p => /hb-todo|hb-next/.test(p.cls)).length >= 2, 'на пустом дне видны места будущих приёмов');
-  дано(/оценка — с первой записью/.test(await p3.textContent('.hctr')), 'без записей оценка не выдумывается');
+  дано(/оценка — с первой записью/.test(await p3.textContent('.day-status')), 'без записей оценка не выдумывается');
   await p3.close();
 
   /* ── перебор в пределах коридора — не промах ──

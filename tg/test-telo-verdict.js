@@ -16,6 +16,8 @@ const план={anchor:M.Д(14),anchorW:89,rate:-.6,gap:.4,onTrack:false};
    if(state==='мало'){delete progress.anchor;delete progress.gap;progress.eta=null;}
    const errors=await M.поднять(page,{theme:state==='плато'?'light':'dark',meas:M.замеры(),goal:цель,progress});
    const v=page.locator('#homebody .vzverdict');
+   дано(!await v.locator('details').evaluate(e=>e.open),'подробный вердикт сначала свёрнут');
+   await v.locator('summary').click();
    дано(await v.count()===1 && (await v.innerText()).includes('Вердикт: '+state),'серверный вердикт виден: '+state);
    const cls=await v.getAttribute('class');
    дано((cls.includes('warn'))===['стоит','плато'].includes(state) && cls.includes('muted')===(state==='мало'),'выделение по состоянию: '+state);

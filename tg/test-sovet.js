@@ -14,7 +14,7 @@ const ЕДА = [
   { id: 2, t: '15:35', kind: 'обед',    kcal: 634, prot: 80, img: '/p/b.jpg' }
 ];
 const часы = page => page.evaluate(() => ({
-  метки: Array.from(document.querySelectorAll('.hclk-svg .hbl')).map(e => e.textContent),
+  метки: Array.from(document.querySelectorAll('.day-events button')).map(e => e.textContent),
   плюс: !!document.querySelector('.hb-next'),
   совет: (document.querySelector('.hnext') || {}).textContent || '',
   /* 12.09: поля на главной больше нет — разговор один, за круглой кнопкой.
