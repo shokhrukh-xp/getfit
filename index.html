@@ -2846,6 +2846,9 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 .timer{bottom:calc(61px + var(--pad-bottom,0px))}
 .hctr{top:79%}
 @media(max-width:360px){.hctr{top:83%}}
+/* 04.10, ревью: центр может выступить ниже SVG на узком экране.
+   Отводим ему реальное место в потоке, не поднимая число обратно к фото. */
+.hclk{margin-bottom:var(--hc-gap,12px)}
 .vzlg .water-key{display:inline;line-height:1.5}
 </style>
 </head>
@@ -3112,7 +3115,7 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
     <div class="attbox" id="cattach" hidden></div>
     <div class="chatask">
       <div class="cpill">
-        <textarea id="ctext" rows="1" placeholder="спроси или напиши, что съел"></textarea>
+        <textarea id="ctext" rows="1" placeholder="Еда или вопрос"></textarea>
         <button type="button" class="cic" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       </div>
       <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
@@ -10702,9 +10705,16 @@ document.addEventListener('keydown',function(e){if(e.target.matches && e.target.
 function hcBadgeSize(){
   var svg=document.querySelector('.hclk-svg');if(!svg)return;
   var w=svg.getBoundingClientRect().width;
-  if(w)svg.style.setProperty('--badge-font',(10.5*HC.W/w).toFixed(3)+'px');
+  if(!w)return;
+  svg.style.setProperty('--badge-font',(10.5*HC.W/w).toFixed(3)+'px');
+  var clock=svg.parentElement, center=clock.querySelector('.hctr'), bottom=svg.getBoundingClientRect().bottom;
+  if(center)Array.prototype.forEach.call(center.children,function(e){
+    var r=e.getBoundingClientRect();if(r.height && getComputedStyle(e).visibility!=='hidden')bottom=Math.max(bottom,r.bottom);
+  });
+  clock.style.setProperty('--hc-gap',Math.ceil(bottom-svg.getBoundingClientRect().bottom+12)+'px');
 }
 window.addEventListener('resize',hcBadgeSize);
+if(document.fonts)document.fonts.ready.then(hcBadgeSize);
 function hcBub(e, i){
   var r = e.cls==='w' ? 13 : e.radius, a=e.angle*Math.PI/180, p=[HC.cx+HC.R*Math.sin(a),HC.cy-HC.RY*Math.cos(a)], x=p[0].toFixed(1), y=p[1].toFixed(1);
   var tap = e.go ? ' data-hgo="'+e.go+'"' : (e.act ? ' data-hact="'+e.act+'"' : '');
@@ -13684,10 +13694,10 @@ function chatPull(){
    этот момент тоже никуда не зовут (одно место — один факт). */
 function chatHint(){
   var d=HOME.day||{}, t=d.targets||{};
-  var общее='спроси или напиши, что съел';
+  var общее='Еда или вопрос';
   if(t.kcal && (t.kcal-(+d.kcal||0))<=0) return общее;
   var n=new Date(), p=nextMealPlan(d.meals||[], n.getHours()+n.getMinutes()/60);
-  return (p && p.at!=null && p.name) ? ('что съел на '+p.name+' — или спроси') : общее;
+  return (p && p.at!=null && p.name) ? ('Еда: '+p.name) : общее;
 }
 /* 04.10: клавиатура может уменьшать visualViewport без resize окна.
    Поле отправки остаётся внутри видимой области и при сдвиге viewport iOS. */

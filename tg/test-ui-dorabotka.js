@@ -22,6 +22,24 @@ async function badgeContrast(p){return p.evaluate(()=>{
 })}
 module.exports={fixture,geometry,badgeContrast};
 if(require.main===module)(async()=>{const b=await chromium.launch();try{
+ // Ревью 18:50: учитываем всю высоту центра, а не только число калорий.
+ for(const theme of ['light','dark'])for(const state of ['обычный','плотный','свободный']){
+  const p=await b.newPage({viewport:{width:390,height:844}}),o=state==='обычный'?opts(theme):fixture(theme);
+  if(state==='плотный'){o.day.kcal=1000;o.day.meals=o.day.meals.map((m,i)=>({...m,t:['10:26','10:28','10:29','10:31','10:32'][i]}));}
+  if(state==='свободный')o.free.push(M.TODAY);
+  await M.поднять(p,o);
+  for(const width of [320,340,360,375,390,430]){
+   await p.setViewportSize({width,height:844});await p.waitForTimeout(60);
+   const gap=await p.evaluate(()=>{const rs=[...document.querySelector('.hctr').children].filter(e=>getComputedStyle(e).visibility!=='hidden').map(e=>e.getBoundingClientRect()).filter(r=>r.height);return document.querySelector('.day-status').getBoundingClientRect().top-Math.max(...rs.map(r=>r.bottom))});
+   ok(gap>=12,'центр отделён от совета >=12 px '+theme+'/'+state+'/'+width+': '+gap.toFixed(1));
+   const g=await geometry(p);ok(!g.issues.length,'бейджи не пересекаются после отступа '+theme+'/'+state+'/'+width+' '+JSON.stringify(g.issues));
+   await p.locator('#coachnav').click();
+   const hint=await p.locator('#ctext').evaluate(e=>{const s=getComputedStyle(e),c=document.createElement('canvas').getContext('2d');c.font=s.font;return {text:e.placeholder,w:c.measureText(e.placeholder).width,space:e.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight)}});
+   ok(hint.w<=hint.space,'подсказка чата помещается одной строкой '+theme+'/'+state+'/'+width+' '+JSON.stringify(hint));
+   await p.locator('#coachclose').click();
+  }
+  await p.close();
+ }
  for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){
   const p=await b.newPage({viewport:{width,height:844}}),tag=theme+'/'+width,o=fixture(theme),err=await M.поднять(p,o);
   const g=await geometry(p);ok(g.times.join('|')==='08:39|09:53|10:26|10:28|14:03|14:48','время зала и пяти приёмов настоящее '+tag+' '+g.times.join('|'));
