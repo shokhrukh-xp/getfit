@@ -2864,6 +2864,24 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 #hmeas .fld input{box-sizing:border-box;width:100%;padding:12px 6px;font-size:16px;min-height:44px}
 #hmeas #fmphoto{grid-column:1;width:100%;min-height:44px}
 #hmeas #fmsave{grid-column:2/-1;width:100%;min-height:44px;font-size:15px}
+
+/* 04.10, его снимок с телефона: в полноэкранном Telegram кнопки «Close» и
+   «⌄ …» лежат поверх верха экрана (это --pad-top). Лист тренера был высотой
+   во весь viewport, и его крестик ушёл под них — закрыть чат было нечем;
+   любой длинный лист — так же. Ни один лист в эту зону не заходит; вне
+   полноэкранного режима --pad-top = 0 и всё как было. */
+.modal .modalbox{max-height:calc(var(--sheet-h,100vh) - var(--pad-top,0px) - 16px)}
+.modal.wide .modalbox{max-height:min(92vh,calc(var(--sheet-h,100vh) - var(--pad-top,0px) - 16px))}
+#coachm .modalbox{height:calc(var(--sheet-h,100vh) - var(--pad-top,0px) - 24px);max-height:calc(var(--sheet-h,100vh) - var(--pad-top,0px) - 24px)}
+
+/* 04.10, его снимок «Недели»: сегодняшняя полоса была пунктирной рамкой без
+   заливки (наследство вертикальных столбиков) и в строке читалась пустой,
+   хотя перебор уже был. Заливаем по тому же правилу, что и прошлые дни:
+   перебор — красным сразу, попадание в коридор — акцентом, недобор, пока
+   день идёт, — нейтрально (не красим: вечер ещё впереди). */
+#fweek .fd-today .fb{border:0;background:var(--muted)}
+#fweek .fd-today .fb.fb-hi{background:var(--accent)}
+#fweek .fd-today .fb.fb-low{background:var(--warn)}
 </style>
 </head>
 <body>

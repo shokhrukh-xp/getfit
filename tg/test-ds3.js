@@ -34,8 +34,10 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
   дано(await p.locator('.fnorm .fbar').count()===5&&await p.locator('.fnorm .ds-zone').count()===1,'пять шкал и одна легенда '+label);
  }
  дано(await p.locator('#fmealhead').innerText()==='Приёмы · '+(state==='пустой'?0:2),'счётчик реальных приёмов '+label);
- const chart=await p.locator('#fweek .fd-today .fb').evaluate(e=>getComputedStyle(e).borderTopStyle);
- дано(chart==='dashed','сегодня в неделе пунктиром '+label);
+ /* 04.10, его снимок: пунктирная рамка без заливки в строке недели читалась
+    пустой при переборе. Сегодня залито по правилу дня; отличает его дата. */
+ const chart=await p.locator('#fweek .fd-today .fb').evaluate(e=>{const cs=getComputedStyle(e);return {рамка:cs.borderTopStyle,фон:cs.backgroundColor,узор:cs.backgroundImage};});
+ дано(chart.рамка!=='dashed'&&(!/rgba\(0, 0, 0, 0\)|transparent/.test(chart.фон)||chart.узор!=='none'),'сегодня в неделе залито, не пустая рамка '+label+' '+JSON.stringify(chart));
  await p.locator('#coachfab').scrollIntoViewIfNeeded();
  дано(await p.locator('#coachfab').evaluate(e=>e.getBoundingClientRect().top>=document.querySelector('main').getBoundingClientRect().bottom),'тренер в потоке после контента '+label);
  if(state==='сегодня'){await p.locator('#food-add').click();дано(await p.locator('#coachm').isVisible(),'добавить приём открывает прежнего тренера '+label)}

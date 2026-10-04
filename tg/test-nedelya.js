@@ -75,6 +75,28 @@ const ДНИ = [
     'полоса дня зала правее полосы дня отдыха — нормы разные и это видно');
   дано(/коридор нормы дня ±10 %/.test(await page.textContent('#fweekt')), 'подпись объясняет полосу');
 
+  /* 04.10, его снимок: сегодняшняя полоса была пунктирной рамкой без заливки
+     и читалась пустой при переборе. Сегодня заливается: недобор, пока день
+     идёт, — нейтрально; перебор — красным, как у прошлых дней. */
+  const заливка = p => p.evaluate(() => { const e = document.querySelector('#fweek .fd-today .fb'), cs = getComputedStyle(e);
+    const пусто = c => c === 'transparent' || /rgba\(0, 0, 0, 0\)/.test(c);
+    return { класс: e.className, фон: cs.backgroundColor, пустой: пусто(cs.backgroundColor), рамка: cs.borderTopStyle,
+      красный: getComputedStyle(document.documentElement).getPropertyValue('--warn').trim() }; });
+  const сегодня1 = await заливка(page);
+  дано(!сегодня1.пустой && сегодня1.рамка !== 'dashed' && !/fb-low/.test(сегодня1.класс),
+    'сегодня недобор (1030 из 2110), день идёт: полоса залита нейтрально, не красная: ' + JSON.stringify(сегодня1));
+  await page.close();
+  const page2 = await br.newPage({ viewport: { width: 390, height: 1400 } });
+  await M.поднять(page2, { theme: 'dark', time: '17:40', page: 'food',
+    week: { days: ДНИ.slice(0, 6).concat([{ date: Д(0), kcal: 2240, prot: 191, n: 5, tg: { kcal: 1650, prot: 160 } }]) }, wait: 2200 });
+  await page2.waitForTimeout(600);
+  const сегодня2 = await заливка(page2);
+  дано(/fb-low/.test(сегодня2.класс) && !сегодня2.пустой && сегодня2.рамка !== 'dashed',
+    'сегодня перебор (2240 при 1650): полоса залита красным, не пустая рамка: ' + JSON.stringify(сегодня2));
+  const ширина = await page2.evaluate(() => { const b = document.querySelector('#fweek .fd-today .fb').getBoundingClientRect(),
+    s = document.querySelector('#fweek .fd-today .nb').getBoundingClientRect(); return { факт: b.right, право: s.right }; });
+  дано(ширина.факт > ширина.право, 'и выходит правее своей полосы нормы');
+
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
