@@ -18,7 +18,7 @@
   src:url(fonts/manrope-cyr.woff2) format('woff2');unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
 @font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;
   src:url(fonts/manrope-lat.woff2) format('woff2')}
-/* 04.10, Шохрух выбрал A «Тихий тренер». Этап 1 — только основа;
+/* 04.10, Шохрух выбрал «Фокус · бирюза». Этап 1 — только основа;
    порядок экранов, дуга дня и расчёты остаются прежними.
    Соответствие старых имён (для старых компонентов, без двух палитр):
    bg-2/card-solid -> card; card-2/field -> card2; line-soft/glass-edge -> line;
@@ -26,27 +26,32 @@
    warn-txt -> warn; mid -> amber; chart-2 -> free; on-accent/on-prime -> white.
    accent-ghost -> accent 10%; corr -> ok 22%; corr-mid -> amber 22%;
    track/sleep -> line; map-bg/map-line/map-line2/map-det -> card/bg/line/faint.
-   shadow-sm -> shadow; r -> 18px; blur/knurl -> none.
+   surface/card -> surface; tint/card2 -> tint; shadow/shadow-sm -> none; r -> 24px;
+   on-accent-muted -> #D6EBEE; tab-line -> #CBDADC (dark line);
+   action -> accent (dark #246F7C: белый текст сохраняет контраст);
+   free/chart-2 -> исходный фиолетовый графика, без новой палитры свободного дня;
+   blur/knurl -> none.
    *-rgb — совместимые RGB-каналы тех же accent/ok/warn для rgba() в старом CSS.
    scrim — нейтральное затемнение поверх темы. Telegram меняет лишь bg/text. */
 :root{
   color-scheme:light;
-  --bg:#F3F4F7;
-  --card:#FFFFFF;
-  --card2:#EEF3FF;
-  --line:#E6E8EE;
-  --text:#111827;
-  --muted:#5B6472;
-  --faint:#9AA3B2;
-  --accent:#2F6BFF;
-  --ok:#1F9D63;
-  --warn:#C2410C;
-  --warn-bg:#FFF4EC;
+  --bg:#EAF0F1;
+  --surface:#FFFFFF; --card:var(--surface);
+  --tint:#E3EFF0; --card2:var(--tint);
+  --on-accent-muted:#D6EBEE; --tab-line:#CBDADC; --action:var(--accent);
+  --line:#DCE5E6;
+  --text:#1F2D30;
+  --muted:#65777A;
+  --faint:#65777A;
+  --accent:#176775;
+  --ok:#337459;
+  --warn:#A94E35;
+  --warn-bg:#FBF0EB;
   --amber:#E0A030;
-  --free:#7C3AED;
-  --accent-rgb:47,107,255;
-  --done-rgb:31,157,99;
-  --warn-rgb:194,65,12;
+  --free:#6E5BE0;
+  --accent-rgb:23,103,117;
+  --done-rgb:51,116,89;
+  --warn-rgb:169,78,53;
   --bg-2:var(--card); --card-solid:var(--card); --card-2:var(--card2);
   --field:var(--card2); --line-soft:var(--line); --glass-edge:var(--line);
   --dim:var(--faint); --accent-2:var(--accent); --accent-txt:var(--accent);
@@ -58,48 +63,50 @@
   --corr-mid:color-mix(in srgb,var(--amber) 22%,transparent);
   --track:var(--line); --sleep:var(--line);
   --map-bg:var(--card); --map-line:var(--bg); --map-line2:var(--line); --map-det:var(--faint);
-  --shadow:0 1px 2px rgba(16,24,40,.05), 0 6px 20px rgba(16,24,40,.05); --shadow-sm:var(--shadow);
-  --r:18px; --blur:none; --knurl:none; --scrim:rgba(15,17,21,.4);
+  --shadow:none; --shadow-sm:var(--shadow);
+  --r:24px; --blur:none; --knurl:none; --scrim:rgba(15,17,21,.4);
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#0F1115;
-  --card:#171A20;
-  --card2:#1B2230;
-  --line:#262B35;
-  --text:#F2F4F8;
-  --muted:#A3ACBA;
-  --faint:#6B7482;
-  --accent:#5B9BFF;
-  --ok:#2FD080;
-  --warn:#FF8A5B;
+  --bg:#0B1215;
+  --surface:#141D21; --card:var(--surface);
+  --tint:rgba(59,163,181,.14); --card2:var(--tint);
+  --tab-line:var(--line); --action:#246F7C;
+  --line:#233035;
+  --text:#E8EEF0;
+  --muted:#8E9DA3;
+  --faint:#8E9DA3;
+  --accent:#3BA3B5;
+  --ok:#3FBF8A;
+  --warn:#E07A55;
   --warn-bg:#2A1D16;
   --amber:#F2B544;
-  --free:#B48CFF;
-  --accent-rgb:91,155,255;
-  --done-rgb:47,208,128;
-  --warn-rgb:255,138,91;
+  --free:#B39CFF;
+  --accent-rgb:59,163,181;
+  --done-rgb:63,191,138;
+  --warn-rgb:224,122,85;
   --shadow:none; --scrim:rgba(0,0,0,.6);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-  --bg:#0F1115;
-  --card:#171A20;
-  --card2:#1B2230;
-  --line:#262B35;
-  --text:#F2F4F8;
-  --muted:#A3ACBA;
-  --faint:#6B7482;
-  --accent:#5B9BFF;
-  --ok:#2FD080;
-  --warn:#FF8A5B;
+  --bg:#0B1215;
+  --surface:#141D21; --card:var(--surface);
+  --tint:rgba(59,163,181,.14); --card2:var(--tint);
+  --tab-line:var(--line); --action:#246F7C;
+  --line:#233035;
+  --text:#E8EEF0;
+  --muted:#8E9DA3;
+  --faint:#8E9DA3;
+  --accent:#3BA3B5;
+  --ok:#3FBF8A;
+  --warn:#E07A55;
   --warn-bg:#2A1D16;
   --amber:#F2B544;
-  --free:#B48CFF;
-  --accent-rgb:91,155,255;
-  --done-rgb:47,208,128;
-  --warn-rgb:255,138,91;
+  --free:#B39CFF;
+  --accent-rgb:59,163,181;
+  --done-rgb:63,191,138;
+  --warn-rgb:224,122,85;
     --shadow:none; --scrim:rgba(0,0,0,.6);
   }
 }
@@ -135,7 +142,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   box-shadow:inset 0 -.5px 0 var(--line), inset 0 .5px 0 var(--glass-edge);
 }
 .top-in{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;max-width:640px;margin:0 auto}
-.mark{display:flex;align-items:center;gap:9px;font-weight:700;font-size:20px;letter-spacing:-.02em}
+.mark{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.02em}
 .mark img{width:26px;height:26px;border-radius:12px;display:block;flex:0 0 26px}
 .mark b{font-weight:700}
 .mark span{color:var(--accent-txt)}
@@ -180,7 +187,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .gends{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);margin-top:-2px}
 .gbig{text-align:center;margin:14px 0 0;line-height:1}
 .gbig b{font-size:52px;font-weight:700;letter-spacing:-.045em}
-.gbig small{font-size:20px;font-weight:600;color:var(--dim);margin-left:5px}
+.gbig small{font-size:17px;font-weight:600;color:var(--dim);margin-left:5px}
 .gsub{text-align:center;font-size:13px;color:var(--muted);margin-top:9px}
 .gsub b{color:var(--text);font-weight:700}
 .gwhy{font-size:13px;color:var(--muted);line-height:1.5;margin:16px 0 0}
@@ -294,7 +301,7 @@ body.nogym .gymonly{display:none!important}
   color:var(--accent-txt)}
 .hact.hrest .hk{color:var(--dim)}
 .hact.hdone .hk{color:var(--done-txt)}
-.hact b{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.hact b{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .hact i{font-style:normal;font-size:13px;color:var(--muted)}
 .hact .hgo{margin-top:9px;display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
   border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:600}
@@ -322,7 +329,7 @@ body.nogym .gymonly{display:none!important}
   border:.5px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--shadow-sm);font:inherit;color:inherit}
 .htile u{font-weight:500;text-decoration:none;font-family:inherit;
   font-size:12px;color:var(--muted)}
-.htile b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.htile b{font-size:17px;font-weight:700;letter-spacing:-.02em}
 .htile i{font-style:normal;font-size:12px;color:var(--dim)}
 .htile.hwide{grid-column:1/-1}
 /* компактный график тела: вес, жир и мышцы одной картинкой */
@@ -369,13 +376,13 @@ body.nogym .gymonly{display:none!important}
   .fig,.fig2{flex:none;width:100%;max-width:180px;align-self:center}
 }
 .dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:16px 0 4px;flex-wrap:wrap}
-.dayhead h2{font-size:20px}
+.dayhead h2{font-size:17px}
 .dayhead .when{font-weight:500;font-family:inherit;font-size:12px;color:var(--dim);}
 /* шапка дня: статус, название, дорожка подходов */
 .dayhd{margin:14px 0 2px}
 .dayhd u{text-decoration:none;display:block;font-family:inherit;font-size:12px;font-weight:600;color:var(--accent-txt)}
 .dayhd u.rest{color:var(--dim)} .dayhd u.done{color:var(--done-txt)}
-.dayhd b{display:block;font-size:20px;font-weight:800;letter-spacing:-.025em;margin:3px 0 11px;line-height:1.15}
+.dayhd b{display:block;font-size:17px;font-weight:800;letter-spacing:-.025em;margin:3px 0 11px;line-height:1.15}
 .dhtr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
 .dhtr>span{height:6px;border-radius:999px;background:var(--track);position:relative;overflow:hidden}
 .dhtr>span s{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--accent);transition:width .5s ease}
@@ -465,7 +472,7 @@ body.nogym .gymonly{display:none!important}
 
 /* ── generic content blocks ─────────────── */
 .sec{margin:26px 0}
-.sec > h2{font-size:20px;margin-bottom:4px}
+.sec > h2{font-size:17px;margin-bottom:4px}
 .sec > .lede{color:var(--muted);font-size:13px;margin:0 0 14px}
 /* Сгруппированный блок, как в настройках iOS: содержимое лежит на карточке,
    заголовок — снаружи над ней. На сером фоне без этого страница выглядит
@@ -549,7 +556,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .timer{opacity:0;visibility:hidden;transition:transform .3s cubic-bezier(.2,.8,.3,1),opacity .2s ease,visibility .3s}
 .timer.show{transform:translateY(0);opacity:1;visibility:visible}
 .timer-in{max-width:640px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:14px}
-.tcount{font-family:inherit;font-size:26px;font-weight:700;letter-spacing:-.03em;min-width:88px}
+.tcount{font-family:inherit;font-size:32px;font-weight:700;letter-spacing:-.03em;min-width:88px}
 .tcount.up{color:var(--done-txt)}
 .tlabel{font-size:12px;color:var(--muted);flex:1;line-height:1.3}
 .tbtn{border:1px solid var(--line);border-radius:12px;padding:8px 13px;font-size:13px;color:var(--muted)}
@@ -573,7 +580,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .season .smo{font-weight:500;font-family:inherit;font-size:12px;color:var(--accent-txt);border:1px solid rgba(var(--accent-rgb),.4);border-radius:12px;padding:2px 7px}
 .season .sn{font-size:13px;color:var(--dim,var(--muted))}
 .season .chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
-.season .chip{font-size:13px;padding:3px 9px;border-radius:18px;background:rgba(var(--done-rgb),.13);color:var(--done-txt);border:1px solid rgba(var(--done-rgb),.25)}
+.season .chip{font-size:13px;padding:3px 9px;border-radius:24px;background:rgba(var(--done-rgb),.13);color:var(--done-txt);border:1px solid rgba(var(--done-rgb),.25)}
 .season .chip.no{background:rgba(var(--warn-rgb),.10);color:var(--warn-txt);border-color:rgba(var(--warn-rgb),.25);text-decoration:line-through;text-decoration-color:rgba(var(--warn-rgb),.5)}
 .season p{margin:0;font-size:13px;line-height:1.55}
 .oos{text-decoration:underline dotted var(--warn);text-underline-offset:3px;cursor:help}
@@ -586,7 +593,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px}
 .bcell{background:var(--card-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
 .bcell .bl{font-weight:500;font-size:12px;color:var(--dim);line-height:1.3}
-.bcell .bv{font-family:inherit;font-size:20px;font-weight:700;margin-top:5px;letter-spacing:-.02em}
+.bcell .bv{font-family:inherit;font-size:17px;font-weight:700;margin-top:5px;letter-spacing:-.02em}
 .bcell .bv small{font-size:12px;font-weight:400;color:var(--muted);margin-left:2px}
 .bcell .bch{font-family:inherit;font-size:12px;margin-top:3px;color:var(--dim)}
 .bcell .bch.bad{color:var(--warn-txt)}
@@ -628,7 +635,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
    «Завершить»: класс ok на них значит «сохранено», а не «кнопка 44×44», и
    строка «11 подходов отмечено» ужималась в колонку шириной с галочку. */
 .setrow .ok{width:44px;height:44px;border-radius:12px;border:2px solid var(--line);background:var(--card-2);
-  color:var(--dim);font-size:20px;display:inline-flex;align-items:center;justify-content:center;
+  color:var(--dim);font-size:17px;display:inline-flex;align-items:center;justify-content:center;
   -webkit-tap-highlight-color:transparent}
 .setrow .ok:active{transform:scale(.94)}
 .mesum{display:flex;align-items:baseline;gap:10px;margin:2px 0 14px;font-size:13px;color:var(--muted)}
@@ -646,7 +653,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .actcard{border-color:rgba(var(--done-rgb),.35)}
 .acthead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .actcard .eyebrow{color:var(--done-txt)}
-.actcard .exname{display:block;font-size:20px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+.actcard .exname{display:block;font-size:17px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
 .actcard .spec{display:block;font-size:12px;color:var(--dim);margin-top:3px}
 .actcard .spec span{opacity:.5}
 .actgain{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(var(--done-rgb),.10);
@@ -682,7 +689,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
    сразу, и вплотную к полям ввода — колонка «было», прошлый раз именно на
    этом подходе. Сравнение с прошлым разом — единственное, ради чего между
    подходами вообще смотрят на экран. */
-.exbox{background:var(--card-solid);border:1px solid var(--line-soft);border-radius:18px;
+.exbox{background:var(--card-solid);border:1px solid var(--line-soft);border-radius:24px;
   padding:12px 11px 12px;margin-top:12px;gap:0;display:block}
 .settbl{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
 .settbl th{font-family:inherit;font-size:12px;font-weight:600;color:var(--dim);
@@ -698,7 +705,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .settbl td.cb{text-align:left;font-family:inherit;font-size:12px;color:var(--dim);
   font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;padding-right:6px}
 .settbl .cell{width:58px;height:46px;border-radius:12px;border:1px solid var(--line-soft);
-  background:var(--field);color:var(--text);font-family:inherit;font-size:20px;font-weight:700;
+  background:var(--field);color:var(--text);font-family:inherit;font-size:17px;font-weight:700;
   text-align:center;font-variant-numeric:tabular-nums;padding:0;-webkit-appearance:none;appearance:none}
 .settbl .cell::placeholder{color:var(--dim);font-weight:400;font-size:15px}
 .settbl .cell:focus{outline:none;border-color:var(--accent);color:var(--accent-txt)}
@@ -711,7 +718,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .exbox .setadd .addset{flex:1;width:auto;height:44px;border:1px dashed var(--line);background:none;
   color:var(--accent-txt);border-radius:12px;font:inherit;font-size:13px;font-weight:600}
 .exbox .setadd .delset{flex:0 0 44px;width:44px;height:44px;border-radius:12px;
-  border:.5px solid var(--line-soft);background:none;color:var(--dim);font:inherit;font-size:20px}
+  border:.5px solid var(--line-soft);background:none;color:var(--dim);font:inherit;font-size:17px}
 .exrow{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;width:100%;
   padding:13px 0;border:none;border-top:1px solid var(--line-soft);background:none;color:inherit;
   font:inherit;text-align:left;-webkit-tap-highlight-color:transparent}
@@ -808,24 +815,24 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 #gate{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;padding:28px 24px;background:var(--bg)}
 #gate.show{display:flex}
 .gatebox{width:100%;max-width:340px;text-align:center}
-.gatebox .glogo{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+.gatebox .glogo{font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
 .gatebox .glogo b{color:var(--accent-txt)}
-.gatebox h2{margin:0 0 8px;font-size:20px;font-weight:700}
+.gatebox h2{margin:0 0 8px;font-size:17px;font-weight:700}
 .gatebox p{margin:0 0 18px;color:var(--muted);font-size:15px;line-height:1.5}
 .gatebox input{display:block;width:100%;padding:13px 12px;border-radius:12px;border:.5px solid var(--line);background:var(--card-solid);
-  color:var(--text);font:inherit;font-size:20px;text-align:center;letter-spacing:.1em;margin-bottom:10px}
+  color:var(--text);font:inherit;font-size:17px;text-align:center;letter-spacing:.1em;margin-bottom:10px}
 .gatebox .gerr{min-height:18px;color:var(--warn-txt);font-size:13px;margin:10px 0 0}
 /* приглашение в профиле */
 .invbox{margin-top:14px;padding:0 14px;border-radius:12px;background:var(--card-2);border:.5px solid var(--line-soft)}
 .invbox .invl{font-weight:500;font-size:12px;color:var(--dim)}
 .invhead{display:flex;align-items:center;gap:8px;width:100%;padding:13px 0;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
 .invhead .invsum{flex:1 1 auto;min-width:0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.invhead .invchev{flex:0 0 auto;font-style:normal;font-size:20px;color:var(--dim);transition:transform .18s}
+.invhead .invchev{flex:0 0 auto;font-style:normal;font-size:17px;color:var(--dim);transition:transform .18s}
 .invhead[aria-expanded="true"] .invchev{transform:rotate(90deg)}
 .invbody{padding:2px 0 12px}
 .invbox .invcode+.invcode{margin-top:8px}
 .invbox .invcode{display:flex;align-items:center;gap:10px}
-.invbox .invcode b{flex:1 1 auto;font-size:20px;font-family:inherit}
+.invbox .invcode b{flex:1 1 auto;font-size:17px;font-family:inherit}
 .invbox .invcode input{flex:1 1 auto;min-width:0;padding:9px 10px;border-radius:12px;border:.5px solid var(--line);background:var(--card-solid);
   color:var(--text);font:inherit;font-size:15px;}
 .invbox .btn.small{padding:9px 12px;font-size:13px;flex:0 0 auto}
@@ -846,7 +853,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .pfrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;
   padding:0 14px;border-radius:12px;border:.5px solid var(--line-soft);background:var(--card-2);
   color:var(--text);font:inherit;font-size:15px;text-align:left}
-.pfrow i{font-style:normal;font-size:20px;color:var(--dim)}
+.pfrow i{font-style:normal;font-size:17px;color:var(--dim)}
 .zdbox .pf{margin-top:13px}
 .zdbox .pf:first-child{margin-top:4px}
 .zdbox .seg.multi button{font-size:13px}
@@ -881,7 +888,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .glwarn{margin:10px 0 0;font-size:12px;line-height:1.5;color:var(--warn-txt)}
 .glsum{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .glsum span{display:flex;align-items:baseline;gap:5px}
-.glsum b{font-size:20px;font-weight:650}
+.glsum b{font-size:17px;font-weight:650}
 .glsum .gl-hi b{color:var(--warn-txt)} .glsum .gl-ok b{color:var(--done-txt)} .glsum .gl-low b{color:var(--warn-txt)}
 .gltrend{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted)}
 .gltrend b{color:var(--text);font-size:15px}
@@ -994,7 +1001,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
    как уже заполненное — то есть как не предназначенное для ввода. */
 .fask input::placeholder,.mlab textarea::placeholder,.mnums input::placeholder{color:var(--dim);opacity:1}
 .fbtn{flex:0 0 44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);
-  display:flex;align-items:center;justify-content:center;font:inherit;font-size:20px}
+  display:flex;align-items:center;justify-content:center;font:inherit;font-size:17px}
 .fbtn svg{width:22px;height:22px}
 .fbtn.go{border-color:var(--accent-txt);color:var(--accent-txt)}
 .fbtn:disabled{opacity:.5}
@@ -1018,7 +1025,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fchips button b{color:var(--text);font-weight:500}
 /* ── «Что съесть»: цель приёма, варианты и примерка ── */
 .podc{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:2px 0 4px}
-.podc b{font-size:20px;font-weight:650;letter-spacing:-.01em}
+.podc b{font-size:17px;font-weight:650;letter-spacing:-.01em}
 .podc s{text-decoration:none;color:var(--muted);font-size:12px;margin-left:3px}
 .podsub{color:var(--muted);font-size:13px;margin:0 0 12px}
 .podraz{display:flex;gap:6px;overflow-x:auto;margin:0 0 10px;padding-bottom:3px;-webkit-overflow-scrolling:touch}
@@ -1141,7 +1148,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   border:1px solid var(--line);border-radius:12px;background:var(--card-2);font:inherit;color:var(--text);text-align:left}
 .catopen b{display:block;font-size:15px;font-weight:600}
 .catopen s{display:block;text-decoration:none;font-size:12px;color:var(--dim);margin-top:2px}
-.catopen i{font-style:normal;color:var(--dim);font-size:20px}
+.catopen i{font-style:normal;color:var(--dim);font-size:17px}
 .mhd{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
 .mtx{font-size:15px;line-height:1.45;margin-top:3px;color:var(--text)}
 .msost{font-size:12px;color:var(--muted);margin:3px 0 0;line-height:1.45}
@@ -1231,7 +1238,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .chatask{display:flex;gap:8px;align-items:flex-end;padding-top:10px;border-top:1px solid var(--line-soft)}
 /* поле — одна пилюля: камера живёт внутри неё, а не третьей кнопкой в ряду */
 .cpill{flex:1 1 auto;min-width:0;display:flex;align-items:flex-end;gap:6px;
-  background:var(--field);border:1px solid transparent;border-radius:18px;padding:4px 4px 4px 14px}
+  background:var(--field);border:1px solid transparent;border-radius:24px;padding:4px 4px 4px 14px}
 .cpill:focus-within{border-color:var(--line)}
 .chatask textarea{flex:1 1 auto;min-width:0;max-height:120px;padding:9px 0;border:none;background:none;
   color:var(--text);font:inherit;font-size:15px;line-height:1.4;resize:none;outline:none;-webkit-appearance:none}
@@ -1241,7 +1248,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .cic svg{width:20px;height:20px}
 .cic:active{color:var(--accent-txt)}
 .csend{flex:none;width:40px;height:40px;border-radius:999px;border:none;background:var(--accent);
-  color:var(--on-accent);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+  color:var(--on-accent);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .csend:disabled{opacity:.45}
 .csend:active{transform:scale(.94)}
 .fweekt{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--muted);line-height:1.5}   /* стояла вплотную под датами столбиков */
@@ -1385,7 +1392,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catpick.undo{color:var(--accent-txt)}
 .cathead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .cathead h3{margin:0}
-.xbtn{background:none;border:none;color:var(--muted);font-size:20px;line-height:1;
+.xbtn{background:none;border:none;color:var(--muted);font-size:17px;line-height:1;
   padding:6px 8px;cursor:pointer}
 .catsearch{width:100%;padding:11px 13px;margin-bottom:12px;border-radius:12px;
   border:1px solid var(--line);background:var(--card-2);color:var(--text);
@@ -1462,7 +1469,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .tile{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card-2)}
 .tile u{font-weight:500;display:block;text-decoration:none;font-family:inherit;font-size:12px;
   color:var(--dim);margin-bottom:5px}
-.tile b{display:block;font-family:inherit;font-size:20px;font-weight:800;
+.tile b{display:block;font-family:inherit;font-size:17px;font-weight:800;
   letter-spacing:-.02em;color:var(--text);font-variant-numeric:tabular-nums}
 .tile b small{font-size:12px;font-weight:400;color:var(--dim)}
 .tile i{font-style:normal;font-size:12px;color:var(--muted)}
@@ -1557,7 +1564,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .lbkey s.lbd-ok{background:var(--done)}.lbkey s.lbd-low{background:var(--warn)}.lbkey s.lbd-today{background:var(--accent)}
 .lbseg{display:flex;gap:6px;margin:14px 0 2px}
 .lbseg button{flex:1;min-height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
-.lbseg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent;font-weight:600}
+.lbseg button[aria-pressed="true"]{background:var(--action);color:var(--on-accent);border-color:transparent;font-weight:600}
 .cirtiles .tile{display:flex;flex-direction:column}
 .cirtiles .tile i{margin-top:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cirnote{margin:10px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
@@ -1569,16 +1576,16 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .cirnote button{background:none;border:none;padding:11px 0;min-height:44px;color:var(--accent-txt);font:inherit;font-size:12px;cursor:pointer}
 .cirrules{margin:8px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);font-size:12px;color:var(--muted);line-height:1.5}
 .cirempty{padding:16px 14px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
-.cirempty b{display:block;font-size:20px;color:var(--text);margin:6px 0 10px;}
+.cirempty b{display:block;font-size:17px;color:var(--text);margin:6px 0 10px;}
 .cirempty .btn{display:block;margin:16px auto 2px}   /* кнопка уезжала в строку текста */
 .fclose{margin:12px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .fclose .btn{flex:1 1 auto;min-height:44px}
 .fclose .fdone{flex:1 1 100%;padding:12px 14px;border-radius:12px;border:1px solid var(--done);background:rgba(var(--done-rgb),.10);font-size:13px;color:var(--text);line-height:1.45}
-.fclose .fdone b{font-size:20px;font-weight:800}
+.fclose .fdone b{font-size:17px;font-weight:800}
 .fclose .fhint{flex:1 1 100%;font-size:12px;color:var(--dim)}
 .udhead{display:flex;align-items:center;gap:12px;margin:0 0 12px}
 .udhead .udback{padding:9px 14px;font-size:13px;font-weight:600;color:var(--accent-txt);flex:0 0 auto}
-.udhead b{font-size:20px;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.udhead b{font-size:17px;font-weight:700;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .udnav{margin:0 0 4px}
 .udkind{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:18px 0 8px;font-weight:700;text-transform:capitalize}
 .udkind s{text-decoration:none;font-weight:400;font-size:12px;color:var(--dim);text-transform:none;white-space:nowrap}
@@ -1586,7 +1593,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 /* ── ПРИБОРНАЯ ВЛАДЕЛЬЦА ── */
 .adhero{background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;padding:16px;margin-bottom:10px}
 .adhero .adline{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
-.adhero .adbig{font-size:26px;font-weight:600;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+.adhero .adbig{font-size:32px;font-weight:600;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
 .adhero .adbig.plus{color:var(--done-txt)}
 .adhero .adbig.minus{color:var(--warn-txt)}
 .adhero .adwhen{color:var(--dim);font-size:12px}
@@ -1599,7 +1606,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adstrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:0 0 6px;-webkit-overflow-scrolling:touch}
 .adstrip .ads{flex:0 0 auto;background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;padding:10px 13px;min-width:92px}
 .adstrip .ads u{display:block;text-decoration:none;color:var(--dim);font-size:12px;margin-bottom:3px}
-.adstrip .ads b{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.adstrip .ads b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .adh{font-size:12px;color:var(--dim);font-weight:500;margin:18px 0 8px}
 .adrow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;margin-bottom:6px}
 .adrow .adn{flex:1;min-width:0}
@@ -1619,7 +1626,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:13px}
 .adcode input.nn{flex:0 0 74px}
 /* ── ПАЛЬЦЫ И РЕЖИМ ПОРЯДКА ── */
-.exfoot .ebtn.th{width:44px;padding:0;font-size:20px;line-height:1}
+.exfoot .ebtn.th{width:44px;padding:0;font-size:17px;line-height:1}
 .exfoot .ebtn.th.on{border-color:var(--accent-txt);color:var(--accent-txt);background:var(--accent-ghost)}
 /* сустав уже отмечен — видно, не открывая шторку */
 .exfoot .ebtn.th.hrt{border-color:var(--warn-txt);color:var(--warn-txt)}
@@ -1647,13 +1654,13 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .ordgin .exrow:first-child{border-top:0}
 .ordbs{flex:0 0 auto;display:flex;flex-direction:column;gap:3px}
 .ordgrip{flex:0 0 26px;width:26px;align-self:stretch;min-height:52px;display:flex;align-items:center;justify-content:center;
-  color:var(--dim);font-size:20px;line-height:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+  color:var(--dim);font-size:17px;line-height:1;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .ordg.drag{transition:none;position:relative;z-index:6;
   background:var(--card-solid,var(--card));box-shadow:0 10px 26px rgba(0,0,0,.34)}
 .ordg.drag .ordgrip{cursor:grabbing;color:var(--accent-txt)}
 @media (prefers-reduced-motion:reduce){.ordg{transition:none}}
 .ordbs .ordb{width:36px;height:36px;flex:0 0 36px;border-radius:12px;border:.5px solid var(--line);
-  background:var(--field);color:var(--text);font:inherit;font-size:20px;line-height:1}
+  background:var(--field);color:var(--text);font:inherit;font-size:17px;line-height:1}
 .ordbs .ordb[disabled]{opacity:.35}
 .subin{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
 .subin li{display:flex;gap:10px;align-items:baseline;font-size:13px;color:var(--text);line-height:1.4}
@@ -1709,7 +1716,7 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .hdate{font-family:inherit;font-size:13px;color:var(--text);min-width:74px}
 .hsub{flex:1;font-size:13px;color:var(--muted)}
 .hcnt{font-family:inherit;font-size:12px;color:var(--dim);
-  border:1px solid var(--line);border-radius:18px;padding:2px 9px}
+  border:1px solid var(--line);border-radius:24px;padding:2px 9px}
 .hhead[aria-expanded="true"] .hdate{color:var(--accent-txt)}
 .hhead[aria-expanded="true"] .hsub{color:var(--text)}
 .hbody{padding:0 2px 14px}
@@ -1724,7 +1731,7 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .hall{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:14px;padding:12px 2px;
   border:0;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:none;color:var(--muted);font:inherit;font-size:13px;text-align:left}
 .hall span{font-family:inherit;font-size:12px;color:var(--dim)}
-.hall::after{content:"›";font-size:20px;color:var(--dim);transform:rotate(90deg);transition:transform .18s}
+.hall::after{content:"›";font-size:17px;color:var(--dim);transform:rotate(90deg);transition:transform .18s}
 .hall[aria-expanded="true"]::after{transform:rotate(-90deg)}
 .hbody .lex{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 0;border-top:1px solid var(--line-soft);font-size:13px}
 .hbody .lex:first-child{border-top:0;padding-top:2px}
@@ -1839,7 +1846,7 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
 .setadd span{font-family:inherit;font-size:12px;color:var(--dim);
   min-width:96px;text-align:center}
 .setadd button{width:40px;height:32px;border-radius:12px;border:.5px solid var(--line);
-  background:var(--card-2);color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+  background:var(--card-2);color:var(--muted);font-size:17px;line-height:1;cursor:pointer}
 .setadd button:active{border-color:var(--accent-txt);color:var(--accent-txt)}
 .setadd button[disabled]{opacity:.3;cursor:default}
 .adv{margin:8px 0 12px;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5;
@@ -1890,13 +1897,13 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
   background:var(--scrim);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .modal.show{display:flex}
 .modalbox{width:100%;max-width:560px;max-height:86vh;overflow:auto;
-  background:var(--bg-2);border-radius:18px 18px 0 0;
+  background:var(--bg-2);border-radius:24px 18px 0 0;
   box-shadow:0 -1px 0 var(--line-soft), 0 -20px 50px rgba(0,0,0,.22);
   padding:22px 18px calc(22px + var(--pad-bottom))}
 /* «ручка» листа — чтобы было видно, что его тянут вниз */
 .modalbox::before{content:"";display:block;width:36px;height:5px;border-radius:12px;
   background:var(--line);margin:-10px auto 14px}
-.modalbox h3{margin:0 0 8px;font-family:inherit;font-size:20px;color:var(--text)}
+.modalbox h3{margin:0 0 8px;font-family:inherit;font-size:17px;color:var(--text)}
 /* ЛИСТ РАЗГОВОРА СТОИТ НА МЕСТЕ. Раньше прокручивался весь лист целиком:
    заголовок «Тренер» и крестик уезжали вверх вместе с перепиской, и закрыть
    разговор было нечем. Теперь лист — колонка фиксированной высоты: шапка и
@@ -1926,7 +1933,7 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
 #wz-err{margin:10px 0 0;color:var(--warn-txt)}
 #sr-when{margin:0 0 14px}
 .srv{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-.srv b{display:block;font-size:20px;font-weight:600;line-height:1.35;margin-bottom:7px;letter-spacing:-.2px}
+.srv b{display:block;font-size:17px;font-weight:600;line-height:1.35;margin-bottom:7px;letter-spacing:-.2px}
 .srv p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
 .srr{display:flex;align-items:baseline;gap:10px;padding:11px 13px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:6px}
 .srr u{text-decoration:none;flex:1;min-width:0}
@@ -2067,7 +2074,7 @@ body.onb #picker .modalbox::before{display:none}
 .profbtn b{font-weight:700;color:var(--text)}
 .profbtn.attn{box-shadow:0 0 0 2px var(--accent)}
 .wrap{padding:0 20px}
-.sec > h2{font-size:20px;letter-spacing:-.025em;margin-bottom:6px}
+.sec > h2{font-size:17px;letter-spacing:-.025em;margin-bottom:6px}
 /* Заголовок раздела выглядел как служебная подпись — тот же кегль и цвет,
    что у «норма 2110 = база 1780 + зал 330». Разделы на вкладке еды идут
    подряд и ничем не отделены, поэтому экран читался одной лентой. Теперь
@@ -2163,11 +2170,11 @@ body.onb #picker .modalbox::before{display:none}
 /* панель действия — главное действие дня всегда под большим пальцем */
 .hbar{position:fixed;left:20px;right:20px;bottom:calc(66px + var(--pad-bottom,0px));z-index:55;display:flex;gap:10px;max-width:600px;margin:0 auto}
 
-.hbtn{flex:0 0 56px;height:56px;border-radius:18px;border:none;background:var(--card-solid);color:var(--muted);display:grid;place-items:center;font:inherit;box-shadow:var(--shadow)}
+.hbtn{flex:0 0 56px;height:56px;border-radius:24px;border:none;background:var(--card-solid);color:var(--muted);display:grid;place-items:center;font:inherit;box-shadow:var(--shadow)}
 .hbtn svg{width:22px;height:22px}
-.hbar input{flex:1;min-width:0;height:56px;border-radius:18px;border:1px solid transparent;background:var(--card-solid);padding:0 16px;font:inherit;font-size:15px;color:var(--text);box-shadow:var(--shadow)}
+.hbar input{flex:1;min-width:0;height:56px;border-radius:24px;border:1px solid transparent;background:var(--card-solid);padding:0 16px;font:inherit;font-size:15px;color:var(--text);box-shadow:var(--shadow)}
 .hbar input:focus{outline:none;border-color:var(--accent-txt)}
-.hbtn.hgo2{background:var(--accent);color:var(--on-accent);font-size:20px;font-weight:700}
+.hbtn.hgo2{background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:700}
 /* съёмка — главное действие дня, её кнопка залита инверсией фона.
    Правило после .hbtn и с двумя классами: одиночный .hshot проигрывал по порядку */
 .hbtn.hshot{background:var(--prime);color:var(--on-prime);box-shadow:0 10px 26px rgba(15,20,25,.22)}
@@ -2176,7 +2183,7 @@ body.onb #picker .modalbox::before{display:none}
    смотрит туда, куда только что нажал. Раньше миниатюра и ответ стояли выше
    по странице — при прокрутке вниз их не видно, и 11.09 он прикрепил фото,
    не понял, прикрепилось ли, и отправил снимок боту в Telegram */
-.hbar.hcard{flex-direction:column;gap:8px;padding:10px;border-radius:18px;background:var(--card-solid);
+.hbar.hcard{flex-direction:column;gap:8px;padding:10px;border-radius:24px;background:var(--card-solid);
   border:1px solid var(--line-soft);box-shadow:0 12px 30px rgba(15,20,25,.26)}
 .hcrow{display:flex;align-items:center;gap:10px;width:100%}
 .hcth{flex:0 0 46px;width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--line)}
@@ -2184,7 +2191,7 @@ body.onb #picker .modalbox::before{display:none}
 .hcst b{display:block;color:var(--text);font-size:15px;font-weight:700;letter-spacing:-.01em}
 .hcst.hcbad b,.hcst.hcbad{color:var(--warn-txt)}
 .hcx{flex:0 0 36px;height:36px;border-radius:12px;border:1px solid var(--line);background:transparent;
-  color:var(--dim);font:inherit;font-size:20px;line-height:1}
+  color:var(--dim);font:inherit;font-size:17px;line-height:1}
 .hbar.hcard input{width:100%;height:48px;border-radius:12px;background:var(--field);box-shadow:none;
   border:1px solid var(--line-soft)}
 .hcsend{width:100%;height:52px;border-radius:12px;border:none;background:var(--prime);color:var(--on-prime);
@@ -2216,16 +2223,16 @@ body.onb #picker .modalbox::before{display:none}
 .hbh u{color:var(--dim)} .hbh s{font-size:12px;color:var(--dim);font-weight:500}
 .hbr u em{font-style:normal;font-size:12px;color:var(--dim);font-weight:500;font-variant-numeric:tabular-nums}
 .hbr u{font-size:13px;color:var(--muted);font-weight:500;font-style:normal}
-.hbr b{font-size:20px;font-weight:700;letter-spacing:-.02em;text-align:right}
+.hbr b{font-size:17px;font-weight:700;letter-spacing:-.02em;text-align:right}
 .hbr b s{text-decoration:none;color:var(--dim);font-weight:500;font-size:12px;margin-left:3px}
 .hbr s{font-size:13px;color:var(--dim);text-align:right;font-weight:600}
 .hbr s.dn{color:var(--done-txt)} .hbr s.up{color:var(--warn-txt)}
 .hbnote{display:none}
-.hact{margin-top:14px;background:var(--card-solid);border:1px solid var(--line-soft);border-radius:18px;padding:16px 16px 14px;
+.hact{margin-top:14px;background:var(--card-solid);border:1px solid var(--line-soft);border-radius:24px;padding:16px 16px 14px;
   -webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
 .hact .hk{color:var(--accent-txt);font-weight:600;font-size:12px}
 .hact.hdone .hk{color:var(--done-txt)} .hact.hrest .hk{color:var(--dim)}
-.hact b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.hact b{font-size:17px;font-weight:700;letter-spacing:-.02em}
 .hact i{font-size:13px}
 .hact .hgo{margin-top:10px;min-height:44px;border-radius:12px;background:var(--prime);color:var(--on-prime);font-weight:700}
 .hact.hrest .hgo,.hact.hdone .hgo{background:var(--field);color:var(--text)}
@@ -2266,10 +2273,10 @@ body.onb #picker .modalbox::before{display:none}
 
 /* ── «Еда» по системе ── */
 .fnav{margin:0 0 18px;justify-content:space-between}
-.fnav .fd{text-align:left;flex:1;font-size:20px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
+.fnav .fd{text-align:left;flex:1;font-size:17px;font-weight:700;letter-spacing:-.025em;line-height:1.1}
 .fnav .fd small{font-size:13px;color:var(--muted);margin-top:3px;font-weight:500}
 .fnav .fdarr{display:flex;gap:6px}
-.fnav button{min-width:36px;min-height:36px;border-radius:999px;border:none;background:var(--field);color:var(--text);font-size:20px;line-height:1}
+.fnav button{min-width:36px;min-height:36px;border-radius:999px;border:none;background:var(--field);color:var(--text);font-size:17px;line-height:1}
 .fnav button:disabled{opacity:.3}
 .fday{gap:14px;margin:16px 0 8px}
 .fbar{gap:8px}
@@ -2299,7 +2306,7 @@ body.onb #picker .modalbox::before{display:none}
 .fline{font-size:13px;margin-top:2px}
 .fclose{margin:14px 0 0}
 .fclose .fdone,.fclose .fdone.fpend{border:none;background:transparent;padding:12px 0 0;border-top:1px solid var(--line-soft);border-radius:0;font-size:13px;color:var(--muted)}
-.fclose .fdone b{font-size:20px;font-weight:700;color:var(--text)}
+.fclose .fdone b{font-size:17px;font-weight:700;color:var(--text)}
 .fclose .fdone small{color:var(--dim);font-size:12px}
 .fmeals{margin:6px 0 12px}
 .fmeal{padding:11px 0;font-size:15px;border-top:1px solid var(--line-soft)}
@@ -2333,7 +2340,7 @@ body.onb #picker .modalbox::before{display:none}
 .cirsw .mchip.on{background:var(--card-solid);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .cirtiles{gap:10px}
 .cirtiles .tile{padding:14px 15px}
-.cirtiles .tile b{font-size:20px;font-weight:800;letter-spacing:-.03em}
+.cirtiles .tile b{font-size:17px;font-weight:800;letter-spacing:-.03em}
 .cirtiles .tile b small{font-size:13px;color:var(--dim);font-weight:500}
 .cirwhy{font-size:13px;color:var(--muted)}
 .lb{padding:0}
@@ -2342,7 +2349,7 @@ body.onb #picker .modalbox::before{display:none}
 .lbrow .pos{font-size:12px;font-weight:600}
 .lbrow .who b{font-size:15px;font-weight:600}
 .lbrow .who i{font-size:12px}
-.lbrow .sc{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.lbrow .sc{font-size:17px;font-weight:800;letter-spacing:-.02em}
 .lbrow.lbme{background:transparent;box-shadow:none;border-radius:0;border-top-color:var(--line-soft);position:relative}
 .lbrow.lbme::before{content:"";position:absolute;left:-20px;top:8px;bottom:8px;width:3px;border-radius:12px;background:var(--accent)}
 .lbrow.lbme + .lbrow{border-top-color:var(--line-soft)}
@@ -2390,7 +2397,7 @@ body.onb #picker .modalbox::before{display:none}
 .upn{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.25}
 .upn em{display:block;font-style:normal;font-size:12px;margin-top:2px}
 .upw{flex:0 0 auto;text-align:right;font-variant-numeric:tabular-nums}
-.upw b{display:block;font-size:20px;font-weight:700;letter-spacing:-.02em}
+.upw b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em}
 .upw b s{text-decoration:none;font-size:12px;font-weight:600;color:var(--dim)}
 .upw u{display:block;text-decoration:none;font-size:12px;color:var(--dim);margin-top:1px;white-space:nowrap;min-height:13px}
 .upmore{display:block;width:100%;margin-top:10px;padding-top:11px;border:none;border-top:1px solid var(--line-soft);
@@ -2421,7 +2428,7 @@ body.onb #picker .modalbox::before{display:none}
 .vzch button span{display:block;font-size:13px;font-weight:600;color:var(--dim);padding:6px 10px;border-radius:999px;transition:background .2s,color .2s}
 .vzch button.on span{background:var(--field);color:var(--text)}
 .vznum{display:flex;align-items:center;gap:10px;margin-top:2px}
-.vznum b{font-size:26px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05}
+.vznum b{font-size:32px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05}
 .vznum b s{text-decoration:none;font-size:15px;color:var(--dim);font-weight:500;margin-left:5px;letter-spacing:0}
 .vznum em{font-style:normal;font-size:13px;font-weight:600;padding:5px 9px;border-radius:999px;background:var(--field);color:var(--muted);font-variant-numeric:tabular-nums}
 .vznum em.dn{color:var(--done-txt);background:rgba(var(--done-rgb),.13)}
@@ -2475,27 +2482,28 @@ body.onb #picker .modalbox::before{display:none}
 .hwd b.free{background:transparent;border:1.5px dashed var(--muted);width:7px;height:7px;box-sizing:border-box}
 .fweek .fd .fb.fb-free{background:repeating-linear-gradient(135deg,var(--track) 0 3px,transparent 3px 6px)}
 
-/* 04.10 · «Тихий тренер», этап 1. Финальный слой компонентов:
+/* 04.10 · «Фокус · бирюза», этап 1. Финальный слой компонентов:
    старые контекстные правила выше обслуживают поведение, здесь одна основа. */
-body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;font-size:15px;line-height:1.5;font-weight:400}
+body{font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;font-size:15px;line-height:1.5;font-weight:400}
 /* Дугу не переводим на новую метрику шрифта: её подписи и геометрия сохранены. */
 .hclk{font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
 .wrap{padding-left:16px;padding-right:16px}
 .top-in{padding-left:16px;padding-right:16px}
-body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.onadmin .hctx b{font-size:26px;font-weight:700;line-height:1.2}
-.sec>h2,.dayhead h2{font-size:26px;font-weight:700;line-height:1.2}
-.lh,.psec,.eyebrow,.vzhd u{font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.onadmin .hctx b{font-size:32px;font-weight:800;line-height:1.2}
+.sec>h2,.dayhead h2{font-size:32px;font-weight:800;line-height:1.2}
+.lh,.psec,.vzhd u{font-size:17px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--text)}
+.eyebrow,.ds-eyebrow{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .vznum b,.bodyhead .bw{font-size:40px;font-weight:700}
-.modalbox h3{font-size:20px;font-weight:600}
+.modalbox h3{font-size:17px;font-weight:600}
 .fbar b,.hrow b,.upw,.lbrow .sc,.adrow,.setrow input,.bcell .bv{font-variant-numeric:tabular-nums}
 .card,.panel,.group,.hact,.htile,.hbody,.tile,.bcell,.goalcard,.progcard,.actcard,.sscard,.svcard,.invbox,.attbox,.phasebox{
-  background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
   padding:16px;margin-bottom:12px;-webkit-backdrop-filter:none;backdrop-filter:none}
 .bcell.key,.tile.key,.card.full,.actcard,.sscard{background:var(--card2)}
 .modalbox{background:var(--card)}
 .btn,.ebtn,.tbtn,.pbtn,.rsbtn{border-radius:12px;font-size:15px;font-weight:600;min-height:44px}
 .btn,.ebtn,.tbtn{background:var(--card2);color:var(--accent);border:1px solid transparent}
-.btn.prim,.fbtn.go{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.prim,.fbtn.go{background:var(--action);color:var(--on-accent);border-color:transparent}
 .btn.danger,.rsbtn.bad{background:transparent;color:var(--warn);border-color:transparent}
 .btn.danger b,.rsbtn.bad b{color:var(--warn)}
 /* Вкладки страниц — подчеркивание; сегменты метрик и выбора ответов остаются сегментами. */
@@ -2510,11 +2518,29 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .htr .hcor::before,.htr .hcor::after,.fbar .tr .fcor::before,.fbar .tr .fcor::after{display:none}
 .fbar .tr .fcor.fmid{background:var(--corr-mid)}
 .htr .hfill,.fbar .tr i{border-radius:999px}
-.hrow:last-of-type .hfill{background:var(--ok)}
+.htr .hfill[class],.fbar .tr i[class]{background:var(--accent)}
 .ds-zone{display:flex;align-items:center;gap:6px;margin:8px 0 0;color:var(--faint);font-size:12px;line-height:1.5}
 .ds-zone::before{content:"";width:16px;height:8px;border-radius:999px;background:var(--corr)}
 .hrows>.ds-zone{margin:0}
-.hwd b.free,.fweek .fd .fb.fb-free,.vzlg i.sv{border-color:var(--free)}
+/* Свободный день сохраняет исходные штриховку и нейтральный контур. */
+
+/* Фокус: вложенные блоки остаются строками; цветной hero и сетка — этап 2. */
+.vz,.fday,.fmeals{background:var(--surface);border-radius:24px;padding:16px;box-shadow:none}
+.group .fday,.group .fmeals{background:transparent;border-radius:0;padding:0;box-shadow:none}
+.fday .fbar,.fmeals .fmeal{background:transparent;border-radius:0;box-shadow:none}
+.fday .fbar+.fbar{border-top:1px solid var(--line);padding-top:12px}
+#finish:not(.ok):not(.bad),.dayseg button.on,.hcsend,.fbtn.fshot{background:var(--action);color:var(--on-accent)}
+.group .group,.group .card,.group .panel,.hbody .group{background:transparent;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:12px 0;margin:0}
+.zseg{border-bottom-color:var(--tab-line)}
+.hctx{min-width:0}
+.hctx>b{display:block;font-size:32px;font-weight:800;line-height:1.2}
+.hctx .ds-eyebrow{margin-bottom:4px}
+.coachfab{width:auto;height:44px;padding:0 14px;display:flex;gap:6px;align-items:center;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:none;color:var(--accent);font-size:13px;font-weight:700}
+.coachfab img{display:none}
+.coachfab::before{content:'✦';font-size:16px}
+.coachfab::after{content:'Тренер'}
+.coachfab.attn::after{content:'Тренер';position:static;width:auto;height:auto;border:0;background:none;border-radius:0}
+.coachfab.attn{border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -9209,8 +9235,8 @@ function goPage(p){
   /* шапка без логотипа: слева — контекст страницы (на «Сегодня» дата),
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
-  if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<b>'+wd.charAt(0).toUpperCase()+wd.slice(1)+'</b>, '+nd.getDate()+' '+MONTHS[nd.getMonth()]; }
-          else hc.innerHTML='<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
+  if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
+          else hc.innerHTML=({log:'Журнал',ref:'Каталог',circle:'Рейтинг',eat:'Что съесть',food:'Мой день'}[p]?'<span class="ds-eyebrow">'+({log:'Журнал',ref:'Каталог',circle:'Рейтинг',eat:'Что съесть',food:'Мой день'}[p])+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
@@ -9259,7 +9285,7 @@ function nextGymDay(){
 /* ── Тема ──
    Приложение живёт внутри Telegram, и переключаться вместе с ним — не
    украшение: светлое окно в тёмном мессенджере бьёт по глазам. Берём
-   colorScheme, а вне Telegram — системную настройку. Токены — «Тихий тренер»;
+   colorScheme, а вне Telegram — системную настройку. Токены — «Фокус · бирюза»;
    04.10: themeParams могут переопределить фон и текст, а шапка Telegram
    получает тот же фон. Остальные роли цвета из нашей палитры. */
 /* 04.10: из themeParams берём только bg_color/text_color, остальное — свои токены. */
