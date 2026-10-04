@@ -2461,6 +2461,10 @@ body.onb #picker .modalbox::before{display:none}
 .vzlg i.pl{background:none;border-top:2px dashed var(--muted);height:0;border-radius:0}
 .vzplan{margin:8px 0 0;font-size:13px;color:var(--muted)}
 .vzplan b{color:var(--warn-txt);font-weight:600} .vzplan b.ok{color:var(--done-txt)}
+.vzplan.vzverdict{color:var(--text);line-height:1.45;overflow-wrap:anywhere}
+.vzverdict.warn{color:var(--warn-txt);font-weight:600}
+.vzverdict.muted,.vzeta{color:var(--muted)}
+.vzeta{display:block;font-weight:400}
 #hmeas{margin-top:14px}
 #hmeas .fask{margin:0}
 /* 02.10, вариант А: сегодняшний замер — мелкой строкой под средним */
@@ -10700,11 +10704,26 @@ function vzГрафик(ms, sr, план){
   return svg+'</svg>';
 }
 function vzПланСтрока(){
-  var p=vzПлан(); if(!p || p.gap==null) return '';
-  var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
-  var сег=p.anchorW + p.rate*(t(TODAY)-t(p.anchor))/(7*864e5);
-  return '<p class="vzplan">План на сегодня '+vzF1(сег)+' кг · '+(p.onTrack ? '<b class="ok">идём по графику</b>'
-    : (p.gap>0 ? '<b>отстаём на '+vzF1(Math.abs(p.gap))+' кг</b>' : '<b class="ok">опережаем на '+vzF1(Math.abs(p.gap))+' кг</b>'))+'</p>';
+  var p=vzПлан(), html='';
+  if(p && p.gap!=null){
+    var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
+    var сег=p.anchorW + p.rate*(t(TODAY)-t(p.anchor))/(7*864e5);
+    html='<p class="vzplan">План на сегодня '+vzF1(сег)+' кг · '+(p.onTrack ? '<b class="ok">идём по графику</b>'
+      : (p.gap>0 ? '<b>отстаём на '+vzF1(Math.abs(p.gap))+' кг</b>' : '<b class="ok">опережаем на '+vzF1(Math.abs(p.gap))+' кг</b>'))+'</p>';
+  }
+  /* 04.10: вердикт и срок уже считает сервер. Показываем его ответ, не
+     выводим «плато» из отдельного замера; «мало» видно и без линии плана. */
+  var g=gget('goal',null), progress=g && g.progress, v=progress && progress.verdict, eta=progress && progress.eta;
+  var text=v && typeof v.text==='string' ? v.text.trim() : '';
+  var cls=v && (v.state==='стоит' || v.state==='плато') ? ' warn' : (v && v.state==='мало' ? ' muted' : '');
+  var срок='';
+  if(eta && typeof eta.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(eta.date)){
+    var d=dLocal(eta.date);
+    if(isFinite(d.getTime()) && isoOf(d)===eta.date)
+      срок='<span class="vzeta">при текущем темпе — к '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</span>';
+  }
+  if(text || срок) html+='<p class="vzplan vzverdict'+cls+'">'+esc(text)+срок+'</p>';
+  return html;
 }
 function homeBody(){
   var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
