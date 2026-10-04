@@ -133,11 +133,13 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
     const set = await page.$('.settbl .setrow:not(.done) .ok');
     if (set) {
       await set.click(); await page.waitForTimeout(900);
+      // Этап 4: капсула в потоке после занятия; проверяем доступность после прокрутки.
+      await page.locator('#coachfab').scrollIntoViewIfNeeded();
       const т = await пр(page, '.timer');
       const ф = await пр(page, '#coachfab');
       дано(await page.$eval('.timer', e => getComputedStyle(e).visibility === 'visible'),
         'полоска отдыха на экране');
-      дано(ф.bottom <= т.top, 'кнопка поднялась над полоской отдыха: низ ' +
+      дано(ф.bottom <= т.top, 'кнопка доступна над полоской отдыха после прокрутки: низ ' +
         Math.round(ф.bottom) + ' ≤ верх полоски ' + Math.round(т.top));
     } else дано(false, 'не нашёл кнопку подхода');
   }

@@ -2691,6 +2691,38 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
  .fmealgroup .fx{grid-column:3;grid-row:1;width:32px}
  .fmealgroup .fact{display:flex;flex-wrap:wrap}
 }
+
+/* Этап 4: один язык поверхностей для зала, журнала и каталога.
+   Сохранение и тренер — в потоке; запас снизу учитывает панель отдыха. */
+.gym-day{padding:16px;margin:16px 0;background:var(--surface);border-radius:24px}
+.gym-day .dayhd{margin:0}.gym-day .dayhd b{font-size:17px;font-weight:700;line-height:1.35}
+.gym-day .dayseg{margin-bottom:0}
+.gym-day .dayseg button{padding:0 2px;min-height:44px}
+#list{background:var(--surface);border-radius:24px;padding:4px 16px;margin-top:16px}
+#list .exrow{border-color:var(--line);padding-top:16px;padding-bottom:16px}
+#list .card.exact{padding:16px 0;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+#list .sstag{background:var(--tint);color:var(--accent);border-radius:12px}
+#gym-work>.btnrow{position:static;margin-top:20px}
+#finish{min-height:48px;scroll-margin-bottom:calc(100px + var(--tmr-h,0px))}
+#list .setrow{scroll-margin-bottom:calc(100px + var(--tmr-h,0px))}
+#logsum .tile,#logmusbox{background:var(--surface);border-radius:24px;box-shadow:none}
+#logmusbox{padding:16px;margin-top:16px}
+#logmus .chartbox{padding:0;margin:0;border:0;background:transparent}
+#logmus .charthead h4{font-size:17px;font-weight:700}
+#logmus .muskey{flex-wrap:wrap;line-height:1.5}
+.bodymap .mz.hit{stroke:var(--accent);stroke-width:.5}
+#logmus .muskey .sw2{border-color:var(--accent)}
+#p-ref .catgrp,#p-ref .catlist{background:var(--surface);border-radius:24px;padding:0 16px}
+#p-ref .catgrp h4{position:sticky;top:0;z-index:4;background:var(--surface);padding:16px 0;margin:0;border-bottom:1px solid var(--line);font-size:17px;line-height:1.4}
+#p-ref .catgrp h4 button{white-space:nowrap}
+#p-ref .catitem{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:14px 0}
+#p-ref .catitem:last-child{border-bottom:0}
+#p-ref .catlist{gap:0}
+#p-ref .catgrp h4{border-radius:24px 24px 0 0}
+body:has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
+body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab{transform:none;opacity:.92}
+body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn{opacity:1}
+
 </style>
 </head>
 <body>
@@ -2744,9 +2776,9 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
       <div class="zseg" id="zseg-gym"></div>
       <div class="todaybar" id="todaybar"></div>
       <div id="gym-work">
-        <div class="dayhd" id="nexthint"></div>
+        <div class="gym-day group"><div class="dayhd" id="nexthint"></div>
         <div class="dayseg" id="dayseg"></div>
-        <div class="dayseg lite" id="liteseg"></div>
+        <div class="dayseg lite" id="liteseg"></div></div>
         <button type="button" class="nudge" id="nudge" hidden></button>
         <button type="button" class="nudge" id="newver" hidden></button>
         <div id="planbox" hidden></div>
@@ -8650,22 +8682,30 @@ function renderMus(){
      места, и рядом с мышцей помещается название, а не только цифра.
      Подписи разведены на две стороны — иначе двадцать выносок наезжают друг на друга. */
   var W=320, CX=160, SC=3.16, FY=8, HH=304;   /* одна фигура на svg: 8 + 92,5·3,16 */
-  var NX=58, TX=86;                     /* отступ цифры и названия от центра */
+  var NX=54, TX=76;                     /* отступ цифры и названия от центра */
   /* подпись, выноска и цифра несут ту же data-m, что и зона: по нажатию
      подсвечивается всё вместе, а не только контур на фигуре */
   function figure(top, set, body, side){
-    var leads='', zones='', txt='';
+    var leads='', zones='', txt='', labelY={};
+    /* Разводим только подписи, геометрия мышц и числа остаются прежними. */
+    [-1,1].forEach(function(sd){
+      var bottom=-10;
+      Object.keys(set).filter(function(k){return set[k].sd===sd;}).sort(function(a,b){return set[a].ly-set[b].ly;}).forEach(function(k){
+        var y=Math.max(r1(set[k].ly*SC),bottom+20);
+        labelY[k]=y; bottom=y+(MNAME[k].split(' ').length-1)*17;
+      });
+    });
     Object.keys(set).forEach(function(k){
       var g=set[k], v=сет[k]||0, d=посл[k], sd=g.sd;
       var op=(d==null)?0.05:Math.max(0.08, 1-d/MFADE);
       var ax=r1(g.a[0]*SC), ay=r1(g.a[1]*SC), an=(sd<0?'end':'start');
-      var ly=r1(g.ly*SC);
+      var ly=labelY[k];
       leads+='<line class="lead'+(v>0?'':' off')+'" data-m="'+k+'" x1="'+(sd*(NX+4))+'" y1="'+ly+
              '" x2="'+ax+'" y2="'+ay+'"/>';
       if(v>0) txt+='<text class="num" data-m="'+k+'" x="'+(sd*NX)+'" y="'+r1(ly+3.8)+'" text-anchor="'+an+'">'+
                    fmtKg(v)+'</text>';
       txt+='<text class="mnm'+(v>0?'':' off')+'" data-m="'+k+'" x="'+(sd*TX)+'" y="'+r1(ly+3.4)+
-           '" text-anchor="'+an+'">'+MNAME[k]+'</text>';
+           '" text-anchor="'+an+'">'+MNAME[k].split(' ').map(function(word,i){ return '<tspan x="'+(sd*TX)+'" dy="'+(i?17:0)+'">'+word+' </tspan>'; }).join('')+'</text>';
       zones+='<g class="mz'+(v>=MPOROG?' hit':'')+'" data-m="'+k+'" fill-opacity="'+r1(op)+'">'+
              '<title>'+MNAME[k]+' · '+(v>0?(fmtKg(v)+' '+plural(Math.round(v),['подход','подхода','подходов'])+' за неделю'):'на этой неделе не работал')+
              (d!=null?' · последний раз '+daysAgoRu(d):'')+'</title>'+g.s+'</g>';
@@ -8692,7 +8732,7 @@ function renderMus(){
     '. Чем ярче мышца, тем свежее работа; через '+MFADE+' дней она гаснет совсем. '+
     'Обводка — норма в '+MPOROG+' подходов за неделю закрыта.</p>'+
     svg+
-    '<div class="muskey"><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
+    '<div class="muskey"><i>подходов за 7 дней</i><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
     '<i><span class="sw2"></span>'+MPOROG+'+ подходов</i>'+
     '<i class="attr">анатомия — body-muscles, Apache-2.0</i></div>'+
     '<p class="musdet" id="musdet">'+сводка+'</p></div>';

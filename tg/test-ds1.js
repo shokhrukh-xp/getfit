@@ -101,7 +101,13 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
  дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'без горизонтальной прокрутки '+theme+'/'+width+'/'+name);
  const r=await контраст(q);дано(r.checked>0&&!r.failures.length,'контраст '+theme+'/'+width+'/'+name+' ('+r.checked+' текстов, фон-картинки пропущены: '+r.skipped+') '+JSON.stringify(r.failures.slice(0,12)));
  if(name==='gym'){
-  await q.click('#list .exrow');await q.locator('.card.exact .allb').click();await q.waitForTimeout(350);
+  await q.click('#list .exrow');
+  const active=await контраст(q);дано(!active.failures.length,'контраст активной тренировки '+theme+'/'+width+' '+JSON.stringify(active.failures));
+  дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'активная тренировка помещается '+width);
+  await q.locator('.setrow .ok').first().click();await q.waitForTimeout(350);
+  const timer=await контраст(q);дано(!timer.failures.length,'контраст с таймером '+theme+'/'+width+' '+JSON.stringify(timer.failures));
+  await q.locator('#tskip').click();
+  await q.locator('.card.exact .allb').click();await q.waitForTimeout(350);
   дано(await q.locator('.setrow.done .ok').count()>0,'выполненные подходы доступны для проверки контраста '+theme);
   const done=await контраст(q,'.card.exact');дано(!done.failures.length,'контраст выполненных подходов '+theme+' '+JSON.stringify(done.failures));
   await q.click('#finish');await M.ответитьДлительность(q,45);await q.waitForTimeout(600);
