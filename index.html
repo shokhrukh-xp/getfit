@@ -2730,6 +2730,37 @@ body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn
 .timer-in .tlabel{grid-column:1 / -1;grid-row:2;min-width:0;overflow-wrap:anywhere}
 .timer-in .tbtn{grid-row:1;min-width:44px;min-height:44px;white-space:nowrap;padding:8px 10px}
 .timer-in #tskip{grid-column:2}.timer-in #tplus{grid-column:3}
+
+/* Этап 5: листы «Фокуса». Разделители и поля отделены от общей поверхности. */
+.modal{top:var(--sheet-top,0px);bottom:auto;height:var(--sheet-h,100vh);background:var(--scrim)}
+.modal .modalbox{background:var(--surface);border-radius:24px 24px 0 0;box-shadow:none;max-height:calc(var(--sheet-h,100vh) - 16px);box-sizing:border-box}
+.modalbox h3{font-size:20px;font-weight:700;line-height:1.3}
+.modalbox .cathead h3{min-width:0;overflow-wrap:anywhere}
+.modalbox .xbtn{flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0;border-radius:999px;background:var(--tint);color:var(--accent)}
+.modalbox .xbtn::after{inset:0}
+.modalbox .pf,.modalbox .sbrow{border-bottom:1px solid var(--line);padding-bottom:14px}
+.modalbox :is(.invbox,.goalcard,.srv,.aiprev,.wzq,.rsbtn){border-radius:16px;box-shadow:none}
+.modalbox :is(.invbox,.srv,.srr){background:var(--surface);border-color:var(--line)}
+.modalbox :is(.seg,.wzopts){gap:6px;flex-wrap:wrap}
+.modalbox .seg button,.wzopts button{border-radius:12px;min-height:44px;white-space:normal;text-overflow:clip;overflow:visible}
+.modalbox .seg button{flex:1 1 auto}
+.modalbox .seg button[aria-pressed="true"]{background:var(--tint);color:var(--accent);border-color:var(--accent)}
+.modalbox .zdbox .zdwhy,.modalbox .wzq{background:var(--tint);color:var(--text);border-color:var(--line);opacity:1}
+.modalbox .zdbox .zdwhy{padding:10px;border-radius:12px}
+#coachm .modalbox{height:calc(var(--sheet-h,100vh) - 24px);max-height:calc(var(--sheet-h,100vh) - 24px)}
+#coachm .modalbox::before{flex:none}
+#coachm .csend,#coachm .cic{width:44px;height:44px;min-width:44px;min-height:44px}
+#coachm .csend{background:var(--action);color:var(--on-accent)}
+#coachm .attbox{max-height:22%;overflow:auto;flex-shrink:0}
+body.onb #wz-one{position:static;background:var(--action);color:var(--on-accent);box-shadow:none}
+body.onb #picker .modalbox{max-height:100%;border-radius:0}
+/* Капсула в потоке не перехватывает касание закреплённой навигации. */
+.coachfab{z-index:50}
+.modalbox .srsrc{opacity:1}
+.modalbox .wzq .mchip{background:var(--surface);color:var(--text)}
+.plate .plph{color:var(--text)}
+.reaction-error{flex-basis:100%;margin:4px 0;color:var(--warn);font-size:13px;line-height:1.45}
+
 </style>
 </head>
 <body>
@@ -2978,7 +3009,7 @@ body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn
 </div>
 <div class="modal" id="schedm" role="dialog" aria-modal="true" aria-labelledby="schedtitle">
   <div class="modalbox">
-    <h3 id="schedtitle">Мои дни</h3>
+    <div class="cathead"><h3 id="schedtitle">Мои дни</h3><button type="button" class="xbtn" id="schedx" aria-label="Закрыть">✕</button></div>
     <p class="mtext">Дни зала. Программа идёт по кругу: следующий день — за последним сделанным, в любой день недели.</p>
     <div id="schedlist"></div>
     <h3 style="margin-top:20px">Лёгкая неделя</h3>
@@ -9588,6 +9619,7 @@ document.getElementById('profm').addEventListener('click', function(e){
     renderReco();
   }
 });
+document.getElementById('schedx').addEventListener('click', closeSched);
 document.getElementById('schedclose').addEventListener('click', function(){ closeSched(); });
 document.getElementById('schedm').addEventListener('click', function(e){
   if(e.target.id==='schedm') closeSched();
@@ -10958,6 +10990,7 @@ function vzГрафик(ms, sr, план){
 }
 /* 04.10: «сила как монитор мышц» — показываем сравнение сервера, без
    своего пересчёта процентов и без вывода о потере мышц. Детали — по тапу. */
+var VZSILA_OPEN=false;
 function vzСилаСтрока(s){
   if(!s || typeof s!=='object') return '';
   var cls=s.verdict==='падает' ? ' warn' : (s.verdict==='мало' ? ' muted' : '');
@@ -10967,7 +11000,7 @@ function vzСилаСтрока(s){
   var set=function(v){
     if(!v || typeof v!=='object') return 'нет прошлого сравнения';
     var date=typeof v.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v.date) ? ' · '+esc(ruDate(v.date)) : '';
-    return num(v.w)+'×'+num(v.r)+date;
+    return (v.w===0 ? num(v.r)+' повт.' : num(v.w)+'×'+num(v.r))+date;
   };
   var rows=Array.isArray(s.rows) ? s.rows.filter(function(r){ return r && typeof r==='object'; }) : [];
   var body=rows.map(function(r){
@@ -10976,7 +11009,7 @@ function vzСилаСтрока(s){
   }).join('');
   if(body) body='<ul>'+body+'</ul>';
   else if(typeof s.text==='string' && s.text.trim()) body='<p>'+esc(s.text)+'</p>';
-  return body ? '<details class="vzplan vzsila'+cls+'"><summary>'+title+'</summary>'+body+'</details>'
+  return body ? '<details class="vzplan vzsila'+cls+'"'+(VZSILA_OPEN?' open':'')+'><summary>'+title+'</summary>'+body+'</details>'
     : '<p class="vzplan vzsila'+cls+'">'+title+'</p>';
 }
 function vzПланСтрока(){
@@ -11010,7 +11043,7 @@ function homeBody(){
     var me0=myData()||{}, w0 = ms.length ? ms[0].w : (+me0.bw||0);
     var под0 = ms.length ? 'нужен второй замер, чтобы увидеть тренд' : (w0 ? 'с твоих слов · встань на весы — пойдёт тренд' : 'впиши вес ниже');
     return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u></div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
-      '<p class="vzsub">'+под0+'</p></div><div class="vzbottom"><p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
+      '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+'<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
   var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид='w';
@@ -11055,7 +11088,7 @@ function homeBody(){
       (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
       (план?'<span><i class="pl"></i>план цели</span>':'')+
       (sr.k!=='waist' && свобСписок().some(function(f){ return f>=vzДн(TODAY,-34); })?'<span><i class="sv"></i>свободный день</span>':'')+'</p>'+
-    '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():'')+свСтрока+
+    '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():vzСилаСтрока(((gget('goal',null)||{}).progress||{}).sila))+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
        недельного сообщения бота (?srez=1). */
@@ -11161,6 +11194,8 @@ function homeSport(){
    ехать из нуля каждый раз, когда сменилось состояние записи */
 function renderHome(){
   var box=document.getElementById('homebody'); if(!box) return;
+  /* 04.10: раскрытие силы переживает смену метрики и возврат на главную. */
+  var sila=box.querySelector('details.vzsila'); if(sila) VZSILA_OPEN=sila.open;
   /* поля замера (30.09) берём ДО пересборки: innerHTML вынимает их из документа */
   var весы=document.getElementById('hmeas'), вФокусе=(весы && весы.contains(document.activeElement)) ? document.activeElement : null;
   if(!PROF || !CYCLE.length){ box.innerHTML='<p class="empt">Загружаю…</p>'; return; }
@@ -11435,7 +11470,8 @@ function plateHtml(m){
     '<u>жир '+(m.fat==null?'—':m.fat)+' г · углеводы '+(m.carb==null?'—':m.carb)+' г · клетчатка '+(m.fib==null?'—':m.fib)+' г · сахар в еде '+(m.sug==null?'—':m.sug)+' г</u>'+
     (m.note?'<p class="plnote"><b>Как готовить:</b> '+esc(m.note)+'</p>':'')+
     '<div class="plact">'+
-      (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'">👍'+(m.likes?' '+m.likes:'')+'</button>')+
+      (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'"'+(m.likeBusy?' disabled aria-busy="true"':'')+'>👍'+(m.likes?' '+m.likes:'')+'</button>')+
+      (m.likeError?'<p class="reaction-error" role="status">'+esc(m.likeError)+'</p>':'')+
       '<button type="button" class="btn" data-recipe="'+esc(m.ref)+'">Отправить себе в чат</button>'+
       (m.stars?'<span class="plwhy">'+starsHtml(m.stars)+' — '+esc(m.stars.why)+'</span>':'')+
       (m.likers&&m.likers.length?'<span class="plwhy">👍 '+esc(m.likers.join(', '))+(m.liked?' и ты':'')+'</span>':(m.me&&m.likes?'<span class="plwhy">👍 '+m.likes+'</span>':''))+
@@ -11447,8 +11483,18 @@ document.getElementById('cirbody').addEventListener('click', function(e){
   var nv=e.target.closest('[data-udnav]'); if(nv){ if(nv.disabled) return; udayShift(+nv.dataset.udnav); haptic('light'); return; }
   var lk=e.target.closest('[data-like]'); if(lk){
     var ref=lk.dataset.like, m=(UDAY&&UDAY.d&&UDAY.d.meals||[]).filter(function(x){ return x.ref===ref; })[0]; if(!m) return;
-    var on=!m.liked; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); renderCircle(); haptic('light');
-    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){ if(d&&d.ok){ m.likes=d.likes; m.liked=d.liked; renderCircle(); } }).catch(function(){});
+    /* 04.10: отказ сервера не должен оставлять неподтверждённую реакцию.
+       Пока запрос идёт, повторное нажатие заблокировано: ответы не гоняются. */
+    if(m.likeBusy) return;
+    var before={liked:m.liked,likes:m.likes}, on=!m.liked;
+    m.likeBusy=true; m.likeError=''; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); renderCircle(); haptic('light');
+    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){
+      if(!d || !d.ok) throw new Error('reaction');
+      m.likes=d.likes; m.liked=d.liked; m.likeBusy=false; renderCircle();
+    }).catch(function(){
+      m.likes=before.likes; m.liked=before.liked; m.likeBusy=false;
+      m.likeError='Не удалось сохранить реакцию. Попробуй ещё раз.'; renderCircle(); haptic('err');
+    });
     return;
   }
   var rc=e.target.closest('[data-recipe]'); if(rc){
@@ -13561,7 +13607,18 @@ function chatHint(){
   var n=new Date(), p=nextMealPlan(d.meals||[], n.getHours()+n.getMinutes()/60);
   return (p && p.at!=null && p.name) ? ('что съел на '+p.name+' — или спроси') : общее;
 }
+/* 04.10: клавиатура может уменьшать visualViewport без resize окна.
+   Поле отправки остаётся внутри видимой области и при сдвиге viewport iOS. */
+function sheetViewport(){
+  var v=window.visualViewport, root=document.documentElement;
+  root.style.setProperty('--sheet-h',(v?v.height:window.innerHeight)+'px');
+  root.style.setProperty('--sheet-top',(v?v.offsetTop:0)+'px');
+}
+window.addEventListener('resize',sheetViewport);
+if(window.visualViewport){ window.visualViewport.addEventListener('resize',sheetViewport); window.visualViewport.addEventListener('scroll',sheetViewport); }
+sheetViewport();
 function openCoach(){
+  sheetViewport();
   var m=document.getElementById('coachm'); if(m) m.classList.add('show');
   document.body.classList.add('coach');
   var ph=document.getElementById('ctext');

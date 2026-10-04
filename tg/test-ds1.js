@@ -144,4 +144,16 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  await q.close();
 }
 
+// Этап 5: все листы и состояния знакомства — те же контраст и границы.
+const sheets=require('./ds5-scenes');
+await Promise.all(['light','dark'].flatMap(theme=>[320,390,430].map(async width=>{
+for(const name of sheets.scenes){
+ const q=await b.newPage({viewport:{width,height:844}});
+ try{
+  const root=await sheets.open(q,name,theme),bounds=await viewport(q),c=await контраст(q,root);
+  дано(!bounds.length,'границы листа '+name+'/'+theme+'/'+width+' '+JSON.stringify(bounds));
+  дано(c.checked>0&&!c.failures.length,'контраст листа '+name+'/'+theme+'/'+width+' '+JSON.stringify(c.failures));
+ }finally{await q.close()}
+}
+})));
 }finally{await b.close()}if(плохо)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});
