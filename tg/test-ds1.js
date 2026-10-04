@@ -123,4 +123,16 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  await q.close();
 }
 
+
+// Заполненное меню: «съедено» приглушено цветом, а не нечитаемой opacity.
+for(const theme of ['light','dark'])for(const width of [320,390]){
+ const q=await b.newPage({viewport:{width,height:844}});
+ const menu={ok:true,span:'today',date:M.TODAY,from:M.TODAY,норма:{kcal:2110,prot:165},съел:{kcal:1030,prot:67},ост:{kcal:1080,prot:98},съедено:M.день().meals,дни:[{приёмы:[{id:'t1',kind:'ужин',text:'Куриная грудка с гречкой',kcal:520,prot:62,готовое:true}]}]};
+ await M.поднять(q,{theme,page:'eat',onMenu:()=>menu});
+ await q.locator('.mnrow.mdone').first().waitFor();
+ const r=await контраст(q);дано(!r.failures.length,'контраст заполненного меню '+theme+'/'+width+' '+JSON.stringify(r.failures));
+ дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'заполненное меню без переполнения '+width);
+ await q.close();
+}
+
 }finally{await b.close()}if(плохо)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});
