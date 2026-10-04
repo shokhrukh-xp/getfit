@@ -21,13 +21,15 @@
 /* 04.10, Шохрух выбрал «Фокус · бирюза». Этап 1 — только основа;
    порядок экранов, дуга дня и расчёты остаются прежними.
    Соответствие старых имён (для старых компонентов, без двух палитр):
-   bg-2/card-solid -> card; card-2/field -> card2; line-soft/glass-edge -> line;
-   dim -> faint; accent-2/accent-txt/prime -> accent; done/done-txt -> ok;
+   bg-2/card-solid -> card; card-2 -> card2; field -> card2 (dark #151D20);
+   line-soft/glass-edge -> line;
+   dim -> faint; accent-2/accent-txt/prime -> accent; done -> ok; done-txt -> #286447 (dark ok), для текста на зелёной подложке;
+   done-fill -> ok (dark #1F7A55), для белого текста выполненных подходов;
    warn-txt -> warn; mid -> amber; chart-2 -> free; on-accent/on-prime -> white.
    accent-ghost -> accent 10%; corr -> ok 22%; corr-mid -> amber 22%;
    track/sleep -> line; map-bg/map-line/map-line2/map-det -> card/bg/line/faint.
    surface/card -> surface; tint/card2 -> tint; shadow/shadow-sm -> none; r -> 24px;
-   on-accent-muted -> #D6EBEE; tab-line -> #CBDADC (dark line);
+   on-accent-muted -> #D6EBEE (dark #CDE7EC); tab-line -> #CBDADC (dark #1F2A2E);
    action -> accent (dark #246F7C: белый текст сохраняет контраст);
    dark prime -> action: заливки с белым текстом; accent остаётся для полос/ссылок;
    free/chart-2 -> исходный фиолетовый графика, без новой палитры свободного дня;
@@ -42,8 +44,8 @@
   --on-accent-muted:#D6EBEE; --tab-line:#CBDADC; --action:var(--accent);
   --line:#DCE5E6;
   --text:#1F2D30;
-  --muted:#65777A;
-  --faint:#65777A;
+  --muted:#5A6B6E;
+  --faint:#5A6B6E;
   --accent:#176775;
   --ok:#337459;
   --warn:#A94E35;
@@ -57,7 +59,7 @@
   --field:var(--card2); --line-soft:var(--line); --glass-edge:var(--line);
   --dim:var(--faint); --accent-2:var(--accent); --accent-txt:var(--accent);
   --prime:var(--accent); --on-prime:#FFFFFF; --on-accent:#FFFFFF;
-  --done:var(--ok); --done-txt:var(--ok); --warn-txt:var(--warn);
+  --done-fill:var(--ok); --done:var(--ok); --done-txt:#286447; --warn-txt:var(--warn);
   --mid:var(--amber); --chart-2:var(--free);
   --accent-ghost:rgba(var(--accent-rgb),.10);
   --corr:rgba(var(--done-rgb),.22);
@@ -79,7 +81,7 @@
   --muted:#8E9DA3;
   --faint:#8E9DA3;
   --accent:#3BA3B5;
-  --ok:#3FBF8A;
+  --ok:#3FBF8A; --done-fill:#1F7A55; --done-txt:var(--ok);
   --warn:#E07A55;
   --warn-bg:#22160E;
   --amber:#F2B544; --amber-rgb:242,181,68;
@@ -102,7 +104,7 @@
   --muted:#8E9DA3;
   --faint:#8E9DA3;
   --accent:#3BA3B5;
-  --ok:#3FBF8A;
+  --ok:#3FBF8A; --done-fill:#1F7A55; --done-txt:var(--ok);
   --warn:#E07A55;
   --warn-bg:#22160E;
   --amber:#F2B544; --amber-rgb:242,181,68;
@@ -472,7 +474,7 @@ body.nogym .gymonly{display:none!important}
   background:var(--card-2);font-family:inherit;font-size:12px;color:var(--dim);
   display:flex;align-items:center;justify-content:center;transition:transform .12s,background .2s,border-color .2s,color .2s;
 }
-.dot.done{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:700;transform:scale(1.06)}
+.dot.done{background:var(--done-fill);border-color:var(--done-txt);color:var(--on-accent);font-weight:700;transform:scale(1.06)}
 .why{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:10px}
 .why summary{
   font-size:12px;color:var(--muted);cursor:pointer;list-style:none;
@@ -684,7 +686,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
   color:var(--accent-txt);font:inherit;font-size:15px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .setrow .swb.on{font-family:inherit;font-size:13px;font-weight:700;
   background:var(--action);border-color:transparent;color:var(--on-accent)}
-.setrow.done .ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:700}
+.setrow.done .ok{background:var(--done-fill);border-color:var(--done-txt);color:var(--on-accent);font-weight:700}
 /* ── Один подход крупно (11.09): активное упражнение раскрыто, остальные —
    строками с фото. Числа подхода — герои, кнопка одна на всю ширину. ── */
 .card.exact .exthumb{flex:0 0 88px;width:88px}
@@ -1288,7 +1290,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   letter-spacing:-.02em;color:var(--text);max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .dayseg button i{display:block;font-style:normal;font-family:inherit;
   font-size:12px;letter-spacing:.03em;color:var(--dim);margin-top:-1px}
-.dayseg button[aria-pressed="true"]{border-color:transparent;background:var(--accent)}
+.dayseg button[aria-pressed="true"]{border-color:transparent;background:var(--action)}
 .dayseg button[aria-pressed="true"] b{color:var(--on-accent)}
 .dayseg button[aria-pressed="true"] i{color:rgba(255,255,255,.86)}   /* .72 давало 2,9:1 на синем */
 .dayseg button[data-next="1"]::after{
@@ -1298,9 +1300,9 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
    показываем цветом самой кнопки — так же, как плашка «сегодня закрыт» */
 .dayseg button[data-done="1"]{border-color:rgba(var(--done-rgb),.55);background:rgba(var(--done-rgb),.10)}
 .dayseg button[data-done="1"] b{color:var(--done-txt)}
-.dayseg button[data-done="1"][aria-pressed="true"]{border-color:transparent;background:var(--done)}
+.dayseg button[data-done="1"][aria-pressed="true"]{border-color:transparent;background:var(--done-fill)}
 .dayseg button[data-done="1"][aria-pressed="true"] b{color:var(--on-accent)}
-.dayseg button[data-done="1"][aria-pressed="true"] i{color:rgba(255,255,255,.75)}
+.dayseg button[data-done="1"][aria-pressed="true"] i{color:var(--on-accent)}
 .nexthint{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.4}
 .nexthint b{color:var(--text);font-weight:600}
 .nexthint b{color:var(--accent-txt);font-weight:400}
@@ -1357,7 +1359,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 /* главное действие экрана — заливкой, как в iOS; остальные остаются тихими */
 .btn.prim{background:var(--action);border-color:transparent;color:var(--on-accent);font-weight:500}
 #finish{background:var(--action);border-color:transparent;color:var(--on-accent);font-weight:500;transition:background .2s,color .2s,border-color .2s}
-#finish.ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:600}
+#finish.ok{background:var(--done-fill);border-color:var(--done-txt);color:var(--on-accent);font-weight:600}
 #finish.bad{background:rgba(var(--warn-rgb),.14);border-color:var(--warn-txt);color:var(--warn-txt)}
 #finish.busy{opacity:.7}
 .dbnote.bad{color:var(--warn-txt)}
@@ -2271,7 +2273,7 @@ body.onb #picker .modalbox::before{display:none}
 .hwg-c.plan{border:2px solid var(--accent);color:var(--text);background:none}
 .hwg-d.on .hwg-c.plan{background:none}
 .hwg-c.miss{border:1.5px dashed var(--line);color:var(--dim);background:none}
-.hwg-c.done,.hwg-d.on .hwg-c.done{background:var(--done);color:#0b1a12}
+.hwg-c.done,.hwg-d.on .hwg-c.done{background:var(--done-fill);color:var(--on-accent)}
 .hwg-c.done:after{content:'✓';position:absolute;right:-3px;top:-3px;width:15px;height:15px;border-radius:999px;
   background:var(--text);color:var(--bg,#0b0c0e);font-size:12px;line-height:15px;font-weight:800}
 .hwg-e{display:block;height:18px;margin-top:3px;font-size:15px;line-height:18px;text-decoration:none;letter-spacing:-2px}
@@ -2296,7 +2298,7 @@ body.onb #picker .modalbox::before{display:none}
 .fbar u{font-size:13px;color:var(--muted)}
 .fbar b{font-size:15px;font-weight:700;letter-spacing:-.02em}
 .fbar b em{font-size:13px;color:var(--dim);font-weight:500}
-.fbar .fbc{font-size:12px;opacity:.5;margin-left:6px;vertical-align:1px}
+.fbar .fbc{font-size:12px;opacity:1;margin-left:6px;vertical-align:1px}
 .fbar .tr{height:6px;overflow:visible}
 .fbar .tr .fcor{position:absolute;top:-4px;bottom:-4px;border-radius:12px;background:var(--corr)}
 .fbar .tr .fcor::before,.fbar .tr .fcor::after{content:"";position:absolute;top:0;bottom:0;width:1px;background:var(--done);opacity:.55}
