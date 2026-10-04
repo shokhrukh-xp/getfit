@@ -2857,6 +2857,13 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 .day-status em{font-style:normal;color:var(--text)}
 .day-status em.hgood{color:var(--done-txt)}
 @media(max-width:360px){.hctr{top:77%}}
+
+/* 04.10, ревью: на 320 пять элементов одной строки обрезали «88,1».
+   Три поля получают целую строку; действия ниже, каждое не меньше 44 px. */
+.vzbottom #hmeas .fmeasq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end}
+#hmeas .fld input{box-sizing:border-box;width:100%;padding:12px 6px;font-size:16px;min-height:44px}
+#hmeas #fmphoto{grid-column:1;width:100%;min-height:44px}
+#hmeas #fmsave{grid-column:2/-1;width:100%;min-height:44px;font-size:15px}
 </style>
 </head>
 <body>
@@ -2900,7 +2907,7 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
           <label class="fld"><span>Жир, %</span><input id="ffat" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"></label>
           <label class="fld"><span>Талия</span><input id="fwaist" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"></label>
           <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
-          <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">→</button>
+          <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">Записать →</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
         </div>
         <p class="freply" id="fmreply" hidden></p>
@@ -5198,7 +5205,7 @@ function renderGoalCard(){
   if(gobj){
     h+='<div class="gt">'+esc(gobj.text)+'</div>';
     if(pr && pr.w0 && pr.now && pr.rate){
-      var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',','); };
+      var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',',').replace('-','−'); };
       h+='<details class="goal-progress"><summary>Ход цели <b>'+esc(String(pr.now).replace('.',','))+' кг</b><span>'+f(pr.fact)+' кг от старта</span></summary><p class="gp">Старт '+esc(String(pr.w0).replace('.',','))+' кг → сейчас <b>'+esc(String(pr.now).replace('.',','))+' кг</b> ('+f(pr.fact)+')'+
          (pr.plan!=null ? ' · по плану '+f(pr.plan) : '')+
          /* Отставание показывалось числом, опережение — одним словом. Человек
@@ -5405,8 +5412,10 @@ function menuДень(д, span, m){
   var шапка = span==='day'
     ? '<div class="mdh top"><b>Меню на завтра</b><span>'+menuДата(д.date)+'</span></div>'
     : '<div class="mdh"><b>'+menuДата(д.date)+'</b>'+(д.зал?'<span class="mzal">зал</span>':'')+'</div>';
-  return шапка+menuStats(д.kcal,д.prot,д.норма.kcal,д.норма.prot)+'<p class="mitog">'+
-      (span==='day'&&д.зал?' · день зала':'')+((д.спорт||[]).length?' · '+esc(д.спорт.join(', ')):'')+'</p>'+
+  var части=[];
+  if(span==='day' && д.зал) части.push('день зала');
+  if((д.спорт||[]).length) части.push(esc(д.спорт.join(', ')));
+  return шапка+menuStats(д.kcal,д.prot,д.норма.kcal,д.норма.prot)+(части.length?'<p class="mitog">'+части.join(' · ')+'</p>':'')+
     (span==='day'?menuNote(m.note):'')+
     (д.белокМало?'<p class="mwarn">Белка не хватает '+д.белокМало+' г — добери перекусом.</p>':'')+
     д.приёмы.map(function(x){ return menuПриём(x, span, m); }).join('');
@@ -10772,7 +10781,7 @@ function homeClock(){
   }).join('')+'</div></details>' : '';
   var c;
   if(homeСвоб()) return '<div class="hclk">'+s+'<div class="hctr"><b class="hfree">свободный<br>день</b><u>без записи и оценки</u>'+
-    '<i class="hcl">завтра — обычная норма</i></div></div>'+timeline;
+    '<i class="hcl">завтра — обычная норма</i></div></div><p class="day-status hnext">'+esc(homeNextLine(E))+'</p>'+timeline;
   if(!t.kcal) c='<b>'+hNum(kc)+'</b><u>ккал съедено</u><i>заполни профиль — будет норма</i>';
   else {
     var rem=t.kcal-kc, rp=Math.round((t.prot||0)-pt);
@@ -10792,10 +10801,19 @@ function homeClock(){
   var гw = (sc && sc.why && sc.why.length) ? sc.why[0] : null;
   var гл = гw ? String(гw.t).split(':')[0] : null;
   var совет = (гw && !sc.closed && гw.совет) ? (/^дальше/.test(гw.совет) ? гw.совет : 'дальше '+гw.совет) : null;
-  var line = (!sc||sc.r==null) ? 'оценка — с первой записью'
-    : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+
-      esc(совет || гл || 'всё в норме')+'</em>';
-  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div></div><p class="day-status">'+line+'</p>'+timeline;
+  /* 04.10, ревью: одна подсказка вместо двух соседних про дальнейшую еду.
+     Статус оценки и совет сервера сохраняем; рядом только недостающая
+     конкретика (белок продуктом / есть лишь по голоду). Итогу дня её не добавляем. */
+  var tip=совет || гл || 'всё в норме', next=homeNextLine(E);
+  if(next && !(sc && sc.closed)){
+    if(next==='на сегодня всё · дальше только если голоден'){
+      // Не повторяем «дальше»: после совета остаётся только условие голода.
+      if(!/только если голоден/.test(tip)) tip+='; только если голоден';
+    }else if(tip.indexOf(next)<0) tip+='; '+next;
+  }
+  var line = (!sc||sc.r==null) ? 'оценка — с первой записью'+(next?' · '+esc(next):'')
+    : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+esc(tip)+'</em>';
+  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div></div><p class="day-status hnext">'+line+'</p>'+timeline;
 }
 /* неделя одной строкой: точка — попал ли день в коридор; будущие дни пустые.
    Нажатие открывает этот день на «Еде». */
@@ -10805,11 +10823,11 @@ function homeClock(){
    грамм — это просто пересчёт граммов белка в граммы мяса или рыбы. */
 function homeNextLine(E){
   var d=HOME.day||{}, t=d.targets||{};
-  if(homeСвоб()) return '<p class="hnext">ешь как решил — записывать не нужно</p>';
+  if(homeСвоб()) return 'ешь как решил — записывать не нужно';
   if(!t.kcal) return '';
-  if(!E.plan || E.plan.at==null) return '<p class="hnext">на сегодня всё · дальше только если голоден</p>';
+  if(!E.plan || E.plan.at==null) return 'на сегодня всё · дальше только если голоден';
   var rem=Math.round(t.kcal-(+d.kcal||0)), rp=Math.round((t.prot||0)-(+d.prot||0));
-  /* время следующего приёма уже стоит на часах подписью пузыря — здесь
+  /* время следующего приёма доступно в списке «События дня» — здесь
      только то, чего на экране ещё нет: чем закрыть остаток.
      Белок делим на ОСТАВШИЕСЯ приёмы, а не валим весь дневной остаток в один:
      утром «~750 г мяса» — это не совет, а насмешка. Доза на приём ≈ 0,4 г/кг
@@ -10821,7 +10839,7 @@ function homeNextLine(E){
             (наПриём<=8 ? 'белок набран — дальше по калориям' :
              приёмов>1 ? 'по ~'+мясо+' г мяса или рыбы на приём'
                        : 'белок закроют ~'+мясо+' г мяса или рыбы');
-  return '<p class="hnext">'+esc(чем)+'</p>';
+  return чем;
 }
 function homeWeek(){
   var w=FOOD.week, by={}; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
@@ -11307,7 +11325,7 @@ function renderHome(){
   var часы=homeClock(), прежние=box.querySelector('.hclk');
   var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
-    homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeNextLine(hcEvents())+homeRows()+'</section>'+
+    homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeRows()+'</section>'+
     homeWeek()+homeBody()+'<div class="hstats">'+homeRating()+'</div>'+homeWeekGym()+homeSport();
   /* 04.10, Фокус: существующий итог зала идёт рядом с рейтингом и серией.
      Итоги и все занятия берём из прежней недели, расчёт не дублируем. */
