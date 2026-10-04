@@ -22,7 +22,7 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  ok(rows.length===7&&rows[0].fact==='2050'&&rows[0].target==='2110','даты, факт и норма отдельными колонками');
  await check('еда');await p.locator('[data-zseg="eat"]:visible').click();await p.locator('[data-eseg="day"]').click();await p.waitForTimeout(400);
  ok(await p.locator('.menu-stats strong').allTextContents().then(xs=>xs.join('|')==='2050 ккал|162 г'),'меню показывает исходные числа');
- ok(await p.locator('.ingredient-chips>span').count()===5,'ингредиенты с граммами отдельными элементами');
+ ok(await p.locator('.ingredient-chips>span').count()===9,'ингредиенты с граммами отдельными элементами');
  await p.locator('.menu-note summary').first().click();ok((await p.locator('.menu-note').first().innerText()).includes('привычные блюда'),'пояснение меню раскрывается');await check('меню');
  await p.locator('#profbtn').click();await check('профиль','#profm');
  await p.locator('.goal-progress summary').click();ok((await p.locator('.goal-progress .gp').innerText()).includes('92,3'),'стартовый вес в деталях цели');

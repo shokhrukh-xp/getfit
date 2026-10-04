@@ -76,8 +76,8 @@ const ВМЕСТЕ = { ok: true, closed: false, going: true, r: 7.1, n: 3, count
     await M.поднять(p, { theme: 'dark', time: '11:20', day: { meals: ЕДА.slice(0, 1), targets: НОРМА },
       score: { ok: true, closed: false, going: true, r: 5.8, n: 1, вместе: true, приёмы: ПРИЁМЫ.slice(0, 1), why }, wait: 2200 });
     await p.waitForTimeout(500);
-    const r = await p.evaluate(() => { const e = document.querySelector('.hctr .hcl em');
-      return e ? { т: document.querySelector('.hctr .hcl').textContent, к: e.className } : null; });
+    const r = await p.evaluate(() => { const e = document.querySelector('.day-status em');
+      return e ? { т: document.querySelector('.day-status').textContent, к: e.className } : null; });
     await p.close(); return r || {};
   };
   let л = await подЧасами(ПРИЁМЫ[0].why);
@@ -85,7 +85,7 @@ const ВМЕСТЕ = { ok: true, closed: false, going: true, r: 7.1, n: 3, count
   дано(л.к === '', 'совет про белок — спокойным цветом, не красным');
   л = await подЧасами([{ k: 'kcal', v: 2, t: 'перебор нормы дня: 1900 при 1550', совет: 'дальше только если голоден' }]);
   дано(/день идёт · дальше только если голоден/.test(л.т || '') && !/дальше дальше/.test(л.т || ''), '«дальше» не двоится: ' + л.т);
-  дано(л.к === 'hbad', 'перебор калорий — красным');
+  дано(л.к === 'hbad', 'перебор калорий сохраняет признак; цвет предупреждения остаётся у числа');
   л = await подЧасами([]);
   дано(/всё в норме/.test(л.т || '') && л.к === 'hgood', 'без вычетов — зелёным «всё в норме»');
 
