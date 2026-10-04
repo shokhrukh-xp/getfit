@@ -61,7 +61,9 @@ const сцены = [
     for (const с of сцены) {
       const page = await br.newPage({ viewport: { width: с.width||390, height: 844 }, deviceScaleFactor: 2 });
       try {
-        const ош = await M.поднять(page, Object.assign({ theme: тема, time:"19:40", week:неделя, menu:{завтра:ЗАВТРА}, onMenu:менюСтенда }, с.o));
+        const opts=Object.assign({theme:тема,time:"19:40",week:неделя,menu:{завтра:ЗАВТРА},onMenu:менюСтенда},с.o);
+        opts.week={...opts.week,days:opts.week.days.map(d=>({...d,free:(opts.free||[]).includes(d.date)}))};
+        const ош = await M.поднять(page, opts);
         await page.waitForTimeout(600);
         if (с.после) { await с.после(page); await page.waitForTimeout(500); }
         await page.screenshot({ path: path.join(OUT, `${с.имя}-${тема}.png`), fullPage: с.fullPage !== false });

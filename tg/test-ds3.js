@@ -10,7 +10,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  const o={theme,page:'food',time:'19:40',day:{line:'За день: 1030 ккал. '+line}};
  if(state==='прошлый'){line='За вчера: 1030 / 2110 ккал. Не хватило до нормы: 1080 ккал.';o.day={date:M.Д(1),line};o.score={closed:true};}
  if(state==='закрыт')o.score={closed:true};
- if(state==='свободный')o.free=[M.Д(0)];
+ if(state==='свободный'){o.free=[M.Д(0)];o.week={days:M.неделя().days.map(d=>({...d,free:d.date===M.Д(0)}))};}
  if(state==='без профиля')o.day.targets={};
  if(state==='пустой'){line='До нормы: 2110 ккал и 165 г белка.';o.day={meals:[],kcal:0,prot:0,line:'За день: 0 ккал. '+line};o.score={r:null};}
  if(state==='норма закрыта'){line='Норма закрыта.';o.day.line='За день: 2110 ккал. '+line;}
@@ -22,6 +22,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
   дано(await hero.count()===0&&/Заполни профиль/.test(await p.locator('#fday').innerText()),'без нормы остаётся подсказка '+label);
  }else if(state==='свободный'){
   дано(await p.locator('.food-free .svcard').count()===1&&await p.locator('#fday .fbar,#fday .fclose').count()===0,'свободный без нормы и оценки '+label);
+  дано(await p.locator('#fweek .fd-today .fb-free').count()===1&&await p.locator('#fweek .fd-today .nb').count()===0,'свободный день недели без коридора '+label);
   дано(await p.locator('#food-add').isHidden(),'в свободный день нет призыва записать еду '+label);
  }else{
   const shown=(await p.locator('.food-hero-copy').textContent()).replace(/\s+/g,' ').trim();
