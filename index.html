@@ -29,6 +29,7 @@
    surface/card -> surface; tint/card2 -> tint; shadow/shadow-sm -> none; r -> 24px;
    on-accent-muted -> #D6EBEE; tab-line -> #CBDADC (dark line);
    action -> accent (dark #246F7C: белый текст сохраняет контраст);
+   dark prime -> action: заливки с белым текстом; accent остаётся для полос/ссылок;
    free/chart-2 -> исходный фиолетовый графика, без новой палитры свободного дня;
    blur/knurl -> none.
    *-rgb — совместимые RGB-каналы тех же accent/ok/warn для rgba() в старом CSS.
@@ -68,18 +69,19 @@
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#0B1215;
-  --surface:#141D21; --card:var(--surface);
+  --bg:#000000;
+  --surface:#0E1416; --card:var(--surface);
   --tint:rgba(59,163,181,.14); --card2:var(--tint);
-  --tab-line:var(--line); --action:#246F7C;
-  --line:#233035;
+  --tab-line:#1F2A2E; --action:#246F7C; --prime:var(--action);
+  --on-accent-muted:#CDE7EC; --field:#151D20;
+  --line:#1B2427;
   --text:#E8EEF0;
   --muted:#8E9DA3;
   --faint:#8E9DA3;
   --accent:#3BA3B5;
   --ok:#3FBF8A;
   --warn:#E07A55;
-  --warn-bg:#2A1D16;
+  --warn-bg:#22160E;
   --amber:#F2B544; --amber-rgb:242,181,68;
   --free:#B39CFF;
   --accent-rgb:59,163,181;
@@ -90,18 +92,19 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
-  --bg:#0B1215;
-  --surface:#141D21; --card:var(--surface);
+  --bg:#000000;
+  --surface:#0E1416; --card:var(--surface);
   --tint:rgba(59,163,181,.14); --card2:var(--tint);
-  --tab-line:var(--line); --action:#246F7C;
-  --line:#233035;
+  --tab-line:#1F2A2E; --action:#246F7C; --prime:var(--action);
+  --on-accent-muted:#CDE7EC; --field:#151D20;
+  --line:#1B2427;
   --text:#E8EEF0;
   --muted:#8E9DA3;
   --faint:#8E9DA3;
   --accent:#3BA3B5;
   --ok:#3FBF8A;
   --warn:#E07A55;
-  --warn-bg:#2A1D16;
+  --warn-bg:#22160E;
   --amber:#F2B544; --amber-rgb:242,181,68;
   --free:#B39CFF;
   --accent-rgb:59,163,181;
@@ -167,7 +170,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .seg{display:flex;gap:6px;flex:1 1 auto;min-width:0}
 .seg button{flex:1 1 0;min-width:0;padding:9px 6px;border-radius:12px;border:.5px solid var(--line);
   background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.seg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--accent)}
+.seg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--action)}
 /* четыре ответа про зал в одну строку не влезают на телефоне — два на два */
 /* «что есть дома» — пять коротких слов, которые не влезают поровну */
 .seg.multi{flex-wrap:wrap}
@@ -228,7 +231,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .wdgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .wdgrid button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:12px;
   padding:9px 0;font:inherit;font-size:13px;min-height:44px}
-.wdgrid button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);
+.wdgrid button[aria-pressed="true"]{background:var(--action);border-color:var(--accent);
   color:var(--on-accent);font-weight:700}
 .sbrow{margin-bottom:16px}
 .sblab{display:block;font-size:12px;color:var(--dim);letter-spacing:.02em;margin-bottom:7px}
@@ -314,7 +317,7 @@ body.nogym .gymonly{display:none!important}
 .hact b{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .hact i{font-style:normal;font-size:13px;color:var(--muted)}
 .hact .hgo{margin-top:9px;display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
-  border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:15px;font-weight:600}
+  border-radius:12px;background:var(--action);color:var(--on-accent);font-size:15px;font-weight:600}
 .hact.hrest .hgo,.hact.hdone .hgo{background:var(--track);color:var(--text)}
 .hact .hbar{margin-top:10px;display:block;height:5px;border-radius:999px;background:var(--track);overflow:hidden}
 .hact .hbar s{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .5s ease}
@@ -407,7 +410,7 @@ body.nogym .gymonly{display:none!important}
   font-size:12px;color:var(--dim);line-height:1.25;
 }
 .dayseg button b{display:block;font-weight:600;font-size:13px;color:var(--muted)}
-.dayseg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--accent)}
+.dayseg button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--action)}
 .phaseline{font-size:13px;color:var(--muted);margin:10px 0 16px;line-height:1.5}
 .phaseline b{color:var(--text)}
 
@@ -680,7 +683,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .setrow .swb{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card-2);
   color:var(--accent-txt);font:inherit;font-size:15px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .setrow .swb.on{font-family:inherit;font-size:13px;font-weight:700;
-  background:var(--accent);border-color:transparent;color:var(--on-accent)}
+  background:var(--action);border-color:transparent;color:var(--on-accent)}
 .setrow.done .ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:700}
 /* ── Один подход крупно (11.09): активное упражнение раскрыто, остальные —
    строками с фото. Числа подхода — герои, кнопка одна на всю ширину. ── */
@@ -964,7 +967,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .planc i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
 .planc .rb{display:flex;gap:8px;margin-top:8px}
 .planc .rb button{flex:1 1 0;min-height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card-solid);color:var(--text);font-size:13px}
-.planc .rb button.go{border-color:transparent;background:var(--accent);color:var(--on-accent);font-weight:500}
+.planc .rb button.go{border-color:transparent;background:var(--action);color:var(--on-accent);font-weight:500}
 .pf.pfcol{display:block}
 .pf.pfcol + .seghint{margin-left:0}
 .pldays{display:flex;gap:4px}
@@ -1042,7 +1045,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .podraz button{flex:0 0 auto;min-height:44px;padding:0 13px;border-radius:999px;border:1px solid var(--line);
   background:var(--card-2);color:var(--muted);font:inherit;font-size:13px}
 .podraz button s{text-decoration:none;opacity:.65;margin-left:5px;font-size:12px}
-.podraz button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
+.podraz button[aria-pressed="true"]{background:var(--action);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
 .podraz button[aria-pressed="true"] s{opacity:.8}
 .podplot{color:var(--muted);font-size:13px;line-height:1.45;margin:0 0 12px;padding:9px 11px;
   border-radius:12px;background:var(--card-2);border:1px solid var(--line)}
@@ -1057,7 +1060,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .eatf .row::-webkit-scrollbar{display:none}
 .eatf .row button{flex:0 0 auto;padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:13px;white-space:nowrap;min-height:44px}
-.eatf .row button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
+.eatf .row button[aria-pressed="true"]{background:var(--action);border-color:transparent;color:var(--on-accent,#06130d);font-weight:600}
 .eatf .row button[disabled]{opacity:.35}
 .eatq{width:100%;margin-top:12px;padding:11px 13px;border-radius:12px;border:1px solid var(--line);
   background:var(--card-2);color:var(--text);font:inherit;font-size:15px;min-height:44px}
@@ -1108,7 +1111,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fchart .lg i{display:inline-block;width:10px;height:3px;border-radius:12px;margin-right:5px;vertical-align:middle}
 /* ── тренер: плавающая кнопка и окно чата ── */
 .coachfab{position:fixed;right:14px;bottom:calc(84px + var(--pad-bottom,0px) + var(--fab-lift,0px));z-index:60;width:44px;height:44px;border-radius:999px;
-  border:none;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;
+  border:none;background:var(--action);color:var(--on-accent);display:flex;align-items:center;justify-content:center;
   box-shadow:0 4px 14px rgba(var(--accent-rgb),.26);padding:0;transform-origin:75% 75%;opacity:.92;
   transition:transform .22s cubic-bezier(.2,.8,.3,1),opacity .22s ease,bottom .3s cubic-bezier(.2,.8,.3,1)}
 /* пока идёт отдых, внизу плашка таймера — кнопка тренера поднимается над ней,
@@ -1142,7 +1145,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .eseg{display:flex;gap:6px;margin:0 0 12px}
 .eseg button{flex:1 1 0;min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--card-2);
   color:var(--muted);font:inherit;font-size:13px;padding:0 6px}
-.eseg button[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:600}
+.eseg button[aria-pressed="true"]{background:var(--action);border-color:transparent;color:var(--on-accent);font-weight:600}
 .mdh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:16px 0 2px}
 .mdh.top{margin-top:2px}
 .mdh b{font-size:15px;color:var(--text);font-weight:650}
@@ -1187,7 +1190,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .chatsep{align-self:center;font-size:12px;color:var(--dim);padding:2px 0}
 .msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-line}
 .msg.me{align-self:flex-end;max-width:80%;padding:9px 13px;font-size:15px;line-height:1.45;
-  background:var(--accent);border:none;color:var(--on-accent);
+  background:var(--action);border:none;color:var(--on-accent);
   border-radius:12px}
 .turn{align-self:stretch;max-width:100%;display:flex;flex-direction:column;gap:4px}
 .turn+.turn{border-top:1px solid var(--line-soft);padding-top:10px}
@@ -1257,7 +1260,7 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
   display:flex;align-items:center;justify-content:center;padding:0}
 .cic svg{width:20px;height:20px}
 .cic:active{color:var(--accent-txt)}
-.csend{flex:none;width:40px;height:40px;border-radius:999px;border:none;background:var(--accent);
+.csend{flex:none;width:40px;height:40px;border-radius:999px;border:none;background:var(--action);
   color:var(--on-accent);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .csend:disabled{opacity:.45}
 .csend:active{transform:scale(.94)}
@@ -1352,8 +1355,8 @@ body.coach .coachfab{opacity:0;pointer-events:none;transform:scale(.6)}
 .btn:active{opacity:.55}
 .btn.wide{display:block;width:100%}
 /* главное действие экрана — заливкой, как в iOS; остальные остаются тихими */
-.btn.prim{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:500}
-#finish{background:var(--accent);border-color:transparent;color:var(--on-accent);font-weight:500;transition:background .2s,color .2s,border-color .2s}
+.btn.prim{background:var(--action);border-color:transparent;color:var(--on-accent);font-weight:500}
+#finish{background:var(--action);border-color:transparent;color:var(--on-accent);font-weight:500;transition:background .2s,color .2s,border-color .2s}
 #finish.ok{background:var(--done);border-color:var(--done-txt);color:var(--on-accent);font-weight:600}
 #finish.bad{background:rgba(var(--warn-rgb),.14);border-color:var(--warn-txt);color:var(--warn-txt)}
 #finish.busy{opacity:.7}
@@ -1535,7 +1538,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .bmcap.sel b{color:var(--text);font-weight:600}
 .bmpick{display:inline-flex;align-items:center;gap:6px;margin:8px auto 2px;padding:9px 14px;border-radius:999px;
   border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent-txt);font:inherit;font-size:13px;cursor:pointer}
-.bmpick:active{background:var(--accent);color:var(--on-accent)}
+.bmpick:active{background:var(--action);color:var(--on-accent)}
 /* ── рейтинг: плитки, таблица недели, страница человека ── */
 .cirsw{display:flex;gap:6px;margin:4px 0 12px;flex-wrap:wrap;align-items:center}
 .cirsw .cirgear,.cirsw .cirnew{flex:0 0 auto;min-width:44px;min-height:40px;padding:0 12px;font-size:15px;line-height:1}
@@ -1644,7 +1647,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
   margin:0 0 10px;padding:10px 12px;border-radius:12px;background:var(--accent-ghost);
   border:.5px solid var(--line);font-size:13px;color:var(--text)}
 .ordbar b{flex:1;font-weight:500}
-.ordbar button{min-height:40px;padding:0 14px;border-radius:12px;border:none;background:var(--accent);color:var(--on-accent);font:inherit;font-weight:600;font-size:13px}
+.ordbar button{min-height:40px;padding:0 14px;border-radius:12px;border:none;background:var(--action);color:var(--on-accent);font:inherit;font-weight:600;font-size:13px}
 /* Дрожит РУЧКА, а не вся карточка. Пока дрожала карточка, вместе с ней
    ездили стрелки: по движущейся кнопке трудно попасть пальцем, а проверка
    вовсе не могла её нажать («element is not stable»). Знак режима остался —
@@ -1988,7 +1991,7 @@ body.onb #wz-one{position:sticky;bottom:8px;z-index:3;box-shadow:0 6px 18px rgba
 .wzline{display:flex;flex-direction:column;gap:8px}
 .wzb{max-width:88%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-line}
 .wzb.c{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
-.wzb.u{align-self:flex-end;background:var(--accent);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
+.wzb.u{align-self:flex-end;background:var(--action);border:none;color:var(--on-accent);border-bottom-right-radius:5px}
 .wzb.wait{background:var(--accent-ghost);border-color:transparent}
 .wzb.bad{border-color:var(--warn-txt)}
 .wzhint{align-self:flex-start;font-size:12px;line-height:1.5;color:var(--dim);padding:0 2px}
@@ -1997,7 +2000,7 @@ body.onb #wz-one{position:sticky;bottom:8px;z-index:3;box-shadow:0 6px 18px rgba
 .wzin input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
   background:var(--field);color:var(--text);font:inherit;font-size:13px;-webkit-appearance:none}
 .wzin input::placeholder{color:var(--dim);opacity:1}
-.wzin button{flex:0 0 auto;padding:0 18px;border-radius:12px;border:none;background:var(--accent);
+.wzin button{flex:0 0 auto;padding:0 18px;border-radius:12px;border:none;background:var(--action);
   color:var(--on-accent);font:inherit;font-size:15px;line-height:1}
 #picker .aiprev{margin-top:14px}
 /* Первый запуск: за окном мастера раньше стояла чужая программа с пустыми
@@ -2103,7 +2106,7 @@ body.onb #picker .modalbox::before{display:none}
    должны выглядеть по-разному */
 .fbtn.fshot{background:var(--prime);color:var(--on-prime);border-color:transparent}
 .fbtn{border:none;background:var(--field);color:var(--muted);border-radius:12px;flex-basis:48px;height:48px}
-.fbtn.go{background:var(--accent);color:var(--on-accent)}
+.fbtn.go{background:var(--action);color:var(--on-accent)}
 .freply{border-left:none;background:var(--field);border-radius:12px;padding:12px 14px}
 .freply.wait{background:var(--accent-ghost)}
 .zseg{background:var(--field);border-radius:12px;padding:3px;margin:12px 0 18px}
@@ -2184,7 +2187,7 @@ body.onb #picker .modalbox::before{display:none}
 .hbtn svg{width:22px;height:22px}
 .hbar input{flex:1;min-width:0;height:56px;border-radius:24px;border:1px solid transparent;background:var(--card-solid);padding:0 16px;font:inherit;font-size:15px;color:var(--text);box-shadow:var(--shadow)}
 .hbar input:focus{outline:none;border-color:var(--accent-txt)}
-.hbtn.hgo2{background:var(--accent);color:var(--on-accent);font-size:17px;font-weight:700}
+.hbtn.hgo2{background:var(--action);color:var(--on-accent);font-size:17px;font-weight:700}
 /* съёмка — главное действие дня, её кнопка залита инверсией фона.
    Правило после .hbtn и с двумя классами: одиночный .hshot проигрывал по порядку */
 .hbtn.hshot{background:var(--prime);color:var(--on-prime);box-shadow:0 10px 26px rgba(15,20,25,.22)}
@@ -2510,7 +2513,8 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
   background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
   padding:16px;margin-bottom:12px;-webkit-backdrop-filter:none;backdrop-filter:none}
 .bcell.key,.tile.key,.card.full,.actcard,.sscard{background:var(--card2)}
-.modalbox{background:var(--card)}
+.modalbox{background:var(--surface);border-top:1px solid var(--line);box-shadow:none}
+.l1{background:var(--surface);border-top:1px solid var(--line);box-shadow:none}
 .btn,.ebtn,.tbtn,.pbtn,.rsbtn{border-radius:12px;font-size:15px;font-weight:600;min-height:44px}
 .btn,.ebtn,.tbtn{background:var(--card2);color:var(--accent);border:1px solid transparent}
 .btn.prim,.fbtn.go{background:var(--action);color:var(--on-accent);border-color:transparent}
