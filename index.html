@@ -2751,6 +2751,8 @@ body:not(.coach):has(.l1 [data-page="gym"][aria-selected="true"]) .coachfab.attn
 #coachm .modalbox::before{flex:none}
 #coachm .csend,#coachm .cic{width:44px;height:44px;min-width:44px;min-height:44px}
 #coachm .csend{background:var(--action);color:var(--on-accent)}
+/* Поле 16 px: фокус на iPhone не должен увеличивать страницу. */
+#coachm .chatask textarea{font-size:16px}
 #coachm .attbox{max-height:22%;overflow:auto;flex-shrink:0}
 body.onb #wz-one{position:static;background:var(--action);color:var(--on-accent);box-shadow:none}
 body.onb #picker .modalbox{max-height:100%;border-radius:0}

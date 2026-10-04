@@ -26,7 +26,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
 }
 // Клавиатура: высота layout viewport и отдельно уменьшенный visual viewport.
 for(const theme of ['light','dark'])for(const width of [320,430])for(const height of [844,667]){
- const p=await b.newPage({viewport:{width,height}});await S.open(p,'coach',theme);await p.focus('#ctext');
+ const p=await b.newPage({viewport:{width,height}});await S.open(p,'coach',theme);ok(await p.locator('#ctext').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16),'поле чата не вызывает увеличение из-за мелкого шрифта');await p.focus('#ctext');
  await p.evaluate(({height})=>{Object.defineProperty(visualViewport,'height',{configurable:true,value:height-300});Object.defineProperty(visualViewport,'offsetTop',{configurable:true,value:20});visualViewport.dispatchEvent(new Event('resize'));}, {height});
  await p.waitForTimeout(150);
  const r=await p.locator('#csend').evaluate(e=>{const r=e.getBoundingClientRect(),v=visualViewport;return {top:r.top,bottom:r.bottom,limit:v.offsetTop+v.height,width:r.width,height:r.height};});
