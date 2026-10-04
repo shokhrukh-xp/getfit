@@ -2582,6 +2582,10 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .hwd-gym{display:block;width:7px;height:7px;background:var(--line);border-radius:1px}
 .hwd-gym.done{background:var(--accent)}
 .hwd-gym.plan{border:1px solid var(--accent);background:transparent}
+.hwd-gym.miss{border:1px dashed var(--muted);background:transparent}
+.hweek-block .hwg-e b{display:inline;width:auto;height:auto;background:none;border:0;border-radius:0}
+.hweek-block .hwg-e.none{display:none}
+.hweek-block .hsport{margin-top:12px}
 .hwd.on .hwd-gym.done{background:var(--on-accent)}
 .hwd.on .hwd-gym.plan{border-color:var(--on-accent)}
 .hweek-legend{display:flex;gap:10px;margin:10px 0 0;font-size:12px;color:var(--muted);white-space:nowrap}
@@ -2604,6 +2608,7 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .vzvtext{display:block;border-radius:12px;padding:12px;background:var(--tint)}
 .vzverdict.warn .vzvtext{background:var(--warn-bg)}
 .vzeta{display:block;margin:12px 0;color:var(--muted)}
+.sila-up,.sila-flat,.sila-down{display:inline-block;white-space:nowrap}
 .sila-up::before{content:'↑ '}.sila-flat::before{content:'→ '}.sila-down::before{content:'↓ '}
 .vzbottom .vzsila{border-top:1px solid var(--line);padding-top:12px}
 .vzbottom #hmeas .fask{margin-bottom:0;gap:6px}
@@ -11075,13 +11080,31 @@ function renderHome(){
     homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeNextLine(hcEvents())+homeRows()+'</section>'+
     homeWeek()+homeBody()+'<div class="hstats">'+homeRating()+'</div>'+homeWeekGym()+homeSport();
   /* 04.10, Фокус: существующий итог зала идёт рядом с рейтингом и серией.
-     Подробная неделя и все занятия остаются ниже, расчёт не дублируем. */
+     Итоги и все занятия берём из прежней недели, расчёт не дублируем. */
   var итогЗала=box.querySelector('.hwg[data-hgo="gym"] .hwg-h'), статистика=box.querySelector('.hstats');
   if(итогЗала && статистика){
     var кнопкаЗала=document.createElement('button'); кнопкаЗала.type='button';
     кнопкаЗала.className='hline hwg-h'; кнопкаЗала.dataset.hgo='gym';
     кнопкаЗала.innerHTML=итогЗала.innerHTML; итогЗала.remove(); статистика.appendChild(кнопкаЗала);
   }
+  /* 04.10, ревью: одна неделя вместо повторных кружков. Их общий переход
+     в зал сохранён кнопкой «Зал на неделе» в статистике (перехода по дате
+     у старых кружков не было). Значки занятий и подписи не теряем. */
+  var неделя=box.querySelector('.hweek-block'), стараяНеделя=box.querySelector('.hwg');
+  if(неделя && стараяНеделя){
+    Array.prototype.forEach.call(стараяНеделя.querySelectorAll('[data-wgday]'), function(день){
+      var новый=неделя.querySelector('[data-hday="'+день.dataset.wgday+'"]'); if(!новый) return;
+      var отметка=новый.querySelector('.hwd-gym'), круг=день.querySelector('.hwg-c'), занятие=день.querySelector('.hwg-e');
+      if(отметка && круг){
+        отметка.className=круг.className.replace('hwg-c','hwd-gym');
+        if(круг.classList.contains('miss')) отметка.setAttribute('aria-label','зал по плану, тренировка не записана');
+      }
+      if(занятие) новый.appendChild(занятие);
+    });
+    Array.prototype.forEach.call(стараяНеделя.querySelectorAll('.hwg-h,.hwg-sub,.hwg-leg'), function(строка){неделя.appendChild(строка);});
+    стараяНеделя.remove();
+  }
+  var занятиеКнопка=box.querySelector('#addsport3'); if(неделя && занятиеКнопка) неделя.appendChild(занятиеКнопка);
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
   var гнездо=box.querySelector('#hmeasslot');

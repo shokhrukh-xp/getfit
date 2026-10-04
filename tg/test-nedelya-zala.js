@@ -29,13 +29,13 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
   const в = await page.evaluate(() => {
     const box = document.getElementById('homebody');
     const строки = Array.from(box.querySelectorAll('.hline')).map(e => e.textContent.replace(/\s+/g, ' ').trim());
-    const w = box.querySelector('.hwg');
+    const w = box.querySelector('.hweek-block');
     return { строки, текст: box.textContent,
-      неделя: w ? { шапка: box.querySelector('.hstats .hwg-h, .hwg .hwg-h').textContent.replace(/\s+/g, ' ').trim(),
-        дни: Array.from(w.querySelectorAll('.hwg-d')).map(e => ({ d: e.dataset.wgday, on: e.classList.contains('on'),
-          c: e.querySelector('.hwg-c').className, n: e.querySelector('.hwg-c').textContent, a: e.querySelector('.hwg-e').className, зн: e.querySelector('.hwg-e').textContent })),
+      неделя: w ? { шапка: box.querySelector('.hstats .hwg-h').textContent.replace(/\s+/g, ' ').trim(),
+        дни: Array.from(w.querySelectorAll('.hwd')).map(e => ({ d: e.dataset.hday, on: e.classList.contains('on'),
+          c: e.querySelector('.hwd-gym').className, n: e.querySelector('.hwd-date').textContent, a: e.querySelector('.hwg-e').className, зн: e.querySelector('.hwg-e').textContent })),
         подпись: (w.querySelector('.hwg-sub') || {}).textContent || '', легенда: (w.querySelector('.hwg-leg') || {}).textContent || '' } : null,
-      кнопка: (() => { const b = document.getElementById('addsport3'); return b ? { видна: !!b.offsetParent, после: !!(w && (w.compareDocumentPosition(b) & 4)) } : null; })() };
+      кнопка: (() => { const b = document.getElementById('addsport3'); return b ? { видна: !!b.offsetParent, после: !!(w && w.contains(b) && (w.querySelector('.hweek').compareDocumentPosition(b) & 4)) } : null; })() };
   });
   /* рейтинг и серия — два факта, две строки */
   дано(!в.строки.some(с => /\d-й из \d.*подряд/.test(с)), 'место и серия больше не в одной строке: ' + в.строки.join(' | '));
@@ -48,7 +48,7 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
   if (н) {
     дано(н.дни[0].d === пн && н.дни.every((x, i) => i === 0 || x.d > н.дни[i - 1].d), 'с понедельника по воскресенье, с датами: ' + н.дни.map(x => x.n).join(' '));
     дано(н.дни.filter(x => x.on).length === 1 && н.дни[dow].on, 'сегодня выделено');
-    дано(/done/.test(н.дни[0].c), 'понедельник с тренировкой — зелёный с галочкой');
+    дано(/done/.test(н.дни[0].c), 'понедельник с тренировкой — отметка done');
     const ещё = н.дни.filter((x, i) => i > dow && [0, 2, 4].includes(i));
     дано(ещё.every(x => /plan/.test(x.c) && !/done/.test(x.c)), 'дни зала впереди — обведены, без галочки: ' + ещё.map(x => x.n).join(', '));
     const мимо = н.дни.filter((x, i) => i < dow && [2, 4].includes(i));
@@ -62,7 +62,11 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     дано(/🎾 теннис/.test(н.легенда) && (dow > 5 || /по плану/.test(н.легенда)), 'под неделей — какой значок что значит: ' + н.легенда);
     дано(/^(Сегодня|Следующая — )/.test(н.подпись), 'подпись — следующая тренировка: ' + н.подпись);
   }
-  дано(!!в.кнопка && в.кнопка.видна && в.кнопка.после, '«+ Занятие вне зала» — внизу главной, под неделей');
+  дано(!!в.кнопка && в.кнопка.видна && в.кнопка.после, '«+ Занятие вне зала» — внутри Недели, под днями');
+  дано(await page.locator('.hwg-c,.hwg-row').count()===0, 'повторных кружков и второго ряда дней нет');
+  await page.click('.hstats [data-hgo="gym"]');
+  дано(await page.locator('#p-gym').isVisible(), 'прежний переход кружков в зал доступен через итог в статистике');
+  await page.click('.l1 [data-page="home"]');
   await page.click('#addsport3'); await page.waitForTimeout(600);
   дано(await page.evaluate(() => !!document.querySelector('#sportm.show')), 'кнопка открывает лист занятия');
   await page.close();
@@ -71,11 +75,18 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
   const еда = await br.newPage({ viewport: { width: 390, height: 1400 } });
   await M.поднять(еда, { theme: 'dark', time: '13:05', page: 'home', me: { sex: 'f', age: 35, ht: 165, bw: 70, only: 'food' }, wait: 2400 });
   await еда.waitForTimeout(600);
-  const е = await еда.evaluate(() => ({ неделя: !!document.querySelector('#homebody .hwg'), кнопка: !!(document.getElementById('addsport3') || {}).offsetParent }));
+  const е = await еда.evaluate(() => ({ неделя: !!document.querySelector('#homebody .hwd-gym, #homebody .hwg-sub, #homebody [data-hgo="gym"]'), кнопка: !!(document.getElementById('addsport3') || {}).offsetParent }));
   дано(!е.неделя, 'у «только еды» без занятий недели зала нет');
   дано(е.кнопка, 'а кнопка занятия на главной есть — это его единственное место кроме чата');
   await еда.close();
 
+  const спорт = await br.newPage({viewport:{width:320,height:844}});
+  await M.поднять(спорт,{theme:'light',page:'home',acts:ЗАНЯТИЯ,me:{sex:'f',age:35,ht:165,bw:70,only:'food'}});
+  await спорт.waitForTimeout(400);
+  дано(await спорт.locator('.hweek-block .hwg-e [data-k="теннис"]').count()===1,'у только питания записанный теннис остался под датой единственной недели');
+  дано(await спорт.locator('.hwd-gym,.hwg-sub,.hwg-c').count()===0,'у только питания с занятиями строки и кружков зала тоже нет');
+  дано(await спорт.locator('.hweek-block #addsport3').isVisible(),'занятие доступно внутри недели и в nogym');
+  await спорт.close();
   await br.close();
   console.log(плохо ? '\nПРОВАЛОВ: ' + плохо : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
