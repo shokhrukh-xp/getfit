@@ -75,7 +75,7 @@ const подсказка = async page => {
   const тело = await page.evaluate(() => {
     const v = document.querySelector('#homebody .vz');
     return v ? { чипы: Array.from(v.querySelectorAll('[data-vzv]')).map(b => b.textContent),
-      под: v.querySelector('.vzsub').textContent, графики: v.querySelectorAll('svg').length } : null;
+      под: v.querySelector('.vzsub').textContent, графики: v.querySelectorAll('.vzsvg svg').length } : null;
     /* 02.10, вариант А: «всего» — от среднего за 7 дней, как крупное число */
   });
   дано(!!тело, 'на главной — карточка «Тело»');

@@ -2557,6 +2557,81 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
 .coachfab::after{content:'Тренер'}
 .coachfab.attn::after{content:'Тренер';position:static;width:auto;height:auto;border:0;background:none;border-radius:0}
 .coachfab.attn{border-color:var(--accent)}
+
+/* 04.10 · Этап 2 «Главная»: новые оболочки, прежние данные и обработчики.
+   У hdaycard нет бокового padding: ширина и геометрия .hclk не меняются. */
+.hdaycard{background:var(--surface);border-radius:24px;padding:8px 0 16px;margin:10px 0 22px}
+.hdaycard .hnext{padding:0 14px}
+.hdaycard .hrows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;padding:0 16px;margin:16px 0 0}
+.hdaycard .hrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 6px;min-width:0;align-items:baseline}
+.hdaycard .hrow>u{grid-area:1/1;font-size:12px}
+.hdaycard .hrow>b{grid-area:1/2;max-width:100%;font-size:14px;line-height:1.4;white-space:normal}
+.hdaycard .hrow b s{font-size:12px}
+.hdaycard .hrow>.htr{grid-area:2/1/3/3;width:100%}
+.hdaycard .hrow:nth-of-type(3):last-of-type{grid-column:1/-1}
+.hdaycard .ds-zone{grid-column:1/-1}
+.hweek-block{margin:0 0 24px}
+.hweek-block h3{font-size:17px;font-weight:700;margin:0 0 12px}
+.hweek-block .hweek{margin:0;gap:4px}
+.hweek-block .hwd{display:flex;flex-direction:column;align-items:center;gap:6px;border-radius:12px;min-height:78px;padding:8px 2px;color:var(--muted);font-size:12px}
+.hweek-block .hwd-date{font-size:15px;color:var(--text)}
+.hweek-block .hwd.on{background:var(--action);color:var(--on-accent)}
+.hweek-block .hwd.on .hwd-date{color:var(--on-accent)}
+.hwd-dots{display:flex;gap:4px;align-items:center;justify-content:center;min-height:8px}
+.hweek-block .hwd b{margin:0}
+.hwd-gym{display:block;width:7px;height:7px;background:var(--line);border-radius:1px}
+.hwd-gym.done{background:var(--accent)}
+.hwd-gym.plan{border:1px solid var(--accent);background:transparent}
+.hwd.on .hwd-gym.done{background:var(--on-accent)}
+.hwd.on .hwd-gym.plan{border-color:var(--on-accent)}
+.hweek-legend{display:flex;gap:10px;margin:10px 0 0;font-size:12px;color:var(--muted);white-space:nowrap}
+.vz{padding:0;overflow:hidden;margin:0 0 20px}
+.vztop{padding:18px 16px;background:var(--action);color:var(--on-accent);--text:var(--on-accent);--muted:#E1F0F3;--dim:#E1F0F3;--line-soft:rgba(255,255,255,.22);--field:rgba(255,255,255,.15);--bg:var(--action)}
+.vztop .vzhd u,.vztop .vznum em,.vztop .vznum b,.vztop .vzch button{color:var(--on-accent)}
+.vztop .vzch{flex-wrap:wrap}
+.vztop .vzch button.on,.vztop .vzch button.on span{color:var(--action)}
+.vztop .vzch button.on{background:var(--on-accent);color:var(--action);border-radius:12px;box-shadow:none}
+.vztop .vznum{flex-wrap:wrap;gap:6px}
+.vztop .vzln{stroke:var(--on-accent)}
+.vztop .vzpl{stroke:var(--on-accent-muted)}
+.vztop svg circle[stroke]{stroke:var(--on-accent)}
+.vztop svg .vzpt{fill:var(--on-accent-muted)}
+.vztop #vzg stop{stop-color:var(--on-accent)!important}
+.vztop .vzlg span:first-child i{background:var(--on-accent)!important}
+.vzbottom{padding:16px;background:var(--surface)}
+.vzbottom .eyebrow{margin:16px 0 8px}
+.vzbottom .vzverdict{padding:0;background:none}
+.vzvtext{display:block;border-radius:12px;padding:12px;background:var(--tint)}
+.vzverdict.warn .vzvtext{background:var(--warn-bg)}
+.vzeta{display:block;margin:12px 0;color:var(--muted)}
+.sila-up::before{content:'↑ '}.sila-flat::before{content:'→ '}.sila-down::before{content:'↓ '}
+.vzbottom .vzsila{border-top:1px solid var(--line);padding-top:12px}
+.vzbottom #hmeas .fask{margin-bottom:0;gap:6px}
+.hstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:12px;background:var(--surface);border-radius:24px;padding:16px;margin:0 0 18px}
+.hstats:empty{display:none}
+.hstats .hline{display:block;border:0;padding:0;margin:0;min-width:0;text-align:left}
+.hstats .hline>span{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.hstats .hline>b{display:block;font-size:17px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.hstats .hline em{display:block;margin:4px 0 0;font-size:12px;white-space:normal;line-height:1.4}
+/* На главной капсула в потоке после содержимого, как в макете:
+   отступ у fixed-кнопки не предотвращал наложение на промежуточные заголовки.
+   На остальных экранах остаётся существующее поведение FAB. */
+body:has(.l1 [data-page="home"][aria-selected="true"]) .coachfab{position:relative;right:auto;bottom:auto;width:max-content;margin:16px 16px 0 auto}
+body:not(.coach):has(.l1 [data-page="home"][aria-selected="true"]) .coachfab{transform:none;opacity:.92}
+body:not(.coach):has(.l1 [data-page="home"][aria-selected="true"]) .coachfab.attn{opacity:1}
+/* Внизу остаётся запас под капсулу и навигацию, в том числе с таймером. */
+body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
+@media(max-width:359px){
+ /* У журнала дата дельты на второй строке: четыре колонки помещаются в 320 px. */
+ .mrow{grid-template-columns:64px minmax(0,1fr) auto auto;gap:6px}
+ .mrow i em{display:block;margin-left:0}
+ .hdaycard .hrow>b{grid-area:2/1/3/3;text-align:left}
+ .hdaycard .hrow>.htr{grid-area:3/1/4/3}
+ .hweek-legend{gap:6px;font-size:12px}
+ .vztop .vzhd{align-items:flex-start;gap:8px;flex-wrap:wrap}
+ .hstats{gap:10px;padding:12px}
+ .hstats .hline>b{font-size:15px}
+}
 </style>
 </head>
 <body>
@@ -10522,15 +10597,18 @@ function homeNextLine(E){
 }
 function homeWeek(){
   var w=FOOD.week, by={}; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
-  var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<div class="hweek">';
+  var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<section class="hweek-block"><h3>Неделя</h3><div class="hweek">';
   for(var i=0;i<7;i++){
     var dt=new Date(nd.getTime()+(i-dow)*864e5), iso=ymd(dt), d=by[iso], fut=iso>TODAY, cls='';
     if(!fut && d && d.free) cls='free';               /* 02.10: свободный день — пунктиром, не красным */
     else if(!fut && d && d.n){ var t=(d.tg&&d.tg.kcal)?d.tg:tg, off=t.kcal?(d.kcal-t.kcal)/t.kcal:0;
       cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
-    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'>'+WD[dt.getDay()]+(fut?'':'<b class="'+cls+'"></b>')+'</button>';
+    /* Только уже загруженные записи и расписание; еда по-прежнему ведёт в день. */
+    var gymDone=!foodOnly() && ((HIST||[]).some(function(x){return x.date===iso;}) || (lastDone && lastDone.date===iso));
+    var gymPlan=!foodOnly() && hasSched() && (dt.getDay() in GYM_DAYS);
+    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':'<b class="'+cls+'"></b>')+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'"></i>':'')+'</span></button>';
   }
-  return h+'</div>';
+  return h+'</div><p class="hweek-legend"><span>● еда в норме</span><span>○ вне нормы</span>'+(!foodOnly()?'<span>■ зал · □ план</span>':'')+'</p></section>';
 }
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
@@ -10776,7 +10854,7 @@ function vzСилаСтрока(s){
   if(!s || typeof s!=='object') return '';
   var cls=s.verdict==='падает' ? ' warn' : (s.verdict==='мало' ? ' muted' : '');
   var n=function(v){ return typeof v==='number' && isFinite(v) && v>=0 && Math.floor(v)===v ? String(v) : '—'; };
-  var title=s.verdict==='мало' ? 'Сила: мало занятий за две недели' : 'Сила за 2 недели: растёт '+n(s.up)+' · стоит '+n(s.flat)+' · падает '+n(s.down);
+  var title=s.verdict==='мало' ? 'Сила: мало занятий за две недели' : 'Сила за 2 недели: <span class="sila-up">растёт '+n(s.up)+'</span> · <span class="sila-flat">стоит '+n(s.flat)+'</span> · <span class="sila-down">падает '+n(s.down)+'</span>';
   var num=function(v){ return typeof v==='number' && isFinite(v) ? String(v).replace('.',',') : '—'; };
   var set=function(v){
     if(!v || typeof v!=='object') return 'нет прошлого сравнения';
@@ -10812,7 +10890,7 @@ function vzПланСтрока(){
     if(isFinite(d.getTime()) && isoOf(d)===eta.date)
       срок='<span class="vzeta">при текущем темпе — к '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</span>';
   }
-  if(text || срок) html+='<p class="vzplan vzverdict'+cls+'">'+esc(text)+срок+'</p>';
+  if(text || срок) html+='<p class="vzplan vzverdict'+cls+'">'+(text?'<span class="vzvtext">'+esc(text)+'</span>':'')+срок+'</p>';
   return html+vzСилаСтрока(progress && progress.sila);
 }
 function homeBody(){
@@ -10823,8 +10901,8 @@ function homeBody(){
        зовём на весы за трендом, а не за самим весом. */
     var me0=myData()||{}, w0 = ms.length ? ms[0].w : (+me0.bw||0);
     var под0 = ms.length ? 'нужен второй замер, чтобы увидеть тренд' : (w0 ? 'с твоих слов · встань на весы — пойдёт тренд' : 'впиши вес ниже');
-    return '<div class="vz"><div class="vzhd"><u>Тело</u></div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
-      '<p class="vzsub">'+под0+'</p></div><div id="hmeasslot"></div>';
+    return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u></div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
+      '<p class="vzsub">'+под0+'</p></div><div class="vzbottom"><p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
   var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид='w';
@@ -10858,7 +10936,7 @@ function homeBody(){
   var свПосл=свобСписок().filter(function(f){ return f<=TODAY && f>=vzДн(TODAY,-((FOOD&&FOOD.вода)||3)); }).pop();
   var свСтрока = (вид!=='waist' && свПосл) ? '<p class="vzsv">Скачок после свободного дня '+ruDate(свПосл)+' — это вода, гликоген и соль, а не жир: обычно +0,5–2 кг, уходит за 2–4 дня. '+
       'Три утра после него не идут в средний вес, «за неделю» и план.</p>' : '';
-  return '<div class="vz">'+
+  return '<div class="vz"><div class="vztop">'+
     '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
     '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
@@ -10869,11 +10947,11 @@ function homeBody(){
       (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
       (план?'<span><i class="pl"></i>план цели</span>':'')+
       (sr.k!=='waist' && свобСписок().some(function(f){ return f>=vzДн(TODAY,-34); })?'<span><i class="sv"></i>свободный день</span>':'')+'</p>'+
-    (вид==='w'?vzПланСтрока():'')+свСтрока+
+    '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():'')+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
        недельного сообщения бота (?srez=1). */
-    '</div><div id="hmeasslot"></div>';
+    '<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
 }
 /* ── НЕДЕЛЯ ЗАЛА И ЗАНЯТИЙ ВМЕСТО «ЗАВТРА» ──
    24.09, его просьба: «вместо текста „завтра в зал“ показать красивую линию
@@ -10994,10 +11072,16 @@ function renderHome(){
   var часы=homeClock(), прежние=box.querySelector('.hclk');
   var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
-    homeWeek()+homeBotStrip()+часы+homeNextLine(hcEvents())+homeRows()+
-    '<div class="hsep"></div>'+
-    homeBody()+
-    homeRating()+homeWeekGym()+homeSport();
+    homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeNextLine(hcEvents())+homeRows()+'</section>'+
+    homeWeek()+homeBody()+'<div class="hstats">'+homeRating()+'</div>'+homeWeekGym()+homeSport();
+  /* 04.10, Фокус: существующий итог зала идёт рядом с рейтингом и серией.
+     Подробная неделя и все занятия остаются ниже, расчёт не дублируем. */
+  var итогЗала=box.querySelector('.hwg[data-hgo="gym"] .hwg-h'), статистика=box.querySelector('.hstats');
+  if(итогЗала && статистика){
+    var кнопкаЗала=document.createElement('button'); кнопкаЗала.type='button';
+    кнопкаЗала.className='hline hwg-h'; кнопкаЗала.dataset.hgo='gym';
+    кнопкаЗала.innerHTML=итогЗала.innerHTML; итогЗала.remove(); статистика.appendChild(кнопкаЗала);
+  }
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы;
   var гнездо=box.querySelector('#hmeasslot');

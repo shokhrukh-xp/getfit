@@ -22,6 +22,8 @@ const день = { meals: [
 const сцены = [
   { имя: 'home', o: { page: 'home', time: '19:40', day: день, goal: цель, progress, meas: M.замеры(), hist: M.журнал() } },
   { имя: 'home-morning-empty', o: { page: 'home', time: '08:10', day: { meals: [], kcal: 0, prot: 0 }, score: null, goal: цель, progress, meas: M.замеры() } },
+  { имя: 'home-nogym', o: { page: 'home', time: '19:40', day: день, goal: цель, progress, meas: M.замеры(), me: { only: 'food', sex: 'm', age: 38, ht: 178, bw: 88.1 } } },
+  { имя: 'home-few-measures', o: { page: 'home', time: '19:40', day: день, goal: цель, progress, meas: [M.замеры()[0]] } },
   { имя: 'home-newbie', o: { page: 'home', time: '12:00', newbie: true, day: null, score: null } },
   { имя: 'gym', o: { page: 'gym', time: '18:05', hist: M.журнал(), day: день } },
   { имя: 'food', o: { page: 'food', time: '19:40', day: день, goal: цель, progress, meas: M.замеры() } },

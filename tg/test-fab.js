@@ -22,7 +22,9 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
     дано(await page.$(s) === null, 'на главной больше нет ' + s);
   дано(await page.$('#homebody .msg') === null, 'ленты разговора в потоке главной нет');
 
-  /* 2. кнопка: размер пальца, в кадре, над вкладками */
+  /* 2. Этап 2: на главной капсула после контента, без наложения. */
+  await page.locator("#coachfab").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(500);
   дано(await page.isVisible('#coachfab'), 'кнопка тренера видна');
   const f = await пр(page, '#coachfab');
   дано(Math.round(f.width) >= 44 && Math.round(f.height) >= 44,

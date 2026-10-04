@@ -40,7 +40,7 @@ const карточка = page => page.evaluate(() => {
     коридор: !!v.querySelector('svg .vzcor'), легенда: (v.querySelector('.vzlg') || {}).textContent || '',
     линия: !!v.querySelector('svg .vzln'), план: !!v.querySelector('svg .vzpl'),
     строкаПлана: (v.querySelector('.vzplan') || {}).textContent || '',
-    графиков: v.querySelectorAll('svg').length
+    графиков: v.querySelectorAll('.vzsvg svg').length
   };
 });
 

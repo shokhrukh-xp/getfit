@@ -31,7 +31,7 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     const строки = Array.from(box.querySelectorAll('.hline')).map(e => e.textContent.replace(/\s+/g, ' ').trim());
     const w = box.querySelector('.hwg');
     return { строки, текст: box.textContent,
-      неделя: w ? { шапка: w.querySelector('.hwg-h').textContent.replace(/\s+/g, ' ').trim(),
+      неделя: w ? { шапка: box.querySelector('.hstats .hwg-h, .hwg .hwg-h').textContent.replace(/\s+/g, ' ').trim(),
         дни: Array.from(w.querySelectorAll('.hwg-d')).map(e => ({ d: e.dataset.wgday, on: e.classList.contains('on'),
           c: e.querySelector('.hwg-c').className, n: e.querySelector('.hwg-c').textContent, a: e.querySelector('.hwg-e').className, зн: e.querySelector('.hwg-e').textContent })),
         подпись: (w.querySelector('.hwg-sub') || {}).textContent || '', легенда: (w.querySelector('.hwg-leg') || {}).textContent || '' } : null,
