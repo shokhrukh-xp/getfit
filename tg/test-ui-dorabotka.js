@@ -2,7 +2,11 @@
 // 04.10: реальные времена на фото, навигация тренера и условные ключи графика.
 const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./shot-clean'),bounds=require('./viewport-check'),contrast=require('./contrast-check');
 let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++}
-function fixture(theme){const o=opts(theme);o.hist=[{...M.журнал()[0],id:M.TODAY+'_D1',day:'D1',date:M.TODAY,t0:new Date(M.TODAY+'T08:39:00').getTime(),updated:new Date(M.TODAY+'T09:30:00').toISOString()},...o.hist];o.free=[M.Д(3)];o.week.days=o.week.days.map(d=>d.date===M.Д(3)?{...d,free:true}:d);return o}
+// 05.10: неделя на главной — с понедельника; свободный день Д(3) в пн–ср уходил в
+// прошлую неделю, и «пицца» пропадала. Берём прошедший день этой недели (не дальше
+// трёх назад); в понедельник такого нет — тогда пиццы в неделе быть не должно.
+const ПН=(new Date(M.TODAY+'T12:00:00').getDay()+6)%7,СВОБ=M.Д(ПН>=1?Math.min(3,ПН):3),СВОБ_В_НЕДЕЛЕ=ПН>=1;
+function fixture(theme){const o=opts(theme);o.hist=[{...M.журнал()[0],id:M.TODAY+'_D1',day:'D1',date:M.TODAY,t0:new Date(M.TODAY+'T08:39:00').getTime(),updated:new Date(M.TODAY+'T09:30:00').toISOString()},...o.hist];o.free=[СВОБ];o.week.days=o.week.days.map(d=>d.date===СВОБ?{...d,free:true}:d);return o}
 // Прямоугольник бейджа против круга фото (не пустых углов его bounding box).
 async function geometry(p){return p.evaluate(()=>{
  const rect=e=>e.getBoundingClientRect(),over=(a,b)=>a.left<b.right-.2&&a.right>b.left+.2&&a.top<b.bottom-.2&&a.bottom>b.top+.2;
@@ -75,7 +79,7 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
   ok(g.x.every((v,i)=>!i||v>g.x[i-1]),'хронологический порядок пузырей '+tag);
   ok((await badgeContrast(p)).every(v=>v>=4.5),'контраст бейджей >=4,5 '+tag);
   ok(await p.locator('.hcpast,.hchand,.day-events,#coachfab').count()===0,'нет старых отметок, списка событий и капсулы '+tag);
-  ok(await p.locator('.hwd-free').count()===1&&await p.locator('.hweek-free').innerText()==='🍕 свободный день','пицца в дне и легенде '+tag);
+  ok(СВОБ_В_НЕДЕЛЕ?(await p.locator('.hwd-free').count()===1&&await p.locator('.hweek-free').innerText()==='🍕 свободный день'):(await p.locator('.hwd-free,.hweek-free').count()===0),'пицца в дне и легенде '+(СВОБ_В_НЕДЕЛЕ?'':'(пн: день прошлой недели — пиццы нет) ')+tag);
   ok(await p.locator('.vzsvl').count()>0&&await p.locator('.vzwet').count()>0&&await p.locator('.free-key').innerText()==='┆ свободный день'&&await p.locator('.water-key').innerText()==='◌ утро после него — вода, не в среднем','легенда совпадает с видимыми отметками графика '+tag);
   ok(await p.evaluate(()=>{const a=document.querySelector('.vz-today').getBoundingClientRect(),svg=document.querySelector('.vzsvg svg').getBoundingClientRect();return Math.abs(a.right-svg.right)<4&&[...document.querySelectorAll('.vzsvl')].every(e=>e.getBoundingClientRect().bottom<a.top)}),'сегодня справа и отдельно от вертикалей '+tag);
   const bb=await bounds(p),cc=await contrast(p);ok(!bb.length&&!cc.failures.length,'главная: контраст и границы '+tag+' '+JSON.stringify({bb,failures:cc.failures}));

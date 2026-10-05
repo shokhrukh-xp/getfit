@@ -11,6 +11,9 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  if(state==='мало замеров')o.meas=[M.замеры()[0]];
  if(state==='утро')Object.assign(o,{time:'08:10',day:{meals:[],kcal:0,prot:0},score:null});
  if(state==='новичок')Object.assign(o,{newbie:true,day:null,score:null,meas:[]});
+ // 05.10: строка «Зал» есть только в день зала по расписанию — в понедельник
+ // стенд падал. Зал каждый день, как в shot-samochuvstvie: проверка не зависит от дня недели.
+ await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({0:1,1:1,2:1,3:1,4:1,5:1,6:1}))}catch(e){}});
  const err=await M.поднять(p,o);const label=theme+'/'+width+'/'+state;
  const d=await p.evaluate(()=>{
   const q=s=>document.querySelector(s),all=s=>[...document.querySelectorAll(s)],r=e=>e.getBoundingClientRect();
