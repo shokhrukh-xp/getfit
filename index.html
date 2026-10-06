@@ -2851,6 +2851,30 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 .hbtime.hbplan text{fill:var(--muted);font-weight:500}
 .hctk{stroke:var(--dim);stroke-width:1.5;stroke-linecap:round}
 .hb:focus-visible{outline:none}.hb:focus-visible .hbcut{stroke:var(--accent);stroke-width:3}
+/* 06.10 · раскрытый кружок дуги: поверх часов, дуга под пеленой */
+.hbx{position:absolute;left:0;right:0;top:0;min-height:100%;z-index:6;display:flex;align-items:center;justify-content:center;padding:6px 0}
+.hbx::before{content:"";position:absolute;inset:0;background:var(--bg);opacity:.86}
+.hbx-card{position:relative;width:min(286px,calc(100% - 24px));background:var(--card-solid);border:.5px solid var(--line-soft);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);padding:12px 12px 10px;text-align:center}
+.hbx-c{--d:clamp(72px,24vw,96px);width:var(--d);height:var(--d);margin:0 auto 8px;border-radius:50%;overflow:hidden;background:var(--field);
+  border:1.5px solid var(--line);display:grid;place-items:center}
+.hbx-c img{width:100%;height:100%;object-fit:cover;display:block}
+.hbx-c svg{width:44%;height:44%;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hbx-c b{font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.hbx-gym .hbx-c,.hbx-gymon .hbx-c{background:var(--prime);border:none}
+.hbx-gym .hbx-c svg,.hbx-gymon .hbx-c svg{stroke:var(--on-prime)}
+.hbx-w .hbx-c{border:2px solid var(--done)}
+.hbx-t{display:block;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.hbx-s{margin:3px 0 0;font-size:13px;color:var(--muted);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hbx-n{margin:3px 0 0;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.hbx-a{display:flex;gap:8px;margin-top:10px}
+.hbx-a button{height:44px;border:none;border-radius:14px;font:inherit;display:grid;place-items:center}
+.hbx-nav{flex:0 0 44px;background:var(--field);color:var(--text)}
+.hbx-nav svg,.hbx-x svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.hbx-nav:disabled{opacity:.35}
+.hbx-go{flex:1;background:var(--prime);color:var(--on-prime);font-weight:700;font-size:15px}
+.hbx-x{position:absolute;top:4px;right:4px;width:44px;height:44px;border:none;background:none;color:var(--muted);display:grid;place-items:center;border-radius:14px}
+.hbx button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .hwd-dots .hwd-free{font-size:15px;line-height:18px}
 .hwd-dots{min-height:18px}
 .hweek-legend{flex-wrap:wrap}
@@ -9561,6 +9585,7 @@ function plural(n,forms){
 }
 function goPage(p){
   if(PAGES.indexOf(p)<0) p=PAGES[0];
+  if(p!=='home') hbxClose(false);   /* раскрытый кружок дуги не ждёт возврата */
   /* режим «только питание»: зала нет ни на экране, ни в адресах */
   if(TABOF[p]==='gym' && foodOnly()) p='home';
   PAGES.forEach(function(x){
@@ -10659,9 +10684,11 @@ function hcEvents(){
   var now=new Date(), nowH=now.getHours()+now.getMinutes()/60, d=HOME.day||{}, ev=[];
   (d.meals||[]).forEach(function(m){
     var h=hcH(m.t); if(h==null) return;
-    ev.push({h:h, time:hcHM(h), cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food'});
+    ev.push({h:h, time:hcHM(h), cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food',
+      key:'m'+(m.id!=null?m.id:String(m.t)), src:m});
   });
-  (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, time:hcHM(h), cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food'}); });
+  (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, time:hcHM(h), cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food',
+    key:'a'+(a.id!=null?a.id:String(a.t)), src:a}); });
   /* зал: закрытая тренировка стоит на времени старта; идущая — тоже, если старт известен */
   var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null, конец=false;
   if(закрыт || pr.done>0){
@@ -10679,7 +10706,8 @@ function hcEvents(){
   if(закрыт || pr.done>0){
     var gh = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : nowH;
     ev.push({h:gh, time:t0&&!isNaN(t0)?hcHM(gh):'', cls: закрыт?'gym':'gymon',
-      lab:((t0&&!isNaN(t0))?hcHM(gh)+' · ':'')+(конец?'зал · сохранено':(закрыт?'зал':'зал идёт')), go:'gym'});
+      lab:((t0&&!isNaN(t0))?hcHM(gh)+' · ':'')+(конец?'зал · сохранено':(закрыт?'зал':'зал идёт')), go:'gym',
+      key:'gym', src:{закрыт:закрыт, конец:конец, done:pr.done, total:pr.total}});
   }
   /* «+» стоит там, когда пора есть по рекомендации, а не когда сменилось окно.
      Если норма уже закрыта — приёма не советуем вовсе: иначе часы зовут ужинать,
@@ -10697,7 +10725,8 @@ function hcEvents(){
      внутри полукруга упиралось бы в число */
   var wt=(FOOD.meas||[]).filter(function(m){ return m.date===TODAY && m.w; })[0];
   if(wt){ var ct=wt.created?new Date(+wt.created):null;
-    ev.push({h:(ct&&!isNaN(ct))?ct.getHours()+ct.getMinutes()/60:7.5, cls:'w', txt:fmtKg(+wt.w), go:'food'}); }
+    ev.push({h:(ct&&!isNaN(ct))?ct.getHours()+ct.getMinutes()/60:7.5, cls:'w', txt:fmtKg(+wt.w), go:'food',
+      key:'w', src:wt, at:(ct&&!isNaN(ct))?hcHM(ct.getHours()+ct.getMinutes()/60):''}); }
   ev.sort(function(a,b){ return a.h-b.h; });
   /* окно дуги: по умолчанию 06→22, раздвигается под то, что реально было */
   var н=6, к=22;
@@ -10722,7 +10751,51 @@ function hcEvents(){
       чужое фото, соседние сливаются в одну «09:53–10:28» (его выбор кнопкой:
       «веером внахлёст», одна плашка на группу). Плановые «≈» отдельно от
       фактических; мешает вес, слова окна или число в центре — плашка над фото. */
-var HC_FAN=7;
+/* 06.10, его слова: «на дуге фото и картинки накладываются друг на друга —
+   это плохо. Нужно, чтобы их было видно всегда. Если записей будет слишком
+   много — может, просто менять размер кружочков? А при нажатии раскрывать
+   кружочек с его данными». На скриншоте зал 06:57 и завтрак 08:19: между
+   ними 15°, а двум кружкам r=20 нужно 20°; веер выше разводил только почти
+   одновременные (ближе 7°), остальное шло внахлёст. Теперь:
+   1) кружки не перекрываются никогда: между центрами ≥ r1 + r2 + HC_GAP;
+   2) раздвигаем как можно меньше (наименьшие квадраты сдвигов, PAV): среднее
+      каждой раздвинутой группы остаётся на среднем её настоящем времени —
+      правило «угол = время» из пункта 2 выше, только для всех соседей;
+      плановые «≈» и вес уступают место фактам (hcSoft, вес 0,3);
+   3) если группе всё равно пришлось уехать от своих часов дальше HC_TOL —
+      кружки ЭТОЙ группы мельчают шагом до HC_RMIN: тесно — значит мельче,
+      остальной день не трогаем;
+   4) время — плашкой, как прежде; нажатие раскрывает кружок (hbxOpen). */
+var HC_R0=20, HC_RMIN=11, HC_GAP=4, HC_TOL=40/60;
+function hcPav(y,w){
+  var st=[], i, k;
+  for(i=0;i<y.length;i++){
+    st.push({v:y[i], w:w[i], n:1});
+    while(st.length>1 && st[st.length-2].v>st[st.length-1].v){
+      var b=st.pop(), a=st.pop(), ww=a.w+b.w;
+      st.push({v:(a.v*a.w+b.v*b.w)/ww, w:ww, n:a.n+b.n});
+    }
+  }
+  var q=[], blk=[]; st.forEach(function(b,bi){ for(k=0;k<b.n;k++){ q.push(b.v); blk.push(bi); } });
+  return {q:q, blk:blk};
+}
+/* угол между центрами соседей, чтобы между кружками остался зазор */
+function hcSep(a,b){ var c=(a.radius+b.radius+HC_GAP)/(2*HC.R); return 2*Math.asin(Math.min(1,c))*180/Math.PI; }
+/* p[i+1]−p[i] ≥ sep: подстановка q = p − D сводит к монотонной регрессии;
+   края дуги — якоря с огромным весом */
+function hcPlace(ev){
+  var n=ev.length, D=[0], y=[-90], w=[1e6], i;
+  for(i=1;i<n;i++) D[i]=D[i-1]+hcSep(ev[i-1],ev[i]);
+  for(i=0;i<n;i++){ y.push(ev[i].a0-D[i]); w.push(hcSoft(ev[i])?0.3:1); }
+  y.push(90-D[n-1]); w.push(1e6);
+  var f=hcPav(y,w);
+  for(i=0;i<n;i++){ ev[i].angle=f.q[i+1]+D[i]; ev[i].blk=f.blk[i+1]; }
+  return D[n-1];
+}
+function hcRad(e,s){ return e.cls==='w' ? Math.min(13, HC_R0*s) : HC_R0*s; }
+/* «мягкие» — без точного времени на дуге: план «≈» и вес (у веса нет плашки
+   времени). Они уступают место фактам и сами кружки не мельчат */
+function hcSoft(e){ return e.cls==='next'||e.cls==='todo'||e.cls==='w'; }
 function hcSvgW(){
   var sv=document.querySelector('.hclk-svg'), w=sv?sv.getBoundingClientRect().width:0;
   if(w) return w;
@@ -10730,24 +10803,21 @@ function hcSvgW(){
 }
 function hcLayout(ev){
   HC.RY=HC.R; HC.cy=214; HC.H=250;
-  var R=HC.R, rr=ev.length>7?16:20, k;
-  ev.forEach(function(e){ e.radius=e.cls==='w'?13:rr; e.angle=hcA(e.h); });
-  /* веер: кучки почти одновременных событий (по НАСТОЯЩЕМУ времени, один
-     проход), среднее кучки = среднее времени. Соседи веера не двигаются —
-     если он их задел, это внахлёст, а не сдвиг часов. */
-  for(var i=0;i<ev.length;){
-    var j=i; while(j+1<ev.length && hcA(ev[j+1].h)-hcA(ev[j].h)<HC_FAN-0.01) j++;
-    if(j>i){
-      var exact=0; for(k=i;k<=j;k++) exact+=hcA(ev[k].h); exact/=(j-i+1);
-      var mid=(j-i)*HC_FAN/2;
-      for(k=i;k<=j;k++) ev[k].angle=exact+(k-i)*HC_FAN-mid;
-    }
-    i=j+1;
+  var R=HC.R, n=ev.length, smin=HC_RMIN/HC_R0, tol=HC_TOL/Math.max(1,HCW[1]-HCW[0])*180;
+  ev.forEach(function(e){ e.a0=hcA(e.h); e.s=1; e.radius=hcRad(e,1); e.angle=e.a0; });
+  for(var g=0; n && g<200; g++){
+    ev.forEach(function(e){ e.radius=hcRad(e,e.s); });
+    var span=hcPlace(ev);
+    /* больше полукруга не помещается — мельчают все разом (день на 9+ записей) */
+    var sMin=ev.reduce(function(m,e){ return Math.min(m,e.s); },1);
+    if(span>180 && sMin>0.3){ ev.forEach(function(e){ e.s=Math.max(0.3,e.s*0.95); }); continue; }
+    var worst=-1, wd=tol+0.01;
+    ev.forEach(function(e,i){ var d=Math.abs(e.angle-e.a0); if(!hcSoft(e) && d>wd && e.s>smin+1e-6){ wd=d; worst=i; } });
+    if(worst<0) break;
+    var blk=ev[worst].blk;
+    ev.forEach(function(e){ if(e.blk===blk) e.s=Math.max(smin, Math.round((e.s-0.05)*100)/100); });
   }
-  /* край окна: веер не уходит за начало и конец дуги */
-  var lo=ev.length?ev[0].angle:0, hi=ev.length?ev[ev.length-1].angle:0, sh=0;
-  if(lo<-90) sh=-90-lo; else if(hi>90) sh=90-hi;
-  ev.forEach(function(e){ e.angle+=sh; var a=e.angle*Math.PI/180; e.x=HC.cx+R*Math.sin(a); e.y=HC.cy-R*Math.cos(a); });
+  ev.forEach(function(e){ e.radius=Math.round(e.radius*10)/10; var a=e.angle*Math.PI/180; e.x=HC.cx+R*Math.sin(a); e.y=HC.cy-R*Math.cos(a); });
   /* плашки */
   HC.lw=hcSvgW(); var fu=10.5*HC.W/HC.lw, cw=0.6*fu, BH=17;
   var B=[]; ev.forEach(function(e,i){ if(e.time) B.push({m:[i], plan:e.time.charAt(0)==='≈', up:false}); });
@@ -10755,12 +10825,15 @@ function hcLayout(ev){
   var place=function(b){
     var t=txt(b), w=Math.ceil(t.length*cw+12), x=0;
     b.m.forEach(function(i){ x+=ev[i].x; }); x/=b.m.length;
-    var y=b.up ? Math.min.apply(null,b.m.map(function(i){ return ev[i].y-ev[i].radius; }))-BH+5
-               : Math.max.apply(null,b.m.map(function(i){ return ev[i].y+ev[i].radius; }))-7;
-    b.t=t; b.w=w; b.h=BH; b.x=Math.max(w/2+2, Math.min(HC.W-w/2-2, x)); b.y=y;
+    /* плашка заходит на своё фото на треть-четверть радиуса (у r=20 — 7 и 5,
+       как раньше): у мелкого кружка она не закрывает половину фото */
+    var y=b.up ? Math.min.apply(null,b.m.map(function(i){ return ev[i].y-ev[i].radius+Math.min(5,0.25*ev[i].radius); }))-BH
+               : Math.max.apply(null,b.m.map(function(i){ return ev[i].y+ev[i].radius-Math.min(7,0.35*ev[i].radius); }));
+    b.t=t; b.w=w; b.h=BH; b.x=Math.max(w/2+2, Math.min(HC.W-w/2-2, x+(b.dx||0))); b.y=y;
   };
   var rr2=function(a,b){ return a.x-a.w/2<b.x+b.w/2+2 && a.x+a.w/2+2>b.x-b.w/2 && a.y<b.y+b.h+2 && a.y+a.h+2>b.y; };
-  var hitB=function(b,e){ var r=e.radius+3, nx=Math.max(b.x-b.w/2, Math.min(e.x, b.x+b.w/2)), ny=Math.max(b.y, Math.min(e.y, b.y+b.h));
+  /* +1 к вырезу: обводка плашки (06.10, на 340 px задевала «+» на полпикселя) */
+  var hitB=function(b,e){ var r=e.radius+4, nx=Math.max(b.x-b.w/2, Math.min(e.x, b.x+b.w/2)), ny=Math.max(b.y, Math.min(e.y, b.y+b.h));
     return (nx-e.x)*(nx-e.x)+(ny-e.y)*(ny-e.y) < (r-0.5)*(r-0.5); };
   /* что плашке закрывать нельзя: слова «утро/вечер» и число в центре */
   var стоп=[{x:HC.cx-R, y:HC.cy+15, w:40, h:16},{x:HC.cx+R, y:HC.cy+15, w:40, h:16},{x:HC.cx, y:150, w:140, h:100}];
@@ -10789,6 +10862,9 @@ function hcLayout(ev){
            времени или плашке уже некуда уйти (над фото тоже занято) */
         if(nb>=0 && B[nb].plan===b.plan && Math.abs(nb-a1)===1 && (b.up || рядом(B[Math.min(a1,nb)],B[Math.max(a1,nb)]))){ слить(Math.min(a1,nb)); fix=true; }
         else if(!b.up){ b.up=true; fix=true; }
+        /* 06.10: и над фото задевает чужой кружок — отодвигаем плашку вбок от
+           него, не дальше 40 единиц (на 320 px «06:57–08:19» задевала «+») */
+        else if(Math.abs(b.dx||0)<40){ b.dx=(b.dx||0)+(b.x>=ev[q].x?4:-4); fix=true; }
       }
       if(fix) break;
       if(!b.up && стоп.some(function(z){ return rr2(b,z); })){ b.up=true; fix=true; }
@@ -10798,7 +10874,8 @@ function hcLayout(ev){
   B.forEach(place);
   ev.badges=B;
 }
-document.addEventListener('keydown',function(e){if(e.target.matches && e.target.matches('.hb') && (e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
+document.addEventListener('keydown',function(e){if(e.target.matches && e.target.matches('.hb') && (e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}
+  else if(e.key==='Escape' && typeof HC==='object' && HC && HC.openKey){ e.preventDefault(); hbxClose(true); }});
 function hcBadgeSize(){
   var svg=document.querySelector('.hclk-svg');if(!svg)return;
   var w=svg.getBoundingClientRect().width;
@@ -10817,12 +10894,17 @@ window.addEventListener('resize',hcBadgeSize);
 if(document.fonts)document.fonts.ready.then(hcBadgeSize);
 function hcBub(e, i){
   var r = e.radius, x=e.x.toFixed(1), y=e.y.toFixed(1);
-  var tap = e.go ? ' data-hgo="'+e.go+'"' : (e.act ? ' data-hact="'+e.act+'"' : '');
-  /* На 320 px круг 56 SVG-единиц даёт >=44 px касания, включая малое фото. */
-  var h='<g class="hb hb-'+e.cls+'"'+tap+' role="button" tabindex="0" data-h="'+e.h.toFixed(3)+'" aria-label="'+esc(e.lab||('Вес '+e.txt))+'" transform="translate('+x+' '+y+')">'+
+  /* 06.10: запись по нажатию раскрывается (data-hx — ключ записи, hbxOpen);
+     «+» и «−» по-прежнему сразу ведут записывать еду */
+  var tap = e.key ? ' data-hx="'+esc(e.key)+'"' : (e.act ? ' data-hact="'+e.act+'"' : '');
+  /* На 320 px круг 56 SVG-единиц даёт >=44 px касания, включая малое фото.
+     Соседние круги касания могут заходить друг на друга — выбирает ближайший
+     центр (hbNearest), а не тот, что лёг сверху. */
+  var h='<g class="hb hb-'+e.cls+'"'+tap+' role="button" tabindex="0" data-h="'+e.h.toFixed(3)+'" data-r="'+r+'" aria-label="'+esc(e.lab||('Вес '+e.txt))+'" transform="translate('+x+' '+y+')">'+
         (tap ? '<circle class="hbtap" r="28" fill="transparent" pointer-events="all"/>' : '')+
         '<circle r="'+(r+3)+'" class="hbcut"/>';
-  var ico=function(d){ return '<g class="hbi" transform="translate(-9.6 -9.6) scale(.8)"><path d="'+d+'"/></g>'; };
+  /* значок мельчает вместе с кружком (у r=20 — прежние 0,8) */
+  var is=0.8*Math.min(1,(r+2)/22), ico=function(d){ return '<g class="hbi" transform="translate('+(-12*is).toFixed(1)+' '+(-12*is).toFixed(1)+') scale('+is.toFixed(2)+')"><path d="'+d+'"/></g>'; };
   if(e.cls==='meal'){
     if(e.img) h+='<clipPath id="hbc'+i+'"><circle r="'+r+'"/></clipPath><circle r="'+r+'" class="hbph"/>'+
                  '<image '+photoAttr(e.img,true)+' x="-'+r+'" y="-'+r+'" width="'+(2*r)+'" height="'+(2*r)+'" preserveAspectRatio="xMidYMid slice" clip-path="url(#hbc'+i+')"/><circle r="'+r+'" class="hbring"/>';
@@ -10836,7 +10918,7 @@ function hcBub(e, i){
   } else if(e.cls==='todo'){
     h+='<circle r="'+(r-1)+'" class="hbbg"/><g class="hbi"><path d="M-4 0h8"/></g>';
   } else if(e.cls==='w'){
-    h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5">'+esc(e.txt)+'</text>';
+    h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5"'+(r<13?' transform="scale('+(r/13).toFixed(2)+')"':'')+'>'+esc(e.txt)+'</text>';
   }
   return h+'</g>';
 }
@@ -10869,9 +10951,11 @@ function homeClock(){
        '<text x="'+b.x.toFixed(1)+'" y="'+(b.y+12).toFixed(1)+'">'+esc(b.t)+'</text></g>';
   });
   s+='</svg>';
+  /* раскрытый кружок переживает перерисовку главной (данные пришли с сервера) */
+  HC.ev=E.ev; var bx=hbxHtml();
   var c;
   if(homeСвоб()) return '<div class="hclk">'+s+'<div class="hctr"><b class="hfree">свободный<br>день</b><u>без записи и оценки</u>'+
-    '<i class="hcl">завтра — обычная норма</i></div></div><p class="day-status hnext">'+esc(homeNextLine(E))+'</p>';
+    '<i class="hcl">завтра — обычная норма</i></div>'+bx+'</div><p class="day-status hnext">'+esc(homeNextLine(E))+'</p>';
   if(!t.kcal) c='<b>'+hNum(kc)+'</b><u>ккал съедено</u><i>заполни профиль — будет норма</i>';
   else {
     var rem=t.kcal-kc, rp=Math.round((t.prot||0)-pt);
@@ -10903,7 +10987,118 @@ function homeClock(){
   }
   var line = (!sc||sc.r==null) ? 'оценка — с первой записью'+(next?' · '+esc(next):'')
     : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+esc(tip)+'</em>';
-  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div></div><p class="day-status hnext">'+line+'</p>';
+  return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div>'+bx+'</div><p class="day-status hnext">'+line+'</p>';
+}
+/* 06.10, его слова: «при нажатии раскрывать кружочек с его данными».
+   Раскрытый кружок — то же фото (или значок) крупно, над дугой, и данные
+   записи. Листается ‹ › по записям дня (на тесной дуге мелкий кружок трудно
+   попасть пальцем — соседа проще долистать). «Подробнее» ведёт туда, где
+   запись живёт: приём — карточка приёма на «Еде», зал — «Зал». */
+function hbxList(){ return (HC.ev||[]).filter(function(e){ return !!e.key; }); }
+function hbxHtml(){
+  if(!HC.openKey) return '';
+  var L=hbxList(), i=-1; L.forEach(function(e,k){ if(e.key===HC.openKey) i=k; });
+  if(i<0){ HC.openKey=null; return ''; }
+  var e=L[i], d=HOME.day||{}, p=(d.targets||{}).parts||{}, m=e.src||{};
+  var ico=function(path){ return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>'; };
+  var cap=function(x){ x=String(x||''); return x.charAt(0).toUpperCase()+x.slice(1); };
+  var big='', title='', sub='', nums='', go='Подробнее';
+  if(e.cls==='meal'){
+    big = e.img ? '<img '+photoAttr(e.img,false)+' alt="">' : ico('M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8');
+    title = e.time+' · '+cap(m.kind||'приём');
+    sub = m.text||'';
+    nums = Math.round(+m.kcal||0)+' ккал · белок '+Math.round(+m.prot||0)+' г';
+  } else if(e.cls==='gym'||e.cls==='gymon'){
+    big = ico('M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10');
+    title = (e.time ? e.time+' · ' : '')+(m.закрыт ? 'Зал' : 'Зал идёт');
+    if(m.конец) sub='время — когда тренировка сохранена';
+    if(!m.закрыт && m.total) nums='сделано '+m.done+' из '+m.total;
+    else if(p.gym) nums='+'+Math.round(p.gym)+' ккал к норме'+(p.gymMin?' · '+Math.round(p.gymMin)+' мин':'');
+    go='Открыть зал';
+  } else if(e.cls==='act'){
+    big = ico('M3 12h4l2.5-6 5 12 2.5-6h4');
+    title = e.time+' · '+cap(m.kind||'занятие');
+    if(m.min) sub = Math.round(+m.min)+' мин';
+    if(m.kcal) nums = '+'+Math.round(+m.kcal)+' ккал к норме';
+  } else if(e.cls==='w'){
+    big = '<b>'+esc(e.txt)+'</b>';
+    title = (e.at ? e.at+' · ' : '')+'Вес';
+    var вчера=(FOOD.meas||[]).filter(function(x){ return x.w && x.date<TODAY; })
+      .sort(function(a,b){ return a.date<b.date?1:-1; })[0];
+    nums = esc(e.txt)+' кг'+(вчера ? ' · '+(вчера.date===ymd(new Date(new Date(TODAY+'T12:00:00').getTime()-864e5))?'вчера':'прошлый раз')+' '+fmtKg(+вчера.w) : '');
+  }
+  return '<div class="hbx hbx-'+e.cls+'">'+
+    '<div class="hbx-card" role="dialog" aria-label="'+esc(title)+'">'+
+      '<button type="button" class="hbx-x" data-hbx-close aria-label="Закрыть">'+ico('M6 6l12 12M18 6L6 18')+'</button>'+
+      '<div class="hbx-c">'+big+'</div>'+
+      '<b class="hbx-t">'+esc(title)+'</b>'+
+      (sub ? '<p class="hbx-s">'+esc(sub)+'</p>' : '')+
+      (nums ? '<p class="hbx-n">'+nums+'</p>' : '')+
+      '<div class="hbx-a">'+
+        '<button type="button" class="hbx-nav" data-hbx-step="-1" aria-label="Запись раньше"'+(i===0?' disabled':'')+'>'+ico('M15 6l-6 6 6 6')+'</button>'+
+        '<button type="button" class="hbx-go" data-hbx-go>'+go+'</button>'+
+        '<button type="button" class="hbx-nav" data-hbx-step="1" aria-label="Запись позже"'+(i===L.length-1?' disabled':'')+'>'+ico('M9 6l6 6-6 6')+'</button>'+
+      '</div>'+
+    '</div></div>';
+}
+function hbxPut(){
+  var clk=document.querySelector('#homebody .hclk'); if(!clk) return null;
+  var old=clk.querySelector('.hbx'); if(old) old.remove();
+  clk.insertAdjacentHTML('beforeend', hbxHtml());
+  return clk.querySelector('.hbx');
+}
+function hbxOpen(key, from){
+  HC.openKey=key;
+  var box=hbxPut(); if(!box) return;
+  var c=box.querySelector('.hbx-c'), card=box.querySelector('.hbx-card');
+  try{ box.querySelector('.hbx-go').focus({preventScroll:true}); }catch(e){}
+  /* кружок растёт со своего места на дуге */
+  var cut=from && from.querySelector('.hbcut');
+  if(cut && c && c.animate && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){
+    var a=cut.getBoundingClientRect(), b=c.getBoundingClientRect();
+    if(a.width && b.width){
+      c.animate([{transform:'translate('+((a.left+a.width/2)-(b.left+b.width/2)).toFixed(1)+'px,'+((a.top+a.height/2)-(b.top+b.height/2)).toFixed(1)+'px) scale('+(a.width/b.width).toFixed(3)+')'},
+                 {transform:'none'}], {duration:240, easing:'cubic-bezier(.2,.8,.2,1)'});
+      card.animate([{opacity:0},{opacity:1}], {duration:160, easing:'ease-out'});
+    }
+  }
+}
+function hbxClose(back){
+  if(typeof HC!=='object' || !HC) return;
+  var key=HC.openKey; HC.openKey=null;
+  var box=document.querySelector('#homebody .hbx'); if(box) box.remove();
+  if(back && key) Array.prototype.forEach.call(document.querySelectorAll('#homebody .hclk-svg .hb[data-hx]'), function(g){
+    if(g.getAttribute('data-hx')===key) try{ g.focus({preventScroll:true}); }catch(e){} });
+}
+function hbxStep(dir){
+  var L=hbxList(), i=-1; L.forEach(function(e,k){ if(e.key===HC.openKey) i=k; });
+  var n=L[i+dir]; if(i<0 || !n) return;
+  HC.openKey=n.key;
+  var box=hbxPut(); if(!box) return;
+  var b=box.querySelector('[data-hbx-step="'+dir+'"]:not([disabled])')||box.querySelector('.hbx-go');
+  try{ b.focus({preventScroll:true}); }catch(e){}
+}
+function hbxGo(){
+  var e=hbxList().filter(function(x){ return x.key===HC.openKey; })[0];
+  hbxClose(false); if(!e) return;
+  if(e.cls==='meal' && e.src){
+    /* приём сегодняшний — «Еду» открываем на сегодня, иначе правка уйдёт в другой день */
+    if(FOOD.date){ FOOD.date=null; FOOD.day=null; }
+    goPage('food'); openMealView(e.src); return;
+  }
+  goPage(e.go);
+}
+/* какой кружок нажат: ближайший к пальцу край, а не верхний слой —
+   круги касания соседей (r=28) на тесной дуге заходят друг на друга */
+function hbNearest(ev, hb){
+  if(!ev.clientX && !ev.clientY) return hb;   /* Enter/пробел — пузырь в фокусе */
+  var best=hb, bd=1e9;
+  Array.prototype.forEach.call(document.querySelectorAll('#homebody .hclk-svg .hb[data-hx], #homebody .hclk-svg .hb[data-hact]'), function(g){
+    var c=g.querySelector('.hbcut'); if(!c) return; var r=c.getBoundingClientRect();
+    var dx=ev.clientX-(r.left+r.width/2), dy=ev.clientY-(r.top+r.height/2), dd=Math.sqrt(dx*dx+dy*dy)-r.width/2;
+    if(dd<bd){ bd=dd; best=g; }
+  });
+  return best;
 }
 /* неделя одной строкой: точка — попал ли день в коридор; будущие дни пустые.
    Нажатие открывает этот день на «Еде». */
@@ -11469,6 +11664,18 @@ function renderHome(){
       if(TG && TG.openTelegramLink) TG.openTelegramLink(BOTLINK); else window.open(BOTLINK,'_blank');
       haptic('medium'); return;
     }
+    /* 06.10: раскрытый кружок дуги (hbxOpen) */
+    if(e.target.closest('.hbx')){
+      if(e.target.closest('[data-hbx-close]')){ hbxClose(true); haptic('light'); return; }
+      var шаг=e.target.closest('[data-hbx-step]'); if(шаг){ if(!шаг.disabled){ hbxStep(+шаг.dataset.hbxStep); haptic('light'); } return; }
+      if(e.target.closest('[data-hbx-go]')){ hbxGo(); haptic('light'); return; }
+      if(!e.target.closest('.hbx-card')) hbxClose(true);   /* мимо карточки — свернуть */
+      return;
+    }
+    var пуз=e.target.closest('.hclk-svg .hb');
+    if(пуз){ var бл=hbNearest(e, пуз);
+      if(бл.hasAttribute('data-hx')){ hbxOpen(бл.getAttribute('data-hx'), бл); haptic('light'); return; }
+      if(бл.hasAttribute('data-hact')){ openCoach(); haptic('light'); return; } }
     var hd=e.target.closest('[data-hday]');
     if(hd){ if(hd.disabled) return; var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
     /* 17.09, его слова: «плюсик на дуге перестал работать, я хотел добавить

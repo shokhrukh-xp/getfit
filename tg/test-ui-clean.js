@@ -20,7 +20,11 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  await check('раскрытое тело');await p.locator('[data-vzv="fat"]').click();await p.locator('[data-vzv="w"]').click();
  // 04.10, вечер: плашка — у группы (веер почти одновременных), фото стоят на своём времени.
  ok(await p.locator('.hbtime').allTextContents().then(xs=>['09:53','10:26','10:28','14:03','14:48'].every(tm=>xs.some(x=>{const [a,z]=x.split('–');return tm>=a&&tm<=(z||a)}))),'плашки сохраняют все времена после обновления главной');
- await p.locator('.hb-meal').last().click();ok(await p.locator('#p-food').isVisible(),'событие открывает еду');
+ // 06.10: нажатие раскрывает кружок; «Подробнее» ведёт в карточку приёма на «Еде».
+ {await p.locator('.hclk').scrollIntoViewIfNeeded();const r=await p.locator('.hb-meal').last().locator('.hbcut').boundingBox();await p.mouse.click(r.x+r.width/2,r.y+r.height/2);}
+ ok(await p.locator('.hbx .hbx-t').innerText().then(t=>t.startsWith('14:48')),'нажатие раскрывает кружок с его временем');
+ await p.locator('.hbx-go').click();ok(await p.locator('#p-food').isVisible()&&await p.locator('#mealm.show').isVisible(),'«Подробнее» открывает приём на «Еде»');
+ await p.locator('#mealclose').click();await p.waitForTimeout(200);
  const rows=await p.locator('#fweek .fd').evaluateAll(es=>es.map(e=>({date:e.querySelector('u').textContent,fact:e.querySelector('.week-fact').textContent,target:e.querySelector('.week-target').textContent})));
  ok(rows.length===7&&rows[0].fact==='2050'&&rows[0].target==='2110','даты, факт и норма отдельными колонками');
  await check('еда');await p.locator('[data-zseg="eat"]:visible').click();await p.locator('[data-eseg="day"]').click();await p.waitForTimeout(400);

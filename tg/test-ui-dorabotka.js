@@ -32,24 +32,31 @@ async function badgeContrast(p){return p.evaluate(()=>{
 async function clock(p){return p.evaluate(()=>{
  const svg=document.querySelector('.hclk-svg'),w0=+svg.dataset.w0,w1=+svg.dataset.w1;
  const bub=[...document.querySelectorAll('.hb')].map((g,ix)=>{const m=g.getAttribute('transform').match(/translate\(([\d.-]+) ([\d.-]+)\)/),h=+g.dataset.h;
-  return {ix,lab:g.getAttribute('aria-label'),h,a:Math.atan2(+m[1]-175,214-+m[2])*180/Math.PI,ex:-90+(h-w0)/(w1-w0)*180}});
+  return {ix,lab:g.getAttribute('aria-label'),h,x:+m[1],y:+m[2],r:+g.dataset.r,a:Math.atan2(+m[1]-175,214-+m[2])*180/Math.PI,ex:-90+(h-w0)/(w1-w0)*180}});
  const badges=[...document.querySelectorAll('.hbtime')].map(e=>({t:e.textContent,m:String(e.dataset.m).split(',').map(Number)}));
- return {bub,badges};
+ return {bub,badges,w0,w1};
 })}
+// 06.10, его слова: «на дуге фото и картинки накладываются друг на друга — это
+// плохо; нужно, чтобы их было видно всегда; если записей много — менять размер
+// кружочков». Правило теперь: кружки не касаются друг друга (зазор ≥ 3,5 SVG);
+// раздвинуты как можно меньше — кружок полного размера стоит не дальше 40 мин
+// от своего времени; дальше разрешено только самому мелкому (r = 11). План «≈» и
+// вес (без плашки времени) уступают место фактам — для них правило 40 мин не действует.
+function tolDeg(c){return 40/60/(c.w1-c.w0)*180+0.6}
 function proportional(c){
- const s=c.bub.slice().sort((a,b)=>a.ex-b.ex),bad=[];
- for(let i=0;i<s.length;){let j=i;while(j+1<s.length&&s[j+1].ex-s[j].ex<7)j++;
-  const g=s.slice(i,j+1),ma=g.reduce((x,y)=>x+y.a,0)/g.length,me=g.reduce((x,y)=>x+y.ex,0)/g.length;
-  if(Math.abs(ma-me)>0.6)bad.push('группа '+g.map(x=>x.lab).join(',')+' '+ma.toFixed(1)+'/'+me.toFixed(1));
-  g.forEach(x=>{if(Math.abs(x.a-x.ex)>(g.length===1?0.6:3.5*(g.length-1)+0.6))bad.push(x.lab+' '+x.a.toFixed(1)+'/'+x.ex.toFixed(1))});
-  i=j+1}
+ const s=c.bub.slice().sort((a,b)=>a.ex-b.ex),bad=[],tol=tolDeg(c);
+ s.forEach((x,i)=>{
+  if(x.r>11.05&&!/^(≈|Вес)/.test(x.lab)&&Math.abs(x.a-x.ex)>tol)bad.push(x.lab+' r'+x.r+' '+x.a.toFixed(1)+'/'+x.ex.toFixed(1));
+  if(x.a<-90.5||x.a>90.5)bad.push('вне дуги '+x.lab);
+  s.slice(i+1).forEach(y=>{const d=Math.hypot(x.x-y.x,x.y-y.y);if(d<x.r+y.r+3.5)bad.push('наложение '+x.lab+' / '+y.lab+' '+d.toFixed(1))});
+ });
  const timed=c.bub.filter(x=>/^≈?\d\d:\d\d/.test(x.lab));
  timed.forEach(x=>{const own=c.badges.find(b=>b.m.indexOf(x.ix)>=0);if(!own)bad.push('нет плашки у '+x.lab);
   else{const tm=x.lab.match(/\d\d:\d\d/)[0],[a,z]=own.t.replace(/≈/g,'').split('–');if(tm<a||tm>(z||a))bad.push(x.lab+' вне плашки '+own.t)}});
  c.badges.forEach(b=>{if(!/^≈?\d\d:\d\d(–\d\d:\d\d)?$/.test(b.t))bad.push('формат '+b.t)});
  return bad;
 }
-module.exports={fixture,geometry,badgeContrast,clock,proportional};
+module.exports={fixture,geometry,badgeContrast,clock,proportional,tolDeg};
 if(require.main===module)(async()=>{const b=await chromium.launch();try{
  // Ревью 18:50: учитываем всю высоту центра, а не только число калорий.
  for(const theme of ['light','dark'])for(const state of ['обычный','плотный','свободный']){
@@ -73,7 +80,7 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
   const p=await b.newPage({viewport:{width,height:844}}),tag=theme+'/'+width,o=fixture(theme),err=await M.поднять(p,o);
   const g=await geometry(p),cl=await clock(p),pr=proportional(cl);
   ok(!pr.length,'фото на своём времени, как на стрелочных часах; плашки покрывают все времена '+tag+' '+JSON.stringify(pr)+' '+g.times.join('|'));
-  const обед=cl.bub.find(x=>/^14:48/.test(x.lab));ok(обед&&Math.abs(обед.a-обед.ex)<0.6&&обед.a<20,'обед 14:48 сразу за полуднем, не у 22:00 '+tag+' '+(обед&&обед.a.toFixed(1)));
+  const обед=cl.bub.find(x=>/^14:48/.test(x.lab));ok(обед&&Math.abs(обед.a-обед.ex)<=tolDeg(cl)&&обед.a<30,'обед 14:48 сразу за полуднем, не у 22:00 '+tag+' '+(обед&&обед.a.toFixed(1)));
   ok(!g.issues.length,'бейджи не пересекают фото, друг друга, число и часы '+tag+' '+JSON.stringify(g.issues));
   ok(g.font.every(v=>v>=10&&v<=11)&&g.targets.every(v=>v>=44),'шрифт 10–11 px и касание >=44 '+tag+' '+JSON.stringify({font:g.font,targets:g.targets}));
   ok(g.x.every((v,i)=>!i||v>g.x[i-1]),'хронологический порядок пузырей '+tag);
@@ -100,7 +107,12 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
   const pr=proportional(await clock(p));
   ok(!g.issues.length&&!pr.length,'плотная группа + планы: веер на своём времени, плашки без наложений '+theme+'/'+width+' '+JSON.stringify(g.issues)+' '+JSON.stringify(pr)+' '+g.times.join('|'));
   ok(!(await bounds(p)).length,'насыщенный день внутри экрана '+theme+'/'+width);
-  await p.locator('.hb-meal').first().focus();await p.keyboard.press('Enter');ok(await p.locator('#p-food').isVisible(),'пузырь доступен клавиатурой');
+  // 06.10: Enter раскрывает кружок, Esc сворачивает и возвращает фокус, Enter на «Подробнее» — в «Еду»
+  const активный=()=>p.evaluate(()=>document.activeElement?document.activeElement.getAttribute('class'):'');
+  await p.locator('.hb-meal').first().focus();await p.keyboard.press('Enter');
+  ok(await p.locator('.hbx').isVisible()&&/hbx-go/.test(await активный()),'пузырь раскрывается с клавиатуры '+theme+'/'+width);
+  await p.keyboard.press('Escape');ok(await p.locator('.hbx').count()===0&&/hb-meal/.test(await активный()),'Esc сворачивает, фокус снова на пузыре '+theme+'/'+width);
+  await p.keyboard.press('Enter');await p.keyboard.press('Enter');ok(await p.locator('#p-food').isVisible(),'пузырь доступен клавиатурой до «Еды» '+theme+'/'+width);
   await p.close();
  }
  for(const theme of ['light','dark'])for(const width of [320,390]){
