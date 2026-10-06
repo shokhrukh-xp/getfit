@@ -2134,7 +2134,7 @@ body.onb #picker .modalbox::before{display:none}
 .hb-gym .hbbg{fill:var(--prime);stroke:none} .hb-gym .hbi{stroke:var(--on-prime)}
 .hb-gymon .hbbg{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3} .hb-gymon .hbi{stroke:var(--accent)}
 .hb-next .hbbg{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3} .hb-next .hbi{stroke:var(--accent);stroke-width:2.2}
-.hb-todo .hbbg{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 3} .hb-todo .hbi{stroke:var(--dim)}
+.hb-todo .hbbg{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 3} .hb-todo .hbi{stroke:var(--dim)} .hb-todo .hbt{fill:var(--muted);font-weight:700}
 .hb-w .hbbg{stroke:var(--done);stroke-width:2}
 .hbt{fill:var(--text);font-size:9px;font-weight:800;text-anchor:middle;font-family:inherit}
 .hctr{position:absolute;left:20%;right:20%;top:65%;transform:translateY(-50%);text-align:center;pointer-events:none}
@@ -10649,26 +10649,44 @@ var HC={W:350,H:250,cx:175,cy:214,R:126};
    Интервал 3,5 ч и 4 приёма в день — ISSN Position Stand 2017 (20–40 г белка
    каждые 3–4 ч) и Schoenfeld & Aragon 2018 (0,4 г/кг на приём, минимум
    четыре приёма). Это РЕКОМЕНДАЦИЯ: запись принимается по факту, когда бы
-   человек ни поел. */
+   человек ни поел. 06.10: приёмов на дуге три (nextMealPlan ниже, его выбор),
+   3,5 ч осталось шагом от последней еды. */
 var MEAL_GAP=3.5, MEAL_FIRST=8.5, MEAL_LAST=22;
-function mealName(h, used){
-  var n = h<11 ? 'завтрак' : (h<16 ? 'обед' : (h<22.5 ? 'ужин' : 'еда'));
-  return (used && used[n]) ? 'ещё приём' : n;
+function mealName(h){
+  return h<11 ? 'завтрак' : (h<16 ? 'обед' : (h<22.5 ? 'ужин' : 'еда'));
 }
+/* 06.10, его вопрос по снимку: «почему на дуге дальше один + и один −
+   кружки?» — и выбор кнопкой «Три приёма: после обеда — ужин». С 05.10
+   перекус наперёд не планируется никому (меню, сервер), а дуга по-прежнему
+   ставила четвёртый «ещё приём» через 3,5 ч после обеда (≈15:33) — тот же
+   перекус, запланированный заранее. Теперь на дуге только основные приёмы:
+   завтрак → обед → ужин. Следующий — от последней еды (+3,5 ч, не раньше
+   «сейчас»); ужин после обеда — не раньше 18:30. Пропущенный по часам приём
+   не догоняем: в 13:00 без завтрака ждём обед. После ужина — ничего: перекус
+   предлагает тренер, если к вечеру недобор (решение 05.10). */
+var ГЛАВНЫЕ=['завтрак','обед','ужин'], УЖИН_С=18.5;
 function nextMealPlan(meals, nowH){
-  var last=null, used={};
+  var last=null, сделан=-1;
   (meals||[]).forEach(function(m){
     var h=hcH(m.t); if(h!=null && (last==null || h>last)) last=h;
-    if(m.kind) used[m.kind]=1;
+    var i=ГЛАВНЫЕ.indexOf(m.kind);
+    if(i<0 && m.kind!=='перекус' && h!=null) i=ГЛАВНЫЕ.indexOf(mealName(h));
+    if(i>сделан) сделан=i;
   });
   var at = last==null ? Math.max(nowH, MEAL_FIRST) : Math.max(last+MEAL_GAP, nowH);
+  var i=Math.max(сделан+1, at<11 ? 0 : (at<16 ? 1 : 2));
+  if(i>2) return {at:null, name:'еда', left:0};
+  if(i===2 && сделан===1) at=Math.max(at, УЖИН_С);
   /* позже 22:00 не советуем: раннее окно питания в сетевом мета-анализе 41 РКИ
      дало на 1,15 кг больше потери веса, чем позднее (Chen 2026). Съест позже —
      запишем по факту и раздвинем дугу, но советовать это незачем. */
-  if(at > MEAL_LAST) return {at:null, name:'еда'};
-  var имя=mealName(at, used), used2={}; used2[имя]=1; for(var k in used) used2[k]=1;
-  var after = at+MEAL_GAP; if(after > MEAL_LAST) after=null;
-  return {at:at, name:имя, after:after, afterName:(after!=null?mealName(after,used2):null)};
+  if(at > MEAL_LAST) return {at:null, name:'еда', left:0};
+  var after=null, afterName=null;
+  if(i<2){
+    after = at+MEAL_GAP; if(i===1) after=Math.max(after, УЖИН_С);
+    if(after > MEAL_LAST) after=null; else afterName=ГЛАВНЫЕ[i+1];
+  }
+  return {at:at, name:ГЛАВНЫЕ[i], after:after, afterName:afterName, left:3-i};
 }
 var HCW=[6,22];
 function hcA(h){ return -90+(h-HCW[0])/Math.max(1,(HCW[1]-HCW[0]))*180; }
@@ -10718,7 +10736,7 @@ function hcEvents(){
   if(plan.at!=null){
     ev.push({h:plan.at, time:'≈'+hcHM(plan.at), cls:'next', act:'eat',
       lab:'≈'+hcHM(plan.at)+' · '+plan.name});
-    if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(plan.after), cls:'todo', act:'eat',
+    if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(plan.after), cls:'todo', act:'eat', name:plan.afterName,
       lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
   }
   /* взвешивание стоит на той же дуге, что и всё остальное: второе кольцо
@@ -10916,7 +10934,8 @@ function hcBub(e, i){
   } else if(e.cls==='next'){
     h+='<circle r="'+(r-1)+'" class="hbbg"/><g class="hbi"><path d="M-6 0h12M0 -6v12"/></g>';
   } else if(e.cls==='todo'){
-    h+='<circle r="'+(r-1)+'" class="hbbg"/><g class="hbi"><path d="M-4 0h8"/></g>';
+    /* 06.10: вместо «−» (читался как минус) — имя приёма: «обед», «ужин» */
+    h+='<circle r="'+(r-1)+'" class="hbbg"/><text class="hbt" dy="3.5"'+(r<19?' transform="scale('+(r/19).toFixed(2)+')"':'')+'>'+esc(e.name||'')+'</text>';
   } else if(e.cls==='w'){
     h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5"'+(r<13?' transform="scale('+(r/13).toFixed(2)+')"':'')+'>'+esc(e.txt)+'</text>';
   }
@@ -11118,7 +11137,8 @@ function homeNextLine(E){
      утром «~750 г мяса» — это не совет, а насмешка. Доза на приём ≈ 0,4 г/кг
      (Schoenfeld & Aragon 2018), в граммах мяса — пересчёт по 0,22 г белка на
      грамм. */
-  var приёмов = 1 + Math.max(0, Math.floor((MEAL_LAST-E.plan.at)/MEAL_GAP));
+  /* 06.10: приёмов осталось — основных, по плану дуги (три в день, без перекусов) */
+  var приёмов = E.plan.left || 1;
   var наПриём = rp/приёмов, мясо = Math.round(наПриём/0.22/10)*10;
   var чем = rem<=0 ? 'на сегодня хватит · дальше только если голоден' :
             (наПриём<=8 ? 'белок набран — дальше по калориям' :
