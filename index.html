@@ -13580,8 +13580,10 @@ document.getElementById('eatbody').addEventListener('input', function(e){
      же полосы, по которой считан; клетчатка — 1,6 нормы); правее — серое
      «пользы больше нет», не красное. Шкала тянется до 1,1 края;
    band — жир (и белок при почках): lo…hi, перебор красный;
-   max — сахар: черты у ориентира ВОЗ 5 % (lo) и потолка 10 % (t);
-     сверх потолка — красный участок (08.10: «Черты + цвет»). */
+   max — сахар: зелёное до ориентира ВОЗ 5 % (lo), жёлтое до потолка 10 %,
+     выше — красное. 08.10 («Черты + цвет»): черты на 5 % и 10 %; заливка —
+     цветом своей зоны, сверх потолка — красный участок. У сахара меньше —
+     лучше, поэтому «ниже первой черты» здесь зелёное, а не бирюзовое. */
 function trackHtml(v, t, mode, lo, hi){
   if(!t) return '<div class="tr"></div>';
   if(mode==='range'){ lo = lo || t*0.9; hi = t*1.1; }
@@ -13592,14 +13594,18 @@ function trackHtml(v, t, mode, lo, hi){
   var cor=function(a, b, c){ return '<em class="fcor'+(c?' '+c:'')+'" style="left:'+F(P(a))+'%;width:'+F(P(b)-P(a))+'%"></em>'; };
   var cls = mode==='range' ? (v>hi?'fb-over':(v>=lo?'fb-done':''))
           : mode==='band'  ? (v>t?'fb-over':(v>=lo?'fb-done':''))
-          : mode==='max'   ? (v>t?'fb-over':(v>=lo?'fb-done':''))
+          : mode==='max'   ? (v>t?'fb-over':(v>lo?'fb-mid':'fb-done'))
           :                  (v>hi?'fb-more':(v>=t?'fb-done':''));
   var low=mode==='min'?t:lo, high=mode==='range'||mode==='min'?hi:t;
-  var h='<div class="tr" style="--bar-fill:'+normFill(Math.min(v,max),low,high,mode==='min'?'dim':'warn')+'">';
+  var заливка = mode==='max'
+    ? (v<=lo ? 'var(--done)' : v<=t ? 'var(--mid)'
+       : 'linear-gradient(to right,var(--mid) 0 '+Math.max(0,Math.min(100,t/Math.min(v,max)*100)).toFixed(3)+'%,var(--warn) '+Math.max(0,Math.min(100,t/Math.min(v,max)*100)).toFixed(3)+'% 100%)')
+    : normFill(Math.min(v,max),low,high,mode==='min'?'dim':'warn');
+  var h='<div class="tr" style="--bar-fill:'+заливка+'">';
   if(mode==='range') h+=cor(lo, hi);
   if(mode==='band')  h+=cor(lo, t);
   if(mode==='min')   h+=cor(t, hi);
-  if(mode==='max')   h+=cor(lo, t);
+  if(mode==='max')   h+=cor(0, lo, 'fcor0')+cor(lo, t, 'fmid');
   h+=normEdges(low,high,P);
   h+='<i class="'+cls+'" style="width:'+pct.toFixed(1)+'%"></i><span class="fdot '+cls+'" style="left:'+pct.toFixed(1)+'%"></span></div>';
   return h;
@@ -13946,7 +13952,7 @@ function renderFoodDay(){
     prot: t.prot ? (белКрай ? 'Коридор — '+t.prot+'–'+t.protMax+' г: при почках больше — тоже плохо.'
                             : 'Коридор — '+t.prot+'–'+белВерх+' г. Больше — не ошибка, но и пользы для мышц уже нет: дальше полоса серая.') : '',
     fib: t.fib ? 'Коридор — '+t.fib+'–'+клВерх+' г. Больше — не вредно, дальше полоса серая.' : '',
-    sug: t.sug ? 'Первая черта — '+сахОр+' г (5 % калорий, ориентир ВОЗ), вторая — '+t.sug+' г (10 %, потолок). Сверх потолка — красный участок.' : ''
+    sug: t.sug ? 'Зелёное — до '+сахОр+' г (5 % калорий, ориентир ВОЗ), жёлтое — до '+t.sug+' г (10 %, потолок), выше — красное.' : ''
   };
   /* 02.10: свободный день — вместо шкал и оценки одна карточка; приёмы, если
      что-то записано, остаются списком, но без баллов */
