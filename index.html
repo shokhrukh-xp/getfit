@@ -12143,7 +12143,7 @@ function circlePull(id){
     .then(function(r){ if(!r.ok) throw new Error('circle'); return r.json(); })
     .then(function(d){
       if(!current()) return d;
-      if(!d || !d.ok) return failed();
+      if(!d || !d.ok || (want && d.circle && d.circle!==want)) return failed();
       CIRCBUSY=false;
       if(d.circle) CIRCACHE[d.circle]=d;
       CIRC=d;

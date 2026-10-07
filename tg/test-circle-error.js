@@ -9,8 +9,8 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   const u=new URL(r.request().url());if(u.pathname!='/circle')return false;requests++;
   if(mode==='hold'){held.push(r);return true;}
   if(mode==='network'){await r.abort();return true;}
-  const d=M.круг();d.circle=u.searchParams.get('id')||'family';d.board[1].name=d.circle==='family'?'Семья участник':'Зал участник';
-  await r.fulfill({status:mode==='bad'?200:mode,contentType:'application/json',body:JSON.stringify(mode===200?d:{ok:false,error:'failure'})});return true;
+  const d=M.круг();d.circle=mode==='wrong'?'family':u.searchParams.get('id')||'family';d.board[1].name=d.circle==='family'?'Семья участник':'Зал участник';
+  await r.fulfill({status:mode==='bad'||mode==='wrong'?200:mode,contentType:'application/json',body:JSON.stringify(mode===200||mode==='wrong'?d:{ok:false,error:'failure'})});return true;
  }});
  p.setDefaultTimeout(4000);
  const error=async()=>{await p.locator('[data-circle-retry]').waitFor();assert((await p.locator('#cirbody').innerText()).includes('Не удалось загрузить рейтинг'));assert(!(await p.locator('#cirbody').innerText()).includes('Загружаю'));};
@@ -26,7 +26,8 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  mode=200;await p.click('[data-cir="family"]');await p.waitForTimeout(100);await p.locator('.lbrow').first().waitFor();
  for(const r of held)await r.fulfill({status:500,contentType:'application/json',body:'{"ok":false}'});held=[];
  await p.waitForTimeout(100);assert.equal(await p.locator('[data-circle-retry]').count(),0,'Старый отказ не портит новый круг');assert.equal(await p.locator('.lb').innerText(),table);assert(requests>=n+2);
- mode=200;await p.click('[data-cir="c_zal"]');await p.waitForFunction(()=>document.querySelector('.lb')?.textContent.includes('Зал участник'));assert((await p.locator('.lb').innerText()).includes('Зал участник'));
+ mode='wrong';await p.click('[data-cir="c_zal"]');await error();assert.equal(await p.locator('[data-cir="c_zal"]').getAttribute('class'),'mchip on');
+ mode=200;await p.click('[data-circle-retry]');await p.waitForFunction(()=>document.querySelector('.lb')?.textContent.includes('Зал участник'));assert((await p.locator('.lb').innerText()).includes('Зал участник'));
  mode=500;await p.click('[data-cir="family"]');await error();assert.equal(await p.locator('.lb').innerText(),table,'Кэш выбранного круга сохраняется и при неудачной смене');
  console.log('ok rating failures/cache/switch/race',theme,width);
  }catch(e){bad++;console.error('FAIL',theme,width,e.stack);}finally{await p.close();}
