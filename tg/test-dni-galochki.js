@@ -23,8 +23,10 @@ const ПРИСЕД={n:'Приседания со штангой',id:'Barbell_Squ
 const ТЯГА={n:'Румынская тяга с гантелями',id:'Stiff-Legged_Dumbbell_Deadlift',unit:'reps',sets:[{w:26,r:10},{w:26,r:10},{w:26,r:10}]};
 const ЖИМ={n:'Жим лёжа',id:'Barbell_Bench_Press_-_Medium_Grip',unit:'reps',sets:[{w:55,r:8}]};
 const ТЕН=[{kind:'теннис',min:120,intensity:'mod',kcal:1226,plan:1}];
-// вт 06.10 (вчера) — эта неделя; вс 04.10 — прошлая. TODAY в стенде — среда 07.10.
-function fx(extra){const o=opts('dark');o.page='gym';o.hist=[зап(1,'D1',[ПРИСЕД,ТЯГА]),зап(3,'D2',[ЖИМ])].concat(extra||[]);
+// D1 — вчера (эта неделя, если сегодня не понедельник); D2 — воскресенье прошлой
+// недели, считаем от понедельника стенда (08.10: «3 дня назад» в четверг — уже эта неделя).
+const ПН=(new Date(M.TODAY+'T12:00:00').getDay()+6)%7;
+function fx(extra){const o=opts('dark');o.page='gym';o.hist=[зап(1,'D1',[ПРИСЕД,ТЯГА]),зап(ПН+1,'D2',[ЖИМ])].concat(extra||[]);
  o.todayPlan=ТЕН;o.day={...o.day,gymPlan:false,plan:ТЕН};return o}
 const кнопки=p=>p.evaluate(()=>[...document.querySelectorAll('#dayseg button')].map(b=>({k:b.dataset.day,i:(b.querySelector('i')||{}).textContent,
  done:b.dataset.done==='1',fin:b.dataset.fin==='1',после:getComputedStyle(b.querySelector('b'),'::after').content})));
