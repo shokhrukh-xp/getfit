@@ -14263,7 +14263,9 @@ function chatDraftRestore(){
   var ta=document.getElementById('ctext'); ta.value=draft.text||''; ta.style.height='auto';
   cAttSet(draft.image); CHAT.err=draft.err||''; CHAT.retry=!!draft.retry;
   var label=document.getElementById('coachdate');
-  label.textContent='Дата записи: '+(CHAT.date===TODAY?'сегодня · ':'')+CHAT.date.split('-').reverse().join('.');
+  /* дата видна только у записи не за сегодня — обычный чат без лишней строки */
+  label.textContent=CHAT.date===TODAY?'':'Запись за '+ruDate(CHAT.date);
+  label.hidden=CHAT.date===TODAY;
   label.dataset.date=CHAT.date;
 }
 function openCoach(date){
@@ -14360,7 +14362,7 @@ function renderChat(scroll){
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
-      h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+CHAT.pendingDate.split('-').reverse().join('.')+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
+      h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+ruDate(CHAT.pendingDate)+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
       ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
     if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
     h+=recoCard('chat');

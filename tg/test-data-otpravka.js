@@ -14,7 +14,11 @@ const day=date=>M.день({date,meals:[{id:date,t:'12:00',kind:'обед',text:
 const score=(r)=>({ok:true,closed:true,r,n:2,why:[],приёмы:[]});
 async function settled(p){await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));}
 async function meal(p,date){await p.waitForFunction(d=>document.querySelector('#fmeals').textContent.includes('Запись '+d),date);}
-async function header(p,date){assert.equal(await p.locator('#coachdate').getAttribute('data-date'),date,'В чате видна дата записи');assert((await p.locator('#coachdate').innerText()).includes(date.split('-').reverse().join('.')));}
+// 07.10, ревью Claude: дата видна только у записи не за сегодня («Запись за 06.10»), в обычном чате строки нет
+async function header(p,date){assert.equal(await p.locator('#coachdate').getAttribute('data-date'),date,'В чате видна дата записи');
+ const дм=date.slice(8)+'.'+date.slice(5,7),txt=(await p.locator('#coachdate').innerText()).trim();
+ if(date===M.TODAY) assert(!(await p.locator('#coachdate').isVisible())&&txt==='','Сегодня — без строки даты: «'+txt+'»');
+ else assert.equal(txt,'Запись за '+дм);}
 (async()=>{const browser=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390])for(const name of cases){
 const p=await browser.newPage({viewport:{width,height:844}});p.setDefaultTimeout(4000);
@@ -128,7 +132,7 @@ try{
   assert(await p.locator('#ctext').isDisabled(),'Во время отправки ввод не теряется из-за повторного Enter');
   await p.locator('#ctext').dispatchEvent('keydown',{key:'Enter'});assert.equal(sent.length,1);
   await p.click('#coachclose');await p.click('#coachnav');await header(p,M.TODAY);
-  assert((await p.locator('.msg.sent').innerText()).includes(M.Д(1).split('-').reverse().join('.')),'У сообщения в пути видна его собственная дата');
+  assert((await p.locator('.msg.sent').innerText()).includes('Запись за '+M.Д(1).slice(8)+'.'+M.Д(1).slice(5,7)),'У сообщения в пути видна его собственная дата');
   await give(held.shift(),{error:'Нет связи с тренером'},503);
   await p.waitForFunction(()=>!document.querySelector('#csend').disabled);
   assert.equal(await p.locator('#ctext').inputValue(),'','Отказ вчерашнего запроса не заполняет сегодняшнее поле');
