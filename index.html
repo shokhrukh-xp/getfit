@@ -967,7 +967,6 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .fmeal.fplan .fk{color:var(--dim)}
 .fok{flex:none;width:30px;height:30px;border-radius:12px;border:1px solid var(--accent);background:var(--accent-ghost);color:var(--accent-txt);font-size:15px;line-height:1}
 .planc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px;background:var(--card)}
-#planbox .planeb{margin:4px 0 8px}   /* 07.10: «Вне зала» над карточками плана */
 .planc b{display:block;font-size:15px}
 .planc i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
 .planc .rb{display:flex;gap:8px;margin-top:8px}
@@ -13572,7 +13571,7 @@ function spДни(){
   var раньше=(было&&было.d||[]).slice().sort(function(a,b){ return a-b; }).join(',');
   var n=document.getElementById('sp-dayn');
   if(n) n.textContent = SPORT.days.length
-    ? 'В эти дни появится карточка — нажмёшь «'+планКнопки(spName())[0]+'», и занятие встанет в норму еды.'
+    ? 'Тренер учтёт эти дни в программе. Спрашивать, было ли, не будем: сыграл — впиши занятие, и норма вырастет.'
     : (было ? 'Дни сняты — повторение уберётся.' : '');
   var s=document.getElementById('sp-save');
   if(s && !spBusy) s.textContent = SPORT.days.length ? 'Записать и повторять' : 'Записать';
@@ -13588,27 +13587,16 @@ function planRefresh(){
   if(FOOD.day) loadDay();
 }
 function planLine(p){ return p.kind+' · '+p.min+' мин'+(p.intensity==='hard'?' · тяжело':p.intensity==='light'?' · легко':''); }
-/* 07.10, его вопрос «почему меня спрашивает, была или нет тренировка» — на
-   странице зала карточку тенниса с «Было / Не было» он принял за вопрос про
-   зал. Над карточками — «Вне зала» (как кнопка «+ Занятие вне зала»), у игр
-   — «Играл / Не играл» (по полу из анкеты), у остального — «Было / Не было». */
-var ИГРЫ=/теннис|футбол|баскетбол|волейбол|падел|бадминтон|сквош|хоккей|гольф/i;
-function планКнопки(kind){
-  if(!ИГРЫ.test(String(kind||''))) return ['Было','Не было'];
-  return ((myData()||{}).sex==='f') ? ['Играла','Не играла'] : ['Играл','Не играл'];
-}
+/* КАРТОЧКИ «ВНЕ ЗАЛА» ПО РАСПИСАНИЮ БОЛЬШЕ НЕТ.
+   07.10 утром он принял карточку тенниса с «Было / Не было» за вопрос про
+   зал — её подписали «Вне зала» и «Играл / Не играл». Через час его слова:
+   «не спрашивай вообще, играл я теннис или нет, сам буду вписывать, как буду
+   играть». Выбрал кнопками: для всех; расписание в профиле оставить (тренер
+   учитывает его в программе и советах). Сыграл — «+ Занятие вне зала» или
+   словами тренеру; в норму занятие входит после записи, как и раньше. */
 function renderPlanBox(){
   var el=document.getElementById('planbox'); if(!el) return;
-  var pl=TODAYPLAN||[];
-  if(!pl.length){ el.hidden=true; el.innerHTML=''; return; }
-  el.hidden=false;
-  el.innerHTML='<p class="eyebrow planeb">Вне зала</p>'+pl.map(function(p){
-    var кн=планКнопки(p.kind);
-    /* 25.09, его выбор «как зал — по факту»: до «Было» план в норме не сидит */
-    return '<div class="planc"><b>'+esc(p.kind.charAt(0).toUpperCase()+p.kind.slice(1))+' сегодня</b><i>'+p.min+' мин по плану · +'+Math.round(p.kcal)+' ккал к норме после «'+кн[0]+'»</i>'+
-      '<div class="rb"><button type="button" class="go" data-plan="do" data-k="'+esc(p.kind)+'" data-m="'+p.min+'" data-i="'+esc(p.intensity||'mod')+'">'+кн[0]+'</button>'+
-      '<button type="button" data-plan="no" data-k="'+esc(p.kind)+'">'+кн[1]+'</button></div></div>';
-  }).join('');
+  el.hidden=true; el.innerHTML='';
 }
 function planDo(k, min, int, date){
   return fPost('/act/add', {uid:syncUid(), date:date||TODAY, kind:k, min:min, intensity:int||'mod', note:'по плану'})
@@ -13650,10 +13638,11 @@ function renderFoodDay(){
      их сумма плюс дефицит даёт ровно норму. Личная поправка сидит внутри
      слагаемых — отдельным множителем в строке она бы ломала сложение. */
   var состав='';
-  /* 25.09: спорт по плану — тоже по факту; пока «Было» не нажато, говорим,
-     сколько он добавит, чтобы рост нормы вечером не был загадкой */
-  var пл=(d.plan||[]), планК=пл.reduce(function(a,p){ return a+(+p.kcal||0); },0);
-  var планСлово = пл.length ? ((пл.length===1 ? пл[0].kind : 'спорт')+' по плану добавит +'+Math.round(планК)+' ккал, когда отметишь «'+(пл.length===1 ? планКнопки(пл[0].kind)[0] : 'Было')+'»') : '';
+  /* 25.09: спорт по плану — по факту. 07.10, его слова: «не спрашивай вообще,
+     играл я теннис или нет, сам буду вписывать, как буду играть» (для всех):
+     строки «добавит +N, когда отметишь» больше нет — занятие входит в норму,
+     когда человек сам его запишет. */
+  var планСлово = '';
   /* 18.09: зал входит в норму по факту, а не по расписанию. Пока тренировки
      нет, слагаемого «зал» нет тоже — и это надо сказать, иначе норма молча
      подрастёт в середине дня и человек снова спросит почему. */
@@ -13730,12 +13719,8 @@ function renderFoodDay(){
      прошлый день судит полная формула, и делить её на приёмы нечестно */
   var оцП={};
   if(DAYSC && DAYSC.date===fDate() && DAYSC.приёмы) DAYSC.приёмы.forEach(function(p){ оцП[p.id]=p; });
-  ml.innerHTML = (d.plan||[]).map(function(pp){
-    return '<div class="fmeal fact fplan"><span class="fk">план</span><span class="ft">'+esc(planLine(pp))+'</span>'+
-           '<span class="fn"><b>+'+Math.round(pp.kcal)+'</b> ккал<i>в норме</i></span>'+
-           '<button type="button" class="fok" data-pdo="'+esc(pp.kind)+'" data-m="'+pp.min+'" data-i="'+esc(pp.intensity||'mod')+'" aria-label="Было">✓</button>'+
-           '<button type="button" class="fx" data-poff="'+esc(pp.kind)+'" aria-label="Не было">×</button></div>';
-  }).join('') + (d.acts||[]).map(function(a){
+  /* 07.10: строк «план · теннис ✓ ×» нет — спорт по расписанию не спрашиваем */
+  ml.innerHTML = (d.acts||[]).map(function(a){
     return '<div class="fmeal fact" data-aid="'+a.id+'"><span class="fk">спорт</span><span class="ft">'+esc(a.kind)+' · '+a.min+' мин'+
            (a.intensity==='hard'?' · тяжело':a.intensity==='light'?' · легко':'')+(a.hr?' · пульс '+a.hr:'')+(a.note?'<i class="dim"> — '+esc(String(a.note).slice(0,60))+'</i>':'')+'</span>'+
            '<span class="fn"><b>+'+Math.round(a.kcal)+'</b> ккал<i>к норме</i></span>'+

@@ -8,8 +8,8 @@
 //  2) нажал на такой день — «сделан вчера · …», итог записи, без «Завершить»;
 //     «Сделать этот день ещё раз сегодня» — обычный список;
 //  3) сохранённый сегодня — ✓, но открывается обычный список (его можно править);
-//  4) карточка спорта по плану — под «Вне зала», у тенниса «Играл / Не играл»
-//     (у женщины — «Играла»), у бега — «Было / Не было».
+//  4) спорт по расписанию не спрашиваем вовсе (его слова через час: «не
+//     спрашивай вообще, играл я теннис или нет, сам буду вписывать»).
 const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./shot-clean');
 let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++}
 const зап=(сдвиг,day,ex)=>({id:M.Д(сдвиг)+'_'+day,date:M.Д(сдвиг),day,name:'День '+day.slice(1),week:1,dur:52,
@@ -39,15 +39,13 @@ const кнопки=p=>p.evaluate(()=>[...document.querySelectorAll('#dayseg butt
   ok(пункты.length===3&&/60×12 · 60×12 · 60×10/.test(пункты[0])&&/60 с · 45 с/.test(пункты[1])&&/20 мин · тяжело/.test(пункты[2]),'итог записи по упражнениям, в своих единицах: '+JSON.stringify(пункты));
   ok(/6\s*подходов/.test(await p.locator('.dvsum').innerText())&&/2040\s*кг/.test(await p.locator('.dvsum').innerText())&&/52\s*мин/.test(await p.locator('.dvsum').innerText()),'сводка: подходы, тоннаж только у повторов, минуты');
   ok(!await p.locator('#finish').isVisible()&&!await p.locator('#reset').isVisible()&&!await p.locator('#phaseline').isVisible(),'в итоге нет «Завершить», «Очистить день» и совета к подходам');
-  ok(await p.locator('#planbox').isVisible(),'карточка «Вне зала» остаётся — она про сегодня');
+
   await p.click('#dvagain');
   ok(await p.locator('#list .dview').count()===0&&await p.locator('#list .exrow').count()>0&&await p.locator('#finish').isVisible(),'«Сделать этот день ещё раз сегодня» — обычный список и «Завершить»');
   ok(!/^сделан/.test(await p.locator('#nexthint').innerText()),'шапка снова про сегодня');
  }
- // карточка тенниса
- const план=(await p.locator('#planbox').innerText()).replace(/\s+/g,' ');
- const кн=await p.locator('#planbox .rb button').allInnerTexts();
- ok(/^Вне зала/i.test(план)&&/после «Играл»/.test(план)&&кн.join('|')==='Играл|Не играл','теннис — под «Вне зала», «Играл / Не играл»: '+план+' '+кн.join('|'));
+ // 4) карточки спорта по расписанию нет, хотя теннис сегодня по плану
+ ok(!await p.locator('#planbox').isVisible()&&await p.locator('#planbox .rb button').count()===0,'теннис по расписанию — без вопроса «играл или нет»');
  ok(!err.length,'без ошибок JS '+err.join('|'));
  await p.close();
 
@@ -61,13 +59,4 @@ const кнопки=p=>p.evaluate(()=>[...document.querySelectorAll('#dayseg butt
  ok(!err.length,'без ошибок JS '+err.join('|'));
  await p.close();
 
- // 4) у женщины — «Играла», у бега — «Было»
- p=await b.newPage({viewport:{width:390,height:844}});
- const o=fx();o.me={...o.me,sex:'f'};const БЕГ=[{kind:'бег',min:30,intensity:'mod',kcal:300,plan:1}];
- o.todayPlan=ТЕН.concat(БЕГ);o.day={...o.day,plan:ТЕН.concat(БЕГ)};
- err=await M.поднять(p,o);await p.waitForTimeout(400);
- const кн2=await p.locator('#planbox .rb button').allInnerTexts();
- ok(кн2.join('|')==='Играла|Не играла|Было|Не было','у неё теннис — «Играла», бег — «Было»: '+кн2.join('|'));
- ok(!err.length,'без ошибок JS '+err.join('|'));
- await p.close();
 }finally{await b.close()}if(bad)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});
