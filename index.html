@@ -1287,16 +1287,10 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 /* 07.10, его просьба «сразу ставить галочку в день, который сохранился»:
    ✓ после имени — не в углу (угловая читалась как дефект вёрстки) */
 .dayseg button[data-fin="1"] b::after{content:"\00a0✓";font-weight:700}
-/* итог дня, сделанного раньше на этой неделе: записи не пишем — прячем
-   «Завершить», «Очистить день», совет к подходам и тренера по дню */
-#gym-work.dview .btnrow, #gym-work.dview .resetline, #gym-work.dview #phaseline,
-#gym-work.dview #coachreco, #gym-work.dview #rbbox, #gym-work.dview #finsum, #gym-work.dview #dbnote{display:none!important}
-.dview .dvsum{margin:0 0 4px}
-.dvl{list-style:none;margin:8px 0 14px;padding:0}
-.dvl li{display:flex;flex-direction:column;gap:3px;padding:10px 2px;border-bottom:1px solid var(--line-soft)}
-.dvl li:last-child{border-bottom:0}
-.dvl b{font-size:14px;font-weight:600;color:var(--text)}
-.dvl span{font-size:13px;color:var(--dim);line-height:1.45}
+/* 07.10: прошлый день недели открыт для правки той записи */
+#againtoday{display:none}
+#gym-work.past #againtoday{display:inline}
+#gym-work.past #reset, #gym-work.past #sportlow, #gym-work.past #sporttoday{display:none}
 .nexthint{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.4}
 .nexthint b{color:var(--text);font-weight:600}
 .nexthint b{color:var(--accent-txt);font-weight:400}
@@ -2973,7 +2967,7 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
              сохранить», чтобы не путать с «+ Добавить упражнение».
              Наполняет renderList (в режиме порядка — пусто). -->
         <div class="sportlow" id="sportlow"></div>
-        <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button></p>
+        <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button><button type="button" class="linkbtn" id="againtoday">Сделать этот день ещё раз сегодня</button></p>
       </div>
       </section>
     <section class="page hide" id="p-log">
@@ -6194,51 +6188,36 @@ function dayProgress(){
   });
   return {done:сделано, total:всего};
 }
-/* Итог дня, сохранённого раньше на этой неделе (07.10). Показываем вместо
-   пустой записи, пока сегодня в этом дне ничего не отмечено; «Сделать этот
-   день ещё раз сегодня» открывает обычный список — до перезагрузки. */
-var ДВ_ЕЩЁ={};
-function просмотрДня(){
-  if((typeof ORDMODE!=='undefined' && ORDMODE) || ДВ_ЕЩЁ[day]) return null;
-  var з=записьНедели(day); if(!з || з.date===TODAY) return null;
-  if(sess && sess.ex && sess.ex.some(function(x){ return (x.sets||[]).some(function(v){ return v.done; }); })) return null;
-  return з;
-}
-function подходовВЗаписи(w){
-  var n=0; (w.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v && v.r!=null) n++; }); }); return n;
-}
-function планПодходов(){
-  var n=0; exList(day).forEach(function(e,di){ n+=setsFor(e,di); }); return n;
-}
-function итогДня(w){
-  var sets=0, ton=0, ИНТ={light:'легко', mod:'средне', hard:'тяжело'};
-  var строки=(w.ex||[]).map(function(x){
-    var u=x.unit||'', подх=(x.sets||[]).filter(function(v){ return v && v.r!=null; });
-    if(!подх.length) return '';
-    подх.forEach(function(v){ sets++; if(v.w!=null && наПовторы(x)) ton+=v.w*v.r; });
-    var txt=подх.map(function(v){ return u==='min' ? v.r+' мин' : (v.w!=null ? fmtKg(v.w)+'×' : '')+v.r+суфф(u); }).join(' · ');
-    return '<li><b>'+esc(x.n||'')+'</b><span>'+esc(txt+(x.int && ИНТ[x.int] ? ' · '+ИНТ[x.int] : ''))+'</span></li>';
-  }).join('');
-  return '<div class="dview">'+
-    '<div class="finsum dvsum"><div class="fs1"><span><b>'+sets+'</b>'+plural(sets,['подход','подхода','подходов'])+'</span>'+
-      (ton?'<span><b>'+Math.round(ton)+'</b>кг</span>':'')+(w.dur>0?'<span><b>'+w.dur+'</b>мин</span>':'')+'</div></div>'+
-    '<ul class="dvl">'+строки+'</ul>'+
-    '<button type="button" class="btn wide" id="dvagain">Сделать этот день ещё раз сегодня</button></div>';
+/* ── СДЕЛАННЫЙ ДЕНЬ ВЫГЛЯДИТ ОДИНАКОВО — СЕГОДНЯ И ВЧЕРА ──
+   07.10, его слова по двум снимкам: «оба дня сделаны. Так почему в одном
+   открывается один вид, а в другом другой вид?» Утром прошлый день недели
+   открывался сводкой, сегодняшний — списком. Его выбор кнопкой: везде как
+   сегодняшний список, упражнение открывается с подходами, числа можно
+   поправить — и за вчера тоже.
+   Для этого у сессии есть ДАТА: обычно сегодня; у дня, сохранённого раньше на
+   этой неделе (и ещё не начатого сегодня), — дата той записи. Ключи памяти,
+   автосохранение и «Сохранить» пишут под этой датой, правка вчерашнего не
+   становится сегодняшней тренировкой. «Сделать этот день ещё раз сегодня» —
+   сегодняшняя сессия того же дня (ДВ_ЕЩЁ, до перезагрузки). */
+var ДВ_ЕЩЁ={}, ДЕНЬ_ДАТА=null;
+function сесДата(){ return ДЕНЬ_ДАТА||TODAY; }
+function датаДня(k){
+  if(ДВ_ЕЩЁ[k]) return null;
+  var з=записьНедели(k); if(!з || з.date===TODAY) return null;
+  var loc=get('sess_'+TODAY+'_'+k,null);
+  if(loc && loc.ex && loc.ex.some(function(x){ return (x.sets||[]).some(function(v){ return v.done; }); })) return null;
+  return з.date;
 }
 function шапкаДняБольшая(nx, doneToday){
   var d=DAYS[day]||{}, метка=dayLabel(day).toLowerCase(), кл='', ст;
-  var зв=просмотрДня();
-  if(зв){
-    /* 07.10: день сделан раньше на этой неделе — итог той записи, не пустой день */
-    var пп=подходовВЗаписи(зв), когда=когдаСделан(зв.date), всего=Math.max(пп, планПодходов());
-    return '<u class="done">'+esc('сделан '+(когда==='вчера'?'вчера':'в '+когда)+' · '+метка)+'</u><b>'+esc(String(d.sub||'').replace(/^./,function(c){return c.toUpperCase();}))+'</b>'+
-      '<div class="dhtr"><span><s class="'+(пп>=всего?'full':'')+'" style="width:'+(всего?Math.round(пп/всего*100):0)+'%"></s></span>'+
-      '<em>'+пп+'<i> / '+всего+' '+plural(всего,['подход','подхода','подходов'])+'</i></em></div>';
-  }
   var пр0=dayProgress(), всёЗакрыто = пр0.total>0 && пр0.done>=пр0.total;
   /* «сегодня закрыт» при двух подходах из тринадцати — неправда: отметка о
      тренировке ставится с первого же подхода, а день закрыт, когда закрыт */
-  if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
+  /* сохранённый день называется одинаково — «сделан вчера» / «сделан сегодня» */
+  var сохрСегодня=записьНедели(day), когда;
+  if(ДЕНЬ_ДАТА){ когда=когдаСделан(ДЕНЬ_ДАТА); ст='сделан '+(когда==='вчера'?'вчера':'в '+когда)+' · '+метка; кл=' done'; }
+  else if(сохрСегодня && сохрСегодня.date===TODAY && doneToday===day){ ст='сделан сегодня · '+метка; кл=' done'; }
+  else if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
   else if(todayLetter() && day===nx){ ст='сегодня зал · '+метка; }
   else if(day===nx){ ст=метка+' · следующий по очереди'; кл=' rest'; }
   else { var w=whenLabel(day); ст=метка+((w&&w!=='—')?' · '+w:''); кл=' rest'; }
@@ -6253,14 +6232,14 @@ function pickDay(e){
   var fs=document.getElementById('finsum'); if(fs) fs.hidden=true;
   day=b.dataset.day; set('day',day); set('pick_'+TODAY,day);
   loadSess(); renderDayHead(); renderList(); paintNote(''); haptic('light');
+  try{ finReset(); }catch(e){}
 }
 document.getElementById('dayseg').addEventListener('click', pickDay);
 var _lite=document.getElementById('liteseg'); if(_lite) _lite.addEventListener('click', pickDay);
-/* 07.10: из итога сделанного дня — обычный список, если хочется повторить сегодня */
-document.getElementById('list').addEventListener('click', function(e){
-  if(!e.target.closest('#dvagain')) return;
-  ДВ_ЕЩЁ[day]=1; renderDayHead(); renderList(); haptic('light');
-});
+/* 07.10: прошлый день недели — правка той записи; повторить его сегодня */
+(function(){ var b=document.getElementById('againtoday'); if(b) b.addEventListener('click', function(){
+  ДВ_ЕЩЁ[day]=1; loadSess(); renderDayHead(); renderList(); paintNote(''); try{ finReset(); }catch(e){} haptic('light');
+}); })();
 
 /* ══════════ ЖУРНАЛ ПОДХОДОВ ══════════ */
 var NOWT={'Планка':1,'Боковая планка':1,'Ролик для пресса':1,'Подъём ног в висе':1};
@@ -6394,7 +6373,7 @@ function suggestedDay(){
    Хранится отдельно от сессии: сессию пересобирают замены, лёгкая неделя и
    синхронизация с облаком, а время старта от этого сдвигаться не должно.
    Сбрасывает его только «Очистить день». */
-function wt0Key(){ return 'wt0_'+TODAY+'_'+day; }
+function wt0Key(){ return 'wt0_'+сесДата()+'_'+day; }
 function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0; return t||null; }
 /* Сколько шло занятие: от первого касания подхода до этой минуты. Потолок в
    четыре часа — от случая «открыл вечером и поправил подход»: без него в
@@ -6402,7 +6381,7 @@ function wStart(){ var t=get(wt0Key(),null); if(!t && sess && sess.t0) t=sess.t0
 /* Подтверждённое человеком время перебивает замер таймера: если он сказал
    «было 70 минут», спорить с ним нечем — таймер видел только то, что ему
    показали. Живёт рядом с t0 и стирается вместе с днём. */
-function wDurKey(){ return 'wdur_'+TODAY+'_'+day; }
+function wDurKey(){ return 'wdur_'+сесДата()+'_'+day; }
 /* ДЛИТЕЛЬНОСТЬ — ДО ПОСЛЕДНЕЙ РАБОТЫ, А НЕ ДО «СЕЙЧАС».
    15.09: у него в записи оказалось 240 минут вместо сорока, и зал насчитал
    880 ккал. Причина не в подходах и не в весах: занятие кончилось в 03:15,
@@ -6413,7 +6392,7 @@ function wDurKey(){ return 'wdur_'+TODAY+'_'+day; }
    Теперь конец занятия — это время последнего касания подхода. Открыть
    приложение, полистать журнал или дописать заметку больше не делает
    тренировку длиннее: чтобы она росла, надо работать. */
-function wtLastKey(){ return 'wtl_'+TODAY+'_'+day; }
+function wtLastKey(){ return 'wtl_'+сесДата()+'_'+day; }
 function wEnd(){
   var t=+get(wtLastKey(),0) || 0;
   return t>0 ? t : Date.now();
@@ -6424,13 +6403,14 @@ function wDur(){
   var t0=wStart(); if(!t0) return null;
   return Math.max(1, Math.min(240, Math.round((wEnd()-t0)/60000)));
 }
-function wTouch(){ if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); set(wtLastKey(), Date.now()); }
+function wTouch(){ if(ДЕНЬ_ДАТА) return; if(!get(wt0Key(),null)) set(wt0Key(), Date.now()); set(wtLastKey(), Date.now()); }
 /* markDone отмечает, что СЕГОДНЯ этот день программы уже делали, и вызывается
    в том числе из «Завершить». Отметку времени она больше не двигает: иначе
    нажатие «Завершить» само сдвигало бы конец занятия на текущую минуту, и
    тренировка, сохранённая повторно через шесть часов, длилась бы шесть часов.
    Время двигает только работа — там, где подход действительно трогают. */
 function markDone(){
+  if(ДЕНЬ_ДАТА) return;   /* правка прошлой записи — не «сегодня сделан» */
   if(lastDone && lastDone.day===day && lastDone.date===TODAY) return;
   lastDone = {day:day, date:TODAY};
   set('lastdone', lastDone);
@@ -6439,7 +6419,7 @@ function markDone(){
 /* нижняя граница диапазона повторов из программы: '8–12' -> 8, '40–60 с' -> 40 */
 function baseReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 10; }
 
-function sKey(){ return 'sess_'+TODAY+'_'+day; }
+function sKey(){ return 'sess_'+сесДата()+'_'+day; }
 function blankSess(){
   var o={ex:[]};
   exList(day).forEach(function(e){
@@ -6467,7 +6447,8 @@ function blankSess(){
 function сессияИзЖурнала(){
   if(!HIST || !HIST.length) return null;
   var w=null;
-  HIST.forEach(function(x){ if(!w && x.date===TODAY && dayHere(x.day)===day) w=x; });
+  var дата=сесДата();
+  HIST.forEach(function(x){ if(!w && x.date===дата && dayHere(x.day)===day) w=x; });
   if(!w || !w.ex || !w.ex.length) return null;
   var сп=exList(day), o={ex:[]}, нашли=false;
   сп.forEach(function(e,di){
@@ -6500,6 +6481,7 @@ function сессияИзЖурнала(){
 }
 function loadSess(){
   EXPICK=false;                     /* другой день — снова список, а не карточка */
+  ДЕНЬ_ДАТА=датаДня(day);
   var x=get(sKey(),null);
   if(!x || !x.ex || x.ex.length!==exList(day).length) x=сессияИзЖурнала()||blankSess();
   exList(day).forEach(function(e,di){
@@ -7143,19 +7125,13 @@ function ordБросить(e){
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
-  /* 07.10: день сохранён раньше на этой неделе — итог записи вместо пустого
-     списка; «Завершить», «Очистить день» и советы к подходам прячет CSS */
-  var зв=просмотрДня(), gw=document.getElementById('gym-work');
-  if(gw) gw.classList.toggle('dview', !!зв);
+  /* 07.10: прошлый день недели — тот же список, правка той записи; «Очистить
+     день» и «+ Занятие вне зала» (они про сегодня) прячет CSS */
+  var gw=document.getElementById('gym-work');
+  if(gw) gw.classList.toggle('past', !!ДЕНЬ_ДАТА);
   if(ORDMODE){ box.innerHTML = ordСписок();
     var sl0=document.getElementById('sportlow'); if(sl0) sl0.innerHTML='';
     return; }
-  if(зв){
-    box.innerHTML=итогДня(зв);
-    var sl2=document.getElementById('sportlow'); if(sl2) sl2.innerHTML='';
-    var hh0=document.getElementById('nexthint'); if(hh0) hh0.innerHTML=шапкаДняБольшая(suggestedDay(), null);
-    return;
-  }
   var список = exList(day);
   /* Суперсет — это один снаряд времени, а не два упражнения подряд. Раньше
      пара жила в двух отдельных карточках с текстовой пометкой: было непонятно,
@@ -8251,7 +8227,7 @@ function refreshDay(){
     harvestDom();saveSess();
     if(DB && countDone()>0){
       var body=sessionBody();
-      DB.doc('workouts/'+TODAY+'_'+day).set(body).catch(function(){});
+      DB.doc('workouts/'+body.date+'_'+day).set(body).catch(function(){});
     }
   }
   stopTimer();TODAY=next;
@@ -8407,7 +8383,8 @@ function commit(тихо){
     var rows=sess.ex[di].sets, done=rows.filter(function(v){return v.done;});
     if(!done.length) return;
     var lastv=done[done.length-1];
-    var rec={ w:lastv.w, r:lastv.r, d:TODAY,
+    if(LAST[e.n] && LAST[e.n].d && LAST[e.n].d>сесДата()) return;
+    var rec={ w:lastv.w, r:lastv.r, d:сесДата(),
               s:rows.map(function(v){ return [v.w, v.r]; }) };
     LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec;
   });
@@ -8448,7 +8425,7 @@ function sessionBody(){
      на экран. Заодно терялась длительность: траты зала и недельная нагрузка
      считались по заявленным минутам из профиля вместо фактических. */
   var t0=wStart();
-  var тело={ date:TODAY, day:day, name:d.name, sub:d.sub, week:week,
+  var тело={ date:сесДата(), day:day, name:d.name, sub:d.sub, week:week,
            updated:new Date().toISOString(), ex:ex,
            t0:t0?new Date(t0).toISOString():null, dur:wDur() };
   /* облегчённая по кнопке — сервер не считает её падением весов (25.09) */
@@ -8463,7 +8440,7 @@ function pushDb(){
   var body=sessionBody();
   if(!body.ex.length){ paintNote('empty'); вПолёте=false; неУехало=false; охрана(); return; }
   paintNote('saving');
-  DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
+  DB.doc('workouts/'+body.date+'_'+day).set(body).then(function(){
     lastSavedAt=new Date(); dirty=false; paintNote('saved'); вПолёте=false; неУехало=false; охрана();
     return сохранитьLAST(body.updated);
   }).catch(function(){ dirty=true; paintNote('err'); вПолёте=false; неУехало=true; охрана(); });
@@ -8548,6 +8525,7 @@ function initDb(){
       /* очередь считается по истории: с её приходом следующий день может смениться */
       var s2=suggestedDay();
       if(!get('pick_'+TODAY,null) && s2!==day && !anyTouched()){ day=s2; set('day',day); loadSess(); }
+      if(датаДня(day)!==ДЕНЬ_ДАТА){ loadSess(); try{ finReset(); }catch(e){} }
       refillIfUntouched(); renderDayseg(); renderDayHead(); renderTodaybar(); renderList();
       recoBoot(); pushVolume(); renderReco2(); planMigrate(); recoPull(); goalPull(); botPull(); subPull();
     });
@@ -8588,7 +8566,7 @@ function стеретьЗапись(){
    Читает экран → пишет в облако → красит кнопку. Любая ошибка — в статус и в облако. */
 var finArmed=false, finT=null, finBtn=document.getElementById('finish');
 function finSay(t,cls){ finBtn.textContent=t; finBtn.className='btn'+(cls?' '+cls:''); }
-function finReset(){ clearTimeout(finT); finArmed=false; finSay('Завершить и сохранить',''); }
+function finReset(){ clearTimeout(finT); finArmed=false; finSay(ДЕНЬ_ДАТА?'Сохранить изменения':'Завершить и сохранить',''); }
 function reportErr(where, err){
   var m=where+': '+(err && (err.message||err.code) || String(err));
   var el=document.getElementById('dbnote'); if(el){ el.textContent='Сбой — '+m; el.className='dbnote bad'; }
@@ -8686,7 +8664,7 @@ function finishSave(){
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
     finSay('Сохраняю…','busy');
     var t0=Date.now();
-    DB.doc('workouts/'+TODAY+'_'+day).set(body).then(function(){
+    DB.doc('workouts/'+body.date+'_'+day).set(body).then(function(){
       lastSavedAt=new Date(); dirty=false; вПолёте=false; неУехало=false; охрана();
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       try{ renderFinSum(body); }catch(e){}
@@ -8701,7 +8679,8 @@ function finishSave(){
         var x=(body.ex||[]).filter(function(y){ return y.n===e.n; })[0];
         var arr=x&&x.sets||[]; if(!arr.length) return;
         var l=arr[arr.length-1];
-        var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:TODAY, s:arr.map(function(y){return [y.w==null?'':y.w, y.r==null?'':y.r];})};
+        if(LAST[e.n] && LAST[e.n].d && LAST[e.n].d>body.date) return;
+        var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:body.date, s:arr.map(function(y){return [y.w==null?'':y.w, y.r==null?'':y.r];})};
         LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; });
       return сохранитьLAST(body.updated);
     }).then(function(){
