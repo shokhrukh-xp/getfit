@@ -1,0 +1,98 @@
+Прогон: 93 наборов, потоков 6, сайт на 56007 (index.html)
+Метка сборки: 07.10 14:28 (воркера рядом нет — не сверяю)
+  ✓ tyk 4/6                78.4 с
+  ✓ test-ds4               93.1 с
+  ✓ test-ui-dorabotka     100.5 с
+  ✓ test-duga             128.1 с
+  ✓ audit 5/5              60.8 с
+  ✓ audit 1/5              68.4 с
+  ✓ audit 3/5              68.3 с
+  ✓ test-telo-sila         72.6 с
+  ✓ test-ds5              205.8 с
+  ✓ audit 4/5             117.0 с
+  ✓ tyk 1/6               110.8 с
+  ✓ tyk 2/6                91.2 с
+  ✓ test-chto             102.6 с
+  ✓ tyk 6/6                68.7 с
+  ✓ test-ds3              162.9 с
+  ✓ test-ds1              341.5 с
+  ✓ test-ds2               79.6 с
+  ✓ audit 2/5              51.6 с
+  ✓ test-zal               23.9 с
+  ✓ test-ui-clean          67.7 с
+  ✓ test-tsel              41.4 с
+  ✓ test-telo-verdict      18.1 с
+  ✓ test-gruppy            21.3 с
+  ✓ test-fab               33.7 с
+  ✓ test-krugi             26.7 с
+  ✓ test-uprazh            11.6 с
+  ✓ test-reset-sync        12.4 с
+  ✓ test-segodnya          20.7 с
+  ✓ test-samochuvstvie     23.3 с
+  ✓ test-zdorovie          13.2 с
+  ✓ test-norma             12.6 с
+  ✓ test-tolko-eda         10.8 с
+  ✓ test-nepusk            11.7 с
+  ✓ tyk 3/6                14.0 с
+  ✓ test-sahar             20.0 с
+  ✓ test-tri-priema        23.7 с
+  ✓ test-srez              10.5 с
+  ✓ test-rbo               11.3 с
+  ✓ test-svobodny          11.5 с
+  ✓ test-znakomstvo        18.7 с
+  ✓ test-avtoobnovlenie    13.1 с
+  ✓ test-katalog           16.0 с
+  ✓ test-reyting            9.2 с
+  ✓ tyk 5/6                18.1 с
+  ✓ test-mnenie            15.8 с
+  ✓ test-tehnika            9.2 с
+  ✓ test-vidno             15.7 с
+  ✓ test-profil            12.9 с
+  ✓ test-priem              9.9 с
+  ✓ test-menu              13.4 с
+  ✓ test-niz               13.4 с
+  ✓ test-podpiska          10.9 с
+  ✓ test-koridor           10.5 с
+  ✓ test-taymer            13.9 с
+  ✓ test-svoy-superset     14.0 с
+  ✓ test-karta              9.2 с
+  ✓ test-zapis             15.4 с
+  ✓ test-karta-chitaemo    15.5 с
+  ✓ test-sloy               9.1 с
+  ✓ test-home               7.7 с
+  ✓ test-start              8.3 с
+  ✓ test-telo               6.5 с
+  ✓ test-nemoyo            13.7 с
+  ✓ test-upravlenie         7.7 с
+  ✓ test-sovet              6.5 с
+  ✓ test-nedelya-zala       6.8 с
+  ✓ test-sport             10.4 с
+  ✓ test-minuty            18.2 с
+  ✓ test-peredat           12.2 с
+  ✓ test-podskazki          6.4 с
+  ✓ test-zapis-tipy        10.2 с
+  ✓ test-food-complete      4.8 с
+  ✓ test-pribornaya         6.3 с
+  ✓ test-povtor             5.8 с
+  ✓ test-istochniki         5.4 с
+  ✓ test-bot                5.8 с
+  ✓ test-osvezhit           6.6 с
+  ✓ test-razbor-priema      5.0 с
+  ✓ test-ves-snaryad        6.3 с
+  ✓ test-sheet-safe         5.8 с
+  ✓ test-krug               7.0 с
+  ✓ test-gotovoe            5.8 с
+  ✓ test-den                6.2 с
+  ✓ test-tablitsa           6.5 с
+  ✓ test-nedelya            6.4 с
+  ✓ test-dni-galochki       5.8 с
+  ✓ test-shagi              5.4 с
+  ✓ test-imena              0.4 с
+  ✓ test-eda                5.1 с
+  ✓ test-session-access     4.9 с
+  ✓ test-private-photos     4.2 с
+  ✓ test-midnight           5.0 с
+  ✓ test-pary-den           4.6 с
+
+За 492.3 с (по очереди было бы 2939.4 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+ВСЕ НАБОРЫ ПРОЙДЕНЫ

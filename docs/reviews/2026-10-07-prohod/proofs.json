@@ -1,0 +1,614 @@
+[
+  {
+    "name": "backdate",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "selected": "Вчера\n6 октября · вторник\n‹\n›",
+      "expected": "2026-10-06",
+      "sent": [
+        {
+          "uid": "308687648",
+          "text": "Съел яблоко",
+          "image": null,
+          "mime": null,
+          "date": "2026-10-07"
+        }
+      ]
+    }
+  },
+  {
+    "name": "chat-failure",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "input": "",
+      "text": "Тренер\n✕\nтренер\nСервис временно недоступен\n→",
+      "attachment": ""
+    }
+  },
+  {
+    "name": "day-race",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "expected": "2026-10-05",
+      "header": "5 октября\nпонедельник\n‹\n›",
+      "meals": "обед\nЗАПИСЬ 2026-10-06\n500\nккал\nбелок 30 г\n×"
+    }
+  },
+  {
+    "name": "measure-invalid",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "sent": [],
+      "message": "",
+      "value": "abc"
+    }
+  },
+  {
+    "name": "measure-failure",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "texts": [
+        {
+          "id": "",
+          "text": "Не удалось сохранить замер",
+          "visible": false,
+          "parent": "p-food"
+        }
+      ],
+      "input": "87.2"
+    }
+  },
+  {
+    "name": "backdate",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "selected": "Вчера\n6 октября · вторник\n‹\n›",
+      "expected": "2026-10-06",
+      "sent": [
+        {
+          "uid": "308687648",
+          "text": "Съел яблоко",
+          "image": null,
+          "mime": null,
+          "date": "2026-10-07"
+        }
+      ]
+    }
+  },
+  {
+    "name": "chat-failure",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "input": "",
+      "text": "Тренер\n✕\nтренер\nСервис временно недоступен\n→",
+      "attachment": ""
+    }
+  },
+  {
+    "name": "day-race",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "expected": "2026-10-05",
+      "header": "5 октября\nпонедельник\n‹\n›",
+      "meals": "обед\nЗАПИСЬ 2026-10-06\n500\nккал\nбелок 30 г\n×"
+    }
+  },
+  {
+    "name": "measure-invalid",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "sent": [],
+      "message": "",
+      "value": "abc"
+    }
+  },
+  {
+    "name": "measure-failure",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "texts": [
+        {
+          "id": "",
+          "text": "Не удалось сохранить замер",
+          "visible": false,
+          "parent": "p-food"
+        }
+      ],
+      "input": "87.2"
+    }
+  },
+  {
+    "name": "backdate",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "selected": "Вчера\n6 октября · вторник\n‹\n›",
+      "expected": "2026-10-06",
+      "sent": [
+        {
+          "uid": "308687648",
+          "text": "Съел яблоко",
+          "image": null,
+          "mime": null,
+          "date": "2026-10-07"
+        }
+      ]
+    }
+  },
+  {
+    "name": "chat-failure",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "input": "",
+      "text": "Тренер\n✕\nтренер\nСервис временно недоступен\n→",
+      "attachment": ""
+    }
+  },
+  {
+    "name": "day-race",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "expected": "2026-10-05",
+      "header": "5 октября\nпонедельник\n‹\n›",
+      "meals": "обед\nЗАПИСЬ 2026-10-06\n500\nккал\nбелок 30 г\n×"
+    }
+  },
+  {
+    "name": "measure-invalid",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "sent": [],
+      "message": "",
+      "value": "abc"
+    }
+  },
+  {
+    "name": "measure-failure",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "texts": [
+        {
+          "id": "",
+          "text": "Не удалось сохранить замер",
+          "visible": false,
+          "parent": "p-food"
+        }
+      ],
+      "input": "87.2"
+    }
+  },
+  {
+    "name": "backdate",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "selected": "Вчера\n6 октября · вторник\n‹\n›",
+      "expected": "2026-10-06",
+      "sent": [
+        {
+          "uid": "308687648",
+          "text": "Съел яблоко",
+          "image": null,
+          "mime": null,
+          "date": "2026-10-07"
+        }
+      ]
+    }
+  },
+  {
+    "name": "chat-failure",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "input": "",
+      "text": "Тренер\n✕\nтренер\nСервис временно недоступен\n→",
+      "attachment": ""
+    }
+  },
+  {
+    "name": "day-race",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "expected": "2026-10-05",
+      "header": "5 октября\nпонедельник\n‹\n›",
+      "meals": "обед\nЗАПИСЬ 2026-10-06\n500\nккал\nбелок 30 г\n×"
+    }
+  },
+  {
+    "name": "measure-invalid",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "sent": [],
+      "message": "",
+      "value": "abc"
+    }
+  },
+  {
+    "name": "measure-failure",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "texts": [
+        {
+          "id": "",
+          "text": "Не удалось сохранить замер",
+          "visible": false,
+          "parent": "p-food"
+        }
+      ],
+      "input": "87.2"
+    }
+  },
+  {
+    "name": "buy-error",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "text": "Сегодня\nЗавтра\nНеделя\nПокупки\nПокупки на завтра\nчт, 8 октября\n\nв сырых весах\n\nВ Telegram"
+    }
+  },
+  {
+    "name": "day-error",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "header": "Вчера\n6 октября · вторник\n‹\n›",
+      "text": "Мой день\nЧто съесть\nРейтинг\nВчера\n6 октября · вторник\n‹\n›\n\nЗагружаю…\n\nПриёмы\nНеделя\n\nцелевая зона ±10 %\n\nДата\nКалории\nФакт\nНорма\n01.10\n2050\n2110\n02.10\n1880\n2110\n03.10\n2210\n2110\n04.10\n2000\n2110\n05.10\n2450\n2110\n06.10\n1960\n2110\n07.10\n1030\n2110\n4 / 6\nдней в норме\n2092\nккал в среднем\n153 г\nбелка в среднем\nКак читать неделю\nШаги и сон\nПрислать ↗\n\nШаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена."
+    }
+  },
+  {
+    "name": "buy-error",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "text": "Сегодня\nЗавтра\nНеделя\nПокупки\nПокупки на завтра\nчт, 8 октября\n\nв сырых весах\n\nВ Telegram"
+    }
+  },
+  {
+    "name": "day-error",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "header": "Вчера\n6 октября · вторник\n‹\n›",
+      "text": "Мой день\nЧто съесть\nРейтинг\nВчера\n6 октября · вторник\n‹\n›\n\nЗагружаю…\n\nПриёмы\nНеделя\n\nцелевая зона ±10 %\n\nДата\nКалории\nФакт\nНорма\n01.10\n2050\n2110\n02.10\n1880\n2110\n03.10\n2210\n2110\n04.10\n2000\n2110\n05.10\n2450\n2110\n06.10\n1960\n2110\n07.10\n1030\n2110\n4 / 6\nдней в норме\n2092\nккал в среднем\n153 г\nбелка в среднем\nКак читать неделю\nШаги и сон\nПрислать ↗\n\nШаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена."
+    }
+  },
+  {
+    "name": "buy-error",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "text": "Сегодня\nЗавтра\nНеделя\nПокупки\nПокупки на завтра\nчт, 8 октября\n\nв сырых весах\n\nВ Telegram"
+    }
+  },
+  {
+    "name": "day-error",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "header": "Вчера\n6 октября · вторник\n‹\n›",
+      "text": "Мой день\nЧто съесть\nРейтинг\nВчера\n6 октября · вторник\n‹\n›\n\nЗагружаю…\n\nПриёмы\nНеделя\n\nцелевая зона ±10 %\n\nДата\nКалории\nФакт\nНорма\n01.10\n2050\n2110\n02.10\n1880\n2110\n03.10\n2210\n2110\n04.10\n2000\n2110\n05.10\n2450\n2110\n06.10\n1960\n2110\n07.10\n1030\n2110\n4 / 6\nдней в норме\n2092\nккал в среднем\n153 г\nбелка в среднем\nКак читать неделю\nШаги и сон\nПрислать ↗\n\nШаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена."
+    }
+  },
+  {
+    "name": "buy-error",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "text": "Сегодня\nЗавтра\nНеделя\nПокупки\nПокупки на завтра\nчт, 8 октября\n\nв сырых весах\n\nВ Telegram"
+    }
+  },
+  {
+    "name": "day-error",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "header": "Вчера\n6 октября · вторник\n‹\n›",
+      "text": "Мой день\nЧто съесть\nРейтинг\nВчера\n6 октября · вторник\n‹\n›\n\nЗагружаю…\n\nПриёмы\nНеделя\n\nцелевая зона ±10 %\n\nДата\nКалории\nФакт\nНорма\n01.10\n2050\n2110\n02.10\n1880\n2110\n03.10\n2210\n2110\n04.10\n2000\n2110\n05.10\n2450\n2110\n06.10\n1960\n2110\n07.10\n1030\n2110\n4 / 6\nдней в норме\n2092\nккал в среднем\n153 г\nбелка в среднем\nКак читать неделю\nШаги и сон\nПрислать ↗\n\nШаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена."
+    }
+  },
+  {
+    "name": "subscription-profile",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(59, 59, 59)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        284,
+        46
+      ],
+      "topModal": "profm",
+      "hit": "<i>вт, ср, чт, пт, вс · 5 дней в неделю</i>",
+      "layers": [
+        {
+          "id": "subm",
+          "z": "120"
+        },
+        {
+          "id": "profm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-coach",
+    "theme": "dark",
+    "width": 320,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(59, 59, 59)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        284,
+        46
+      ],
+      "topModal": "subm",
+      "hit": "<button class=\"btn prim wide\" id=\"sub-buy\">Подключить за 500 ★</button>",
+      "layers": [
+        {
+          "id": "coachm",
+          "z": "120"
+        },
+        {
+          "id": "subm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-profile",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(59, 59, 59)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        354,
+        46
+      ],
+      "topModal": "profm",
+      "hit": "<div class=\"progcard gymonly\" id=\"progcard\"><h4>Мышцы · вес вниз · 5 дней</h4><i>вт, ср, чт, пт, вс · 5 дней в неделю</i><p class=\"pcond\">всё тело ровно · в зале · 45 мин · блин 2,",
+      "layers": [
+        {
+          "id": "subm",
+          "z": "120"
+        },
+        {
+          "id": "profm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-coach",
+    "theme": "dark",
+    "width": 390,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(59, 59, 59)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        354,
+        46
+      ],
+      "topModal": "subm",
+      "hit": "<button class=\"btn prim wide\" id=\"sub-buy\">Подключить за 500 ★</button>",
+      "layers": [
+        {
+          "id": "coachm",
+          "z": "120"
+        },
+        {
+          "id": "subm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-profile",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(255, 255, 255)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        284,
+        46
+      ],
+      "topModal": "profm",
+      "hit": "<i>вт, ср, чт, пт, вс · 5 дней в неделю</i>",
+      "layers": [
+        {
+          "id": "subm",
+          "z": "120"
+        },
+        {
+          "id": "profm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-coach",
+    "theme": "light",
+    "width": 320,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(255, 255, 255)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        284,
+        46
+      ],
+      "topModal": "subm",
+      "hit": "<button class=\"btn prim wide\" id=\"sub-buy\">Подключить за 500 ★</button>",
+      "layers": [
+        {
+          "id": "coachm",
+          "z": "120"
+        },
+        {
+          "id": "subm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-profile",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(255, 255, 255)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        354,
+        46
+      ],
+      "topModal": "profm",
+      "hit": "<div class=\"progcard gymonly\" id=\"progcard\"><h4>Мышцы · вес вниз · 5 дней</h4><i>вт, ср, чт, пт, вс · 5 дней в неделю</i><p class=\"pcond\">всё тело ровно · в зале · 45 мин · блин 2,",
+      "layers": [
+        {
+          "id": "subm",
+          "z": "120"
+        },
+        {
+          "id": "profm",
+          "z": "120"
+        }
+      ]
+    }
+  },
+  {
+    "name": "subscription-coach",
+    "theme": "light",
+    "width": 390,
+    "result": {
+      "promo": {
+        "rect": [
+          18,
+          789,
+          153,
+          21
+        ],
+        "background": "rgb(255, 255, 255)",
+        "font": "13.3333px"
+      },
+      "subShow": true,
+      "rect": [
+        18,
+        730,
+        354,
+        46
+      ],
+      "topModal": "subm",
+      "hit": "<button class=\"btn prim wide\" id=\"sub-buy\">Подключить за 500 ★</button>",
+      "layers": [
+        {
+          "id": "coachm",
+          "z": "120"
+        },
+        {
+          "id": "subm",
+          "z": "120"
+        }
+      ]
+    }
+  }
+]

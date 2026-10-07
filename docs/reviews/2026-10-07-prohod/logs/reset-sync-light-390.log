@@ -1,0 +1,4 @@
+PASS reset: failure preserves local data; retry is stable; successful reset clears and reloads
+PASS reset: second device clears stale profile/history before any upload
+PASS reset: failed CloudStorage deletion retries without removing the new generation
+PASS reset: another tab changing the marker cannot promote stale data to the new generation
