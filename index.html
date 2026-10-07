@@ -3459,6 +3459,14 @@ function катНадо(){
   катЖдём=true;
   loadCatalog().then(function(){
     катЖдём=false;
+    /* 07.10: число подходов зависит от каталога (кардио — один заход). Каталог
+       пришёл после сборки сессии — нетронутый день пересобираем, иначе у
+       лестницы оставались три строки до следующего захода */
+    try{
+      if(sess && sess.ex && !anyTouched() && exList(day).some(function(e,di){ return sess.ex[di] && sess.ex[di].sets.length!==setsFor(e,di); })){
+        var раскрыто=EXPICK; loadSess(); EXPICK=раскрыто;
+      }
+    }catch(e){}
     try{ renderList(); }catch(e){}
     try{ renderProgress(); }catch(e){}
     /* карта тела достаёт мышцу из каталога: без перерисовки она оставалась
