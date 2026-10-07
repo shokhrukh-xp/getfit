@@ -1899,6 +1899,16 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
 .modal{position:fixed;inset:0;z-index:120;display:none;align-items:flex-end;justify-content:center;
   background:var(--scrim);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .modal.show{display:flex}
+/* Подписка открывается поверх текущего листа и возвращает в него. */
+#subm{z-index:130}
+#sub-promo{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#sub-code{flex:1 1 140px;min-width:0;width:100%;min-height:44px;box-sizing:border-box;
+  padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--text);font:inherit;font-size:16px}
+#sub-code::placeholder{color:var(--muted);opacity:1}
+#sub-codeb{min-height:44px}
+#hmeas .freply.bad{color:var(--warn-txt)}
+.mbtns{flex-wrap:wrap}
+.mbtns .mwarn{flex:0 0 100%;margin:0}
 .modalbox{width:100%;max-width:560px;max-height:86vh;overflow:auto;
   background:var(--bg-2);border-radius:24px 24px 0 0;
   box-shadow:0 -1px 0 var(--line-soft), 0 -20px 50px rgba(0,0,0,.22);
@@ -5409,7 +5419,7 @@ function readMeForm(){
    просьбе в разговоре — сам тренер его не присылает (его ответ). Числа —
    норма дня, подгонка порций, покупки в сырых весах — считает сервер,
    здесь только показ. Отметки в списке покупок — в этом телефоне. */
-var EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='';
+var EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='', MENUSENDBUSY='', MENUSENDERR={};
 /* 25.09, его выбор (vybor-13-segodnya.png, «Б»): «Сейчас» → «Сегодня» — меню на
    остаток дня сверху, каталог под кнопкой. Ключ 'now' оставлен: на него
    ссылаются чат и проверки. */
@@ -5445,10 +5455,23 @@ function menuРецепт(key){
     if(d&&d.ok) MENUREC[key]=d; else MENUERR=(d&&d.нет)||'Рецепт не сложился — попробуй ещё раз.'; })
   .catch(function(e){ MENUERR=humanErr(e); }).then(function(){ MENURECBUSY=''; renderEat(); });
 }
+/* Отправка — только по явному нажатию. Ошибка привязана к виду отправления. */
+function menuSendButton(v, prim){
+  var err=MENUSENDERR[v];
+  return (err?'<p class="mwarn" role="status">Не удалось отправить. '+esc(err)+'</p>':'')+
+    '<button type="button" class="btn'+(prim?' prim':'')+'" data-msend="'+esc(v)+'"'+(MENUSENDBUSY?' disabled':'')+'>'+
+    (MENUSENDBUSY===v?'Отправляю…':err?'Повторить':MENUSENT===v?'Отправил ✓':'В Telegram')+'</button>';
+}
 function menuОтправить(v){
-  var p=v.split(':');
-  fPost('/menu/send', {uid:syncUid(), span:p[0], what:p[1]}).then(function(){ MENUSENT=v; haptic('ok'); renderEat(); })
-    .catch(function(e){ MENUERR=humanErr(e); haptic('err'); renderEat(); });
+  if(MENUSENDBUSY) return;
+  var p=v.split(':'); MENUSENDBUSY=v; delete MENUSENDERR[v];
+  if(MENUSENT===v) MENUSENT='';
+  renderEat();
+  fPost('/menu/send', {uid:syncUid(), span:p[0], what:p[1]}).then(function(d){
+    if(!d || d.ok!==true) throw new Error((d&&d.error)||'Сервер не подтвердил отправку.');
+    MENUSENT=v; haptic('ok');
+  }).catch(function(e){ MENUSENDERR[v]=humanErr(e); haptic('err'); })
+    .then(function(){ MENUSENDBUSY=''; renderEat(); });
 }
 function menuДата(iso){ var d=new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]; }
 function menuПриём(x, span, m){
@@ -5553,7 +5576,7 @@ function сегодняHTML(){
   }
   h+='<details class="menu-note"><summary>↻ Обновляется автоматически</summary><p>Пересоберу сам, когда запишешь еду или изменится норма.</p></details>';
   if(!m.всё) h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="today">Другое меню</button>'+
-     '<button type="button" class="btn" data-msend="today:menu">'+(MENUSENT==='today:menu'?'Отправил ✓':'В Telegram')+'</button></div>';
+     menuSendButton('today:menu')+'</div>';
   return h;
 }
 function menuHTML(){
@@ -5569,7 +5592,7 @@ function menuHTML(){
   if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>'+грМенюHTML(m.группы)+menuNote(m.note);
   h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
   h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="'+span+'">Другое меню</button>'+
-     '<button type="button" class="btn" data-msend="'+span+':menu">'+(MENUSENT===span+':menu'?'Отправил ✓':'В Telegram')+'</button></div>';
+     menuSendButton(span+':menu')+'</div>';
   return h;
 }
 function buyHTML(){
@@ -5584,7 +5607,7 @@ function buyHTML(){
     h+='<div class="botd">'+esc(o.отдел)+'</div>'+o.список.map(function(x){
       return '<button type="button" class="bitem" data-buy="'+esc(x.имя)+'" aria-pressed="'+(!!отм[x.имя])+'"><i></i><span>'+esc(x.имя)+' — '+esc(x.сколько)+'</span></button>'; }).join('');
   });
-  h+='<div class="btnrow mbtns"><button type="button" class="btn prim" data-msend="'+span+':buy">'+(MENUSENT===span+':buy'?'Отправил ✓':'В Telegram')+'</button></div>';
+  h+='<div class="btnrow mbtns">'+menuSendButton(span+':buy',true)+'</div>';
   return h;
 }
 function menuКлик(e){
@@ -12596,12 +12619,24 @@ function датаРус(ms){
   var d=new Date(+ms); if(isNaN(d)) return '';
   return d.getDate()+' '+MONTHS[d.getMonth()];
 }
+var SUBRETURN=null, SUBUNDER=[];
 function openSub(){
   var m=document.getElementById('subm'); if(!m) return;
-  renderSub(); m.classList.add('show');
+  if(!m.classList.contains('show')){
+    SUBRETURN=document.activeElement;
+    SUBUNDER=Array.from(document.querySelectorAll('.modal.show')).filter(function(x){ return x!==m; }).map(function(x){
+      var state={el:x,inert:x.inert}; x.inert=true; return state;
+    });
+  }
+  renderSub(); m.classList.add('show'); document.getElementById('subclose').focus({preventScroll:true});
   if(!SUB || !SUB.link) subPull();
 }
-function closeSub(){ var m=document.getElementById('subm'); if(m) m.classList.remove('show'); }
+function closeSub(){
+  var m=document.getElementById('subm'); if(m) m.classList.remove('show');
+  SUBUNDER.forEach(function(x){ x.el.inert=x.inert; }); SUBUNDER=[];
+  var back=SUBRETURN && (SUBRETURN.isConnected?SUBRETURN:document.getElementById(SUBRETURN.id));
+  if(back) back.focus({preventScroll:true}); SUBRETURN=null;
+}
 /* Одна дверь на все отказы: любой запрос, которому сервер ответил кодом sub,
    приводит сюда, и человек видит цену, а не красную ошибку. */
 function стенаЕсли(e){
