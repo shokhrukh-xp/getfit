@@ -2929,6 +2929,15 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 .pickgroups{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .pickgroups .mchip{min-height:44px;margin:0;padding:8px 12px}
 body.ordmode #list .sstag{color:var(--text)}
+/* 07.10 B4/B7: компактный выбор дня и доступные строки недели. */
+.menu-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin:12px 0}
+.menu-days button{min-width:0;min-height:48px;padding:6px 1px;border:1px solid var(--line);border-radius:12px;background:var(--tint);color:var(--text);font:inherit;font-size:11px}
+.menu-days button b,.menu-days button span{display:block}
+.menu-days button[aria-pressed="true"]{background:var(--action);color:var(--on-accent)}
+#fweek button.fd{width:100%;font:inherit;color:var(--text);background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;text-align:left;min-height:44px;cursor:pointer}
+#fweek button.fd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#fnav{scroll-margin-top:calc(var(--pad-top) + 16px)}
+.dbnote.bad{color:var(--warn-txt)}
 </style>
 </head>
 <body>
@@ -2990,7 +2999,7 @@ body.ordmode #list .sstag{color:var(--text)}
         <div id="rbbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
         <div id="list"></div>
-        <p class="dbnote" id="dbnote"></p><div id="day-save-status"></div>
+        <p class="dbnote" id="dbnote" role="status"></p>
         <div class="finsum" id="finsum" hidden></div>
         <div class="btnrow one">
           <button class="btn" id="finish">Завершить и сохранить</button>
@@ -3282,7 +3291,7 @@ body.ordmode #list .sstag{color:var(--text)}
      бота однажды разойдутся. -->
 <div class="modal" id="srezm" role="dialog" aria-modal="true" aria-labelledby="srtitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="srtitle">Срез</h3><button class="xbtn" id="srclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><h3 id="srtitle">Изменения тела</h3><button class="xbtn" id="srclose" aria-label="Закрыть">✕</button></div>
     <p class="mtext" id="sr-when"></p>
     <div id="sr-body"></div>
     <div class="srsw" id="sr-sw"></div>
@@ -4143,7 +4152,7 @@ function saveSubs(){
   парыПодмести();
   set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD); set('pairs', PAIRS);
   var pending=DB?DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}):Promise.resolve();
-  savedNear(document.getElementById('day-save-status'),pending);return pending.catch(function(){});
+  dayEditSaved(pending,!!CS);return pending.catch(function(){});
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
@@ -5517,7 +5526,7 @@ function readMeForm(){
    просьбе в разговоре — сам тренер его не присылает (его ответ). Числа —
    норма дня, подгонка порций, покупки в сырых весах — считает сервер,
    здесь только показ. Отметки в списке покупок — в этом телефоне. */
-var EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='', MENUSENDBUSY='', MENUSENDERR={};
+var MENUWEEKDATE='', EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='', MENUSENDBUSY='', MENUSENDERR={};
 /* 25.09, его выбор (vybor-13-segodnya.png, «Б»): «Сейчас» → «Сегодня» — меню на
    остаток дня сверху, каталог под кнопкой. Ключ 'now' оставлен: на него
    ссылаются чат и проверки. */
@@ -5687,8 +5696,17 @@ function menuHTML(){
       ? 'Меню на неделю — круг из твоих же блюд: 2–3 завтрака и 3–4 обеда и ужина, чтобы готовить два-три раза в неделю. Порции — под норму каждого дня, покупки — списком.'
       : 'Меню на завтра — из того, что ты обычно ешь, с граммами под норму завтрашнего дня.')+'</p>'+
     '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="'+span+'">'+(span==='week'?'Собрать меню на неделю':'Собрать меню на завтра')+'</button></div>';
-  if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>'+грМенюHTML(m.группы)+menuNote(m.note);
-  h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
+  if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>';
+  /* 07.10 B4: вместо семи меню подряд — выбранный день; порядок и даты
+     приходят от сервера (неделя может начинаться не с понедельника). */
+  if(span==='week' && m.дни.length){
+    if(!m.дни.some(function(d){return d.date===MENUWEEKDATE;})) MENUWEEKDATE=m.дни[0].date;
+    h+='<div class="menu-days" aria-label="День меню">'+m.дни.map(function(d){
+      var dt=new Date(d.date+'T12:00:00');
+      return '<button type="button" data-menu-day="'+esc(d.date)+'" aria-pressed="'+(d.date===MENUWEEKDATE)+'"><b>'+WD[dt.getDay()]+'</b><span>'+ruDate(d.date)+'</span></button>';
+    }).join('')+'</div>';
+    h+=грМенюHTML(m.группы)+menuNote(m.note)+menuДень(m.дни.filter(function(d){return d.date===MENUWEEKDATE;})[0],span,m);
+  }else h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
   h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="'+span+'">Другое меню</button>'+
      menuSendButton(span+':menu')+'</div>';
   return h;
@@ -5709,6 +5727,8 @@ function buyHTML(){
   return h;
 }
 function menuКлик(e){
+  var md=e.target.closest('[data-menu-day]');
+  if(md){MENUWEEKDATE=md.dataset.menuDay;renderEat();haptic('light');return true;}
   var es=e.target.closest('[data-eseg]'); if(es){ EATSEG=es.dataset.eseg; MENUERR=''; renderEat(); haptic('light'); return true; }
   var mg=e.target.closest('[data-mgen]');
   if(mg){ if(mg.dataset.mgen==='today'){ var дс=деньСегодня(); MENUTRY=дс?подписьДня(дс):''; } menuСобрать(mg.dataset.mgen); haptic('light'); return true; }
@@ -8452,17 +8472,35 @@ function countDone(){
   sess.ex.forEach(function(x){ x.sets.forEach(function(v){ if(v.done) n++; }); });
   return n;
 }
+/* 07.10: правка программы и подходы — одна строка состояния, но две
+   независимые записи. Успех одной не должен спрятать ошибку другой. */
+var WORK_NOTE='local', WORK_NOTE_KEY='', DAYEDIT_SAVE='', DAYEDIT_GEN=0, DAYEDIT_TIMER=null;
+function dayEditSaved(promise,cloud){
+  var gen=++DAYEDIT_GEN;clearTimeout(DAYEDIT_TIMER);DAYEDIT_SAVE=cloud?'saving':'local';paintNote('');
+  Promise.resolve(promise).then(function(){
+    if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';paintNote('');
+    DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';paintNote('');}},3000);
+  }).catch(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='err';paintNote('');}});
+}
 function paintNote(k){
   var el=document.getElementById('dbnote'); if(!el) return;
-  var n=countDone();
-  var head = n ? n+' '+plural(n,['подход','подхода','подходов'])+' отмечено'
-              : 'ни один подход не отмечен';
-  var tail = {local:' · сохранено на телефоне', saving:' · сохраняю '+STORENAME+'…',
-              saved:' · Сохранено', err:' · Telegram не ответил, данные на телефоне',
-              empty:' — жми ✓ справа от подхода или «всё» над ними'}[k] || '';
-  el.textContent = head + tail;
-  el.className = 'dbnote' + (k==='saved' ? ' ok' : '') + (k==='empty' ? ' warn' : '');
+  var key=sKey();if(key!==WORK_NOTE_KEY){WORK_NOTE_KEY=key;WORK_NOTE='local';}
+  if(k)WORK_NOTE=k;
+  var n=countDone(), state=WORK_NOTE||'local';
+  var head = n ? n+' '+plural(n,['подход','подхода','подходов'])+' отмечено' : 'ни один подход не отмечен';
+  var tail={local:'сохранено на телефоне',saving:'сохраняю '+STORENAME+'…',
+    saved:'Сохранено '+(CS?'в облаке':'на телефоне'),err:'Telegram не ответил, данные на телефоне',
+    empty:'жми ✓ справа от подхода или «всё» над ними'}[state]||'';
+  var err=state==='err'||DAYEDIT_SAVE==='err';
+  if(DAYEDIT_SAVE==='err')tail='На телефоне сохранено · правки не дошли в облако'+(state==='err'?' · подходы тоже':'');
+  else if(state!=='err' && DAYEDIT_SAVE==='saving')tail='На телефоне сохранено · отправляю правки в облако…';
+  else if(state!=='err' && DAYEDIT_SAVE==='saved')tail=state==='saved'?'Сохранено в облаке':
+    'Сохранено: правки в облаке'+(n?(state==='saving'?' · подходы отправляются':' · подходы на телефоне'):'');
+  else if(DAYEDIT_SAVE==='local' && state!=='err')tail='сохранено на телефоне';
+  el.textContent=head+(tail?' · '+tail:'');
+  el.className='dbnote'+(err?' bad':state==='saved'||DAYEDIT_SAVE==='saved'?' ok':state==='empty'?' warn':'');
 }
+
 function thaw(){ if(Object.isFrozen(LAST)) LAST=JSON.parse(JSON.stringify(LAST)); }
 /* ── «В ПРОШЛЫЙ РАЗ» НЕ ДОЛЖЕН УПИРАТЬСЯ В ПОТОЛОК ────────────────────
    16.09, его снимок: красное «Сбой — cloud/last: CloudStorage timeout»
@@ -9422,7 +9460,7 @@ function renderMeasSummary(){
         '<i class="'+(dw!=null?cls(dw):'')+'">'+(dw!=null? f(dw)+'<em>за нед.</em>' : '')+'</i>'+
         '<i class="'+(d0!=null?cls(d0):'')+'">'+(d0!=null? f(d0)+'<em>от '+ruDate(first.date)+'</em>' : '')+'</i></div>';
     };
-    box.innerHTML = row('вес','w','кг',true,true) + row('жир','fat','%',true,true) + row('белок','prot','кг',false,true) + row('талия','waist','см',true,true) +
+    box.innerHTML = row('вес','w','кг',true,true) + row('жир','fat','%',true,true) + row('белок тела','prot','кг',false,true) + row('талия','waist','см',true,true) +
       /* пояснение — только когда есть что сказать: белковая масса упала */
       ((last.prot!=null && first!==last && first.prot!=null && last.prot-first.prot<-0.3) ? '<p class="fline" style="margin-top:8px">Расчётная белковая масса ниже старта. Это не доказывает потерю мышц — сравни условия замеров, питание и силу.</p>' : '');
   };
@@ -10812,6 +10850,11 @@ function fDate(){ return FOOD.date || TODAY; }
 function fShift(n){
   var d=new Date(fDate()+'T12:00:00'); d.setDate(d.getDate()+n);
   var iso=ymd(d); if(iso>TODAY) return;
+  fOpenDay(iso);
+}
+/* 07.10 B7: стрелки и строка недели используют один путь загрузки даты. */
+function fOpenDay(iso){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)||iso>TODAY)return;
   FOOD.date = (iso===TODAY) ? null : iso;
   FOOD.day=null; FOOD.err=false; renderFoodNav(); renderFoodDay(); loadDay();
 }
@@ -11559,7 +11602,7 @@ function bodySeries(){
       под:function(m){ return m.fat!=null ? fmtKg(+m.fat)+' %' : null; },
       f:function(m){
       return m.fatkg!=null ? +m.fatkg : ((m.w!=null && m.fat!=null) ? Math.round(+m.w*+m.fat)/100 : null); }},
-    {k:'prot', n:'белок', нейтр:true, вниз:false, порог:0.3, f:function(m){
+    {k:'prot', n:'белок тела', нейтр:true, вниз:false, порог:0.3, f:function(m){
       return m.prot!=null ? +m.prot : null; }},
     /* Талия — единственное здесь, что меряет сантиметр, а не весы. На дефиците
        она врёт меньше веса: вода и гликоген её почти не двигают. Строки нет,
@@ -11620,7 +11663,7 @@ function замерыВзять(d){
   if(Array.isArray(d.free)) FOOD.free=d.free;
   if(d.вода) FOOD.вода=d.вода;
 }
-var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['prot','белок'],['waist','талия']];
+var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['prot','белок тела'],['waist','талия']];
 function vzВид(){ try{ return localStorage.getItem('gf_vz')||'w'; }catch(e){ return 'w'; } }
 function vzВидЗадать(k){ try{ localStorage.setItem('gf_vz',k); }catch(e){} }
 function vzСерия(k){ var r=null; bodySeries().forEach(function(s){ if(s.k===k) r=s; }); return r; }
@@ -12633,13 +12676,13 @@ function renderSrez(){
   if(SREZBUSY){ if(когда) когда.textContent='Считаю…'; box.innerHTML=''; return; }
   if(!SREZ || SREZ.ошибка){
     if(когда) когда.textContent='';
-    box.innerHTML='<p class="mtext">'+esc((SREZ&&SREZ.что)||'Не получилось посчитать срез.')+'</p>';
+    box.innerHTML='<p class="mtext">'+esc((SREZ&&SREZ.что)||'Не получилось посчитать изменения тела.')+'</p>';
     return;
   }
   if(!SREZ.есть){
     if(когда) когда.textContent='';
     box.innerHTML='<p class="mtext">Чтобы увидеть, сколько из веса ушло жиром, нужно хотя бы два замера за выбранный срок. '+
-      'Встань на весы — и срез посчитается сам.</p>';
+      'Встань на весы — и изменения тела посчитаются автоматически.</p>';
     return;
   }
   var d=SREZ, дл=d['д']||{};
@@ -14083,9 +14126,9 @@ function renderFoodWeek(){
     var t=норма(d), откл = t.kcal ? (d.kcal-t.kcal)/t.kcal : 0;
     var cls = d.free ? 'fb-free' : !d.n ? 'fb-none' : (Math.abs(откл)<=0.10 ? 'fb-hi' : (откл>0.10 || d.date<TODAY ? 'fb-low' : ''));
     if(t.kcal) естьНорма=true;
-    return '<div class="fd'+(d.date===TODAY?' fd-today':'')+'"><u>'+ruDate(d.date).slice(0,5)+'</u><div class="fbw">'+
+    return '<button type="button" data-food-day="'+esc(d.date)+'" class="fd'+(d.date===TODAY?' fd-today':'')+'"'+(d.date>TODAY?' disabled':'')+'><u>'+ruDate(d.date).slice(0,5)+'</u><div class="fbw">'+
       (t.kcal&&!d.free?'<s class="nb" data-norm="'+t.kcal+'" style="left:'+(t.kcal*.9/mx*100)+'%;width:'+(t.kcal*.2/mx*100)+'%"></s>':'')+
-      '<div class="fb '+cls+'" style="width:'+(d.free?12:Math.max(1,d.n?d.kcal/mx*100:0))+'%"></div></div><i class="week-fact">'+(d.free?'своб.':(d.n?d.kcal:'—'))+'</i><span class="week-target">'+(d.free?'—':(t.kcal||'—'))+'</span></div>';
+      '<div class="fb '+cls+'" style="width:'+(d.free?12:Math.max(1,d.n?d.kcal/mx*100:0))+'%"></div></div><i class="week-fact">'+(d.free?'своб.':(d.n?d.kcal:'—'))+'</i><span class="week-target">'+(d.free?'—':(t.kcal||'—'))+'</span></button>';
   }).join('');
   /* одна строка: среднее против нормы и сколько дней попали в коридор */
   var logged=w.days.filter(function(d){ return d.n && d.date<TODAY && !d.free; });
@@ -14099,6 +14142,11 @@ function renderFoodWeek(){
     : 'За неделю записей нет.');
   t.innerHTML=(logged.length?'<span class="week-summary">'+(нк?'<span><b>'+вНорме+' / '+logged.length+'</b> дней в норме</span>':'')+'<span><b>'+avg.kcal+'</b> ккал в среднем</span><span><b>'+avg.prot+' г</b> белка в среднем</span></span>':'')+'<details class="week-explain"><summary>Как читать неделю</summary>'+esc(explanation)+'</details>';
 }
+document.getElementById('fweek').addEventListener('click',function(e){
+  var b=e.target.closest('[data-food-day]');if(!b||b.disabled)return;
+  fOpenDay(b.dataset.foodDay);haptic('light');
+  document.getElementById('fnav').scrollIntoView({block:'start'});
+});
 function sortMeas(a){ return (a||[]).slice().sort(function(x,y){ return x.date<y.date?1:x.date>y.date?-1:0; }); }
 /* 30.09: три полосы веса, жира и белка с «Еды» переехали на главную —
    карточкой «Тело» с одной величиной на выбор (homeBody). Все, кто получил

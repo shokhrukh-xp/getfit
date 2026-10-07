@@ -1,0 +1,80 @@
+FAIL labels light 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'белок'
+- 'белок тела'
+        ^
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:23:10
+FAIL menu light 320 locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-menu-day]').first() to be visible[22m
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:26:82
+FAIL week light 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 7
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:33:63
+FAIL save light 320 page.waitForFunction: Timeout 5000ms exceeded.
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:41:97
+FAIL labels light 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'белок'
+- 'белок тела'
+        ^
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:23:10
+FAIL menu light 390 locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-menu-day]').first() to be visible[22m
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:26:82
+FAIL week light 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 7
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:33:63
+FAIL save light 390 page.waitForFunction: Timeout 5000ms exceeded.
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:41:97
+FAIL labels dark 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'белок'
+- 'белок тела'
+        ^
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:23:10
+FAIL menu dark 320 locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-menu-day]').first() to be visible[22m
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:26:82
+FAIL week dark 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 7
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:33:63
+FAIL save dark 320 page.waitForFunction: Timeout 5000ms exceeded.
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:41:97
+FAIL labels dark 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'белок'
+- 'белок тела'
+        ^
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:23:10
+FAIL menu dark 390 locator.waitFor: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('[data-menu-day]').first() to be visible[22m
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:26:82
+FAIL week dark 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 7
+
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:33:63
+FAIL save dark 390 page.waitForFunction: Timeout 5000ms exceeded.
+    at /private/tmp/getfit-telo-nedelya-local/tg/test-telo-nedelya.js:41:97

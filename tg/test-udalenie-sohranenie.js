@@ -58,7 +58,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   await p.locator('[data-pickex="0"]').click();
   await p.locator('#list input[data-f="w"]').first().fill('42.5');await p.locator('#list input[data-f="r"]').first().fill('9');await p.locator('#list input[data-f="r"]').first().blur();
   const before=await p.evaluate(()=>Object.fromEntries(Object.entries(localStorage).filter(([k])=>k.startsWith('shp_v1_ai_sess_')).map(([k,v])=>[k,JSON.parse(v)])));
-  await p.click('[data-drop="0"]');await p.waitForFunction(()=>document.querySelector('#day-save-status .save-notice')?.textContent==='Сохранено');await snap(p,'exercise-undo',theme,width);if(name==='gym-day')await p.click('[data-day="A2"]');await p.click('.undo-row button');
+  await p.click('[data-drop="0"]');await p.waitForFunction(()=>document.querySelector('#dbnote')?.textContent.includes('Сохранено: правки в облаке'));await snap(p,'exercise-undo',theme,width);if(name==='gym-day')await p.click('[data-day="A2"]');await p.click('.undo-row button');
   await p.waitForFunction(()=>!document.querySelector('.undo-row'));
   const after=await p.evaluate(()=>Object.fromEntries(Object.entries(localStorage).filter(([k])=>k.startsWith('shp_v1_ai_sess_')).map(([k,v])=>[k,JSON.parse(v)])));
   const key=Object.keys(before)[0];assert(key);assert.deepEqual(after[key].n,before[key].n);assert.deepEqual(after[key].ex[0],before[key].ex[0],'Вернулись те же числа и подходы');
