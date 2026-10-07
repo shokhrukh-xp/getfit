@@ -43,6 +43,10 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   await p.evaluate(()=>{window.__oldSet=Telegram.WebApp.CloudStorage.setItem;Telegram.WebApp.CloudStorage.setItem=(k,v,cb)=>cb('temporary failure',false);});
   await p.click('#ordopen');await p.click('[data-orddn="0"]');await p.click('#orddone');await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('правки не дошли в облако'));await p.locator('#dbnote').scrollIntoViewIfNeeded();await snap(p,'save-error',theme,width);
   await p.evaluate(()=>Telegram.WebApp.CloudStorage.setItem=window.__oldSet);await p.click('#ordopen');await p.click('[data-orddn="0"]');await p.click('#orddone');await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('Сохранено: правки в облаке'));assert(!(await p.locator('#dbnote').innerText()).includes('не дошли'));await p.waitForTimeout(3200);assert((await p.locator('#dbnote').innerText()).includes('сохранено на телефоне'));
+  await p.evaluate(()=>Telegram.WebApp.CloudStorage.setItem=(k,v,cb)=>cb('temporary failure',false));
+  await p.locator('#list [data-pickex]').filter({hasNot:p.locator('.sstag')}).first().click();await p.locator('[data-nope]').first().click();await p.locator('[data-noped]').first().click();await p.locator('[data-selfpick]').waitFor();
+  await p.waitForFunction(()=>document.querySelector('#dbnote .db-save-tail')?.textContent.includes('правки не дошли в облако'));assert(await p.locator('[data-selfpick]').isVisible(),'Ошибка сохранения не убирает выбор замены');
+
  }
  assert.deepEqual(errors,[]);console.log('ok',name,theme,width);
  }catch(e){bad++;console.error('FAIL',name,theme,width,e.stack);}finally{await p.close();}

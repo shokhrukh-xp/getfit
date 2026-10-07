@@ -1350,7 +1350,7 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 #finish.ok{background:var(--done-fill);border-color:var(--done-txt);color:var(--on-accent);font-weight:600}
 #finish.bad{background:rgba(var(--warn-rgb),.14);border-color:var(--warn-txt);color:var(--warn-txt)}
 #finish.busy{opacity:.7}
-.dbnote.bad{color:var(--warn-txt)}
+.dbnote.bad,.db-save-tail.bad{color:var(--warn-txt)}
 .timer{bottom:calc(54px + env(safe-area-inset-bottom));z-index:55;padding-bottom:0}
 .dbnote{margin:12px 0 0;text-align:left;font-size:12px;color:var(--dim);min-height:16px;
   border:none;background:none;padding:0 2px;line-height:1.5}
@@ -2937,7 +2937,7 @@ body.ordmode #list .sstag{color:var(--text)}
 #fweek button.fd{width:100%;font:inherit;color:var(--text);background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;text-align:left;min-height:44px;cursor:pointer}
 #fweek button.fd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #fnav{scroll-margin-top:calc(var(--pad-top) + 16px)}
-.dbnote.bad{color:var(--warn-txt)}
+.dbnote.bad,.db-save-tail.bad{color:var(--warn-txt)}
 </style>
 </head>
 <body>
@@ -8474,13 +8474,25 @@ function countDone(){
 }
 /* 07.10: правка программы и подходы — одна строка состояния, но две
    независимые записи. Успех одной не должен спрятать ошибку другой. */
-var WORK_NOTE='local', WORK_NOTE_KEY='', DAYEDIT_SAVE='', DAYEDIT_GEN=0, DAYEDIT_TIMER=null;
+var WORK_NOTE='local', WORK_NOTE_KEY='', WORK_NOTE_TEXT='', DAYEDIT_SAVE='', DAYEDIT_GEN=0, DAYEDIT_TIMER=null;
+/* Ссылка «выбрать самому» и сообщения ошибок тоже живут в dbnote.
+   Позднее подтверждение сохранения не должно стирать их. */
+function dayEditRepaint(){
+  var el=document.getElementById('dbnote');if(!el)return;
+  if(el.querySelector('[data-selfpick]')){
+    var tail=el.querySelector('.db-save-tail');
+    if(!tail){tail=document.createElement('span');tail.className='db-save-tail';el.appendChild(tail);}
+    var text={saving:'отправляю правки в облако…',saved:'Сохранено в облаке',local:'сохранено на телефоне',err:'На телефоне сохранено · правки не дошли в облако'}[DAYEDIT_SAVE]||'';
+    tail.textContent=text?' · '+text:'';tail.className='db-save-tail'+(DAYEDIT_SAVE==='err'?' bad':'');return;
+  }
+  if(el.textContent===WORK_NOTE_TEXT)paintNote('');
+}
 function dayEditSaved(promise,cloud){
   var gen=++DAYEDIT_GEN;clearTimeout(DAYEDIT_TIMER);DAYEDIT_SAVE=cloud?'saving':'local';paintNote('');
   Promise.resolve(promise).then(function(){
-    if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';paintNote('');
-    DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';paintNote('');}},3000);
-  }).catch(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='err';paintNote('');}});
+    if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';dayEditRepaint();
+    DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';dayEditRepaint();}},3000);
+  }).catch(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='err';dayEditRepaint();}});
 }
 function paintNote(k){
   var el=document.getElementById('dbnote'); if(!el) return;
@@ -8497,7 +8509,7 @@ function paintNote(k){
   else if(state!=='err' && DAYEDIT_SAVE==='saved')tail=state==='saved'?'Сохранено в облаке':
     'Сохранено: правки в облаке'+(n?(state==='saving'?' · подходы отправляются':' · подходы на телефоне'):'');
   else if(DAYEDIT_SAVE==='local' && state!=='err')tail='сохранено на телефоне';
-  el.textContent=head+(tail?' · '+tail:'');
+  el.textContent=head+(tail?' · '+tail:'');WORK_NOTE_TEXT=el.textContent;
   el.className='dbnote'+(err?' bad':state==='saved'||DAYEDIT_SAVE==='saved'?' ok':state==='empty'?' warn':'');
 }
 
