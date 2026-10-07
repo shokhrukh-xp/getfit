@@ -1,0 +1,14 @@
+Прогон: 1 наборов, потоков 1, сайт на 60967 (index.html)
+Метка сборки: 07.10 17:09 (воркера рядом нет — не сверяю)
+  ✗ test-zamery            33.3 с
+        ПРОВАЛ validation light/320: A5: вес отмечен как неверный
+        ПРОВАЛ failure light/320: A4: ошибка рядом с формой, не на скрытой Еде
+        ПРОВАЛ waist light/320: page.waitForFunction: Timeout 4500ms exceeded.
+        ПРОВАЛ empty light/320: A8: верный путь в пустом журнале
+        ПРОВАЛ validation light/390: A5: вес отмечен как неверный
+        ПРОВАЛ failure light/390: A4: ошибка рядом с формой, не на скрытой Еде
+        ПРОВАЛ waist light/390: page.waitForFunction: Timeout 4500ms exceeded.
+        ПРОВАЛ empty light/390: A8: верный путь в пустом журнале
+
+За 33.3 с (по очереди было бы 33.3 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+УПАЛО: 1 — test-zamery

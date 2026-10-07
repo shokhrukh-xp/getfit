@@ -1,0 +1,28 @@
+  ПРОВАЛ validation light/320: A5: вес отмечен как неверный
+
+null !== 'true'
+
+  ПРОВАЛ failure light/320: A4: ошибка рядом с формой, не на скрытой Еде
+  ПРОВАЛ waist light/320: page.waitForFunction: Timeout 4500ms exceeded.
+  ПРОВАЛ empty light/320: A8: верный путь в пустом журнале
+  ПРОВАЛ validation light/390: A5: вес отмечен как неверный
+
+null !== 'true'
+
+  ПРОВАЛ failure light/390: A4: ошибка рядом с формой, не на скрытой Еде
+  ПРОВАЛ waist light/390: page.waitForFunction: Timeout 4500ms exceeded.
+  ПРОВАЛ empty light/390: A8: верный путь в пустом журнале
+  ПРОВАЛ validation dark/320: A5: вес отмечен как неверный
+
+null !== 'true'
+
+  ПРОВАЛ failure dark/320: A4: ошибка рядом с формой, не на скрытой Еде
+  ПРОВАЛ waist dark/320: page.waitForFunction: Timeout 4500ms exceeded.
+  ПРОВАЛ empty dark/320: A8: верный путь в пустом журнале
+  ПРОВАЛ validation dark/390: A5: вес отмечен как неверный
+
+null !== 'true'
+
+  ПРОВАЛ failure dark/390: A4: ошибка рядом с формой, не на скрытой Еде
+  ПРОВАЛ waist dark/390: page.waitForFunction: Timeout 4500ms exceeded.
+  ПРОВАЛ empty dark/390: A8: верный путь в пустом журнале

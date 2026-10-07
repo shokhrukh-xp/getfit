@@ -2450,6 +2450,8 @@ body.onb #picker .modalbox::before{display:none}
 .vzsila li{margin:0 0 8px} .vzsila li span{display:block;color:var(--muted)}
 .vzsila p{margin:0 0 8px;color:var(--muted)}
 #hmeas{margin-top:14px}
+#hmeas .fmerror{display:block;font-size:12px;line-height:1.35;color:var(--warn-txt);margin-top:4px}
+#hmeas input[aria-invalid="true"]{border-color:var(--warn-txt)}
 #hmeas .fask{margin:0}
 /* 02.10, вариант А: сегодняшний замер — мелкой строкой под средним */
 .vztd{margin:2px 0 0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;line-height:1.4}
@@ -2819,7 +2821,7 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 
 /* 04.10, ревью: на 320 пять элементов одной строки обрезали «88,1».
    Три поля получают целую строку; действия ниже, каждое не меньше 44 px. */
-.vzbottom #hmeas .fmeasq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end}
+.vzbottom #hmeas .fmeasq{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}
 #hmeas .fld input{box-sizing:border-box;width:100%;padding:12px 6px;font-size:16px;min-height:44px}
 #hmeas #fmphoto{grid-column:1;width:100%;min-height:44px}
 #hmeas #fmsave{grid-column:2/-1;width:100%;min-height:44px;font-size:15px}
@@ -2934,14 +2936,14 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
              с набранным числом и обработчиками. -->
         <div id="hmeashold" hidden><div id="hmeas">
         <div class="fask fmeasq">
-          <label class="fld"><span>Вес, кг</span><input id="fw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"></label>
-          <label class="fld"><span>Жир, %</span><input id="ffat" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"></label>
-          <label class="fld"><span>Талия</span><input id="fwaist" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"></label>
+          <label class="fld"><span>Вес, кг</span><input id="fw" aria-describedby="fw-error" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"><small class="fmerror" id="fw-error" hidden></small></label>
+          <label class="fld"><span>Жир, %</span><input id="ffat" aria-describedby="ffat-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"><small class="fmerror" id="ffat-error" hidden></small></label>
+          <label class="fld"><span>Талия</span><input id="fwaist" aria-describedby="fwaist-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"><small class="fmerror" id="fwaist-error" hidden></small></label>
           <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">Записать →</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
         </div>
-        <p class="freply" id="fmreply" hidden></p>
+        <p class="freply" id="fmreply" role="status" aria-live="polite" hidden></p>
         </div></div></div>
     </section>
     <section class="page hide" id="p-gym">
@@ -9281,13 +9283,15 @@ function renderLog(){
 function renderMeasSummary(){
   var box=document.getElementById('logmeas'); if(!box) return;
   var draw=function(ms){
-    ms=(ms||[]).filter(function(m){ return m.w; }).sort(function(a,b){ return a.date<b.date?1:-1; });
-    if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Вкладка «Еда» → «Весы»: скриншот отчёта или вес руками.</p>'; return; }
-    var last=ms[0], first=ms[ms.length-1];
-    /* «неделю назад» — ближайший замер не позже семи дней до последнего */
-    var wk=null; for(var i=1;i<ms.length;i++){ if((new Date(last.date)-new Date(ms[i].date))/864e5>=6){ wk=ms[i]; break; } }
+    ms=(ms||[]).filter(function(m){ return m.w || m.waist; }).sort(function(a,b){ return a.date<b.date?1:-1; });
+    if(!ms.length){ box.innerHTML='<p class="fline">Замеров нет. Сегодня → Тело → Новый замер.</p><button type="button" class="btn" data-new-measure>Новый замер</button>'; return; }
+    var weights=ms.filter(function(m){ return m.w; }), last=weights[0]||{}, first=weights[weights.length-1]||{};
     var row=function(label, key, unit, goodDown, dec){
-      var v=last[key]; if(v==null) return '';
+      /* 07.10: талия может прийти без веса — у каждой величины свои даты. */
+      var own=ms.filter(function(m){ return m[key]!=null; }); if(!own.length) return '';
+      var last=own[0], first=own[own.length-1], wk=null;
+      for(var i=1;i<own.length;i++){ if((new Date(last.date)-new Date(own[i].date))/864e5>=6){ wk=own[i]; break; } }
+      var v=last[key];
       var f=function(x){ return (x>0?'+':'')+(dec? x.toFixed(1).replace('.',',') : Math.round(x)); };
       var cls=function(d){ if(Math.abs(d)<(dec?0.15:1)) return ''; return (d<0)===goodDown ? 'up' : 'down'; };
       var dw = (wk && wk[key]!=null) ? v-wk[key] : null, d0 = (first!==last && first[key]!=null) ? v-first[key] : null;
@@ -11562,6 +11566,7 @@ function vzКоридор(pts, ср){
   return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
 }
 function vzГрафик(ms, sr, план){
+  vzГрафик.кор=null;
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
   var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
@@ -11671,8 +11676,9 @@ function vzПланСтрока(){
   return html+vzСилаСтрока(progress && progress.sila);
 }
 function homeBody(){
-  var ms=(FOOD.meas||[]).filter(function(m){ return m.w; }).slice().reverse();
-  if(ms.length<2){
+  /* 07.10, B5: отдельный замер талии не выбрасываем вместе с отсутствующим весом. */
+  var ms=(FOOD.meas||[]).filter(function(m){ return m.w || m.waist; }).slice().reverse();
+  if(ms.length<2 && !ms.some(function(m){ return m.waist; })){
     /* Вес человек назвал на первом шаге знакомства. Просить его снова —
        значит не помнить, что он только что сказал. Показываем его число и
        зовём на весы за трендом, а не за самим весом. */
@@ -11682,7 +11688,7 @@ function homeBody(){
       '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+'<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
-  var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид='w';
+  var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид=есть[0][0];
   var sr=vzСерия(вид), пос=vzПоследний(ms, sr), ед=sr.ед||'кг';
   /* «за день» — от последнего замера ЭТОЙ величины: талию меряют не каждое
      утро, и от сегодняшнего взвешивания без талии дельты не было */
@@ -14189,22 +14195,64 @@ document.getElementById('mealm').addEventListener('click', function(e){
   var sb=e.target.closest('#ml-kind button[data-v]');
   if(sb){ Array.prototype.forEach.call(sb.parentNode.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x===sb)); }); haptic('light'); }
 });
-document.getElementById('fmphoto').addEventListener('click', function(){ document.getElementById('fmfile').click(); });
+/* 07.10, A4/A5/B5: ответ относится к форме на «Сегодня», а не к скрытой
+   панели еды. Ошибка не стирает ввод; повторный клик не создаёт второй запрос. */
+var MEASBUSY=false;
+function measReply(text, kind){
+  var el=document.getElementById('fmreply'); el.hidden=false;
+  el.className='freply'+(kind?' '+kind:''); el.textContent=text;
+}
+function measBusy(on){
+  MEASBUSY=on;
+  ['fw','ffat','fwaist','fmsave','fmphoto'].forEach(function(id){ document.getElementById(id).disabled=on; });
+}
+function measError(id,text){
+  var el=document.getElementById(id), hint=document.getElementById(id+'-error');
+  el.setAttribute('aria-invalid','true'); hint.textContent=text; hint.hidden=false;
+  el.focus(); el.scrollIntoView({block:'center',behavior:'auto'}); haptic('err');
+}
+function measClearError(id){
+  document.getElementById(id).removeAttribute('aria-invalid');
+  var hint=document.getElementById(id+'-error'); hint.hidden=true; hint.textContent='';
+}
+['fw','ffat','fwaist'].forEach(function(id){ document.getElementById(id).addEventListener('input',function(){ measClearError(id); }); });
+document.getElementById('logmeas').addEventListener('click',function(e){
+  if(!e.target.closest('[data-new-measure]')) return;
+  goPage('home');
+  requestAnimationFrame(function(){ var el=document.getElementById('fw'); el.focus({preventScroll:true}); el.scrollIntoView({block:'center',behavior:'auto'}); });
+});
+document.getElementById('fmphoto').addEventListener('click', function(){ if(!MEASBUSY) document.getElementById('fmfile').click(); });
 document.getElementById('fmfile').addEventListener('change', function(e){
-  var f=e.target.files&&e.target.files[0]; if(!f) return;
-  var el=document.getElementById('fmreply'); el.hidden=false; el.className='freply wait'; el.innerHTML='<span>Скриншот ушёл, читаю отчёт — секунд 20<span class="dots"><i></i><i></i><i></i></span></span>'; haptic('medium');
+  var f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f || MEASBUSY) return;
+  measBusy(true); measReply('Читаю отчёт весов…','wait'); haptic('medium');
   shrink(f, 1600).then(function(b64){ return fPost('/coach', {uid:syncUid(), text:'отчёт весов', image:b64, mime:'image/jpeg'}); })
-    .then(function(d){ el.className='freply'; el.textContent=d.reply||'Записал.'; haptic('ok');
-      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); renderMeas(); } }); })
-    .catch(function(err){ el.className='freply bad'; el.textContent=humanErr(err); haptic('err'); });
-  e.target.value='';
+    .then(function(d){ measReply(d.reply||'Записал.'); haptic('ok');
+      return fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); syncBwFromMeas(); renderMeas(); renderMeasSummary(); } }); })
+    .catch(function(err){ measReply(humanErr(err),'bad'); haptic('err'); })
+    .then(function(){ measBusy(false); });
 });
 document.getElementById('fmsave').addEventListener('click', function(){
-  var w=дробь(document.getElementById('fw').value)||0, f=дробь(document.getElementById('ffat').value)||0, ws=дробь(document.getElementById('fwaist').value)||0;
-  if(!(w>20)) return;
-  fPost('/measure', {uid:syncUid(), w:w, fat:f>0?f:null, waist:ws>30?ws:null}).then(function(d){ FOOD.meas=sortMeas(d.measures); syncBwFromMeas(); renderMeas(); освежить(); document.getElementById('fw').value=''; document.getElementById('ffat').value=''; document.getElementById('fwaist').value=''; haptic('ok');
-    fGet('/day?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.day){ FOOD.day=x.day; renderFoodDay(); } }).catch(function(){}); })
-    .catch(function(err){ fReply(humanErr(err),'bad'); });
+  if(MEASBUSY) return;
+  var ids=['fw','ffat','fwaist'], raw={}, val={};
+  ids.forEach(function(id){ measClearError(id); raw[id]=document.getElementById(id).value.trim(); val[id]=/^\d+(?:[.,]\d*)?$/.test(raw[id])?дробь(raw[id]):null; });
+  if(raw.fw && !(val.fw>20)){ measError('fw','Укажи вес больше 20 кг'); return; }
+  if(raw.fwaist && !(val.fwaist>30)){ measError('fwaist','Укажи талию больше 30 см'); return; }
+  if(!raw.fw && !raw.fwaist){ measError('fw','Укажи вес или талию'); return; }
+  if(raw.ffat && !(val.ffat>0 && val.ffat<100)){ measError('ffat','Укажи процент жира от 0 до 100'); return; }
+  if(raw.ffat && !raw.fw){ measError('fw','Для процента жира укажи вес'); return; }
+  var body={uid:syncUid()};
+  if(raw.fw) body.w=val.fw;
+  if(raw.ffat) body.fat=val.ffat;
+  if(raw.fwaist) body.waist=val.fwaist;
+  measBusy(true); measReply('Сохраняю замер…','wait');
+  fPost('/measure',body).then(function(d){
+    if(!d || !Array.isArray(d.measures)) throw new Error('Не удалось получить сохранённый замер.');
+    замерыВзять(d); syncBwFromMeas();
+    if(!raw.fw && raw.fwaist) vzВидЗадать('waist');
+    ids.forEach(function(id){ document.getElementById(id).value=''; });
+    renderMeas(); renderMeasSummary(); освежить(); measReply('Замер записан'); haptic('ok');
+  }).catch(function(err){ measReply(humanErr(err),'bad'); haptic('err'); })
+    .then(function(){ measBusy(false); });
 });
 
 /* ══════════ ТРЕНЕР: ЧАТ ══════════
