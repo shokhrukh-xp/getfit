@@ -1,0 +1,116 @@
+FAIL meal light 320 AssertionError [ERR_ASSERTION]: Удаление видно до ответа
+
+1 !== 0
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:37:35
+FAIL network light 320 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:34:36
+FAIL edit light 320 AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await p.locator('#mealquestion').isVisible())
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:45:98
+FAIL gym light 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:86
+FAIL extra light 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:55:89
+FAIL auto light 320 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:68:11
+FAIL meal light 390 AssertionError [ERR_ASSERTION]: Удаление видно до ответа
+
+1 !== 0
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:37:35
+FAIL network light 390 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:34:36
+FAIL edit light 390 AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await p.locator('#mealquestion').isVisible())
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:45:98
+FAIL gym light 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:86
+FAIL extra light 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:55:89
+FAIL auto light 390 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:68:11
+FAIL meal dark 320 AssertionError [ERR_ASSERTION]: Удаление видно до ответа
+
+1 !== 0
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:37:35
+FAIL network dark 320 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:34:36
+FAIL edit dark 320 AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await p.locator('#mealquestion').isVisible())
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:45:98
+FAIL gym dark 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:86
+FAIL extra dark 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:55:89
+FAIL auto dark 320 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:68:11
+FAIL meal dark 390 AssertionError [ERR_ASSERTION]: Удаление видно до ответа
+
+1 !== 0
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:37:35
+FAIL network dark 390 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:34:36
+FAIL edit dark 390 AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert(await p.locator('#mealquestion').isVisible())
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:45:98
+FAIL gym dark 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:86
+FAIL extra dark 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:55:89
+FAIL auto dark 390 page.waitForFunction: Timeout 5500ms exceeded.
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:68:11
+FAIL gym-day light 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:139
+FAIL gym-day light 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:139
+FAIL gym-day dark 320 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:139
+FAIL gym-day dark 390 page.click: Timeout 5500ms exceeded.
+Call log:
+[2m  - waiting for locator('.undo-row button')[22m
+
+    at /private/tmp/getfit-udalenie-sohranenie/tg/test-udalenie-sohranenie.js:61:139

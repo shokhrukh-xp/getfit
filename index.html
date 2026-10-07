@@ -2909,6 +2909,17 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 /* 04.10, ревью: центр может выступить ниже SVG на узком экране.
    Отводим ему реальное место в потоке, не поднимая число обратно к фото. */
 .hclk{margin-bottom:var(--hc-gap,12px)}
+
+/* 07.10 B1/B6: отмена рядом с нижней панелью, без системных диалогов. */
+#undolist{position:fixed;left:12px;right:12px;bottom:calc(68px + var(--pad-bottom));z-index:145;max-height:32vh;overflow:auto;display:grid;gap:6px;pointer-events:none}
+.undo-row{pointer-events:auto;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:6px 12px;display:flex;align-items:center;gap:8px;max-width:540px;width:100%;box-sizing:border-box;margin:auto}
+.undo-row span{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
+.undo-row button{min-width:80px;min-height:44px;border:0;background:var(--tint);color:var(--accent);border-radius:12px;font:inherit;font-size:14px}
+.save-notice{grid-column:1/-1;display:block;font-size:12px;color:var(--muted);margin:6px 0}
+.save-notice.bad{color:var(--warn-txt)}
+#mealquestion{border-top:1px solid var(--line);padding:12px 0;background:var(--surface)}
+#mealquestion .btn{min-height:44px}
+
 </style>
 </head>
 <body>
@@ -2970,7 +2981,7 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
         <div id="rbbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
         <div id="list"></div>
-        <p class="dbnote" id="dbnote"></p>
+        <p class="dbnote" id="dbnote"></p><div id="day-save-status"></div>
         <div class="finsum" id="finsum" hidden></div>
         <div class="btnrow one">
           <button class="btn" id="finish">Завершить и сохранить</button>
@@ -3196,6 +3207,7 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
         <button class="btn" id="mv-del">Удалить</button>
       </div>
     </div>
+    <div id="mealquestion" hidden role="group" aria-label="Сохранить правки приёма?"><b>Сохранить?</b><div class="btnrow"><button type="button" class="btn prim" id="ml-keep">Сохранить</button><button type="button" class="btn" id="ml-discard">Не сохранять</button></div></div>
     <div id="ml-form">
     <div class="pf"><span class="pfl">когда</span><div class="seg" id="ml-kind"></div></div>
     <div class="pf"><span class="pfl">день</span><input id="ml-date" type="date"></div>
@@ -3797,7 +3809,8 @@ function saveSched(){
   /* Расписание своё у каждой программы, а в облаке лежит один документ на
      всех (кроме жены). Пишем рядом имя программы, чтобы дни трёхдневной
      программы не приезжали в двухдневную. */
-  if(DB) DB.doc('state/sched').set({s:GYM_DAYS, p:profile, at:new Date().toISOString()}).catch(function(){});
+  var pending=DB?DB.doc('state/sched').set({s:GYM_DAYS, p:profile, at:new Date().toISOString()}):Promise.resolve();
+  savedNear(document.querySelector('#schedm .modalbox'),pending);return pending.catch(function(){});
 }
 /* На кнопке — короткое имя дня программы, в подписи — полное */
 /* Одно имя у дня — «День N». Ярлыки «Верх А / Низ Б / Жим» путали: на экране
@@ -3930,6 +3943,7 @@ function applyProfile(p, silent){
   PAIRS= get('pairs', {});
   NOPE = get('nope', {});
   LIKE = get('like', {});
+  if(DB && get('undo_subs_pending',false)){set('undo_subs_pending',false);saveSubs();}
   /* Слой правок только что прочитан — здесь и подметаем повторы в добавленных
      руками. Раньше этот вызов стоял при запуске, до applyProfile, и подметал
      пустоту: EXTRA на тот момент ещё не загружен. */
@@ -4119,7 +4133,8 @@ var ADJ = {};
 function saveSubs(){
   парыПодмести();
   set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD); set('pairs', PAIRS);
-  if(DB) DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}).catch(function(){});
+  var pending=DB?DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}):Promise.resolve();
+  savedNear(document.getElementById('day-save-status'),pending);return pending.catch(function(){});
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
@@ -4263,12 +4278,73 @@ function rebuildSess(){
   sess=нов; saveSess();
 }
 /* убрать упражнение из этого дня (добавленное — совсем, из программы — пометкой) */
+/* 07.10: у каждой операции свои пять секунд — быстрое второе удаление
+   не лишает человека возможности вернуть первое. Ошибка возврата остаётся. */
+var UNDOSEQ=0;
+function undoOffer(restore){
+  var host=document.getElementById('undolist');
+  if(!host){ host=document.createElement('div'); host.id='undolist'; document.body.appendChild(host); }
+  var row=document.createElement('div'); row.className='undo-row'; row.dataset.undo=++UNDOSEQ;
+  row.innerHTML='<span role="status">Удалено</span><button type="button">Вернуть</button>'; host.appendChild(row);
+  var text=row.querySelector('span'), b=row.querySelector('button'), busy=false;
+  var timer=setTimeout(function(){ row.remove(); },5000);
+  var api={fail:function(message){clearTimeout(timer);if(!row.isConnected)host.appendChild(row);text.textContent=message; b.textContent='Вернуть';},remove:function(){clearTimeout(timer);row.remove();}};
+  b.onclick=function(){
+    if(busy) return; busy=true;clearTimeout(timer);b.disabled=true;text.textContent='Возвращаю…';
+    Promise.resolve().then(restore).then(function(){api.remove();haptic('ok');}).catch(function(e){
+      text.textContent='Не удалось вернуть. '+humanErr(e);b.textContent='Повторить';
+    }).then(function(){busy=false;b.disabled=false;});
+  };
+  return api;
+}
+function savedNear(anchor, promise){
+  if(!anchor) return;
+  var node=anchor.querySelector('.save-notice');
+  if(!node){ node=document.createElement('small');node.className='save-notice';node.setAttribute('role','status');anchor.appendChild(node); }
+  var gen=(node._gen||0)+1;node._gen=gen;clearTimeout(node._timer);node.textContent='Сохраняю…';
+  Promise.resolve(promise).then(function(){
+    if(node._gen!==gen)return;node.textContent='Сохранено';node.className='save-notice';
+    node._timer=setTimeout(function(){if(node._gen===gen)node.textContent='';},3000);
+  }).catch(function(){if(node._gen===gen){node.textContent='На телефоне сохранено. Не удалось синхронизировать.';node.className='save-notice bad';}});
+}
 function dropEx(di){
   var e=exList(day)[di]; if(!e) return;
-  if(e.add){ (EXTRA[day]||[]).splice(e.xi,1); if(!EXTRA[day].length) delete EXTRA[day]; }
+  if(e.add && !EXTRA[day][e.xi].id){EXTRA[day][e.xi].id=workOperation();e=exList(day)[di];}
+  harvestDom();
+  var dk=day, pf=PFX, sessionKey=sKey(), removed=JSON.parse(JSON.stringify(sess.ex[di])), index=di, names=(sess.n||[]).slice();
+  var added=e.add?JSON.parse(JSON.stringify(EXTRA[dk][e.xi])):null, adj=ADJ[e.k], skip=SKIP[e.k];
+  if(e.add){ (EXTRA[dk]||[]).splice(e.xi,1); if(!EXTRA[dk].length) delete EXTRA[dk]; }
   else SKIP[e.k]=1;
   delete ADJ[e.k];
   saveSubs(); rebuildSess(); renderList(); paintNote(''); haptic('medium');
+  undoOffer(function(){
+    /* Возврат относится к исходной программе и дате, даже после перехода. */
+    var read=function(k){try{return JSON.parse(localStorage.getItem(LS+pf+k)||'{}');}catch(_){return {};}};
+    var restoreStored=function(){
+      var stored=read(sessionKey);if(!stored.ex || !stored.n || stored.n.indexOf(e.n)>=0)return;
+      var at=stored.n.length;
+      for(var j=index+1;j<names.length;j++){var next=stored.n.indexOf(names[j]);if(next>=0){at=next;break;}}
+      stored.ex.splice(at,0,removed);stored.n.splice(at,0,e.n);localStorage.setItem(LS+pf+sessionKey,JSON.stringify(stored));
+    };
+    var same=pf===PFX, sk=same?SKIP:read('skip'), ax=same?ADJ:read('adj'), xx=same?EXTRA:read('extra');
+    if(added){ var arr=xx[dk]=xx[dk]||[];if(!arr.some(function(x){return x.id===added.id;}))arr.splice(Math.min(e.xi,arr.length),0,added); }
+    else if(skip==null)delete sk[e.k];else sk[e.k]=skip;
+    if(adj!=null)ax[e.k]=adj;
+    ['skip','adj','extra'].forEach(function(k,i){localStorage.setItem(LS+pf+k,JSON.stringify([sk,ax,xx][i]));});
+    if(same){
+      saveSubs();
+      if(day===dk && sKey()===sessionKey){
+        rebuildSess();var i=exList(day).findIndex(function(x){return x.k===e.k;});
+        if(i>=0)sess.ex[i]=removed;saveSess();renderList();
+      }else{
+        restoreStored();
+      }
+    }else{
+      restoreStored();
+      localStorage.setItem(LS+pf+'undo_subs_pending','true');
+      /* Не посылаем состояние другой программы под текущим именем. */
+    }
+  });
 }
 function addEx(item){
   if(!item) return;
@@ -5800,11 +5876,12 @@ function здКлик(e, pfx, save){
 }
 /* подпись профиля: что из него влияет на подсказки */
 function meSig(me){ me=me||{}; var gp=goalPair(me); return [me.only||'all',gp.wt||'',gp.gym||'',me.level||'',me.place||'',(me.lim||[]).slice().sort().join('+'),(me.eq||[]).slice().sort().join('+'),(me.likes||[]).join('+'),(me.dislikes||[]).join('+'),JSON.stringify(me.plan||[]),Object.keys(GYM_DAYS).length].join('|'); }
-function saveMe(){
+function saveMe(event){
+  var edited=(event&&event.target)||document.activeElement;
   if(!document.getElementById('me-bw')) return;
   var prev=myData()||{}, me=readMeForm();
   gset('me', me);
-  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  var pending=DB?DB.doc('state/me').set({me:me, at:new Date().toISOString()}):Promise.resolve();
   if(!anyTouched()) renderList();
   if(meSig(prev)!==meSig(me)){ gset('reco_seen', null); }
   var pe=document.getElementById('pf-eq'); if(pe) pe.hidden=(me.place||'gym')!=='home';
@@ -5813,6 +5890,7 @@ function saveMe(){
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
   var zs=document.getElementById('zdsum'); if(zs) zs.textContent=здSum(me.med);
   var bs=document.getElementById('btsum'); if(bs) bs.textContent=бтSum(me.byt);
+  var near=edited.closest('#profm .pf, #profm #mefields, #profm details, #profm .profblock')||document.querySelector('#profm .modalbox');savedNear(near,pending);
 }
 function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
   здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med); бтРендер();
@@ -8357,9 +8435,8 @@ function paintNote(k){
   var n=countDone();
   var head = n ? n+' '+plural(n,['подход','подхода','подходов'])+' отмечено'
               : 'ни один подход не отмечен';
-  var hm = lastSavedAt ? pad2(lastSavedAt.getHours())+':'+pad2(lastSavedAt.getMinutes())+':'+pad2(lastSavedAt.getSeconds()) : '';
   var tail = {local:' · сохранено на телефоне', saving:' · сохраняю '+STORENAME+'…',
-              saved:' · сохранено '+STORENAME+' ✓ '+hm, err:' · Telegram не ответил, данные на телефоне',
+              saved:' · Сохранено', err:' · Telegram не ответил, данные на телефоне',
               empty:' — жми ✓ справа от подхода или «всё» над ними'}[k] || '';
   el.textContent = head + tail;
   el.className = 'dbnote' + (k==='saved' ? ' ok' : '') + (k==='empty' ? ' warn' : '');
@@ -8530,6 +8607,7 @@ function initDb(){
       /* профиль общий на все программы: облако главнее пустого локального */
       if(b.me && typeof b.me==='object' && !hasGoal(myData()||{})){ gset('me', b.me); }
     }
+    if(get('undo_subs_pending',false)){set('undo_subs_pending',false);saveSubs();return {exists:false};}
     return DB.doc('state/subs').get();
   }).then(function(sn){
     if(sn && sn.exists){
@@ -10721,6 +10799,7 @@ function dayRead(path, date, after){
     .then(function(d){
       if(DAYREAD[key]!==gen) return;
       if(!d || d.error || (path==='/day' ? !d.day : !d.ok)) throw new Error('Нет данных дня');
+      if(path==='/day')d.day=mealVisibleDay(d.day);
       var responseDate=path==='/day'?d.day.date:d.date;
       if(responseDate && responseDate!==date) throw new Error('Неверная дата ответа');
       if(date===TODAY){
@@ -12398,6 +12477,7 @@ function приёмHtml(p){
    остальное перечитываем одним залпом. */
 var ОСВЕЖ=0;
 function освежить(day){
+  day=mealVisibleDay(day);
   if(day && day.date){
     ['/day','/day/score'].forEach(function(path){ var key=path+'|'+day.date; DAYREAD[key]=(DAYREAD[key]||0)+1; });
     if(day.date===TODAY){ HOME.day=day; homeSave(); }
@@ -14044,7 +14124,7 @@ function renderAtt(box, b64, hint){
    открываться и правиться, а не только удаляться. Здесь же заводится приём
    руками, в том числе за прошлый день. */
 var KINDS=[['завтрак','завтрак'],['обед','обед'],['ужин','ужин'],['перекус','перекус']];
-var MEAL=null;
+var MEAL=null, MEALBASE=null, MEALBUSY=false;
 /* ══════════ СОСТАВ ПРИЁМА ══════════
    Числа приёма — сумма состава, а не отдельная догадка. Поэтому правится не
    итог, а граммы ингредиента: поменял вес чиа — пересчиталось всё. Пока
@@ -14123,7 +14203,7 @@ function советыHtml(сс){
 }
 function openMealView(m){
   if(!m) return;
-  MEAL = m;
+  MEAL = JSON.parse(JSON.stringify(m)); MEALBASE=null; document.getElementById('mealquestion').hidden=true;
   var мой = ++MEALVIEW;
   var p = (DAYSC && DAYSC.date===fDate() && DAYSC.приёмы || []).filter(function(x){ return String(x.id)===String(m.id); })[0];
   var вид = (m.kind ? m.kind.charAt(0).toUpperCase()+m.kind.slice(1) : 'Приём') + (m.t ? ' · '+m.t : '');
@@ -14148,7 +14228,7 @@ function openMealView(m){
 }
 function openMeal(m){
   if(!m) return;
-  MEAL = m; MEALVIEW++;
+  MEAL = JSON.parse(JSON.stringify(m)); MEALVIEW++;
   mealВид(false);
   MEAL.its = mealItems(m);
   document.getElementById('mealtitle').textContent = 'Правка приёма';
@@ -14161,11 +14241,25 @@ function openMeal(m){
   renderMealItems(); mealNums();
   document.getElementById('ml-note').value = MEAL.note || '';
   document.getElementById('ml-hide').checked = !!MEAL.hide;
+  MEALBASE=mealDraft();document.getElementById('mealquestion').hidden=true;
   document.getElementById('mealm').classList.add('show');
 }
-function closeMeal(){ document.getElementById('mealm').classList.remove('show'); }
+function mealDraft(){
+  var kind=document.querySelector('#ml-kind [aria-pressed="true"]');
+  return JSON.stringify({fields:['date','text','kcal','prot','fat','fib','note'].map(function(k){return document.getElementById('ml-'+k).value;}),
+    hide:document.getElementById('ml-hide').checked,kind:kind?kind.dataset.v:'',items:MEAL&&MEAL.its});
+}
+function closeMeal(force){
+  if(MEALBUSY)return;
+  if(force!==true && MEALBASE && mealDraft()!==MEALBASE && !document.getElementById('ml-form').hidden){
+    var q=document.getElementById('mealquestion');q.hidden=false;q.scrollIntoView({block:'nearest'});document.getElementById('ml-keep').focus();return;
+  }
+  MEALBASE=null;document.getElementById('mealquestion').hidden=true;document.getElementById('mealm').classList.remove('show');
+}
+document.getElementById('ml-keep').addEventListener('click',function(){mealSave();});
+document.getElementById('ml-discard').addEventListener('click',function(){closeMeal(true);});
 function mealSave(){
-  if(!MEAL) return;
+  if(!MEAL || MEALBUSY) return;
   var v=function(id){ var x=document.getElementById('ml-'+id).value.trim(); return x===''?null:+x; };
   var сег=document.querySelector('#ml-kind button[aria-pressed="true"]');
   var body={ uid:syncUid(), id:MEAL.id, date:document.getElementById('ml-date').value||fDate(),
@@ -14178,17 +14272,61 @@ function mealSave(){
     return { name:x.name, g:x.g, kcal:x.kcal, prot:x.prot, fat:x.fat, carb:x.carb, fib:x.fib, sug:x.sug };
   });
   if(!body.text){ document.getElementById('ml-hint').textContent='Без описания приём не сохранить.'; return; }
-  var btn=document.getElementById('ml-save'); btn.disabled=true;
+  var btn=document.getElementById('ml-save'); btn.disabled=true;MEALBUSY=true;document.getElementById('ml-keep').disabled=true;document.getElementById('ml-discard').disabled=true;document.getElementById('ml-form').inert=true;
   fPost('/meal/upd', body).then(function(d){
+    if(!d || !d.ok || !d.day)throw new Error('Сервер не подтвердил сохранение.');
+    MEALBUSY=false;
     /* запись могла уехать в другой день — открываем тот, куда она легла */
     if(body.date!==fDate()){ FOOD.date = body.date===TODAY ? null : body.date; renderFoodNav(); }
-    FOOD.day=d.day; closeMeal(); haptic('ok'); освежить(d.day);
+    closeMeal(true); haptic('ok'); освежить(d.day);
   }).catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); })
-    .then(function(){ btn.disabled=false; });
+    .then(function(){ btn.disabled=false;MEALBUSY=false;document.getElementById('ml-keep').disabled=false;document.getElementById('ml-discard').disabled=false;document.getElementById('ml-form').inert=false; });
+}
+/* Сервер хранит снимок по operation: клиент не пересобирает удалённую
+   тарелку через /meal/add (это потеряло бы фото, id, дату и состав). */
+var MEALDELETIONS={};
+function mealVisibleDay(d){
+  if(d && Array.isArray(d.meals) && MEALDELETIONS)d.meals=d.meals.filter(function(m){return !(MEALDELETIONS[m.id]&&MEALDELETIONS[m.id].hidden);});
+  return d;
+}
+function mealMutation(path, body){
+  /* Потерянный ответ не должен навсегда блокировать «Вернуть». Повтор
+     restore безопасен благодаря тому же operation на сервере. */
+  return new Promise(function(resolve,reject){
+    var timer=setTimeout(function(){reject(new Error('Сервер не ответил.'));},15000);
+    fPost(path,body).then(function(d){clearTimeout(timer);resolve(d);},function(e){clearTimeout(timer);reject(e);});
+  });
+}
+function deleteMeal(id){
+  if(!id || MEALDELETIONS[id] || MEALBUSY)return;
+  var op=workOperation(), uid=syncUid(), wanted=false, job, notice;
+  var original=(FOOD.day&&FOOD.day.meals||[]).find(function(m){return String(m.id)===String(id);})||MEAL;
+  var date=(original&&original.date)||(FOOD.day&&FOOD.day.date)||fDate();
+  var state={hidden:true,settled:false,expired:false};MEALDELETIONS[id]=state;
+  closeMeal(true);
+  [FOOD.day,HOME.day].forEach(function(d){if(d)d.meals=(d.meals||[]).filter(function(m){return String(m.id)!==String(id);});});
+  renderFoodDay();homeDirty();
+  notice=undoOffer(function(){
+    wanted=true;
+    return job.catch(function(){}).then(function(){return mealMutation('/meal/restore',{uid:uid,id:id,operation:op});}).then(function(d){
+      if(!d||!d.ok||!d.day||d.day.date!==date)throw new Error('Сервер не подтвердил возврат за исходный день.');
+      delete MEALDELETIONS[id];освежить(d.day);
+    });
+  });
+  job=mealMutation('/meal/del',{uid:uid,id:id,operation:op}).then(function(d){
+    if(!d||!d.ok||!d.day||d.day.date!==date)throw new Error('Сервер не подтвердил удаление за исходный день.');
+    if(!wanted)освежить(d.day);
+  }).catch(function(e){
+    if(!wanted){state.hidden=false;notice.fail('Не удалось подтвердить удаление. '+humanErr(e));освежить();}
+    throw e;
+  });
+  var settled=function(){state.settled=true;if(state.expired&&!wanted)delete MEALDELETIONS[id];};
+  job.then(settled,settled);
+  setTimeout(function(){state.expired=true;if(state.settled&&!wanted)delete MEALDELETIONS[id];},5000);
 }
 document.getElementById('fmeals').addEventListener('click', function(e){
   var b=e.target.closest('[data-fdel]');
-  if(b){ fPost('/meal/del', {uid:syncUid(), id:b.dataset.fdel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  if(b){ deleteMeal(b.dataset.fdel); return; }
   var pd=e.target.closest('[data-pdo]');
   if(pd){ planDo(pd.dataset.pdo, +pd.dataset.m, pd.dataset.i, fDate()); return; }
   var po=e.target.closest('[data-poff]');
@@ -14201,18 +14339,10 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   if(m){ openMealView(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
 });
 document.getElementById('mv-edit').addEventListener('click', function(){ if(MEAL) openMeal(MEAL); haptic('light'); });
-document.getElementById('mv-del').addEventListener('click', function(){
-  if(!MEAL||!MEAL.id) return;
-  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; closeMeal(); haptic('light'); освежить(d.day); })
-    .catch(function(err){ closeMeal(); fReply(humanErr(err),'bad'); });
-});
+document.getElementById('mv-del').addEventListener('click', function(){if(MEAL&&!MEALBUSY)deleteMeal(MEAL.id);});
 document.getElementById('mealclose').addEventListener('click', closeMeal);
 document.getElementById('ml-save').addEventListener('click', mealSave);
-document.getElementById('ml-del').addEventListener('click', function(){
-  if(!MEAL||!MEAL.id) return;
-  fPost('/meal/del', {uid:syncUid(), id:MEAL.id}).then(function(d){ FOOD.day=d.day; closeMeal(); haptic('light'); освежить(d.day); })
-    .catch(function(err){ document.getElementById('ml-hint').textContent=humanErr(err); });
-});
+document.getElementById('ml-del').addEventListener('click', function(){if(MEAL&&!MEALBUSY)deleteMeal(MEAL.id);});
 document.getElementById('ml-items').addEventListener('input', function(e){
   var g=e.target.closest('[data-ig]'); if(!g||!MEAL||!MEAL.its) return;
   var x=MEAL.its[+g.dataset.ig]; if(!x) return;
