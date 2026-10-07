@@ -2890,7 +2890,6 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 /* 04.10, ревью: центр может выступить ниже SVG на узком экране.
    Отводим ему реальное место в потоке, не поднимая число обратно к фото. */
 .hclk{margin-bottom:var(--hc-gap,12px)}
-.vzlg .water-key{display:inline;line-height:1.5}
 </style>
 </head>
 <body>
@@ -11444,8 +11443,11 @@ function vzПлан(){
      два стандартных отклонения замеров от средней за последние три недели
      (у него ±0,8–0,9 кг). Замер внутри полосы — серый: это обычный шум, цвет
      у него не заслужен; вне полосы — цветом линии, но не красным;
-   • СВОБОДНЫЙ ДЕНЬ — пунктирная вертикаль, а три утра после него — пустые
-     пунктирные кружки: это вода, в среднюю линию и коридор они не идут. */
+   • СВОБОДНЫЙ ДЕНЬ — пунктирная вертикаль с 🍕 наверху, а три утра после
+     него — бледные точки: это вода, в среднюю линию и коридор они не идут.
+     07.10, его слова про легенду «всё равно не понятно и слишком много
+     текста»: строк о свободном дне в легенде больше нет — 🍕 та же, что в
+     ленте недели, и объясняет себя сама. */
 function vzКоридор(pts, ср){
   var r=[], от=vzДн(TODAY,-20);
   pts.forEach(function(p,i){ if(p.d>=от) r.push(p.v-ср[i].v); });
@@ -11454,7 +11456,6 @@ function vzКоридор(pts, ср){
   return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
 }
 function vzГрафик(ms, sr, план){
-  vzГрафик.freeVisible=false; vzГрафик.wetVisible=false;
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
   var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
@@ -11483,9 +11484,12 @@ function vzГрафик(ms, sr, план){
     svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+yy+'" y2="'+yy+'" stroke="var(--line-soft)" stroke-width="1"/>'+
       '<text x="'+(W-2)+'" y="'+(+yy+3.5).toFixed(1)+'" text-anchor="end" class="vzax">'+fmtKg(Math.round(g/шаг)*шаг)+'</text>';
   }
-  /* свободные дни — пунктирной вертикалью под всем остальным */
-  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1); vzГрафик.freeVisible=true;
-    svg+='<line class="vzsvl" x1="'+xx+'" x2="'+xx+'" y1="'+T+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>'; });
+  /* свободные дни — пунктирной вертикалью под всем остальным; 🍕 — поверх
+     всего в конце, в верхнем запасе шкалы (pad), где точек нет */
+  var пиццы='';
+  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1);
+    svg+='<line class="vzsvl" x1="'+xx+'" x2="'+xx+'" y1="'+(T+13)+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>';
+    пиццы+='<text class="vzsvp" x="'+xx+'" y="'+(T+8)+'" text-anchor="middle" font-size="13"><title>свободный день '+ruDate(f)+'</title>🍕</text>'; });
   /* плавно — только средний за 7 дней: через редкие точки талии кривая
      выгибалась выше и ниже замеров, которых не было */
   var линия=(скольз?ср:pts).map(function(p){ return [x(p.d), y(p.v)]; });
@@ -11501,8 +11505,7 @@ function vzГрафик(ms, sr, план){
   if(скольз) pts.forEach(function(p,i){
     var вне = кор!=null && Math.abs(p.v-ср[i].v) > кор;
     svg+='<circle class="'+(вне?'vzpt vzout':'vzpt')+'" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="'+(кор!=null && !вне ? 'var(--muted)' : цв)+'" opacity="'+(кор!=null && !вне ? '.55' : '.6')+'"/>'; });
-  vzГрафик.wetVisible=мокрые.length>0;
-  мокрые.forEach(function(p){ svg+='<circle class="vzwet" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3.4" fill="none" stroke="var(--muted)" stroke-width="1.3" stroke-dasharray="2 2"/>'; });
+  мокрые.forEach(function(p){ svg+='<circle class="vzwet" cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="2.1" fill="var(--muted)" opacity=".28"/>'; });
   svg+='<path class="vzln" d="'+путь+'" fill="none" stroke="'+цв+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
   if(!скольз) pts.forEach(function(p){ svg+='<circle cx="'+x(p.d).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="3" fill="'+цв+'"/>'; });
   var пос=pts[pts.length-1];
@@ -11510,7 +11513,7 @@ function vzГрафик(ms, sr, план){
     '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(все[0].d)+'</text>'+
     '<text x="'+(W-2)+'" y="'+(H-5)+'" class="vzax vz-today" text-anchor="end">сегодня</text>';
   vzГрафик.кор=кор;
-  return svg+'</svg>';
+  return svg+пиццы+'</svg>';
 }
 /* 04.10: «сила как монитор мышц» — показываем сравнение сервера, без
    своего пересчёта процентов и без вывода о потере мышц. Детали — по тапу. */
@@ -11613,8 +11616,7 @@ function homeBody(){
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
       (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
-      (план?'<span><i class="pl"></i>план цели</span>':'')+
-      (vzГрафик.freeVisible?'<span class="free-key">┆ свободный день</span>':'')+(vzГрафик.wetVisible?'<span class="water-key">◌ утро после него — вода, не в среднем</span>':'')+'</p>'+
+      (план?'<span><i class="pl"></i>план цели</span>':'')+'</p>'+
     '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():vzСилаСтрока(((gget('goal',null)||{}).progress||{}).sila))+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из

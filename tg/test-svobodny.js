@@ -33,7 +33,7 @@ const карточка = page => page.evaluate(() => {
   return { число: v.querySelector('.vznum b').textContent, неделя: (v.querySelector('.vznum em') || {}).textContent || '',
     цвет: (v.querySelector('.vznum em') || {}).className || '', под: v.querySelector('.vzsub').textContent,
     сегодня: (v.querySelector('.vztd') || {}).textContent || '', вода: v.querySelectorAll('svg .vzwet').length,
-    метка: v.querySelectorAll('svg .vzsvl').length, строка: (v.querySelector('.vzsv') || {}).textContent || '',
+    метка: v.querySelectorAll('svg .vzsvl').length, пицца: v.querySelectorAll('svg .vzsvp').length, строка: (v.querySelector('.vzsv') || {}).textContent || '',
     легенда: (v.querySelector('.vzlg') || {}).textContent || '', красныхЗамеров: v.querySelectorAll('svg .vzout').length };
 });
 
@@ -49,10 +49,11 @@ const карточка = page => page.evaluate(() => {
   дано(к && /^87,6\s*кг$/.test(к.число), 'крупно — средний за 7 дней без утра с водой: ' + (к && к.число));
   дано(к && /^сегодня 89,0 · за день \+1,4 — вода$/.test(к.сегодня), 'сегодняшние 89,0 — мелко, «за день +1,4 — вода»: ' + (к && к.сегодня));
   дано(к && к.неделя === '±0,0 за неделю' && !/up|dn/.test(к.цвет), '«за неделю» без воды — ±0,0, без красного: ' + (к && к.неделя + ' ' + к.цвет));
-  дано(к && к.вода === 1 && к.метка === 1, 'на графике — вертикаль свободного дня и пунктирный кружок утра с водой: ' + (к && к.метка + '/' + к.вода));
+  дано(к && к.вода === 1 && к.метка === 1 && к.пицца === 1, 'на графике — вертикаль свободного дня с 🍕 и бледная точка утра с водой: ' + (к && к.метка + '/' + к.пицца + '/' + к.вода));
   дано(к && /Скачок после свободного дня \d\d\.\d\d — это вода, гликоген и соль, а не жир/.test(к.строка) && /Три утра после него не идут в средний вес/.test(к.строка),
     'под графиком сказано, что скачок — вода: ' + (к && к.строка.slice(0, 90)));
-  дано(к && /свободный день/.test(к.легенда) && /обычный разброс ±/.test(к.легенда), 'в легенде — коридор и свободный день: ' + (к && к.легенда));
+  // 07.10, его слова: «всё равно не понятно и слишком много текста» — о свободном дне в легенде ни строки, его знак — 🍕 на графике
+  дано(к && /обычный разброс ±/.test(к.легенда) && !/свободн|вода/.test(к.легенда), 'в легенде — коридор, о свободном дне ни строки: ' + (к && к.легенда));
   const цветДня = await page.evaluate(() => getComputedStyle(document.querySelector('#homebody .vztd')).color);
   const цветКрасный = await page.evaluate(() => { const e = document.createElement('i'); e.style.color = 'var(--warn-txt)'; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; });
   дано(цветДня !== цветКрасный, '«за день» не красится: ' + цветДня);
