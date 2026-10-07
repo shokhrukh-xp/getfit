@@ -3158,6 +3158,7 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <p id="coachdate" class="mtext" style="flex:none;margin:0;padding:0 16px 8px" aria-live="polite"></p>
     <div class="chatlog" id="chatlog"></div>
     <div class="attbox" id="cattach" hidden></div>
     <div class="chatask">
@@ -10672,12 +10673,41 @@ function fShift(n){
   var d=new Date(fDate()+'T12:00:00'); d.setDate(d.getDate()+n);
   var iso=ymd(d); if(iso>TODAY) return;
   FOOD.date = (iso===TODAY) ? null : iso;
-  FOOD.day=null; renderFoodNav(); renderFoodDay(); loadDay();
+  FOOD.day=null; FOOD.err=false; renderFoodNav(); renderFoodDay(); loadDay();
+}
+/* 07.10: быстрые стрелки и повторный запрос того же дня не должны
+   подменять выбранную дату запоздалым ответом. Общий счётчик также для
+   освежить/homePull: более старое чтение не откатывает свежую запись. */
+var DAYREAD={};
+function dayRead(path, date, after){
+  var key=path+'|'+date, gen=DAYREAD[key]=(DAYREAD[key]||0)+1;
+  return tgFetch(SYNCURL+path+'?uid='+encodeURIComponent(syncUid())+'&date='+date)
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){
+      if(DAYREAD[key]!==gen) return;
+      if(!d || d.error || (path==='/day' ? !d.day : !d.ok)) throw new Error('Нет данных дня');
+      var responseDate=path==='/day'?d.day.date:d.date;
+      if(responseDate && responseDate!==date) throw new Error('Неверная дата ответа');
+      if(date===TODAY){
+        if(path==='/day') HOME.day=d.day;
+        else { d.date=date; HOME.sc=d; }
+        homeSave(); homeDirty();
+      }
+      if(date===fDate()){
+        if(path==='/day'){ FOOD.day=d.day; FOOD.err=false; }
+        else { d.date=date; DAYSC=d; }
+        renderFoodDay();
+      }
+      if(after) after(d);
+    }).catch(function(){
+      if(DAYREAD[key]!==gen || date!==fDate() || path!=='/day') return;
+      FOOD.day=null; FOOD.err=true; renderFoodDay();
+    });
 }
 function loadDay(){
-  DAYSC=null;
-  fGet('/day?uid='+encodeURIComponent(syncUid())+'&date='+fDate())
-    .then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
+  var date=fDate(); DAYSC=null; FOOD.err=false;
+  renderFoodDay();
+  dayRead('/day', date);
   loadDayScore();
 }
 /* ══════════ ГЛАВНАЯ «СЕГОДНЯ» ══════════
@@ -10720,8 +10750,8 @@ function homeRestore(){
 }
 function homePull(){
   var u=encodeURIComponent(syncUid());
-  fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; homeSave(); homeDirty(); } }).catch(function(){});
-  fGet('/day/score?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.ok){ d.date=TODAY; HOME.sc=d; homeSave(); homeDirty(); } }).catch(function(){});
+  dayRead('/day', TODAY);
+  dayRead('/day/score', TODAY);
   fGet('/week?uid='+u).then(function(d){ if(d&&d.week){ FOOD.week=d.week; homeDirty(); } }).catch(function(){});
   if(!(FOOD.meas||[]).length) fGet('/measures?uid='+u)
     .then(function(d){ if(d&&d.measures){ замерыВзять(d); syncBwFromMeas(); homeDirty(); } }).catch(function(){});
@@ -12332,6 +12362,7 @@ function приёмHtml(p){
 var ОСВЕЖ=0;
 function освежить(day){
   if(day && day.date){
+    ['/day','/day/score'].forEach(function(path){ var key=path+'|'+day.date; DAYREAD[key]=(DAYREAD[key]||0)+1; });
     if(day.date===TODAY){ HOME.day=day; homeSave(); }
     if(day.date===fDate()) FOOD.day=day;
   }
@@ -12341,24 +12372,18 @@ function освежить(day){
   homeDirty();
   clearTimeout(ОСВЕЖ);
   ОСВЕЖ=setTimeout(function(){
-    var u=encodeURIComponent(syncUid()), есть=day && day.date;
+    var u=encodeURIComponent(syncUid()), есть=day && day.date, date=fDate();
     if(!есть || day.date!==TODAY)
-      fGet('/day?uid='+u+'&date='+TODAY).then(function(d){ if(d&&d.day){ HOME.day=d.day; homeSave();
-        if(fDate()===TODAY){ FOOD.day=d.day; renderFoodDay(); } homeDirty(); try{ сегодняПроверить(true); }catch(e){} } }).catch(function(){});
-    if(fDate()!==TODAY && (!есть || day.date!==fDate()))
-      fGet('/day?uid='+u+'&date='+fDate()).then(function(d){ if(d&&d.day){ FOOD.day=d.day; renderFoodDay(); } }).catch(function(){});
-    fGet('/day/score?uid='+u+'&date='+TODAY).then(function(x){ if(x&&x.ok){ x.date=TODAY; HOME.sc=x; homeSave();
-      if(fDate()===TODAY){ DAYSC=x; renderFoodDay(); } homeDirty(); } }).catch(function(){});
-    if(fDate()!==TODAY) loadDayScore();
+      dayRead('/day', TODAY, function(){ try{ сегодняПроверить(true); }catch(e){} });
+    if(date!==TODAY && (!есть || day.date!==date)) dayRead('/day', date);
+    dayRead('/day/score', TODAY);
+    if(date!==TODAY) loadDayScore();
     fGet('/week?uid='+u).then(function(w){ if(w&&w.week){ FOOD.week=w.week; renderFoodWeek(); homeDirty(); } }).catch(function(){});
     circlePull().then(function(){ homeDirty(); });
   }, 250);
 }
 function loadDayScore(){
-  var date=fDate();
-  fGet('/day/score?uid='+encodeURIComponent(syncUid())+'&date='+date).then(function(d){
-    if(!d||!d.ok) return; d.date=date; DAYSC=d; renderFoodDay();
-  }).catch(function(){});
+  dayRead('/day/score', fDate());
 }
 function renderFoodNav(){
   var el=document.getElementById('fnav'); if(!el) return;
@@ -13605,11 +13630,11 @@ function foodHeroHtml(d, line){
 }
 function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
-  var d=FOOD.day;
+  var d=FOOD.day && (!FOOD.day.date || FOOD.day.date===fDate()) ? FOOD.day : null;
   document.getElementById('fmealhead').textContent='Приёмы'+(d?' · '+(d.meals||[]).length:'');
   var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
-  if(!d){ box.innerHTML='<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
+  if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : '<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
   /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
      когда есть что показывать (иначе это просто число) */
@@ -13864,7 +13889,8 @@ function renderWear(){
     '. Новые числа — скриншотом тренеру; к норме еды шаги не прибавляются.</p>';
 }
 document.addEventListener('click', function(e){
-  if(e.target.closest('[data-wrcoach]')){ openCoach(); haptic('light'); }
+  if(e.target.closest('[data-day-retry]')){ loadDay(); return; }
+  if(e.target.closest('[data-wrcoach]')){ openCoach(fDate()); haptic('light'); }
 });
 /* строка над меню недели: что закрывает само меню */
 function грМенюHTML(g){
@@ -14176,7 +14202,7 @@ document.getElementById('fmsave').addEventListener('click', function(){
 /* ══════════ ТРЕНЕР: ЧАТ ══════════
    Плавающая кнопка на всех страницах. Тот же агент, что в боте: видит профиль,
    цель, еду, замеры и тренировки. Еда из чата ложится в дневник так же. */
-var CHAT={items:null, busy:false, att:null};
+var CHAT={items:null, busy:false, att:null, date:TODAY, drafts:{}};
 /* лист разговора открыт — значит ответ человек видит сразу */
 function чатОткрыт(){ var m=document.getElementById('coachm'); return !!(m && m.classList.contains('show')); }
 function coachAttn(on){
@@ -14222,12 +14248,27 @@ function sheetViewport(){
 window.addEventListener('resize',sheetViewport);
 if(window.visualViewport){ window.visualViewport.addEventListener('resize',sheetViewport); window.visualViewport.addEventListener('scroll',sheetViewport); }
 sheetViewport();
-function openCoach(){
+/* 07.10: запись еды наследует день «Еды», обычная вкладка — сегодня.
+   Неотправленные текст/фото хранятся отдельно по датам внутри этого захода. */
+function chatDraftSave(){
+  CHAT.drafts[CHAT.date]={text:document.getElementById('ctext').value, image:CHAT.att, err:CHAT.err||''};
+}
+function chatDraftRestore(){
+  var draft=CHAT.drafts[CHAT.date]||{};
+  var ta=document.getElementById('ctext'); ta.value=draft.text||''; ta.style.height='auto';
+  cAttSet(draft.image); CHAT.err=draft.err||'';
+  var label=document.getElementById('coachdate');
+  label.textContent='Дата записи: '+(CHAT.date===TODAY?'сегодня · ':'')+CHAT.date.split('-').reverse().join('.');
+  label.dataset.date=CHAT.date;
+}
+function openCoach(date){
+  chatDraftSave(); CHAT.date=typeof date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(date)?date:TODAY;
+  chatDraftRestore();
   sheetViewport();
   var m=document.getElementById('coachm'); if(m) m.classList.add('show');
   document.body.classList.add('coach');
   var ph=document.getElementById('ctext');
-  if(ph){ try{ ph.placeholder=chatHint(); }catch(e){} }
+  if(ph){ try{ ph.placeholder=CHAT.date===TODAY?chatHint():'Еда или вопрос'; }catch(e){} }
   coachAttn(false);
   chatPull();
   setTimeout(function(){
@@ -14235,6 +14276,7 @@ function openCoach(){
   }, 220);
 }
 function closeCoach(){
+  chatDraftSave();
   var m=document.getElementById('coachm'); if(m) m.classList.remove('show');
   document.body.classList.remove('coach');
   gset('chat_seen', (CHAT.items||[]).length);
@@ -14313,12 +14355,15 @@ function renderChat(scroll){
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
-      h+='<div class="msg me sent">'+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
+      h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+CHAT.pendingDate.split('-').reverse().join('.')+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
       ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
-    if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad');
+    if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+'<button type="button" class="btn" id="chatretry">Повторить</button>';
     h+=recoCard('chat');
   }
   box.innerHTML=h;
+  var retry=document.getElementById('chatretry');
+  if(retry){ retry.disabled=CHAT.busy || CHAT.prep; retry.addEventListener('click',cGo); }
+  ['ctext','csend','cphoto'].forEach(function(id){ document.getElementById(id).disabled=!!(CHAT.busy || CHAT.prep); });
   var mb=document.getElementById('chatmore');
   if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
   box.querySelectorAll('[data-cmenu]').forEach(function(b){
@@ -14817,10 +14862,12 @@ function takeChanges(d){
 }
 
 function coachSend(text, image){
-  if(CHAT.busy || (!text && !image)) return;
+  if(CHAT.busy || CHAT.prep || (!text && !image)) return;
+  var date=CHAT.date||TODAY;
+  CHAT.drafts[date]={}; cAttSet(null);
   /* Пустая подпись при отправленном фото раньше стирала состояние ожидания:
      весь блок «отправлено / смотрю» висел на непустом тексте. */
-  CHAT.busy=true; CHAT.err=''; CHAT.pending=text||''; CHAT.pendingImg=image||null;
+  CHAT.busy=true; CHAT.err=''; CHAT.pendingDate=date; CHAT.pending=text||''; CHAT.pendingImg=image||null;
   CHAT.prep=false;
   /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
      значит показывать человеку, что сообщение никуда не ушло */
@@ -14828,7 +14875,7 @@ function coachSend(text, image){
   if(ta){ ta.value=''; ta.style.height='auto'; }
   renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
-  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:TODAY})
+  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date})
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -14836,7 +14883,10 @@ function coachSend(text, image){
         {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null, act:(d.act&&d.act.length)?d.act:null}]);
       CHAT.pick=false;
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
-      if(d.day){ HOME.day=d.day; if(!FOOD.date){ FOOD.day=d.day; renderFoodDay(); } }
+      if(d.day){
+        if(d.day.date===TODAY) HOME.day=d.day;
+        if(d.day.date===fDate()){ FOOD.day=d.day; FOOD.err=false; renderFoodDay(); }
+      }
       renderChat(); renderHome(); haptic('ok');
       /* оценка, неделя, рейтинг и занятия — всем экранам сразу */
       освежить(d.day); if(d.acts && d.acts.length) homeActsPull(true);
@@ -14845,23 +14895,28 @@ function coachSend(text, image){
       if(d.plan) takePlan(d.plan);
       if(d.byt) takeByt(d.byt);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
-        FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
+        if(d.day.date===fDate()) FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
-    .catch(function(e){ CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
-    .then(function(){ CHAT.busy=false; if(sb) sb.disabled=false; });
+    .catch(function(e){
+      CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
+      CHAT.drafts[date]={text:text||'', image:image||null, err:humanErr(e)};
+      if(CHAT.date===date) chatDraftRestore();
+      haptic('err');
+    })
+    .then(function(){ CHAT.busy=false; renderChat(); });
 }
 /* 04.10: тренер — четвёртая кнопка панели; текущую страницу не меняем. */
 document.getElementById('coachnav').addEventListener('click', function(){ openCoach(); haptic('light'); });
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 function cGo(){
+  if(CHAT.busy || CHAT.prep) return;
   var t=document.getElementById('ctext').value.trim();
   if(!t && !CHAT.att) return;
-  var img=CHAT.att; cAttSet(null);
-  coachSend(t, img);
+  coachSend(t, CHAT.att);
 }
 document.getElementById('csend').addEventListener('click', cGo);
 document.getElementById('ctext').addEventListener('keydown', function(e){
@@ -14871,14 +14926,16 @@ document.getElementById('ctext').addEventListener('input', function(e){ e.target
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files && e.target.files[0]; e.target.value='';
-  if(!f) return;
+  if(!f || CHAT.busy || CHAT.prep) return;
+  var date=CHAT.date; chatDraftSave();
   CHAT.prep=true; renderChat();
-  shrink(f).then(function(b64){ CHAT.prep=false; cAttSet(b64); renderChat();
+  shrink(f).then(function(b64){ CHAT.prep=false; CHAT.drafts[date].image=b64;
+    if(CHAT.date===date) cAttSet(b64); renderChat();
     var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
   }).catch(function(){ CHAT.prep=false; CHAT.err='Не смог прочитать фото'; renderChat(); });
 });
 function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); }
-document.getElementById('cattach').addEventListener('click', function(e){ if(e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
+document.getElementById('cattach').addEventListener('click', function(e){ if(!CHAT.busy && !CHAT.prep && e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 
 /* ── init ── */
