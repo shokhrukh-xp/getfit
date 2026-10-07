@@ -722,6 +722,11 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .settbl .cell:focus{outline:none;border-color:var(--accent);color:var(--accent-txt)}
 .settbl .ok{margin:0 auto}
 .settbl .swb{width:36px}
+/* 07.10: у кардио секундомер идёт минутами — «12:05» шире секунд планки */
+.settbl .swb.mm{width:58px;font-variant-numeric:tabular-nums}
+.cint{display:flex;gap:6px;margin-top:10px}
+.cint button{flex:1;height:44px;border-radius:12px;border:.5px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600}
+.cint button[aria-pressed="true"]{border-color:var(--accent-txt);background:var(--accent-ghost);color:var(--accent-txt)}
 tr.setrow{display:table-row}
 tr.setrow.now .cell{border-color:var(--accent)}
 tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transparent;color:var(--done-txt)}
@@ -4073,12 +4078,15 @@ function saveSubs(){
    недели. Лёгкая неделя режет пополам то, что получилось. */
 function setsFor(e, di, dk){
   var k = (e && e.k) ? e.k : subKey(dk||day, di), base;
+  /* 07.10: кардио — один заход на минуты, сколько бы подходов ни стояло в программе */
+  var повторы = !isTime(e) && !isMin(e) && !isDist(e);
   if(ADJ[k]!=null) base = ADJ[k];
-  else if(isTime(e)) base = e.sets;
+  else if(isMin(e)) base = 1;
+  else if(!повторы) base = e.sets;
   else { var ph=phaseNow(); base = e.sets + ((ph && typeof ph.ds==='number') ? ph.ds : 0); }
-  if(deloadOn() && !isTime(e)) base = Math.round(base/2);
+  if(deloadOn() && повторы) base = Math.round(base/2);
   /* «Облегчить сегодня» (25.09): только сегодня на подход меньше */
-  if(легчеВкл() && !isTime(e) && base>1) base = base-1;
+  if(легчеВкл() && повторы && base>1) base = base-1;
   return Math.max(1, Math.min(8, base));
 }
 /* «ЗАМЕНЕНО» — ЭТО ПОДТВЕРЖДЕНИЕ, А НЕ СОСТОЯНИЕ.
@@ -6178,7 +6186,50 @@ var _lite=document.getElementById('liteseg'); if(_lite) _lite.addEventListener('
 
 /* ══════════ ЖУРНАЛ ПОДХОДОВ ══════════ */
 var NOWT={'Планка':1,'Боковая планка':1,'Ролик для пресса':1,'Подъём ног в висе':1};
-function hasW(e){ return !NOWT[e.n] && !e.nw; }
+/* ── КАК ЗАПИСЫВАЕТСЯ УПРАЖНЕНИЕ ──
+   07.10, его слова: «в упражнениях на лестнице или дорожке нужно, чтобы был
+   таймер, а не подходы с повторениями. Проанализируйте все упражнения и
+   определите, у кого что должно быть». Разметка всех 899 упражнений лежит в
+   каталоге полем lg (его выборы кнопками: кардио — минуты и «как шло»;
+   свой вес — «+кг» по желанию):
+     нет  — кг × повторы (штанга, гантели, блок, тренажёр, гиря);
+     r+   — повторы, кг по желанию (отжимания, подтягивания, пресс): пусто = свой вес;
+     r    — повторы без веса (резинки, прыжки, разминка движением);
+     s    — секунды, секундомер (планки, висы, статическая растяжка, ролл);
+     ks   — кг × секунды (удержание блинов);
+     min  — минуты, секундомер и «как шло» (дорожка, лестница, эллипс, вело, гребля);
+     km   — кг × метры (прогулка фермера, сани).
+   Без каталога (не загрузился, своё упражнение) — по строке повторов и по
+   старому списку NOWT. */
+var CATIX=null, CATIXN=0;
+function catOf(e){
+  var id=e && (e.cat||e.id); if(!id) return null;
+  /* встроенная программа каталог сама не грузит — просим: придёт и перерисует */
+  if(!CAT || !CAT.ex){ try{ катНадо(); }catch(err){} return null; }
+  if(!CATIX || CATIXN!==CAT.ex.length){ CATIX={}; CAT.ex.forEach(function(x){ CATIX[x.i]=x; }); CATIXN=CAT.ex.length; }
+  return CATIX[id]||null;
+}
+function logOf(e){
+  if(!e) return '';
+  var c=catOf(e);
+  if(c && c.lg) return c.lg;
+  if(c && c.tm) return 's';
+  var r=String(e.reps||'');
+  if(/ мин$/.test(r)) return 'min';
+  if(/ с$/.test(r)) return 's';
+  if(c) return '';
+  return (NOWT[e.n] || e.nw) ? 'r' : '';
+}
+function hasW(e){ var l=logOf(e); return l!=='r' && l!=='s' && l!=='min'; }
+function весПоЖеланию(e){ return logOf(e)==='r+'; }
+function isMin(e){ return logOf(e)==='min'; }
+function isDist(e){ return logOf(e)==='km'; }
+/* единица подхода в журнале и подпись числа */
+function unitCode(e){ return isTime(e)?'sec':isMin(e)?'min':isDist(e)?'m':'reps'; }
+function суфф(u){ return u==='sec'?' с':u==='min'?' мин':u==='m'?' м':''; }
+function суффЕ(e){ return суфф(unitCode(e)); }
+/* тоннаж — только у подходов на повторы: секунды, минуты и метры не килограммы × разы */
+function наПовторы(x){ return !x || !x.unit || x.unit==='reps'; }
 /* ── ЧТО СЧИТАЕТСЯ В СЕКУНДАХ ──
    13.09: «Планка считается в секундах же, где таймер здесь?» Признаком было
    только окончание «с» в строке повторов: своя программа пишет «20–40 с», а
@@ -6192,19 +6243,30 @@ function держим(e){
   for(var i=0;i<CAT.ex.length;i++) if(CAT.ex[i].i===id) return !!CAT.ex[i].tm;
   return false;
 }
-function isTime(e){ return / с$/.test(e.reps) || держим(e); }
+function isTime(e){
+  if(!e) return false;
+  var l=logOf(e);
+  if(l==='s' || l==='ks') return true;
+  if(l==='min' || l==='km') return false;
+  return / с$/.test(e.reps||'') || держим(e);
+}
 /* Если движение держат, а в программе стоят повторы — показываем секунды.
    20–40 с — то же окно, что стоит у планки в собственной программе
-   приложения; подобрать своё он может шагом в 5 секунд. */
+   приложения; подобрать своё он может шагом в 5 секунд. 07.10: то же для
+   минут (кардио) и метров (переноски), растяжке — 20–30 с. */
 function repsTime(r, e){
-  if(!держим(e) || / с$/.test(r||'')) return r;
-  return '20–40 с';
+  r=String(r||'');
+  if(isMin(e)) return / мин$/.test(r) ? r : '15–20 мин';
+  if(isDist(e)) return / м$/.test(r) ? r : '20–30 м';
+  if(!isTime(e) || / с$/.test(r)) return r;
+  var c=catOf(e);
+  return (c && c.c==='stretching') ? '20–30 с' : '20–40 с';
 }
-function stepR(e){ return isTime(e)?5:1; }
-function unitR(e){ return isTime(e)?'секунды':'повторы'; }
-function unitR2(e){ return isTime(e)?'секунд':'повторов'; }
+function stepR(e){ return isTime(e)?5:isDist(e)?5:1; }
+function unitR(e){ return isTime(e)?'секунды':isMin(e)?'минуты':isDist(e)?'метры':'повторы'; }
+function unitR2(e){ return isTime(e)?'секунд':isMin(e)?'минут':isDist(e)?'метров':'повторов'; }
 /* «30–45 с секунд» — единица уже стоит в самих повторах: для времени не дублируем */
-function repsUnit(e){ return isTime(e) ? repsOf(e) : repsOf(e)+' '+unitR2(e); }
+function repsUnit(e){ return (isTime(e)||isMin(e)||isDist(e)) ? repsOf(e) : repsOf(e)+' '+unitR2(e); }
 function pad2(n){ return ('0'+n).slice(-2); }
 function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function ruDate(x){ var a=(x||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : (x||''); }
@@ -6424,7 +6486,7 @@ function былоСета(e,si){
   var w=x[0], r=x[1];
   if((w===''||w==null) && (r===''||r==null)) return '';
   return (hasW(e)&&w!==''&&w!=null ? String(w).replace('.',',')+'×' : '')+
-         ((r===''||r==null)?'—':r)+(isTime(e)?' с':'');
+         ((r===''||r==null)?'—':String(r).replace('.',','))+суффЕ(e);
 }
 /* Чем подсказана пустая ячейка. Лесенка сверху вниз:
      1) что уже стоит в подходе выше сегодня — это и есть твой рабочий вес;
@@ -6505,17 +6567,21 @@ function advanceCur(di){
   sess.cur=di;
 }
 function setGrid(e,di,подвал){
-  var st=sess.ex[di].sets, wt=hasW(e), время=isTime(e), si=activeSet(di);
+  /* 07.10: колонки по тому, как записывается упражнение (logOf): свой вес —
+     «+кг» по желанию (пусто = свой вес), кардио — секундомер и минуты */
+  var st=sess.ex[di].sets, wt=hasW(e), время=isTime(e)||isMin(e), si=activeSet(di), опц=весПоЖеланию(e);
   var блины = plateFor(e, targetOf(e).tw);
   var шапка='<tr><th class="cn">#</th><th class="cb">было</th>'+
-    (wt?'<th class="cw">кг</th>':'')+
+    (wt?'<th class="cw">'+(опц?'+кг':'кг')+'</th>':'')+
     (время?'<th class="cs"></th>':'')+
     '<th class="cr">'+unitR(e)+'</th>'+
     '<th class="cok"><button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></th></tr>';
   var ряды=st.map(function(v,k){
     function поле(f,ик,им){
+      var подск=показЧисла(подсказкаСета(e,di,k,f),f);
+      if(f==='w' && опц && подск==='—') подск='свой';
       return '<input class="cell" data-f="'+f+'" inputmode="'+ик+'"'+
-        ' placeholder="'+показЧисла(подсказкаСета(e,di,k,f),f)+'"'+
+        ' placeholder="'+подск+'"'+
         ' aria-label="'+им+', подход '+(k+1)+'"'+
         ' value="'+(v[f]==null||v[f]===''?'':esc(String(v[f]).replace('.',',')))+'">';
     }
@@ -6524,14 +6590,23 @@ function setGrid(e,di,подвал){
            '" data-ex="'+di+'" data-set="'+k+'">'+
       '<td class="cn">'+(k+1)+'</td>'+
       '<td class="cb">'+(было?esc(было):'·')+'</td>'+
-      (wt?'<td class="cw">'+поле('w','decimal','вес, кг')+'</td>':'')+
-      (время?'<td class="cs"><button type="button" class="swb" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
+      (wt?'<td class="cw">'+поле('w','decimal',опц?'дополнительный вес, кг':'вес, кг')+'</td>':'')+
+      (время?'<td class="cs"><button type="button" class="swb'+(isMin(e)?' mm':'')+'" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
       '<td class="cr">'+поле('r','numeric',unitR(e))+'</td>'+
       '<td class="cok"><button type="button" class="ok" data-ok="1" aria-pressed="'+(!!v.done)+
         '" aria-label="Подход '+(k+1)+' сделан">'+(v.done?'✓':'○')+'</button></td></tr>';
   }).join('');
+  /* «как шло» у кардио: от него зависят калории (Compendium 2024 — ходьба и
+     бег на дорожке, медленный и быстрый темп на лестнице отличаются вдвое) */
+  var как='';
+  if(isMin(e)){
+    var ин=sess.ex[di].int||'mod';
+    как='<div class="cint" role="group" aria-label="Как шло">'+[['light','легко'],['mod','средне'],['hard','тяжело']].map(function(x){
+      return '<button type="button" data-cint="'+x[0]+'" data-ex="'+di+'" aria-pressed="'+(ин===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
+  }
   return '<div class="setgrid exbox">'+
     '<table class="settbl"><thead>'+шапка+'</thead><tbody>'+ряды+'</tbody></table>'+
+    как+
     (блины ? '<p class="plates">'+блины+'</p>' : '')+
     (подвал!==undefined ? подвал :
       '<div class="setadd">'+
@@ -6555,7 +6630,7 @@ function exRow(e,di,метка){
   var b=bestOf({sets:st.filter(function(v){ return v.done; })});
   var время=isTime(e);
   var вес;
-  if(сделано && b) вес='<b>'+((b.w!=null?fmtKg(b.w)+'×':'')+b.r+(время?' с':''))+'</b>';
+  if(сделано && b) вес='<b>'+((b.w!=null?fmtKg(b.w)+'×':'')+String(b.r).replace('.',',')+суффЕ(e))+'</b>';
   else { var t=targetOf(e); вес='<s>'+((hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—')+'</s>'; }
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
@@ -7216,7 +7291,7 @@ function шапка(e, di, метка){
     '<button type="button" class="exttl" data-shut="'+di+'" aria-expanded="true" aria-label="Свернуть '+e.n+'">'+
       '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</span>'+
       '<span class="exname">'+e.n+'</span>'+
-      '<span class="spec">'+setsFor(e,di)+' × '+repsOf(e)+' <span>·</span> отдых '+rest+'</span>'+
+      '<span class="spec">'+setsFor(e,di)+' × '+repsOf(e)+(isMin(e)?'':' <span>·</span> отдых '+rest)+'</span>'+
       '<span class="exchev" aria-hidden="true"></span>'+
     '</button></div>';
 }
@@ -7429,6 +7504,9 @@ document.getElementById('list').addEventListener('click', function(ev){
     if(!already){ wTouch(); markDone(); }
     saveSess(); commit(); return;
   }
+  /* 07.10: «как шло» у кардио — одно на упражнение, едет в журнал рядом с минутами */
+  var ci=ev.target.closest('[data-cint]');
+  if(ci){ var cdi=+ci.dataset.ex; if(sess.ex[cdi]){ sess.ex[cdi].int=ci.dataset.cint; saveSess(); renderList(); commit(); haptic('light'); } return; }
   var row=ev.target.closest('.setrow'); if(!row) return;
   var di=+row.dataset.ex, si=+row.dataset.set;
   var e=exList(day)[di], v=sess.ex[di].sets[si];
@@ -7456,7 +7534,8 @@ document.getElementById('list').addEventListener('click', function(ev){
          человек переходит сразу, иначе весь смысл экономии времени теряется. */
       var пара = e.ss ? партнёрDi(di) : -1;
       var первыйВПаре = пара>=0 && di<пара;
-      if(!первыйВПаре) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
+      /* после кардио отдыха между подходами нет — таймер не зовём (07.10) */
+      if(!первыйВПаре && !isMin(e)) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
       wTouch(); markDone();
       advanceCur(di);
     }
@@ -8132,9 +8211,9 @@ function buildReport(){
       var ton=0;
       w.ex.forEach(function(x){
         var parts=(x.sets||[]).map(function(v){
-          if(v.w!=null && v.r!=null && x.unit!=='sec') ton += v.w*v.r;
-          if(x.unit==='sec') return (v.r==null?'—':v.r+'с');
-          return (v.w!=null? v.w+'×':'')+(v.r==null?'—':v.r);
+          if(v.w!=null && v.r!=null && наПовторы(x)) ton += v.w*v.r;
+          if(x.unit==='sec' && v.w==null) return (v.r==null?'—':v.r+'с');
+          return (v.w!=null? v.w+'×':'')+(v.r==null?'—':v.r)+суфф(x.unit).replace(' с','с');
         });
         if(parts.length) out.push('  '+x.n+': '+parts.join(' · '));
       });
@@ -8260,12 +8339,16 @@ function sessionBody(){
        строке — сделанное переставало находиться. Имя остаётся как есть. */
     /* мышца и группа движения едут вместе с подходами: карта тела не должна
        зависеть от того, загрузился ли каталог на этом устройстве */
-    ex.push({ n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
-      unit:(isTime(e)?'sec':'reps'),
+    /* 07.10: единица подхода — sec, min (кардио), m (метры) или reps; у кардио
+       ещё «как шло» — по нему сервер считает траты (MET × минуты) */
+    var ед=unitCode(e), зап={ n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
+      unit:ед,
       sets:done.map(function(v){
         var w=parseFloat(String(v.w).replace(',','.')), r=parseFloat(String(v.r).replace(',','.'));
-        return { w:isNaN(w)?null:w, r:isNaN(r)?null:r };
-      })});
+        return { w:(isNaN(w)||!hasW(e))?null:w, r:isNaN(r)?null:r };
+      })};
+    if(ед==='min') зап.int=sess.ex[di].int||'mod';
+    ex.push(зап);
   });
   /* НАЧАЛО И ДЛИТЕЛЬНОСТЬ ЕДУТ В КАЖДУЮ ЗАПИСЬ.
      14.09: «время тренировки отличается на телефоне и на маке». Отметка о
@@ -8444,7 +8527,7 @@ function readScreen(){
 function renderFinSum(body){
   var el=document.getElementById('finsum'); if(!el) return;
   var sets=0, ton=0;
-  (body.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r==null) return; sets++; if(v.w!=null && x.unit!=='sec') ton+=v.w*v.r; }); });
+  (body.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r==null) return; sets++; if(v.w!=null && наПовторы(x)) ton+=v.w*v.r; }); });
   var мин = body.dur || null;
   var prs=[];
   if(HIST){
@@ -8710,7 +8793,7 @@ function logStats(){
       (x.sets||[]).forEach(function(v){
         if(v.r==null) return;
         wk[k].sets++; tot.sets++;
-        if(v.w!=null && x.unit!=='sec'){ wk[k].ton+=v.w*v.r; tot.ton+=v.w*v.r; }
+        if(v.w!=null && наПовторы(x)){ wk[k].ton+=v.w*v.r; tot.ton+=v.w*v.r; }
       });
     });
   });
@@ -8727,7 +8810,7 @@ function renderLogSum(){
   /* Неделя считается против плана — «1 из 3» понятнее голого нуля в понедельник.
      Тоннаж — за последние 7 дней, а не за календарную неделю, чтобы не обнулялся. */
   var план=Object.keys(GYM_DAYS).length, семь=0, семьПод=0, сер=weekStreak();
-  HIST.forEach(function(w){ if((new Date(TODAY)-new Date(w.date))/864e5<7){ (w.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r!=null){ семьПод++; if(v.w!=null && x.unit!=='sec') семь+=v.w*v.r; } }); }); } });
+  HIST.forEach(function(w){ if((new Date(TODAY)-new Date(w.date))/864e5<7){ (w.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r!=null){ семьПод++; if(v.w!=null && наПовторы(x)) семь+=v.w*v.r; } }); }); } });
   box.innerHTML =
     tile('эта неделя', c.sess+(план?' <small>/ '+план+'</small>':''), lastD==null ? 'занятий' : (lastD===0?'последняя сегодня':'последняя '+lastD+' '+plural(lastD,['день','дня','дней'])+' назад')) +
     tile('подряд', сер, plural(сер,['неделя','недели','недель'])+' без пропуска');
@@ -8964,8 +9047,10 @@ function fmtSets(sets, time){
     var g=groups[groups.length-1];
     if(g && g.w===w) g.r.push(r); else groups.push({w:w, r:[r]});
   });
-  return groups.map(function(g){ return (g.w!=null? fmtKg(g.w)+'×':'')+g.r.join('/'); }).join(' · ')+(time?' с':'');
+  return groups.map(function(g){ return (g.w!=null? fmtKg(g.w)+'×':'')+g.r.join('/'); }).join(' · ')+суффT(time);
 }
+/* time — true/false (старое «в секундах») или единица записи: sec, min, m, reps (07.10) */
+function суффT(time){ return typeof time==='string' ? суфф(time) : (time?' с':''); }
 /* ── Прогресс по упражнениям ──
    То, ради чего вообще ведут журнал: растёт ли нагрузка. Для каждого
    упражнения — лучший подход первой и последней тренировки, дельта по
@@ -8981,7 +9066,7 @@ function bestOf(x){
   });
   return b;
 }
-function fmtBest(b, time){ return b ? ((b.w!=null? fmtKg(b.w)+'×':'')+b.r+(time?' с':'')) : '—'; }
+function fmtBest(b, time){ return b ? ((b.w!=null? fmtKg(b.w)+'×':'')+b.r+суффT(time)) : '—'; }
 /* ── УПРАЖНЕНИЯ: одна таблица вместо «Прогресса» и «Итога блока» ──
    Две секции показывали рост по упражнениям и умели спорить между собой:
    «Тяга к лицу» в одной стояла как «=», в другой как «растёт» — окна и
@@ -9000,14 +9085,15 @@ function вердиктДля(e){
 }
 function числоПодхода(b, time){
   if(!b) return '';
-  if(time) return '<b>'+b.r+'<s>с</s></b>';
-  if(b.w!=null) return '<b>'+fmtKg(b.w)+'<s>×'+b.r+'</s></b>';
-  return '<b>'+b.r+'<s>раз</s></b>';
+  var u=(time===true)?'sec':(time||'');
+  if(u==='min') return '<b>'+b.r+'<s>мин</s></b>';
+  if(b.w!=null) return '<b>'+fmtKg(b.w)+'<s>×'+b.r+суфф(u)+'</s></b>';
+  return '<b>'+b.r+'<s>'+(u==='sec'?'с':u==='m'?'м':'раз')+'</s></b>';
 }
 function строкаБыло(b, time){
   if(!b) return '';
-  if(time) return 'было '+b.r+' с';
-  return 'было '+(b.w!=null? fmtKg(b.w)+'×'+b.r : b.r);
+  var u=(time===true)?'sec':(time||'');
+  return 'было '+(b.w!=null? fmtKg(b.w)+'×' : '')+b.r+суфф(u);
 }
 /* Записи до 12.09 хранят только имя — id каталога у них нет, и строка
    оставалась с пустым серым квадратом вместо кадра. Движение ищем по имени
@@ -9031,7 +9117,7 @@ function renderProgress(){
     (w.ex||[]).forEach(function(x){
       var b=bestOf(x); if(!b) return;
       var k=x.id || ('n:'+нормИмя(x.n));
-      if(!by[k]){ by[k]={k:k, id:x.id||null, n:x.n, time:x.unit==='sec', pts:[]}; order.push(k); }
+      if(!by[k]){ by[k]={k:k, id:x.id||null, n:x.n, time:(x.unit && x.unit!=='reps') ? x.unit : false, pts:[]}; order.push(k); }
       by[k].n=x.n;                                       /* имя как в последней записи */
       by[k].pts.push({d:w.date, b:b});
     });
@@ -9304,15 +9390,13 @@ function advice(e){
   if(!h.length){ var sh=startHint(e);
     /* вес уже стоит в ячейках с подписью «ориентир», диапазон — в шапке: строка нужна только когда веса нет */
     return {kind:'start', text:sh, lw:null,
-      short: sh.kg!=null ? '' : (tm ? 'Держи '+repsOf(e)+' — засеки время кнопкой ▶'
-                                     : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом') }; }
+      short: sh.kg!=null ? '' : первыйРаз(e) }; }
 
   var last = h[0], prev = h[1] || null;
   var done = last.sets.filter(function(v){ return v.r!=null; });
   if(!done.length){ var sh2=startHint(e);
     return {kind:'start', text:sh2, lw:null,
-      short: sh2.kg!=null ? '' : (tm ? 'Держи '+repsOf(e)+' — засеки время кнопкой ▶'
-                                      : 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом') }; }
+      short: sh2.kg!=null ? '' : первыйРаз(e) }; }
 
   var allTop = done.every(function(v){ return v.r>=top; });
   var w = done[0].w;
@@ -9322,6 +9406,19 @@ function advice(e){
   var was = (w!=null? fmtKg(w)+' кг × ':'') + done.map(function(v){return v.r;}).join('/');
 
   var bot = botReps(e);
+  /* 07.10: кардио — минуты, переноски — метры: двойная прогрессия по весу
+     к ним не относится, говорим, сколько было, и зовём засечь время */
+  if(isMin(e)){
+    var мин=Math.max.apply(null, done.map(function(v){ return v.r||0; }));
+    return {kind:'hold', tw:null, tr:мин||top, lw:null,
+      short:'Прошлый раз '+String(мин).replace('.',',')+' мин — засеки время кнопкой ▶',
+      text:'Прошлый раз: '+done.map(function(v){ return String(v.r).replace('.',',')+' мин'; }).join(' · ')+'. Засеки время кнопкой ▶ — минуты запишутся сами.'};
+  }
+  if(isDist(e)){
+    return {kind:'hold', tw:w, tr:top, lw:w,
+      short:(w!=null?'<b>'+fmtKg(w)+' кг</b> · ':'')+repsOf(e)+' без остановки',
+      text:'Прошлый раз: '+done.map(function(v){ return (v.w!=null?fmtKg(v.w)+' кг × ':'')+v.r+' м'; }).join(' · ')+'. Прошёл всю дистанцию без остановки — добавь вес.'};
+  }
   if(tm){
     return { kind: allTop?'up':'hold', tw:null, tr: allTop ? top+5 : top, lw:null,
       short: allTop ? 'Держал по '+top+' с — <b>добавь 5–10 секунд</b>'
@@ -9349,8 +9446,8 @@ function advice(e){
   }
   if(allTop && w==null){
     return {kind:'up', tw:null, tr:top, lw:null,
-      short:'Все подходы по '+top+' — <b>пора усложнить вариант</b> или взять вес',
-      text:'Все подходы по '+top+' повторов на своём весе. Пора добавлять внешний вес или усложнять вариант.'};
+      short:'Все подходы по '+top+' — <b>пора усложнить вариант</b>'+(hasW(e)?' или взять вес':''),
+      text:'Все подходы по '+top+' повторов'+(hasW(e)?' на своём весе. Пора добавлять внешний вес или усложнять вариант.':'. Пора усложнять вариант.')};
   }
   if(prev && prevVol!=null && lastVol<prevVol && sameW){
     return {kind:'warn', tw:w, tr:top, lw:w,
@@ -9366,6 +9463,15 @@ function advice(e){
   return {kind:'hold', tw:w, tr:top, lw:w,
     short:(w!=null?'<b>'+fmtKg(w)+' кг</b> · ':'')+'добери до '+top+' повторов — прошлый раз недобрал в '+где,
     text:'Прошлый раз: '+was+'. Тот же вес, добери повторы до '+top+': в прошлый раз недобрал в '+где+'.'};
+}
+/* Строка первого раза — по тому, как записывается упражнение (07.10) */
+function первыйРаз(e){
+  if(isTime(e)) return 'Держи '+repsOf(e)+' — засеки время кнопкой ▶';
+  if(isMin(e)) return 'Засеки время кнопкой ▶ — '+repsOf(e)+', минуты запишутся сами';
+  if(isDist(e)) return 'Подбери вес, с которым пройдёшь '+repsOf(e)+' без остановки';
+  if(весПоЖеланию(e)) return 'Своим весом: '+repsOf(e)+' '+unitR2(e)+'. Легко — впиши дополнительный вес в «+кг»';
+  if(!hasW(e)) return 'Сделай '+repsOf(e)+' '+unitR2(e);
+  return 'Подбери вес: '+repsOf(e)+' '+unitR2(e)+' должны идти с запасом';
 }
 /* нижняя граница диапазона: '6–10' → 6 */
 function botReps(e){ var m=String(repsOf(e)).match(/\d+/); return m ? +m[0] : 8; }
@@ -9480,7 +9586,8 @@ function watchBtns(){
     b.classList.toggle('on', on);
     /* идущее время пишем в саму кнопку, а НЕ в поле подхода: поле подхватывает
        автосохранение, и «Отмена» уже не смогла бы вернуть прежнее значение */
-    b.textContent = on ? String(watchSec()) : '▶';
+    /* кардио идёт минутами — в кнопке «12:05», у планки — секунды как были */
+    b.textContent = on ? (WATCH.min ? fmt(watchSec()) : String(watchSec())) : '▶';
     b.setAttribute('aria-label', on ? 'Остановить и записать' : 'Засечь время');
   });
 }
@@ -9493,7 +9600,8 @@ function watchPaint(){
 function watchStart(di,si){
   var e=exList(day)[di]; if(!e) return;
   if(WATCH) watchStop(false);
-  WATCH={di:di, si:si, t0:Date.now(), label:e.n+' · подход '+(si+1)+' · цель '+repsOf(e)};
+  WATCH={di:di, si:si, t0:Date.now(), min:isMin(e),
+         label:e.n+(isMin(e)?'':' · подход '+(si+1))+' · цель '+repsOf(e)};
   TMODE='watch';
   tSkipB.textContent='Отмена'; tPlusB.textContent='Готово';
   tEl.classList.add('show'); tmodePaint();
@@ -9510,9 +9618,11 @@ function watchStop(save){
   tEl.classList.remove('show'); document.body.classList.remove('tmr');
   var v=sess.ex[w.di] && sess.ex[w.di].sets[w.si];
   if(save && v){
-    v.r=sec; v.t=true; v.done=true; wTouch(); saveSess(); syncRow(w.di,w.si); commit(); markDone(); haptic('ok');
+    /* кардио пишется минутами (не меньше одной), удержание — секундами */
+    v.r = w.min ? Math.max(1, Math.round(sec/60)) : sec;
+    v.t=true; v.done=true; wTouch(); saveSess(); syncRow(w.di,w.si); commit(); markDone(); haptic('ok');
     var e=exList(day)[w.di], пара=e && e.ss ? партнёрDi(w.di) : -1;
-    if(!(пара>=0 && w.di<пара)) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
+    if(!(пара>=0 && w.di<пара) && !w.min) startTimer(пара>=0 ? Math.max(e.rest, exList(day)[пара].rest) : e.rest);
   } else { haptic('light'); }   /* отмена: в поле ничего не писали, восстанавливать нечего */
   watchBtns();
 }
@@ -13466,6 +13576,8 @@ function renderFoodDay(){
     var темп = pr.gymTempo || '';
     var зал = pr.gymMin ? ('зал: '+pr.gymMin+' '+plural(pr.gymMin,['минута','минуты','минут'])+
       (pr.gymSets?' и '+pr.gymSets+' '+plural(pr.gymSets,['подход','подхода','подходов'])+(темп?' — темп '+темп:''):'')) : '';
+    /* 07.10: кардио в зале считается отдельно — по минутам и «как шло» */
+    if(pr.cardioMin) зал += (зал?'; ':'')+'кардио '+pr.cardioMin+' мин'+(pr.gymCardio?' — '+pr.gymCardio+' ккал':'');
     состав='<p class="fparts">норма '+t.kcal+' = '+части.join(' + ')+
       /* Пол нормы — «нижняя граница плана». Его выбор 24.09 из двух вариантов,
          показанных рядом: «это пол по жиру / по основному обмену» (так было с
