@@ -723,6 +723,7 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 .settbl .ok{margin:0 auto}
 .settbl .swb{width:36px}
 /* 07.10: у кардио секундомер идёт минутами — «12:05» шире секунд планки */
+.settbl .cs.mm{width:62px}
 .settbl .swb.mm{width:58px;font-variant-numeric:tabular-nums}
 .cint{display:flex;gap:6px;margin-top:10px}
 .cint button{flex:1;height:44px;border-radius:12px;border:.5px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600}
@@ -6573,7 +6574,7 @@ function setGrid(e,di,подвал){
   var блины = plateFor(e, targetOf(e).tw);
   var шапка='<tr><th class="cn">#</th><th class="cb">было</th>'+
     (wt?'<th class="cw">'+(опц?'+кг':'кг')+'</th>':'')+
-    (время?'<th class="cs"></th>':'')+
+    (время?'<th class="cs'+(isMin(e)?' mm':'')+'"></th>':'')+
     '<th class="cr">'+unitR(e)+'</th>'+
     '<th class="cok"><button type="button" class="allb" data-allex="'+di+'" aria-label="Отметить все подходы">всё</button></th></tr>';
   var ряды=st.map(function(v,k){
@@ -6591,7 +6592,7 @@ function setGrid(e,di,подвал){
       '<td class="cn">'+(k+1)+'</td>'+
       '<td class="cb">'+(было?esc(было):'·')+'</td>'+
       (wt?'<td class="cw">'+поле('w','decimal',опц?'дополнительный вес, кг':'вес, кг')+'</td>':'')+
-      (время?'<td class="cs"><button type="button" class="swb'+(isMin(e)?' mm':'')+'" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
+      (время?'<td class="cs'+(isMin(e)?' mm':'')+'"><button type="button" class="swb'+(isMin(e)?' mm':'')+'" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
       '<td class="cr">'+поле('r','numeric',unitR(e))+'</td>'+
       '<td class="cok"><button type="button" class="ok" data-ok="1" aria-pressed="'+(!!v.done)+
         '" aria-label="Подход '+(k+1)+' сделан">'+(v.done?'✓':'○')+'</button></td></tr>';
