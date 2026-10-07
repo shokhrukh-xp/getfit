@@ -2920,6 +2920,15 @@ body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
 #mealquestion{border-top:1px solid var(--line);padding:12px 0;background:var(--surface)}
 #mealquestion .btn{min-height:44px}
 
+
+/* 07.10 B2/B3: явный вход в порядок и компактные группы выбора. */
+.dayedit-actions{display:flex;gap:8px;align-items:stretch}
+.dayedit-actions #addex{flex:1;min-width:0;font-size:13px;padding:10px 8px}
+.dayedit-actions #ordopen{flex:0 0 auto;font-size:13px;padding:10px 12px}
+.dayedit-actions .btn{min-height:44px}
+.pickgroups{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pickgroups .mchip{min-height:44px;margin:0;padding:8px 12px}
+body.ordmode #list .sstag{color:var(--text)}
 </style>
 </head>
 <body>
@@ -4292,6 +4301,9 @@ function undoOffer(restore){
   b.onclick=function(){
     if(busy) return; busy=true;clearTimeout(timer);b.disabled=true;text.textContent='Возвращаю…';
     Promise.resolve().then(restore).then(function(){api.remove();haptic('ok');}).catch(function(e){
+      if(e && (e.status===404 || e.status===410)){
+        text.textContent='Вернуть уже нельзя';b.hidden=true;timer=setTimeout(function(){row.remove();},3500);return;
+      }
       text.textContent='Не удалось вернуть. '+humanErr(e);b.textContent='Повторить';
     }).then(function(){busy=false;b.disabled=false;});
   };
@@ -4361,7 +4373,7 @@ function resetDay(){
 /* ── окно каталога ── */
 function openCatalog(ctx){
   catCtx = ctx || null;                    /* {dk, di, muscle} — режим замены */
-  catQuery=''; catEquip=''; catLevel=''; catNope='';
+  catQuery=''; catEquip=''; catLevel=''; catNope='';catGroup='';catShown=40;
   /* заменяем силовое — предлагаем силовое: велотренажёр вместо приседа
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
@@ -4377,22 +4389,31 @@ function openCatalog(ctx){
 }
 function closeCatalog(){
   var m=document.getElementById('catalog'); if(m) m.classList.remove('show');
-  catCtx=null; catQuery=''; catMuscle=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
+  catCtx=null; catQuery=''; catMuscle='';catGroup=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
 }
 
-function muscleChips(){
-  var counts={};
-  CAT.ex.forEach(function(x){ counts[x.m]=(counts[x.m]||0)+1; if(x.m2) counts[x.m2]=(counts[x.m2]||0)+1; });
-  var keys=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; });
-  var h='<button class="mchip'+(catMuscle?'':' on')+'" data-m="">Все</button>';
-  keys.forEach(function(k){
-    h+='<button class="mchip'+(catMuscle===k?' on':'')+'" data-m="'+k+'">'+
-       (CAT.muscles[k]||k)+' <s>'+counts[k]+'</s></button>';
-  });
-  return h;
+var catEquip='', catLevel='', catType='', catShown=40, catNope='', catGroup='';
+/* 07.10 B3: короткие группы для выбора, без ранжирования «полезностью».
+   Точные мышцы и остальные фильтры остаются на странице каталога. */
+var PICKGROUPS=[
+  ['legs','Ноги',['quadriceps','hamstrings','glutes','calves','abductors','adductors','tibialis']],
+  ['back','Спина',['middle back','lats','lower back','traps','neck']],
+  ['chest','Грудь',['chest']],['shoulders','Плечи',['shoulders','rear delts']],
+  ['arms','Руки',['biceps','triceps','forearms']],['abs','Пресс',['abdominals','obliques']],['cardio','Кардио',[]]
+];
+function pickGroupMatch(x){
+  if(!catGroup)return true;
+  if(catGroup==='cardio')return catKind(x)==='cardio';
+  var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});
+  return !!g && (g[2].indexOf(x.m)>=0 || g[2].indexOf(x.m2)>=0);
 }
-var catEquip='', catLevel='', catType='', catShown=40, catNope='';
+function pickGroupChips(){
+  return '<div class="pickgroups" aria-label="Группа упражнений">'+[['','Все',[]]].concat(PICKGROUPS).map(function(g){
+    var on=catGroup===g[0]&&!catMuscle;
+    return '<button type="button" class="mchip'+(on?' on':'')+'" data-pickgroup="'+g[0]+'" aria-pressed="'+on+'">'+g[1]+'</button>';
+  }).join('')+'</div>'+(catMuscle?'<p class="catcount">'+esc(CAT.muscles[catMuscle]||catMuscle)+'</p>':'');
+}
 /* Отмеченные 👎 копились и не показывались нигде: передумал — вернуть некуда.
    Его правка 16.09: не заводить отдельный список, а добавить фильтр в самом
    каталоге — там, где человек и так выбирает упражнение, и замена видна
@@ -4404,6 +4425,7 @@ function catFiltered(){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
   return CAT.ex.filter(function(x){
+    if(catCtx && !pickGroupMatch(x))return false;
     if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
     if(catEquip && x.q!==catEquip) return false;
     if(catLevel && x.l!==catLevel) return false;
@@ -4545,8 +4567,8 @@ function renderCatalog(){
       if(on.offsetLeft+on.offsetWidth>r.clientWidth) r.scrollLeft=on.offsetLeft-40;
     });
   }
-  var list=catFiltered(), lim=onPage?catShown:80, shown=list.slice(0,lim);
-  var h = onPage ? '' : '<div class="mchips">'+muscleChips()+'</div>';
+  var list=catFiltered(), lim=catShown, shown=list.slice(0,lim);
+  var h = onPage ? '' : pickGroupChips();
   if(catCtx && !catCtx.add){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
@@ -4564,7 +4586,7 @@ function renderCatalog(){
     return;
   }
   if(!list.length){
-    box.innerHTML='<div class="catempt"><b>Ничего не нашлось</b>'+
+    box.innerHTML=h+'<div class="catempt"><b>Ничего не нашлось</b>'+
       (catQuery.trim()?'<i>по запросу «'+esc(catQuery.trim())+'»</i>':'')+
       (катСводка().length?'<p>Ищем среди: '+esc(катСводка().join(' · '))+'</p>'+
         '<button type="button" class="btn" id="catwide">Искать среди всех</button>':'')+
@@ -4576,7 +4598,7 @@ function renderCatalog(){
   h+='<div class="catlist">';
   shown.forEach(function(x){ h+=catRow(x,!!catCtx); });
   h+='</div>';
-  if(onPage && list.length>shown.length)
+  if(list.length>shown.length)
     h+='<button class="btn wide" id="catmore">Показать ещё '+
        Math.min(40,list.length-shown.length)+'</button>';
   box.innerHTML=h;
@@ -7262,7 +7284,7 @@ function renderList(){
      вместе с упражнениями, а не подписью под ними. */
   h+='<div id="sporttoday"></div>'+
      '<div class="dayedit">'+
-     '<button type="button" class="btn wide" id="addex">+ Добавить упражнение</button>'+
+     '<div class="dayedit-actions"><button type="button" class="btn" id="addex">+ Добавить упражнение</button><button type="button" class="btn" id="ordopen">Порядок</button></div>'+
      (пр.skip||пр.add||пр.pair ? '<p class="dayeditn">В этом дне '+
         [пр.add?'добавлено '+пр.add:'', пр.skip?'убрано '+пр.skip:'', пр.pair?'своих суперсетов '+пр.pair:'']
           .filter(Boolean).join(' · ')+
@@ -10176,6 +10198,10 @@ document.getElementById('wzchat').addEventListener('keydown', function(e){
 document.getElementById('catclose').addEventListener('click', closeCatalog);
 document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.id==='catalog'){ closeCatalog(); return; }
+  if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}
+  if(e.target.closest('#catwide')){catMuscle='';catGroup='';catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
+  var group=e.target.closest('[data-pickgroup]');
+  if(group){catGroup=group.dataset.pickgroup;catMuscle='';catType='';catShown=40;renderCatalog();haptic('light');return;}
   var m=e.target.closest('button[data-m]');
   if(m){ catMuscle=m.dataset.m; renderCatalog(); haptic('light'); return; }
   var p=e.target.closest('button[data-pick]');
@@ -10191,7 +10217,7 @@ document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.id==='catundo' && catCtx){ applySub(catCtx.k, null); closeCatalog(); }
 });
 var _cs=document.getElementById('catsearch');
-if(_cs) _cs.addEventListener('input', function(){ catQuery=this.value; if(CAT) renderCatalog(); });
+if(_cs) _cs.addEventListener('input', function(){ catQuery=this.value;catShown=40; if(CAT) renderCatalog(); });
 /* строка поиска и фильтры на странице каталога */
 var _pcs=document.getElementById('pcatsearch');
 if(_pcs) _pcs.addEventListener('input', function(){
@@ -10315,6 +10341,7 @@ document.getElementById('list').addEventListener('click', function(e){
   var nd=e.target.closest('button[data-noped]'); if(nd){ неНравится(+nd.dataset.noped); return; }
   var dr=e.target.closest('button[data-drop]');
   if(dr){ dropEx(+dr.dataset.drop); return; }
+  if(e.target.closest('#ordopen')){ ordВкл(); return; }
   if(e.target.closest('#addex')){ openCatalog({dk:day, add:true}); return; }
   if(e.target.closest('#dayreset')){ resetDay(); return; }
   var b=e.target.closest('button[data-swap]'); if(!b) return;
@@ -12519,7 +12546,7 @@ document.getElementById('fnav').addEventListener('click', function(e){
 });
 function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.json(); }); }
 function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
-  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; throw e; }
   return d; }); }); }
 /* Человек не должен видеть текст Google про квоты и биллинг: у жены Шохруха
    такой абзац вылез прямо в профиле, когда она просто заполняла анкету.
@@ -14311,7 +14338,7 @@ function deleteMeal(id){
     return job.catch(function(){}).then(function(){return mealMutation('/meal/restore',{uid:uid,id:id,operation:op});}).then(function(d){
       if(!d||!d.ok||!d.day||d.day.date!==date)throw new Error('Сервер не подтвердил возврат за исходный день.');
       delete MEALDELETIONS[id];освежить(d.day);
-    });
+    }).catch(function(e){if(e && (e.status===404||e.status===410))delete MEALDELETIONS[id];throw e;});
   });
   job=mealMutation('/meal/del',{uid:uid,id:id,operation:op}).then(function(d){
     if(!d||!d.ok||!d.day||d.day.date!==date)throw new Error('Сервер не подтвердил удаление за исходный день.');

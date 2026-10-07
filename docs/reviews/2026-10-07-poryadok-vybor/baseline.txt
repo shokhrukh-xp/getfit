@@ -1,0 +1,100 @@
+FAIL order light 320 locator.scrollIntoViewIfNeeded: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#ordopen')[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:17:73
+FAIL picker light 320 locator.waitFor: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#catalog [data-pickgroup="legs"]') to be visible[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:25:79
+FAIL 404 light 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+FAIL 410 light 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+ok 503 light 320
+FAIL order light 390 locator.scrollIntoViewIfNeeded: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#ordopen')[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:17:73
+FAIL picker light 390 locator.waitFor: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#catalog [data-pickgroup="legs"]') to be visible[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:25:79
+FAIL 404 light 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+FAIL 410 light 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+ok 503 light 390
+FAIL order dark 320 locator.scrollIntoViewIfNeeded: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#ordopen')[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:17:73
+FAIL picker dark 320 locator.waitFor: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#catalog [data-pickgroup="legs"]') to be visible[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:25:79
+FAIL 404 dark 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+FAIL 410 dark 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+ok 503 dark 320
+FAIL order dark 390 locator.scrollIntoViewIfNeeded: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#ordopen')[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:17:73
+FAIL picker dark 390 locator.waitFor: Timeout 4500ms exceeded.
+Call log:
+[2m  - waiting for locator('#catalog [data-pickgroup="legs"]') to be visible[22m
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:25:79
+FAIL 404 dark 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+FAIL 410 dark 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'Не удалось вернуть. Отказ стенда'
+- 'Вернуть уже нельзя'
+
+    at /private/tmp/getfit-poryadok-vybor/tg/test-poryadok-vybor.js:41:11
+ok 503 dark 390
