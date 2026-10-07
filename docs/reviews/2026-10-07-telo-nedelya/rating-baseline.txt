@@ -1,0 +1,6 @@
+Прогон: 1 наборов, потоков 4, сайт на 59369 (getfit-tg.html)
+Метка сборки: 07.10 22:53 (воркера рядом нет — не сверяю)
+  ✗ test-circle-error      19.6 с
+
+За 19.6 с (по очереди было бы 19.6 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+УПАЛО: 1 — test-circle-error

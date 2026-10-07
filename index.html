@@ -12129,19 +12129,30 @@ var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
 function fmtR(x){ if(x==null) return '—'; var r=Math.round(x*10)/10; return r>=10 ? '10' : r.toFixed(1).replace('.',','); }
 function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
 function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
-var CIRCACHE={};
+var CIRCACHE={}, CIRCERROR=false, CIRCBUSY=false, CIRCGEN=0;
 function circlePull(id){
   if(id!=null) CIRCID=id;
-  var want=CIRCID;
-  return fGet('/circle?uid='+encodeURIComponent(syncUid())+(CIRCID?'&id='+encodeURIComponent(CIRCID):''))
+  var want=CIRCID, gen=++CIRCGEN;
+  CIRCERROR=false; CIRCBUSY=true; renderCircle();
+  function current(){ return gen===CIRCGEN && want===CIRCID; }
+  function failed(){
+    if(current()){ CIRCBUSY=false; CIRCERROR=true; renderCircle(); }
+    return null;
+  }
+  return tgFetch(SYNCURL+'/circle?uid='+encodeURIComponent(syncUid())+(want?'&id='+encodeURIComponent(want):''))
+    .then(function(r){ if(!r.ok) throw new Error('circle'); return r.json(); })
     .then(function(d){
-      if(d&&d.ok){
-        if(d.circle) CIRCACHE[d.circle]=d;
-        /* ответ про другой круг (человек уже переключился) — не показываем */
-        if(!want || !d.circle || d.circle===CIRCID){ CIRC=d; if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); } renderCircle(); }
-      }
-      return d; })
-    .catch(function(){ return null; });
+      if(!current()) return d;
+      if(!d || !d.ok) return failed();
+      CIRCBUSY=false;
+      if(d.circle) CIRCACHE[d.circle]=d;
+      CIRC=d;
+      if(d.circle){ CIRCID=d.circle; gset('circle',CIRCID); }
+      renderCircle(); return d;
+    }).catch(failed);
+}
+function circleErrorHtml(){
+  return CIRCERROR ? '<div class="group" role="status"><p>Не удалось загрузить рейтинг</p><button type="button" class="btn" data-circle-retry>Повторить</button></div>' : '';
 }
 /* переключение круга: чип и «Загружаю…» сразу, из кэша — мгновенно, сеть — следом */
 function circleSwitch(id){
@@ -12165,10 +12176,11 @@ function renderCircle(){
   var box=document.getElementById('cirbody'); if(!box) return;
   var sg=document.getElementById('fseg-circle'); if(sg) sg.hidden=!!UDAY;
   if(UDAY){ box.innerHTML=udayHtml(); return; }
+  if(!CIRC && CIRCERROR){ box.innerHTML=circleErrorHtml(); return; }
   if(!CIRC){ box.innerHTML='<p class="empt">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; return; }
   var me=CIRC.me||{}, list=CIRC.circles||[], cur=null;
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
-  var h='';
+  var h=circleErrorHtml();
   /* 16.09, его слова: «не вижу, как редактировать круги, удалять, создавать».
      Круги живут здесь — значит и управление ими живёт здесь, а не в профиле
      под свёрнутой строкой, куда я его спрятал. Полоса кругов теперь стоит
@@ -12198,6 +12210,7 @@ function renderCircle(){
      (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
   var b=CIRC.board||[];
 
+  if(CIRC.loading && CIRCERROR){ box.innerHTML=h; return; }
   if(CIRC.loading){ h+='<p class="empt">Загружаю «'+esc(cur.name)+'»…</p>'; box.innerHTML=h; return; }
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b>'+
@@ -12317,6 +12330,7 @@ function plateHtml(m){
     '</div></div>';
 }
 document.getElementById('cirbody').addEventListener('click', function(e){
+  if(e.target.closest('[data-circle-retry]')){ if(!CIRCBUSY) circlePull(); return; }
   var c=e.target.closest('[data-cir]'); if(c){ if(c.dataset.cir!==CIRCID) circleSwitch(c.dataset.cir); haptic('light'); return; }
   if(e.target.closest('[data-udback]')){ closeUserDay(); haptic('light'); return; }
   var nv=e.target.closest('[data-udnav]'); if(nv){ if(nv.disabled) return; udayShift(+nv.dataset.udnav); haptic('light'); return; }
