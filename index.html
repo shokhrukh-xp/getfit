@@ -2520,13 +2520,14 @@ body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.
   border-radius:0;background:transparent;color:var(--muted);font-size:16px;font-weight:400;white-space:normal;box-shadow:none}
 .zseg button[aria-pressed="true"]{background:transparent;color:var(--text);border-bottom-color:var(--accent);font-weight:700;box-shadow:none}
 /* Данные и границы коридоров не меняются: убрана только визуальная ручка. */
-.htr,.fbar .tr{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.htr,.fbar .tr{height:8px;border-radius:999px;background:var(--line);overflow:visible}
 .htr .hdot,.fbar .tr .fdot{display:none}
 .htr .hcor,.fbar .tr .fcor{top:0;bottom:0;border-radius:999px;background:var(--corr);z-index:1;pointer-events:none}
 .htr .hcor::before,.htr .hcor::after,.fbar .tr .fcor::before,.fbar .tr .fcor::after{display:none}
 .fbar .tr .fcor.fmid{background:var(--corr-mid)}
 .htr .hfill,.fbar .tr i{border-radius:999px}
-.htr .hfill[class],.fbar .tr i[class]{background:var(--accent)}
+.htr .hfill[class],.fbar .tr i[class]{background:var(--bar-fill,var(--accent));z-index:2}
+.htr .norm-edge,.fbar .tr .norm-edge{position:absolute;top:-3px;bottom:-3px;width:2px;transform:translateX(-1px);background:var(--text);box-shadow:0 0 0 1px var(--surface);z-index:3;pointer-events:none}
 .ds-zone{display:flex;align-items:center;gap:6px;margin:8px 0 0;color:var(--faint);font-size:12px;line-height:1.5}
 .ds-zone::before{content:"";width:16px;height:8px;border-radius:999px;background:var(--corr)}
 .hrows>.ds-zone{margin:0}
@@ -10993,6 +10994,17 @@ function homeGymToday(){
    Не кольцо (это Apple) и не полоса «до 100 %», а дорожка, на которой видно
    саму норму: у калорий — зелёный коридор ±10 %, у белка — засечка «от
    нормы», у зала — доля подходов. Точка — где ты сейчас. */
+/* Две видимые границы и цвет факта; координаты остаются на общей шкале.
+   Обводка поверхности отделяет черту от любой заливки в обеих темах. */
+function normFill(v, low, high, excess){
+  if(v<low) return 'var(--accent)';
+  if(v<=high) return 'var(--done)';
+  var stop=Math.max(0,Math.min(100,high/v*100)).toFixed(3)+'%';
+  return 'linear-gradient(to right,var(--done) 0 '+stop+',var(--'+excess+') '+stop+' 100%)';
+}
+function normEdges(low, high, P){
+  return [low,high].map(function(x){ return '<span class="norm-edge" aria-hidden="true" style="left:'+P(x).toFixed(1)+'%"></span>'; }).join('');
+}
 function htrack(v, t, mode, lo, hi, cap){
   if(!t) return '<div class="htr"></div>';
   /* 27.09: коридор, как на «Еде»: калории от нижней границы плана (lo), белок
@@ -11006,9 +11018,12 @@ function htrack(v, t, mode, lo, hi, cap){
   var cls = mode==='range' ? (v>hi?'hf-over':(v>=lo?'hf-ok':''))
           : mode==='min'   ? (v>hi?(cap?'hf-over':'hf-more'):(v>=t?'hf-ok':''))
           :                  (v>=t?'hf-ok':'');
-  var h='<div class="htr">';
+  var low=mode==='range'?lo:t, high=mode==='range'||mode==='min'?hi:t;
+  var fill=normFill(Math.min(v,max),low,high,mode==='min'&&!cap?'dim':'warn');
+  var h='<div class="htr" style="--bar-fill:'+fill+'">';
   if(mode==='range') h+='<div class="hcor" style="left:'+P(lo).toFixed(1)+'%;width:'+(P(hi)-P(lo)).toFixed(1)+'%"></div>';
   if(mode==='min') h+='<div class="hcor" style="left:'+P(t).toFixed(1)+'%;width:'+(P(hi)-P(t)).toFixed(1)+'%"></div>';
+  if(mode==='range'||mode==='min') h+=normEdges(low,high,P);
   h+='<div class="hfill '+cls+'" data-w="'+pos.toFixed(1)+'"></div><div class="hdot '+cls+'" data-l="'+pos.toFixed(1)+'"></div></div>';
   return h;
 }
@@ -13565,8 +13580,8 @@ document.getElementById('eatbody').addEventListener('input', function(e){
      же полосы, по которой считан; клетчатка — 1,6 нормы); правее — серое
      «пользы больше нет», не красное. Шкала тянется до 1,1 края;
    band — жир (и белок при почках): lo…hi, перебор красный;
-   max — сахар: зелёное до ориентира ВОЗ 5 % (lo), жёлтое до потолка 10 %,
-     выше — красное. */
+   max — сахар: черты у ориентира ВОЗ 5 % (lo) и потолка 10 % (t);
+     сверх потолка — красный участок (08.10: «Черты + цвет»). */
 function trackHtml(v, t, mode, lo, hi){
   if(!t) return '<div class="tr"></div>';
   if(mode==='range'){ lo = lo || t*0.9; hi = t*1.1; }
@@ -13577,13 +13592,15 @@ function trackHtml(v, t, mode, lo, hi){
   var cor=function(a, b, c){ return '<em class="fcor'+(c?' '+c:'')+'" style="left:'+F(P(a))+'%;width:'+F(P(b)-P(a))+'%"></em>'; };
   var cls = mode==='range' ? (v>hi?'fb-over':(v>=lo?'fb-done':''))
           : mode==='band'  ? (v>t?'fb-over':(v>=lo?'fb-done':''))
-          : mode==='max'   ? (v>t?'fb-over':(v>lo?'fb-mid':'fb-done'))
+          : mode==='max'   ? (v>t?'fb-over':(v>=lo?'fb-done':''))
           :                  (v>hi?'fb-more':(v>=t?'fb-done':''));
-  var h='<div class="tr">';
+  var low=mode==='min'?t:lo, high=mode==='range'||mode==='min'?hi:t;
+  var h='<div class="tr" style="--bar-fill:'+normFill(Math.min(v,max),low,high,mode==='min'?'dim':'warn')+'">';
   if(mode==='range') h+=cor(lo, hi);
   if(mode==='band')  h+=cor(lo, t);
   if(mode==='min')   h+=cor(t, hi);
-  if(mode==='max')   h+=cor(0, lo, 'fcor0')+cor(lo, t, 'fmid');
+  if(mode==='max')   h+=cor(lo, t);
+  h+=normEdges(low,high,P);
   h+='<i class="'+cls+'" style="width:'+pct.toFixed(1)+'%"></i><span class="fdot '+cls+'" style="left:'+pct.toFixed(1)+'%"></span></div>';
   return h;
 }
@@ -13929,7 +13946,7 @@ function renderFoodDay(){
     prot: t.prot ? (белКрай ? 'Коридор — '+t.prot+'–'+t.protMax+' г: при почках больше — тоже плохо.'
                             : 'Коридор — '+t.prot+'–'+белВерх+' г. Больше — не ошибка, но и пользы для мышц уже нет: дальше полоса серая.') : '',
     fib: t.fib ? 'Коридор — '+t.fib+'–'+клВерх+' г. Больше — не вредно, дальше полоса серая.' : '',
-    sug: t.sug ? 'Зелёное — до '+сахОр+' г (5 % калорий, ориентир ВОЗ), жёлтое — до '+t.sug+' г (10 %, потолок), выше — красное.' : ''
+    sug: t.sug ? 'Первая черта — '+сахОр+' г (5 % калорий, ориентир ВОЗ), вторая — '+t.sug+' г (10 %, потолок). Сверх потолка — красный участок.' : ''
   };
   /* 02.10: свободный день — вместо шкал и оценки одна карточка; приёмы, если
      что-то записано, остаются списком, но без баллов */

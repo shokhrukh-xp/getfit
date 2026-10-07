@@ -21,7 +21,7 @@ await p.click('.l1 button[data-page="food"]');await p.waitForTimeout(400);
 дано(await p.locator('#fday .ds-zone').count()===1,'на Еде одна легенда');
 дано(await p.locator('#fday .tr').evaluateAll(ns=>ns.every(n=>getComputedStyle(n).height==='8px')),'полосы еды 8px');
 дано(await p.locator('#fday .fcor').count()>=5,'границы целевых зон сохранены');
-дано(await p.locator('#fday .tr i').evaluateAll(ns=>ns.every(e=>getComputedStyle(e).backgroundColor===getComputedStyle(document.querySelector('.zseg button[aria-pressed="true"]')).borderBottomColor)),'заполнение всех шкал акцентное, включая состояние сахара');
+дано(await p.locator('#fday .tr i').evaluateAll(ns=>ns.every((e,i)=>{const probe=document.createElement('span');probe.style.color=i===4?'var(--done)':'var(--accent)';document.body.appendChild(probe);const expected=getComputedStyle(probe).color;probe.remove();return getComputedStyle(e).backgroundColor===expected;})),'шкалы ниже коридора акцентные; сахар 32 внутри 25–50 зелёный');
 const tab=await p.locator('.zseg button[aria-pressed="true"]:visible').evaluate(e=>{let c=getComputedStyle(e);return [c.borderBottomWidth,c.backgroundColor,c.fontSize]});
 дано(tab[0]==='3px'&&tab[1]==='rgba(0, 0, 0, 0)'&&tab[2]==='16px','активная вкладка подчёркнута, без капсулы');
 дано(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'экран помещается в '+width);

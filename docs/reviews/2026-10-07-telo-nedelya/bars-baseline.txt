@@ -1,0 +1,10 @@
+Прогон: 1 наборов, потоков 4, сайт на 65156 (getfit-tg.html)
+Метка сборки: 08.10 00:00 (воркера рядом нет — не сверяю)
+  ✗ test-shkaly-cherty      6.7 с
+        FAIL light 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+        FAIL light 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+        FAIL dark 320 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+        FAIL dark 390 AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+За 6.7 с (по очереди было бы 6.7 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+УПАЛО: 1 — test-shkaly-cherty

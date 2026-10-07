@@ -1,0 +1,9 @@
+Прогон: 4 наборов, потоков 4, сайт на 64431 (index.html)
+Метка сборки: 08.10 00:00 (воркера рядом нет — не сверяю)
+  ✓ test-koridor            6.8 с
+  ✓ test-sahar             15.7 с
+  ✓ test-shkaly-cherty     32.1 с
+  ✓ test-ds1               96.5 с
+
+За 96.5 с (по очереди было бы 151.1 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+ВСЕ НАБОРЫ ПРОЙДЕНЫ
