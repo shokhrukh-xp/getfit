@@ -1,0 +1,100 @@
+Прогон: 94 наборов, потоков 4, сайт на 51000 (index.html)
+Метка сборки: 07.10 14:56 (воркера рядом нет — не сверяю)
+  ✓ audit 4/5              41.3 с
+  ✓ test-duga              45.3 с
+  ✓ test-ds5               69.6 с
+  ✓ audit 1/5              40.8 с
+  ✓ audit 3/5              40.8 с
+  ✓ test-ds1               94.1 с
+  ✓ test-ds4               40.1 с
+  ✓ audit 2/5              21.3 с
+  ✓ audit 5/5              40.8 с
+  ✓ tyk 4/6                42.7 с
+  ✓ test-ds3               24.8 с
+  ✓ test-chto              26.8 с
+  ✓ tyk 1/6                39.1 с
+  ✓ tyk 6/6                26.6 с
+  ✓ test-ui-dorabotka      32.5 с
+  ✓ test-ui-clean          16.7 с
+  ✓ tyk 2/6                24.8 с
+  ✓ test-tri-priema        14.6 с
+  ✓ test-ds2               17.0 с
+  ✓ test-segodnya          17.3 с
+  ✓ test-tsel              19.7 с
+  ✓ test-fab               19.0 с
+  ✓ test-krugi             18.0 с
+  ✓ test-sahar             15.0 с
+  ✓ test-minuty            15.9 с
+  ✓ test-samochuvstvie     17.2 с
+  ✓ test-data-otpravka     26.4 с
+  ✓ test-gruppy             9.1 с
+  ✓ test-znakomstvo        16.5 с
+  ✓ tyk 5/6                15.4 с
+  ✓ test-mnenie            13.7 с
+  ✓ test-katalog           13.2 с
+  ✓ test-zapis             12.4 с
+  ✓ test-profil            10.2 с
+  ✓ test-vidno             12.0 с
+  ✓ tyk 3/6                11.4 с
+  ✓ test-karta-chitaemo    10.0 с
+  ✓ test-nemoyo            11.5 с
+  ✓ test-avtoobnovlenie    11.2 с
+  ✓ test-peredat           10.8 с
+  ✓ test-uprazh             8.8 с
+  ✓ test-svoy-superset     10.9 с
+  ✓ test-zal               11.3 с
+  ✓ test-taymer            10.4 с
+  ✓ test-menu              10.0 с
+  ✓ test-nepusk             8.9 с
+  ✓ test-zdorovie           9.3 с
+  ✓ test-niz                9.5 с
+  ✓ test-norma              9.2 с
+  ✓ test-zapis-tipy         8.8 с
+  ✓ test-rbo                8.9 с
+  ✓ test-svobodny           8.4 с
+  ✓ test-tolko-eda          8.2 с
+  ✓ test-reset-sync         9.1 с
+  ✓ test-sport              9.3 с
+  ✓ test-telo-verdict       7.2 с
+  ✓ test-telo-sila          6.3 с
+  ✓ test-srez               8.9 с
+  ✓ test-start              6.2 с
+  ✓ test-upravlenie         6.3 с
+  ✓ test-reyting            6.6 с
+  ✓ test-sloy               7.2 с
+  ✓ test-priem              7.1 с
+  ✓ test-koridor            6.1 с
+  ✓ test-nedelya-zala       5.2 с
+  ✓ test-tehnika            7.1 с
+  ✓ test-podpiska           7.3 с
+  ✓ test-podskazki          5.3 с
+  ✓ test-karta              6.1 с
+  ✓ test-home               5.1 с
+  ✓ test-pribornaya         4.8 с
+  ✓ test-den                4.8 с
+  ✓ test-sovet              4.5 с
+  ✓ test-krug               5.5 с
+  ✓ test-telo               4.3 с
+  ✓ test-istochniki         3.8 с
+  ✓ test-povtor             4.6 с
+  ✓ test-dni-galochki       4.6 с
+  ✓ test-ves-snaryad        4.1 с
+  ✓ test-sheet-safe         3.3 с
+  ✓ test-tablitsa           3.3 с
+  ✗ test-food-complete      3.4 с
+        AssertionError [ERR_ASSERTION]: The input did not match the regular expression /учитывается автоматически/. Input:
+  ✓ test-osvezhit           5.1 с
+  ✓ test-razbor-priema      3.4 с
+  ✓ test-gotovoe            3.7 с
+  ✓ test-nedelya            3.1 с
+  ✓ test-shagi              2.5 с
+  ✓ test-midnight           1.8 с
+  ✓ test-pary-den           2.3 с
+  ✓ test-eda                1.7 с
+  ✓ test-imena              0.0 с
+  ✓ test-bot                4.0 с
+  ✓ test-private-photos     1.2 с
+  ✓ test-session-access     1.3 с
+
+За 331.8 с (по очереди было бы 1325.8 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+УПАЛО: 1 — test-food-complete

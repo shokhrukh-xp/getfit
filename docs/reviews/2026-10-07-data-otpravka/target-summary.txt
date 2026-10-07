@@ -1,6 +1,8 @@
-Прогон: 1 наборов, потоков 1, сайт на 50781 (index.html)
+Прогон: 3 наборов, потоков 4, сайт на 53003 (index.html)
 Метка сборки: 07.10 14:56 (воркера рядом нет — не сверяю)
-  ✓ test-data-otpravka     26.7 с
+  ✓ test-food-complete      2.6 с
+  ✓ test-samochuvstvie     17.2 с
+  ✓ test-data-otpravka     31.4 с
 
-За 26.7 с (по очереди было бы 26.7 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
+За 31.4 с (по очереди было бы 51.3 с). Логи: /var/folders/67/mfxb530d7r3gw_qbj46cfchr0000gn/T/getfit-tg-logs
 ВСЕ НАБОРЫ ПРОЙДЕНЫ

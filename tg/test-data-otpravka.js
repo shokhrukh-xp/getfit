@@ -5,7 +5,7 @@ const {chromium}=require('playwright'), M=require('./mock'), assert=require('ass
 const shots=process.env.GF_DATA_SHOTS;
 if(shots)fs.mkdirSync(shots,{recursive:true});
 async function shot(p,name,theme,width){if(shots)await p.screenshot({path:path.join(shots,name+'-'+theme+'-'+width+'.png')});}
-const cases=(process.env.GF_DATA_CASE||'date,race,retry,load,inflight').split(',');
+const cases=(process.env.GF_DATA_CASE||'date,race,retry,load,inflight,guards').split(',');
 let failed=0;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn){for(let i=0;i<150;i++){if(fn())return;await pause(20)}throw Error('Не дождались запроса стенда');}
@@ -22,6 +22,9 @@ try{
  let sent=[], held=[], hold=false, broken=true, reads=0;
  const handleRoute=async r=>{
   const u=new URL(r.request().url()), d=u.searchParams.get('date')||M.TODAY;
+  if(u.pathname==='/coach/act'&&name==='guards'){
+   await give(r,broken?{error:'Действие не отправлено'}:{ok:true,reply:'Самочувствие принято.'},broken?503:200);return true;
+  }
   if(u.pathname==='/coach'){
    sent.push(JSON.parse(r.request().postData()));
    if(name==='retry' && broken==='network'){await r.abort('failed');return true;}
@@ -40,8 +43,24 @@ try{
   }
   return false;
  };
- const errors=await M.поднять(p,{page:'food',theme,handleRoute});
+ const errors=await M.поднять(p,{page:'food',theme,handleRoute,chat:name==='guards'?[{role:'assistant',ts:Date.now(),text:'Как ты?',act:[{k:'wb',v:'норм',t:'Нормально',d:M.TODAY}]}]:[]});
  await meal(p,M.TODAY);
+ if(name==='guards'){
+  await p.click('#coachnav');
+  await p.setInputFiles('#cfile',{name:'bad.jpg',mimeType:'image/jpeg',buffer:Buffer.from('not an image')});
+  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('Не смог прочитать фото'));
+  assert.equal(await p.locator('#chatretry').count(),0,'Ошибка чтения файла не предлагает отправить пустое сообщение');
+  assert(!(await p.locator('#ctext').isDisabled()));
+  await p.locator('[data-cact]').first().click();
+  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('Действие не отправлено'));
+  await settled(p);assert(!(await p.locator('#ctext').isDisabled()),'Отказ кнопки самочувствия не блокирует ввод');
+  assert.equal(await p.locator('#chatretry').count(),0,'Ошибка действия не повторяется как обычный текст');
+  broken=false;await p.locator('[data-cact]').first().click();
+  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('Самочувствие принято.'));
+  await settled(p);assert(!(await p.locator('#ctext').isDisabled()),'Успех кнопки самочувствия возвращает ввод');
+  await p.fill('#ctext','Вопрос после самочувствия');await p.click('#csend');await until(()=>sent.length===1);
+  assert.equal(sent[0].text,'Вопрос после самочувствия');
+ }
  if(name==='date'){
   await p.click('[data-fnav="-1"]');await meal(p,M.Д(1));await p.click('#food-add');
   await p.fill('#ctext','Вчерашний ужин');await p.click('#csend');await until(()=>sent.length===1);
@@ -116,6 +135,8 @@ try{
   await p.click('#coachclose');await p.click('#food-add');
   assert.equal(await p.locator('#ctext').inputValue(),'Неотправленный ужин','Ошибка после закрытия листа тоже сохраняет черновик');
   assert(await p.locator('#chatretry').isVisible());
+  await p.fill('#ctext','');assert(await p.locator('#chatretry').isDisabled(),'Пустой черновик нельзя повторить');
+  await p.fill('#ctext','Исправленный ужин');assert(!(await p.locator('#chatretry').isDisabled()),'Исправленный черновик можно отправить');
  }
  if(name==='load'){
   await p.click('[data-fnav="-1"]');await until(()=>reads===1);await settled(p);

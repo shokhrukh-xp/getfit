@@ -14250,13 +14250,18 @@ if(window.visualViewport){ window.visualViewport.addEventListener('resize',sheet
 sheetViewport();
 /* 07.10: запись еды наследует день «Еды», обычная вкладка — сегодня.
    Неотправленные текст/фото хранятся отдельно по датам внутри этого захода. */
+function chatSendState(){
+  var blocked=!!(CHAT.busy || CHAT.prep), retry=document.getElementById('chatretry');
+  ['ctext','csend','cphoto'].forEach(function(id){ document.getElementById(id).disabled=blocked; });
+  if(retry) retry.disabled=blocked || !(document.getElementById('ctext').value.trim() || CHAT.att);
+}
 function chatDraftSave(){
-  CHAT.drafts[CHAT.date]={text:document.getElementById('ctext').value, image:CHAT.att, err:CHAT.err||''};
+  CHAT.drafts[CHAT.date]={text:document.getElementById('ctext').value, image:CHAT.att, err:CHAT.err||'', retry:!!CHAT.retry};
 }
 function chatDraftRestore(){
   var draft=CHAT.drafts[CHAT.date]||{};
   var ta=document.getElementById('ctext'); ta.value=draft.text||''; ta.style.height='auto';
-  cAttSet(draft.image); CHAT.err=draft.err||'';
+  cAttSet(draft.image); CHAT.err=draft.err||''; CHAT.retry=!!draft.retry;
   var label=document.getElementById('coachdate');
   label.textContent='Дата записи: '+(CHAT.date===TODAY?'сегодня · ':'')+CHAT.date.split('-').reverse().join('.');
   label.dataset.date=CHAT.date;
@@ -14357,13 +14362,13 @@ function renderChat(scroll){
     else if(CHAT.pending || CHAT.pendingImg)
       h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+CHAT.pendingDate.split('-').reverse().join('.')+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
       ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
-    if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+'<button type="button" class="btn" id="chatretry">Повторить</button>';
+    if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
     h+=recoCard('chat');
   }
   box.innerHTML=h;
   var retry=document.getElementById('chatretry');
-  if(retry){ retry.disabled=CHAT.busy || CHAT.prep; retry.addEventListener('click',cGo); }
-  ['ctext','csend','cphoto'].forEach(function(id){ document.getElementById(id).disabled=!!(CHAT.busy || CHAT.prep); });
+  if(retry) retry.addEventListener('click',cGo);
+  chatSendState();
   var mb=document.getElementById('chatmore');
   if(mb) mb.addEventListener('click', function(){ CHATALL=true; renderChat(false); haptic('light'); });
   box.querySelectorAll('[data-cmenu]').forEach(function(b){
@@ -14443,7 +14448,7 @@ function чатДействие(a){
 /* Нажатие уходит на сервер: он пишет обе реплики в историю и отвечает
    без модели — быстро и одинаково. */
 function послатьДействие(body, подпись){
-  CHAT.busy=true; CHAT.err=''; CHAT.pending=подпись||''; CHAT.pendingImg=null; renderChat(); haptic('medium');
+  CHAT.busy=true; CHAT.err=''; CHAT.retry=false; CHAT.pendingDate=TODAY; CHAT.pending=подпись||''; CHAT.pendingImg=null; renderChat(); haptic('medium');
   fPost('/coach/act', Object.assign({uid:syncUid(), date:TODAY}, body)).then(function(d){
     if(!d || !d.ok) throw new Error((d && d.error) || 'Не получилось — попробуй ещё раз.');
     var ts=d.ts||Date.now();
@@ -14453,7 +14458,7 @@ function послатьДействие(body, подпись){
     CHAT.pending=''; renderChat(); haptic('ok');
     if(чатОткрыт()) gset('chat_seen', CHAT.items.length); else coachAttn(true);
   }).catch(function(e){ CHAT.pending=''; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
-    .then(function(){ CHAT.busy=false; });
+    .then(function(){ CHAT.busy=false; renderChat(); });
 }
 /* «Мешает суставу» по кнопке тренера: отметка — та же, что под 👎, замена —
    тот же подбор, что у 👎 «Не нравится» (та же мышца, тот же род, ближе по
@@ -14867,7 +14872,7 @@ function coachSend(text, image){
   CHAT.drafts[date]={}; cAttSet(null);
   /* Пустая подпись при отправленном фото раньше стирала состояние ожидания:
      весь блок «отправлено / смотрю» висел на непустом тексте. */
-  CHAT.busy=true; CHAT.err=''; CHAT.pendingDate=date; CHAT.pending=text||''; CHAT.pendingImg=image||null;
+  CHAT.busy=true; CHAT.err=''; CHAT.retry=false; CHAT.pendingDate=date; CHAT.pending=text||''; CHAT.pendingImg=image||null;
   CHAT.prep=false;
   /* написанное уже висит пузырём «отправлено» — оставлять его ещё и в поле
      значит показывать человеку, что сообщение никуда не ушло */
@@ -14902,7 +14907,7 @@ function coachSend(text, image){
     })
     .catch(function(e){
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
-      CHAT.drafts[date]={text:text||'', image:image||null, err:humanErr(e)};
+      CHAT.drafts[date]={text:text||'', image:image||null, err:humanErr(e), retry:true};
       if(CHAT.date===date) chatDraftRestore();
       haptic('err');
     })
@@ -14922,7 +14927,7 @@ document.getElementById('csend').addEventListener('click', cGo);
 document.getElementById('ctext').addEventListener('keydown', function(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); cGo(); }
 });
-document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; });
+document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files && e.target.files[0]; e.target.value='';
@@ -14932,9 +14937,9 @@ document.getElementById('cfile').addEventListener('change', function(e){
   shrink(f).then(function(b64){ CHAT.prep=false; CHAT.drafts[date].image=b64;
     if(CHAT.date===date) cAttSet(b64); renderChat();
     var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
-  }).catch(function(){ CHAT.prep=false; CHAT.err='Не смог прочитать фото'; renderChat(); });
+  }).catch(function(){ CHAT.prep=false; CHAT.retry=false; CHAT.err='Не смог прочитать фото'; renderChat(); });
 });
-function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); }
+function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); chatSendState(); }
 document.getElementById('cattach').addEventListener('click', function(e){ if(!CHAT.busy && !CHAT.prep && e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 

@@ -15,9 +15,11 @@ const M=require('./mock');
   await page.close();
   page=await browser.newPage({viewport:{width:390,height:900}});
   await page.route('**://cdn.jsdelivr.net/**',r=>r.abort());
-  const pastErrors=await M.поднять(page,{theme:'dark',wait:2700,day:{date:'2026-08-20'}});
+  const pastErrors=await M.поднять(page,{theme:'dark',wait:2700});
   await page.click('.l1 button[data-page="food"]');
-  await page.waitForTimeout(900);
+  // 07.10: выбираем прошлый день, а не подменяем ответ на запрос сегодня.
+  await page.click('[data-fnav="-1"]');
+  await page.waitForFunction(()=>document.querySelector('#fday').textContent.includes('учитывается автоматически'));
 
   assert.equal(await page.locator('[data-confirm-food]').count(),0);
   assert.match(await page.locator('#fday').innerText(),/учитывается автоматически/);
