@@ -60,7 +60,7 @@ async function нажать(page, текст){
   дано((await кнопки(page)).join(' · ') === 'Облегчить сегодня', 'старые кнопки ушли, под ответом — «Облегчить сегодня»');
   const строки = () => page.$$eval('#list .exrow', ns => ns.map(n => {
     const b = n.querySelector('.exrn b'), i = n.querySelector('.exrn i'), u = n.querySelector('.exrv u');
-    return { n: b.childNodes[b.childNodes.length - 1].textContent.trim(), план: +(/^(\d+)/.exec(i.textContent) || [0, 0])[1],
+    return { n: b.childNodes[b.childNodes.length - 1].textContent.trim(), план: +(/(\d+) ×/.exec(i.textContent) || [0, 0])[1],   /* с 09.10 строка начинается с мышцы: «квадрицепс · 4 × 6–10» */
       таблица: +(/из (\d+)/.exec(u.textContent) || [0, 0])[1], время: /\sс$/.test(i.textContent.trim()) };
   }));
   const было = await строки();

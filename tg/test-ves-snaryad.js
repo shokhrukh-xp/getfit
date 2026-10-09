@@ -18,8 +18,11 @@ const ПРОГ = { name: 'Мышцы · 2 дня', note: 'Два дня.', focus
   { s: 'Руки А', sub: 'бицепс штанга', ex: [
     у('Barbell_Curl', 'Сгибание на бицепс (штанга, классическое)', 'Barbell Curl', 'biceps', 'barbell', 'Бицепс'),
     у('Seated_Palm-Up_Barbell_Wrist_Curl', 'Сгибание запястий (сидя, штанга)', 'Seated Palm-Up Barbell Wrist Curl', 'forearms', 'barbell', 'Предплечья')] } ] };
-/* его 27.09: сгибание со штангой 30 кг; запястья — ни разу */
-const ЖУРНАЛ = [{ id: M.Д(4) + '_A2', date: M.Д(4), day: 'A2', name: 'День 2', week: 1, updated: new Date(M.Д(4) + 'T19:10:00').toISOString(),
+/* его 27.09: сгибание со штангой 30 кг; запястья — ни разу.
+   09.10: запись — 8 дней назад, всегда прошлая неделя. Было 4 дня: с четверга
+   по воскресенье это ЭТА неделя, День 2 открывается сделанным (датаДня), и
+   «было» у него — занятие ДО того дня, а не оно само («прошлый раз» один). */
+const ЖУРНАЛ = [{ id: M.Д(8) + '_A2', date: M.Д(8), day: 'A2', name: 'День 2', week: 1, updated: new Date(M.Д(8) + 'T19:10:00').toISOString(),
   ex: [{ n: 'Сгибание на бицепс (штанга, классическое)', id: 'Barbell_Curl', p: 'Бицепс', m: 'biceps', unit: 'reps',
     sets: [{ w: 30, r: 10 }, { w: 30, r: 12 }, { w: 30, r: 12 }] }] }];
 const МЕ = { sex: 'm', age: 34, ht: 178, bw: 87.6, goal: 'fat', wt: 'down', gym: 'muscle', level: 'mid', place: 'gym', only: 'all', lim: [], eq: [] };

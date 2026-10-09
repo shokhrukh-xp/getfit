@@ -746,6 +746,9 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .exrn{min-width:0}
 .exrn b{display:block;font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
 .exrn i{font-style:normal;font-size:12px;color:var(--dim)}
+.mmore{font-size:12px;color:var(--dim);margin:10px 0 0;letter-spacing:.02em;line-height:1.45}
+.mmore b{color:var(--muted);font-weight:400}
+.mmore+.lastline{margin-top:2px}
 .exrv{text-align:right;white-space:nowrap;font-size:13px;font-weight:700}
 .exrv u{text-decoration:none;display:block;font-size:12px;color:var(--dim);font-weight:500;margin-top:2px}
 .exrow.done .exrn b{color:var(--dim)}
@@ -763,7 +766,9 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .finsum .fs1 b{font-family:inherit;font-size:15px;font-weight:800;color:var(--done-txt);margin-right:4px}
 .finsum .pr{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--text)}
 .finsum .pr b{color:var(--done-txt);font-weight:600}
-.finsum .pr i{font-style:normal;color:var(--dim)}
+/* «было …» на зелёной подложке: --muted даёт 4,26 при норме 4,5 — цвет текста,
+   отличие от рекорда — словом «было» и весом шрифта (рекорд жирный и зелёный) */
+.finsum .pr i{font-style:normal;color:var(--text);font-weight:400}
 .btnrow .btn{flex:1}
 /* ── страница журнала ───────────────────── */
 .logitem{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);padding:13px 14px;margin-bottom:9px}
@@ -6711,15 +6716,27 @@ function былоСета(e,si){
    там, где человек поднял 40, и он прочитал это как свой результат: число,
    стоящее рядом с фактом, должно быть фактом, а совет живёт словами строкой
    выше. Возвращает число, а не текст — его же записывает галочка. */
+/* 09.10, его снимок и выбор кнопкой «Совет»: в тексте «Оставь 20 кг», в
+   ячейке 25 — подсказки спорили. Теперь в ячейке то, что делать СЕГОДНЯ, —
+   те же вес и повторы, что в строке совета; факт прошлого раза стоит рядом,
+   в колонке «было» (её 13.09 ещё не было, отсюда прежний порядок). Лесенка:
+     1) что уже стоит в подходе выше сегодня;
+     2) совет на сегодня (targetOf);
+     3) тот же подход в прошлый раз — если совета нет (история ещё грузится,
+        свой вес без отягощения). */
 function подсказкаСета(e,di,si,f){
   var st=(sess.ex[di]||{}).sets||[], i, v, z;
   for(i=si-1;i>=0;i--){ v=st[i]; if(v && v[f]!=null && v[f]!=='' && !isNaN(parseFloat(v[f]))) return parseFloat(v[f]); }
+  var t=targetOf(e);
+  if(t.kind!=='wait'){
+    if(f==='w'){ if(hasW(e) && t.tw!=null) return t.tw; }
+    else if(t.tr!=null) return t.tr;
+  }
   var p=lastFor(e);
   if(p){
     var src=(p.s&&p.s.length)?p.s:[[p.w,p.r]], x=src[si];
     if(x){ z=(f==='w')?x[0]:x[1]; if(z!=null && z!=='' && !isNaN(parseFloat(z))) return parseFloat(z); }
   }
-  var t=targetOf(e);
   if(f==='w') return (hasW(e) && t.tw!=null) ? t.tw : null;
   return (t.tr!=null) ? t.tr : null;
 }
@@ -6831,6 +6848,40 @@ function setGrid(e,di,подвал){
       (st.length<=1?' disabled':'')+' aria-label="Убрать последний подход">−</button></div>')+
     '</div>';
 }
+/* ── НА КАКИЕ МЫШЦЫ ──
+   09.10, его слова: «мне не хватает информации, на какие мышцы каждое
+   упражнение». Его выбор кнопкой «В списке дня»: в строке списка — главная
+   мышца, в раскрытой карточке она же (в капители) и строкой ниже —
+   вспомогательные из каталога (sm): «помогают ягодицы, бицепс бедра, поясница».
+   Главная — не e.p как есть: там часто движение («Присед», «Горизонтальная
+   тяга», «Наклон»), а не мышца. Если e.p уже мышца («Задние дельты») — она
+   точнее каталога; иначе мышца из каталога (m) или по движению (MUSCLEOF).
+   Имена — как в каталоге; до его загрузки — та же таблица, чтобы подпись не
+   менялась на глазах. В каталоге sm идут по алфавиту, и у приседа первыми
+   стояли бы икры — поэтому порядок по тому, насколько мышца обычно работает
+   в базовых движениях; не больше трёх. */
+var МЫШЦА_RU={quadriceps:'Квадрицепс',hamstrings:'Бицепс бедра',glutes:'Ягодицы',calves:'Икры',
+ chest:'Грудь',shoulders:'Плечи','rear delts':'Задние дельты',traps:'Трапеции',lats:'Широчайшие',
+ 'middle back':'Середина спины','lower back':'Поясница',biceps:'Бицепс',triceps:'Трицепс',
+ forearms:'Предплечья',abdominals:'Пресс',obliques:'Косые',abductors:'Отведение бедра',
+ adductors:'Приведение бедра',neck:'Шея',tibialis:'Голень'};
+function имяМышцы(id){ return String((CAT && CAT.muscles && CAT.muscles[id]) || МЫШЦА_RU[id] || ''); }
+var МЫШЦЫ_ПОРЯДОК=['glutes','hamstrings','quadriceps','lats','middle back','chest','shoulders','rear delts','triceps','biceps','lower back','traps','abductors','adductors','forearms','calves','abdominals','obliques','neck','tibialis'];
+function мышцаГлавная(e){
+  if(!e) return '';
+  var p=String(e.p||'').toLowerCase();
+  if(p==='средние дельты') return p;
+  for(var id in МЫШЦА_RU) if(имяМышцы(id).toLowerCase()===p) return p;
+  return имяМышцы(мышцаКат(e)).toLowerCase();
+}
+function мышцыЕщё(e){
+  var c=catOf(e); if(!c || !c.sm || !c.sm.length || !CAT || !CAT.muscles) return '';
+  var гл=мышцаГлавная(e), ранг=function(id){ var i=МЫШЦЫ_ПОРЯДОК.indexOf(id); return i<0?99:i; };
+  return c.sm.slice().sort(function(a,b){ return ранг(a)-ранг(b); })
+    .map(function(id){ return String(CAT.muscles[id]||'').toLowerCase(); })
+    .filter(function(n){ return n && n!==гл; })
+    .slice(0,3).join(', ');
+}
 /* свёрнутое упражнение: фото, название, рабочий вес и сколько подходов закрыто */
 function exRow(e,di,метка){
   var st=sess.ex[di].sets, сделано=st.filter(function(v){ return v.done; }).length;
@@ -6850,7 +6901,7 @@ function exRow(e,di,метка){
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
     '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.n)+'</b>'+
-      '<i>'+setsFor(e,di)+' × '+repsOf(e)+'</i></span>'+
+      '<i>'+(мышцаГлавная(e)?esc(мышцаГлавная(e))+' · ':'')+setsFor(e,di)+' × '+repsOf(e)+'</i></span>'+
     '<span class="exrv'+(сделано?' был':'')+'">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
 }
 /* Добавить или убрать подход в конкретном упражнении на сегодня.
@@ -7508,11 +7559,14 @@ function шапка(e, di, метка){
        сразу на YouTube, а с cues раскрывала их в карточке. */
     '<button type="button" class="exthumb" data-tech="'+di+'" aria-label="Как делать: '+e.n+'">'+mediaFor(e)+'</button>'+
     '<button type="button" class="exttl" data-shut="'+di+'" aria-expanded="true" aria-label="Свернуть '+e.n+'">'+
-      '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+e.p+'</span>'+
+      '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+esc(мышцаГлавная(e)||e.p||'')+'</span>'+
       '<span class="exname">'+e.n+'</span>'+
       '<span class="spec">'+setsFor(e,di)+' × '+repsOf(e)+(isMin(e)?'':' <span>·</span> отдых '+rest)+'</span>'+
       '<span class="exchev" aria-hidden="true"></span>'+
-    '</button></div>';
+    '</button></div>'+
+    /* вспомогательные — своей строкой во всю ширину, строчными: в капители
+       над названием на 320 они занимали три строки и спорили с названием */
+    (мышцыЕщё(e)?'<div class="mmore">помогают <b>'+esc(мышцыЕщё(e))+'</b></div>':'');
 }
 function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
@@ -9544,24 +9598,36 @@ function sameMove(name, e, id){
   return !(a.m && mE && a.m!==mE);
 }
 /* последний вес по упражнению — по имени, а если имя новое, то по движению */
+/* ── «ПРОШЛЫЙ РАЗ» — ОДИН ИСТОЧНИК ──
+   09.10, его снимок: «Оставь 20 кг» считалось по журналу (01.10: 20×10),
+   а «прошлый раз · 18.09» и «было 25×8» — по записи LAST под id каталога,
+   которая с 18.09 не обновлялась (облако отдало старую карту). Два места про
+   один факт разошлись. Теперь «прошлый раз» — самое НОВОЕ занятие ДО текущего:
+   из журнала и из LAST (по id, по имени); при равной дате — журнал, в нём все
+   подходы. Сегодняшняя запись (LAST пишет каждая галочка) прошлым разом не
+   считается: «было» — это до сегодня. Совет (advice) берёт ту же историю. */
+function историяДо(e){
+  var до=сесДата();
+  return exHistory(e).filter(function(x){ return String(x.date)<до; })
+    .sort(function(a,b){ return a.date<b.date?1:a.date>b.date?-1:0; });
+}
 function lastFor(e){
-  /* сначала по id каталога: имя упражнения может смениться при правке
-     каталога, id — нет, и вес не должен из-за этого теряться */
-  if(e.cat && LAST['#'+e.cat]) return LAST['#'+e.cat];
-  if(LAST[e.n]) return LAST[e.n];
-  /* LAST копится в момент сохранения тренировки. Если его нет — переустановил
-     приложение, или облако отдало журнал раньше состояния, — а занятия в
-     журнале есть, берём прошлый раз прямо из журнала: два места про один факт
-     расходиться не должны. */
-  var h=exHistory(e);
+  var до=сесДата(), best=null;
+  var h=историяДо(e);
   if(h.length && h[0].sets.length){
     var w=h[0], l=w.sets[w.sets.length-1];
-    return {d:w.date, w:l.w, r:l.r, s:w.sets.map(function(x){ return [x.w, x.r]; })};
+    best={d:w.date, w:l.w, r:l.r, s:w.sets.map(function(x){ return [x.w, x.r]; })};
   }
-  if(!e.ph) return null;
-  var ks=Object.keys(LAST), best=null;
+  /* по id каталога (имя может смениться при правке каталога) и по имени */
+  [e.cat ? LAST['#'+e.cat] : null, LAST[e.n]].forEach(function(c){
+    if(!c) return;
+    if(!c.d){ if(!best) best=c; return; }
+    if(String(c.d)<до && (!best || String(c.d)>String(best.d||''))) best=c;
+  });
+  if(best || !e.ph) return best;
   /* по шаблону — теми же правилами, что журнал: со снарядом (01.10) */
-  ks.forEach(function(k){ var v=LAST[k]; if(v && k.charAt(0)!=='#' && sameMove(k, e) && (!best || String(v.d||'')>String(best.d||''))) best=v; });
+  Object.keys(LAST).forEach(function(k){ var v=LAST[k];
+    if(v && k.charAt(0)!=='#' && sameMove(k, e) && (!v.d || String(v.d)<до) && (!best || String(v.d||'')>String(best.d||''))) best=v; });
   return best;
 }
 function exHistory(e){
@@ -9640,7 +9706,7 @@ function stepText(e){
    к отказу работать не начнут. */
 function advice(e){
   if(!HIST) return {kind:'wait', lw:null, short:'смотрю историю…', text:'Смотрю твою историю по этому упражнению…'};
-  var h = exHistory(e);
+  var h = историяДо(e);   /* 09.10: та же история, что у «было» и «прошлый раз» */
   var top = topReps(e), st = stepOf(e), tm = isTime(e);
   if(!h.length){ var sh=startHint(e);
     /* вес уже стоит в ячейках с подписью «ориентир», диапазон — в шапке: строка нужна только когда веса нет */
