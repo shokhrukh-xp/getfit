@@ -1831,6 +1831,8 @@ a.ebtn{display:flex;align-items:center;justify-content:center;gap:5px;text-decor
 .resetline{margin:8px 0 0;text-align:center}
 .linkbtn{background:none;border:0;padding:8px 12px;font:inherit;font-size:13px;color:var(--dim);text-decoration:underline;text-underline-offset:3px}
 .linkbtn.armed{color:var(--warn-txt)}
+/* 09.10: «Повторить» у красной строки — своей строкой, цветом строки, палец попадает */
+.dbnote .dbretry{display:block;min-height:44px;padding:0;background:none;border:0;font:inherit;font-size:13px;font-weight:600;color:inherit;text-decoration:underline;text-underline-offset:3px;text-align:left}
 /* итог блока в журнале */
 .blk{padding:4px 0}
 .blk .blkh{font-size:12px;color:var(--muted);margin:0 0 6px;line-height:1.45}
@@ -4157,8 +4159,9 @@ var ADJ = {};
 function saveSubs(){
   парыПодмести();
   set('subs', SUBS); set('adj', ADJ); set('extra', EXTRA); set('skip', SKIP); set('ord', ORD); set('pairs', PAIRS);
-  var pending=DB?DB.doc('state/subs').set({s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}):Promise.resolve();
-  dayEditSaved(pending,!!CS);return pending.catch(function(){});
+  /* 09.10: «правки в облаке» — когда их принял сервер, копия в Telegram молча */
+  var pending=DB?сохранитьСостояние('state/subs',{s:SUBS, adj:ADJ, x:EXTRA, sk:SKIP, ord:ORD, pr:PAIRS, at:new Date().toISOString()}):Promise.resolve();
+  dayEditSaved(pending,!!DB);return pending.catch(function(){});
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
@@ -8440,7 +8443,7 @@ function refreshDay(){
     harvestDom();saveSess();
     if(DB && countDone()>0){
       var body=sessionBody();
-      DB.doc('workouts/'+body.date+'_'+day).set(body).catch(function(){});
+      сохранитьТренировку(body).catch(function(){});
     }
   }
   stopTimer();TODAY=next;
@@ -8559,8 +8562,8 @@ function paintNote(k){
   if(k)WORK_NOTE=k;
   var n=countDone(), state=WORK_NOTE||'local';
   var head = n ? n+' '+plural(n,['подход','подхода','подходов'])+' отмечено' : 'ни один подход не отмечен';
-  var tail={local:'сохранено на телефоне',saving:'сохраняю '+STORENAME+'…',
-    saved:'Сохранено '+(CS?'в облаке':'на телефоне'),err:'Telegram не ответил, данные на телефоне',
+  var tail={local:'сохранено на телефоне',saving:'сохраняю…',
+    saved:'Сохранено в облаке',err:'не отправлено, данные на телефоне',
     empty:'жми ✓ справа от подхода или «всё» над ними'}[state]||'';
   var err=state==='err'||DAYEDIT_SAVE==='err';
   if(DAYEDIT_SAVE==='err')tail='На телефоне сохранено · правки не дошли в облако'+(state==='err'?' · подходы тоже':'');
@@ -8568,7 +8571,13 @@ function paintNote(k){
   else if(state!=='err' && DAYEDIT_SAVE==='saved')tail=state==='saved'?'Сохранено в облаке':
     'Сохранено: правки в облаке'+(n?(state==='saving'?' · подходы отправляются':' · подходы на телефоне'):'');
   else if(DAYEDIT_SAVE==='local' && state!=='err')tail='сохранено на телефоне';
-  el.textContent=head+(tail?' · '+tail:'');WORK_NOTE_TEXT=el.textContent;
+  el.textContent=head+(tail?' · '+tail:'');
+  if(err){
+    var повтор=document.createElement('button'); повтор.type='button'; повтор.className='dbretry';
+    повтор.textContent='Повторить'; повтор.onclick=повторитьОтправку;
+    el.appendChild(повтор);
+  }
+  WORK_NOTE_TEXT=el.textContent;
   el.className='dbnote'+(err?' bad':state==='saved'||DAYEDIT_SAVE==='saved'?' ok':state==='empty'?' warn':'');
 }
 
@@ -8675,6 +8684,50 @@ function sessionBody(){
   return тело;
 }
 var lastSavedAt=null, dirty=false;
+/* ── СОХРАНЕНО = ПРИНЯЛ СЕРВЕР ──
+   09.10, его снимок: красное «20 подходов отмечено · Telegram не ответил,
+   данные на телефоне», а все 20 подходов уже лежали на сервере. Запись
+   уходит в два места: на наш сервер (журнал — его читает тренер, оттуда её
+   берут другие устройства) и запасной копией в CloudStorage Telegram. Строка
+   и «Завершить» отвечали по копии: Telegram не ответил за 12 с на слабом
+   5G — и тревога, хотя всё сохранено. Его выбор кнопкой «Статус по
+   серверу»: «Сохранено» — когда сервер подтвердил; красное «не отправлено ·
+   Повторить» — только когда сервер не получил (запись ждёт в очереди на
+   телефоне и уйдёт сама при следующем открытии или появлении сети). Копию
+   в Telegram повторяем молча; не легла — не повод пугать. То же для правок
+   дня (state/subs): «правки не дошли» — только если их не принял сервер. */
+function копияTelegram(path, body){
+  var k=csKey(path), v=fit(body);
+  return csSet(k, v).catch(function(){
+    return new Promise(function(r){ setTimeout(r,5000); }).then(function(){ return csSet(k, v); });
+  }).catch(function(err){ try{ console.log('getfit копия Telegram '+path+':', (err&&err.message)||err); }catch(_){} });
+}
+function сохранитьТренировку(body){
+  var id=body.date+'_'+body.day, uid=syncUid();
+  копияTelegram('workouts/'+id, body);
+  return Promise.resolve(syncPush('workouts/'+id, body)).catch(function(){}).then(function(){
+    var j=workState(uid).pending[id];
+    if(j) throw new Error(j.conflict ? 'другая версия на другом устройстве' : 'сервер не принял');
+  });
+}
+function сохранитьСостояние(path, body){
+  копияTelegram(path, body);
+  return Promise.resolve(syncPush(path, body)).then(function(res){
+    if(!(res && res.ok)) throw new Error('сервер не принял');
+    return res;
+  });
+}
+/* «Повторить» у красной строки: досылаем очередь и правки, рисуем по ответу */
+function повторитьОтправку(){
+  paintNote('saving');
+  Promise.all([workFlush(), pushDirty()]).catch(function(){}).then(function(){
+    var wok=!Object.keys(workState(syncUid()).pending).length;
+    if(DAYEDIT_SAVE==='err' && !DIRTY.subs) DAYEDIT_SAVE='saved';
+    if(wok){ dirty=false; неУехало=false; охрана(); }
+    paintNote(wok ? (countDone() ? 'saved' : 'empty') : 'err');
+  });
+}
+var PUSHGEN=0;
 function pushDb(){
   harvestDom();
   if(countDone()===0){ paintNote('empty'); вПолёте=false; неУехало=false; охрана(); return; }
@@ -8682,10 +8735,13 @@ function pushDb(){
   var body=sessionBody();
   if(!body.ex.length){ paintNote('empty'); вПолёте=false; неУехало=false; охрана(); return; }
   paintNote('saving');
-  DB.doc('workouts/'+body.date+'_'+day).set(body).then(function(){
+  var gen=++PUSHGEN;
+  сохранитьТренировку(body).then(function(){
+    if(gen!==PUSHGEN) return;
     lastSavedAt=new Date(); dirty=false; paintNote('saved'); вПолёте=false; неУехало=false; охрана();
-    return сохранитьLAST(body.updated);
-  }).catch(function(){ dirty=true; paintNote('err'); вПолёте=false; неУехало=true; охрана(); });
+    /* подсказки «в прошлый раз» — служебная запись, её сбой не красит строку */
+    сохранитьLAST(body.updated).catch(function(){});
+  }).catch(function(){ if(gen!==PUSHGEN) return; dirty=true; paintNote('err'); вПолёте=false; неУехало=true; охрана(); });
 }
 function initDb(){
   DB = STORE;
@@ -8907,7 +8963,7 @@ function finishSave(){
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
     finSay('Сохраняю…','busy');
     var t0=Date.now();
-    DB.doc('workouts/'+body.date+'_'+day).set(body).then(function(){
+    сохранитьТренировку(body).then(function(){
       lastSavedAt=new Date(); dirty=false; вПолёте=false; неУехало=false; охрана();
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       try{ renderFinSum(body); }catch(e){}
@@ -8934,14 +8990,13 @@ function finishSave(){
          вызовом. Красное «Сбой» под зелёным «Сохранено» — это два ответа
          об одном и том же, и один из них неправда. */
       if(finBtn.classList.contains('ok')){
-        var эл=document.getElementById('dbnote');
-        if(эл){ эл.textContent='Тренировка сохранена. Подсказки «в прошлый раз» Telegram принял не сразу — на других устройствах они подтянутся с сервера.';
-                эл.className='dbnote'; }
+        /* 09.10: тренировку принял сервер — строка уже зелёная; сбой
+           служебной карты подсказок в строку не выносим */
         try{ console.log('getfit cloud/last:', (err&&err.message)||err); }catch(_){}
       }
-      else { finSay('Не сохранилось','bad'); reportErr('store',err); haptic('err'); вПолёте=false; неУехало=true; охрана(); }
+      else { finSay('Не отправлено · на телефоне','bad'); paintNote('err'); reportErr('store',err); haptic('err'); вПолёте=false; неУехало=true; охрана(); }
     });
-    setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Telegram не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
+    setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Сервер не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
   }catch(err){ finSay('Ошибка','bad'); reportErr('finish',err); }
 }
 finBtn.addEventListener('click', finishSave);
