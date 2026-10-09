@@ -53,4 +53,33 @@ const строки=p=>p.evaluate(()=>[...document.querySelectorAll('#list .exrow
   ok(!err||!err.length,где+'без ошибок на странице'+(err&&err.length?': '+err.join(' | '):''));
   await p.close();
  }
+
+ /* программа от тренера-ИИ (подходов у него 2–3 — фаза цели, их не проверяем): p — «подпись мышцы или движения». «Верх груди»
+    точнее каталожного «Грудь» и остаётся как есть (выпуск 09.10 09:00 её
+    подменял: у него «Разведение» стало «ГРУДЬ»); движение — мышца из каталога;
+    своё упражнение без каталога и подписи — без мышцы. */
+ const у=(id,n,en,m,q,p)=>({id,n,en,m,q,p,sets:3,reps:'10–12',rest:60,ss:null,why:''});
+ const ПРОГ={name:'Верх · 1 день',note:'Один день.',focus:['chest'],days:[{s:'Грудь',sub:'верх груди',ex:[
+  у('Incline_Dumbbell_Flyes','Разведение (наклон вверх, гантели, обычная)','Incline Dumbbell Flyes','chest','dumbbell','Верх груди'),
+  у('Incline_Dumbbell_Press','Жим (наклон вверх, гантели)','Incline Dumbbell Press','chest','dumbbell','Горизонтальный жим'),
+  у(null,'Моё упражнение','My exercise',null,null,'')]}]};
+ const МЕ={sex:'m',age:34,ht:178,bw:87.6,goal:'fat',wt:'down',gym:'muscle',level:'mid',place:'gym',only:'all',lim:[],eq:[]};
+ for(const w of [320,390]){
+  const p=await b.newPage({viewport:{width:w,height:900}});
+  const err=await M.поднять(p,{theme:'dark',page:'gym',wait:2800,prog:ПРОГ,profile:'ai',hist:[],me:МЕ});
+  const где='ИИ '+w+': ';
+  const с=await строки(p);
+  const по=имя=>с.find(r=>r.имя.indexOf(имя)>=0);
+  ok(по('Разведение')&&/^верх груди · \d+ × 10–12$/.test(по('Разведение').под),где+'подпись тренера «Верх груди» осталась: '+JSON.stringify(по('Разведение')));
+  ok(по('Жим (наклон')&&/^грудь · \d+ × 10–12$/.test(по('Жим (наклон').под),где+'вместо движения — мышца из каталога: '+JSON.stringify(по('Жим (наклон')));
+  const моё=по('Моё упражнение');
+  ok(!моё||/^\d+ × 10–12$/.test(моё.под),где+'своё без каталога — без мышцы: '+JSON.stringify(моё||'нет в списке'));
+  const i=await p.evaluate(()=>{const n=[...document.querySelectorAll('#list .exrow')].find(x=>/Разведение/.test(x.textContent));return n?n.dataset.pickex:null});
+  await p.click('#list .exrow[data-pickex="'+i+'"]');await p.waitForTimeout(900);
+  const к=await p.evaluate(()=>{const c=document.querySelector('#list .card.exact');return c?{над:(c.querySelector('.eyebrow')||{}).textContent||'',ещё:((c.querySelector('.mmore')||{}).textContent||'').replace(/\s+/g,' ').trim()}:null});
+  ok(к&&/верх груди/i.test(к.над)&&к.ещё==='помогают плечи',где+'в карточке «ВЕРХ ГРУДИ» и «помогают плечи»: '+JSON.stringify(к));
+  await p.screenshot({path:'/tmp/gf-myshtsy-ai-'+w+'.png'});
+  ok(!err||!err.length,где+'без ошибок на странице'+(err&&err.length?': '+err.join(' | '):''));
+  await p.close();
+ }
 }finally{await b.close()}if(bad)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});
