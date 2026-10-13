@@ -1638,6 +1638,10 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .adstrip .ads b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .adh{font-size:12px;color:var(--dim);font-weight:500;margin:18px 0 8px}
 .adrow{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-2);border:.5px solid var(--line-soft);border-radius:12px;margin-bottom:6px}
+.adgrant{flex-wrap:wrap}
+.adstop{min-height:44px;flex-shrink:0}
+.adhistory{margin:16px 0}
+.adhistory>summary{cursor:pointer;min-height:44px;display:list-item;padding:12px 0;color:var(--muted)}
 .adrow .adn{flex:1;min-width:0}
 .adrow .adn b{display:block;font-size:13px;font-weight:500}
 .adrow .adn i{display:block;font-style:normal;color:var(--dim);font-size:12px;margin-top:2px}
@@ -13188,22 +13192,28 @@ function renderAdmin(){
   h+='<h3 class="adh">люди · '+сп.length+'</h3>'+видно.map(admЧеловек).join('');
   if(сп.length>видно.length) h+='<button type="button" class="admore" id="admall">все '+сп.length+' →</button>';
   else if(ADMALL && сп.length>6) h+='<button type="button" class="admore" id="admless">свернуть</button>';
-  /* 6. Pro-ссылки (13.10) — создаются в профиле, здесь видно, кто вошёл. */
-  if((ADM.про||[]).length) h+='<h3 class="adh">pro-ссылки</h3>'+(ADM.про||[]).map(function(x){
-    var кончилась=(x.used||0)>=(x.uses||0);
-    return '<div class="adrow"><span class="adn"><b>Pro '+proСрок(x.days)+'</b><i>'+(x.used||0)+' из '+(x.uses||0)+
-      ((x.кто||[]).length?' · '+esc(x.кто.join(', ')):' · пока никто')+'</i></span>'+
-      '<span class="adpill '+(кончилась?'off':'free')+'">'+(кончилась?'разобрана':'действует')+'</span>'+
-      '<button type="button" class="memx" data-prodrop="'+esc(x.code)+'" aria-label="Убрать">×</button></div>';
-  }).join('');
-  /* 7. Промокоды. */
-  h+='<h3 class="adh">промокоды</h3>'+(ADM.промо||[]).map(function(x){
-    var кончился=(x.used||0)>=(x.uses||0);
-    return '<div class="adrow"><span class="adn"><b>'+esc(String(x.code).toUpperCase())+'</b><i>'+
-      (x.note?esc(x.note)+' · ':'')+(x.used||0)+' из '+(x.uses||0)+'</i></span>'+
-      '<span class="adpill '+(кончился?'off':'free')+'">'+(кончился?'разобран':'навсегда')+'</span>'+
-      '<button type="button" class="memx" data-pdrop="'+esc(x.code)+'" aria-label="Убрать">×</button></div>';
-  }).join('')+
+  /* 13.10: «использованные коды и ссылки — в историю», а крестик
+     непонятен: отключаем только новые активации, выданный доступ остаётся. */
+  var pro=ADM.про||[], promo=ADM.промо||[];
+  var used=function(x){return (x.used||0)>=(x.uses||0);};
+  function linkRow(x,isPro){
+    var ended=used(x), title=isPro?'Pro '+proСрок(x.days):String(x.code).toUpperCase();
+    var sub=(x.used||0)+' из '+(x.uses||0);
+    if(isPro) sub+=(x.кто||[]).length?' · '+x.кто.join(', '):' · пока никто';
+    else if(x.note) sub=x.note+' · '+sub;
+    return '<div class="adrow adgrant"><span class="adn"><b>'+esc(title)+'</b><i>'+esc(sub)+'</i></span>'+
+      (ended?'<span class="adpill off">использован'+(isPro?'а':'')+'</span>':
+      '<button type="button" class="btn small adstop" '+(isPro?'data-prodrop':'data-pdrop')+'="'+esc(x.code)+'" aria-describedby="adgrant-note">Отключить</button>')+'</div>';
+  }
+  var activePro=pro.filter(function(x){return !used(x);}), activePromo=promo.filter(function(x){return !used(x);});
+  if(activePro.length) h+='<h3 class="adh">pro-ссылки</h3>'+activePro.map(function(x){return linkRow(x,true);}).join('');
+  h+='<h3 class="adh">промокоды</h3>'+activePromo.map(function(x){return linkRow(x,false);}).join('');
+  if(activePro.length||activePromo.length) h+='<p class="adnote" id="adgrant-note">Отключение запрещает новые активации. Выданный доступ сохранится.</p>';
+  var pastPro=pro.filter(used),pastPromo=promo.filter(used),pastCount=pastPro.length+pastPromo.length;
+  if(pastCount) h+='<details class="adhistory"><summary>История · '+pastCount+'</summary>'+
+    (pastPro.length?'<h3 class="adh">pro-ссылки</h3>'+pastPro.map(function(x){return linkRow(x,true);}).join(''):'')+
+    (pastPromo.length?'<h3 class="adh">промокоды</h3>'+pastPromo.map(function(x){return linkRow(x,false);}).join(''):'')+'</details>';
+  h+=
   '<div class="adcode"><input id="adm-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код">'+
   '<input id="adm-n" class="nn" type="number" inputmode="numeric" min="1" max="10000" placeholder="20">'+
   '<button type="button" class="btn small prim" id="adm-add">Завести</button></div>'+

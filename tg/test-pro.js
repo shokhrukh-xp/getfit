@@ -16,7 +16,7 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   ok(await p.$eval('#reflink',e=>!!e.offsetParent),'обычная ссылка у него на месте');
   ok(!err.length,'без ошибок'+(err.length?': '+err.join(' | '):''));await p.close();}
  for(const theme of ['light','dark'])for(const width of [320,390]){
-  const где=theme+' '+width+': ',o={me:ME,theme,admin:{про:ПРО}};
+  const где=theme+' '+width+': ',o={me:ME,theme,admin:{про:ПРО,промо:[{code:'FIT2026',uses:1,used:1},{code:'ACTIVE',uses:3,used:1}]}};
   const p=await b.newPage({viewport:{width,height:900}});const ушлоMe=[];
   p.on('request',r=>{try{const u=new URL(r.url());if(u.pathname==='/s'&&JSON.parse(r.postData()||'{}').key==='me')ушлоMe.push(1);}catch(e){}});
   const err=await M.поднять(p,o);await p.waitForTimeout(400);
@@ -38,14 +38,34 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   ok(в.вид&&/start=p_abc123xyz0/.test(в.л),где+'ссылка показана: '+в.л);
   ok(/Ссылка на 2 человека, Pro на месяц/.test(в.с),где+'итог: '+в.с);
   await p.locator('#probox').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-pro-'+theme+'-'+width+'.png'});
+  await p.click('#profboss');await p.waitForTimeout(500);
+  ok(!await p.locator('.adhistory').getAttribute('open'),где+'история свёрнута');
+  ok(!await p.getByText('FIT2026',{exact:true}).isVisible(),где+'использованный код скрыт');
+  ok(await p.locator('[data-prodrop="zzz"], [data-pdrop="FIT2026"]').count()===0,где+'у использованных нет отключения');
+  ok(await p.locator('.adstop').count()===2,где+'две действующие записи можно отключить');
+  ok(await p.locator('#adgrant-note').innerText().then(t=>t.includes('Выданный доступ сохранится')),где+'последствия объяснены');
+  await p.locator('.adhistory summary').click();
+  ok(await p.getByText('FIT2026',{exact:true}).isVisible()&&await p.getByText('1 из 1 · Инна',{exact:true}).isVisible(),где+'история хранит код и получателя ссылки');
+  ok(await p.locator('.adstop').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.height>=44&&r.right<=innerWidth;})),где+'кнопки помещаются и доступны касанию');
+  await p.locator('.adhistory').scrollIntoViewIfNeeded();
+  await p.screenshot({path:'/tmp/gf-history-'+theme+'-'+width+'.png'});
   ok(!err.length,где+'без ошибок'+(err.length?': '+err.join(' | '):''));
   if(theme==='light'&&width===390){
-   await p.click('#profboss');await p.waitForTimeout(800);
+   await p.waitForTimeout(100);
    const а=await p.evaluate(()=>document.body.innerText);
-   ok(/pro-ссылки/.test(а)&&/1 из 2 · Фируз/.test(а)&&/разобрана/.test(а),'в админ-панели видно, кто вошёл');
+   ok(/pro-ссылки/.test(а)&&/1 из 2 · Фируз/.test(а)&&/Отключить/.test(а),'в админ-панели видно, кто вошёл');
+   const promoRequest=p.waitForRequest(r=>new URL(r.url()).pathname==='/admin/promo');
+   await p.click('[data-pdrop="ACTIVE"]');
+   const payload=JSON.parse((await promoRequest).postData());
+   ok(payload.code==='ACTIVE'&&payload.drop===1,'Отключить код: прежний контракт сервера');
+   await p.waitForTimeout(500);
    await p.click('[data-prodrop="abc123xyz0"]');await p.waitForTimeout(500);
-   ok((o.proLinks||[]).some(x=>x.drop==='abc123xyz0'),'крестик убирает ссылку');
+   ok((o.proLinks||[]).some(x=>x.drop==='abc123xyz0'),'Отключить отправляет прежний запрос без отзыва доступа');
    await p.screenshot({path:'/tmp/gf-pro-admin.png',fullPage:true});
+   o.admin={про:[],промо:[]};
+   await p.evaluate(()=>admPull());await p.waitForTimeout(500);
+   ok(await p.locator('.adhistory,.adstop,#adgrant-note').count()===0,'пустой список: нет истории и лишних действий');
+   ok(await p.locator('#adm-add').isVisible(),'новый код по-прежнему можно создать');
   }
   await p.close();
  }
