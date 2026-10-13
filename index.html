@@ -14645,6 +14645,20 @@ document.getElementById('fmfile').addEventListener('change', function(e){
     .catch(function(err){ measReply(humanErr(err),'bad'); haptic('err'); })
     .then(function(){ measBusy(false); });
 });
+/* 13.10, его выбор «короткая реплика»: после замера формой — слово тренера.
+   Запись не ждёт модель: «Замер записан» сразу, реплика приходит следом и
+   встаёт на его место (она же ложится в чат на сервере). Не пришла или
+   нет подписки — остаётся «Замер записан», ошибку не показываем. */
+var ЗАМСЛОВО=0;
+function замерСлово(date){
+  var gen=++ЗАМСЛОВО, body={uid:syncUid()}; if(date) body.date=date;
+  fPost('/measure/say',body).then(function(d){
+    if(gen!==ЗАМСЛОВО || !d || !d.text) return;
+    var el=document.getElementById('fmreply'); if(!el || el.hidden || el.classList.contains('bad') || MEASBUSY) return;
+    measReply(d.text);
+    try{ if(CHAT.items) chatPull(); }catch(e){}
+  }).catch(function(){});
+}
 document.getElementById('fmsave').addEventListener('click', function(){
   if(MEASBUSY) return;
   var ids=['fw','ffat','fwaist'], raw={}, val={};
@@ -14665,6 +14679,7 @@ document.getElementById('fmsave').addEventListener('click', function(){
     if(!raw.fw && raw.fwaist) vzВидЗадать('waist');
     ids.forEach(function(id){ document.getElementById(id).value=''; });
     renderMeas(); renderMeasSummary(); освежить(); measReply('Замер записан'); haptic('ok');
+    замерСлово(d.date||null);
   }).catch(function(err){ measReply(humanErr(err),'bad'); haptic('err'); })
     .then(function(){ measBusy(false); });
 });

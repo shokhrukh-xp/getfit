@@ -12,7 +12,8 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
   const p=await b.newPage({viewport:{width,height:844}});p.setDefaultTimeout(4500);
   try{
    let sent=[],bad=name==='failure';
-   const o={theme,meas:name==='empty'?[]:M.замеры().filter(m=>m.date!==M.TODAY)};
+   /* 13.10: реплика тренера после замера — отдельный набор test-zamer-slovo; здесь её нет */
+   const o={theme,meas:name==='empty'?[]:M.замеры().filter(m=>m.date!==M.TODAY),measSay:null};
    o.handleRoute=async r=>{
     const u=new URL(r.request().url());
     if(u.pathname==='/coach'&&name==='failure'){await give(r,{error:'Не удалось прочитать отчёт весов'},503);return true;}

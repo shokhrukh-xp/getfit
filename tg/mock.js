@@ -242,6 +242,8 @@ async function поднять(page, o) {
       const мс = (Array.isArray(o.meas) ? o.meas : замеры()).filter(m => m.date !== TODAY);
       o.meas = [{ date: TODAY, w: b.w, fat: b.fat, waist: b.waist }].concat(мс);
       return дать({ ok: true, measures: o.meas }); }
+    /* 13.10: реплика тренера после замера формой */
+    if (p === '/measure/say') { o.словоЗамер = (o.словоЗамер || 0) + 1; return дать({ ok: true, text: o.measSay === undefined ? 'Весы сегодня в хорошем настроении, средний за неделю ниже на 0,3 кг.' : o.measSay }); }
     if (p === '/measures')   { const мс = o.meas === null ? [] : (Array.isArray(o.meas) ? o.meas : замеры());
       return дать({ ok: true, measures: мс, first: o.first !== undefined ? o.first : (мс.length ? стартовый() : null), free: o.free || [], вода: 3 }); }
     /* проверка может подать свой круг (например, с me.open = false) —
