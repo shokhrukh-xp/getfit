@@ -15,6 +15,12 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   ok(await p.$eval('#probox',e=>e.hidden),'обычный человек: блока Pro нет');
   ok(await p.$eval('#reflink',e=>!!e.offsetParent),'обычная ссылка у него на месте');
   ok(!err.length,'без ошибок'+(err.length?': '+err.join(' | '):''));await p.close();}
+ {const p=await b.newPage({viewport:{width:320,height:900}});
+  await M.поднять(p,{me:ME,admin:{про:[],промо:[]}});
+  await p.click('#profbtn');await p.click('#profboss');await p.waitForTimeout(500);
+  ok(await p.locator('.adhistory,.adstop,#adgrant-note').count()===0,'пустой список: нет истории и лишних действий');
+  ok(await p.locator('#adm-add').isVisible(),'новый код по-прежнему можно создать');
+  await p.close();}
  for(const theme of ['light','dark'])for(const width of [320,390]){
   const где=theme+' '+width+': ',o={me:ME,theme,admin:{про:ПРО,промо:[{code:'FIT2026',uses:1,used:1},{code:'ACTIVE',uses:3,used:1}]}};
   const p=await b.newPage({viewport:{width,height:900}});const ушлоMe=[];
@@ -62,10 +68,7 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
    await p.click('[data-prodrop="abc123xyz0"]');await p.waitForTimeout(500);
    ok((o.proLinks||[]).some(x=>x.drop==='abc123xyz0'),'Отключить отправляет прежний запрос без отзыва доступа');
    await p.screenshot({path:'/tmp/gf-pro-admin.png',fullPage:true});
-   o.admin={про:[],промо:[]};
-   await p.evaluate(()=>admPull());await p.waitForTimeout(500);
-   ok(await p.locator('.adhistory,.adstop,#adgrant-note').count()===0,'пустой список: нет истории и лишних действий');
-   ok(await p.locator('#adm-add').isVisible(),'новый код по-прежнему можно создать');
+
   }
   await p.close();
  }
