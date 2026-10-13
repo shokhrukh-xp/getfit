@@ -867,7 +867,14 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .pcond{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .seghint2{margin:8px 0 0;font-size:12px;line-height:1.4;color:var(--muted)}
 .refsum{margin:9px 0 0;font-size:13px;color:var(--muted)}
+.refsum.bad{color:var(--warn-txt)}
 #refwhat{margin:0;font-size:13px;line-height:1.5;color:var(--muted)}
+/* 13.10: Pro-ссылки владельца */
+#probox .invnote{margin:0 0 4px}
+#probox .invnote b{color:var(--text);font-weight:600}
+#probox #pro-make{margin-top:12px}
+#probox #pro-out{margin-top:10px}
+#probox .prosep{margin-top:18px}
 #profm .invcode{display:flex;align-items:center;gap:10px;margin-top:10px}
 #profm .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
   background:var(--card-solid);color:var(--text);font:inherit;font-size:15px}
@@ -3435,6 +3442,17 @@ body.ordmode #list .sstag{color:var(--text)}
          живут: там и код, и кто внутри, и приглашение. Здесь осталась одна
          ссылка — её можно отправить кому угодно, она не про круг. -->
     <h4 class="psec">Поделиться</h4>
+    <!-- 13.10, его просьба: «чтобы только я мог делиться и Pro-доступом, и
+         обычным со своего профиля». Блок видит только владелец. -->
+    <div id="probox" hidden>
+      <p class="invnote"><b>С Pro</b> — тренер бесплатно. Эта кнопка есть только у тебя.</p>
+      <div class="pf pfv"><span class="pfl">срок Pro</span><div class="seg" id="pro-days"></div></div>
+      <div class="pf pfv"><span class="pfl">на сколько человек</span><div class="seg" id="pro-n"></div></div>
+      <button type="button" class="btn wide prim" id="pro-make">Пригласить с Pro</button>
+      <div class="invcode" id="pro-out" hidden><input id="prolink" type="text" readonly aria-label="Pro-ссылка"><button type="button" class="btn small prim" id="proshare">Отправить</button></div>
+      <p class="refsum" id="pro-sum"></p>
+      <p class="invnote prosep"><b>Обычная</b> — приложение бесплатно, тренер по подписке.</p>
+    </div>
     <p class="invnote" id="refwhat"></p>
     <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
     <p class="refsum" id="refsum2"></p>
@@ -12972,7 +12990,46 @@ function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока �
 function admВкладка(){
   var он = !!(SUB && SUB.boss);
   var b=document.getElementById('profboss'); if(b) b.hidden = !он;
+  renderPro();
 }
+/* ══ PRO-ССЫЛКИ (13.10) ══ Его выборы: одна ссылка на N человек, срок —
+   при создании (месяц, три месяца, навсегда). Ссылка ведёт в бот; кто
+   пришёл — видно в админ-панели. */
+var PRO={days:0, n:1, last:null, busy:false, err:''};
+var PRODAYS=[['30','месяц'],['90','3 месяца'],['0','навсегда']], PRON=[['1','1'],['2','2'],['3','3'],['5','5'],['10','10']];
+function proСрок(d){ return +d===30?'на месяц':+d===90?'на 3 месяца':'навсегда'; }
+function renderPro(){
+  var box=document.getElementById('probox'); if(!box) return;
+  var он=!!(SUB && SUB.boss); box.hidden=!он; if(!он) return;
+  segSet('pro-days', segHtml('prodays',PRODAYS,String(PRO.days)));
+  segSet('pro-n', segHtml('pron',PRON,String(PRO.n)));
+  var b=document.getElementById('pro-make'); b.disabled=PRO.busy; b.textContent=PRO.busy?'Создаю ссылку…':'Пригласить с Pro';
+  var out=document.getElementById('pro-out'), sum=document.getElementById('pro-sum');
+  out.hidden=!PRO.last;
+  if(PRO.last) document.getElementById('prolink').value=PRO.last.link;
+  sum.className='refsum'+(PRO.err?' bad':'');
+  sum.textContent = PRO.err ? PRO.err : PRO.last
+    ? 'Ссылка на '+PRO.last.uses+' '+plural(PRO.last.uses,['человека','человека','человек'])+', Pro '+proСрок(PRO.last.days)+'. Кто вошёл — в админ-панели.'
+    : '';
+}
+document.getElementById('probox').addEventListener('click', function(e){
+  var sb=e.target.closest('.seg button[data-v]');
+  if(sb){ e.stopPropagation();   /* это не профиль — saveMe тут ни при чём */
+    if(sb.parentNode.id==='pro-days') PRO.days=+sb.dataset.v; else PRO.n=+sb.dataset.v;
+    PRO.last=null; PRO.err=''; renderPro(); haptic('light'); return; }
+  if(e.target.closest('#pro-make')){
+    if(PRO.busy) return; PRO.busy=true; PRO.err=''; renderPro();
+    fPost('/pro/link', {uid:syncUid(), uses:PRO.n, days:PRO.days})
+      .then(function(d){ PRO.busy=false; if(!d||!d.link) throw new Error('Не удалось создать ссылку.'); PRO.last=d; renderPro(); haptic('ok'); })
+      .catch(function(err){ PRO.busy=false; PRO.err=humanErr(err); renderPro(); haptic('err'); });
+    return; }
+  if(e.target.closest('#proshare')){
+    if(!PRO.last) return;
+    var text='Дарю тебе Pro в GetFit — тренер прямо в Telegram, бесплатно '+proСрок(PRO.last.days)+'. Заходи по ссылке.';
+    var u='https://t.me/share/url?url='+encodeURIComponent(PRO.last.link)+'&text='+encodeURIComponent(text);
+    if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
+    haptic('light'); return; }
+});
 function renderSub(){
   var w=document.getElementById('sub-what'); if(!w||!SUB) return;
   var ц=SUB.stars||500;
@@ -13131,7 +13188,15 @@ function renderAdmin(){
   h+='<h3 class="adh">люди · '+сп.length+'</h3>'+видно.map(admЧеловек).join('');
   if(сп.length>видно.length) h+='<button type="button" class="admore" id="admall">все '+сп.length+' →</button>';
   else if(ADMALL && сп.length>6) h+='<button type="button" class="admore" id="admless">свернуть</button>';
-  /* 6. Промокоды. */
+  /* 6. Pro-ссылки (13.10) — создаются в профиле, здесь видно, кто вошёл. */
+  if((ADM.про||[]).length) h+='<h3 class="adh">pro-ссылки</h3>'+(ADM.про||[]).map(function(x){
+    var кончилась=(x.used||0)>=(x.uses||0);
+    return '<div class="adrow"><span class="adn"><b>Pro '+proСрок(x.days)+'</b><i>'+(x.used||0)+' из '+(x.uses||0)+
+      ((x.кто||[]).length?' · '+esc(x.кто.join(', ')):' · пока никто')+'</i></span>'+
+      '<span class="adpill '+(кончилась?'off':'free')+'">'+(кончилась?'разобрана':'действует')+'</span>'+
+      '<button type="button" class="memx" data-prodrop="'+esc(x.code)+'" aria-label="Убрать">×</button></div>';
+  }).join('');
+  /* 7. Промокоды. */
   h+='<h3 class="adh">промокоды</h3>'+(ADM.промо||[]).map(function(x){
     var кончился=(x.used||0)>=(x.uses||0);
     return '<div class="adrow"><span class="adn"><b>'+esc(String(x.code).toUpperCase())+'</b><i>'+
@@ -13178,6 +13243,12 @@ function admЧеловек(x){
 document.getElementById('admbody').addEventListener('click', function(e){
   if(e.target.closest('#admall')){ ADMALL=true; renderAdmin(); return; }
   if(e.target.closest('#admless')){ ADMALL=false; renderAdmin(); return; }
+  var pd=e.target.closest('[data-prodrop]');
+  if(pd){ if(ADMBUSY) return; ADMBUSY=true;
+    fPost('/pro/link', {uid:syncUid(), drop:pd.dataset.prodrop})
+      .then(function(){ ADMBUSY=false; haptic('ok'); admPull(); })
+      .catch(function(err){ ADMBUSY=false; say(humanErr(err)); });
+    return; }
   var d=e.target.closest('[data-pdrop]');
   if(d){ if(ADMBUSY) return; ADMBUSY=true;
     fPost('/admin/promo', {uid:syncUid(), code:d.dataset.pdrop, drop:1})

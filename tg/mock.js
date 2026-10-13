@@ -321,6 +321,14 @@ async function поднять(page, o) {
       return дать({ ok: true, stars: 500, link: null, boss: !!o.admin, sub: { ok: true, kind: 'grand', until: 0 } });
     }
     if (p === '/sub/cancel') return дать({ ok: true });
+    /* Pro-ссылки владельца (13.10): o.proLinks копит запросы. */
+    if (p === '/pro/link') {
+      if (!o.admin) return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: 'нет' }) });
+      const d = JSON.parse(route.request().postData() || '{}');
+      (o.proLinks = o.proLinks || []).push(d);
+      if (d.drop) return дать({ ok: true });
+      return дать({ ok: true, code: 'abc123xyz0', link: 'https://t.me/GetFit_MyBot?start=p_abc123xyz0', uses: d.uses, days: d.days });
+    }
     /* приглашения и баллы. o.ref — что отдаёт сервер; по умолчанию ссылка
        есть, приглашённых нет, баллов нет. */
     /* Приборная владельца. По умолчанию стенд — ОБЫЧНЫЙ человек: владелец
