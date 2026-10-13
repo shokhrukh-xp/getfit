@@ -24,12 +24,12 @@ async function поднять(b,width,theme,o){
   await p.locator('#voicenudge').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-voice-card-'+theme+'-'+width+'.png'});
   await p.click('#voicenudge button[data-voice="hard"]');await p.waitForTimeout(300);
   ok(await p.evaluate(()=>document.getElementById('voicenudge').hidden),где+'выбрал — карточка ушла');
-  ok((await мой(p)).voice==='hard'&&ушло.includes('hard'),где+'хардкорный записан и ушёл на сервер');
+  ok((await мой(p)).voice==='hard'&&ушло.includes('hard'),где+'саркастичный записан и ушёл на сервер');
   /* 2. профиль: видно выбор, можно сменить */
   await p.click('#profbtn');await p.waitForTimeout(400);
   const пр=await p.evaluate(()=>({нажат:(document.querySelector('#me-voice button[aria-pressed="true"]')||{}).dataset,
    подсказка:(document.getElementById('me-voice-hint')||{}).textContent}));
-  ok(пр.нажат&&пр.нажат.v==='hard'&&/без мата/.test(пр.подсказка),где+'в профиле — хардкорный и подсказка: '+пр.подсказка);
+  ok(пр.нажат&&пр.нажат.v==='hard'&&/без мата/.test(пр.подсказка),где+'в профиле — саркастичный и подсказка: '+пр.подсказка);
   await p.locator('#me-voice').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-voice-prof-'+theme+'-'+width+'.png'});
   await p.click('#me-voice button[data-v="standard"]');await p.waitForTimeout(400);
   ok((await мой(p)).voice==='standard'&&ушло.includes('standard'),где+'сменил в профиле на стандартного');
