@@ -1303,6 +1303,20 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
   border:none;background:var(--accent-ghost);color:var(--text);font:inherit;font-size:13px;line-height:1.4}
 .nudge b{color:var(--accent-txt);font-weight:500}
 .nudge.onb{margin:0 0 12px}
+/* 13.10: карточка «Какой тренер тебе нужен?» — один раз, пока не выбрал */
+.vnudge .vnsub{display:block;margin-top:2px;color:var(--muted);font-size:12px}
+.vnbtns{display:flex;gap:6px;margin-top:10px}
+/* строка «тренер»: три длинных слова не влезают рядом с подписью на 320 —
+   подпись сверху, кнопки во всю ширину и в одну строку */
+.pf.pfv{flex-wrap:wrap}
+.pf.pfv .pfl{flex:0 0 100%}
+.pf.pfv .seg{flex:1 1 100%;flex-wrap:nowrap}
+.pf.pfv .seg button{padding:9px 4px;white-space:nowrap}
+.seghint.pfvh{margin-left:0}
+.vnbtns button{flex:1 1 0;min-width:0;min-height:44px;padding:8px 4px;border-radius:12px;border:.5px solid var(--line);
+  background:var(--card);color:var(--text);font:inherit;font-size:12px;line-height:1.3;text-align:center}
+.vnbtns button b{display:block;font-size:13px;font-weight:600;color:var(--text)}
+.vnbtns button span{display:block;margin-top:2px;color:var(--muted);font-size:11px}
 .hbot{display:flex;align-items:baseline;gap:10px;width:100%;margin:10px 0 2px;padding:11px 14px;
   border-radius:12px;text-align:left;border:1px solid var(--line);background:var(--card);
   color:var(--muted);font:inherit;font-size:13px;line-height:1.4}
@@ -2976,6 +2990,7 @@ body.ordmode #list .sstag{color:var(--text)}
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
         <button type="button" class="nudge onb" id="zdnudge" hidden></button>
+        <div class="nudge onb vnudge" id="voicenudge" role="group" aria-labelledby="vntitle" hidden></div>
         <div class="hwrap" id="homebody"></div>
         <!-- 30.09, его просьба: ввод замера — с «Еды» на главную, под карточку
              «Тело». Узел один на всё время жизни страницы: renderHome
@@ -3145,6 +3160,8 @@ body.ordmode #list .sstag{color:var(--text)}
     <div id="wzme" hidden>
       <div class="pf"><span class="pfl">веду</span><div class="seg" id="wz-only"></div></div>
       <p class="seghint" id="wz-only-hint">выберешь «только еда» — зала в приложении не будет, программу собирать не станем</p>
+      <div class="pf pfv"><span class="pfl">тренер</span><div class="seg" id="wz-voice"></div></div>
+      <p class="seghint pfvh" id="wz-voice-hint"></p>
       <div class="pf"><span class="pfl">пол</span><div class="seg" id="wz-sex"></div></div>
       <div class="mnums">
         <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
@@ -3396,6 +3413,9 @@ body.ordmode #list .sstag{color:var(--text)}
          него. 17.09, его слова: «нужно показать выше». -->
     <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
     <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
+    <!-- 13.10: характер тренера — его выбор: три на выбор, спросить каждого -->
+    <div class="pf pfv"><span class="pfl">тренер</span><div class="seg" id="me-voice"></div></div>
+    <p class="seghint pfvh" id="me-voice-hint"></p>
 
     <h4 class="psec gymonly">Зал</h4>
     <div class="progcard gymonly" id="progcard"></div>
@@ -4654,6 +4674,40 @@ var SEXES=[['m','мужской'],['f','женский']];
    ни гантели на часах. Программа при этом остаётся в памяти — переключил
    обратно, и всё на месте. */
 var ONLYKEYS=[['all','еда и зал'],['food','только еда']];
+/* ══ ХАРАКТЕР ТРЕНЕРА (13.10) ══
+   Его слова: «давай позволим пользователям выбирать характер тренера:
+   стандартный (как было), весёлый (как сейчас) и хардкорный». Его выборы
+   кнопками: хардкорный — жёстче, но без мата; спросить каждого — строка в
+   знакомстве и карточка на главной, пока не выбрал (до выбора тренер
+   весёлый, как было у всех); менять — в профиле и словами в чате. Хранится
+   в профиле: me.voice. */
+var VOICEKEYS=[['standard','стандартный'],['fun','весёлый'],['hard','хардкорный']];
+var VOICEHINT={standard:'спокойно и по делу, без шуток',fun:'шутит, когда есть повод',hard:'жёстче и злее, без мата; тело и здоровье не трогает',
+  '':'каким будет тренер в чате, в напоминаниях и после замеров'};
+var VOICESHORT={standard:'без шуток',fun:'шутит по поводу',hard:'жёстко, без мата'};
+function голосПодсказка(id, v){ var el=document.getElementById(id); if(el) el.textContent=VOICEHINT[v||'']||VOICEHINT['']; }
+function голосЗадать(v){
+  if(!VOICEHINT[v]) return;
+  var me=myData()||{}; if(me.voice===v) return;
+  me.voice=v; me.voice_at=new Date().toISOString(); gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+}
+/* сменил словами в чате — сервер уже записал, здесь только показать */
+function takeVoice(v){
+  if(!VOICEHINT[v]) return;
+  var me=myData()||{}; if(me.voice===v) return;
+  me.voice=v; me.voice_at=new Date().toISOString(); gset('me', me);
+  try{ fillMe(); }catch(e){} renderVoiceNudge();
+}
+function renderVoiceNudge(){
+  var el=document.getElementById('voicenudge'); if(!el) return;
+  var me=myData()||{};
+  var надо=meFull() && hasGoal(me) && !me.voice;
+  el.hidden=!надо; if(!надо) return;
+  if(el.firstChild) return;
+  el.innerHTML='<b id="vntitle">Какой тренер тебе нужен?</b><span class="vnsub">Поменять можно в профиле или просто написать тренеру.</span>'+
+    '<div class="vnbtns">'+VOICEKEYS.map(function(x){ return '<button type="button" data-voice="'+x[0]+'"><b>'+x[1]+'</b><span>'+VOICESHORT[x[0]]+'</span></button>'; }).join('')+'</div>';
+}
 function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
 function applyOnly(){
   var f=foodOnly();
@@ -4704,6 +4758,7 @@ function renderWzMe(){
   var wo=document.getElementById('wz-only');
   if(wo) segSet('wz-only', segHtml('only',ONLYKEYS,WIZ.only||me.only||'all'));
   segSet('wz-sex', segHtml('sex',SEXES,me.sex||'m'));
+  if(document.getElementById('wz-voice')){ segSet('wz-voice', segHtml('voice',VOICEKEYS,WIZ.voice||me.voice||null)); голосПодсказка('wz-voice-hint', WIZ.voice||me.voice); }
   [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
     var el=document.getElementById(x[0]);
     if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=me[x[1]];
@@ -4716,7 +4771,8 @@ function readWzMe(){
   var num=function(id){ var el=document.getElementById(id); return el ? дробь(el.value) : null; };
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
   var ob=document.querySelector('#wz-only button[aria-pressed="true"]');
-  return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'),
+  var vb=document.querySelector('#wz-voice button[aria-pressed="true"]');
+  return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'), voice:(vb?vb.dataset.v:null),
            age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
 }
 /* 16.09. Знакомство новичка — одна страница: профиль, цель и расписание
@@ -4741,6 +4797,7 @@ function wzMeSave(тихо){
   var me=myData()||{};
   var было=[me.sex,me.age,me.ht,me.bw].join('|');
   me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
+  if(v.voice && v.voice!==me.voice){ me.voice=v.voice; me.voice_at=new Date().toISOString(); }
   var зд=здRead('wz'); if(зд) me.med=зд;
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
@@ -5482,6 +5539,7 @@ function fillMe(){
   if(hint) hint.hidden = !(есть && поля && !поля.hidden);
   renderGoalCard();
   var O=document.getElementById('me-only'); if(O) O.innerHTML=segHtml('only',ONLYKEYS,me.only||'all');
+  var VC=document.getElementById('me-voice'); if(VC){ VC.innerHTML=segHtml('voice',VOICEKEYS,me.voice||null); голосПодсказка('me-voice-hint', me.voice); }
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
@@ -5513,6 +5571,8 @@ function readMeForm(){
   return {bw:v('me-bw'), ht:v('me-ht'), age:v('me-age'), sex:(sx?sx.value:'m'),
           wt:wt, gym:gym, goal:(wt&&gym)?legacyOf(wt,gym):(old.goal||null), level:pick('me-level')||old.level||null,
           only:pick('me-only')||old.only||'all',
+          voice:pick('me-voice')||old.voice||null,
+          voice_at:(pick('me-voice') && pick('me-voice')!==old.voice) ? new Date().toISOString() : (old.voice_at||null),
           place:pick('me-place')||old.place||'gym', lim:lim, eq:eq, plate:+(pick('me-plate')||old.plate||1.25),
           min:old.min||null, about:old.about||'',
           /* 17.09, его слова: «кнопки нравится и не нравится теперь прямо на
@@ -5941,6 +6001,7 @@ function saveMe(event){
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
   var zs=document.getElementById('zdsum'); if(zs) zs.textContent=здSum(me.med);
   var bs=document.getElementById('btsum'); if(bs) bs.textContent=бтSum(me.byt);
+  голосПодсказка('me-voice-hint', me.voice);
   var near=edited.closest('#profm .pf, #profm #mefields, #profm details, #profm .profblock')||document.querySelector('#profm .modalbox');savedNear(near,pending);
 }
 function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
@@ -5997,6 +6058,7 @@ function renderOnb(){
 function renderNudge(){
   renderOnb();
   try{ renderZdNudge(); }catch(e){}
+  try{ renderVoiceNudge(); }catch(e){}
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
   var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
@@ -6031,6 +6093,10 @@ document.getElementById('zdnudge').addEventListener('click', function(){
   renderZdNudge(); haptic('light');
 });
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
+document.getElementById('voicenudge').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-voice]'); if(!b) return;
+  голосЗадать(b.dataset.voice); try{ fillMe(); }catch(_){} renderVoiceNudge(); haptic('medium');
+});
 document.getElementById('onbbar').addEventListener('click', function(){ showPicker(true); haptic('light'); });
 function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
 function renderProfProg(){
@@ -10303,8 +10369,9 @@ document.getElementById('picker').addEventListener('click', function(e){
       if(id==='g-wt'){ WIZ.gwt=sb.dataset.v; wzTargetReset(); } else WIZ.ggym=sb.dataset.v;
       renderPicker(); haptic('light'); return;
     }
-    if(id==='wz-sex' || id==='wz-only'){
+    if(id==='wz-sex' || id==='wz-only' || id==='wz-voice'){
       Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
+      if(id==='wz-voice'){ WIZ.voice=sb.dataset.v; голосПодсказка('wz-voice-hint', WIZ.voice); }
       /* выбор режима меняет и счётчик шагов, и список программ — перерисовываем */
       if(id==='wz-only'){ WIZ.only=sb.dataset.v; renderPicker(); }
       haptic('light'); return;
@@ -15386,6 +15453,7 @@ function coachSend(text, image){
       if(!чатОткрыт()) coachAttn(true);   /* ответ пришёл, а человек на другом экране */
       if(d.plan) takePlan(d.plan);
       if(d.byt) takeByt(d.byt);
+      if(d.voice) takeVoice(d.voice);
       if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
         if(d.day.date===fDate()) FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
