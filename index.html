@@ -5677,9 +5677,13 @@ function bwNow(){
 function syncBwFromMeas(){
   var m=lastMeas();
   if(!m || !m.w) return;
+  var полон=meFull();
   var me=myData()||{}; if(+me.bw===+m.w) return;
   me.bw=+m.w; gset('me', me);
-  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  /* 14.10: неполный локальный профиль (новое устройство, другой аккаунт) —
+     вес только у себя; в облако {bw} поверх полного не пишем, профиль
+     сперва придёт оттуда */
+  if(полон && DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   if(!anyTouched()) renderList();
   var s=document.getElementById('mesumt'); if(s) fillMe();
 }
@@ -6497,7 +6501,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '14.10 22:04';
+var BUILD = '14.10 22:34';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -15388,6 +15392,8 @@ function легчеПоставить(on){
    два устройства не спросят дважды. */
 function самочувствиеСпросить(){
   if(foodOnly() || !hasSched() || !todayLetter()) return;
+  /* 14.10: не до конца знакомства — ни до анкеты, ни пока висит «С чего начнём?» */
+  if(!meFull() || gget('startcard',0)) return;
   if(gget('wb_ask', null)===TODAY) return;
   var ч=new Date().getHours(); if(ч<6 || ч>=22) return;
   var lw=lastWorkout(); if(lw && lw.date===TODAY) return;

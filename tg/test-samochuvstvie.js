@@ -37,11 +37,13 @@ async function нажать(page, текст){
 }
 (async () => {
   const br = await chromium.launch();
+  /* 14.10: спрашивает только после анкеты — профиль на стенде обязателен */
+  const МЕ = { sex: 'm', age: 34, ht: 178, bw: 88, wt: 'down', gym: 'muscle' };
   /* ── 1. вопрос в день зала, «Плохо спал» → «Облегчить сегодня» ── */
   let page = await br.newPage({ viewport: { width: 390, height: 900 } });
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await расписание(page);
-  const o = { theme: 'dark', wait: 2400, time: '09:10', chat: [], onAsk: () => ({ ok: true, pushed: true, turn: ВОПРОС }), onAct: ответ };
+  const o = { theme: 'dark', wait: 2400, time: '09:10', me: МЕ, chat: [], onAsk: () => ({ ok: true, pushed: true, turn: ВОПРОС }), onAct: ответ };
   const ош = await M.поднять(page, o);
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   дано((o.спрошено || []).length === 1 && o.спрошено[0].date === T, 'в день зала тренер спросил сам — один запрос за сегодня');
@@ -160,10 +162,21 @@ async function нажать(page, текст){
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   const нетЗала = {}; const wd = new Date(T + 'T12:00:00').getDay(); for (let i = 0; i < 7; i++) if (i !== wd) нетЗала[i] = 1;
   await page.addInitScript(д => { try { localStorage.setItem('shp_v1_shp_sched', JSON.stringify(д)); } catch (e) {} }, нетЗала);
-  const о5 = { theme: 'dark', wait: 2400, time: '09:10', onAsk: () => ({ ok: true, pushed: true, turn: ВОПРОС }) };
+  const о5 = { theme: 'dark', wait: 2400, time: '09:10', me: МЕ, onAsk: () => ({ ok: true, pushed: true, turn: ВОПРОС }) };
   await M.поднять(page, о5);
   дано(!(о5.спрошено || []).length, 'в день отдыха тренер не спрашивает');
   await page.close();
+  /* ── 5. до анкеты (14.10, первый новичок) и пока висит «С чего начнём?» — не спрашивает ── */
+  for (const [имя, доп] of [['до анкеты', {}], ['пока висит «С чего начнём?»', { me: МЕ }]]) {
+    page = await br.newPage({ viewport: { width: 390, height: 900 } });
+    await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    await расписание(page);
+    if (доп.me) await page.addInitScript(() => { try { localStorage.setItem('shp_v1_startcard', '1'); } catch (e) {} });
+    const о6 = Object.assign({ theme: 'dark', wait: 2400, time: '09:10', onAsk: () => ({ ok: true, pushed: true, turn: ВОПРОС }) }, доп);
+    await M.поднять(page, о6);
+    дано(!(о6.спрошено || []).length, имя + ' тренер не спрашивает');
+    await page.close();
+  }
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
