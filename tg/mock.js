@@ -124,7 +124,7 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
-  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз, цвета]) => {
+  await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз, цвета, tgId]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
        СЧЁТЧИК ВРЕМЕНИ должен идти: иначе стенд не может проверить ничего, что
@@ -141,7 +141,7 @@ async function поднять(page, o) {
     });
     /* Telegram: приложение живёт внутри мини-аппа */
     window.Telegram = { WebApp: {
-      initData: 'mock', initDataUnsafe: { user: { id: 308687648, first_name: 'Ш' } },
+      initData: 'mock', initDataUnsafe: { user: { id: tgId, first_name: 'Ш' } },
       colorScheme: тема, themeParams: цвета || {}, version: '7.0', platform: 'macos',
       expand(){}, ready(){}, close(){}, disableVerticalSwipes(){}, enableVerticalSwipes(){},
       enableClosingConfirmation(){}, disableClosingConfirmation(){}, requestFullscreen(){},
@@ -197,7 +197,7 @@ async function поднять(page, o) {
         localStorage.setItem('tgcs_workouts_' + w.id, JSON.stringify(w));
       });
     } catch (e) {}
-  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null, !!o.preserveReload, o.themeParams || null]);
+  }, [час, o.theme || 'dark', o.page || 'home', !!o.newbie, o.hist || null, o.seen == null ? null : o.seen, o.subs || null, o.me || null, o.prog || null, o.profile || null, o.layer || null, !!o.preserveReload, o.themeParams || null, o.tgId || 308687648]);
 
   /* НАСТОЯЩИЙ telegram-web-app.js НА СТЕНД НЕ ПУСКАЕМ.
      15.09: test-bot то проходил, то падал, и оба раза приложение было ни при
@@ -318,6 +318,8 @@ async function поднять(page, o) {
         sub: { ok: false, kind: 'none', until: 0, stars: 500 } });
       if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
+      if (o.sub === 'подарок') return дать({ ok: true, stars: 500, link: null,
+        sub: { ok: true, kind: 'sub', until: Date.now() + 29 * 864e5, canceled: true, stars: 500, paid: false } });
       return дать({ ok: true, stars: 500, link: null, boss: !!o.admin, sub: { ok: true, kind: 'grand', until: 0 } });
     }
     if (p === '/sub/cancel') return дать({ ok: true });

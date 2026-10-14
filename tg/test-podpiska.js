@@ -83,6 +83,17 @@ const ЛИСТ = () => {
   дано(await платит.$eval('#sub-off', e => !!e).catch(() => false), 'и есть чем отменить');
   await платит.close();
 
+  /* ── 14.10: Pro по ссылке владельца — не платил и не отменял ── */
+  const дар = await br.newPage({ viewport: { width: 390, height: 900 } });
+  await дар.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+  await M.поднять(дар, { theme: 'light', wait: 2800, sub: 'подарок' });
+  await дар.click('#profbtn'); await дар.waitForTimeout(800);
+  const стр4 = await дар.$eval('#subrow', e => e.textContent.trim()).catch(() => '');
+  дано(/подключён до/.test(стр4) && /Автосписаний нет/.test(стр4), 'подарок: до какого числа и без списаний: ' + стр4);
+  дано(!/списание|отменена|оплаченное/.test(стр4), 'подарок: ни «списания», ни «отменена»');
+  дано(!(await дар.$('#sub-off')), 'подарок: отменять нечего');
+  await дар.close();
+
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);

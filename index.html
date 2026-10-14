@@ -6353,7 +6353,42 @@ function renderDayseg(){
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
 var BUILD = '14.10 07:11';
-var LS = 'shp_v1_', PFX = '';
+/* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
+   одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
+   аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
+   в его облако. Теперь у каждого аккаунта свой префикс. Хозяин прежних ключей
+   (кто уже открывал приложение на этом устройстве) живёт в них, как жил, —
+   ничего не переносим; остальные получают «shp_v1_@<id>_» и «tgcs_@<id>_» и
+   начинают с облака. Хозяина узнаём по data_session_<id>: если в прежних
+   ключах только он — это он; если там несколько людей — прежнее не отдаём
+   никому (облако восстановит). */
+var LSNS = (function(){
+  var id='';
+  try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user;
+       if(u&&u.id) id=String(u.id); }catch(e){}
+  if(!id) return {ls:'shp_v1_', ms:'tgcs_', id:''};
+  var своё={ls:'shp_v1_@'+id+'_', ms:'tgcs_@'+id+'_', id:id}, прежнее={ls:'shp_v1_', ms:'tgcs_', id:id};
+  try{
+    var хоз=localStorage.getItem('shp_v1_owner');
+    if(хоз===id) return прежнее;
+    if(хоз) return своё;
+    var кто={}, есть=false;
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i)||'';
+      if(k.indexOf('shp_v1_@')===0 || k.indexOf('tgcs_@')===0 || k==='shp_v1_owner') continue;
+      if(k.indexOf('shp_v1_')!==0 && k.indexOf('tgcs_')!==0) continue;
+      есть=true;
+      var м=k.match(/^shp_v1_data_session_(\d+)(?:_w)?$/); if(м) кто[м[1]]=1;
+    }
+    var люди=Object.keys(кто);
+    if(!есть || !люди.length || (люди.length===1 && люди[0]===id)){ localStorage.setItem('shp_v1_owner',id); return прежнее; }
+    if(люди.length>1) localStorage.setItem('shp_v1_owner','?');   /* спорное — не отдаём никому */
+    return своё;
+  }catch(e){ return своё; }
+})();
+var LS = LSNS.ls, PFX = '';
+/* прежний (общий) префикс: чужие пространства «@» и метку хозяина не трогаем */
+function своКлюч(k,pre){ return k.indexOf(pre)===0 && (pre.slice(-1)!=='_' || pre.indexOf('@')>=0 || (k.charAt(pre.length)!=='@' && k!=='shp_v1_owner')); }
 /* ключи профиля разделены префиксом: на одном телефоне можно посмотреть обе программы */
 function get(k,d){ try{ var v=localStorage.getItem(LS+PFX+k); return v===null?d:JSON.parse(v);}catch(e){return d} }
 function set(k,v){ try{ localStorage.setItem(LS+PFX+k,JSON.stringify(v)); }catch(e){} }
@@ -7968,12 +8003,12 @@ function csKey(path){
   var pre = (profile==='wife') ? 'w_' : '';
   return (sessionNamespace()+pre+String(path)).replace(/[^A-Za-z0-9_-]/g,'_');
 }
-function mGet(k){ try{ return localStorage.getItem('tgcs_'+k); }catch(e){ return null; } }
-function mSet(k,v){ try{ localStorage.setItem('tgcs_'+k,v); }catch(e){} }
+function mGet(k){ try{ return localStorage.getItem(LSNS.ms+k); }catch(e){ return null; } }
+function mSet(k,v){ try{ localStorage.setItem(LSNS.ms+k,v); }catch(e){} }
 function mKeys(){
   var out=[];
   try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i);
-        if(k && k.indexOf('tgcs_')===0) out.push(k.slice(5)); } }catch(e){}
+        if(k && своКлюч(k,LSNS.ms)) out.push(k.slice(LSNS.ms.length)); } }catch(e){}
   return out;
 }
 function csSet(k,v){
@@ -8000,7 +8035,7 @@ function csGet(k){
   });
 }
 function csDel(k){
-  try{ localStorage.removeItem('tgcs_'+k); }catch(e){}
+  try{ localStorage.removeItem(LSNS.ms+k); }catch(e){}
   if(!CS || !CS.removeItem) return Promise.resolve();
   return new Promise(function(res,rej){
     var done=false;
@@ -11005,8 +11040,8 @@ function wipeLocal(всё){
       var k=localStorage.key(i); if(!k) continue;
       /* зеркало облака: при «стереть всё» — целиком, иначе его чистит csDel
          ровно по тем ключам, что удаляются и в самом облаке */
-      if(k.indexOf('tgcs_')===0){ if(всё) убрать.push(k); continue; }
-      if(k.indexOf(LS)!==0) continue;
+      if(своКлюч(k,LSNS.ms)){ if(всё) убрать.push(k); continue; }
+      if(!своКлюч(k,LS)) continue;
       if(всё){ убрать.push(k); continue; }
       var хвост=k.slice(LS.length);
       if(RESET_G.indexOf(хвост)>=0){ убрать.push(k); continue; }
@@ -13052,8 +13087,12 @@ function renderSub(){
     if(с.kind==='grand'){ r.hidden=true; }                   /* свой — про цену молчим */
     else if(с.ok){
       r.hidden=false;
-      r.innerHTML='Тренер подключён'+(с.until?', следующее списание '+датаРус(с.until):'')+
-        (с.canceled?' — подписка отменена, дорабатывает оплаченное.':'. <button type="button" id="sub-off">Отменить</button>');
+      /* 14.10: Pro по ссылке и месяц за баллы — без платежа: ни «списания»,
+         ни «отменена» тут нет (сервер отдаёт paid:false). */
+      r.innerHTML = с.paid===false
+        ? 'Тренер подключён'+(с.until?' до '+датаРус(с.until):'')+'. Автосписаний нет.'
+        : 'Тренер подключён'+(с.until?', следующее списание '+датаРус(с.until):'')+
+          (с.canceled?' — подписка отменена, дорабатывает оплаченное.':'. <button type="button" id="sub-off">Отменить</button>');
     } else {
       r.hidden=false;
       r.innerHTML='Тренер — по подписке, '+ц+' ★ в месяц. <button type="button" id="sub-on">Подключить</button>';
