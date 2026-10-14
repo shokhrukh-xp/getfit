@@ -13192,6 +13192,7 @@ function renderAdmin(){
   h+='<h3 class="adh">люди · '+сп.length+'</h3>'+видно.map(admЧеловек).join('');
   if(сп.length>видно.length) h+='<button type="button" class="admore" id="admall">все '+сп.length+' →</button>';
   else if(ADMALL && сп.length>6) h+='<button type="button" class="admore" id="admless">свернуть</button>';
+  /* 14.10: отключённая (x.off) не стирается — уходит в историю с именами.
   /* 13.10: «использованные коды и ссылки — в историю», а крестик
      непонятен: отключаем только новые активации, выданный доступ остаётся. */
   var pro=ADM.про||[], promo=ADM.промо||[];
@@ -13202,7 +13203,7 @@ function renderAdmin(){
     if(isPro) sub+=(x.кто||[]).length?' · '+x.кто.join(', '):' · пока никто';
     else if(x.note) sub=x.note+' · '+sub;
     return '<div class="adrow adgrant"><span class="adn"><b>'+esc(title)+'</b><i>'+esc(sub)+'</i></span>'+
-      (ended?'<span class="adpill off">использован'+(isPro?'а':'')+'</span>':
+      (ended?'<span class="adpill off">'+(x.off?(isPro?'отключена':'отключён'):'использован'+(isPro?'а':''))+'</span>':
       '<button type="button" class="btn small adstop" '+(isPro?'data-prodrop':'data-pdrop')+'="'+esc(x.code)+'" aria-describedby="adgrant-note">Отключить</button>')+'</div>';
   }
   var activePro=pro.filter(function(x){return !used(x);}), activePromo=promo.filter(function(x){return !used(x);});

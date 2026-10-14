@@ -6,7 +6,8 @@ const {chromium}=require('playwright'),M=require('./mock');
 let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++;};
 const ME={sex:'m',age:34,ht:178,bw:88,goal:'fat',wt:'down',gym:'muscle',level:'mid',place:'gym',only:'all',lim:[],eq:[]};
 const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],link:'https://t.me/GetFit_MyBot?start=p_abc123xyz0'},
-           {code:'zzz',uses:1,used:1,days:0,кто:['Инна'],link:'x'}];
+           {code:'zzz',uses:1,used:1,days:0,кто:['Инна'],link:'x'},
+           {code:'off1',uses:1,used:1,days:90,кто:['Пётр'],link:'x',off:1}];
 (async()=>{const b=await chromium.launch();try{
  /* 1. обычный человек блока не видит */
  {const p=await b.newPage({viewport:{width:390,height:900}});
@@ -52,6 +53,7 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   ok(await p.locator('#adgrant-note').innerText().then(t=>t.includes('Выданный доступ сохранится')),где+'последствия объяснены');
   await p.locator('.adhistory summary').click();
   ok(await p.getByText('FIT2026',{exact:true}).isVisible()&&await p.getByText('1 из 1 · Инна',{exact:true}).isVisible(),где+'история хранит код и получателя ссылки');
+  ok(await p.getByText('1 из 1 · Пётр',{exact:true}).isVisible()&&await p.locator('.adhistory .adpill',{hasText:'отключена'}).count()===1&&await p.locator('.adhistory .adpill',{hasText:'использована'}).count()===1,где+'отключённая ссылка в истории с именем, отличается от использованной');
   ok(await p.locator('.adstop').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.height>=44&&r.right<=innerWidth;})),где+'кнопки помещаются и доступны касанию');
   await p.locator('.adhistory').scrollIntoViewIfNeeded();
   await p.screenshot({path:'/tmp/gf-history-'+theme+'-'+width+'.png'});
