@@ -35,7 +35,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
 // Стендовые меню из test-menu; генерация/отправка никогда не идут в настоящий Worker.
 function менюСтенда(route){
  const span=JSON.parse(route.request().postData()||'{}').span;
- if(span==='today')return {...МЕНЮ,span,date:M.TODAY,from:M.TODAY,sig:[M.TODAY,2110,1115,3,2].join('|'),
+ if(span==='today')return {...МЕНЮ,span,date:M.TODAY,from:M.TODAY,sig:[M.TODAY,2110,1115,3,2,165].join('|'),
   норма:{kcal:2110,prot:165},съел:{kcal:1115,prot:109},ост:{kcal:995,prot:56},съедено:день.meals,
   дни:[{...ДЕНЬ,date:M.TODAY,приёмы:[ДЕНЬ.приёмы[3]]}]};
  return {...МЕНЮ,span,дни:span==='week'?Array.from({length:7},(_,i)=>({...ДЕНЬ,date:M.Д(-i-1)})):[ДЕНЬ]};

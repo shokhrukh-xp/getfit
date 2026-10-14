@@ -13,7 +13,7 @@ let плохо = 0;
 const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') + т); if (!у) плохо++; };
 const T = M.TODAY;
 /* день стенда: завтрак 420 и обед 610 записаны, норма 2110, 14:03 — окно «после 11» */
-const ПОДП = [T, 2110, 1030, 2, 1].join('|');
+const ПОДП = [T, 2110, 1030, 2, 1, 165].join('|');
 const И = (name, g, kcal, prot) => ({ name, g, kcal, prot, fat: 5, carb: 10 });
 const СЕГ = (o) => Object.assign({ ok: true, span: 'today', date: T, from: T, at: Date.now(), sig: ПОДП, зал: false,
   норма: { kcal: 2110, prot: 165 }, съел: { kcal: 1030, prot: 67 }, ост: { kcal: 1080, prot: 98 },
@@ -61,7 +61,7 @@ const текст = async page => (await page.textContent('#eatbody')).replace(/\
   await page.close();
 
   /* ── 2. меню разошлось с днём: пересобирается само, один раз ── */
-  const о2 = { menuDelay: 2500, menu: { today: СЕГ({ sig: [T, 2110, 420, 1, 1].join('|'), съел: { kcal: 420, prot: 26 } }) },
+  const о2 = { menuDelay: 2500, menu: { today: СЕГ({ sig: [T, 2110, 420, 1, 1, 165].join('|'), съел: { kcal: 420, prot: 26 } }) },
     onMenu: b => { (о2.спаны = о2.спаны || []).push(JSON.parse(b.request().postData() || '{}').span); return СЕГ({ note: 'Новое меню под остаток.' }); } };
   о2.wait = 300; ({ page } = await открыть(br, о2));
   т = await текст(page);
