@@ -12,11 +12,10 @@ const т=async(p,s)=>((await p.textContent(s).catch(()=>''))||'').replace(/\s+/g
   p.on('request',r=>{if(/\/onboard/.test(r.url()))онб.push(1);});
   const err=await M.поднять(p,{theme,newbie:true,sub:'нет',wait:2500});
   await p.waitForTimeout(400);
-  ok(/Подобрать программу/.test(await т(p,'#wz-one')),где+'кнопка без обещания сборки: '+await т(p,'#wz-one'));
+  await M.шаги(p,{});   /* 14.10: по шагам — до «где и когда» */
+  ok(/Подобрать программу/.test(await т(p,'#wz-go')),где+'кнопка без обещания сборки: '+await т(p,'#wz-go'));
   ok(/готовая программа под твои дни, бесплатно/.test(await т(p,'#pickhi')),где+'подсказка честная: '+await т(p,'#pickhi'));
-  await p.fill('#wz-age','34');await p.fill('#wz-ht','176');await p.fill('#wz-bw','88');
-  await p.waitForSelector('#g-rng',{timeout:8000}).catch(()=>{});await p.waitForTimeout(400);
-  await p.click('#wz-one');await p.waitForTimeout(1500);
+  await p.click('#wz-go');await p.waitForTimeout(1500);
   ok(онб.length===0,где+'тренера не зовём — сборка по подписке');
   const сп=await p.evaluate(()=>({n:document.querySelectorAll('#picklist button[data-prof]').length,
     note:(document.querySelector('#picklist .wzfree')||{}).textContent||'',ош:document.body.innerText.includes('тренер недоступен')}));
@@ -29,13 +28,13 @@ const т=async(p,s)=>((await p.textContent(s).catch(()=>''))||'').replace(/\s+/g
    ok(await p.$eval('#subm',e=>e.classList.contains('show')),'«Что такое Pro» открывает подписку');
    await p.click('#subclose');await p.waitForTimeout(400);
    await p.click('#picklist button[data-prof]');await p.waitForTimeout(1200);
-   ok(!(await p.isVisible('#wz-one').catch(()=>false)),'выбрал готовую — анкета закрылась');
+   ok(!(await p.$eval('#picker',e=>e.classList.contains('show'))),'выбрал готовую — анкета закрылась');
   }
   ok(!err.length,где+'без ошибок'+(err.length?': '+err.join(' | '):''));
   await p.close();
  }
  /* с подпиской — как было */
  {const p=await b.newPage({viewport:{width:390,height:900}});await M.поднять(p,{theme:'dark',newbie:true,wait:2500});await p.waitForTimeout(300);
-  ok(/Собрать программу/.test(await т(p,'#wz-one')),'с подпиской — «Собрать программу», как было');await p.close();}
+  await M.шаги(p,{});ok(/Собрать программу/.test(await т(p,'#wz-go')),'с подпиской — «Собрать программу», как было');await p.close();}
 }finally{await b.close();}
 console.log(bad?'ПРОВАЛОВ: '+bad:'всё ок');process.exit(bad?1:0);})();

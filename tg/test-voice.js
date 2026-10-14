@@ -50,15 +50,12 @@ async function поднять(b,width,theme,o){
  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('без поблажек'),null,{timeout:6000}).catch(()=>{});
  ok((await мой(p)).voice==='hard','чат: «давай хардкор» — характер сменился и в приложении');
  await p.close();
- /* 6. знакомство: строка «тренер» */
+ /* 6. 14.10, его выбор: знакомство по шагам, характер — после «С чего начнём?» */
  let r=await поднять(b,390,'dark',{newbie:true,wait:2500});p=r.p;
- const з=await p.evaluate(()=>({кн:[...document.querySelectorAll('#wz-voice button')].map(x=>x.dataset.v+':'+x.getAttribute('aria-pressed')),
-  подсказка:(document.getElementById('wz-voice-hint')||{}).textContent}));
- ok(з.кн.join()==='standard:false,fun:false,hard:false','знакомство: три характера, ничего не выбрано заранее: '+з.кн.join());
- await p.click('#wz-voice button[data-v="fun"]');
- ok(/шутит, когда есть повод/.test(await p.textContent('#wz-voice-hint')),'подсказка под выбором');
- await p.fill('#wz-age','34');await p.fill('#wz-ht','176');await p.fill('#wz-bw','88');await p.waitForTimeout(600);
- await p.click('#wz-one');await p.waitForTimeout(1500);
- ok((await мой(p)).voice==='fun','знакомство: выбор записан в профиль');
+ ok(!(await p.isVisible('#wz-voice').catch(()=>false)),'в шагах знакомства характера нет');
+ await M.шаги(p,{only:'food'});await p.waitForTimeout(1200);
+ ok(await p.evaluate(()=>!document.getElementById('startcard').hidden&&document.getElementById('voicenudge').hidden),'после знакомства — сначала «С чего начнём?», карточки характера пока нет');
+ await p.click('#startcard [data-start="later"]');await p.waitForTimeout(400);
+ ok(await p.evaluate(()=>!document.getElementById('voicenudge').hidden),'«Позже» — и следом спрашиваем характер');
  await p.close();
 }finally{await b.close()}if(bad)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});

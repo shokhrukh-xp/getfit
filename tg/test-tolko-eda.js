@@ -66,14 +66,13 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500 });
   await page.waitForTimeout(600);
   дано(await page.isVisible('#wz-only'), 'на первом шаге знакомства спрашивают, что ведём');
-  await page.click('#wz-only button[data-v="food"]');
-  await page.fill('#wz-age', '33'); await page.fill('#wz-ht', '168'); await page.fill('#wz-bw', '61');
+  /* 14.10: по шагам — что ведём → параметры → цель → ограничения, без «где и когда» */
+  await M.шаги(page, { only: 'food', до: 'goal', age: 33, ht: 168, bw: 61 });
   дано(!(await page.isVisible('#wzhave').catch(() => false)), 'готовые программы не предлагаются');
-  await page.waitForTimeout(1200);
-  /* цель — на той же странице; про зал в ней не спрашивают */
-  дано(await page.isVisible('#wzgoal'), 'цель на той же странице');
+  дано(await page.isVisible('#wzgoal'), 'цель — своим шагом');
   дано(!(await page.isVisible('#g-gymrow').catch(() => false)), 'вопроса «что важнее в зале» у них нет');
-  await page.click('#wz-one');
+  await page.click('#g-go'); await page.waitForTimeout(900);
+  await page.click('#wz-health-go');
   await page.waitForTimeout(1700);
   дано(!(await page.isVisible('#picker .modalbox').catch(() => false)) || !(await page.$eval('#picker', e => e.classList.contains('show'))),
     'знакомство закончилось на цели, без вопросов про зал');

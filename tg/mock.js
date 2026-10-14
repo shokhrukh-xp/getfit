@@ -119,6 +119,21 @@ function журнал() {
 }
 
 /* ── подстановки ── */
+/* 14.10: знакомство по шагам — что ведём → параметры → цель → ограничения
+   (→ где и когда). до: 'me' | 'goal' | 'health' | 'form' (по умолчанию). */
+async function шаги(page, o) {
+  o = o || {};
+  await page.click('#wz-only button[data-only="' + (o.only || 'all') + '"]');
+  await page.click('#wz-only-go'); await page.waitForTimeout(200);
+  if (o.до === 'me') return;
+  await page.fill('#wz-age', String(o.age || 34)); await page.fill('#wz-ht', String(o.ht || 176)); await page.fill('#wz-bw', String(o.bw || 88));
+  await page.click('#wz-me-go'); await page.waitForTimeout(300);
+  if (o.до === 'goal') { await page.waitForFunction(() => { const g = document.getElementById('g-go'); return g && !g.disabled; }, null, { timeout: 8000 }).catch(() => {}); return; }
+  await page.waitForFunction(() => { const g = document.getElementById('g-go'); return g && !g.disabled; }, null, { timeout: 8000 }).catch(() => {});
+  await page.click('#g-go'); await page.waitForTimeout(900);
+  if (o.до === 'health') return;
+  await page.click('#wz-health-go'); await page.waitForTimeout(600);
+}
 async function поднять(page, o) {
   o = o || {};
   const час = o.time || '14:03';
@@ -664,4 +679,4 @@ async function ответитьДлительность(page, мин) {
   return true;
 }
 
-module.exports = { ответитьДлительность, Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };
+module.exports = { шаги, ответитьДлительность, Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };

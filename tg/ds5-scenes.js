@@ -30,9 +30,9 @@ async function open(p,name,theme){
  if(name==='circle-settings')await p.locator('[data-krug]').first().click();
  if(name==='tech'||name==='duration'){await p.locator('#list .exrow').first().click();await p.waitForTimeout(250);if(name==='tech')await p.locator('.card.exact [data-tech]').click();else{await p.locator('.card.exact .allb').click();await p.click('#finish');}}
  if(name.startsWith('onboard')&&name!=='onboard'){
-  await p.fill('#wz-age','34');await p.fill('#wz-ht','176');await p.fill('#wz-bw','88');await p.locator('#g-rng').waitFor();
+  await M.шаги(p,{});   /* 14.10: знакомство по шагам — до «где и когда» */
   if(name!=='onboard-filled'){
-   await p.click('#wz-one');await p.locator('.wzq [data-opt="колени"]').waitFor();
+   await p.click('#wz-go');await p.locator('.wzq [data-opt="колени"]').waitFor();
    if(name!=='onboard-program'){await p.click('.wzq [data-opt="колени"]');await p.locator('.wzq [data-opt="кардио"]').waitFor();}
    if(name==='onboard-question3'||name==='onboard-done'){await p.click('.wzq [data-opt="кардио"]');await p.locator('.wzq [data-opt="нет"]').waitFor();if(name==='onboard-done'){await p.click('.wzq [data-opt="нет"]');await p.locator('.wzq').waitFor({state:'hidden'});}}
   }

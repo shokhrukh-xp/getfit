@@ -117,18 +117,18 @@ async function жми(page, sel, текст) {
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(page, { theme: 'dark', wait: 2800, newbie: true });
   await page.waitForTimeout(900);
-  const зн = await page.$('#wzzd');
-  дано(!!зн, 'в знакомстве блок тоже есть');
-  дано(!!зн && await зн.evaluate(e => !e.closest('[hidden]') && getComputedStyle(e).display !== 'none'),
-    'и он на виду, а не спрятан за шагом');
-  дано(await page.$eval('#wzzdbody', e => e.hidden), 'свёрнут: у кого ничего нет, знакомство не удлиняется');
-  const пояс = await page.$eval('#wzzdsum', e => e.innerText);
-  дано(/диабет/.test(пояс) && /если есть/.test(пояс), 'строка сама объясняет, зачем её открывать: ' + пояс);
-  await page.click('#wzzdtoggle'); await page.waitForTimeout(400);
+  /* 14.10, его выбор: знакомство по шагам — здоровье отдельным шагом 4 */
+  await M.шаги(page, { до: 'health' });
+  дано(await page.isVisible('#wzhealth') && /Есть ограничения/.test(await page.textContent('#picktitle')), 'шаг «Есть ограничения?»');
+  дано(/шаг 4 из 5/.test(await page.textContent('#wzstep')), 'четвёртым шагом: ' + await page.textContent('#wzstep'));
+  дано(await page.isVisible('#wz-dia'), 'вопросы сразу на виду, без раскрытия');
   дано(!!(await page.$('#wz-dia')), 'внутри тот же набор вопросов, что и в профиле');
   дано(await жми(page, '#wz-dia button', '1 тип'), 'диабет выбирается и тут');
   await page.waitForTimeout(300);
   дано(!(await page.$eval('#wz-diamore', e => e.hidden)), 'и подвопросы раскрываются так же');
+  await page.click('#wz-health-go'); await page.waitForTimeout(500);
+  const мед = await page.evaluate(() => { try { return (JSON.parse(localStorage.getItem('shp_v1_me')) || {}).med || null; } catch (e) { return null; } });
+  дано(мед && мед.dia === 't1', 'ответ записан в профиль: ' + JSON.stringify(мед && мед.dia));
   await page.close();
 
   await br.close();

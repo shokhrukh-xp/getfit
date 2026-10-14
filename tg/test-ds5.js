@@ -20,7 +20,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   ok(geo.bg===(theme==='light'?'rgb(255, 255, 255)':'rgb(14, 20, 22)')&&geo.title==='20px'&&geo.weight==='700','лист по токенам '+name+'/'+theme+'/'+width);
   ok(geo.left>=0&&geo.right<=width,'лист в экране '+name);
   ok(await p.locator(root+' .xbtn').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'крестики >=44 '+name);
-  if(name==='onboard-filled'){await p.locator('#wz-one').scrollIntoViewIfNeeded();ok(await p.locator('#wz-one').evaluate(e=>getComputedStyle(e).position==='static'&&e.getBoundingClientRect().top>=document.querySelector('#wz-text').getBoundingClientRect().bottom),'Собрать программу после полей, не перекрывает их');}
+  if(name==='onboard-filled'){await p.locator('#wz-go').scrollIntoViewIfNeeded();ok(await p.locator('#wz-go').evaluate(e=>getComputedStyle(e).position==='static'&&e.getBoundingClientRect().top>=document.querySelector('#wz-text').getBoundingClientRect().bottom),'Собрать программу после полей, не перекрывает их');}
   await p.close();
  }
 }

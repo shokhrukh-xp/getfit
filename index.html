@@ -2674,6 +2674,27 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 #food-add[hidden]{display:none}
 .food-add small{font-size:12px;font-weight:400;color:#E1F0F3}
 .wzfree{margin:14px 0 8px}
+/* 14.10: одноразовые подсказки и «С чего начнём?» */
+.hint1{display:flex;align-items:center;gap:8px;margin:8px 0;padding:6px 6px 6px 12px;border-radius:12px;background:var(--card-2);border:.5px solid var(--line-soft);font-size:13px;color:var(--text)}
+.hint1 span{flex:1}
+.hint1 .xbtn{min-width:44px;min-height:44px}
+.startcard b{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text)}
+.startcard .scbtns{display:flex;flex-wrap:wrap;gap:8px}
+.startcard .scbtns .btn{flex:1 1 auto;min-height:44px}
+.howlist{margin:4px 0 12px;padding-left:20px;display:grid;gap:12px}
+.howlist li b{display:block;font-size:15px;font-weight:600;color:var(--text)}
+.howlist li span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+/* 14.10: шаги знакомства */
+.wztop{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.wztop .wzstep{margin:0 0 0 auto}
+.wzprev{border:0;background:none;padding:0 4px 0 0;min-height:44px;font:inherit;font-size:14px;color:var(--accent)}
+.wzpick{display:grid;gap:10px;margin:6px 0 16px}
+.wzpick button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;min-height:64px;padding:12px 14px;border-radius:14px;border:1px solid var(--line-soft);background:var(--card-2);color:var(--text);font:inherit}
+.wzpick button b{font-size:16px;font-weight:600}
+.wzpick button span{font-size:13px;color:var(--muted)}
+.wzpick button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+#wzhealth .zdbox{margin:4px 0 16px}
+#wzhealth .invnote{font-size:13px;color:var(--muted);margin-top:10px}
 .wzfree .lnk{display:block;min-height:44px;padding:0;text-align:left}
 /* 14.10, GF-04: незаписанные приёмы — один вопрос, две кнопки */
 .fgaps{margin:4px 0 12px;padding:12px 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
@@ -3008,6 +3029,8 @@ body.ordmode #list .sstag{color:var(--text)}
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
         <button type="button" class="nudge onb" id="zdnudge" hidden></button>
+        <!-- 14.10, его выбор: после знакомства — «С чего начнём?», один раз -->
+        <div class="nudge onb startcard" id="startcard" role="group" aria-labelledby="sctitle" hidden></div>
         <div class="nudge onb vnudge" id="voicenudge" role="group" aria-labelledby="vntitle" hidden></div>
         <div class="hwrap" id="homebody"></div>
         <!-- 30.09, его просьба: ввод замера — с «Еды» на главную, под карточку
@@ -3039,6 +3062,7 @@ body.ordmode #list .sstag{color:var(--text)}
         <div id="coachreco" hidden></div>
         <div id="rbbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
+        <p class="hint1" id="gymhint" hidden><span>Введи вес и повторы, затем отметь подход ✓</span><button type="button" class="xbtn" data-hint="gym" aria-label="Понятно">✕</button></p>
         <div id="list"></div>
         <p class="dbnote" id="dbnote" role="status"></p>
         <div class="finsum" id="finsum" hidden></div>
@@ -3073,6 +3097,7 @@ body.ordmode #list .sstag{color:var(--text)}
         <div class="fday" id="fday"></div>
         <div class="group fmealgroup"><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
+        <p class="hint1" id="foodhint" hidden><span>Нажми на приём, чтобы исправить</span><button type="button" class="xbtn" data-hint="food" aria-label="Понятно">✕</button></p>
         <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов тренеру</small></button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
              с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
@@ -3173,33 +3198,38 @@ body.ordmode #list .sstag{color:var(--text)}
 </div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
-    <p class="wzstep" id="wzstep" hidden></p>
+    <div class="wztop"><button type="button" class="wzprev" id="wz-prev" hidden>← Назад</button><p class="wzstep" id="wzstep" hidden></p></div>
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажи о себе — тренер задаст пару вопросов и соберёт программу.</p>
+    <!-- 14.10, его выбор: знакомство по шагам 1–4 (что ведём → параметры →
+         цель → ограничения; для зала ещё «где и когда»). Характер тренера —
+         карточкой на главной после первого шага в приложении. -->
+    <div id="wzonly" hidden>
+      <div class="wzpick" id="wz-only" role="group" aria-label="Что будем вести"></div>
+      <button class="btn prim wide" id="wz-only-go">Далее</button>
+    </div>
     <div id="wzme" hidden>
-      <div class="pf"><span class="pfl">веду</span><div class="seg" id="wz-only"></div></div>
-      <p class="seghint" id="wz-only-hint">выберешь «только еда» — зала в приложении не будет, программу собирать не станем</p>
-      <div class="pf pfv"><span class="pfl">тренер</span><div class="seg" id="wz-voice"></div></div>
-      <p class="seghint pfvh" id="wz-voice-hint"></p>
+      <div class="pf pfv" hidden><span class="pfl">тренер</span><div class="seg" id="wz-voice"></div></div>
+      <p class="seghint pfvh" id="wz-voice-hint" hidden></p>
       <div class="pf"><span class="pfl">пол</span><div class="seg" id="wz-sex"></div></div>
       <div class="mnums">
         <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
         <label>рост, см<input id="wz-ht" type="number" inputmode="numeric" min="120" max="230" placeholder="176"></label>
         <label>вес, кг<input id="wz-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="89"></label>
       </div>
-      <div class="invbox zdbox" id="wzzd">
-        <button type="button" class="invhead" id="wzzdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="wzzdsum">диабет, давление, чего не ешь — если есть</span><i class="invchev">›</i></button>
-        <div class="invbody" id="wzzdbody" hidden></div>
-      </div>
       <p class="mtext" id="wz-me-err" hidden></p>
-      <button class="btn prim wide" id="wz-me-go">Дальше</button>
+      <button class="btn prim wide" id="wz-me-go">Далее</button>
+    </div>
+    <div id="wzhealth" hidden>
+      <div class="zdbox" id="wzzd"><div id="wzzdbody"></div></div>
+      <button class="btn prim wide" id="wz-health-go">Далее</button>
     </div>
     <div id="wzgoal" hidden>
       <div class="pf"><span class="pfl">вес</span><div class="seg" id="g-wt"></div></div>
       <div id="g-body"></div>
       <div class="pf gymonly" id="g-gymrow"><span class="pfl">в зале</span><div class="seg multi" id="g-gym"></div></div>
       <p class="gwhy" id="g-why"></p>
-      <button class="btn prim wide" id="g-go">Дальше</button>
+      <button class="btn prim wide" id="g-go">Далее</button>
     </div>
     <div id="wzform">
       <div class="pf"><span class="pfl">где</span><div class="seg" id="wz-place"></div></div>
@@ -3471,12 +3501,26 @@ body.ordmode #list .sstag{color:var(--text)}
     <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
 
     <h4 class="psec">Приложение</h4>
+    <button type="button" class="pfrow" id="profhow"><span>Как пользоваться</span><i>›</i></button>
     <button type="button" class="pfrow" id="profboss" hidden><span>Админ панель</span><i>›</i></button>
     <!-- Карточка «программа …» отсюда убрана: то же самое стоит выше, в
          разделе «Зал», и третьим местом об одном факте быть незачем. -->
     <p class="mtext bline" id="buildline"></p>
     <button class="btn wide danger" id="profreset">Начать заново</button>
     <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
+  </div>
+</div>
+<!-- 14.10: «Как пользоваться» — отдельно от «Начать заново» -->
+<div class="modal" id="howm" role="dialog" aria-modal="true" aria-labelledby="howtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="howtitle">Как пользоваться</h3><button class="xbtn" id="howclose" aria-label="Закрыть">✕</button></div>
+    <ol class="howlist">
+      <li><b>Еда</b><span>«Добавить» на «Еде» — фото или пара слов тренеру. Ошибся — нажми на приём и исправь, новая запись не появится.</span></li>
+      <li><b>Зал</b><span>Введи вес и повторы, отметь подход ✓. В конце — «Завершить и сохранить».</span></li>
+      <li><b>Бот в Telegram</b><span>Пиши боту, как другу: фото тарелки или «200 г творога и 2 яйца». Исправить — «творога было 150 г». Команды: «сегодня», «неделя», «отмена» — убрать последнюю запись.</span></li>
+      <li><b>Один дневник</b><span>Что прислал боту — сразу в приложении, и наоборот.</span></li>
+    </ol>
+    <p class="mtext" id="howfree" hidden></p>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -4733,11 +4777,42 @@ function takeVoice(v){
 function renderVoiceNudge(){
   var el=document.getElementById('voicenudge'); if(!el) return;
   var me=myData()||{};
-  var надо=meFull() && hasGoal(me) && !me.voice;
+  var надо=meFull() && hasGoal(me) && !me.voice && !gget('startcard',0);
   el.hidden=!надо; if(!надо) return;
   if(el.firstChild) return;
   el.innerHTML='<b id="vntitle">Какой тренер тебе нужен?</b><span class="vnsub">Поменять можно в профиле или просто написать тренеру.</span>'+
     '<div class="vnbtns">'+VOICEKEYS.map(function(x){ return '<button type="button" data-voice="'+x[0]+'"><b>'+x[1]+'</b><span>'+VOICESHORT[x[0]]+'</span></button>'; }).join('')+'</div>';
+}
+/* 14.10, его выбор: сразу после знакомства — одна карточка «С чего начнём?».
+   Характер тренера спрашиваем после неё, не вперемешку. */
+function renderStartCard(){
+  var el=document.getElementById('startcard'); if(!el) return;
+  var on=!!gget('startcard',0) && meFull();
+  el.hidden=!on; if(!on){ el.innerHTML=''; return; }
+  el.innerHTML='<b id="sctitle">С чего начнём?</b><div class="scbtns">'+
+    '<button type="button" class="btn prim" data-start="food">Записать еду</button>'+
+    (foodOnly()?'':'<button type="button" class="btn" data-start="gym">Открыть тренировку</button>')+
+    '<button type="button" class="btn" data-start="later">Позже</button></div>';
+}
+document.addEventListener('click', function(e){
+  var b=e.target.closest('#startcard [data-start]'); if(!b) return;
+  gset('startcard',0); renderStartCard(); renderVoiceNudge(); haptic('light');
+  if(b.dataset.start==='food') openCoach(TODAY);
+  else if(b.dataset.start==='gym') goPage('gym');
+});
+/* одноразовые подсказки: показали — человек закрыл или сделал то, о чём она */
+function подсказкаВидна(k){ return !gget('hint_'+k,0); }
+function подсказкаУбрать(k){ gset('hint_'+k,1); var el=document.getElementById(k+'hint'); if(el) el.hidden=true; }
+document.addEventListener('click', function(e){
+  var x=e.target.closest('[data-hint]'); if(x){ подсказкаУбрать(x.dataset.hint); haptic('light'); return; }
+  if(e.target.closest('#profhow')){ openHow(); haptic('light'); return; }
+  if(e.target.closest('#howclose')){ var m=document.getElementById('howm'); if(m) m.classList.remove('show'); return; }
+});
+function openHow(){
+  var m=document.getElementById('howm'); if(!m) return;
+  var f=document.getElementById('howfree');
+  if(f){ var без=безПро(); f.hidden=!без; f.textContent=без?'Без подписки — 3 записи еды в день. Разговор, меню и программа под тебя — в Pro.':''; }
+  m.classList.add('show');
 }
 function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
 function applyOnly(){
@@ -4796,12 +4871,11 @@ function renderWzMe(){
   });
   var e=document.getElementById('wz-me-err');
   if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
-  здРендер('wz', 'wzzdbody', 'wzzdsum', me.med);
 }
 function readWzMe(){
   var num=function(id){ var el=document.getElementById(id); return el ? дробь(el.value) : null; };
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
-  var ob=document.querySelector('#wz-only button[aria-pressed="true"]');
+  var ob={dataset:{v:WIZ.only||(myData()||{}).only||'all'}};
   var vb=document.querySelector('#wz-voice button[aria-pressed="true"]');
   return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'), voice:(vb?vb.dataset.v:null),
            age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
@@ -4811,7 +4885,41 @@ function readWzMe(){
    программы, и обрыв был размазан по всем четырём шагам, а не сидел в
    одном. Старая лесенка осталась для тех, кто открывает это окно потом
    («сменить программу»): им переспрашивать про рост и возраст незачем. */
-function однаСтр(){ return firstRun && WIZ.stage==='form'; }
+/* 14.10, его выбор: знакомство снова по шагам (1–4, для зала ещё «где и
+   когда»), с «Назад» и счётчиком. Одна страница от 16.09 больше не нужна. */
+function однаСтр(){ return false; }
+var ШАГИ_ВСЕ=['only','me','goal','health','form'];
+function шагиЗнакомства(){
+  var еда=(WIZ.only||(myData()||{}).only)==='food';
+  var все=ШАГИ_ВСЕ.filter(function(x){ return !(еда && x==='form'); });
+  /* не первый вход — начинаем с того шага, с которого открыли */
+  var с=все.indexOf(WIZ.step0||'only'); return с>0 ? все.slice(с) : все;
+}
+var ONLYCARD={all:['Еда и зал','Дневник еды, норма и тренировки по программе'],food:['Только еда','Дневник еды и норма, без зала']};
+function renderWzOnly(){
+  var v=WIZ.only||(myData()||{}).only||'all';
+  segSet('wz-only', ['all','food'].map(function(k){
+    return '<button type="button" data-only="'+k+'" aria-pressed="'+(v===k)+'"><b>'+ONLYCARD[k][0]+'</b><span>'+ONLYCARD[k][1]+'</span></button>'; }).join(''));
+}
+function wzOnlyNext(){
+  var me=myData()||{}, v=WIZ.only||me.only||'all';
+  if(me.only!==v){ me.only=v; gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); applyOnly(); }
+  WIZ.step='me'; renderPicker(); haptic('light');
+}
+function wzHealthNext(){
+  var me=myData()||{}, зд=здRead('wz');
+  if(зд){ me.med=зд; gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
+  try{ renderNudge(); }catch(e){}
+  if((WIZ.only||me.only)==='food'){ choose(profile||'shp'); return; }
+  WIZ.step='form'; renderPicker(); haptic('light');
+}
+function wzНазад(){
+  var все=шагиЗнакомства(), i=все.indexOf(WIZ.step);
+  if(i<=0) return;
+  WIZ.step=все[i-1]; WIZ.err=''; WIZ.meErr='';
+  if(WIZ.step==='goal'){ WIZ.safe=null; WIZ.safeErr=false; wzGoalPull(); }
+  renderPicker(); haptic('light');
+}
 /* 14.10, GF-05: анкета обещала «собрать программу», а сборка — тренер по
    подписке. Новичок без подписки заполнял страницу и упирался в оплату с
    надписью «тренер недоступен». Его выбор: готовая программа — бесплатно,
@@ -4821,8 +4929,7 @@ function безПро(){ return !!(SUB && SUB.sub && SUB.sub.ok===false); }
 /* подписка пришла, когда анкета уже открыта: поля не трогаем, только слова */
 function wzЯрлыкПро(){
   if(!безПро() || WIZ.stage!=='form' || WIZ.busy || WIZ.ждёт) return;
-  var one=document.getElementById('wz-one'); if(one && !one.hidden && one.textContent==='Собрать программу') one.textContent='Подобрать программу';
-  var hi=document.getElementById('pickhi'); if(hi && !hi.hidden && /Дальше сразу программа/.test(hi.textContent)) hi.textContent='Одна страница. Дальше — готовая программа под твои дни, бесплатно.';
+  var pk=document.getElementById('picker'); if(pk && pk.classList.contains('show')) renderPicker();
 }
 function wzГотовые(){
   WIZ.busy=false; WIZ.free=true; WIZ.err=''; WIZ.fallback=false; WIZ.stage='form';
@@ -4845,7 +4952,7 @@ function wzMeSave(тихо){
   var было=[me.sex,me.age,me.ht,me.bw].join('|');
   me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
   if(v.voice && v.voice!==me.voice){ me.voice=v.voice; me.voice_at=new Date().toISOString(); }
-  var зд=здRead('wz'); if(зд) me.med=зд;
+  /* здоровье — отдельный шаг (14.10): здесь его не трогаем */
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   renderNudge();
@@ -4886,7 +4993,7 @@ function renderWzForm(){
   var msg = WIZ.err || (n ? '' : 'Отметь хотя бы один день — по ним и построю неделю.');
   if(e){ e.hidden=!msg; e.textContent=msg; }
   var go=document.getElementById('wz-go');
-  if(go){ go.disabled = !n || WIZ.busy; go.textContent = WIZ.busy ? 'Думаю…' : 'Дальше'; }
+  if(go){ go.disabled = !n || WIZ.busy; go.textContent = WIZ.busy ? 'Думаю…' : безПро() ? 'Подобрать программу' : 'Собрать программу'; }
 }
 function wzПолеОтвета(){
   var h='';
@@ -4993,7 +5100,7 @@ function renderWzList(){
          подпись «готовая» их различает */
       h+='<button class="pbtn" data-prof="'+x.k+'"><em class="dim">готовая</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
     });
-  } else if(WIZ.stage==='form'){
+  } else if(WIZ.stage==='form' && WIZ.step==='form'){
     /* запасной выход должен быть с самого начала: у кого программа уже есть,
        того незачем сначала гонять через анкету о себе */
     h+='<button type="button" class="wzhave" id="wzhave">у меня уже есть программа</button>';
@@ -5180,22 +5287,26 @@ function wzGoalNext(){
   });
 }
 function wzGoalDone(){
-  /* «только еда» — зал не ведём, значит шаги про программу не нужны */
-  if((myData()||{}).only==='food'){ choose(profile||'shp'); return; }
-  WIZ.step='form'; renderPicker(); haptic('light');
+  /* 14.10: после цели — ограничения по здоровью, потом (для зала) где и когда */
+  WIZ.step='health'; renderPicker(); haptic('light');
 }
 function renderPicker(){
   if(!document.getElementById('wzform')) return;
   wizInit();
   var стр = однаСтр();
   var еда = (WIZ.only||(myData()||{}).only)==='food';
+  var шагЕда = WIZ.stage==='form' && WIZ.step==='only', шагЗд = WIZ.stage==='form' && WIZ.step==='health';
   var знакомство = стр || (WIZ.stage==='form' && WIZ.step==='me');
   var цель       = стр || (WIZ.stage==='form' && WIZ.step==='goal');
-  var анкета     = (стр && !еда) || (WIZ.stage==='form' && WIZ.step!=='me' && WIZ.step!=='goal');
+  var анкета     = (стр && !еда) || (WIZ.stage==='form' && WIZ.step==='form');
   var mebox=document.getElementById('wzme'), form=document.getElementById('wzform'),
       chat=document.getElementById('wzchat'), gbox=document.getElementById('wzgoal');
   var анкета0 = WIZ.stage==='form' && анкета;
   mebox.hidden = !(знакомство && WIZ.stage==='form');
+  var ob=document.getElementById('wzonly'); if(ob) ob.hidden=!шагЕда;
+  var hb=document.getElementById('wzhealth'); if(hb) hb.hidden=!шагЗд;
+  if(шагЕда) renderWzOnly();
+  if(шагЗд) здРендер('wz', 'wzzdbody', 'wzzdsum', (myData()||{}).med);
   if(gbox) gbox.hidden = !(цель && WIZ.stage==='form');
   form.hidden  = !анкета0;
   chat.hidden  = WIZ.stage==='form';
@@ -5219,18 +5330,18 @@ function renderPicker(){
   /* «у меня уже есть программа» — это про зал, на отдельном шаге цели ему не
      место; на одной странице он нужен: это запасной выход, если тренер упал */
   var pl=document.getElementById('picklist'); if(pl) pl.hidden = цель && !стр;
-  var шаг=document.getElementById('wzstep');
+  var шаг=document.getElementById('wzstep'), все=шагиЗнакомства(), iш=все.indexOf(WIZ.step);
   if(шаг){
-    var n = знакомство ? 1 : (цель ? 2 : (анкета ? 3 : 4));
-    var всего = еда ? 2 : 4;
-    шаг.hidden = !firstRun || стр;
-    шаг.textContent = 'шаг '+n+' из '+всего;
+    шаг.hidden = WIZ.stage!=='form' || iш<0 || все.length<2;
+    шаг.textContent = 'шаг '+(iш+1)+' из '+все.length;
   }
+  var назад=document.getElementById('wz-prev'); if(назад) назад.hidden = WIZ.stage!=='form' || iш<=0 || WIZ.busy;
   var t=document.getElementById('picktitle'), nm=whoName();
-  if(t) t.textContent = (стр && WIZ.stage==='form') ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
-      : (знакомство && WIZ.stage==='form') ? (nm ? nm+', расскажи о себе' : 'Расскажи о себе')
-      : (цель && WIZ.stage==='form') ? 'Чего хочешь?'
-      : анкета0 ? (nm ? nm+', когда занимаешься?' : 'Когда занимаешься?')
+  if(t) t.textContent = шагЕда ? (nm && firstRun ? nm+', что будем вести?' : 'Что будем вести?')
+      : шагЗд ? 'Есть ограничения?'
+      : (знакомство && WIZ.stage==='form') ? 'Твои параметры'
+      : (цель && WIZ.stage==='form') ? 'Твоя цель'
+      : анкета0 ? 'Где и когда тренируешься?'
       : 'Собираем программу';
   var hi=document.getElementById('pickhi');
   if(hi){
@@ -5239,9 +5350,12 @@ function renderPicker(){
       ? (еда ? 'Одна страница. Дальше сразу норма на день.'
              : безПро() ? 'Одна страница. Дальше — готовая программа под твои дни, бесплатно.'
              : 'Одна страница. Дальше сразу программа — вопросы тренер задаст уже по ней.')
-      : знакомство ? 'Отсюда считаются стартовые веса и норма еды.'
-      : цель ? 'Без цели норма считается на поддержание — это не то, зачем ты пришёл.'
-      : 'Где и когда — и своими словами, чего хочешь. Остальное тренер спросит.';
+      : шагЕда ? 'Можно поменять потом в профиле.'
+      : шагЗд ? 'Чтобы учитывать их в норме и советах. Если ничего из этого нет — жми «Далее».'
+      : знакомство ? 'Для расчёта нормы и стартовых весов.'
+      : цель ? 'Без цели норма считается на поддержание.'
+      : безПро() ? 'Дальше — готовая программа под твои дни, бесплатно.'
+      : 'И своими словами, чего хочешь. Остальное тренер спросит.';
   }
 }
 /* ── одна страница: собрать всё разом ── */
@@ -5369,6 +5483,7 @@ function wzSaveMe(){
 }
 function wzApply(){
   if(!WIZ.prog) return;
+  if(firstRun) gset('startcard',1);
   чернСтереть();
   wzSaveMe();
   var дни=wizDays();
@@ -5393,7 +5508,8 @@ function showPicker(first){
   WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.oneErr=''; WIZ.show=false; WIZ.free=false;
   WIZ.after=false;
   /* профиль уже заполнен — второй раз про рост и возраст не спрашиваем */
-  WIZ.step = meFull() ? 'form' : 'me';
+  WIZ.step = firstRun ? 'only' : (meFull() ? 'form' : 'me');
+  WIZ.step0 = WIZ.step;
   wzЧисла=''; clearTimeout(wzЖдун);
   /* вернулся на середине — продолжаем с того места, а не с чистого листа */
   if(firstRun) чернВзять();
@@ -5406,6 +5522,7 @@ function hidePicker(){
   document.body.classList.remove('onb');
 }
 function choose(p){
+  if(firstRun) gset('startcard',1);
   hidePicker();
   чернСтереть();
   if(firstRun && !gget('startdate', null)) gset('startdate', TODAY);
@@ -6109,7 +6226,7 @@ function renderOnb(){
 function renderNudge(){
   renderOnb();
   try{ renderZdNudge(); }catch(e){}
-  try{ renderVoiceNudge(); }catch(e){}
+  try{ renderStartCard(); renderVoiceNudge(); }catch(e){}
   var el=document.getElementById('nudge'); if(!el) return;
   var me=myData()||{};
   var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
@@ -7490,6 +7607,7 @@ function ordБросить(e){
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
+  var gh=document.getElementById('gymhint'); if(gh) gh.hidden=!подсказкаВидна('gym') || !!ДЕНЬ_ДАТА;
   /* 07.10: прошлый день недели — тот же список, правка той записи; «Очистить
      день» и «+ Занятие вне зала» (они про сегодня) прячет CSS */
   var gw=document.getElementById('gym-work');
@@ -8778,6 +8896,7 @@ function сохранитьLAST(updated){
 }
 function commit(тихо){
   thaw();
+  if(!тихо && подсказкаВидна('gym')) try{ if(countDone()>0) подсказкаУбрать('gym'); }catch(e){}
   /* тихо — это фоновая досылка при запуске, а не правка человека:
      поднимать из-за неё вопрос о несохранённом нечестно */
   if(!тихо){ вПолёте=true; охрана(); }
@@ -10466,6 +10585,11 @@ document.getElementById('picker').addEventListener('click', function(e){
     if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-min') WIZ.min=+sb.dataset.v;
     renderPicker(); haptic('light'); return;
   }
+  var oc=e.target.closest('#wz-only button[data-only]');
+  if(oc){ WIZ.only=oc.dataset.only; renderPicker(); haptic('light'); return; }
+  if(e.target.closest('#wz-only-go')){ wzOnlyNext(); return; }
+  if(e.target.closest('#wz-health-go')){ wzHealthNext(); return; }
+  if(e.target.closest('#wz-prev')){ wzНазад(); return; }
   if(e.target.closest('#wz-one')){ wzOneGo(); return; }
   if(e.target.closest('#wz-me-go')){ wzMeNext(); return; }
   if(e.target.closest('#g-retry')){ WIZ.safeErr=false; renderPicker(); wzGoalPull(); haptic('light'); return; }
@@ -14256,6 +14380,7 @@ function renderFoodDay(){
   var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
   add.querySelector('small').textContent=едаБесплатноСлово();
+  var fh=document.getElementById('foodhint'); if(fh) fh.hidden=!(d && (d.meals||[]).length && подсказкаВидна('food'));
   renderGaps(d);
   if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : '<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
@@ -14834,6 +14959,7 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   if(ab){ fPost('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
   if(e.target.closest('.fact')) return;
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
+  if(подсказкаВидна('food')) подсказкаУбрать('food');
   var m=(FOOD.day&&FOOD.day.meals||[]).filter(function(x){ return String(x.id)===row.dataset.mid; })[0];
   if(m){ openMealView(Object.assign({date:(FOOD.day||{}).date||fDate()}, m)); haptic('light'); }
 });
