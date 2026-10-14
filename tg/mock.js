@@ -37,7 +37,9 @@ function день(o) {
                gymMin: 60, gymSets: 24, gymMet: 5, gymTempo: 'плотный' } },
     /* 18.09: зал входит в норму по факту. Флаг «сегодня день зала, но
        тренировки ещё нет» приходит с сервера отдельным полем. */
-    gymPlan: o.gymPlan !== undefined ? o.gymPlan : false
+    gymPlan: o.gymPlan !== undefined ? o.gymPlan : false,
+    /* 14.10, GF-04: незаписанные приёмы дня и ответ человека */
+    пробелы: o.пробелы !== undefined ? o.пробелы : null
   };
 }
 function неделя(o) {
@@ -227,6 +229,10 @@ async function поднять(page, o) {
     const сДатой = (д, date) => { const д2 = (o.day && o.day.date) || date; return Object.assign({}, д, { date: д2, free: свобДня(д2) }); };
     if (p === '/day')        { const date = u.searchParams.get('date') || TODAY;
       return дать(день_ ? { ok: true, day: сДатой(день_, date) } : { ok: true, day: сДатой(день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }), date) }); }
+    /* 14.10, GF-04: ответ про незаписанные приёмы. o.gaps копит запросы. */
+    if (p === '/day/gaps') { const b = JSON.parse(route.request().postData() || '{}'); (o.gaps = o.gaps || []).push(b);
+      const д = день_ || день({}); return дать({ ok: true, date: b.date, ответ: b.ответ,
+        day: Object.assign({}, д, { date: b.date, пробелы: Object.assign({}, д.пробелы || { kinds: [] }, { ответ: b.ответ }) }) }); }
     if (p === '/day/score')  { const date = u.searchParams.get('date') || TODAY;
       if ((o.free || []).includes(date)) return дать({ ok: true, free: true, closed: false, r: null, why: [], n: 0, приёмы: [] });
       return дать(оценка || { ok: true, r: null }); }
@@ -315,7 +321,7 @@ async function поднять(page, o) {
     if (p === '/sub') {
       if (o.sub === 'нет') return дать({ ok: true, stars: 500, link: 'https://t.me/$invoice_mock',
         title: 'GetFit — тренер', about: 'Разбор еды по фото и словам, разговор с тренером, сборка программы и недельный разбор.',
-        sub: { ok: false, kind: 'none', until: 0, stars: 500 } });
+        sub: { ok: false, kind: 'none', until: 0, stars: 500 }, бесплатно: o.бесплатно || { left: 3, of: 3, used: 0, calls: 0 } });
       if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
       if (o.sub === 'подарок') return дать({ ok: true, stars: 500, link: null,

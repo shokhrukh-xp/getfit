@@ -2673,6 +2673,11 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 #food-add{margin-top:14px;text-align:left;display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:var(--action);color:var(--on-accent)}
 #food-add[hidden]{display:none}
 .food-add small{font-size:12px;font-weight:400;color:#E1F0F3}
+/* 14.10, GF-04: незаписанные приёмы — один вопрос, две кнопки */
+.fgaps{margin:4px 0 12px;padding:12px 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
+.fgaps p{margin:0 0 10px;font-size:14px;color:var(--text)}
+.fgaps .fgb{display:flex;gap:8px}
+.fgaps .fgb .btn{flex:1;min-height:44px;padding:0 8px;white-space:nowrap;background:var(--surface);border:.5px solid var(--line-soft)}
 #fweek .fb.fb-hi{background:var(--accent)}
 #fweek .fb.fb-low{background:var(--warn)}
 #fweek .fbw .nb{background:var(--tint);opacity:1;border-radius:0}
@@ -3062,6 +3067,7 @@ body.ordmode #list .sstag{color:var(--text)}
         <div class="zseg" id="fseg-food"></div>
         <div class="fnav" id="fnav"></div>
         <div class="food-day-shell">
+        <div class="fgaps" id="fgaps" hidden></div>
         <div class="fday" id="fday"></div>
         <div class="group fmealgroup"><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
@@ -13020,7 +13026,7 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); } return d; }).catch(function(){ return null; });
+    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
 /* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
@@ -14190,12 +14196,43 @@ function foodHeroHtml(d, line){
   if(!fin) text=text.replace(/(До нормы(?: ещё|:)?) ([\d \u00a0]+)( ккал)/, '$1 <strong class="food-remaining">$2</strong>$3');
   return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml()+'</section>';
 }
+/* 14.10, GF-02: без подписки — 3 записи еды через ИИ в день. Сколько
+   осталось, видно на самой кнопке, а не после отправки. */
+function едаБесплатноСлово(){
+  var с=SUB&&SUB.sub, б=SUB&&SUB.бесплатно;
+  if(!с || с.ok || !б) return 'Фото или пара слов тренеру';
+  return б.left>0 ? 'Фото или пара слов · бесплатно ещё '+б.left+' из '+б.of : 'Бесплатные записи на сегодня кончились';
+}
+/* 14.10, GF-04: незаписанный приём — не значит «пропущен». Его выбор:
+   спрашивать. Сегодня и вчера; ответ хранит сервер, он же пересчитывает. */
+var GAPBUSY=false;
+function вчераСтр(){ var x=new Date(TODAY+'T12:00:00'); x.setDate(x.getDate()-1); return ymd(x); }
+function renderGaps(d){
+  var el=document.getElementById('fgaps'); if(!el) return;
+  var п=d&&d.пробелы, дата=d&&(d.date||fDate());
+  var показать=!!(п && п.kinds && п.kinds.length && !п.ответ && (d.meals||[]).length && дата>=вчераСтр() && !(d.free&&d.free.on));
+  el.hidden=!показать; if(!показать){ el.innerHTML=''; return; }
+  var что=п.kinds.join(п.kinds.length>2?', ':' и '); что=что.charAt(0).toUpperCase()+что.slice(1);
+  el.innerHTML='<p><b>'+esc(что)+' не '+(п.kinds.length>1?'записаны':'записан')+'.</b> '+(п.kinds.length>1?'Ты их ел?':'Ты '+(п.kinds[0]==='ужин'?'ужинал':п.kinds[0]==='обед'?'обедал':'завтракал')+'?')+'</p>'+
+    '<div class="fgb"><button type="button" class="btn small" data-gap="не записал"'+(GAPBUSY?' disabled':'')+'>Ел, не записал</button>'+
+    '<button type="button" class="btn small" data-gap="пропустил"'+(GAPBUSY?' disabled':'')+'>Не ел</button></div>';
+}
+document.addEventListener('click', function(e){
+  var b=e.target.closest('[data-gap]'); if(!b || GAPBUSY) return;
+  var d=FOOD.day; if(!d) return;
+  GAPBUSY=true; renderGaps(d);
+  fPost('/day/gaps', {uid:syncUid(), date:d.date||fDate(), ответ:b.dataset.gap})
+    .then(function(r){ GAPBUSY=false; if(r&&r.day){ FOOD.day=r.day; if(r.day.date===TODAY) HOME.day=r.day; renderFoodDay(); освежить(r.day); } haptic('ok'); })
+    .catch(function(err){ GAPBUSY=false; renderGaps(FOOD.day); fReply(humanErr(err),'bad'); });
+});
 function renderFoodDay(){
   var box=document.getElementById('fday'), ml=document.getElementById('fmeals'); if(!box) return;
   var d=FOOD.day && (!FOOD.day.date || FOOD.day.date===fDate()) ? FOOD.day : null;
   document.getElementById('fmealhead').textContent='Приёмы'+(d?' · '+(d.meals||[]).length:'');
   var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
+  add.querySelector('small').textContent=едаБесплатноСлово();
+  renderGaps(d);
   if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : '<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
   /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
@@ -15564,6 +15601,7 @@ function coachSend(text, image){
         {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null, act:(d.act&&d.act.length)?d.act:null}]);
       CHAT.pick=false;
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
+      if(d.бесплатно && SUB){ SUB.бесплатно=d.бесплатно; }
       if(d.day){
         if(d.day.date===TODAY) HOME.day=d.day;
         if(d.day.date===fDate()){ FOOD.day=d.day; FOOD.err=false; renderFoodDay(); }
