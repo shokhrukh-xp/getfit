@@ -2673,6 +2673,8 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 #food-add{margin-top:14px;text-align:left;display:flex;flex-direction:column;gap:4px;align-items:flex-start;background:var(--action);color:var(--on-accent)}
 #food-add[hidden]{display:none}
 .food-add small{font-size:12px;font-weight:400;color:#E1F0F3}
+.wzfree{margin:14px 0 8px}
+.wzfree .lnk{display:block;min-height:44px;padding:0;text-align:left}
 /* 14.10, GF-04: незаписанные приёмы — один вопрос, две кнопки */
 .fgaps{margin:4px 0 12px;padding:12px 14px;border-radius:14px;background:var(--card-2);border:.5px solid var(--line-soft)}
 .fgaps p{margin:0 0 10px;font-size:14px;color:var(--text)}
@@ -3344,7 +3346,7 @@ body.ordmode #list .sstag{color:var(--text)}
     <div class="cathead"><h3 id="subtitle">Тренер по подписке</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
     <p class="mtext" id="sub-what"></p>
     <ul class="subin" id="sub-list"></ul>
-    <p class="subfree">Дневник, нормы, зал, журнал, карта тела и рейтинг остаются бесплатными.</p>
+    <p class="subfree">Дневник еды (3 записи в день), нормы, зал, журнал, карта тела и рейтинг — бесплатно.</p>
     <button class="btn prim wide" id="sub-buy">Подключить</button>
     <!-- Промокод здесь, а не отдельным экраном: человеку, которому его дали,
          он нужен ровно в ту секунду, когда он увидел цену. -->
@@ -4810,6 +4812,22 @@ function readWzMe(){
    одном. Старая лесенка осталась для тех, кто открывает это окно потом
    («сменить программу»): им переспрашивать про рост и возраст незачем. */
 function однаСтр(){ return firstRun && WIZ.stage==='form'; }
+/* 14.10, GF-05: анкета обещала «собрать программу», а сборка — тренер по
+   подписке. Новичок без подписки заполнял страницу и упирался в оплату с
+   надписью «тренер недоступен». Его выбор: готовая программа — бесплатно,
+   индивидуальная — Pro. Подписку знаем из /sub; пока не знаем — как раньше,
+   а отказ сервера ведёт туда же, к готовым. */
+function безПро(){ return !!(SUB && SUB.sub && SUB.sub.ok===false); }
+/* подписка пришла, когда анкета уже открыта: поля не трогаем, только слова */
+function wzЯрлыкПро(){
+  if(!безПро() || WIZ.stage!=='form' || WIZ.busy || WIZ.ждёт) return;
+  var one=document.getElementById('wz-one'); if(one && !one.hidden && one.textContent==='Собрать программу') one.textContent='Подобрать программу';
+  var hi=document.getElementById('pickhi'); if(hi && !hi.hidden && /Дальше сразу программа/.test(hi.textContent)) hi.textContent='Одна страница. Дальше — готовая программа под твои дни, бесплатно.';
+}
+function wzГотовые(){
+  WIZ.busy=false; WIZ.free=true; WIZ.err=''; WIZ.fallback=false; WIZ.stage='form';
+  renderPicker(); wzScroll(); haptic('light');
+}
 function wzMeSave(тихо){
   var v=readWzMe(), нет=[];
   if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
@@ -4958,13 +4976,14 @@ function renderWzList(){
   var h='', me=myData()||{};
   /* «только еда» — программы не предлагаем вовсе, ни своей, ни готовой */
   if((WIZ.only||me.only)==='food'){ box.innerHTML=''; return; }
-  var готовые = WIZ.fallback || WIZ.show || !firstRun;
+  var готовые = WIZ.fallback || WIZ.show || WIZ.free || !firstRun;
   Object.keys(PROFILES).filter(function(k){ return PROFILES[k].custom; }).forEach(function(k){
     var P=PROFILES[k];
     h+='<button class="pbtn best" data-prof="'+k+'"><em>твоя программа</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
   });
   if(готовые){
-    if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
+    if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно, первая подходит тебе больше всех. Свою под тебя соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
+    else if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
     var scored=Object.keys(PROFILES).filter(function(k){ return !PROFILES[k].custom; }).map(function(k){
       return {k:k, s:fitScore(k, {wt:goalPair(me).wt, gym:goalPair(me).gym, level:me.level||'new', place:WIZ.place}, wizDays().length)};
     }).sort(function(a,b){ return b.s-a.s; });
@@ -5192,7 +5211,7 @@ function renderPicker(){
   if(one){
     one.hidden = !(стр && WIZ.stage==='form');
     one.disabled = !!(WIZ.busy || WIZ.ждёт);
-    one.textContent = (WIZ.busy || WIZ.ждёт) ? 'Собираю…' : (еда ? 'Начать' : 'Собрать программу');
+    one.textContent = (WIZ.busy || WIZ.ждёт) ? 'Собираю…' : (еда ? 'Начать' : безПро() ? 'Подобрать программу' : 'Собрать программу');
   }
   var oe=document.getElementById('wz-one-err');
   if(oe){ oe.hidden = !(стр && WIZ.oneErr); oe.textContent = WIZ.oneErr||''; }
@@ -5218,6 +5237,7 @@ function renderPicker(){
     hi.hidden = WIZ.stage!=='form';
     hi.textContent = стр
       ? (еда ? 'Одна страница. Дальше сразу норма на день.'
+             : безПро() ? 'Одна страница. Дальше — готовая программа под твои дни, бесплатно.'
              : 'Одна страница. Дальше сразу программа — вопросы тренер задаст уже по ней.')
       : знакомство ? 'Отсюда считаются стартовые веса и норма еды.'
       : цель ? 'Без цели норма считается на поддержание — это не то, зачем ты пришёл.'
@@ -5245,6 +5265,7 @@ function wzOneGo(){
   WIZ.busy=true; WIZ.err=''; renderPicker(); haptic('medium');
   wzGoalSend().then(function(){
     if(еда){ WIZ.busy=false; чернСтереть(); choose(profile||'shp'); return; }
+    if(безПро()){ wzГотовые(); return; }
     WIZ.after=false; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
     wzSend();
   }).catch(function(){
@@ -5317,6 +5338,7 @@ function wzSend(){
       renderPicker();
     })
     .catch(function(e){
+      if(e && e.code==='sub' && !WIZ.prog){ subPull(); wzГотовые(); return; }
       WIZ.busy=false; WIZ.err=humanErr(e); WIZ.fallback=true; haptic('err');
       renderPicker();
     })
@@ -5368,7 +5390,7 @@ function wzReset(){
 var firstRun=false;
 function showPicker(first){
   firstRun = !!first;
-  WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.oneErr=''; WIZ.show=false;
+  WIZ.stage='form'; WIZ.err=''; WIZ.meErr=''; WIZ.oneErr=''; WIZ.show=false; WIZ.free=false;
   WIZ.after=false;
   /* профиль уже заполнен — второй раз про рост и возраст не спрашиваем */
   WIZ.step = meFull() ? 'form' : 'me';
@@ -10457,6 +10479,7 @@ document.getElementById('picker').addEventListener('click', function(e){
   if(e.target.closest('#wz-go')){
     var ta=document.getElementById('wz-text'); if(ta) WIZ.text=ta.value.trim();
     if(!wizDays().length){ renderPicker(); haptic('err'); return; }
+    if(безПро()){ wzГотовые(); return; }
     wzSend(); haptic('medium'); return;
   }
   var op=e.target.closest('[data-opt]');
@@ -10469,6 +10492,7 @@ document.getElementById('picker').addEventListener('click', function(e){
   if(e.target.closest('#wzapply')){ wzApply(); return; }
   if(e.target.closest('#wzagain')){ wzReset(); return; }
   if(e.target.closest('#wzhave')){ WIZ.show=true; renderPicker(); haptic('light'); return; }
+  if(e.target.closest('#wz-pro')){ openSub(); haptic('light'); return; }
   var b=e.target.closest('button[data-prof]'); if(b) choose(b.dataset.prof);
 });
 document.getElementById('wz-text').addEventListener('input', function(e){ WIZ.text=e.target.value; });
@@ -13026,7 +13050,7 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} } return d; }).catch(function(){ return null; });
+    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){} } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
 /* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
@@ -13080,7 +13104,7 @@ function renderSub(){
   var ц=SUB.stars||500;
   w.textContent='Тренер — '+ц+' ★ в месяц. Списывается раз в месяц, отменить можно в любой момент.';
   var l=document.getElementById('sub-list');
-  if(l) l.innerHTML=['Разбор еды по фото и по словам — калории, белок, жиры, клетчатка',
+  if(l) l.innerHTML=['Разбор еды без ограничений — фото и словами: калории, белок, жиры, клетчатка',
     'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
     'Сборка программы под тебя и правки по ходу',
     'Недельный разбор: что получилось, что менять'].map(function(t){ return '<li>'+t+'</li>'; }).join('');
