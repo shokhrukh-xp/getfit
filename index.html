@@ -5409,8 +5409,9 @@ function чернВзять(){
   return true;
 }
 /* ── ход разговора ── */
-var wzCtl=null;
+var wzCtl=null, WZGEN=0;   /* 15.10: поколение разговора — ответ после «Начать по ней» не возвращает экран сборки */
 function wzSend(){
+  var gen=WZGEN;
   WIZ.busy=true; WIZ.err=''; WIZ.stage = WIZ.stage==='form' ? 'chat' : WIZ.stage;
   renderPicker();
   var me=myData()||{};
@@ -5428,6 +5429,7 @@ function wzSend(){
       if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
       return d; }); })
     .then(function(d){
+      if(gen!==WZGEN) return;
       WIZ.busy=false;
       var былоПосле=!!WIZ.after;
       if(d.prog && d.prog.days && d.prog.days.length){
@@ -5452,6 +5454,7 @@ function wzSend(){
       renderPicker();
     })
     .catch(function(e){
+      if(gen!==WZGEN) return;
       if(e && e.code==='sub' && !WIZ.prog){ subPull(); wzГотовые(); return; }
       WIZ.busy=false; WIZ.err=humanErr(e); WIZ.fallback=true; haptic('err');
       renderPicker();
@@ -5481,8 +5484,17 @@ function wzSaveMe(){
     if(wp){ me.plan=wp; me.plan_at=Date.now(); } else me.sports=String(WIZ.sports).slice(0,120); ch=true; }
   if(ch){ gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
 }
+/* Остановить разговор знакомства: 15.10, проверка на Xplorence — «Начать по
+   ней», нажатое, пока тренер думал над уточнением, применяло программу, а
+   пришедший следом ответ снова открывал экран сборки с вопросом. */
+function wzСтоп(){
+  WZGEN++; WIZ.busy=false;
+  if(wzCtl){ try{ wzCtl.abort(); }catch(e){} wzCtl=null; }
+}
 function wzApply(){
   if(!WIZ.prog) return;
+  wzСтоп();
+  var первый=firstRun;
   if(firstRun) gset('startcard',1);
   чернСтереть();
   wzSaveMe();
@@ -5495,8 +5507,12 @@ function wzApply(){
     GYM_DAYS=schedNorm(дни.reduce(function(o,d){ o[d]=1; return o; },{}));
     saveSched(); renderDayseg(); renderDayHead(); renderTodaybar();
   }
+  /* 15.10: первое знакомство кончается на «Сегодня», где ждёт «С чего начнём?»,
+     а не в зале — иначе карточку новичок не видит */
+  if(первый){ try{ goPage('home'); renderStartCard(); }catch(e){} }
 }
 function wzReset(){
+  wzСтоп();
   WIZ.stage='form'; WIZ.step='form'; WIZ.qa=[]; WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
   WIZ.prog=null; WIZ.err=''; WIZ.oneErr=''; WIZ.after=false;
   чернСтереть();
@@ -6501,7 +6517,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '14.10 22:34';
+var BUILD = '15.10 08:25';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль

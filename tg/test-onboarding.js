@@ -43,12 +43,23 @@ const вид=(p,s)=>p.evaluate(s=>{const e=document.querySelector(s);return !!e&
   await M.поднять(p,{theme:'dark',newbie:true,wait:2500});
   await M.шаги(p,{});await p.click('#wz-go');await p.waitForSelector('#wzapply',{timeout:8000}).catch(()=>{});
   await p.click('#wzapply');await p.waitForTimeout(1500);
-  await p.click('.l1 [data-page="home"]').catch(()=>{});await p.waitForTimeout(500);
+  /* 15.10: после «Начать по ней» — сразу «Сегодня», где ждёт карточка */
+  ok(await вид(p,'#p-home') && await вид(p,'#startcard'),'после «Начать по ней» — сразу «Сегодня» с «С чего начнём?»');
   const кн=await p.$$eval('#startcard [data-start]',bs=>bs.map(x=>x.dataset.start).join());
   ok(кн==='food,gym,later','еда и зал — и тренировка тоже: '+кн);
   await p.click('#startcard [data-start="later"]');await p.waitForTimeout(300);
   await p.reload({waitUntil:'domcontentloaded'});await p.waitForTimeout(2500);
   ok(!(await вид(p,'#startcard')),'«Позже» — и больше не появляется');
+  await p.close();}
+ /* 15.10: «Начать по ней», пока тренер думает над уточнением, — принятие не сбивается */
+ {const p=await b.newPage({viewport:{width:390,height:844}});
+  const o={theme:'dark',newbie:true,wait:2500,onboardDelay:2500};
+  await M.поднять(p,o);
+  await M.шаги(p,{});await p.click('#wz-go');await p.waitForSelector('#wzapply',{timeout:8000}).catch(()=>{});
+  await p.click('#wzapply');await p.waitForTimeout(3500);
+  ok(!(await вид(p,'#wzapply')),'ответ тренера после «Начать по ней» не открывает сборку снова');
+  ok(!(await p.evaluate(()=>document.body.innerHTML.indexOf('Колени или спина беспокоят')>=0)),'опоздавший вопрос тренера отброшен, а не дорисован в сборку');
+  ok(await вид(p,'#p-home'),'и человек остаётся на «Сегодня»');
   await p.close();}
  /* 3. подсказки: первая еда и первый зал */
  for(const theme of ['light','dark']){

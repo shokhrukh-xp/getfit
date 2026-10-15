@@ -599,6 +599,8 @@ async function поднять(page, o) {
     if (p === '/onboard') {
       const b = JSON.parse(route.request().postData() || '{}');
       o.онб = (o.онб || []).concat([b]);
+      /* o.onboardDelay — задержка уточнений (after), чтобы нажать «Начать по ней», пока тренер думает (15.10) */
+      if (o.onboardDelay && b.after && !route.__ждали) { route.__ждали = 1; await new Promise(r => setTimeout(r, o.onboardDelay)); }
       if (o.onOnboard) return дать(o.onOnboard(b));
       const у = (id, n, м, п) => ({ id, n, en: n, m: м, q: 'machine', p: п, sets: 3, reps: '8–12', rest: 90, ss: null, why: 'по каталогу' });
       const день = (s, sub, ex) => ({ s, sub, ex });
