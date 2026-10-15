@@ -5800,8 +5800,11 @@ function menuPull(){
 }
 function menuЗавтра(){ var d=new Date(); d.setDate(d.getDate()+1); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 function menuСвежее(span){
-  if(!MENU) return null; var m=span==='week'?MENU.week:MENU.day;
-  return (m && m.from===(MENU.завтра||menuЗавтра()) && Array.isArray(m.дни)) ? m : null;
+  if(!MENU) return null; var m=span==='week'?MENU.week:MENU.day, з=MENU.завтра||menuЗавтра();
+  if(!m || !Array.isArray(m.дни)) return null;
+  /* 15.10 (ревью Codex): неделя действует, пока в ней есть завтрашний день, — не только в день сборки */
+  if(m.from===з) return m;
+  return (span==='week' && m.дни.some(function(d){ return d && d.date===з; })) ? m : null;
 }
 function menuСобрать(span){
   if(MENUBUSY) return;
@@ -5809,6 +5812,10 @@ function menuСобрать(span){
   fPost('/menu', {uid:syncUid(), span:span}).then(function(d){
     if(!d || !d.ok){ MENUERR=(d&&d.нет)||'Меню не сложилось — попробуй ещё раз.'; haptic('err'); return; }
     MENU=MENU||{}; MENU[span==='week'?'week':span==='today'?'today':'day']=d; if(span!=='today' && !MENU.завтра) MENU.завтра=d.from; MENUREC={};
+    /* 15.10 (GF-09): одно меню на дату — день, собранный заново, сервер кладёт
+       в неделю и отдаёт её; новая неделя меняет и «Завтра» */
+    if(d.неделя){ MENU.week=d.неделя; delete d.неделя; }
+    if(span==='week') setTimeout(menuPull, 0);
     haptic('ok');
   }).catch(function(e){ MENUERR=humanErr(e); haptic('err'); })
   .then(function(){ MENUBUSY=''; renderEat(); });
@@ -5846,7 +5853,7 @@ function menuПриём(x, span, m){
      едят как есть) — кнопки «Рецепт» нет (его выбор из трёх). Меню до 25.09
      пометок не знает: там сервер скажет «готовое» по нажатию. */
   var рец = (x.готовое || (r && r.готовое))
-    ? '<p class="msost mgot">Готовить не нужно</p>'
+    ? '<p class="msost mgot">Готовить не нужно'+((x.гот||[]).length?': '+esc(x.гот.map(function(n){return String(n).toLowerCase();}).join(', ')):'')+' — покупаешь готовым или ешь как есть</p>'
     : (r && r.шаги)
     ? '<ol class="mrec">'+r.шаги.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ol>'+
       (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
@@ -5963,7 +5970,10 @@ function menuHTML(){
       return '<button type="button" data-menu-day="'+esc(d.date)+'" aria-pressed="'+(d.date===MENUWEEKDATE)+'"><b>'+WD[dt.getDay()]+'</b><span>'+ruDate(d.date)+'</span></button>';
     }).join('')+'</div>';
     h+=грМенюHTML(m.группы)+menuNote(m.note)+menuДень(m.дни.filter(function(d){return d.date===MENUWEEKDATE;})[0],span,m);
-  }else h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
+  }else{
+    if(m.изНедели) h+='<p class="mitog" id="mizned">День из меню недели. «Другое меню» заменит его в неделе, покупки пересчитаются.</p>';
+    h+=m.дни.map(function(д){ return menuДень(д, span, m); }).join('');
+  }
   h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="'+span+'">Другое меню</button>'+
      menuSendButton(span+':menu')+'</div>';
   return h;
@@ -5976,9 +5986,11 @@ function buyHTML(){
   var p=m.покупки||{отделы:[],дома:[]}, span=m.span, отм=gget('buy_'+span+'_'+m.from,{})||{};
   var h='<div class="mdh top"><b>Покупки '+(span==='week'?'на неделю':'на завтра')+'</b><span>'+(span==='week'?'с ':'')+menuДата(m.from)+'</span></div>';
   h+='<p class="mitog">'+(p.семья>1?'На '+p.семья+' чел., примерно · ':'')+'в сырых весах'+((p.дома||[]).length?' · дома уже есть: '+esc(p.дома.join(', ')):'')+'</p>';
+  if(p.пояснение) h+='<details class="menu-note" id="bpoyas"><summary>Как посчитан вес</summary><p>'+esc(p.пояснение)+'</p></details>';
   (p.отделы||[]).forEach(function(o){
     h+='<div class="botd">'+esc(o.отдел)+'</div>'+o.список.map(function(x){
-      return '<button type="button" class="bitem" data-buy="'+esc(x.имя)+'" aria-pressed="'+(!!отм[x.имя])+'"><i></i><span>'+esc(x.имя)+' — '+esc(x.сколько)+'</span></button>'; }).join('');
+      /* 15.10 (ревью Codex): отметка хранит количество — пересчитали неделю, стало больше, отметка снята */
+      return '<button type="button" class="bitem" data-buy="'+esc(x.имя)+'" data-buyq="'+esc(x.сколько)+'" aria-pressed="'+(отм[x.имя]===x.сколько)+'"><i></i><span>'+esc(x.имя)+' — '+esc(x.сколько)+'</span></button>'; }).join('');
   });
   h+='<div class="btnrow mbtns">'+menuSendButton(span+':buy',true)+'</div>';
   return h;
@@ -5994,8 +6006,9 @@ function menuКлик(e){
   var ms=e.target.closest('[data-msend]'); if(ms){ menuОтправить(ms.dataset.msend); haptic('light'); return true; }
   var bi=e.target.closest('[data-buy]');
   if(bi){ var m=menuСвежее('week')||menuСвежее('day'); if(!m) return true;
-    var k='buy_'+m.span+'_'+m.from, о=gget(k,{})||{}; if(о[bi.dataset.buy]) delete о[bi.dataset.buy]; else о[bi.dataset.buy]=1; gset(k,о);
-    bi.setAttribute('aria-pressed', String(!!о[bi.dataset.buy])); haptic('light'); return true; }
+    var k='buy_'+m.span+'_'+m.from, о=gget(k,{})||{}, q=bi.dataset.buyq||'1';
+    if(о[bi.dataset.buy]===q) delete о[bi.dataset.buy]; else о[bi.dataset.buy]=q; gset(k,о);
+    bi.setAttribute('aria-pressed', String(о[bi.dataset.buy]===q)); haptic('light'); return true; }
   return false;
 }
 /* из разговора: «составь меню» — кнопка под ответом открывает нужный вид */
@@ -6517,7 +6530,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.10 08:25';
+var BUILD = '15.10 09:33';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
