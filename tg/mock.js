@@ -141,6 +141,8 @@ async function поднять(page, o) {
   const оценка = o.score === null ? null
     : Object.assign({ ok: true, r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }] }, o.score || {});
 
+  /* 15.10: быт перед первым меню — на стенде вопрос уже пропущен, если проверка не просит его (o.bytAsk) */
+  if (!o.bytAsk) await page.addInitScript(() => { try { if (!localStorage.getItem('shp_v1_byt_ask')) localStorage.setItem('shp_v1_byt_ask', '1'); } catch (e) {} });
   await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз, цвета, tgId]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но

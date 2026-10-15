@@ -2844,6 +2844,7 @@ body.onb #picker .modalbox{max-height:100%;border-radius:0}
 .menu-left{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:12px 0}
 .menu-left b{color:var(--text)}
 .menu-note{font-size:13px;color:var(--muted);margin:4px 0}
+.mbyt{display:block}.mbyt>b{display:block;font-size:16px;margin-bottom:6px}
 .menu-note summary{color:var(--muted)}
 #p-eat .mnrow{padding:14px 0;border-bottom:1px solid var(--line)}
 #p-eat .mhd{font-size:12px;gap:8px;flex-wrap:wrap}
@@ -5806,8 +5807,50 @@ function menuСвежее(span){
   if(m.from===з) return m;
   return (span==='week' && m.дни.some(function(d){ return d && d.date===з; })) ? m : null;
 }
+/* ══ БЫТ ПЕРЕД ПЕРВЫМ МЕНЮ (15.10, его выбор «Спросить быт перед первым меню») ══
+   Живая неделя на Xplorence: быт пуст — тренер часть блюд счёл купленными
+   готовыми («грудка гриль» в «Готовых блюдах»), а часть — сырыми, и курица
+   встала в покупки дважды. Пока быт пуст и вопрос не пропущен, вместо сборки —
+   три коротких вопроса; ответы ложатся в быт профиля (тот же, что в «Быт и еда»). */
+var MENUBYT='', MENUBYTBUSY=false, MENUBYTERR='';
+/* byt_dirty: ответы записаны у себя, но сервер их ещё не подтвердил — меню
+   без них соберётся по старому быту, поэтому карточка держится до «ok» */
+function бытНужен(){
+  if(gget('byt_dirty',0)) return true;
+  var b=(myData()||{}).byt||{};
+  return !gget('byt_ask',0) && !b.cook && !(b.where||[]).length && !(+b.min>0);
+}
+var МБ_MIN=[['15','до 15'],['30','до 30'],['60','до 60'],['90','больше']];
+function бытКарточка(span){
+  var b=(myData()||{}).byt||{};
+  return '<div class="mbyt" id="mbyt" data-span="'+esc(span)+'"><b>Пара вопросов перед меню</b>'+
+    '<p class="podall">Чтобы тренер ставил то, что ты правда будешь есть, а в покупках не было лишнего.</p>'+
+    '<div class="pf pfcol"><span class="pfl">где обычно ешь</span>'+здSeg('mb-where', БТ_WHERE.slice(0,3), бтМн(b.where), true)+'</div>'+
+    '<div class="pf pfcol"><span class="pfl">кто готовит</span>'+здSeg('mb-cook', [['сам','сам(а)'],['семья','семья'],['не готовлю','не готовлю']], b.cook||'', false)+'</div>'+
+    '<div class="pf pfcol"><span class="pfl">минут на готовку в день</span>'+здSeg('mb-min', МБ_MIN, b.min?String(b.min):'', false)+'</div>'+
+    (MENUBYTERR?'<p class="mwarn">'+esc(MENUBYTERR)+'</p>':'')+
+    '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mbyt="save"'+(MENUBYTBUSY?' disabled':'')+'>'+(MENUBYTBUSY?'Сохраняю…':'Собрать меню')+'</button>'+
+    '<button type="button" class="btn" data-mbyt="skip">Пропустить</button></div>'+
+    '<p class="invnote">Поменять можно в профиле → «Быт и еда».</p></div>';
+}
+function бытСохранить(){
+  var один=function(id){ var x=document.querySelector('#'+id+' button[aria-pressed="true"]'); return x?x.dataset.v:''; };
+  var мн=function(id){ return Array.prototype.map.call(document.querySelectorAll('#'+id+' button[aria-pressed="true"]'), function(x){ return x.dataset.v; }); };
+  var me=myData()||{}, b=Object.assign({}, me.byt||{});
+  var где=мн('mb-where'), кто=один('mb-cook'), мин=+один('mb-min')||0;
+  var готово=function(){ gset('byt_ask',1); gset('byt_dirty',0); try{ бтРендер(); }catch(e){} };
+  /* ничего не отметили — то же, что «Пропустить»; повтор после сбоя шлёт уже записанное */
+  if(!где.length && !кто && !мин && !gget('byt_dirty',0)){ готово(); return Promise.resolve(); }
+  if(где.length) b.where=где; if(кто) b.cook=кто; if(мин) b.min=мин;
+  me.byt=b; me.byt_at=Date.now(); gset('me', me);
+  if(!(meFull() && DB)){ готово(); return Promise.resolve(); }
+  gset('byt_dirty',1);
+  /* ждём подтверждения сервера (не копии Telegram): меню читает быт оттуда */
+  return сохранитьСостояние('state/me', {me:me, at:new Date().toISOString()}).then(готово);
+}
 function menuСобрать(span){
   if(MENUBUSY) return;
+  if(бытНужен()){ if(MENUBYT!==span){ MENUBYT=span; renderEat(); } return; }
   MENUBUSY=span; MENUERR=''; renderEat();
   fPost('/menu', {uid:syncUid(), span:span}).then(function(d){
     if(!d || !d.ok){ MENUERR=(d&&d.нет)||'Меню не сложилось — попробуй ещё раз.'; haptic('err'); return; }
@@ -5922,15 +5965,17 @@ function сегодняПроверить(фон){
 function сегодняHTML(){
   if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
   var m=сегодняСвежее(), занят=MENUBUSY==='today', h='';
+  /* пересборка упёрлась в вопросы о быте — без карточки старое меню висело бы молча */
+  if(MENUBYT==='today' && бытНужен()) return бытКарточка('today');
   var точки='<span class="dots"><i></i><i></i><i></i></span>';
   if(!m){
-    if(занят) return '<p class="podall">Собираю меню на остаток дня из твоей же еды — секунд 20'+точки+'</p>';
+    if(занят) return '<p class="podall">Собираю меню на остаток дня из твоей же еды — до минуты, можно пока открыть другую вкладку'+точки+'</p>';
     return (MENUERR?'<p class="mwarn">'+esc(MENUERR)+'</p>':'')+
       '<p class="podall">Меню на остаток дня — из того, что ты обычно ешь, с граммами под то, что осталось от нормы.</p>'+
       '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="today">Собрать меню на сегодня</button></div>';
   }
   h+='<div class="mdh top"><b>Меню на остаток дня</b><span>'+menuДата(m.date)+'</span></div>';
-  if(занят) h+='<p class="mnote">Пересобираю под новый остаток — секунд 20'+точки+'</p>';
+  if(занят) h+='<p class="mnote">Пересобираю под новый остаток — до минуты'+точки+'</p>';
   else if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
   h+=menuStats(m.съел.kcal,m.съел.prot,m.норма.kcal,m.норма.prot)+'<div class="menu-left"><span>Осталось</span><b>'+m.ост.kcal+' ккал</b><b>'+m.ост.prot+' г белка</b></div>'+(m.зал?'<p class="mitog">день зала</p>':'');
   (m.съедено||[]).forEach(function(x){
@@ -5954,7 +5999,8 @@ function menuHTML(){
   if(EATSEG==='buy') return buyHTML();
   if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
   var span = EATSEG==='week'?'week':'day', m=menuСвежее(span), h='';
-  if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю из твоей же еды — это до минуты':'Собираю меню на завтра из твоей же еды — секунд 20')+'<span class="dots"><i></i><i></i><i></i></span></p>';
+  if(MENUBYT===span && бытНужен()) return бытКарточка(span);
+  if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю из твоей же еды — минуту-полторы, можно пока открыть другую вкладку':'Собираю меню на завтра из твоей же еды — до минуты, можно пока открыть другую вкладку')+'<span class="dots"><i></i><i></i><i></i></span></p>';
   if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
   if(!m) return h+'<p class="podall">'+(span==='week'
       ? 'Меню на неделю — круг из твоих же блюд: 2–3 завтрака и 3–4 обеда и ужина, чтобы готовить два-три раза в неделю. Порции — под норму каждого дня, покупки — списком.'
@@ -5996,6 +6042,23 @@ function buyHTML(){
   return h;
 }
 function menuКлик(e){
+  var mbs=e.target.closest('#mbyt .seg button');
+  if(mbs && MENUBYTBUSY) return true; /* ответы уже ушли — не менять их на лету */
+  if(mbs){ var seg=mbs.parentNode, мн=seg.classList.contains('multi'), был=mbs.getAttribute('aria-pressed')==='true';
+    if(!мн) Array.prototype.forEach.call(seg.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed','false'); });
+    mbs.setAttribute('aria-pressed', String(мн?!был:true)); haptic('light'); return true; }
+  var mb=e.target.closest('[data-mbyt]');
+  if(mb){ var sp=(document.getElementById('mbyt')||{}).dataset; sp=(sp&&sp.span)||MENUBYT||'day';
+    if(MENUBYTBUSY) return true;
+    var запуск=function(){ MENUBYT=''; MENUBYTERR=''; if(sp==='today'){ var дс0=деньСегодня(); MENUTRY=дс0?подписьДня(дс0):''; } menuСобрать(sp); };
+    haptic('light');
+    if(mb.dataset.mbyt!=='save'){ gset('byt_ask',1); gset('byt_dirty',0); запуск(); return true; }
+    /* сначала снять ответы с карточки — renderEat её перерисует */
+    var сохр; try{ сохр=бытСохранить(); }catch(err){ сохр=Promise.reject(err); }
+    MENUBYTBUSY=true; MENUBYTERR=''; renderEat();
+    сохр.then(function(){ MENUBYTBUSY=false; запуск(); }, function(){
+      MENUBYTBUSY=false; MENUBYTERR='Не получилось сохранить ответы — проверь связь и нажми ещё раз. Меню пока не собираю.'; renderEat(); });
+    return true; }
   var md=e.target.closest('[data-menu-day]');
   if(md){MENUWEEKDATE=md.dataset.menuDay;renderEat();haptic('light');return true;}
   var es=e.target.closest('[data-eseg]'); if(es){ EATSEG=es.dataset.eseg; MENUERR=''; renderEat(); haptic('light'); return true; }
@@ -6530,7 +6593,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '15.10 09:33';
+var BUILD = '15.10 11:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
