@@ -155,22 +155,25 @@ const снимок = page => page.evaluate(() => ({
       'сделанные подходы остались редактируемыми');
   }
 
-  /* ── «ЗАМЕНЕНО» ДЕРЖИТСЯ ДЕСЯТЬ СЕКУНД ──
-     Надпись висела навсегда и читалась как запертая кнопка. */
-  const кнЗам = await page.$('.card.exact [data-swap]');
+  /* ── ЗАМЕНА ИЗ КАРТОЧКИ ──
+     (16.09–16.10 тут проверялось «Заменено» на десять секунд — той кнопки нет.) */
+  /* 16.10: «Заменить» в подвале открывает шторку; «Выбрать самому» в ней —
+     каталог на замену этого упражнения (раньше — отдельная кнопка data-swap) */
+  const кнЗам = await page.$('.card.exact [data-nope]');
   if (кнЗам) {
-    дано(/Заменить/.test(await кнЗам.textContent()), 'до замены кнопка зовёт заменить');
-    await кнЗам.click();
+    дано(/Заменить/.test(await кнЗам.textContent()), 'в подвале кнопка «Заменить»');
+    const былоИмя = await page.$eval('.card.exact .exname', e => e.textContent.trim());
+    await кнЗам.click(); await page.waitForTimeout(400);
+    const сам = await page.$('.card.exact .nope2 [data-swap]');
+    дано(!!сам && /Выбрать самому/.test(await сам.textContent()), 'в шторке есть «Выбрать самому»');
+    await сам.click();
     await page.waitForTimeout(1200);
     const пик = await page.$('#catbody .catpick, #catbody [data-pick]');
     if (пик) {
       await пик.click();
-      await page.waitForTimeout(700);
-      const сразу = await page.$eval('.card.exact [data-swap], .exrow + * [data-swap]', e => e.textContent).catch(() => '');
-      дано(/Заменено/.test(сразу), 'сразу после замены сказано «Заменено»: ' + сразу);
-      await page.waitForTimeout(11000);
-      const потом = await page.$eval('.card.exact [data-swap], [data-swap]', e => e.textContent).catch(() => '');
-      дано(/Заменить/.test(потом), 'через десять секунд снова можно заменить: ' + потом);
+      await page.waitForTimeout(900);
+      const стало = await page.$$eval('#list .exrow .exrn b, #list .card.exact .exname', ns => ns.map(n => n.textContent.trim()));
+      дано(стало.length && стало.indexOf(былоИмя) < 0, 'выбранное из каталога встало вместо «' + былоИмя + '»');
     } else дано(false, 'каталог замены не открылся');
   }
 

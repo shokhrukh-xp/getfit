@@ -65,7 +65,7 @@ const открытьФильтры = async page => {
   const чип = await page.$('#pcatfilters .mchips[data-f="nope"] .mchip[data-v="no"]');
   дано(!!чип, 'фильтр появился, как только появилась первая отметка');
   const подпись = чип ? (await чип.textContent()).replace(/\s+/g, ' ').trim() : '';
-  дано(/👎/.test(подпись) && /1/.test(подпись), 'на чипе палец и счёт: ' + подпись);
+  дано(/заменённые/.test(подпись) && /1/.test(подпись), 'на чипе «заменённые» и счёт: ' + подпись);
 
   await чип.click();
   await page.waitForTimeout(900);
@@ -86,7 +86,7 @@ const открытьФильтры = async page => {
   const вСтроке = await page.$eval('#pcatbody [data-unnope]', e => e.dataset.unnope).catch(() => '');
   дано(!!ключ && ключ === вСтроке, 'в списке ровно то упражнение, что отмечено: ' + вСтроке);
   дано(строки[0] && строки[0].кнопка === 'вернуть', 'вместо «видео» — «вернуть»: ' + (строки[0] || {}).кнопка);
-  дано(/отмеченные/.test(await page.textContent('#pcatfbtn')), 'кнопка фильтров признаётся, что фильтрует: ' + (await page.textContent('#pcatfbtn')).replace(/\s+/g, ' ').trim());
+  дано(/заменённые/.test(await page.textContent('#pcatfbtn')), 'кнопка фильтров признаётся, что фильтрует: ' + (await page.textContent('#pcatfbtn')).replace(/\s+/g, ' ').trim());
 
   /* ── вернули: отметка снята, список опустел, фильтр сам выключился ── */
   await page.click('#pcatbody [data-unnope]');

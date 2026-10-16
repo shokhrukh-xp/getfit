@@ -40,8 +40,9 @@ async function раскрыть(page, i) {
 
   await раскрыть(page, 0);
   const кнопки = await page.$$eval('.card.exact .exfoot button', ns => ns.map(n => n.textContent.trim()));
-  дано(кнопки[0] === '👍' && кнопки[1] === '👎', 'в карточке оба пальца: ' + кнопки.join(' · '));
-  дано(кнопки.indexOf('Заменить') < 0, 'кнопки «Заменить» больше нет — палец вниз и есть замена');
+  /* 16.10, его слова: «убери лайк дислайк, лучше добавь кнопку „заменить“» */
+  дано(кнопки[0] === 'Заменить', 'первая кнопка — «Заменить»: ' + кнопки.join(' · '));
+  дано(!кнопки.some(t => /👍|👎/.test(t)) && !(await page.$('.card.exact [data-like]')), 'пальцев 👍/👎 больше нет');
 
   /* ── палец вниз меняет упражнение ── */
   const было = await page.$eval('.card.exact .exname', e => e.textContent.trim());
@@ -82,13 +83,13 @@ async function раскрыть(page, i) {
   дано(отказы.length === 2 && отказы.indexOf(было) >= 0 && отказы.indexOf(стало1) >= 0,
     'оба отказа записаны навсегда: ' + отказы.join(' · '));
 
-  /* ── палец вверх ── */
+  /* ── «Выбрать самому» из шторки — каталог на замену этого упражнения ── */
   await раскрыть(page, 0);
-  await page.click('.card.exact [data-like]');
-  await page.waitForTimeout(600);
-  await раскрыть(page, 0);
-  дано(await page.$eval('.card.exact [data-like]', e => e.getAttribute('aria-pressed') === 'true'),
-    'палец вверх остаётся нажатым');
+  await page.click('.card.exact [data-nope]'); await page.waitForTimeout(400);
+  await page.click('.card.exact .nope2 [data-swap]'); await page.waitForTimeout(900);
+  дано(await page.evaluate(() => document.getElementById('catalog').classList.contains('show')),
+    '«Выбрать самому» открыл каталог');
+  await page.click('#catclose'); await page.waitForTimeout(400);
 
   /* ── режим порядка ── */
   const bb = await (await page.$('#list .exrow')).boundingBox();
