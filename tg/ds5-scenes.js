@@ -37,7 +37,9 @@ async function open(p,name,theme){
    if(name==='onboard-question3'||name==='onboard-done'){await p.click('.wzq [data-opt="кардио"]');await p.locator('.wzq [data-opt="нет"]').waitFor();if(name==='onboard-done'){await p.click('.wzq [data-opt="нет"]');await p.locator('.wzq').waitFor({state:'hidden'});}}
   }
  }
- if(name==='body-one'||name==='strength-bodyweight'){if(name==='strength-bodyweight')await p.locator('.vzsila summary').click();await p.locator('.vzbottom').scrollIntoViewIfNeeded();await p.waitForTimeout(400);return '#p-home';}
+ /* 17.10: рабочие веса и список упражнений — в Журнале («Три KPI, индекс в Журнал») */
+ if(name==='strength-bodyweight'){await p.click('.l1 [data-page="gym"]');await p.click('#zseg-gym [data-zseg="log"]');await p.waitForTimeout(700);await p.locator('#logsila .vzsila summary').click();await p.locator('#logsila').scrollIntoViewIfNeeded();await p.waitForTimeout(400);return '#p-log';}
+ if(name==='body-one'){await p.locator('.vzbottom').scrollIntoViewIfNeeded();await p.waitForTimeout(400);return '#p-home';}
  if(name==='reaction-failure'){await p.locator('[data-lbwho]:not(.lbme)').first().click();await p.locator('.plate').first().click();await p.locator('[data-like]').click();await p.locator('.reaction-error').waitFor();await p.locator('.plate.open').scrollIntoViewIfNeeded();await p.waitForTimeout(400);return '#p-circle';}
  const ids={profile:'profm','profile-fields':'profm',srez:'srezm',meal:'mealm','meal-edit':'mealm',coach:'coachm',subscription:'subm','catalog-picker':'catalog',schedule:'schedm',free:'svm',sport:'sportm',tech:'techm',duration:'durm',program:'sborm',reset:'resetm','circle-settings':'krugm'};
  const id=ids[name]||'picker';await p.locator('#'+id+'.show').waitFor();await p.waitForTimeout(250);return '#'+id;

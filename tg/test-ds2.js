@@ -36,7 +36,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  дано(d.fabAfter&&d.fabHeight>=44&&d.reserve>=d.fabHeight+d.nav,'вход тренера в панели и запас под навигацию '+label);
  if(state==='обычно'){
   /* 17.10: плашек «растёт / стоит / падает» нет — заголовок силы и строка о снижении целиком, без «фильтров» */
-  дано(await p.locator('.sila-up,.sila-flat,.sila-down').count()===0&&await p.locator('.vzsila2 .sxhd').count()===1&&(await p.locator('.vzsila2 .sxdown').innerText())==='Ниже прошлого раза — в 1 упражнении', 'сила по тренировкам без плашек-фильтров '+label);
+  дано(await p.locator('.sila-up,.sila-flat,.sila-down,.vzsila2').count()===0&&await p.locator('.vzbottom .zk .zkhd').count()===1, '«Зал на неделе» вместо рабочих весов на «Сегодня» '+label);
   await p.locator('#fw').fill('87.4');
   for(const metric of ['fat','prot','w']){
    const chip=p.locator('[data-vzv="'+metric+'"]');if(await chip.count()){

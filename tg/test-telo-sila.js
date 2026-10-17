@@ -10,6 +10,8 @@ const дано=(ok,text)=>{console.log((ok?'  ok  ':'  ПРОВАЛ  ')+text);if
 const цель={text:'75 кг',wt:'down',rate:-.6,from:M.Д(29),w0:92};
 const ряд=[{name:'Жим лёжа',now:{w:62.5,r:8,date:M.Д(1)},was:{w:60,r:8,date:M.Д(15)},pct:9},
  {name:'Тяга',now:{w:70,r:10,date:M.Д(1)},was:null,pct:null}];
+/* 17.10, его выбор «Три KPI, индекс в Журнал»: рабочие веса живут в Журнале */
+const вЖурнал=async p=>{await p.click('.l1 [data-page="gym"]');await p.waitForTimeout(300);await p.click('#zseg-gym [data-zseg="log"]');await p.waitForTimeout(900);};
 const пн=k=>{const t=new Date(M.TODAY+'T12:00:00');const x=new Date(t);x.setDate(t.getDate()-((t.getDay()+6)%7)-7*k);return x.toISOString().slice(0,10);};
 const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.part!=null?o.part:null];
  return {base:пн(7),now:103.2,nowWeek:пн(1),ch:3.2,enough:true,weeks:i.map((v,k)=>({from:пн(8-k),i:v,t:k?12+k/2:null,n:5,pairs:4,partial:k===8}))};};
@@ -20,8 +22,9 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
    const p=await br.newPage({viewport:{width:390,height:900}});
    const errors=await M.поднять(p,{theme:verdict==='падает'?'light':'dark',meas:M.замеры(),goal:цель,
     progress:{sila:{verdict,up:3,flat:2,down:verdict==='мало'?0:1,rows:ряд}}});
-   const box=p.locator('.vzsila2'), list=box.locator('details.sxlist'), summary=list.locator('summary');
-   дано(await box.count()===1,'блок силы есть и без линии плана: '+verdict);
+   await вЖурнал(p);
+   const box=p.locator('#logsila .vzsila2'), list=box.locator('details.sxlist'), summary=list.locator('summary');
+   дано(await box.count()===1,'в Журнале блок рабочих весов есть и без линии плана: '+verdict);
    дано((await box.locator('.sxhd').innerText()).includes('Рабочие веса по тренировкам'),'заголовок: рабочие веса по тренировкам (не «сила»)');
    дано(await p.locator('.sila-counts, .sila-up').count()===0,'плашек-«фильтров» нет');
    const нет=(await box.locator('.sxnone').innerText()).trim();
@@ -41,7 +44,8 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
   for(const [part,theme,width] of [[null,'dark',390],[103.9,'light',320],[104.5,'dark',320]]){
    const p=await br.newPage({viewport:{width,height:900}});
    const errors=await M.поднять(p,{theme,meas:M.замеры(),goal:цель,progress:{sila:{verdict:'растёт',up:3,flat:1,down:0,rows:ряд,index:индекс({part})}}});
-   const box=p.locator('.vzsila2'), где=theme+' '+width+': ';
+   await вЖурнал(p);
+   const box=p.locator('#logsila .vzsila2'), где=theme+' '+width+': ';
    const крупно=(await box.locator('.sxhd b').innerText()).replace(/\s+/g,'');
    дано(крупно==='+3,2%','крупно — изменение к стартовой неделе в процентах '+где);
    дано(/^в среднем по упражнениям, с учётом повторов — к неделе с \d\d\.\d\d$/.test((await box.locator('.sxwhat').innerText()).replace(/\u00a0/g,' ')) && !/сильнее/.test(await box.innerText()),'словами — что и от какой даты, без «сильнее»');
@@ -61,13 +65,15 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
   {const p=await br.newPage({viewport:{width:390,height:900}});
    const ix=индекс({part:105});ix.weeks[7].i=null;ix.now=104;ix.nowWeek=ix.weeks[6].from;
    await M.поднять(p,{meas:M.замеры(),goal:цель,progress:{sila:{verdict:'растёт',up:3,flat:1,down:0,rows:ряд,index:ix}}});
+   await вЖурнал(p);
    дано(await p.locator('.sxpart').count()===0 && await p.locator('.sxpartpt').count()===1,'через пропуск — отдельная точка идущей недели, без пунктира-моста');
    дано(await p.locator('.sxvol rect[fill="none"]').count()===1,'объём идущей недели — контуром, не бледной заливкой');
    await p.close();}
   for(const sila of [undefined,{verdict:'мало',rows:[]},{verdict:'падает',up:0,flat:0,down:1,rows:[{name:'<img src=x onerror=alert(1)>',now:{w:50,r:8},was:{w:55,r:8},pct:-7}]}]){
    const p=await br.newPage({viewport:{width:320,height:800}});
    await M.поднять(p,{meas:M.замеры(),goal:цель,progress:{sila}});
-   дано(await p.locator('.vzsila2').count()===(sila?1:0),'без sila — нет блока и пустого места');
+   await вЖурнал(p);
+   дано(await p.locator('#logsila .vzsila2').count()===(sila?1:0),'без sila — нет блока и пустого места');
    if(sila && sila.rows.length){await p.locator('.sxlist summary').click();дано((await p.locator('.sxlist').innerText()).includes('<img') && await p.locator('.sxlist img').count()===0,'имя упражнения экранировано');}
    дано(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'помещается на 320 px');await p.close();
   }

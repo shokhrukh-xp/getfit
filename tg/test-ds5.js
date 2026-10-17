@@ -7,12 +7,14 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  for(const n of [0,1,3]){
   const p=await b.newPage({viewport:{width,height:844}});await M.поднять(p,{theme,meas:M.замеры().slice(0,n),goal:{text:"75 кг",wt:"down",rate:-.6,from:M.Д(29),w0:92},progress});
   ok(await p.locator('.vztemp p.muted').count()===1,'F1: вердикт мало виден при '+n+' замерах '+theme+'/'+width);
-  ok(await p.locator('.vzsila').count()===1,'F1: сила независима от графика');
-  await p.locator('.vzsila summary').click();const text=(await p.locator('.vzsila').innerText()).replace(/\u00a0/g,' ');
+  /* 17.10: на «Сегодня» — «Зал на неделе», рабочие веса и список упражнений — в Журнале */
+  ok(await p.locator('.vzbottom .zk').count()===1,'F1: зал на неделе независим от графика');
+  const вЖурнал=async()=>{await p.click('.l1 [data-page="gym"]');await p.click('#zseg-gym [data-zseg="log"]');await p.waitForTimeout(700);};
+  await вЖурнал();
+  await p.locator('#logsila .vzsila summary').click();const text=(await p.locator('#logsila .vzsila').innerText()).replace(/\u00a0/g,' ');
   ok(text.includes('6 повт.')&&text.includes('8 повт.')&&!/(^|[^0-9])0×/.test(text),'F2: без веса — повторы');ok(text.includes('60×8')&&text.includes('33 %'),'вес снаряда и серверный процент сохранены');
-  if(n===3)for(const metric of ['fat','prot','w']){await p.locator('[data-vzv="'+metric+'"]').click();ok(await p.locator('.vzsila').evaluate(e=>e.open),'F3: раскрытие сохранено на '+metric);}
-  await p.click('.l1 [data-page="food"]');await p.click('.l1 [data-page="home"]');ok(await p.locator('.vzsila').evaluate(e=>e.open),'F3: раскрытие сохранено после возвращения');
-  await p.locator('.vzsila summary').click();await p.click('.l1 [data-page="food"]');await p.click('.l1 [data-page="home"]');ok(!await p.locator('.vzsila').evaluate(e=>e.open),'явное сворачивание тоже сохранено');await p.close();
+  await p.click('.l1 [data-page="food"]');await вЖурнал();ok(await p.locator('#logsila .vzsila').evaluate(e=>e.open),'F3: раскрытие сохранено после возвращения');
+  await p.locator('#logsila .vzsila summary').click();await p.click('.l1 [data-page="food"]');await вЖурнал();ok(!await p.locator('#logsila .vzsila').evaluate(e=>e.open),'явное сворачивание тоже сохранено');await p.close();
  }
  for(const name of ['profile','srez','meal-edit','coach','subscription','catalog-picker','schedule','onboard-filled']){
   const p=await b.newPage({viewport:{width,height:844}}),root=await S.open(p,name,theme);

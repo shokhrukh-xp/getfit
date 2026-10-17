@@ -10446,6 +10446,7 @@ document.getElementById('logblk').addEventListener('click', function(e){
    объём и сравнение упражнений живут здесь, на «Сегодня» — «Зал на неделе» */
 function renderLogSila(){
   var b=document.getElementById('logsila'); if(!b) return;
+  var было=b.querySelector('details.vzsila'); if(было) VZSILA_OPEN=было.open;
   var s=((gget('goal',null)||{}).progress||{}).sila;
   b.innerHTML=s ? '<div class="group">'+vzСилаСтрока(s)+'</div>' : '';
 }
@@ -13022,12 +13023,11 @@ function группыПодхода(x){
   ГРУППЫ5.forEach(function(g){ var k=0; mus.forEach(function(m){ if(g[1].indexOf(m[0])>=0 && m[1]>k) k=m[1]; }); if(k){ o[g[0]]=k; есть=true; } });
   return есть ? o : null;
 }
-function пнНедели(iso){ var d=dLocal(iso); d.setDate(d.getDate()-((d.getDay()+6)%7)); return isoOf(d); }
 function днейПосле(iso,n){ var d=dLocal(iso); d.setDate(d.getDate()+n); return isoOf(d); }
 function подходыНаПовторы(x){ return наПовторы(x) ? (x.sets||[]).filter(function(v){ return v && +v.r>0; }) : []; }
 function неделяЗала(){
   if(!HIST) return null;
-  var пн=пнНедели(TODAY), вс=днейПосле(пн,6), записи={}, факт={}, датыЗаписей={};
+  var пн=пнНедели(), вс=днейПосле(пн,6), записи={}, факт={}, датыЗаписей={};
   HIST.forEach(function(w){
     if(!w || w.date<пн || w.date>вс) return;
     var n=0;

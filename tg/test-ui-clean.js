@@ -17,7 +17,8 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  await check('главная');
  /* 17.10: вердикт — одной строкой темпа (без «▶ •»), длинный текст сервера — тренеру */
  ok(await p.locator('.vztemp p').first().innerText().then(t=>/без снижения/.test(t)),'темп недели словами');
- await p.locator('.sxlist summary').click();ok((await p.locator('.sxlist').innerText()).includes('8 повт.'),'подробности силы доступны');
+ /* 17.10: на «Сегодня» — «Зал на неделе»; ссылка ведёт в Журнал к рабочим весам */
+ ok(await p.locator('.vzbottom .zk [data-zkgo="log"]').count()===1,'зал на неделе со ссылкой в Журнал');
  await check('раскрытое тело');await p.locator('[data-vzv="fat"]').click();await p.locator('[data-vzv="w"]').click();
  // 04.10, вечер: плашка — у группы (веер почти одновременных), фото стоят на своём времени.
  ok(await p.locator('.hbtime').allTextContents().then(xs=>['09:53','10:26','10:28','14:03','14:48'].every(tm=>xs.some(x=>{const [a,z]=x.split('–');return tm>=a&&tm<=(z||a)}))),'плашки сохраняют все времена после обновления главной');
