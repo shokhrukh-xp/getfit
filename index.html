@@ -10446,11 +10446,20 @@ document.getElementById('logblk').addEventListener('click', function(e){
 });
 /* 17.10, его выбор «Три KPI, индекс в Журнал»: рабочие веса по тренировкам,
    объём и сравнение упражнений живут здесь, на «Сегодня» — «Зал на неделе» */
+var ZKSCROLL=false;
+function zkScroll(){
+  var el=document.getElementById('logsila'), жр=document.getElementById('p-log');
+  if(!ZKSCROLL || !el || !el.firstChild || !жр || жр.classList.contains('hide')) return;
+  ZKSCROLL=false; el.scrollIntoView({block:'start'});
+}
+addEventListener('touchstart', function(){ ZKSCROLL=false; }, {passive:true});
+addEventListener('wheel', function(){ ZKSCROLL=false; }, {passive:true});
 function renderLogSila(){
   var b=document.getElementById('logsila'); if(!b) return;
   var было=b.querySelector('details.vzsila'); if(было) VZSILA_OPEN=было.open;
   var s=((gget('goal',null)||{}).progress||{}).sila;
   b.innerHTML=s ? '<div class="group">'+vzСилаСтрока(s)+'</div>' : '';
+  zkScroll();
 }
 function renderLog(){
   var box=document.getElementById('logprog'); if(!box) return;
@@ -15929,7 +15938,8 @@ function measClearError(id){
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-zkgo]'); if(!b) return;
   haptic('light'); goPage(b.dataset.zkgo); scrollTo(0,0);
-  if(b.dataset.zkgo==='log') setTimeout(function(){ var el=document.getElementById('logsila'); if(el && el.firstChild) el.scrollIntoView({block:'start'}); }, 600);
+  /* ревью Codex: прокрутка к рабочим весам — когда блок реально нарисован, а не по таймеру */
+  ZKSCROLL = b.dataset.zkgo==='log'; if(ZKSCROLL) zkScroll();
 });
 document.getElementById('logmeas').addEventListener('click',function(e){
   if(!e.target.closest('[data-new-measure]')) return;

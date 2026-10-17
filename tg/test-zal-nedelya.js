@@ -66,6 +66,13 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
    const v=await p.locator('.zkrow').evaluateAll(rs=>rs.map(r=>r.querySelector('s').textContent).join('|'));await p.close();return v;};
   const до=await план(false), после=await план(true);
   дано(до===после && /из/.test(до),'облегчение сегодня не уменьшает план недели: '+до+' / '+после);}
+ /* ревью Codex P3: «Рабочие веса и объём» при позднем /goal — прокрутка к блоку, когда он нарисован */
+ {const p=await br.newPage({viewport:{width:390,height:844}});
+  const o=opts('dark');o.hist=журнал;o.goalDelay=2000;o.progress={sila:{verdict:'стоит',up:1,flat:1,down:0,rows:[{name:'Жим лёжа',was:{w:55,r:8},now:{w:55,r:10},pct:7}]}};
+  await M.поднять(p,o);await p.locator('.zk [data-zkgo="log"]').click();await p.waitForTimeout(3000);
+  const r=await p.evaluate(()=>{const e=document.querySelector('#logsila');return e?e.getBoundingClientRect().top:null;});
+  дано(r!=null && r>=-2 && r<844*0.6,'поздний индекс — в видимой области после ссылки: top='+r);
+  await p.close();}
  /* ревью Codex Z1: поздний /goal дорисовывает уже открытый Журнал */
  {const p=await br.newPage({viewport:{width:390,height:900}});
   const o=opts('dark');o.hist=журнал;o.goalDelay=2500;o.progress={sila:{verdict:'стоит',up:1,flat:1,down:0,rows:[{name:'Жим лёжа',was:{w:55,r:8},now:{w:55,r:10},pct:7}]}};
