@@ -26,7 +26,7 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
    дано(await p.locator('.sila-counts, .sila-up').count()===0,'плашек-«фильтров» нет');
    const нет=(await box.locator('.sxnone').innerText()).trim();
    дано(verdict==='мало' ? /Мало тренировок/.test(нет) : /Индекс появится/.test(нет),'без индекса — честная строка: '+нет);
-   дано(await box.locator('.sxdown').count()===(verdict==='мало'?0:1) && (verdict==='мало' || (await box.locator('.sxdown').innerText())==='Снижение в 1 упражнении'),'строка о снижении — числом с сервера');
+   дано(await box.locator('.sxdown').count()===(verdict==='мало'?0:1) && (verdict==='мало' || (await box.locator('.sxdown').innerText())==='Ниже прошлого раза — в 1 упражнении'),'строка о снижении — числом с сервера');
    дано(!await list.evaluate(e=>e.open),'список упражнений изначально свёрнут');
    await summary.click();
    дано(await list.evaluate(e=>e.open) && await list.locator('li').count()===2,'по тапу видны упражнения');
@@ -45,16 +45,23 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
    const крупно=(await box.locator('.sxhd b').innerText()).replace(/\s+/g,'');
    дано(крупно==='103,2+3,2%','крупно — последняя законченная неделя и изменение к базе '+где);
    дано(await box.locator('.sxhd b s.up').count()===1,'рост — цветом «хорошо»');
-   дано(/100 — неделя с \d\d\.\d\d/.test(await box.locator('.sxbase').innerText()),'подписано, что такое 100');
+   дано(/^Неделя с \d\d\.\d\d · 100 — неделя с \d\d\.\d\d$/.test(await box.locator('.sxbase').innerText()),'подписаны неделя числа и что такое 100');
    дано(await box.locator('svg.sxsvg path[stroke="var(--accent)"]:not(.sxpart)').count()===2,'пропуск недели рвёт линию на два куска');
    дано(await box.locator('.sxpart').count()===(part!=null?1:0),'текущая неделя — пунктиром, только если в ней есть точка');
    дано((await box.locator('svg.sxsvg').innerHTML()).includes('неделя идёт'),'ось подписывает идущую неделю');
-   дано(/объём · 15,5\s?т за неделю/.test(await box.locator('.sxvol').innerText()),'объём — своей строкой, по последней законченной неделе');
+   дано(/^объём · 15,5\s?т за неделю с \d\d\.\d\d$/.test(await box.locator('.sxvol span').innerText()),'объём — своей строкой с датой недели');
    дано(await box.locator('.sxnone').count()===0,'с индексом нет строки «появится»');
    дано(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'помещается '+где);
    const hd=await box.locator('.sxhd b').boundingBox();дано(hd && hd.height<40,'число и процент — одной строкой '+где);
    дано(errors.length===0,'нет ошибок браузера');await p.close();
   }
+  /* ревью Codex U3: идущая неделя после пропуска — отдельной точкой, без моста; её объём — контуром */
+  {const p=await br.newPage({viewport:{width:390,height:900}});
+   const ix=индекс({part:105});ix.weeks[7].i=null;ix.now=104;ix.nowWeek=ix.weeks[6].from;
+   await M.поднять(p,{meas:M.замеры(),goal:цель,progress:{sila:{verdict:'растёт',up:3,flat:1,down:0,rows:ряд,index:ix}}});
+   дано(await p.locator('.sxpart').count()===0 && await p.locator('.sxpartpt').count()===1,'через пропуск — отдельная точка идущей недели, без пунктира-моста');
+   дано(await p.locator('.sxvol rect[fill="none"]').count()===1,'объём идущей недели — контуром, не бледной заливкой');
+   await p.close();}
   for(const sila of [undefined,{verdict:'мало',rows:[]},{verdict:'падает',up:0,flat:0,down:1,rows:[{name:'<img src=x onerror=alert(1)>',now:{w:50,r:8},was:{w:55,r:8},pct:-7}]}]){
    const p=await br.newPage({viewport:{width:320,height:800}});
    await M.поднять(p,{meas:M.замеры(),goal:цель,progress:{sila}});

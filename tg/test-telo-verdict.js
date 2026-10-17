@@ -13,6 +13,16 @@ const цель={text:'75 кг',wt:'down',rate:-.6,from:M.Д(29),w0:92,by:'2027-0
 const план={anchor:M.Д(14),anchorW:89,rate:-.6,gap:.4,onTrack:false,w0:92,kg:17};
 const слова={'план':/^Средний вес за неделю −0,4 кг — в темпе плана ✓$/,'быстрее':/быстрее плана ✓$/,'медленнее':/— медленнее плана$/,
  'стоит':/— без снижения$/,'плато':/^Две недели без снижения веса$/,'мало':/^Мало замеров, чтобы судить о темпе$/};
+/* подпись скобки согласована с рисунком: «выше» — средняя над пунктиром плана в той же точке */
+const сверить=async(page,где)=>{
+ const r=await page.evaluate(()=>{const sv=document.querySelector('#homebody .vzsvg svg');const t=sv.querySelector('.vzgapl text');if(!t)return null;
+  const к=[...sv.querySelectorAll('circle')].find(c=>c.getAttribute('r')==='4.5'),пл=sv.querySelector('.vzpl');
+  const cx=+к.getAttribute('cx'),cy=+к.getAttribute('cy'),x1=+пл.getAttribute('x1'),y1=+пл.getAttribute('y1'),x2=+пл.getAttribute('x2'),y2=+пл.getAttribute('y2');
+  const yп=y1+(y2-y1)*(cx-x1)/(x2-x1);return {м:t.textContent.replace(/\u00a0/g,' '),над:cy<yп,dy:Math.abs(cy-yп),скобка:sv.querySelectorAll('.vzgap').length};});
+ дано(!!r,'метка отклонения на графике '+где);if(!r)return '';
+ дано(r.м==='по плану' ? r.скобка===0 : (r.м.startsWith('выше')===r.над && (r.скобка===1||r.dy<8)),'подпись не спорит с рисунком: «'+r.м+'» '+где);
+ return r.м;
+};
 (async()=>{
  const br=await chromium.launch();
  try{
@@ -30,24 +40,30 @@ const слова={'план':/^Средний вес за неделю −0,4 к
    const срок=state==='мало' ? null : (await v.locator('.vzeta').innerText()).replace(/ /g,' ');
    дано(state==='мало' ? await v.locator('.vzeta').count()===0 : /^Цель 75 кг — к \d+ [а-я]+ при −0,5 кг в неделю$/.test(срок),'срок с целью и темпом, без eta скрыт: '+срок);
    дано(!(await v.innerText()).includes('Вердикт:'),'длинный серверный текст — тренеру, не сюда');
-   if(state!=='мало'){
-    const п=await page.locator('#homebody .vzgapl text').textContent();
-    дано(п.replace(/ /g,' ')==='выше плана на 0,4 кг','отклонение от плана — на графике: '+п);
-    дано(await page.locator('#homebody .vzgap').count()===1,'скобка между средней линией и планом');
-   }
+   if(state!=='мало') await сверить(page,'состояние '+state);
    дано(errors.length===0,'без ошибок браузера: '+state);
    if(state==='стоит'){await page.click('[data-vzv="fat"]');дано(await page.locator('.vztemp, .vzgapl').count()===0,'темп и отклонение веса не появляются у жира');}
    await page.close();
   }
-  /* дальний срок — «примерно к месяцу»; «по плану» — без скобки, одной меткой; впереди — «ниже плана» */
-  for(const [gap,onTrack,ждём,скобка] of [[0.2,true,'по плану',0],[-1.1,false,'ниже плана на 1,1 кг',1]]){
+  /* дальний срок — «примерно к месяцу»; ниже / выше плана; редкие замеры (ревью Codex U1): подпись
+     и скобка — из одних и тех же двух точек, знак не противоречит рисунку */
+  const редкие=[{date:M.Д(14),w:89.2},{date:M.Д(8),w:90},{date:M.Д(6),w:88},{date:M.Д(2),w:87}];
+  for(const [anchorW,meas,ждём] of [[92,M.замеры(),/^ниже плана на \d/],[85.5,M.замеры(),/^выше плана на \d/],[89.2,редкие,/^(по плану|выше)/]]){
    const page=await br.newPage({viewport:{width:320,height:800}});
-   await M.поднять(page,{meas:M.замеры(),goal:цель,progress:{...план,gap,onTrack,verdict:{state:'план',d0:-0.6},eta:{date:'2027-08-24',pace:-.3}}});
-   дано((await page.locator('.vzgapl text').textContent()).replace(/ /g,' ')===ждём,'метка на графике: '+ждём);
-   дано(await page.locator('.vzgap').count()===скобка,'скобка только при отклонении');
+   await M.поднять(page,{meas,goal:цель,progress:{...план,anchorW,gap:-0.5,onTrack:false,verdict:{state:'план',d0:-0.6},eta:{date:'2027-08-24',pace:-.3}}});
+   const м=await сверить(page,'якорь '+anchorW);
+   дано(ждём.test(м),'метка на графике: '+м);
    дано(/^Цель 75 кг — примерно к августу 2027 при −0,3 кг в неделю$/.test((await page.locator('.vztemp .vzeta').innerText()).replace(/ /g,' ')),'дальний срок — месяц и «примерно»');
    дано(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'помещается на 320');
    await page.close();
+  }
+  /* ревью Codex U2: цель «набрать» — без прибавки; вывод по талии — словами сервера, не «темп веса» */
+  for(const [goal,v,ждём] of [[{...цель,rate:.5},{state:'плато',d0:0.05},/^Две недели без прибавки веса$/],[{...цель,rate:.5},{state:'стоит',d0:0.0},/— без прибавки$/],
+   [цель,{state:'план',by:'талия',text:'По талии: −1,2 см за 14 дн. (95 → 93,8) — жир уходит. Весов мало, поэтому вывод по сантиметру.'},/^По талии: −1,2 см за 14 дн\. \(95 → 93,8\) — жир уходит( ✓)?$/]]){
+   const page=await br.newPage({viewport:{width:320,height:800}});
+   await M.поднять(page,{meas:M.замеры(),goal,progress:{...план,rate:goal.rate,verdict:v}});
+   const т=(await page.locator('.vztemp p').first().innerText()).replace(/\u00a0/g,' ').trim();
+   дано(ждём.test(т),'направление и источник вывода: '+т);await page.close();
   }
   for(const item of [
    {progress:план,visible:false},
