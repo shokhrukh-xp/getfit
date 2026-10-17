@@ -310,8 +310,11 @@ async function поднять(page, o) {
                   text: b.wt === 'keep' ? 'держим 88,1 кг' : t + ' кг · ' + темп + ' кг в неделю',
                   verdict: 'ok', note: 'проверка' } });
       }
-      return дать({ ok: true, goal: o.goal === undefined ? null : o.goal, progress: o.progress || null,
+      /* o.goalDelay — поздний ответ /goal (17.10, ревью Codex Z1: Журнал уже открыт) */
+      const отв = () => дать({ ok: true, goal: o.goal === undefined ? null : o.goal, progress: o.progress || null,
         safe: o.safe === undefined ? { w: 88.1, max: 0.88, limit: 'вес', floor: 70.9, upMax: 0.35 } : o.safe });
+      if (o.goalDelay) return new Promise(r => setTimeout(() => r(отв()), o.goalDelay));
+      return отв();
     }
     /* спорт вне зала. Прибавку СЧИТАЕТ СЕРВЕР, а не приложение: стенд нарочно
        отвечает числом, которого не даст никакая формула (777), и проверка

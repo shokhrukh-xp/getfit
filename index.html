@@ -3272,7 +3272,7 @@ body.ordmode #list .sstag{color:var(--text)}
 .zkhd span{font-size:14px;color:var(--muted)}
 .zksec{margin-top:14px}
 .zklab{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;font-weight:600}
-.zklab em{font-style:normal;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.zklab em{font-style:normal;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .zkdots{display:inline-flex;gap:5px}
 .zkdots i{width:12px;height:12px;box-sizing:border-box;border-radius:12px;border:2px solid var(--accent)}
 .zkdots i.on{background:var(--accent)}
@@ -4622,7 +4622,7 @@ function saveSubs(){
 }
 /* Сколько подходов делать сегодня: правка человека, иначе программа со сдвигом
    недели. Лёгкая неделя режет пополам то, что получилось. */
-function setsFor(e, di, dk){
+function setsFor(e, di, dk, безЛегче){
   var k = (e && e.k) ? e.k : subKey(dk||day, di), base;
   /* 07.10: кардио — один заход на минуты, сколько бы подходов ни стояло в программе */
   var повторы = !isTime(e) && !isMin(e) && !isDist(e);
@@ -4632,7 +4632,7 @@ function setsFor(e, di, dk){
   else { var ph=phaseNow(); base = e.sets + ((ph && typeof ph.ds==='number') ? ph.ds : 0); }
   if(deloadOn() && повторы) base = Math.round(base/2);
   /* «Облегчить сегодня» (25.09): только сегодня на подход меньше */
-  if(легчеВкл() && повторы && base>1) base = base-1;
+  if(легчеВкл() && повторы && base>1 && !безЛегче) base = base-1;
   return Math.max(1, Math.min(8, base));
 }
 /* «ЗАМЕНЕНО» — ЭТО ПОДТВЕРЖДЕНИЕ, А НЕ СОСТОЯНИЕ.
@@ -5995,6 +5995,8 @@ function goalPull(){
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
       renderGoalCard(); homeDirty();   /* 30.09: пунктир плана на карточке «Тело» */
+      /* ревью Codex Z1: рабочие веса теперь в Журнале — поздний ответ дорисовывает и его */
+      var жр=document.getElementById('p-log'); if(жр && !жр.classList.contains('hide')) renderLogSila();
     }).catch(function(){});
 }
 function renderGoalCard(){
@@ -13028,19 +13030,24 @@ function подходыНаПовторы(x){ return наПовторы(x) ? (x.
 function неделяЗала(){
   if(!HIST) return null;
   var пн=пнНедели(), вс=днейПосле(пн,6), записи={}, факт={}, датыЗаписей={};
+  var уже={};
   HIST.forEach(function(w){
     if(!w || w.date<пн || w.date>вс) return;
+    var ключ=w.id||(w.date+'_'+w.day); if(уже[ключ]) return; уже[ключ]=1;   /* повторная запись — та же */
     var n=0;
     (w.ex||[]).forEach(function(x){
       var c=подходыНаПовторы(x).length; if(!c) return; n+=c;
       var g=группыПодхода(x); if(g) Object.keys(g).forEach(function(k){ факт[k]=(факт[k]||0)+c*g[k]; });
     });
-    if(n){ записи[w.id||(w.date+'_'+w.day)]=1; датыЗаписей[w.date]=1; }
+    if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; }
   });
   var вНеделю=Object.keys(GYM_DAYS).length, коэф=CYCLE.length && вНеделю ? вНеделю/CYCLE.length : 1, план={};
-  CYCLE.forEach(function(dk){ exList(dk).forEach(function(e,di){
+  /* ревью Codex Z2: без расписания частота неизвестна — цикл программы не
+     выдаём за недельную цель подходов */
+  if(вНеделю) CYCLE.forEach(function(dk){ exList(dk).forEach(function(e,di){
     if(isTime(e)||isMin(e)||isDist(e)) return;
-    var g=группыПодхода(e); if(!g) return; var n=setsFor(e,di,dk);
+    /* ревью Codex Z3: «облегчить сегодня» — про одно занятие, не про план недели */
+    var g=группыПодхода(e); if(!g) return; var n=setsFor(e,di,dk,true);
     Object.keys(g).forEach(function(k){ план[k]=(план[k]||0)+n*g[k]*коэф; });
   }); });
   /* ближайший день зала по расписанию, где ещё нет записи */
@@ -13051,14 +13058,17 @@ function неделяЗала(){
 function результатыЗала(){
   if(!HIST) return [];
   var от=днейПосле(TODAY,-27), прог={}, имя=function(n){ return String(n||'').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim(); };
-  CYCLE.forEach(function(dk){ exList(dk).forEach(function(e){ if(e.cat) прог['i:'+e.cat]=1; if(e.id) прог['i:'+e.id]=1; прог['n:'+имя(e.n)]=1; }); });
+  /* ревью Codex Z4: при известных id — только совпадение id; имя — для записей
+     и упражнений программы без id (старые записи до каталога) */
+  var безId={};
+  CYCLE.forEach(function(dk){ exList(dk).forEach(function(e){ var i=e.cat||e.id; if(i) прог['i:'+i]=1; else безId[имя(e.n)]=1; прог['n:'+имя(e.n)]=1; }); });
   var по={};
   HIST.forEach(function(w){
     if(!w || w.easy || w.date<от || w.date>TODAY) return;
     (w.ex||[]).forEach(function(x){
       var годные=подходыНаПовторы(x); if(!годные.length) return;
       var id=x.id||x.cat||'', ключ=(id?'i:'+id:'n:'+имя(x.n))+'|'+(x.unit||'reps');
-      if(!(прог[id?'i:'+id:''] || прог['n:'+имя(x.n)])) return;
+      if(!(id ? (прог['i:'+id] || безId[имя(x.n)]) : прог['n:'+имя(x.n)])) return;
       var b=null; годные.forEach(function(v){ var c={w:+v.w||0, r:+v.r}; var sc=c.w>0?e1rm(c.w,c.r):c.r, sb=b?(b.w>0?e1rm(b.w,b.r):b.r):-1; if(sc>sb) b=c; });
       var z=по[ключ]=по[ключ]||{ключ:ключ, n:x.n, x:x, даты:{}};
       var был=z.даты[w.date]; if(!был || (b.w>0?e1rm(b.w,b.r):b.r) > (был.w>0?e1rm(был.w,был.r):был.r)) z.даты[w.date]=b;
@@ -13095,7 +13105,7 @@ function залНеделиHtml(){
   h+='<div class="zkhd"><span>Зал · '+мес(н.пн,н.вс)+'</span></div>';
   /* 1. регулярность */
   var точки='';
-  if(н.план){ for(var i=0;i<Math.max(н.план,н.занятий);i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
+  if(н.план && н.план<=7){ for(var i=0;i<н.план;i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
   h+='<div class="zksec"><div class="zklab">Записано занятий<em>'+(точки?'<span class="zkdots" aria-hidden="true">'+точки+'</span>':'')+н.занятий+(н.план?' из '+н.план:'')+'</em></div>';
   var след=н.след ? (н.след===TODAY ? 'сегодня' : WD[dLocal(н.след).getDay()]+', '+ruDate(н.след)) : '';
   if(!н.занятий) h+='<p class="zknote">Пока нет записанных занятий'+(н.план?' · план '+н.план:'')+'</p><button type="button" class="zklink" data-zkgo="gym">Открыть тренировку</button>';
@@ -13109,8 +13119,8 @@ function залНеделиHtml(){
     h+='<div class="zksec"><div class="zklab">Подходы на неделе</div><div class="zkrows">'+гр.map(function(g){
       var план=g[2]>=0.5;
       return '<div class="zkrow"><b>'+g[0]+'</b><div class="zkbar" aria-hidden="true"><i style="width:'+(g[1]/мх*100).toFixed(1)+'%"></i>'+(план?'<u style="left:'+(g[2]/мх*100).toFixed(1)+'%"></u>':'')+'</div>'+
-        '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+ч(g[2]):' · вне плана')+'</s></div>';
-    }).join('')+'</div><p class="zknote">черта — сколько стоит в программе на неделю</p></div>';
+        '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+ч(g[2]):(н.план?' · вне плана':''))+'</s></div>';
+    }).join('')+'</div><p class="zknote">'+(н.план ? 'черта — сколько стоит в текущей программе на неделю' : 'дни зала не заданы — недельного плана нет')+'</p></div>';
   }
   /* 3. результаты в упражнениях */
   var рр=результатыЗала();
@@ -15919,6 +15929,7 @@ function measClearError(id){
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-zkgo]'); if(!b) return;
   haptic('light'); goPage(b.dataset.zkgo); scrollTo(0,0);
+  if(b.dataset.zkgo==='log') setTimeout(function(){ var el=document.getElementById('logsila'); if(el && el.firstChild) el.scrollIntoView({block:'start'}); }, 600);
 });
 document.getElementById('logmeas').addEventListener('click',function(e){
   if(!e.target.closest('[data-new-measure]')) return;
