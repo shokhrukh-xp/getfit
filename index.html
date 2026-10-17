@@ -4443,8 +4443,6 @@ function applyProfile(p, silent){
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
   if(!DAYS[day]) day = CYCLE[0];
   gset('profile', p);
-  /* тихий вызов при запуске до выбора программы — не смена */
-  if(!silent) отметитьСменуПрограммы(p);
   var pn=document.getElementById('profname'); if(pn) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   if(silent) return;
@@ -5914,7 +5912,14 @@ function hidePicker(){
   var el=document.getElementById('picker'); if(el) el.classList.remove('show');
   document.body.classList.remove('onb');
 }
-function choose(p){
+function choose(p, новая){
+  /* 17.10, его выбор «Смена программы посреди недели»: когда человек САМ сменил
+     программу (другая готовая, «Перейти на эту программу», пересборка) —
+     время смены едет в указателе prof.ch на все устройства. Повторный выбор
+     той же (мастер «только еда») и промежуточные копии при синхронизации
+     смену не ставят (ревью Codex U3). */
+  var прежУк=null; try{ прежУк=JSON.parse(mGet(PROFKEY)||'null'); }catch(e){}
+  var сменил=!!новая || (!!profile && p!==profile);
   if(firstRun) gset('startcard',1);
   hidePicker();
   чернСтереть();
@@ -5929,6 +5934,7 @@ function choose(p){
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
      иначе на новом устройстве его негде было бы искать */
   var ук={p:p, at:new Date().toISOString(), start: gget('startdate', null),
+          ch: сменил ? new Date().toISOString() : ((прежУк && прежУк.ch) || null),
           tg: TGUSER ? {id:TGUSER.id, n:whoName(), u:TGUSER.username||''} : null};
   if(DB){ csSet(PROFKEY, JSON.stringify(ук)).catch(function(){});
     /* и в базу: CloudStorage на части устройств глухой, а знать, какая
@@ -9583,6 +9589,10 @@ function sessionBody(){
            t0:t0?new Date(t0).toISOString():null, dur:wDur() };
   /* облегчённая по кнопке — сервер не считает её падением весов (25.09) */
   if(легчеВкл()) тело.easy=1;
+  /* fs — запись новой схемы: без fin она не завершена. У старых записей fs нет —
+     они считаются завершёнными (ревью Codex U4: граница по дате путала новые
+     незавершённые записи дня выпуска со старыми) */
+  тело.fs=1;
   /* 17.10, его выбор «Занятие „завершено“»: «Завершить и сохранить» ставит
      отметку fin, и автосохранение её не стирает — берём из своей памяти или
      из уже сохранённой записи этого дня (другое устройство) */
@@ -9767,6 +9777,7 @@ function стеретьЗапись(){
   var id=TODAY+'_'+day;
   try{ if(HIST) HIST=HIST.filter(function(w){ return !(w.date===TODAY && dayHere(w.day)===day); }); }catch(e){}
   try{ set(wDurKey(), null); set(wtLastKey(), null); }catch(e){}
+  try{ var фм=get('fin',{})||{}; if(фм[id]){ delete фм[id]; set('fin', фм); } }catch(e){}   /* ревью Codex U1 */
   try{ csDel(csKey('workouts/'+id)); }catch(e){}
   try{ workQueue(id, null, true); }catch(e){}
   try{ if(lastDone && lastDone.date===TODAY && lastDone.day===day){ lastDone=null; set('lastdone', null); } }catch(e){}
@@ -11851,7 +11862,7 @@ function aiApply(){
     if(сохр && Object.keys(сохр).length!==Object.keys(PROFILES.ai.gymDays).length)
       localStorage.removeItem(LS+'ai_sched');
   }catch(e){}
-  choose('ai');
+  choose('ai', true);
   document.getElementById('aibox').innerHTML='';
   closeProf(); haptic('ok');
 }
@@ -13068,8 +13079,6 @@ function vzСилаСтрока(s){
      программа на неделю, что у карты мышц; одна шкала на все пять строк;
    • два результата: частые упражнения программы за 28 дней с 2+ датами, из
      разных групп; последнее занятие против предыдущего, без облегчённых. */
-/* отметки «завершено» появились 18.10 — более старые записи считаем завершёнными */
-var ЗАВЕРШ_С='2026-10-18';
 var ГРУППЫ5=[['Спина',['lat','mid','lower','trap']],['Грудь',['chest']],['Ноги',['quad','ham','glute','add','abd','calf','tib']],
   ['Плечи',['delt','rdelt']],['Руки',['bic','tri','fore']]];
 function группыПодхода(x){
@@ -13080,17 +13089,6 @@ function группыПодхода(x){
 }
 function днейПосле(iso,n){ var d=dLocal(iso); d.setDate(d.getDate()+n); return isoOf(d); }
 function подходыНаПовторы(x){ return наПовторы(x) ? (x.sets||[]).filter(function(v){ return v && +v.r>0; }) : []; }
-/* 17.10, его выбор «Смена программы посреди недели»: помним, с какого дня
-   действует текущая программа (основа дней, без замен человека), чтобы черта
-   плана честно называлась «по программе с …» */
-function отметитьСменуПрограммы(p){
-  try{
-    var sig=p+'|'+CYCLE.map(function(dk){ return ((DAYS[dk]||{}).ex||[]).map(function(e){ return e.cat||e.id||нормИмя(e.n); }).join(','); }).join(';');
-    var был=gget('prog_sig',null);
-    if(был && был.sig!==sig) gset('prog_sig',{sig:sig, since:TODAY});
-    else if(!был) gset('prog_sig',{sig:sig, since:null});
-  }catch(e){}
-}
 function неделяЗала(){
   if(!HIST) return null;
   var пн=пнНедели(), вс=днейПосле(пн,6), записи={}, заверш={}, факт={}, датыЗаписей={};
@@ -13103,7 +13101,7 @@ function неделяЗала(){
       var c=подходыНаПовторы(x).length; if(!c) return; n+=c;
       var g=группыПодхода(x); if(g) Object.keys(g).forEach(function(k){ факт[k]=(факт[k]||0)+c*g[k]; });
     });
-    if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; if(w.fin || w.date<ЗАВЕРШ_С) заверш[ключ]=1; }
+    if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; if(w.fin || !w.fs) заверш[ключ]=1; }
   });
   var вНеделю=Object.keys(GYM_DAYS).length, коэф=CYCLE.length && вНеделю ? вНеделю/CYCLE.length : 1, план={};
   /* ревью Codex Z2: без расписания частота неизвестна — цикл программы не
@@ -13117,8 +13115,13 @@ function неделяЗала(){
   /* ближайший день зала по расписанию, где ещё нет записи */
   var след=null;
   for(var i=0;i<14 && вНеделю;i++){ var d=днейПосле(TODAY,i); if((dLocal(d).getDay() in GYM_DAYS) && !датыЗаписей[d]){ след=d; break; } }
-  var смена=(gget('prog_sig',null)||{}).since;
-  return {смена:(смена && смена>пн && смена<=вс) ? смена : null, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
+  /* смена программы посреди недели — только если до неё на этой неделе уже
+     были занятия (иначе вся неделя и так по новой программе) */
+  var смена=null;
+  try{ var ук=JSON.parse(mGet(PROFKEY)||'null'), дт=ук && ук.ch ? new Date(ук.ch) : null;
+       if(дт && !isNaN(дт)) смена=дт.getFullYear()+'-'+('0'+(дт.getMonth()+1)).slice(-2)+'-'+('0'+дт.getDate()).slice(-2); }catch(e){}
+  if(смена && !(смена>пн && смена<=вс && Object.keys(датыЗаписей).some(function(d){ return d<смена; }))) смена=null;
+  return {смена:смена, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
 }
 function результатыЗала(){
   if(!HIST) return [];

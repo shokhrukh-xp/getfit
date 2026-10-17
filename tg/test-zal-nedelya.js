@@ -9,14 +9,12 @@ let плохо=0;const дано=(ok,t)=>{console.log((ok?'  ok  ':'  ПРОВА�
 const П='Barbell_Squat', Ж='Barbell_Bench_Press_-_Medium_Grip', Р='Stiff-Legged_Dumbbell_Deadlift';
 /* fin — отметка «Завершить и сохранить» (17.10, его выбор «Занятие „завершено“») */
 const зап=(id,date,ex,easy,безFin)=>({id,date,day:'A',name:'День A',week:1,easy:!!easy,updated:new Date(date+'T19:00:00').toISOString(),
- fin:безFin?undefined:new Date(date+'T19:30:00').toISOString(),
+ fs:1, fin:безFin?undefined:new Date(date+'T19:30:00').toISOString(),
  ex:ex.map(([n,i,w,r,unit])=>({n,id:i,unit:unit||'reps',sets:[1,2,3].map(()=>({w,r}))}))});
 const сегодня=M.Д(0), прошлая=M.Д(7);
-/* запись без «Завершить»: отметки появились 18.10, более старые считаются завершёнными —
-   поэтому кладём её не раньше 18.10 (это воскресенье недели 12–18, дальше — сегодня) */
-const ЗАВЕРШ_С='2026-10-18', незак=сегодня>=ЗАВЕРШ_С?сегодня:ЗАВЕРШ_С;
+/* запись новой схемы (fs) без «Завершить» — сегодня; ревью Codex U4: без даты-границы */
 const журнал=[
- Object.assign(зап('u',незак,[['Тяга штанги в наклоне','Bent_Over_Barbell_Row',50,10]],false,true),{day:'B'}),
+ Object.assign(зап('u',сегодня,[['Тяга штанги в наклоне','Bent_Over_Barbell_Row',50,10]],false,true),{day:'B'}),
  зап('a',сегодня,[['Приседания со штангой',П,75,8],['Жим лёжа',Ж,55,10],['Румынская тяга с гантелями',Р,28,10]]),
  зап('c',сегодня,[['Планка','Plank',null,60,'sec']]),                                   /* только секунды — не занятие */
  зап('b',прошлая,[['Приседания со штангой',П,72.5,8],['Жим лёжа',Ж,55,8],['Румынская тяга с гантелями',Р,28,10]]),
@@ -79,21 +77,35 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   дано(!!r && r.hl && r.top>=0 && r.bot<=700,'Журнал открыт на этом упражнении, строка подсвечена и видна '+JSON.stringify(r));
   дано(!err.length,'клик по результату без ошибок '+err.join(' | '));
   await p.close();}
- /* его выбор «Смена программы посреди недели»: черта подписана по новой программе;
-    первый запуск после выпуска и повторный вход — не смена */
+ /* его выбор «Смена программы посреди недели» (ревью Codex U3): смену ставит только явный
+    выбор человека — другая программа; повторный выбор той же — не смена; переживает повторный вход */
  {const пн=(()=>{const t=new Date(M.TODAY+'T12:00:00');t.setDate(t.getDate()-((t.getDay()+6)%7));return t.toISOString().slice(0,10);})();
-  const заметка=async(sig,reload)=>{const p=await br.newPage({viewport:{width:390,height:900}});
-   await p.addInitScript(s=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));if(s&&!localStorage.getItem('__sig_once')){localStorage.setItem('shp_v1_prog_sig',JSON.stringify(s));localStorage.setItem('__sig_once','1');}}catch(e){}},sig);
-   const o=opts('dark');o.hist=журнал;await M.поднять(p,o);await p.waitForTimeout(900);
-   if(reload){await p.reload();await p.waitForTimeout(1200);}
-   const t=числа(await p.locator('.zk .zksec').nth(1).innerText());const ps=await p.evaluate(()=>localStorage.getItem('shp_v1_prog_sig'));await p.close();return {t,ps};};
-  const перв=await заметка(null,false);
-  дано(/черта — сколько стоит в текущей программе/.test(перв.t) && JSON.parse(перв.ps).since===null,'первый запуск — не смена программы');
-  const см=await заметка({sig:'старая|A:x',since:null},true);
-  const ждёмСмену=M.TODAY>пн;
-  дано(ждёмСмену ? /программа сменилась \S+, \d\d\.\d\d — черта по новой программе, подходы — за всю неделю/.test(см.t) : !/сменилась/.test(см.t),
-   'смена посреди недели названа (и переживает повторный вход): '+см.t);
-  дано(JSON.parse(см.ps).since===M.TODAY,'дата смены — сегодня и не сдвигается при повторном входе');}
+  const раньше=журнал.some(w=>w.date>=пн && w.date<M.TODAY);
+  const выбрать=(p,prof)=>p.evaluate(x=>{const b=document.createElement('button');b.type='button';b.dataset.prof=x;document.getElementById('picker').appendChild(b);b.click();b.remove();},prof);
+  const заметка=async p=>{await p.click('.l1 [data-page="home"]');await p.waitForTimeout(700);return числа(await p.locator('.zk .zksec').nth(1).innerText());};
+  const p=await br.newPage({viewport:{width:390,height:900}});
+  await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));localStorage.setItem('shp_v1_friend_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
+  const o=opts('dark');o.hist=журнал;const err=await M.поднять(p,o);await p.waitForTimeout(900);
+  дано(!/сменилась/.test(числа(await p.locator('.zk').innerText())),'без выбора программы — не смена');
+  await выбрать(p,'shp');await p.waitForTimeout(500);
+  дано(!/сменилась/.test(await заметка(p)),'выбор той же программы — не смена');
+  await выбрать(p,'friend');await p.waitForTimeout(800);
+  const t=await заметка(p);
+  дано(раньше ? /программа сменилась \S+, \d\d\.\d\d — черта по новой программе, подходы — за всю неделю/.test(t) : !/сменилась/.test(t),
+   'другая программа посреди недели — названо (если до смены были занятия этой недели): '+t);
+  await p.reload();await p.waitForTimeout(1500);
+  const t2=числа(await p.locator('.zk .zksec').nth(1).innerText());
+  дано(t2===t,'повторный вход не сдвигает и не теряет смену: '+t2);
+  дано(!err.length,'смена программы без ошибок '+err.join(' | '));
+  await p.close();}
+ /* старые записи без схемы fs — завершённые (до этой доработки отметки не было) */
+ {const p=await br.newPage({viewport:{width:390,height:900}});
+  await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
+  const стар=зап('L',сегодня,[['Жим лёжа',Ж,55,10]]);delete стар.fs;delete стар.fin;
+  const o=opts('dark');o.hist=[стар];await M.поднять(p,o);await p.waitForTimeout(900);
+  const t=числа(await p.locator('.zk .zksec').first().innerText());
+  дано(/^Завершено занятий 1 из 3/.test(t) && !/без «Завершить/.test(t),'старая запись без fs считается завершённой: '+t);
+  await p.close();}
  /* ревью Codex Z3: «облегчить сегодня» не меняет недельный план подходов */
  {const план=async easy=>{const p=await br.newPage({viewport:{width:390,height:900}});
    await p.addInitScript(e=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));if(e)localStorage.setItem('shp_v1_shp_easy',JSON.stringify(e))}catch(x){}},easy?M.TODAY:null);
