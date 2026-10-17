@@ -9597,7 +9597,12 @@ function sessionBody(){
      отметку fin, и автосохранение её не стирает — берём из своей памяти или
      из уже сохранённой записи этого дня (другое устройство) */
   var фк=тело.date+'_'+day, фин=(get('fin',{})||{})[фк];
-  if(!фин && HIST) HIST.forEach(function(w){ if(!фин && w.date===тело.date && w.day===day && w.fin) фин=w.fin; });
+  /* ревью Codex U4-R1: старая запись (без fs) считалась завершённой — её правка
+     автосохранением сохраняет это признание, а не превращает в незавершённую */
+  if(!фин && HIST) HIST.forEach(function(w){
+    if(фин || w.date!==тело.date || w.day!==day) return;
+    if(w.fin) фин=w.fin; else if(!w.fs) фин=w.updated||(w.date+'T12:00:00.000Z');
+  });
   if(фин) тело.fin=фин;
   return тело;
 }

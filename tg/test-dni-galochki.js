@@ -51,6 +51,10 @@ const запись=(p,id)=>p.evaluate(k=>{const v=localStorage.getItem('tgcs_wor
   await p.click('#list .exrow[data-pickex="0"]');await p.waitForTimeout(200);
   const w=p.locator('#list .setrow[data-set="2"] input[data-f="w"]');
   await w.fill('62,5');await w.dispatchEvent('change');await p.waitForTimeout(150);
+  /* ревью Codex U4-R1: старая запись (без fs) считалась завершённой — правка без
+     «Сохранить изменения» это признание сохраняет */
+  {const t0=Date.now();let r=null;while(Date.now()-t0<4000){r=await запись(p,M.Д(1)+'_D1');if(r&&r.fs)break;await p.waitForTimeout(250);}
+   ok(r&&r.fs===1&&!!r.fin,'правка старой записи автосохранением — осталась завершённой: fs='+(r&&r.fs)+' fin='+(r&&r.fin));}
   await p.click('#finish');await p.waitForTimeout(1200);
   const вчера=await запись(p,M.Д(1)+'_D1'),сегодня=await запись(p,M.TODAY+'_D1');
   const вес=вчера&&вчера.ex&&(вчера.ex.find(x=>/Присед/.test(x.n))||{}).sets;
