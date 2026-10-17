@@ -22,7 +22,7 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
     progress:{sila:{verdict,up:3,flat:2,down:verdict==='мало'?0:1,rows:ряд}}});
    const box=p.locator('.vzsila2'), list=box.locator('details.sxlist'), summary=list.locator('summary');
    дано(await box.count()===1,'блок силы есть и без линии плана: '+verdict);
-   дано((await box.locator('.sxhd').innerText()).includes('Сила по тренировкам'),'заголовок говорит, что это по тренировкам');
+   дано((await box.locator('.sxhd').innerText()).includes('Рабочие веса по тренировкам'),'заголовок: рабочие веса по тренировкам (не «сила»)');
    дано(await p.locator('.sila-counts, .sila-up').count()===0,'плашек-«фильтров» нет');
    const нет=(await box.locator('.sxnone').innerText()).trim();
    дано(verdict==='мало' ? /Мало тренировок/.test(нет) : /График появится/.test(нет),'без индекса — честная строка: '+нет);
@@ -44,7 +44,7 @@ const индекс=(o)=>{const i=[null,100,101.5,null,103,102.4,104,103.2,o&&o.p
    const box=p.locator('.vzsila2'), где=theme+' '+width+': ';
    const крупно=(await box.locator('.sxhd b').innerText()).replace(/\s+/g,'');
    дано(крупно==='+3,2%','крупно — изменение к стартовой неделе в процентах '+где);
-   дано(/^сильнее, чем в неделю с \d\d\.\d\d$/.test(await box.locator('.sxwhat').innerText()),'словами — от какой даты');
+   дано(/^в среднем по упражнениям, с учётом повторов — к неделе с \d\d\.\d\d$/.test((await box.locator('.sxwhat').innerText()).replace(/\u00a0/g,' ')) && !/сильнее/.test(await box.innerText()),'словами — что и от какой даты, без «сильнее»');
    const ось=await box.locator('svg.sxsvg').innerHTML();дано(ось.includes('>старт<') && !/>10\d</.test(ось) && /\+\d(,\d)?\s?%/.test(ось.replace(/&nbsp;|\u00a0/g,' ')),'на оси «старт» и «+N %», без 100/105');
    дано(await box.locator('.sxhd b.up').count()===1,'рост — цветом «хорошо»');
    дано(/^Последняя неделя — с \d\d\.\d\d$/.test(await box.locator('.sxbase').innerText()),'подписана неделя числа');

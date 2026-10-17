@@ -3245,7 +3245,7 @@ body.ordmode #list .sstag{color:var(--text)}
 .sxhd b{font-size:26px;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
 .sxhd b s{text-decoration:none;font-size:13px;font-weight:700;margin-left:6px}
 .sxhd b.up{color:var(--ok)} .sxhd b.down{color:var(--warn-txt)}
-.sxwhat{margin:2px 0 0;font-size:14px;color:var(--text);text-align:right}
+.sxwhat{margin:4px 0 0;font-size:13px;line-height:1.45;color:var(--muted)}
 .sxchart{margin:8px 0 0}
 .sxax{font-size:14px}
 .sxchart>svg,.sxvol svg{display:block;width:100%;height:auto}
@@ -12911,7 +12911,7 @@ function vzСилаГрафик(ix){
   var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(1.5,(mx-mn)*0.15); mn-=pad; mx+=pad;
   var x=function(i){ return L+(W-L-R)*i/(n-1); }, y=function(v){ return T+(H-T-B)*(1-(v-mn)/(mx-mn)); };
   var f1=function(v){ return String(Math.round(v*10)/10).replace('.',','); };
-  var svg='<svg class="sxsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Индекс силы по тренировкам за '+(n-1)+' недель">';
+  var svg='<svg class="sxsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Рабочие веса по тренировкам за '+(n-1)+' недель">';
   svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+y(100).toFixed(1)+'" y2="'+y(100).toFixed(1)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>'+
     '<text x="'+(W-2)+'" y="'+(y(100)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">старт</text>';
   var верх=Math.round(mx-pad); if(Math.abs(y(верх)-y(100))>16) svg+='<text x="'+(W-2)+'" y="'+(y(верх)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">'+(верх>100?'+':'−')+f1(Math.abs(верх-100))+' %</text>';
@@ -12952,9 +12952,11 @@ function vzСилаСтрока(s){
      Поэтому вместо 100/105 — проценты к стартовой неделе и слова «сильнее,
      чем в неделю с …»; на оси — «старт» и «+5 %». */
   var ch = график && typeof ix.ch==='number' ? ix.ch : null;
-  var шапка='<div class="sxhd"><span>Сила по тренировкам</span>'+(ch!=null
+  /* 17.10, его вопрос «„сильнее“ вообще правильно говорить?» — нет: это
+     рабочие веса с учётом повторов, а не измеренная сила; выбрал «Рабочие веса» */
+  var шапка='<div class="sxhd"><span>Рабочие веса по тренировкам</span>'+(ch!=null
     ? '<b class="'+(ch>=0?'up':'down')+'">'+(ch>0?'+':ch<0?'−':'')+f1(Math.abs(ch))+' %</b>' : '')+'</div>'+
-    (ch!=null && ix.base ? '<p class="sxwhat">'+(Math.abs(ch)<0.5 ? 'как' : ch>0 ? 'сильнее, чем' : 'слабее, чем')+' в неделю с '+ruDate(ix.base)+'</p>' : '');
+    (ch!=null && ix.base ? '<p class="sxwhat">в среднем по упражнениям, с учётом повторов — к\u00a0неделе с\u00a0'+ruDate(ix.base)+'</p>' : '');
   /* ревью Codex: дата и покрытие рядом с числом — после пропусков оно не «текущее» */
   var база = график && ix.base ? '<p class="sxbase">Последняя неделя — с '+ruDate(ix.nowWeek)+(typeof ix.nowPairs==='number'?', по '+ix.nowPairs+' '+(ix.nowPairs%10===1&&ix.nowPairs%100!==11?'упражнению':'упражнениям')+' с весом':'')+'</p>' : '';
   var пусто = !график ? '<p class="sxnone">'+(s.verdict==='мало' ? 'Мало тренировок, чтобы сравнивать.' : 'График появится, когда будет две недели с тремя одинаковыми упражнениями с весом.')+'</p>' : '';
