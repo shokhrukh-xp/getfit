@@ -27,8 +27,10 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
    fabAfter:fab.parentElement.classList.contains('l1-in')&&r(fab).bottom<=innerHeight&&r(fab).top>=r(q('.l1')).top,fabHeight:r(fab).height,
    reserve:parseFloat(getComputedStyle(document.body).paddingBottom),nav:r(q('.l1')).height};
  });
- дано(!d.overflow&&d.arc===1&&d.grid===2&&d.legend===1,'дуга, сетка и ширина '+label);
- дано(d.rows===(state==='без зала'?3:4)&&(state!=='без зала'||d.scoreFull),'показатели и широкая оценка без зала '+label);
+ /* 17.10, его выбор H: калории · белок · оценка — одним рядом из трёх плиток;
+    с залом четыре плитки — 2×2. Широкой оценки больше нет. */
+ дано(!d.overflow&&d.arc===1&&d.grid===(state==='без зала'?3:2)&&d.legend===1,'дуга, сетка и ширина '+label);
+ дано(d.rows===(state==='без зала'?3:4)&&(state!=='без зала'||!d.scoreFull),'показатели: без зала три плитки в ряд '+label);
  дано(d.week===1&&d.dates.length===7&&d.dates.every(x=>/^\d{1,2}$/.test(x))&&d.after,'единственная неделя с датами после Сегодня '+label);
  дано(d.body&&d.fields&&d.plot===(['мало замеров','новичок'].includes(state)?0:1),'Тело и доступный новый замер '+label);
  дано(d.fabAfter&&d.fabHeight>=44&&d.reserve>=d.fabHeight+d.nav,'вход тренера в панели и запас под навигацию '+label);

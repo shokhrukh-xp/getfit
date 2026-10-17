@@ -3100,6 +3100,85 @@ body.ordmode #list .sstag{color:var(--text)}
 #probox .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
   background:var(--field);color:var(--text);font:inherit;font-size:15px}
 #probox .invcode .btn.small{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:13px}
+/* ══ ПОЛИРОВКА 17.10, ПАКЕТ 2 (Claude) ══
+   Его вопрос «что ещё можно улучшить в дизайне?», проход Claude и Codex, его
+   выбор буквами по макетам (Совместная работа Codex и Claude/dizayn-1710-*).
+   Стиль «Фокус · бирюза» не меняется: порядок, иерархия, меньше текста. */
+/* B · шапка «Моего дня»: число крупно, оценка справа, итог строкой во всю ширину */
+.food-hero{grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:6px 14px}
+.food-hero .food-hero-copy{font-size:14px;line-height:1.35}
+.food-hero .fh-l{display:block;font-size:13px;color:var(--on-accent);margin-bottom:4px}
+.food-hero .food-remaining{display:inline;font-size:44px;line-height:1;letter-spacing:-.03em;margin:0}
+.food-hero .fh-u{font-size:16px;font-weight:600;margin-left:2px}
+.food-hero .fclose,.food-hero .fclose .fdone{display:contents}
+.food-hero .fsc{text-align:right;align-self:end;white-space:nowrap}
+.food-hero .fsc u{display:block;text-decoration:none;font-size:13px;color:var(--on-accent);margin-bottom:2px}
+.food-hero .fsc b{font-size:30px;font-weight:800;line-height:1.05;color:var(--on-accent)}
+.food-hero .fsc b s{text-decoration:none;font-size:14px;font-weight:600;color:var(--on-accent)}
+.food-hero .fclose .fdone small{grid-column:1/-1;display:block;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.22);
+  font-size:13px;line-height:1.45;color:var(--on-accent)}
+.wear-surface .wrmore summary{min-height:44px;display:flex;align-items:center;font-size:13px;color:var(--accent-txt);cursor:pointer}
+.wear-surface .wrmore p{margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--muted)}
+@media(max-width:359px){
+ .food-hero{grid-template-columns:minmax(0,1fr) auto}
+ .food-hero .food-remaining{font-size:38px}
+ .food-hero .fsc b{font-size:24px}
+ .fmealgroup .fmeal{grid-template-columns:44px minmax(0,1fr)}
+}
+/* C · меню: блюдо главное, ккал строкой, состав через точку, «Рецепт» — кнопка */
+.mnrow .mkp{font-size:13px;color:var(--muted);margin:-4px 0 6px}
+.mnrow .ingredient-chips{display:block;font-size:13px;line-height:1.5;color:var(--text)}
+.mnrow .ingredient-chips>span{display:inline;background:none;padding:0;border-radius:0}
+.mnrow .ingredient-chips>span+span::before{content:' · ';color:var(--muted)}
+.mnrow .mrecb{display:inline-flex;align-items:center;min-height:44px;margin-top:10px;padding:0 14px;border-radius:12px;
+  background:var(--tint);color:var(--accent-txt);font-weight:600;text-decoration:none}
+/* D · Шаги и сон */
+.wear-surface .wrmore{margin-top:2px}
+/* F · каталог: русское название главное, английское — в «Как делать» */
+.catitem .cattx>i{display:none}
+.howattr{margin:14px 0 0;font-size:12px;color:var(--muted)}
+/* G · изменения тела сеткой; снимок весов подписан */
+.srgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 10px}
+.srgrid .srr{margin:0;flex-direction:column-reverse;align-items:flex-start;gap:4px;min-width:0}
+.srgrid .srr s{font-size:24px;font-weight:800;line-height:1.1}
+.srgrid .srr u b{font-size:14px}
+.srgrid .srr u i{display:block;font-size:12px;overflow-wrap:anywhere}
+.srgrid .srwide{grid-column:1/-1}
+#hmeas #fmphoto{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
+#hmeas #fmphoto svg{width:18px;height:18px;flex:none}
+/* H · итог под дугой: калории · белок · оценка — в один ряд плиток */
+.hdaycard .hrows{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 12px}
+.hdaycard .hrows:has(>.hrow:nth-of-type(4)){grid-template-columns:repeat(2,minmax(0,1fr))}
+.hdaycard .hrows>.hrow{padding:10px 10px 12px;border-radius:16px;background:var(--field);grid-column:auto!important}
+.hdaycard .hrows>.ds-zone{grid-column:1/-1;margin:2px 0 0}
+@media(max-width:359px){ .hdaycard .hrows{padding:0 8px;gap:6px} .hdaycard .hrows>.hrow{padding:8px 8px 10px} .hdaycard .hrow>b{font-size:18px} }
+/* I · пустой разговор и подпись камеры */
+.chatempty{padding:20px 2px 6px}
+.chatempty>b{display:block;font-size:20px;font-weight:800;margin-bottom:6px}
+.chatempty>p{margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--muted)}
+.chatq{display:flex;flex-wrap:wrap;gap:8px}
+.chatq button{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:var(--tint);color:var(--accent-txt);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+#coachm .cpill .cic{width:auto;min-width:44px;padding:0 8px;display:inline-flex;align-items:center;gap:4px}
+.cic-l{font-size:12px;font-weight:600}
+/* J · подписка: цена крупно, пункты галочками */
+#subm .subprice{display:block;margin:2px 0 4px;font-size:15px;color:var(--muted)}
+#subm .subprice b{font-size:36px;font-weight:800;color:var(--text);letter-spacing:-.02em;margin-right:4px}
+#subm .subterms{display:block;font-size:13px;color:var(--muted)}
+#subm .subin{list-style:none;padding:0;margin:14px 0;gap:0}
+#subm .subin li{display:block;position:relative;padding:10px 0 10px 26px;border-top:1px solid var(--line);font-size:14px;line-height:1.45}
+#subm .subin li:first-child{border-top:0}
+#subm .subin li::before{content:'✓';position:absolute;left:2px;top:10px;width:auto;height:auto;margin:0;border-radius:0;background:none;
+  color:var(--accent-txt);font-weight:800;line-height:1.45}
+#subm .subfree{padding:10px 12px;border-radius:12px;background:var(--tint);font-size:13px;color:var(--muted)}
+/* K · админка: итог крупно, расчёт по нажатию, плитки 3×2 */
+.adhero .adlbl{display:block;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.adhero .adcalc{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
+.adhero .adcalc summary{min-height:44px;display:flex;align-items:center;color:var(--accent-txt);font-size:14px;cursor:pointer}
+.adstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}
+.adstrip .ads{min-width:0}
+/* L · рейтинг: легенда образцами, подписи у кнопок круга */
+.lbkey2{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.lbkey2 i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
 </style>
 </head>
 <body>
@@ -3143,7 +3222,7 @@ body.ordmode #list .sstag{color:var(--text)}
           <label class="fld"><span>Вес, кг</span><input id="fw" aria-describedby="fw-error" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"><small class="fmerror" id="fw-error" hidden></small></label>
           <label class="fld"><span>Жир, %</span><input id="ffat" aria-describedby="ffat-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"><small class="fmerror" id="ffat-error" hidden></small></label>
           <label class="fld"><span>Талия</span><input id="fwaist" aria-describedby="fwaist-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"><small class="fmerror" id="fwaist-error" hidden></small></label>
-          <button type="button" class="fbtn" id="fmphoto" aria-label="Скриншот отчёта весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
+          <button type="button" class="fbtn" id="fmphoto" aria-label="Снимок весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Снимок весов</span></button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">Записать →</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
         </div>
@@ -3394,7 +3473,7 @@ body.ordmode #list .sstag{color:var(--text)}
     <div class="chatask">
       <div class="cpill">
         <textarea id="ctext" rows="1" placeholder="Еда или вопрос"></textarea>
-        <button type="button" class="cic" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <button type="button" class="cic" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="cic-l">Фото</span></button>
       </div>
       <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
@@ -3670,6 +3749,8 @@ body.ordmode #list .sstag{color:var(--text)}
       <li><b>Один дневник</b><span>Что прислал боту — сразу в приложении, и наоборот.</span></li>
     </ol>
     <p class="mtext" id="howfree" hidden></p>
+    <!-- 17.10: строка лицензии ушла с карты тела сюда (его выбор F) -->
+    <p class="howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -6060,7 +6141,7 @@ function menuОтправить(v){
 function menuДата(iso){ var d=new Date(iso+'T12:00:00'); return WD[d.getDay()]+', '+d.getDate()+' '+MONTHS[d.getMonth()]; }
 function menuПриём(x, span, m){
   var key=span+':'+x.id, r=MENUREC[key]||((m&&m.рецепты)||{})[x.id];
-  var состав=(x.items||[]).filter(function(i){return i.g;}).map(function(i){ return '<span>'+esc(String(i.name).toLowerCase())+' <b>'+i.g+' г</b></span>'; }).join('');
+  var состав=(x.items||[]).filter(function(i){return i.g;}).map(function(i){ return '<span>'+esc(String(i.name).toLowerCase())+' <b>'+i.g+'&nbsp;г</b></span>'; }).join('');
   /* 25.09, его слова: «некоторые рецепты просто говорят возьми готовую еду
      и разогрей — это же глупо писать как рецепт». Всё готовое (куплено или
      едят как есть) — кнопки «Рецепт» нет (его выбор из трёх). Меню до 25.09
@@ -6072,8 +6153,11 @@ function menuПриём(x, span, m){
       (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
       (r.совет ? '<p class="msost">'+esc(r.совет)+'</p>' : '')
     : '<button type="button" class="lnk mrecb" data-mrec="'+esc(key)+'">'+(MENURECBUSY===key?'Пишу рецепт…':'Рецепт'+(x.мин?' · '+x.мин+' мин':'')+' ›')+'</button>';
-  return '<div class="mnrow"><div class="mhd"><span>'+esc(x.kind)+'</span><span>'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</span></div>'+
-    '<div class="mtx">'+esc(x.text)+'</div>'+(состав?'<div class="msost ingredient-chips">'+состав+'</div>':'')+рец+'</div>';
+  /* 17.10, его выбор C: блюдо — главное; под ним одна строка ккал и белка,
+     состав строкой через точку; «Рецепт» — кнопкой, а не подписью */
+  return '<div class="mnrow"><div class="mhd"><span>'+esc(x.kind)+'</span></div>'+
+    '<div class="mtx">'+esc(x.text)+'</div><div class="mkp">'+Math.round(x.kcal)+' ккал · '+Math.round(x.prot)+' г белка</div>'+
+    (состав?'<div class="msost ingredient-chips">'+состав+'</div>':'')+рец+'</div>';
 }
 function menuStats(k,p,kt,pt){
   return '<div class="menu-stats"><div><span>Калории</span><strong>'+esc(k==null?'—':String(k))+' <small>ккал</small></strong><span>норма '+esc(kt)+'</span></div><div><span>Белок</span><strong>'+esc(p==null?'—':String(p))+' <small>г</small></strong><span>норма '+esc(pt)+' г</span></div></div>';
@@ -10011,13 +10095,11 @@ function renderMus(){
     ' групп закрыли норму.'+(нет.length?' Не трогал: '+хвост+'.':'')+
     ' Нажми на мышцу — покажу подробности.';
   box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Карта тела</h4></div>'+
-    '<p class="chartsub">Последние 7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+
-    '. Чем ярче мышца, тем свежее работа; через '+MFADE+' дней она гаснет совсем. '+
-    'Обводка — норма в '+MPOROG+' подходов за неделю закрыта.</p>'+
+    /* 17.10, его выбор F: одна строка; числа порогов — в легенде под картой */
+    '<p class="chartsub">7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+' · ярче — свежее, обводка — норма закрыта</p>'+
     svg+
     '<div class="muskey"><i>подходов за 7 дней</i><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
-    '<i><span class="sw2"></span>'+MPOROG+'+ подходов</i>'+
-    '<i class="attr">анатомия — body-muscles, Apache-2.0</i></div>'+
+    '<i><span class="sw2"></span>'+MPOROG+'+ подходов — норма закрыта</i></div>'+
     '<p class="musdet" id="musdet">'+сводка+'</p></div>';
 
   /* данные нажатия берём с последней отрисовки, а не из замыкания первой:
@@ -12970,7 +13052,7 @@ var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
 /* Балл с одной цифрой после запятой: 8,4 / 10. Кроме высшего — «10», а не
    «10,0» (24.09): идеальный приём с хвостом «,0» читается как недоделанный. */
 function fmtR(x){ if(x==null) return '—'; var r=Math.round(x*10)/10; return r>=10 ? '10' : r.toFixed(1).replace('.',','); }
-function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+' (−'+fmtR(x.v)+')'; }).join('; ') : 'всё в норме'; }
+function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+(x.v!=null?' (−'+fmtR(x.v)+')':''); }).join('; ') : 'всё в норме'; }
 function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
 var CIRCACHE={}, CIRCERROR=false, CIRCBUSY=false, CIRCGEN=0;
 function circlePull(id){
@@ -13031,8 +13113,8 @@ function renderCircle(){
   h+='<div class="cirsw">'+list.map(function(c){
        return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>';
      }).join('')+
-     (cur?'<button type="button" class="mchip cirgear" data-krug="'+esc(cur.id)+'" aria-label="Настроить круг «'+esc(cur.name)+'»">⚙</button>':'')+
-     '<button type="button" class="mchip cirnew" id="cirnew" aria-label="Завести круг">+</button></div>';
+     (cur?'<button type="button" class="mchip cirgear" data-krug="'+esc(cur.id)+'" aria-label="Настроить круг «'+esc(cur.name)+'»">⚙ круг</button>':'')+
+     '<button type="button" class="mchip cirnew" id="cirnew" aria-label="Завести круг">+ новый</button></div>';
   var td=me.today||null;
   /* Человек не в круге — плитки «— / 10» показывать нечестно: это места под
      числа, которых не будет. Вместо них объяснение и кнопка туда, где
@@ -13050,7 +13132,7 @@ function renderCircle(){
   h+='<div class="tiles cirtiles" style="margin-top:0">'+
      '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'день идёт') : 'ещё ничего не записано')+'</i></div>'+
      '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+(me.lastr!=null?'прошлая '+fmtR(me.lastr):weekSub(me))+'</i></div></div>'+
-     (td&&td.r!=null?'<p class="cirwhy">'+esc(whyText(td.why))+'</p>':'');
+     '';   /* 17.10, его выбор L: «за что сняты баллы» — в «Моём дне», здесь строка висела без подписи */
   var b=CIRC.board||[];
 
   if(CIRC.loading && CIRCERROR){ box.innerHTML=h; return; }
@@ -13077,7 +13159,8 @@ function renderCircle(){
       return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+класс+'">'+число+'</span></div>';
     }).join('')+'</div>'+
-    '<p class="lbkey">Точки — дни недели, с понедельника: <i><s class="lbd-ok"></s>оценка 7 и выше</i>, <i><s class="lbd-low"></s>ниже 7</i>, <i><s class="lbd-today"></s>сегодня</i>, <i><s></s>не в зачёте</i> — еды не записано или только один приём.</p>';
+    /* 17.10, его выбор L: легенда образцами в одну строку, без абзаца */
+    '<p class="lbkey lbkey2"><span>пн–вс:</span><i><s class="lbd-ok"></s>7+</i><i><s class="lbd-low"></s>ниже 7</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>нет зачёта</i></p>';
   }
   /* 19.09, его решение: каждый решает за себя. В таблице человек есть
      всегда — балл и есть смысл круга; тарелки с фото показывает тот, кто
@@ -13381,11 +13464,20 @@ function circleShare(id){
 }
 /* оценка дня на «Еде» — всегда, без закрытия (его правило: «не нужно закрывать
    день, чтобы получить оценку»); итог фиксируется в полночь сам */
-function closeHtml(){
+function closeHtml(герой){
   var d=DAYSC; if(!d || d.date!==fDate() || d.free) return '';
   var fin = d.closed || d.date<TODAY;
   /* до первой записи числа нет: «3,0 / 10» с утра — это не оценка, а пустой день */
-  if(d.r==null) return fin ? '' : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>';
+  if(d.r==null) return fin ? '' : (герой
+    ? '<div class="fclose"><div class="fdone fpend"><span class="fsc"><u>оценка дня</u><b>—<s> / 10</s></b></span><small>появится с первой записью</small></div></div>'
+    : '<div class="fclose"><div class="fdone fpend"><b>— / 10</b> · оценка дня<br><small>появится с первой записью</small></div></div>');
+  /* 17.10, шапка «Моего дня» (его выбор B): справа подпись и балл, под ними
+     во всю ширину — как идёт день и за что сняты баллы; слова те же */
+  if(герой){
+    var пока0 = !fin && !!d.вместе;
+    return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><span class="fsc"><u>'+(fin?'итог дня':'оценка дня')+'</u><b>'+fmtR(d.r)+'<s> / 10</s></b></span>'+
+      '<small>'+(fin?'итог дня':(пока0?'съеденное пока':'день идёт'))+(d.streak?' · '+streakText(d.streak):'')+' · '+esc(whyText(d.why))+(пока0?'. Итог дня — в полночь, по всей норме':'')+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
+  }
   /* 24.09: пока день идёт, сервер судит съеденное — каждый приём своей долей
      дня, — а не весь день полной нормой. Так и подписываем, иначе «5,8» в
      10 утра читается как приговор дню. Итог по всей норме — в полночь. */
@@ -13557,6 +13649,8 @@ function renderSrez(){
   if(когда) когда.textContent=ruDate(d['от'])+' — '+ruDate(d['до'])+' · '+d.n+' '+(d.n===1?'замер':(d.n<5?'замера':'замеров'));
   var h='<div class="srv"><b>'+esc(d.шапка)+'</b>'+
     (d.текст&&d.текст.length?'<p>'+d.текст.map(esc).join(' ')+'</p>':'')+'</div>';
+  /* 17.10, его выбор G: изменения — сеткой 2×2, «против плана» во всю ширину */
+  h+='<div class="srgrid">';
   h+=срСтрока('вес', срЗпт(d.a.w)+' → '+срЗпт(d.b.w)+' кг', дл.w, true);
   h+=срСтрока('жир', (d.a.fat!=null?срЗпт(d.a.fat)+' → '+срЗпт(d.b.fat)+' кг':'')+
       (d.a.pct!=null?' · '+срЗпт(d.a.pct)+' → '+срЗпт(d.b.pct)+' %':''), дл.fat, true);
@@ -13571,9 +13665,10 @@ function renderSrez(){
     var пл=d.план;
     var впереди = Math.abs(пл.fact)>Math.abs(пл.plan) && ((пл.fact<0)===(пл.rate<0));
     var слово = пл.onTrack ? 'по графику' : ((впереди?'впереди ':'позади ')+срЗпт(Math.abs(пл.gap)));
-    h+='<div class="srr"><u><b>против плана</b><i>с '+ruDate(пл.from)+' ушло '+срЗпт(Math.abs(пл.fact))+
+    h+='<div class="srr srwide"><u><b>против плана</b><i>с '+ruDate(пл.from)+' ушло '+срЗпт(Math.abs(пл.fact))+
        ' кг, по плану '+срЗпт(Math.abs(пл.plan))+'</i></u><s class="'+(пл.onTrack?'nc':(впереди?'dn':'up'))+'">'+слово+'</s></div>';
   }
+  h+='</div>';
   var гр=срГрафик(d.ряд||[]);
   if(гр) h+='<div class="srch"><p class="hd">сколько ушло от '+ruDate(d['от'])+'</p>'+
     '<div class="srleg"><i><u style="background:var(--accent)"></u>вес</i>'+
@@ -13649,7 +13744,8 @@ document.getElementById('probox').addEventListener('click', function(e){
 function renderSub(){
   var w=document.getElementById('sub-what'); if(!w||!SUB) return;
   var ц=SUB.stars||500;
-  w.textContent='Тренер — '+ц+' ★ в месяц. Списывается раз в месяц, отменить можно в любой момент.';
+  /* 17.10, его выбор J: цена крупно, условия — сразу под ней */
+  w.innerHTML='<span class="subprice"><b>'+ц+' ★</b> в месяц</span> <span class="subterms">Списывается раз в месяц, отменить можно в любой момент.</span>';
   var l=document.getElementById('sub-list');
   if(l) l.innerHTML=['Разбор еды без ограничений — фото и словами: калории, белок, жиры, клетчатка',
     'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
@@ -13766,9 +13862,10 @@ function renderAdmin(){
   var h='';
   /* 1. Я в плюсе? Раскладка рядом, чтобы число не пришлось брать на веру. */
   var итог=+д.итог||0;
-  h+='<div class="adhero"><div class="adline"><span class="adbig '+(итог>=0?'plus':'minus')+'">'+
+  /* 17.10, его выбор K: итог крупно, расчёт целиком — по нажатию */
+  h+='<div class="adhero"><u class="adlbl">итог за период</u><div class="adline"><span class="adbig '+(итог>=0?'plus':'minus')+'">'+
      (итог>0?'+':'')+дол(итог)+'</span><span class="adwhen">с '+admДата(ADM.month)+'</span></div>'+
-     '<p class="adnote">'+чис(д.замесяц)+' ★ собрано (<em>'+дол(д.долларов)+'</em> по курсу вывода '+
+     '<details class="adcalc"><summary>Расчёт и расходы на ИИ</summary><p class="adnote">'+чис(д.замесяц)+' ★ собрано (<em>'+дол(д.долларов)+'</em> по курсу вывода '+
      String(д.курс).replace('.',',')+' $ за звезду), минус <em>'+дол(д.ии)+'</em> на ИИ'+
      (д.роздано?', минус <em>'+чис(д.роздано)+' ★</em> роздано баллами':'')+'.'+
      (д.заморожено?'<br>Заморожено до вывода (21 день) — <em>'+чис(д.заморожено)+' ★</em>.':'')+
@@ -13776,7 +13873,7 @@ function renderAdmin(){
        plural(д.вызовов,['обращение','обращения','обращений'])+' к модели, '+чис(д.токенов)+' токенов на входе, из них '+
        чис(д.изкеша)+' взято из кеша'+(д.кеш_доля!=null?' ('+д.кеш_доля+'%)':'')+
        '. Считано по ценам Gemini, счетов Google приложение не видит.</s>'
-       : '<br><s class="admini">Расход на ИИ считается с 15 сентября — до этого обращения не записывались.</s>')+'</p>'+
+       : '<br><s class="admini">Расход на ИИ считается с 15 сентября — до этого обращения не записывались.</s>')+'</p></details>'+
      (д.понеделям&&д.понеделям.some(function(x){return x>0;})
        ? '<div class="adbars">'+admПолоски(д.понеделям)+'</div><p class="adnote" style="margin-top:6px">по неделям, ★</p>' : '')+
      '</div>';
@@ -14765,8 +14862,12 @@ function foodHeroHtml(d, line){
   if(d.free && d.free.on) return '<section class="food-hero food-free">'+свобКартаHtml(d.free,d.date||fDate())+'</section>';
   if(!(d.targets && d.targets.kcal)) return '';
   var text=esc(line), fin=(d.date||fDate())<TODAY || (DAYSC && DAYSC.date===fDate() && DAYSC.closed);
-  if(!fin) text=text.replace(/(До нормы(?: ещё|:)?) ([\d \u00a0]+)( ккал)/, '$1 <strong class="food-remaining">$2</strong>$3');
-  return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml()+'</section>';
+  /* 17.10, его выбор «B · шапка дня»: подпись мелко, число крупно, единица рядом;
+     текст строки сервера не меняется ни на букву (test-ds3). «Сверх нормы» —
+     тоже число, раньше оно терялось в абзаце. */
+  if(!fin) text=text.replace(/(До нормы(?: ещё|:)?|Сверх нормы) ([\d \u00a0]+)( ккал)/, function(_,a,n,u){
+    return '<span class="fh-l">'+a+'</span> <strong class="food-remaining'+(/Сверх/.test(a)?' fh-over':'')+'">'+n+'</strong><span class="fh-u">'+u+'</span>'; });
+  return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml(true)+'</section>';
 }
 /* 14.10, GF-02: без подписки — 3 записи еды через ИИ в день. Сколько
    осталось, видно на самой кнопке, а не после отправки. */
@@ -14909,8 +15010,9 @@ function renderFoodDay(){
                   : '<span class="fmth fmno"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg></span>';
     return '<div class="fmeal" data-mid="'+m.id+'">'+ф+
            '<span class="ft">'+(m.kind?'<i>'+esc(m.kind)+'</i>':'')+m.text+приёмHtml(оцП[m.id])+'</span>'+
-           '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span>'+
-           '<button type="button" class="fx" data-fdel="'+m.id+'" aria-label="Убрать">×</button></div>';
+           '<span class="fn"><b>'+Math.round(m.kcal)+'</b> ккал<i>белок '+Math.round(m.prot||0)+' г</i></span></div>';
+           /* 17.10, его выбор B: «×» у каждой строки убран — мимо пальцем
+              стирался приём; удалить — «Удалить» в листе приёма */
   }).join('');
   if((d.meals||[]).length && !(св && св.on)) (box.querySelector('.fnorm')||box).innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
   if(св && св.on && !ml.innerHTML){ ml.innerHTML='<p class="empt">Записей нет — и не нужно.</p>'; return; }
@@ -15043,7 +15145,9 @@ function renderWear(){
   hd.hidden=false; b.hidden=false;
   var н=w.шагиСон;
   if(!н || (!н.днейШаги && !н.ночей)){
-    b.innerHTML='<p class="wrnone">Шаги и сон записывает тренер со скриншота: пришли ему снимок экрана из «Здоровья», Samsung Health или Mi Fitness — числа появятся здесь. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p>';
+    /* 17.10, его выбор D: одна строка вместо абзаца; подробности — по нажатию */
+    b.innerHTML='<p class="wrnone">Пришли тренеру скриншот шагов и сна — числа появятся здесь.</p>'+
+      '<details class="wrmore"><summary>Откуда и зачем</summary><p>Подойдёт снимок из «Здоровья», Samsung Health или Mi Fitness. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p></details>';
     return;
   }
   var возр=+((myData()||{}).age)||0, цельШ=возр>=60?6000:8000;
@@ -15627,6 +15731,11 @@ function источникиHTML(src, коротко){
     return '<button type="button" data-src="'+q(x.u)+'" title="'+q(x.p||'')+'" aria-label="'+q(x.k+(x.t?', '+x.t:'')+(x.p?': '+x.p:''))+'">📄 <b>'+esc(x.k)+'</b>'+(x.t&&!коротко?' '+esc(x.t):'')+'</button>';
   }).join('')+'</div>';
 }
+var ЧАТ_НАЧАЛА=[['photo','📷 Сфоткать еду'],['Что съесть на ужин?','Что съесть на ужин?'],['Разбери мой день','Разбери мой день'],['Как идёт моя цель?','Как идёт цель?']];
+function чатПустой(){
+  return '<div class="chatempty"><b>Чем помочь?</b><p>Пришли фото еды — запишу и оценю. Или спроси словами.</p><div class="chatq">'+
+    ЧАТ_НАЧАЛА.map(function(x){ return '<button type="button" data-cq="'+esc(x[0])+'">'+esc(x[1])+'</button>'; }).join('')+'</div></div>';
+}
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
@@ -15650,9 +15759,17 @@ function renderChat(scroll){
       h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+ruDate(CHAT.pendingDate)+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
       ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
     if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
+    /* 17.10, его выбор I: пустой разговор — не чёрный экран, а «чем помочь»
+       и четыре частых начала; нажатие отправляет как обычное сообщение */
+    if(!все.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err) h+=чатПустой();
     h+=recoCard('chat');
   }
   box.innerHTML=h;
+  box.querySelectorAll('[data-cq]').forEach(function(b){
+    b.addEventListener('click', function(){ haptic('light');
+      if(b.dataset.cq==='photo'){ var ph=document.getElementById('cphoto'); if(ph) ph.click(); return; }
+      coachSend(b.dataset.cq); });
+  });
   var retry=document.getElementById('chatretry');
   if(retry) retry.addEventListener('click',cGo);
   chatSendState();
