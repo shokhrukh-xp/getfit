@@ -35,8 +35,8 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  await p.locator('#profbtn').click();await check('профиль','#profm');
  ok((await p.locator('.goal-progress summary').innerText()).includes('−4,8 кг'),'минус в кратком ходе цели');
  await p.locator('.goal-progress summary').click();ok((await p.locator('.goal-progress .gp').innerText()).includes('(−4,8)'),'минус в раскрытом ходе цели');ok((await p.locator('.goal-progress .gp').innerText()).includes('92,3'),'стартовый вес в деталях цели');
- await p.locator('#zdtoggle').click();await check('здоровье','#profm');await p.locator('#bttoggle').click();await check('быт','#profm');
- await p.locator('#meedit').click();ok(await p.locator('#me-age').isVisible(),'личные данные редактируются');
+ await p.locator('#zdtoggle').click();await check('здоровье','#profm');await p.locator('#pqback').click();await p.locator('#bttoggle').click();await check('быт','#profm');
+ await p.locator('#pqback').click();await p.locator('#meedit').click();ok(await p.locator('#me-age').isVisible(),'личные данные редактируются');
  ok(!errs.length,'без ошибок приложения: '+errs.join('|'));await p.close();
  }
  for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){

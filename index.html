@@ -879,10 +879,6 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 #profm .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
   background:var(--card-solid);color:var(--text);font:inherit;font-size:15px}
 #profm .invcode .btn.small{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:13px}
-.pfrow{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;
-  padding:0 14px;border-radius:12px;border:.5px solid var(--line-soft);background:var(--card-2);
-  color:var(--text);font:inherit;font-size:15px;text-align:left}
-.pfrow i{font-style:normal;font-size:17px;color:var(--dim)}
 .zdbox .pf{margin-top:13px}
 .zdbox .pf:first-child{margin-top:4px}
 .zdbox .seg.multi button{font-size:13px}
@@ -3003,6 +2999,105 @@ body.ordmode #list .sstag{color:var(--text)}
 #fweek button.fd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #fnav{scroll-margin-top:calc(var(--pad-top) + 16px)}
 .dbnote.bad,.db-save-tail.bad{color:var(--warn-txt)}
+/* ══ КНОПКА ПРОФИЛЯ И ПРОФИЛЬ ГРУППАМИ (17.10) ══
+   Его слова: «кнопка профиля почти не заметна особенно когда открываю на
+   телефоне, страница профиля вообще в каком-то хаосе». Его выбор из макета
+   (Claude outputs/profil-maket-2026-10-17): аватар-акцент 44 px с точкой,
+   когда в профиле ждёт совет; профиль — «Группы + строки»; Pro-ссылки — в
+   Админ панель. Лист профиля на фоне --bg, группы — карточками --surface. */
+.hright > .profbtn{width:44px;height:44px;border:0;background:var(--action);color:#fff;font-size:17px;font-weight:800;
+  box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+.hright > .profbtn b{color:#fff;font-weight:800}
+.hright > .profbtn svg{width:22px;height:22px}
+.hright > .profbtn.attn{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
+.hright > .profbtn.attn::before{content:"";position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:999px;
+  background:var(--amber);border:2px solid var(--bg)}
+#profm .modalbox{background:var(--bg);padding:12px 16px 28px}
+#profm .pqhead{flex-wrap:wrap;min-height:44px;margin-bottom:12px}
+#profm .pqhead h3{font-size:26px;font-weight:800;letter-spacing:-.02em}
+#profm.pqin .pqhead h3{order:3;flex:1 0 100%;font-size:24px;margin:2px 4px 0}
+.pqback{background:none;border:0;padding:0 12px 0 0;min-height:44px;color:var(--accent-txt);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.pqid{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 16px;border-radius:20px;background:var(--surface)}
+.pqava{width:52px;height:52px;flex:none;border-radius:999px;background:var(--action);color:#fff;font-weight:800;font-size:21px;
+  display:grid;place-items:center}
+.pqava svg{width:26px;height:26px}
+.pqidt{flex:1;min-width:0}
+.pqidt > b{display:block;font-size:17px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#profm .pqid .mesum{margin:2px 0 0;font-size:13px;color:var(--muted)}
+#profm .pqid #meedit{flex:none;background:none;border:0;color:var(--accent-txt);font:inherit;font-size:14px;font-weight:600;
+  min-height:44px;padding:0 0 0 6px;cursor:pointer;position:relative}
+#profm #mefields{margin:8px 0 0;padding:4px 16px 14px;border-radius:20px;background:var(--surface)}
+#profm .mehint{margin:8px 4px 0}
+#profm .subrow{margin:8px 0 0;padding:4px 16px;border-radius:16px;background:var(--surface)}
+#profm .goalcard{margin:12px 0 0;padding:16px;border-radius:20px;background:var(--tint);border:1px solid rgba(var(--accent-rgb),.35)}
+#profm .goalcard .gl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-txt);margin-bottom:6px}
+#profm .goalcard .gt{font-size:20px;font-weight:800;line-height:1.25;letter-spacing:-.02em}
+.pqgbar{position:relative;height:8px;border-radius:9px;background:rgba(var(--accent-rgb),.2);margin:16px 0 8px}
+.pqgbar b{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:var(--accent)}
+.pqgbar u{position:absolute;top:-5px;width:4px;height:18px;border-radius:3px;background:var(--text)}
+.pqgends{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.pqgends b{color:var(--text);font-weight:700}
+#profm .goalcard .goal-progress{margin-top:10px}
+#profm .goalcard #goaltalk{display:flex;width:100%;justify-content:center;align-items:center;margin-top:12px;min-height:44px;
+  border:1px solid var(--accent);border-radius:12px;padding:0 12px;color:var(--accent-txt);font-weight:700;font-size:14px;text-align:center}
+.pqlab{margin:22px 4px 8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pqgroup{background:var(--surface);border-radius:20px;overflow:hidden}
+.pqrow{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 12px 10px 14px;
+  border:0;border-radius:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.pqrow + .pqrow::before{content:"";position:absolute;left:58px;right:0;top:0;border-top:1px solid var(--line)}
+.pqrow:active{background:var(--field)}
+.pqic{position:relative;width:32px;height:32px;flex:none;border-radius:10px;background:var(--tint);color:var(--accent-txt);
+  display:grid;place-items:center}
+.pqic svg{width:18px;height:18px}
+.pqrow.pqdot .pqic::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:999px;
+  background:var(--amber);border:2px solid var(--surface)}
+.pqt{flex:1;min-width:0}
+.pqt b{display:block;font-size:15px;font-weight:600;line-height:1.3}
+.pqt small{display:block;font-size:12px;line-height:1.35;color:var(--muted);margin-top:2px}
+.pqt small:empty{display:none}
+.pqv{flex:0 1 auto;max-width:42%;font-size:13px;line-height:1.35;color:var(--muted);text-align:right;overflow-wrap:anywhere}
+.pqv:empty{display:none}
+.pqv.pqac{color:var(--accent-txt);font-weight:600}
+.pqch{font-style:normal;font-size:20px;line-height:1;color:var(--muted);flex:none}
+.pqnote{margin:8px 4px 0;font-size:12px;line-height:1.4;color:var(--muted)}
+.pqfoot{text-align:center;margin-top:20px}
+#profm .pqfoot .bline{margin:0 0 4px!important;color:var(--muted)}
+#profm .pqfoot #profreset{margin:4px auto 0;width:auto;min-height:44px;padding:0 16px;font-weight:700;font-size:15px}
+#profm .pqfoot .foot{margin:6px 0 0}
+.pqlead{margin:0 4px 14px;font-size:14px;line-height:1.5;color:var(--muted)}
+#profm .pqpage .invbody{padding:6px 16px 16px;border-radius:20px;background:var(--surface)}
+#profm #refwhat{margin:0 4px 14px;font-size:14px;line-height:1.5}
+#profm .pqopts{border:0}
+@media(max-width:360px){
+  /* на 320 текст важнее значков: подпись «на что влияет» — то, ради чего строки */
+  .pqic{display:none}
+  .pqrow + .pqrow::before{left:14px}
+  .pqv{max-width:40%}
+}
+#profm .pqpage .progcard{margin:0;padding:16px;border-radius:20px;background:var(--surface)}
+#profm .pqpage #recobox:not(:empty){margin-top:12px}
+#profm .pqpage .invcode{margin-top:0}
+#profm .pqpage .refsum{margin:12px 4px 0}
+#profm .pqpage #refspend{margin-top:12px}
+#profm .pqopts{margin:0;padding:0}
+#profm .pqopts .seg{flex-direction:column;gap:10px}
+#profm .pqopts .seg button{flex:none;display:block;width:100%;padding:14px 16px;border-radius:18px;border:1.5px solid transparent;
+  background:var(--surface);color:var(--text);font-size:16px;font-weight:700;text-align:left;white-space:normal}
+#profm .pqopts .seg button small{display:block;margin-top:4px;font-size:13px;font-weight:400;line-height:1.4;color:var(--muted)}
+#profm .pqopts .seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--tint);color:var(--text)}
+#profm .pqopts .seg button[aria-pressed="true"]::after{content:"✓";position:absolute;top:14px;right:16px;width:22px;height:22px;
+  border-radius:999px;background:var(--accent);color:var(--bg);font-size:13px;font-weight:800;display:grid;place-items:center}
+#profm .pqopts .seg button{position:relative;padding-right:48px}
+#profm .pqpage #me-voice-hint{display:none}
+/* Pro-ссылки в Админ панели */
+#probox .prowrap{padding:14px 16px 16px;border-radius:16px;background:var(--surface)}
+#probox .invnote{margin:0 0 4px;font-size:13px;line-height:1.45;color:var(--muted)}
+#probox .pf{margin-top:12px}
+#probox #pro-make{margin-top:14px}
+#probox .invcode{display:flex;align-items:center;gap:8px;margin-top:10px}
+#probox .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
+  background:var(--field);color:var(--text);font:inherit;font-size:15px}
+#probox .invcode .btn.small{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:13px}
 </style>
 </head>
 <body>
@@ -3168,6 +3263,20 @@ body.ordmode #list .sstag{color:var(--text)}
     <section class="page hide" id="p-admin">
       <div class="sec" style="padding-top:18px">
         <div id="admbody"><p class="empt">Загружаю…</p></div>
+        <!-- 17.10, его выбор «В админ панель»: Pro-ссылки видит только он, и в
+             профиле они мешали остальному. Здесь они рядом со списком выданных
+             ссылок и промокодов. -->
+        <div id="probox" hidden>
+          <h3 class="adh">подарить pro</h3>
+          <div class="prowrap">
+            <p class="invnote">Одна ссылка на N человек: тренер для них бесплатно на выбранный срок.</p>
+            <div class="pf pfv"><span class="pfl">срок</span><div class="seg" id="pro-days"></div></div>
+            <div class="pf pfv"><span class="pfl">на сколько человек</span><div class="seg" id="pro-n"></div></div>
+            <button type="button" class="btn wide prim" id="pro-make">Создать Pro-ссылку</button>
+            <div class="invcode" id="pro-out" hidden><input id="prolink" type="text" readonly aria-label="Pro-ссылка"><button type="button" class="btn small prim" id="proshare">Отправить</button></div>
+            <p class="refsum" id="pro-sum"></p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -3437,81 +3546,115 @@ body.ordmode #list .sstag{color:var(--text)}
     <p class="aistate" id="sbstate" hidden></p>
   </div>
 </div>
+<!-- 17.10, его слова: «страница профиля вообще в каком-то хаосе, нет
+     организованности и понятной структуры что тут и на что влияет». Его выбор
+     из макета (Claude outputs/profil-maket-2026-10-17): «Группы + строки».
+     Главный экран профиля — короткий список групп; в каждой строке название,
+     на что влияет, текущее значение и ›. Подробности открываются листом
+     внутри того же окна (profGo), назад — «‹ Профиль». Все прежние id и
+     обработчики живут как были: строки здоровья и быта — те же #zdtoggle и
+     #bttoggle, их тела — в своих листах. Pro-ссылки владельца переехали в
+     Админ панель (его выбор «В админ панель»). -->
 <div class="modal" id="profm" role="dialog" aria-modal="true" aria-labelledby="proftitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="proftitle">Профиль</h3><button class="xbtn" id="profclose" aria-label="Закрыть">✕</button></div>
-    <p class="mesum"><span id="mesumt"></span><button type="button" id="meedit">изменить</button></p>
-    <div class="me" id="mefields" hidden>
-      <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
-      <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
-      <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
-      <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
-    </div>
-    <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его вписываешь на главной, под карточкой «Тело».</p>
-    <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
-    <p class="subrow" id="subrow" hidden></p>
+    <div class="cathead pqhead"><button type="button" class="pqback" id="pqback" hidden>‹ Профиль</button><h3 id="proftitle">Профиль</h3><button class="xbtn" id="profclose" aria-label="Закрыть">✕</button></div>
 
-    <!-- Про человека: цель и здоровье. Без заголовка — это не настройки. -->
-    <div class="goalcard" id="goalcard"></div>
-    <div class="invbox zdbox" id="zdbox">
-      <button type="button" class="invhead" id="zdtoggle" aria-expanded="false"><span class="invl">здоровье</span><span class="invsum" id="zdsum">не заполнено</span><i class="invchev">›</i></button>
+    <div class="pqmain" id="pqmain">
+      <div class="pqid">
+        <span class="pqava" id="pqava" aria-hidden="true"></span>
+        <div class="pqidt"><b id="pqname"></b><p class="mesum"><span id="mesumt"></span></p></div>
+        <button type="button" id="meedit">изменить</button>
+      </div>
+      <div class="me" id="mefields" hidden>
+        <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
+        <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
+        <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
+        <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
+      </div>
+      <p class="mehint" id="mehint" hidden>Вес берётся из последнего замера — его вписываешь на главной, под карточкой «Тело».</p>
+      <!-- Строка появляется только у тех, кого подписка касается. У своих её нет. -->
+      <p class="subrow" id="subrow" hidden></p>
+
+      <div class="goalcard" id="goalcard"></div>
+
+      <h4 class="pqlab">О тебе</h4>
+      <div class="pqgroup">
+        <button type="button" class="pqrow" data-pp="zd" id="zdtoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="pqt"><b>Здоровье</b><small>ограничения для нормы, меню и зала</small></span><span class="pqv" id="zdsum">не заполнено</span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>на скольких готовишь, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
+      </div>
+      <p class="pqnote">Отсюда тренер считает нормы и собирает меню.</p>
+
+      <h4 class="pqlab">Тренер</h4>
+      <div class="pqgroup">
+        <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>как тренер пишет и шутит</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
+      </div>
+
+      <h4 class="pqlab gymonly">Зал</h4>
+      <div class="pqgroup gymonly">
+        <button type="button" class="pqrow" data-pp="gym" id="pq-gym"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 7v10M9 5v14M15 5v14M18 7v10M9 12h6M3 10v4M21 10v4"/></svg></span><span class="pqt"><b>Программа</b><small id="pq-gymsub">по ней собирается день в «Тренировке»</small></span><span class="pqv" id="pv-gym"></span><i class="pqch">›</i></button>
+      </div>
+
+      <h4 class="pqlab">Друзья</h4>
+      <div class="pqgroup">
+        <button type="button" class="pqrow" data-pp="ref" id="pq-ref"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3 8 4.5 9.5 8 12 8zm0 0s1.5-5 4-3.5S14.5 8 12 8z"/></svg></span><span class="pqt"><b>Пригласить друга</b><small id="pq-refsub">месяц тренера за баллы</small></span><span class="pqv pqac" id="pv-ref"></span><i class="pqch">›</i></button>
+      </div>
+
+      <h4 class="pqlab">Приложение</h4>
+      <div class="pqgroup">
+        <button type="button" class="pqrow" id="profhow"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg></span><span class="pqt"><b>Как пользоваться</b></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="profboss" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg></span><span class="pqt"><b>Админ панель</b><small>деньги, люди, Pro-ссылки</small></span><i class="pqch">›</i></button>
+      </div>
+
+      <div class="pqfoot">
+        <p class="mtext bline" id="buildline"></p>
+        <button class="btn wide danger" id="profreset">Начать заново</button>
+        <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
+      </div>
+    </div>
+
+    <!-- ── листы внутри профиля ── -->
+    <section class="pqpage zdbox" data-pp="zd" id="zdbox" data-title="Здоровье" hidden>
+      <p class="pqlead">Это учитывают норма еды, темп цели, меню и зал.</p>
       <div class="invbody" id="zdbody" hidden></div>
-    </div>
+    </section>
     <!-- 24.09, этап 2: быт — из него тренер собирает меню -->
-    <div class="invbox zdbox" id="btbox">
-      <button type="button" class="invhead" id="bttoggle" aria-expanded="false"><span class="invl">быт и еда</span><span class="invsum" id="btsum">не заполнено</span><i class="invchev">›</i></button>
+    <section class="pqpage zdbox" data-pp="bt" id="btbox" data-title="Быт и еда" hidden>
+      <p class="pqlead">Из этого тренер собирает меню и список покупок.</p>
       <div class="invbody" id="btbody" hidden></div>
-    </div>
-    <!-- «Веду» решает, будет ли вообще раздел про зал, поэтому стоит выше
-         него. 17.09, его слова: «нужно показать выше». -->
-    <div class="pf"><span class="pfl">веду</span><div class="seg" id="me-only"></div></div>
-    <p class="seghint">«только еда» убирает зал с экранов — вкладку, дорожку и карточку дня</p>
+    </section>
+    <!-- «Веду» решает, будет ли вообще раздел про зал. 17.09: «нужно показать выше». -->
+    <section class="pqpage" data-pp="only" data-title="Что веду" hidden>
+      <p class="pqlead">Что приложение показывает и о чём говорит тренер.</p>
+      <div class="pf pfv pqopts"><div class="seg" id="me-only"></div></div>
+    </section>
     <!-- 13.10: характер тренера — его выбор: три на выбор, спросить каждого -->
-    <div class="pf pfv"><span class="pfl">тренер</span><div class="seg" id="me-voice"></div></div>
-    <p class="seghint pfvh" id="me-voice-hint"></p>
-
-    <h4 class="psec gymonly">Зал</h4>
-    <div class="progcard gymonly" id="progcard"></div>
-    <div class="pf gymonly hide" id="pf-place"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
-    <div class="pf gymonly hide" id="pf-eq"><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
-    <div class="pf gymonly hide" id="pf-lim"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
-    <div class="pf gymonly hide" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
-    <div class="pf gymonly hide" id="pf-level"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
-    <div id="recobox"></div>
-    <!-- Одна кнопка про сборку, а не две. Есть программа — «изменить и
-         пересобрать» живёт на карточке; нет — эта. -->
-    <p class="aistate gymonly" id="aistate" hidden></p>
-    <div id="aibox"></div>
-
+    <section class="pqpage" data-pp="voice" data-title="Характер тренера" hidden>
+      <p class="pqlead">Как тренер пишет в чате, в напоминаниях и после записи еды и замеров. Сменить можно и словами в чате.</p>
+      <div class="pf pfv pqopts"><div class="seg" id="me-voice"></div></div>
+      <p class="seghint pfvh" id="me-voice-hint"></p>
+    </section>
+    <section class="pqpage" data-pp="gym" data-title="Программа" hidden>
+      <div class="progcard gymonly" id="progcard"></div>
+      <div class="pf gymonly hide" id="pf-place"><span class="pfl">где</span><div class="seg" id="me-place"></div></div>
+      <div class="pf gymonly hide" id="pf-eq"><span class="pfl">есть</span><div class="seg multi" id="me-eq"></div></div>
+      <div class="pf gymonly hide" id="pf-lim"><span class="pfl">беречь</span><div class="seg multi" id="me-lim"></div></div>
+      <div class="pf gymonly hide" id="pf-plate"><span class="pfl">блины</span><div class="seg" id="me-plate"></div></div>
+      <div class="pf gymonly hide" id="pf-level"><span class="pfl">опыт</span><div class="seg" id="me-level"></div></div>
+      <div id="recobox"></div>
+      <!-- Одна кнопка про сборку, а не две. Есть программа — «изменить и
+           пересобрать» живёт на карточке; нет — эта. -->
+      <p class="aistate gymonly" id="aistate" hidden></p>
+      <div id="aibox"></div>
+    </section>
     <!-- 17.09, его слова: «не понимаю секцию друзья, оставь там только ссылку
-         поделиться». Круги переехали целиком на вкладку «Рейтинг», где они и
-         живут: там и код, и кто внутри, и приглашение. Здесь осталась одна
-         ссылка — её можно отправить кому угодно, она не про круг. -->
-    <h4 class="psec">Поделиться</h4>
-    <!-- 13.10, его просьба: «чтобы только я мог делиться и Pro-доступом, и
-         обычным со своего профиля». Блок видит только владелец. -->
-    <div id="probox" hidden>
-      <p class="invnote"><b>С Pro</b> — тренер бесплатно. Эта кнопка есть только у тебя.</p>
-      <div class="pf pfv"><span class="pfl">срок Pro</span><div class="seg" id="pro-days"></div></div>
-      <div class="pf pfv"><span class="pfl">на сколько человек</span><div class="seg" id="pro-n"></div></div>
-      <button type="button" class="btn wide prim" id="pro-make">Пригласить с Pro</button>
-      <div class="invcode" id="pro-out" hidden><input id="prolink" type="text" readonly aria-label="Pro-ссылка"><button type="button" class="btn small prim" id="proshare">Отправить</button></div>
-      <p class="refsum" id="pro-sum"></p>
-      <p class="invnote prosep"><b>Обычная</b> — приложение бесплатно, тренер по подписке.</p>
-    </div>
-    <p class="invnote" id="refwhat"></p>
-    <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
-    <p class="refsum" id="refsum2"></p>
-    <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
-
-    <h4 class="psec">Приложение</h4>
-    <button type="button" class="pfrow" id="profhow"><span>Как пользоваться</span><i>›</i></button>
-    <button type="button" class="pfrow" id="profboss" hidden><span>Админ панель</span><i>›</i></button>
-    <!-- Карточка «программа …» отсюда убрана: то же самое стоит выше, в
-         разделе «Зал», и третьим местом об одном факте быть незачем. -->
-    <p class="mtext bline" id="buildline"></p>
-    <button class="btn wide danger" id="profreset">Начать заново</button>
-    <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
+         поделиться». Круги — на вкладке «Рейтинг». -->
+    <section class="pqpage" data-pp="ref" data-title="Пригласить друга" hidden>
+      <p class="pqlead" id="refwhat"></p>
+      <div class="invcode"><input id="reflink" type="text" readonly aria-label="твоя ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
+      <p class="refsum" id="refsum2"></p>
+      <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
+    </section>
   </div>
 </div>
 <!-- 14.10: «Как пользоваться» — отдельно от «Начать заново» -->
@@ -5639,6 +5782,16 @@ function renderGoalCard(){
   var h='<div class="gl">цель</div>';
   if(gobj){
     h+='<div class="gt">'+esc(gobj.text)+'</div>';
+    /* 17.10: путь цели полосой — старт, цель и где сейчас (макет профиля).
+       Доля — от того, сколько всего надо пройти (pr.kg); шаг назад — ноль. */
+    if(pr && pr.w0 && pr.now && pr.rate && pr.kg>0 && pr.fact!=null){
+      var к=function(x){ return String(Math.round(x*10)/10).replace('.',','); };
+      var цельКг=pr.w0+Math.sign(pr.rate)*pr.kg;
+      var путь=Math.sign(pr.fact)===Math.sign(pr.rate) ? Math.abs(pr.fact)/pr.kg : 0;
+      var пр=Math.max(0, Math.min(100, Math.round(путь*100)));
+      h+='<div class="pqgbar" role="img" aria-label="пройдено '+пр+'% пути"><b style="width:'+пр+'%"></b><u style="left:calc('+пр+'% - 2px)"></u></div>'+
+         '<div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>пройдено '+пр+'%</span><span>цель <b>'+к(цельКг)+'</b></span></div>';
+    }
     if(pr && pr.w0 && pr.now && pr.rate){
       var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',',').replace('-','−'); };
       h+='<details class="goal-progress"><summary>Ход цели <b>'+esc(String(pr.now).replace('.',','))+' кг</b><span>'+f(pr.fact)+' кг от старта</span></summary><p class="gp">Старт '+esc(String(pr.w0).replace('.',','))+' кг → сейчас <b>'+esc(String(pr.now).replace('.',','))+' кг</b> ('+f(pr.fact)+')'+
@@ -5649,7 +5802,7 @@ function renderGoalCard(){
          (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? ((Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем на ' : ' · отстаём на ')+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
          (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p></details>';
     } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
-    if(rbCard()) h+='<p class="gp">Программа собрана под старую цель — предложение пересобрать ниже.</p>';
+    if(rbCard()) h+='<p class="gp">Программа собрана под старую цель — предложение пересобрать в строке «Программа» ниже.</p>';
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
     h+='<div class="gt">'+esc(goalText(me))+'</div>'+
@@ -5710,9 +5863,10 @@ function syncBwFromMeas(){
 function meSumText(){
   var me=myData()||{}, из=[];
   из.push(me.sex==='f'?'жен':'муж');
-  if(me.age) из.push(me.age+' '+plural(me.age,['год','года','лет']));
-  if(me.ht) из.push(me.ht+' см');
-  var bw=bwNow(); if(bw) из.push(fmtKg(bw)+' кг');
+  /* 17.10: неразрывный пробел — в строке профиля «88,1» и «кг» не расходятся по строкам */
+  if(me.age) из.push(me.age+'\u00a0'+plural(me.age,['год','года','лет']));
+  if(me.ht) из.push(me.ht+'\u00a0см');
+  var bw=bwNow(); if(bw) из.push(fmtKg(bw)+'\u00a0кг');
   return из.join(' · ');
 }
 function fillMe(){
@@ -5730,14 +5884,25 @@ function fillMe(){
   var поля=document.getElementById('mefields');
   if(hint) hint.hidden = !(есть && поля && !поля.hidden);
   renderGoalCard();
-  var O=document.getElementById('me-only'); if(O) O.innerHTML=segHtml('only',ONLYKEYS,me.only||'all');
-  var VC=document.getElementById('me-voice'); if(VC){ VC.innerHTML=segHtml('voice',VOICEKEYS,me.voice||null); голосПодсказка('me-voice-hint', me.voice); }
+  var O=document.getElementById('me-only'); if(O) O.innerHTML=segОпис(ONLYKEYS,me.only||'all',ONLYDESC);
+  var VC=document.getElementById('me-voice'); if(VC){ VC.innerHTML=segОпис(VOICEKEYS,me.voice||null,VOICEHINT); голосПодсказка('me-voice-hint', me.voice); }
   var L=document.getElementById('me-level'); if(L) L.innerHTML=segHtml('level',LEVELS,me.level);
   var P=document.getElementById('me-place'); if(P) P.innerHTML=segHtml('place',PLACES,me.place||'gym');
   var M=document.getElementById('me-lim');   if(M) M.innerHTML=segHtml('lim',LIMKEYS,me.lim||[],true);
   var PL=document.getElementById('me-plate'); if(PL) PL.innerHTML=segHtml('plate',PLATEKEYS,String(me.plate||'1.25'));
   var Q=document.getElementById('me-eq');    if(Q) Q.innerHTML=segHtml('eq',EQKEYS,me.eq||[],true);
   var pe=document.getElementById('pf-eq');   if(pe) pe.hidden=(me.place||'gym')!=='home';
+  pqVals();
+}
+/* 17.10: в листах «Что веду» и «Характер» каждый вариант — карточка с
+   подписью, на что он влияет: в профиле было непонятно, «что тут и на что
+   влияет» (его слова). Кнопки те же — data-v и aria-pressed. */
+var ONLYDESC={all:'еда, зал и тренировки — всё на экранах', food:'зал уходит с экранов: вкладка, дорожка и карточка дня'};
+function segОпис(list, val, desc){
+  return list.map(function(x){
+    return '<button type="button" data-v="'+x[0]+'" aria-pressed="'+(val===x[0])+'">'+x[1]+
+      (desc && desc[x[0]] ? '<small>'+esc(desc[x[0]])+'</small>' : '')+'</button>';
+  }).join('');
 }
 /* «тренажёры, тяги» → ['тренажёры','тяги'] и обратно: человеку удобнее одной
    строкой, модели — списком */
@@ -6147,12 +6312,8 @@ function takeByt(bs){
   gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   бтРендер();
 }
-document.getElementById('btbox').addEventListener('click', function(e){
-  var t=e.target.closest('#bttoggle');
-  if(t){ var b=document.getElementById('btbody'), от=t.getAttribute('aria-expanded')==='true';
-    t.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light'); return; }
-  /* кнопки .seg переключает и сохраняет общий обработчик профиля (#profm) */
-});
+/* 17.10: строка #bttoggle — в списке профиля, открывает лист быта (profGo);
+   кнопки .seg внутри переключает и сохраняет общий обработчик профиля (#profm) */
 document.getElementById('btbox').addEventListener('change', function(e){ if(/^bt-/.test(e.target.id||'')) saveMe(); });
 /* ══════════ ЗДОРОВЬЕ ══════════
    17.09, его просьба: у сестры диабет, и советы приложения обязаны это
@@ -6269,12 +6430,58 @@ function saveMe(event){
   var zs=document.getElementById('zdsum'); if(zs) zs.textContent=здSum(me.med);
   var bs=document.getElementById('btsum'); if(bs) bs.textContent=бтSum(me.byt);
   голосПодсказка('me-voice-hint', me.voice);
+  pqVals();
   var near=edited.closest('#profm .pf, #profm #mefields, #profm details, #profm .profblock')||document.querySelector('#profm .modalbox');savedNear(near,pending);
 }
-function openProf(){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
+function openProf(pp){ fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
   здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med); бтРендер();
   try{ renderProgCard(); }catch(e){}
+  profGo(pp||'');
   var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+/* 17.10: профиль — список групп, подробности — листом внутри того же окна.
+   Его выбор «Группы + строки» (макет profil-maket-2026-10-17). pp — имя
+   листа (zd, bt, only, voice, gym, ref), пусто — главный список. */
+function profGo(pp){
+  var m=document.getElementById('profm'); if(!m) return;
+  var стр=pp ? m.querySelector('.pqpage[data-pp="'+pp+'"]') : null;
+  if(pp && !стр) pp='';
+  m.classList.toggle('pqin', !!pp);
+  var main=document.getElementById('pqmain'); if(main) main.hidden=!!pp;
+  Array.prototype.forEach.call(m.querySelectorAll('.pqpage'), function(x){ x.hidden = x!==стр; });
+  var t=document.getElementById('proftitle'); if(t) t.textContent = стр ? (стр.dataset.title||'Профиль') : 'Профиль';
+  var bk=document.getElementById('pqback'); if(bk) bk.hidden=!pp;
+  /* у здоровья и быта тела были свёрнутыми блоками — aria-expanded и hidden
+     держим как раньше, по ним живут проверки и подсказки */
+  [['zd','zdtoggle','zdbody'],['bt','bttoggle','btbody']].forEach(function(z){
+    var tg=document.getElementById(z[1]), b=document.getElementById(z[2]);
+    if(tg) tg.setAttribute('aria-expanded', String(pp===z[0])); if(b) b.hidden = pp!==z[0];
+  });
+  var box=m.querySelector('.modalbox'); if(box) box.scrollTop=0;
+  pqVals();
+}
+/* значения справа в строках профиля: что сейчас выбрано */
+function pqVals(){
+  var me=myData()||{};
+  var set=function(id,t){ var el=document.getElementById(id); if(el && el.textContent!==t) el.textContent=t; };
+  var имя=String(whoName()||'').trim();
+  set('pqname', имя||'Профиль');
+  var ava=document.getElementById('pqava'); if(ava){ var l=имя?имя.charAt(0).toUpperCase():''; if(ava.dataset.l!==l){ ava.dataset.l=l; ava.innerHTML=l?esc(l):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"/></svg>'; } }
+  var only=me.only||'all';
+  set('pv-only', lbl(ONLYKEYS, only));
+  set('pq-onlysub', only==='food' ? '«еда и зал» вернёт вкладку «Тренировка»' : '«только еда» уберёт зал со всех экранов');
+  set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
+  var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
+  var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? PROF.name : '';
+  set('pq-gymsub', имяП ? имяП+(дни && !/\d\s*(день|дня|дней)/.test(имяП) ? ' · '+дни+' '+plural(дни,['день','дня','дней'])+' в неделю' : '') : 'по ней собирается день в «Тренировке»');
+  var совет=profAttn();
+  set('pv-gym', совет ? 'есть совет' : '');
+  var vg=document.getElementById('pv-gym'); if(vg) vg.classList.toggle('pqac', !!совет);
+  var rg=document.getElementById('pq-gym'); if(rg) rg.classList.toggle('pqdot', !!совет);
+  if(typeof REF!=='undefined' && REF){
+    set('pv-ref', (REF.points||0)+' '+plural(REF.points||0,['балл','балла','баллов']));
+    set('pq-refsub', (REF.month||500)+' баллов = месяц тренера');
+  }
+}
 /* одна строка под кнопками дней, пока в профиле нет веса или цели — без них
    нет ни стартовых весов, ни норм по еде */
 /* Кто вошёл по коду внутри приложения, а не через бота, остаётся без
@@ -6333,9 +6540,7 @@ function renderNudge(){
   el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
 }
 document.getElementById('zdbox').addEventListener('click', function(e){
-  var t=e.target.closest('#zdtoggle');
-  if(t){ var b=document.getElementById('zdbody'), от=t.getAttribute('aria-expanded')==='true';
-    t.setAttribute('aria-expanded', String(!от)); b.hidden=от; haptic('light'); return; }
+  /* 17.10: строка #zdtoggle теперь в списке профиля и открывает этот лист (profGo) */
   здКлик(e, 'zd', saveMe);
 });
 document.getElementById('zdbox').addEventListener('input', function(e){ if(e.target.id==='zd-no') saveMe(); });
@@ -6354,9 +6559,7 @@ document.getElementById('profboss').addEventListener('click', function(){
 });
 document.getElementById('zdnudge').addEventListener('click', function(){
   gset('zd_seen', 1);
-  openProf();
-  var t=document.getElementById('zdtoggle'), b=document.getElementById('zdbody');
-  if(t && b){ t.setAttribute('aria-expanded','true'); b.hidden=false; }
+  openProf('zd');
   renderZdNudge(); haptic('light');
 });
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
@@ -6536,11 +6739,14 @@ function renderReco(){
   box.innerHTML=h; paintProfBtn();
 }
 /* точка на кнопке профиля, пока есть непросмотренный совет */
+function profAttn(){
+  var me=myData()||{}, seen=gget('reco_seen',null);
+  return !!((seen!==meSig(me) && (RECO.prog || RECO.swaps.length || RECO.dis.length)) || rbCard());
+}
 function paintProfBtn(){
   var b=document.getElementById('profbtn'); if(!b) return;
-  var me=myData()||{}, seen=gget('reco_seen',null);
-  var есть = (seen!==meSig(me) && (RECO.prog || RECO.swaps.length || RECO.dis.length)) || !!rbCard();
-  b.classList.toggle('attn', !!есть);
+  b.classList.toggle('attn', profAttn());
+  try{ pqVals(); }catch(e){}
 }
 /* каталог нужен для замен — подтягиваем, когда в профиле есть что беречь */
 function recoBoot(){
@@ -10582,6 +10788,9 @@ document.getElementById('profbtn').addEventListener('click', function(){ openPro
 document.getElementById('profclose').addEventListener('click', closeProf);
 document.getElementById('profm').addEventListener('click', function(e){
   if(e.target.id==='profm'){ closeProf(); return; }
+  var pr=e.target.closest('.pqrow[data-pp]');
+  if(pr){ profGo(pr.dataset.pp); haptic('light'); return; }
+  if(e.target.closest('#pqback')){ profGo(''); haptic('light'); return; }
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
     var seg=sb.parentNode, multi=seg.classList.contains('multi');
@@ -11145,7 +11354,7 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.dislikes=csv((document.getElementById('sb-dis')||{}).value);
   me.level=sbPick('sb-level')||me.level||null;
   gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
-  closeSbor(); openProf(); renderProgCard();
+  closeSbor(); openProf('gym'); renderProgCard();
   aiBuild();
 });
 /* Карточка «под что собрана программа»: те же условия, но уже как факт.
@@ -13322,13 +13531,13 @@ function renderPro(){
   var он=!!(SUB && SUB.boss); box.hidden=!он; if(!он) return;
   segSet('pro-days', segHtml('prodays',PRODAYS,String(PRO.days)));
   segSet('pro-n', segHtml('pron',PRON,String(PRO.n)));
-  var b=document.getElementById('pro-make'); b.disabled=PRO.busy; b.textContent=PRO.busy?'Создаю ссылку…':'Пригласить с Pro';
+  var b=document.getElementById('pro-make'); b.disabled=PRO.busy; b.textContent=PRO.busy?'Создаю ссылку…':'Создать Pro-ссылку';
   var out=document.getElementById('pro-out'), sum=document.getElementById('pro-sum');
   out.hidden=!PRO.last;
   if(PRO.last) document.getElementById('prolink').value=PRO.last.link;
   sum.className='refsum'+(PRO.err?' bad':'');
   sum.textContent = PRO.err ? PRO.err : PRO.last
-    ? 'Ссылка на '+PRO.last.uses+' '+plural(PRO.last.uses,['человека','человека','человек'])+', Pro '+proСрок(PRO.last.days)+'. Кто вошёл — в админ-панели.'
+    ? 'Ссылка на '+PRO.last.uses+' '+plural(PRO.last.uses,['человека','человека','человек'])+', Pro '+proСрок(PRO.last.days)+'. Кто вошёл — в списке pro-ссылок выше.'
     : '';
 }
 document.getElementById('probox').addEventListener('click', function(e){
@@ -13339,7 +13548,7 @@ document.getElementById('probox').addEventListener('click', function(e){
   if(e.target.closest('#pro-make')){
     if(PRO.busy) return; PRO.busy=true; PRO.err=''; renderPro();
     fPost('/pro/link', {uid:syncUid(), uses:PRO.n, days:PRO.days})
-      .then(function(d){ PRO.busy=false; if(!d||!d.link) throw new Error('Не удалось создать ссылку.'); PRO.last=d; renderPro(); haptic('ok'); })
+      .then(function(d){ PRO.busy=false; if(!d||!d.link) throw new Error('Не удалось создать ссылку.'); PRO.last=d; renderPro(); haptic('ok'); try{ admPull(); }catch(_){} })
       .catch(function(err){ PRO.busy=false; PRO.err=humanErr(err); renderPro(); haptic('err'); });
     return; }
   if(e.target.closest('#proshare')){
@@ -13622,6 +13831,7 @@ function renderRef(){
   var b=document.getElementById('refspend');
   if(b){ b.hidden = REF.points < REF.month; b.disabled=REFBUSY;
          b.textContent = REFBUSY ? 'Оплачиваю…' : 'Оплатить месяц баллами ('+REF.points+')'; }
+  try{ pqVals(); }catch(e){}
 }
 document.getElementById('refshare').addEventListener('click', function(){
   if(!REF||!REF.link) return;
@@ -15631,7 +15841,7 @@ function renderRb(){
 function rbClick(e){
   var b=e.target.closest('button[data-rb]'); if(!b) return;
   if(b.dataset.rb==='go'){
-    var m=document.getElementById('profm'); if(!m || !m.classList.contains('show')) openProf();
+    var m=document.getElementById('profm'); if(!m || !m.classList.contains('show')) openProf('gym'); else profGo('gym');
     aiBuild(); haptic('medium');
     /* Довести глаз до того, что происходит: пока идёт сборка — до строки
        состояния, как только программа готова — до неё самой. */

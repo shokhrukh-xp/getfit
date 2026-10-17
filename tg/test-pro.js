@@ -14,7 +14,9 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   const err=await M.поднять(p,{me:ME});await p.waitForTimeout(300);
   await p.click('#profbtn');await p.waitForTimeout(400);
   ok(await p.$eval('#probox',e=>e.hidden),'обычный человек: блока Pro нет');
-  ok(await p.$eval('#reflink',e=>!!e.offsetParent),'обычная ссылка у него на месте');
+  /* 17.10: ссылка — в листе «Пригласить друга», Pro-ссылки — в Админ панели */
+  await p.click('#pq-ref');await p.waitForTimeout(300);
+  ok(await p.$eval('#reflink',e=>!!e.offsetParent),'обычная ссылка у него на месте — в листе «Пригласить друга»');
   ok(!err.length,'без ошибок'+(err.length?': '+err.join(' | '):''));await p.close();}
  {const p=await b.newPage({viewport:{width:320,height:900}});
   await M.поднять(p,{me:ME,admin:{про:[],промо:[]}});
@@ -28,7 +30,10 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   p.on('request',r=>{try{const u=new URL(r.url());if(u.pathname==='/s'&&JSON.parse(r.postData()||'{}').key==='me')ушлоMe.push(1);}catch(e){}});
   const err=await M.поднять(p,o);await p.waitForTimeout(400);
   await p.click('#profbtn');await p.waitForTimeout(500);
-  const н=await p.evaluate(()=>({вид:!document.getElementById('probox').hidden,
+  /* 17.10, его выбор «В админ панель»: в профиле блока больше нет */
+  ok(await p.evaluate(()=>!document.querySelector('#profm #probox')&&!!document.querySelector('#p-admin #probox')),где+'Pro-ссылки живут в Админ панели, не в профиле');
+  await p.click('#profboss');await p.waitForTimeout(500);
+  const н=await p.evaluate(()=>({вид:!document.getElementById('probox').hidden&&!!document.getElementById('probox').offsetParent,
     срок:(document.querySelector('#pro-days button[aria-pressed="true"]')||{}).textContent,
     n:(document.querySelector('#pro-n button[aria-pressed="true"]')||{}).textContent,
     вбок:document.documentElement.scrollWidth>innerWidth}));
@@ -45,7 +50,6 @@ const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],lin
   ok(в.вид&&/start=p_abc123xyz0/.test(в.л),где+'ссылка показана: '+в.л);
   ok(/Ссылка на 2 человека, Pro на месяц/.test(в.с),где+'итог: '+в.с);
   await p.locator('#probox').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-pro-'+theme+'-'+width+'.png'});
-  await p.click('#profboss');await p.waitForTimeout(500);
   ok(!await p.locator('.adhistory').getAttribute('open'),где+'история свёрнута');
   ok(!await p.getByText('FIT2026',{exact:true}).isVisible(),где+'использованный код скрыт');
   ok(await p.locator('[data-prodrop="zzz"], [data-pdrop="FIT2026"]').count()===0,где+'у использованных нет отключения');

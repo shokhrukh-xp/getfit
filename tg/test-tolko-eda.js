@@ -44,6 +44,9 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   /* профиль: переключатель есть, поля зала спрятаны */
   await page.click('#profbtn');
   await page.waitForTimeout(500);
+  /* 17.10: «Что веду» — строка в списке профиля, переключатель — в её листе */
+  дано(!(await page.isVisible('#pq-gym')), 'строки «Программа» в профиле нет — зала нет');
+  await page.click('#pq-only'); await page.waitForTimeout(300);
   дано(await page.isVisible('#me-only'), 'в профиле есть переключатель «веду»');
   дано(!(await page.isVisible('#me-place')), 'поля зала в профиле спрятаны');
   await page.close();

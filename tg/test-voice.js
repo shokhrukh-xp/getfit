@@ -27,6 +27,9 @@ async function поднять(b,width,theme,o){
   ok((await мой(p)).voice==='hard'&&ушло.includes('hard'),где+'саркастичный записан и ушёл на сервер');
   /* 2. профиль: видно выбор, можно сменить */
   await p.click('#profbtn');await p.waitForTimeout(400);
+  /* 17.10: в списке профиля — строка «Характер» со значением, выбор — в её листе */
+  ok(/саркастичный/.test(await p.textContent('#pv-voice')),где+'строка «Характер» показывает выбор: '+await p.textContent('#pv-voice'));
+  await p.click('#pq-voice');await p.waitForTimeout(300);
   const пр=await p.evaluate(()=>({нажат:(document.querySelector('#me-voice button[aria-pressed="true"]')||{}).dataset,
    подсказка:(document.getElementById('me-voice-hint')||{}).textContent}));
   ok(пр.нажат&&пр.нажат.v==='hard'&&/без мата/.test(пр.подсказка),где+'в профиле — саркастичный и подсказка: '+пр.подсказка);
@@ -34,6 +37,9 @@ async function поднять(b,width,theme,o){
   await p.click('#me-voice button[data-v="standard"]');await p.waitForTimeout(400);
   ok((await мой(p)).voice==='standard'&&ушло.includes('standard'),где+'сменил в профиле на стандартного');
   ok(/без шуток/.test(await p.textContent('#me-voice-hint')),где+'подсказка сменилась');
+  ok(/без шуток/.test(await p.textContent('#me-voice button[data-v="standard"]')),где+'у каждого варианта подпись, что он значит');
+  await p.click('#pqback');await p.waitForTimeout(300);
+  ok(/стандартный/.test(await p.textContent('#pv-voice')),где+'назад — и строка «Характер» уже со новым значением');
   ok(!err.length,где+'без ошибок на странице'+(err.length?': '+err.join(' | '):''));
   await p.close();
  }

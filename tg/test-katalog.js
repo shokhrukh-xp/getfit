@@ -161,6 +161,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   for (const id of ['pf-place', 'pf-plate', 'pf-lim', 'pf-level'])
     дано(!(await page.isVisible('#' + id)), 'россыпь в профиле убрана: #' + id);
 
+  await page.click('#pq-gym'); await page.waitForTimeout(300);   /* 17.10: карточка — в листе «Программа» */
   await page.click('#progedit');
   await page.waitForTimeout(600);
   дано(await page.isVisible('#sborm'), 'кнопка открывает лист сборки, а не собирает молча');

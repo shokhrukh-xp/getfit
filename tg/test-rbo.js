@@ -39,6 +39,9 @@ const КНОПКА = p => p.$$eval('#recobox .rbc .rb button',
   await page.click('#profbtn');
   await page.waitForTimeout(1200);
   дано(await page.$eval('#profm', e => e.classList.contains('show')).catch(() => false), 'профиль открыт');
+  /* 17.10: предложение — в листе «Программа»; в списке строка зовёт туда */
+  дано(/есть совет/.test(await page.textContent('#pv-gym')), 'строка «Программа» говорит, что там ждёт совет');
+  await page.click('#pq-gym'); await page.waitForTimeout(300);
 
   /* ── карточка на месте и зовёт собрать ── */
   let к = await КНОПКА(page);
@@ -72,6 +75,7 @@ const КНОПКА = p => p.$$eval('#recobox .rbc .rb button',
     rbo: { stamp: 'g2', why: 'Цель поменялась.', phase: 'дефицит' },
     me: { sex: 'm', age: 38, ht: 178, bw: 88.5, goal: 'fat', wt: 'down', gym: 'muscle', level: 'mid', place: 'gym', only: 'all', lim: [], eq: [] } });
   await p2.click('#profbtn'); await p2.waitForTimeout(1200);
+  await p2.click('#pq-gym'); await p2.waitForTimeout(300);
   дано((await КНОПКА(p2)).length === 2, 'предложение показано и во втором заходе');
   await p2.click('#recobox .rbc [data-rb="no"]');
   await p2.waitForTimeout(600);

@@ -17,7 +17,10 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  for(const name of ['profile','srez','meal-edit','coach','subscription','catalog-picker','schedule','onboard-filled']){
   const p=await b.newPage({viewport:{width,height:844}}),root=await S.open(p,name,theme);
   const geo=await p.locator(root+' .modalbox').evaluate(e=>{let c=getComputedStyle(e),h=e.querySelector('h3'),r=e.getBoundingClientRect();return {bg:c.backgroundColor,title:getComputedStyle(h).fontSize,weight:getComputedStyle(h).fontWeight,handle:getComputedStyle(e,'::before').display,left:r.left,right:r.right};});
-  ok(geo.bg===(theme==='light'?'rgb(255, 255, 255)':'rgb(14, 20, 22)')&&geo.title==='20px'&&geo.weight==='700','лист по токенам '+name+'/'+theme+'/'+width);
+  /* 17.10: профиль — список групп (его выбор «Группы + строки»): лист на --bg,
+     группы карточками --surface, заголовок крупнее, как у страницы */
+  if(name==='profile') ok(geo.bg===(theme==='light'?'rgb(234, 240, 241)':'rgb(0, 0, 0)')&&geo.title==='26px'&&geo.weight==='800','лист по токенам '+name+'/'+theme+'/'+width);
+  else ok(geo.bg===(theme==='light'?'rgb(255, 255, 255)':'rgb(14, 20, 22)')&&geo.title==='20px'&&geo.weight==='700','лист по токенам '+name+'/'+theme+'/'+width);
   ok(geo.left>=0&&geo.right<=width,'лист в экране '+name);
   ok(await p.locator(root+' .xbtn').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44;})),'крестики >=44 '+name);
   if(name==='onboard-filled'){await p.locator('#wz-go').scrollIntoViewIfNeeded();ok(await p.locator('#wz-go').evaluate(e=>getComputedStyle(e).position==='static'&&e.getBoundingClientRect().top>=document.querySelector('#wz-text').getBoundingClientRect().bottom),'Собрать программу после полей, не перекрывает их');}

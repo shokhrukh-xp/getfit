@@ -18,7 +18,7 @@ async function open(p,name,theme){
  await M.поднять(p,o);
  if(['profile','profile-fields','program','reset','subscription'].includes(name))await p.click('#profbtn');
  if(name==='profile-fields'){await p.click('#meedit');await p.click('#zdtoggle');}
- if(name==='program')await p.click('#progedit');
+ if(name==='program'){await p.click('#pq-gym');await p.click('#progedit');}
  if(name==='reset')await p.click('#profreset');
  if(name==='subscription')await p.click('#sub-on');
  if(name==='coach'){await p.click('#coachnav');await p.fill('#ctext','Что лучше съесть после тренировки?');}
