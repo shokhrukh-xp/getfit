@@ -3100,6 +3100,26 @@ body.ordmode #list .sstag{color:var(--text)}
 #probox .invcode input{flex:1 1 auto;min-width:0;padding:11px 12px;border-radius:12px;border:.5px solid var(--line);
   background:var(--field);color:var(--text);font:inherit;font-size:15px}
 #probox .invcode .btn.small{flex:0 0 auto;min-height:44px;padding:0 14px;font-size:13px}
+
+/* 17.10, пакет полировки 1: выбранные A/E. Коридоры и их цвета,
+   таблица подходов и её горизонтальные отступы на 320 — прежние. */
+.fnorm .fnorm-label{margin:0;font-size:12px;color:var(--muted)}
+.fnorm .fbar .fh{align-items:baseline;gap:8px}
+.fnorm .fbar .fh u{font-size:13px;color:var(--text)}
+.fnorm .fbar .fh b{font-size:20px;font-variant-numeric:tabular-nums}
+.fnorm .fbar .fh b em{display:inline;font-size:12px;margin-left:4px;white-space:nowrap}
+.fnorm .norm-parts{border-top:1px solid var(--line);padding-top:2px}
+.fnorm .norm-parts summary,.exhelp summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--accent-txt);font-size:13px;line-height:1.4;list-style:none}
+.fnorm .norm-parts summary::-webkit-details-marker,.exhelp summary::-webkit-details-marker{display:none}
+.fnorm .norm-parts summary::before,.exhelp summary::before{content:'›';font-size:18px;flex:none}
+.fnorm .norm-parts[open]>summary::before,.exhelp[open]>summary::before{content:'⌄'}
+.fnorm .norm-parts .fparts{margin:0 0 10px;line-height:1.5}
+.exhelp{margin:0;color:var(--muted);font-size:12px}
+.exhelp .mmore{margin:0 0 8px;line-height:1.5}
+.wuline .exhelp{flex-basis:100%;width:100%}
+.wuline .exhelp i{display:block;margin-bottom:8px}
+.card.exact .rec{border-left:3px solid var(--accent);padding:12px;line-height:1.5}
+.today-label{display:block;color:var(--accent-txt);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
 /* ══ ПОЛИРОВКА 17.10, ПАКЕТ 2 (Claude) ══
    Его вопрос «что ещё можно улучшить в дизайне?», проход Claude и Codex, его
    выбор буквами по макетам (Совместная работа Codex и Claude/dizayn-1710-*).
@@ -6487,7 +6507,7 @@ function здРендер(pfx, boxId, sumId, med){
 }
 /* Нажатия внутри обоих блоков: переключение кнопок и показ подвопросов. */
 function здКлик(e, pfx, save){
-  var t=e.target.closest('#'+pfx+'-dia button, #'+pfx+'-ins button, #'+pfx+'-low button, #'+pfx+'-osl button, #'+pfx+'-more button');
+  var t=e.target.closest('#'+pfx+'-dia button, #'+pfx+'-ins button, #'+pfx+'-met button, #'+pfx+'-low button, #'+pfx+'-osl button, #'+pfx+'-more button');
   if(!t) return false;
   var box=t.parentNode, мульти=box.classList.contains('multi');
   if(мульти) t.setAttribute('aria-pressed', t.getAttribute('aria-pressed')==='true'?'false':'true');
@@ -8265,7 +8285,7 @@ function разминкаHTML(e, di){
   var отм=wuОтм(e, di), видел=!!gget('wu_seen', false);
   return '<div class="wuline" data-wuex="'+di+'"><b>Разминка</b>'+w.map(function(x,k){
       return '<button type="button" data-wu="'+di+':'+k+'" aria-pressed="'+(!!отм[k])+'">'+fmtKg(x.w)+' кг × '+x.r+'</button>'; }).join('')+
-    (видел ? '' : '<i>Лёгкие подходы перед рабочими — в подходы и объём не идут. Нажми, когда сделал.</i>')+'</div>';
+    (видел ? '' : exHelpHtml('warm',di,'Как учитывать разминку','<i>Лёгкие подходы перед рабочими — в подходы и объём не идут. Нажми, когда сделал.</i>'))+'</div>';
 }
 function wuЖми(btn){
   var p=btn.dataset.wu.split(':'), di=+p[0], k=+p[1], e=exList(day)[di]; if(!e) return;
@@ -8304,6 +8324,12 @@ function hurtToggle(n, di){
    схема одной строкой. Раньше картинка пряталась в «Описание», и человек её
    не видел вовсе; заодно три отдельные строки — надкласс, название, чипы —
    ужались в один блок рядом с картинкой. */
+/* 17.10, выбранный макет E: вторичные пояснения — по раскрытию.
+   Сохраняем открытое пояснение при отметке подхода, не меняя данные. */
+function exHelpHtml(kind, di, title, body){
+  var id='exhelp-'+kind+'-'+di, old=document.getElementById(id);
+  return '<details class="exhelp exhelp-'+kind+'" id="'+id+'"'+(old&&old.open?' open':'')+'><summary>'+title+'</summary>'+body+'</details>';
+}
 function шапка(e, di, метка){
   var rest = Math.floor(e.rest/60)+':'+pad2(e.rest%60);
   return '<div class="exhead">'+
@@ -8319,7 +8345,7 @@ function шапка(e, di, метка){
     '</button></div>'+
     /* вспомогательные — своей строкой во всю ширину, строчными: в капители
        над названием на 320 они занимали три строки и спорили с названием */
-    (мышцыЕщё(e)?'<div class="mmore">помогают <b>'+esc(мышцыЕщё(e))+'</b></div>':'');
+    (мышцыЕщё(e)?exHelpHtml('muscles',di,'Помогающие мышцы','<div class="mmore">помогают <b>'+esc(мышцыЕщё(e))+'</b></div>'):'');
 }
 function одна(e,di){
   if(di!==раскрытыйEx()) return exRow(e,di,'');
@@ -8468,7 +8494,7 @@ function adviceLine(e){
   var a;
   try{ a = advice(e); }catch(err){ return ''; }
   if(!a.short) return '';
-  return '<div class="rec '+a.kind+'">'+a.short+'</div>';
+  return '<div class="rec '+a.kind+'"><span class="today-label">Сегодня</span>'+a.short+'</div>';
 }
 function syncRow(di,si){
   var row=document.querySelector('.setrow[data-ex="'+di+'"][data-set="'+si+'"]');
@@ -10963,6 +10989,9 @@ document.getElementById('profm').addEventListener('click', function(e){
   if(e.target.closest('#pqback')){ profGo(''); haptic('light'); return; }
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
+    /* 17.10: здоровье уже обработал здКлик. Второй toggle снимал
+       давление/беременность и отправлял два противоположных сохранения. */
+    if(sb.closest('#zdbox')) return;
     var seg=sb.parentNode, multi=seg.classList.contains('multi');
     if(multi){ sb.setAttribute('aria-pressed', String(sb.getAttribute('aria-pressed')!=='true')); }
     else Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
@@ -11053,6 +11082,9 @@ document.getElementById('srezm').addEventListener('click', function(e){
 document.getElementById('picker').addEventListener('click', function(e){
   var sb=e.target.closest('.seg button[data-v]');
   if(sb){
+    /* В анкете здоровье тоже ведёт здКлик: общая перерисовка сбрасывала
+       выбор, если WebView не фокусировал нажатую кнопку. */
+    if(sb.closest('#wzzd')) return;
     var seg=sb.parentNode, id=seg.id;
     if(id==='g-wt' || id==='g-gym'){
       if(id==='g-wt'){ WIZ.gwt=sb.dataset.v; wzTargetReset(); } else WIZ.ggym=sb.dataset.v;
@@ -14602,8 +14634,8 @@ function trackHtml(v, t, mode, lo, hi){
 function fbar(label, v, t, unit, mode, key, lo, hi){
   var зн = !t ? ' <em>'+unit+'</em>'
          : mode==='max' ? ' <em>до '+t+' '+unit+'</em>'
-         : (mode==='min' && hi>t) ? ' <em>норма '+t+'–'+hi+' '+unit+'</em>'
-         : ' <em>норма '+t+' '+unit+'</em>';
+         : (mode==='min' && hi>t) ? ' <em> / '+t+'–'+hi+' '+unit+'</em>'
+         : ' <em> / '+t+' '+unit+'</em>';
   return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
          '<b>'+v+зн+'</b></div>'+
          trackHtml(v, t, mode||'range', lo, hi)+fbOpenHtml(key)+'</div>';
@@ -14611,7 +14643,7 @@ function fbar(label, v, t, unit, mode, key, lo, hi){
 function fband(label, v, lo, hi, unit, key){
   if(!hi) return fbar(label, v, 0, unit, null, key);
   return '<div class="fbar'+fbTap(key)+'"'+fbAttr(key)+'><div class="fh"><u>'+label+fbChev(key)+'</u>'+
-         '<b>'+v+' <em>норма '+lo+'–'+hi+' '+unit+'</em></b></div>'+
+         '<b>'+v+' <em> / '+lo+'–'+hi+' '+unit+'</em></b></div>'+
          trackHtml(v, hi, 'band', lo)+fbOpenHtml(key)+'</div>';
 }
 /* ══ из чего набралась шкала ══
@@ -14985,11 +15017,11 @@ function renderFoodDay(){
   var строка=d.line.replace(/^За день:[^.]*\.\s*/,'');
   var hero=foodHeroHtml(d,строка);
   if(св && св.on) box.innerHTML = hero;
-  else box.innerHTML = hero+'<div class="group fnorm">'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+  else box.innerHTML = hero+'<div class="group fnorm"><p class="fnorm-label">'+(t.kcal?'Съедено / норма дня':'Записано за день')+'</p>'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
     (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
-    (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + (t.kcal?'<p class="ds-zone">целевая зона</p>':'') + состав +
+    (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + (t.kcal?'<p class="ds-zone">целевая зона</p>':'') + (состав?'<details class="norm-parts"><summary>Из чего сложилась норма</summary>'+состав+'</details>':'') +
     (hero?'':'<p class="fline">'+esc(строка)+(t.kcal?'':' Заполни профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>')+
     (hero?'':closeHtml()) + свобСтрокаHtml(св)+'</div>';
   /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:

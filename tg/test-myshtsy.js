@@ -41,10 +41,11 @@ const строки=p=>p.evaluate(()=>[...document.querySelectorAll('#list .exrow
   ok(/^Приседания со штангой/.test(пр.имя)&&/^квадрицепс · 4 × 6–10/.test(пр.под),где+'присед — «квадрицепс · 4 × 6–10»: '+пр.под);
   await p.screenshot({path:'/tmp/gf-myshtsy-list-'+theme+'-'+w+'.png'});
   await p.click('#list .exrow[data-pickex="0"]');await p.waitForTimeout(900);
+  await p.locator('.exhelp-muscles summary').click();
   const шапка=await p.evaluate(()=>{const c=document.querySelector('#list .card.exact');const e=c&&c.querySelector('.eyebrow'),m=c&&c.querySelector('.mmore');
    const lh=m?parseFloat(getComputedStyle(m).lineHeight):16;
    return e?{т:e.textContent.replace(/\s+/g,' ').trim(),ещё:m?m.textContent.replace(/\s+/g,' ').trim():'',
-    строк:m?Math.round(m.getBoundingClientRect().height/lh):0,доПрошлого:!!(m&&m.nextElementSibling&&m.nextElementSibling.classList.contains('lastline'))}:null});
+    строк:m?Math.round(m.getBoundingClientRect().height/lh):0,доПрошлого:!!(m&&m.closest('.exhelp')&&m.closest('.exhelp').nextElementSibling&&m.closest('.exhelp').nextElementSibling.classList.contains('lastline'))}:null});
   ok(шапка&&/^квадрицепс$/i.test(шапка.т),где+'над названием — главная мышца: '+(шапка&&шапка.т));
   ok(шапка&&шапка.ещё==='помогают ягодицы, бицепс бедра, поясница',где+'строкой ниже — вспомогательные, самые нагруженные первыми: '+(шапка&&шапка.ещё));
   ok(шапка&&шапка.строк<=(w<=320?2:1),где+'вспомогательные — '+(w<=320?'не больше двух строк':'одной строкой')+': '+(шапка&&шапка.строк));

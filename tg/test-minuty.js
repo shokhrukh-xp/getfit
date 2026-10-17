@@ -146,6 +146,8 @@ const ЗАПИСЬ = () => {
   const page2 = await br.newPage({ viewport: { width: 390, height: 900 } });
   await page2.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(page2, { theme: 'dark', page: 'food', wait: 2600 });
+  /* 17.10: формула теперь по раскрытию; проверяем тот же видимый текст. */
+  await page2.locator('.norm-parts summary').click();
   const строка = await page2.$eval('.fparts', e => e.innerText.replace(/\s+/g, ' ').trim()).catch(() => '');
   дано(/зал 350/.test(строка), 'в сумме нормы зал стоит отдельным слагаемым: ' + строка);
   дано(/60 минут/.test(строка) && /24 подхода/.test(строка),
