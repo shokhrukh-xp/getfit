@@ -3244,7 +3244,8 @@ body.ordmode #list .sstag{color:var(--text)}
 .sxhd span{font-size:14px;color:var(--muted)}
 .sxhd b{font-size:26px;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
 .sxhd b s{text-decoration:none;font-size:13px;font-weight:700;margin-left:6px}
-.sxhd b s.up{color:var(--ok)} .sxhd b s.down{color:var(--warn-txt)}
+.sxhd b.up{color:var(--ok)} .sxhd b.down{color:var(--warn-txt)}
+.sxwhat{margin:2px 0 0;font-size:14px;color:var(--text);text-align:right}
 .sxchart{margin:8px 0 0}
 .sxax{font-size:14px}
 .sxchart>svg,.sxvol svg{display:block;width:100%;height:auto}
@@ -12905,15 +12906,15 @@ function vzСилаГрафик(ix){
   while(нед.length && typeof нед[0].i!=='number') нед.shift();
   var есть=нед.filter(function(w){ return typeof w.i==='number' && isFinite(w.i); });
   if(есть.length<2) return '';
-  var W=300, H=104, L=6, R=34, T=10, B=20, n=нед.length;
+  var W=300, H=104, L=6, R=50, T=10, B=20, n=нед.length;   /* справа место под «старт» и «+5 %» */
   var vals=есть.map(function(w){ return w.i; }).concat([100]);
   var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(1.5,(mx-mn)*0.15); mn-=pad; mx+=pad;
   var x=function(i){ return L+(W-L-R)*i/(n-1); }, y=function(v){ return T+(H-T-B)*(1-(v-mn)/(mx-mn)); };
   var f1=function(v){ return String(Math.round(v*10)/10).replace('.',','); };
   var svg='<svg class="sxsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Индекс силы по тренировкам за '+(n-1)+' недель">';
   svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+y(100).toFixed(1)+'" y2="'+y(100).toFixed(1)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>'+
-    '<text x="'+(W-2)+'" y="'+(y(100)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">100</text>';
-  var верх=Math.round(mx-pad); if(Math.abs(y(верх)-y(100))>16) svg+='<text x="'+(W-2)+'" y="'+(y(верх)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">'+f1(верх)+'</text>';
+    '<text x="'+(W-2)+'" y="'+(y(100)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">старт</text>';
+  var верх=Math.round(mx-pad); if(Math.abs(y(верх)-y(100))>16) svg+='<text x="'+(W-2)+'" y="'+(y(верх)+4).toFixed(1)+'" class="vzax sxax" text-anchor="end">'+(верх>100?'+':'−')+f1(Math.abs(верх-100))+' %</text>';
   /* линия — по готовым неделям, пропуск рвёт её; текущая — пунктиром */
   var сег=[], тек=[];
   нед.forEach(function(w,i){ if(w.partial) return; if(typeof w.i==='number'){ тек.push([x(i),y(w.i)]); } else if(тек.length){ сег.push(тек); тек=[]; } });
@@ -12946,11 +12947,17 @@ function vzСилаСтрока(s){
   var ix=s.index && typeof s.index==='object' ? s.index : null;
   var f1=function(v){ return String(Math.round(v*10)/10).replace('.',','); };
   var график = ix && ix.enough ? vzСилаГрафик(ix) : '';
-  var шапка='<div class="sxhd"><span>Сила по тренировкам</span>'+(график && typeof ix.now==='number'
-    ? '<b>'+f1(ix.now)+(typeof ix.ch==='number' ? '<s class="'+(ix.ch>=0?'up':'down')+'">'+(ix.ch>0?'+':ix.ch<0?'−':'')+f1(Math.abs(ix.ch))+' %</s>' : '')+'</b>' : '')+'</div>';
+  /* 17.10, его вопрос: «не понятно, что означает 105 … процент изменения
+     от каждой недели или от какой-то даты в начале?» — от одной даты в начале.
+     Поэтому вместо 100/105 — проценты к стартовой неделе и слова «сильнее,
+     чем в неделю с …»; на оси — «старт» и «+5 %». */
+  var ch = график && typeof ix.ch==='number' ? ix.ch : null;
+  var шапка='<div class="sxhd"><span>Сила по тренировкам</span>'+(ch!=null
+    ? '<b class="'+(ch>=0?'up':'down')+'">'+(ch>0?'+':ch<0?'−':'')+f1(Math.abs(ch))+' %</b>' : '')+'</div>'+
+    (ch!=null && ix.base ? '<p class="sxwhat">'+(Math.abs(ch)<0.5 ? 'как' : ch>0 ? 'сильнее, чем' : 'слабее, чем')+' в неделю с '+ruDate(ix.base)+'</p>' : '');
   /* ревью Codex: дата и покрытие рядом с числом — после пропусков оно не «текущее» */
-  var база = график && ix.base ? '<p class="sxbase">Неделя с '+ruDate(ix.nowWeek)+(typeof ix.nowPairs==='number'?', по '+ix.nowPairs+' '+(ix.nowPairs%10===1&&ix.nowPairs%100!==11?'упражнению':'упражнениям')+' с весом':'')+' · 100 — неделя с '+ruDate(ix.base)+'</p>' : '';
-  var пусто = !график ? '<p class="sxnone">'+(s.verdict==='мало' ? 'Мало тренировок, чтобы сравнивать.' : 'Индекс появится, когда будет две недели с тремя одинаковыми упражнениями с весом.')+'</p>' : '';
+  var база = график && ix.base ? '<p class="sxbase">Последняя неделя — с '+ruDate(ix.nowWeek)+(typeof ix.nowPairs==='number'?', по '+ix.nowPairs+' '+(ix.nowPairs%10===1&&ix.nowPairs%100!==11?'упражнению':'упражнениям')+' с весом':'')+'</p>' : '';
+  var пусто = !график ? '<p class="sxnone">'+(s.verdict==='мало' ? 'Мало тренировок, чтобы сравнивать.' : 'График появится, когда будет две недели с тремя одинаковыми упражнениями с весом.')+'</p>' : '';
   var вниз=typeof s.down==='number' && s.down>0 ? '<p class="sxdown">Ниже прошлого раза — в '+s.down+' '+(s.down%10===1&&s.down%100!==11?'упражнении':'упражнениях')+'</p>' : '';
   return '<div class="vzplan vzsila2">'+шапка+(график?'<div class="sxchart">'+график+'</div>':'')+база+пусто+вниз+vzСилаСписок(s)+'</div>';
 }
