@@ -15437,6 +15437,8 @@ function послатьДействие(body, подпись){
       {role:'assistant', text:d.reply||'', ts:ts, src:d.src||[], act:(d.act&&d.act.length)?d.act:null}]);
     CHAT.pending=''; renderChat(); haptic('ok');
     if(чатОткрыт()) gset('chat_seen', CHAT.items.length); else coachAttn(true);
+    /* 17.10: «Убрал …» под вердиктом «До еды» правит приём — день обновляем сразу */
+    if(d.day && body.k==='rm'){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e2){} освежить(d.day); }
   }).catch(function(e){ CHAT.pending=''; CHAT.err=humanErr(e); renderChat(); haptic('err'); })
     .then(function(){ CHAT.busy=false; renderChat(); });
 }
