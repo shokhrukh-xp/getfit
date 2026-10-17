@@ -7,10 +7,16 @@
 const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./shot-clean');
 let плохо=0;const дано=(ok,t)=>{console.log((ok?'  ok  ':'  ПРОВАЛ  ')+t);if(!ok)плохо++};
 const П='Barbell_Squat', Ж='Barbell_Bench_Press_-_Medium_Grip', Р='Stiff-Legged_Dumbbell_Deadlift';
-const зап=(id,date,ex,easy)=>({id,date,day:'A',name:'День A',week:1,easy:!!easy,updated:new Date(date+'T19:00:00').toISOString(),
+/* fin — отметка «Завершить и сохранить» (17.10, его выбор «Занятие „завершено“») */
+const зап=(id,date,ex,easy,безFin)=>({id,date,day:'A',name:'День A',week:1,easy:!!easy,updated:new Date(date+'T19:00:00').toISOString(),
+ fin:безFin?undefined:new Date(date+'T19:30:00').toISOString(),
  ex:ex.map(([n,i,w,r,unit])=>({n,id:i,unit:unit||'reps',sets:[1,2,3].map(()=>({w,r}))}))});
 const сегодня=M.Д(0), прошлая=M.Д(7);
+/* запись без «Завершить»: отметки появились 18.10, более старые считаются завершёнными —
+   поэтому кладём её не раньше 18.10 (это воскресенье недели 12–18, дальше — сегодня) */
+const ЗАВЕРШ_С='2026-10-18', незак=сегодня>=ЗАВЕРШ_С?сегодня:ЗАВЕРШ_С;
 const журнал=[
+ Object.assign(зап('u',незак,[['Тяга штанги в наклоне','Bent_Over_Barbell_Row',50,10]],false,true),{day:'B'}),
  зап('a',сегодня,[['Приседания со штангой',П,75,8],['Жим лёжа',Ж,55,10],['Румынская тяга с гантелями',Р,28,10]]),
  зап('c',сегодня,[['Планка','Plank',null,60,'sec']]),                                   /* только секунды — не занятие */
  зап('b',прошлая,[['Приседания со штангой',П,72.5,8],['Жим лёжа',Ж,55,8],['Румынская тяга с гантелями',Р,28,10]]),
@@ -33,7 +39,9 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   /* a — эта неделя; e (облегчённое) — если попало в неделю; c (только секунды) и b (прошлая) — нет */
   const пн=(()=>{const t=new Date(M.TODAY+'T12:00:00');t.setDate(t.getDate()-((t.getDay()+6)%7));return t.toISOString().slice(0,10);})();
   const ждём=1+(M.Д(3)>=пн?1:0);
-  дано(new RegExp('^Записано занятий '+ждём+' из 3$').test(зан),где+'записано занятий: '+зан);
+  дано(new RegExp('^Завершено занятий '+ждём+' из 3$').test(зан),где+'завершено занятий (без незавершённой): '+зан);
+  const пз=числа(await z.locator('.zksec').first().locator('.zknote').innerText());
+  дано(/^Ещё 1 запись без «Завершить и сохранить»/.test(пз),где+'незавершённая запись названа отдельно: '+пз);
   дано(await z.locator('.zkdots i').count()===3 && await z.locator('.zkdots i.on').count()===ждём,где+'точки по плану');
   /* подходы: присед 3×(ноги 1) + румынская 3×(ноги 1) = 6 на ноги, а не сумма мышц */
   const гр=await z.locator('.zkrow').evaluateAll(rs=>rs.map(r=>({n:r.querySelector('b').textContent,f:r.querySelector('s strong').textContent,w:r.querySelector('.zkbar').getBoundingClientRect().width})));
@@ -59,6 +67,33 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   }
   await p.close();
  }
+ /* его выбор «Клик по результату»: результат ведёт к истории упражнения в Журнале */
+ {const p=await br.newPage({viewport:{width:390,height:700}});
+  await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
+  const o=opts('dark');o.hist=журнал;const err=await M.поднять(p,o);await p.waitForTimeout(900);
+  const к=p.locator('.zk button.zkr',{hasText:'Жим лёжа'});
+  дано(await к.count()===1 && /история в Журнале/.test(await к.getAttribute('aria-label')),'результат — кнопка с понятной подписью');
+  const h=await к.evaluate(b=>b.getBoundingClientRect().height);дано(h>=44,'цель нажатия не меньше 44: '+h);
+  await к.click();await p.waitForTimeout(500);
+  const r=await p.evaluate(id=>{const e=document.querySelector('#p-log:not(.hide) .uprow[data-exk="'+id+'"]');if(!e)return null;const b=e.getBoundingClientRect();return {hl:e.classList.contains('hl'),top:b.top,bot:b.bottom};},Ж);
+  дано(!!r && r.hl && r.top>=0 && r.bot<=700,'Журнал открыт на этом упражнении, строка подсвечена и видна '+JSON.stringify(r));
+  дано(!err.length,'клик по результату без ошибок '+err.join(' | '));
+  await p.close();}
+ /* его выбор «Смена программы посреди недели»: черта подписана по новой программе;
+    первый запуск после выпуска и повторный вход — не смена */
+ {const пн=(()=>{const t=new Date(M.TODAY+'T12:00:00');t.setDate(t.getDate()-((t.getDay()+6)%7));return t.toISOString().slice(0,10);})();
+  const заметка=async(sig,reload)=>{const p=await br.newPage({viewport:{width:390,height:900}});
+   await p.addInitScript(s=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));if(s&&!localStorage.getItem('__sig_once')){localStorage.setItem('shp_v1_prog_sig',JSON.stringify(s));localStorage.setItem('__sig_once','1');}}catch(e){}},sig);
+   const o=opts('dark');o.hist=журнал;await M.поднять(p,o);await p.waitForTimeout(900);
+   if(reload){await p.reload();await p.waitForTimeout(1200);}
+   const t=числа(await p.locator('.zk .zksec').nth(1).innerText());const ps=await p.evaluate(()=>localStorage.getItem('shp_v1_prog_sig'));await p.close();return {t,ps};};
+  const перв=await заметка(null,false);
+  дано(/черта — сколько стоит в текущей программе/.test(перв.t) && JSON.parse(перв.ps).since===null,'первый запуск — не смена программы');
+  const см=await заметка({sig:'старая|A:x',since:null},true);
+  const ждёмСмену=M.TODAY>пн;
+  дано(ждёмСмену ? /программа сменилась \S+, \d\d\.\d\d — черта по новой программе, подходы — за всю неделю/.test(см.t) : !/сменилась/.test(см.t),
+   'смена посреди недели названа (и переживает повторный вход): '+см.t);
+  дано(JSON.parse(см.ps).since===M.TODAY,'дата смены — сегодня и не сдвигается при повторном входе');}
  /* ревью Codex Z3: «облегчить сегодня» не меняет недельный план подходов */
  {const план=async easy=>{const p=await br.newPage({viewport:{width:390,height:900}});
    await p.addInitScript(e=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));if(e)localStorage.setItem('shp_v1_shp_easy',JSON.stringify(e))}catch(x){}},easy?M.TODAY:null);
@@ -85,7 +120,7 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
   const o=opts('dark');o.hist=[];await M.поднять(p,o);await p.waitForTimeout(900);
   const t=числа(await p.locator('.zk').innerText());
-  дано(/Записано занятий 0 из 3/.test(t) && /Пока нет записанных занятий · план 3/.test(t),'новичок: 0 из 3 и строка без красного');
+  дано(/Завершено занятий 0 из 3/.test(t) && /Пока нет завершённых занятий · план 3/.test(t),'новичок: 0 из 3 и строка без красного');
   дано(/Появятся после повторного занятия/.test(t),'новичок: результатов нет — объяснение');
   дано(await p.locator('.zk [data-zkgo="gym"]').count()===1,'новичок: вход в тренировку');
   await p.close();}

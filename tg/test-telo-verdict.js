@@ -15,12 +15,16 @@ const слова={'план':/^Средний вес за неделю −0,4 к
  'стоит':/— без снижения$/,'плато':/^Две недели без снижения веса$/,'мало':/^Мало замеров, чтобы судить о темпе$/};
 /* подпись скобки согласована с рисунком: «выше» — средняя над пунктиром плана в той же точке */
 const сверить=async(page,где)=>{
- const r=await page.evaluate(()=>{const sv=document.querySelector('#homebody .vzsvg svg');const t=sv.querySelector('.vzgapl text');if(!t)return null;
+ /* 17.10, его выбор «Плашка на графике веса»: фраза — строкой над графиком, у скобки только «+1,7» без плашки */
+ const r=await page.evaluate(()=>{const sv=document.querySelector('#homebody .vzsvg svg');const line=document.querySelector('#homebody .vzgapline');if(!line)return null;
+  const t=sv.querySelector('.vzgapl');let м=line.textContent.replace(/\u00a0/g,' ');м=м==='Идёшь по плану'?'по плану':м.charAt(0).toLowerCase()+м.slice(1);
   const к=[...sv.querySelectorAll('circle')].find(c=>c.getAttribute('r')==='4.5'),пл=sv.querySelector('.vzpl');
   const cx=+к.getAttribute('cx'),cy=+к.getAttribute('cy'),x1=+пл.getAttribute('x1'),y1=+пл.getAttribute('y1'),x2=+пл.getAttribute('x2'),y2=+пл.getAttribute('y2');
-  const yп=y1+(y2-y1)*(cx-x1)/(x2-x1);return {м:t.textContent.replace(/\u00a0/g,' '),над:cy<yп,dy:Math.abs(cy-yп),скобка:sv.querySelectorAll('.vzgap').length};});
+  const yп=y1+(y2-y1)*(cx-x1)/(x2-x1);return {м,к:t?t.textContent:null,над:cy<yп,dy:Math.abs(cy-yп),скобка:sv.querySelectorAll('.vzgap').length,плашка:sv.querySelectorAll('.vzgapl rect, g.vzgapl').length};});
  дано(!!r,'метка отклонения на графике '+где);if(!r)return '';
  дано(r.м==='по плану' ? r.скобка===0 : (r.м.startsWith('выше')===r.над && (r.скобка===1||r.dy<8)),'подпись не спорит с рисунком: «'+r.м+'» '+где);
+ дано(r.плашка===0,'плашки на графике нет '+где);
+ дано(r.м==='по плану' ? r.к===null : (r.скобка===0 || (r.к && r.к.charAt(0)===(r.м.startsWith('выше')?'+':'−') && r.м.includes(r.к.slice(1)))),'у скобки — коротко и тем же числом: «'+r.к+'» '+где);
  return r.м;
 };
 (async()=>{
@@ -42,7 +46,7 @@ const сверить=async(page,где)=>{
    дано(!(await v.innerText()).includes('Вердикт:'),'длинный серверный текст — тренеру, не сюда');
    if(state!=='мало') await сверить(page,'состояние '+state);
    дано(errors.length===0,'без ошибок браузера: '+state);
-   if(state==='стоит'){await page.click('[data-vzv="fat"]');дано(await page.locator('.vztemp, .vzgapl').count()===0,'темп и отклонение веса не появляются у жира');}
+   if(state==='стоит'){await page.click('[data-vzv="fat"]');дано(await page.locator('.vztemp, .vzgapl, .vzgapline').count()===0,'темп и отклонение веса не появляются у жира');}
    await page.close();
   }
   /* дальний срок — «примерно к месяцу»; ниже / выше плана; редкие замеры (ревью Codex U1): подпись

@@ -3294,6 +3294,13 @@ body.ordmode #list .sstag{color:var(--text)}
 .zklink{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;margin-top:6px;padding:0;border:0;background:none;font:inherit;font-size:14px;color:var(--text);text-align:left;cursor:pointer}
 .zklink::after{content:'›';color:var(--muted)}
 #logsila .vzsila2{border-top:0;padding-top:4px}
+
+/* 17.10 доработка: результаты — кнопки, подсветка упражнения в Журнале, строка отклонения над графиком */
+.zkr{width:100%;padding:4px 0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;min-height:44px}
+.zkr span::after{content:' ›';color:var(--muted)}
+.uprow.hl{background:var(--tint);border-radius:12px;transition:background .3s}
+.vztop .vzgapline{margin:6px 0 0;font-size:15px;font-weight:700;color:var(--on-accent)}
+.vztop .vznum em:not(.dn):not(.up){background:rgba(0,0,0,.24)}
 </style>
 </head>
 <body>
@@ -4436,6 +4443,8 @@ function applyProfile(p, silent){
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
   if(!DAYS[day]) day = CYCLE[0];
   gset('profile', p);
+  /* тихий вызов при запуске до выбора программы — не смена */
+  if(!silent) отметитьСменуПрограммы(p);
   var pn=document.getElementById('profname'); if(pn) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   if(silent) return;
@@ -9574,7 +9583,19 @@ function sessionBody(){
            t0:t0?new Date(t0).toISOString():null, dur:wDur() };
   /* облегчённая по кнопке — сервер не считает её падением весов (25.09) */
   if(легчеВкл()) тело.easy=1;
+  /* 17.10, его выбор «Занятие „завершено“»: «Завершить и сохранить» ставит
+     отметку fin, и автосохранение её не стирает — берём из своей памяти или
+     из уже сохранённой записи этого дня (другое устройство) */
+  var фк=тело.date+'_'+day, фин=(get('fin',{})||{})[фк];
+  if(!фин && HIST) HIST.forEach(function(w){ if(!фин && w.date===тело.date && w.day===day && w.fin) фин=w.fin; });
+  if(фин) тело.fin=фин;
   return тело;
+}
+function отметитьЗавершено(){
+  var m=get('fin',{})||{}, k=сесДата()+'_'+day, от=днейПосле(TODAY,-60);
+  Object.keys(m).forEach(function(x){ if(x.slice(0,10)<от) delete m[x]; });
+  if(!m[k]) m[k]=new Date().toISOString();
+  set('fin', m);
 }
 var lastSavedAt=null, dirty=false;
 /* ── СОХРАНЕНО = ПРИНЯЛ СЕРВЕР ──
@@ -9851,6 +9872,8 @@ function finishSave(){
       finReset(); openDur(сделано, dur, function(){ finishSave(); });
       return;
     }
+    /* «завершено» — только когда запись действительно уходит (не при открытом вопросе о времени) */
+    отметитьЗавершено(); body=sessionBody();
     var label=сделано+' '+plural(сделано,['подход','подхода','подходов']);
 
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
@@ -10392,7 +10415,7 @@ function renderProgress(){
     var v=вердиктДля(e);
     var м=e.id ? {cat:e.id, ph:null, fig:null} : видПоИмени(e.n);
     var кадр=mediaFor({cat:м.cat, n:e.n, ph:м.ph, fig:м.fig});
-    return '<div class="uprow">'+
+    return '<div class="uprow" data-exk="'+esc(e.k)+'">'+
       (кадр ? '<span class="exph">'+кадр+'</span>' : '')+
       '<span class="upn">'+esc(e.n)+(v?'<em class="v-'+v.v+'">'+esc(v.vru)+'</em>':'')+'</span>'+
       '<span class="upw">'+числоПодхода(посл, e.time)+
@@ -10402,7 +10425,22 @@ function renderProgress(){
      (PROGMORE ? 'Свернуть' : 'Ещё '+(все.length-10)+' '+plural(все.length-10,['упражнение','упражнения','упражнений']))+'</button>' : '');
   var mb=document.getElementById('upmore');
   if(mb) mb.addEventListener('click', function(){ PROGMORE=!PROGMORE; renderProgress(); haptic('light'); });
+  /* из «Результатов» на «Сегодня»: показать это упражнение и подсветить */
+  if(ZKEX){
+    var row=null; Array.prototype.forEach.call(box.querySelectorAll('.uprow'), function(r){ if(r.dataset.exk===ZKEX) row=r; });
+    if(!row && !PROGMORE && все.some(function(e){ return e.k===ZKEX; })){ PROGMORE=true; renderProgress(); return; }
+    if(row){ ZKHL={k:ZKEX, до:Date.now()+1800}; row.scrollIntoView({block:'center'}); }
+    ZKEX=null;
+  }
+  /* подсветка переживает перерисовку списка (история догружается следом) */
+  if(ZKHL && Date.now()<ZKHL.до){
+    Array.prototype.forEach.call(box.querySelectorAll('.uprow'), function(r){
+      if(r.dataset.exk!==ZKHL.k) return;
+      r.classList.add('hl'); setTimeout(function(){ r.classList.remove('hl'); }, ZKHL.до-Date.now());
+    });
+  }
 }
+var ZKEX=null, ZKHL=null;
 
 /* ══════════ ИТОГ БЛОКА ══════════
    «Как понять, что росло, а что нет?» Сервер считает по расчётному максимуму
@@ -12844,7 +12882,7 @@ function vzКоридор(pts, ср){
   return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
 }
 function vzГрафик(ms, sr, план){
-  vzГрафик.кор=null;
+  vzГрафик.кор=null; vzГрафик.откл=null;
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
   var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
@@ -12913,10 +12951,14 @@ function vzГрафик(ms, sr, план){
     var поПлану=Math.abs(кон.v-плК) <= Math.max(0.5, путьПл*0.25);
     var слова = поПлану ? 'по плану' : (разн>0 ? 'выше' : 'ниже')+' плана на '+vzF1(Math.abs(разн))+'\u00a0кг';
     var yС=y(кон.v), yП=y(плК), xs=x(кон.d)-14, верх=Math.min(yС,yП), низ=Math.max(yС,yП);
-    var шир=Math.round(24+слова.length*8), ym=Math.max(T+14, Math.min(H-B-14, (верх+низ)/2));
-    if(!поПлану && низ-верх>=8) svg+='<path class="vzgap" d="M'+(xs+4)+','+(верх+6).toFixed(1)+' H'+xs+' V'+(низ-4).toFixed(1)+' H'+(xs+4)+'" fill="none" stroke="var(--on-accent)" stroke-width="1.8" stroke-linecap="round"/>';
-    svg+='<g class="vzgapl"><rect x="'+Math.max(L,xs-шир-6)+'" y="'+(ym-14).toFixed(1)+'" width="'+шир+'" height="28" rx="14" fill="#000" opacity=".24"/>'+
-      '<text x="'+(Math.max(L,xs-шир-6)+шир/2)+'" y="'+(ym+5.5).toFixed(1)+'" text-anchor="middle" font-size="16" font-weight="700" fill="var(--on-accent)">'+слова+'</text></g>';
+    /* его выбор «Плашка на графике веса»: плашка закрывала линию и пунктир —
+       у скобки только «+1,7», полная фраза строкой над графиком */
+    var ym=Math.max(T+10, Math.min(H-B-6, (верх+низ)/2));
+    vzГрафик.откл={слова:слова, по:поПлану};
+    if(!поПлану && низ-верх>=8){
+      svg+='<path class="vzgap" d="M'+(xs+4)+','+(верх+6).toFixed(1)+' H'+xs+' V'+(низ-4).toFixed(1)+' H'+(xs+4)+'" fill="none" stroke="var(--on-accent)" stroke-width="1.8" stroke-linecap="round"/>';
+      svg+='<text class="vzgapl" x="'+(xs-5)+'" y="'+(ym+5).toFixed(1)+'" text-anchor="end" font-size="15" font-weight="700" fill="var(--on-accent)" paint-order="stroke" stroke="rgba(0,0,0,.28)" stroke-width="3">'+(разн>0?'+':'−')+vzF1(Math.abs(разн))+'</text>';
+    }
   }
   vzГрафик.кор=кор;
   return svg+пиццы+'</svg>';
@@ -13026,6 +13068,8 @@ function vzСилаСтрока(s){
      программа на неделю, что у карты мышц; одна шкала на все пять строк;
    • два результата: частые упражнения программы за 28 дней с 2+ датами, из
      разных групп; последнее занятие против предыдущего, без облегчённых. */
+/* отметки «завершено» появились 18.10 — более старые записи считаем завершёнными */
+var ЗАВЕРШ_С='2026-10-18';
 var ГРУППЫ5=[['Спина',['lat','mid','lower','trap']],['Грудь',['chest']],['Ноги',['quad','ham','glute','add','abd','calf','tib']],
   ['Плечи',['delt','rdelt']],['Руки',['bic','tri','fore']]];
 function группыПодхода(x){
@@ -13036,9 +13080,20 @@ function группыПодхода(x){
 }
 function днейПосле(iso,n){ var d=dLocal(iso); d.setDate(d.getDate()+n); return isoOf(d); }
 function подходыНаПовторы(x){ return наПовторы(x) ? (x.sets||[]).filter(function(v){ return v && +v.r>0; }) : []; }
+/* 17.10, его выбор «Смена программы посреди недели»: помним, с какого дня
+   действует текущая программа (основа дней, без замен человека), чтобы черта
+   плана честно называлась «по программе с …» */
+function отметитьСменуПрограммы(p){
+  try{
+    var sig=p+'|'+CYCLE.map(function(dk){ return ((DAYS[dk]||{}).ex||[]).map(function(e){ return e.cat||e.id||нормИмя(e.n); }).join(','); }).join(';');
+    var был=gget('prog_sig',null);
+    if(был && был.sig!==sig) gset('prog_sig',{sig:sig, since:TODAY});
+    else if(!был) gset('prog_sig',{sig:sig, since:null});
+  }catch(e){}
+}
 function неделяЗала(){
   if(!HIST) return null;
-  var пн=пнНедели(), вс=днейПосле(пн,6), записи={}, факт={}, датыЗаписей={};
+  var пн=пнНедели(), вс=днейПосле(пн,6), записи={}, заверш={}, факт={}, датыЗаписей={};
   var уже={};
   HIST.forEach(function(w){
     if(!w || w.date<пн || w.date>вс) return;
@@ -13048,7 +13103,7 @@ function неделяЗала(){
       var c=подходыНаПовторы(x).length; if(!c) return; n+=c;
       var g=группыПодхода(x); if(g) Object.keys(g).forEach(function(k){ факт[k]=(факт[k]||0)+c*g[k]; });
     });
-    if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; }
+    if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; if(w.fin || w.date<ЗАВЕРШ_С) заверш[ключ]=1; }
   });
   var вНеделю=Object.keys(GYM_DAYS).length, коэф=CYCLE.length && вНеделю ? вНеделю/CYCLE.length : 1, план={};
   /* ревью Codex Z2: без расписания частота неизвестна — цикл программы не
@@ -13062,7 +13117,8 @@ function неделяЗала(){
   /* ближайший день зала по расписанию, где ещё нет записи */
   var след=null;
   for(var i=0;i<14 && вНеделю;i++){ var d=днейПосле(TODAY,i); if((dLocal(d).getDay() in GYM_DAYS) && !датыЗаписей[d]){ след=d; break; } }
-  return {пн:пн, вс:вс, занятий:Object.keys(записи).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
+  var смена=(gget('prog_sig',null)||{}).since;
+  return {смена:(смена && смена>пн && смена<=вс) ? смена : null, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
 }
 function результатыЗала(){
   if(!HIST) return [];
@@ -13091,7 +13147,7 @@ function результатыЗала(){
     var g=группыПодхода(z.x)||{}, глав=Object.keys(g).filter(function(k){ return g[k]===1; })[0]||Object.keys(g)[0]||'?';
     if(занято[глав]) return; занято[глав]=1;
     var д2=z.д[z.д.length-1], д1=z.д[z.д.length-2];
-    out.push({n:z.n, was:z.даты[д1], now:z.даты[д2], d1:д1, d2:д2});
+    out.push({n:z.n, was:z.даты[д1], now:z.даты[д2], d1:д1, d2:д2, k:(z.x.id||('n:'+нормИмя(z.x.n)))});
   });
   return out;
 }
@@ -13103,7 +13159,7 @@ function залРезультатHtml(r){
   else if(a.r===b.r){ что=a.r+' повт. · '+f(a.w)+' → '+f(b.w)+' кг'; сдвиг=(b.w>a.w?'↑ +':'↓ −')+f(Math.abs(b.w-a.w))+' кг'; cls=b.w>a.w?'up':'dn'; }
   else { что=f(a.w)+'×'+a.r+' → '+f(b.w)+'×'+b.r; сдвиг=(b.w>a.w?'+':'−')+f(Math.abs(b.w-a.w))+' кг, '+(b.r>a.r?'+':'−')+Math.abs(b.r-a.r)+' повт.'; }
   var д1=r.d1.split('-'), д2=r.d2.split('-'), даты=(д1[1]===д2[1] ? д1[2] : д1[2]+'.'+д1[1])+'→'+д2[2]+'.'+д2[1];
-  return '<div class="zkr"><b>'+esc(String(r.n||'Упражнение'))+'</b><em class="'+cls+'">'+(сдвиг||'без изменений')+'</em><span>'+что+' · '+даты+'</span></div>';
+  return '<button type="button" class="zkr" data-zkex="'+esc(r.k)+'" aria-label="'+esc(String(r.n||'Упражнение'))+' — история в Журнале"><b>'+esc(String(r.n||'Упражнение'))+'</b><em class="'+cls+'">'+(сдвиг||'без изменений')+'</em><span>'+что+' · '+даты+'</span></button>';
 }
 function залНеделиHtml(){
   if(foodOnly()) return '';
@@ -13115,10 +13171,11 @@ function залНеделиHtml(){
   /* 1. регулярность */
   var точки='';
   if(н.план && н.план<=7){ for(var i=0;i<н.план;i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
-  h+='<div class="zksec"><div class="zklab">Записано занятий<em>'+(точки?'<span class="zkdots" aria-hidden="true">'+точки+'</span>':'')+н.занятий+(н.план?' из '+н.план:'')+'</em></div>';
+  h+='<div class="zksec"><div class="zklab">Завершено занятий<em>'+(точки?'<span class="zkdots" aria-hidden="true">'+точки+'</span>':'')+н.занятий+(н.план?' из '+н.план:'')+'</em></div>';
   var след=н.след ? (н.след===TODAY ? 'сегодня' : WD[dLocal(н.след).getDay()]+', '+ruDate(н.след)) : '';
-  if(!н.занятий) h+='<p class="zknote">Пока нет записанных занятий'+(н.план?' · план '+н.план:'')+'</p><button type="button" class="zklink" data-zkgo="gym">Открыть тренировку</button>';
-  else if(след) h+='<p class="zknote">По расписанию — '+след+'</p>';
+  var незак = н.безЗаверш>0 ? 'ещё '+н.безЗаверш+' '+plural(н.безЗаверш,['запись','записи','записей'])+' без «Завершить и сохранить»' : '';
+  if(!н.занятий && !н.безЗаверш) h+='<p class="zknote">Пока нет завершённых занятий'+(н.план?' · план '+н.план:'')+'</p><button type="button" class="zklink" data-zkgo="gym">Открыть тренировку</button>';
+  else if(незак || след) h+='<p class="zknote">'+[незак, след?'по расписанию — '+след:''].filter(Boolean).join(' · ').replace(/^./,function(c){ return c.toUpperCase(); })+'</p>';
   h+='</div>';
   /* 2. подходы по группам — одна шкала на все строки */
   var гр=ГРУППЫ5.map(function(g){ return [g[0], н.факт[g[0]]||0, н.планГр[g[0]]||0]; }).filter(function(g){ return g[1]>0 || g[2]>0; });
@@ -13129,7 +13186,7 @@ function залНеделиHtml(){
       var план=g[2]>=0.5;
       return '<div class="zkrow"><b>'+g[0]+'</b><div class="zkbar" aria-hidden="true"><i style="width:'+(g[1]/мх*100).toFixed(1)+'%"></i>'+(план?'<u style="left:'+(g[2]/мх*100).toFixed(1)+'%"></u>':'')+'</div>'+
         '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+ч(g[2]):(н.план?' · вне плана':''))+'</s></div>';
-    }).join('')+'</div><p class="zknote">'+(н.план ? 'черта — сколько стоит в текущей программе на неделю' : 'дни зала не заданы — недельного плана нет')+'</p></div>';
+    }).join('')+'</div><p class="zknote">'+(!н.план ? 'дни зала не заданы — недельного плана нет' : н.смена ? 'программа сменилась '+WD[dLocal(н.смена).getDay()]+', '+ruDate(н.смена)+' — черта по новой программе, подходы — за всю неделю' : 'черта — сколько стоит в текущей программе на неделю')+'</p></div>';
   }
   /* 3. результаты в упражнениях */
   var рр=результатыЗала();
@@ -13211,7 +13268,7 @@ function homeBody(){
   var всего = старт.date<пос.date ? главное-sr.f(старт) : null, от=старт.date;
   var вода=свобВода(), мокро=вода[пос.date];
   var план = вид==='w' ? vzПлан() : null;
-  var график=vzГрафик(ms, sr, план), кор=vzГрафик.кор;
+  var график=vzГрафик(ms, sr, план), кор=vzГрафик.кор, откл=vzГрафик.откл;
   var под=[поСред ? 'средний за 7 дней' : (пос.date!==TODAY ? 'замер '+ruDate(пос.date) : null),
     всего!=null ? 'с '+ruDate(от)+' '+vzЗн(всего) : null, (sr.k==='prot'||sr.k==='fat') ? 'оценка весов' : null].filter(Boolean).join(' · ');
   var сег = поСред ? '<p class="vztd">'+(пос.date===TODAY ? 'сегодня ' : 'замер '+ruDate(пос.date)+' ')+'<b>'+vzF1(sr.f(пос))+'</b>'+
@@ -13226,6 +13283,7 @@ function homeBody(){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
     '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
     '<p class="vzsub">'+под+'</p>'+сег+
+    (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёшь по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : '')+
     '<div class="vzsvg">'+график+'</div>'+
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
@@ -15936,6 +15994,8 @@ function measClearError(id){
 ['fw','ffat','fwaist'].forEach(function(id){ document.getElementById(id).addEventListener('input',function(){ measClearError(id); }); });
 /* 17.10: из «Зала на неделе» — в тренировку или в Журнал (рабочие веса и объём) */
 document.addEventListener('click',function(e){
+  var r=e.target.closest('[data-zkex]');
+  if(r){ haptic('light'); ZKEX=r.dataset.zkex; ZKSCROLL=false; goPage('log'); return; }
   var b=e.target.closest('[data-zkgo]'); if(!b) return;
   haptic('light'); goPage(b.dataset.zkgo); scrollTo(0,0);
   /* ревью Codex: прокрутка к рабочим весам — когда блок реально нарисован, а не по таймеру */
