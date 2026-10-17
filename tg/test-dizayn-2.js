@@ -69,13 +69,26 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   ok(ч.q.length===4&&ч.q.every(x=>x.h>=44),где+'I: в пустом чате четыре начала, кнопки ≥44: '+ч.q.map(x=>x.t).join(' · '));
   ok(/Фото/.test(ч.cam),где+'I: у камеры подпись «Фото»');
   await чист('чат','#coachm');
-  /* U1 · черновик не теряется: при наборе начала уходят, нажатие по началу не стирает текст */
+  /* U1/R2 · черновик не теряется: при наборе и фото начала уходят, после очистки возвращаются */
+  const есть=()=>p.evaluate(()=>!!document.querySelector('#chatlog [data-cq]'));
   await p.fill('#ctext','мой вопрос');await p.waitForTimeout(200);
-  ok(await p.evaluate(()=>!document.querySelector('#chatlog [data-cq]')&&document.getElementById('ctext').value==='мой вопрос'),где+'U1: начал ряд с набранным текстом нет, текст на месте');
-  await p.fill('#ctext','');await p.click('#coachclose');await p.waitForTimeout(300);await p.click('#coachnav');await p.waitForTimeout(500);
-  const u1=await p.evaluate(()=>{const t=document.getElementById('ctext');t.value='не стирай';const q=document.querySelector('#chatlog [data-cq]');if(!q)return {q:false};q.click();
-   return {q:true,v:t.value,sent:/Разбери мой день|Что съесть|Как идёт|Сфоткать/.test([...document.querySelectorAll('#chatlog .msg.me')].map(x=>x.textContent).join(' '))}});
-  ok(u1.q&&u1.v==='не стирай'&&!u1.sent,где+'U1: нажатие по началу при черновике не отправляет и не стирает '+JSON.stringify(u1));
+  ok(!(await есть())&&await p.inputValue('#ctext')==='мой вопрос',где+'U1: с набранным текстом начал нет, текст на месте');
+  await p.fill('#ctext','');await p.waitForTimeout(200);
+  ok(await есть(),где+'R2: текст стёрт — начала вернулись');
+  const PNG={name:'e.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==','base64')};
+  const фото=()=>p.evaluate(()=>!!document.querySelector('#cattach [data-att]'));
+  /* R3 · запомнить именно текстовое начало (не фотокнопку) и следить за /coach */
+  await p.evaluate(()=>{window.__q=document.querySelector('#chatlog [data-cq="Разбери мой день"]');window.__n=0;const f0=window.fetch;window.__f0=f0;
+   window.fetch=function(u){if(/\/coach/.test(String(u&&u.url||u)))window.__n++;return f0.apply(this,arguments);};});
+  await p.setInputFiles('#cfile',PNG);await p.waitForTimeout(800);const сФото=await есть(),прикр=await фото();
+  const r3a=await p.evaluate(()=>{window.__q.click();return {q:!!window.__q&&window.__q.dataset.cq};});await p.waitForTimeout(200);
+  const r3=Object.assign(r3a,{фото:await фото(),n:await p.evaluate(()=>window.__n)});
+  await p.click('#cattach [data-att]');await p.waitForTimeout(200);
+  ok(прикр&&!сФото&&await есть(),где+'R2: фото прикреплено — начал нет, снято — вернулись');
+  await p.fill('#ctext','не стирай');await p.evaluate(()=>window.__q.click());await p.waitForTimeout(200);
+  const r3t={v:await p.inputValue('#ctext'),n:await p.evaluate(()=>window.__n),me:await p.locator('#chatlog .msg.me').count()};
+  await p.evaluate(()=>{window.fetch=window.__f0;});
+  ok(r3.q==='Разбери мой день'&&r3.фото&&!r3.n&&r3t.v==='не стирай'&&!r3t.n&&!r3t.me,где+'R3: «Разбери мой день» при фото или тексте — не отправлено, черновик цел '+JSON.stringify([r3,r3t]));
   await p.evaluate(()=>{document.getElementById('ctext').value='';});await p.click('#coachclose');await p.waitForTimeout(300);await p.click('#coachnav');await p.waitForTimeout(500);
   await p.click('#chatlog [data-cq="Разбери мой день"]');await p.waitForTimeout(600);
   ok(await p.evaluate(()=>/Разбери мой день/.test(document.getElementById('chatlog').textContent)&&!document.querySelector('#chatlog [data-cq]')),где+'I: нажатие отправляет как сообщение, начала уходят');

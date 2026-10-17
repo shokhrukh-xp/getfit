@@ -15775,6 +15775,10 @@ function чатПустой(){
   return '<div class="chatempty"><b>Чем помочь?</b><p>Пришли фото еды — запишу и оценю. Или спроси словами.</p><div class="chatq">'+
     ЧАТ_НАЧАЛА.map(function(x){ return '<button type="button" data-cq="'+esc(x[0])+'">'+esc(x[1])+'</button>'; }).join('')+'</div></div>';
 }
+/* пустой разговор без черновика — показать четыре начала; сверка на обоих
+   переходах «пусто ↔ черновик» (ревью Codex 17.10, R2) */
+function чатНачалаНужны(){ var в=CHAT.items; return !!в && !в.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err && !чатЧерновик(); }
+function чатНачалаСверить(){ if(чатНачалаНужны() !== !!document.querySelector('#chatlog [data-cq]')) renderChat(false); }
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
@@ -15800,7 +15804,7 @@ function renderChat(scroll){
     if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
     /* 17.10, его выбор I: пустой разговор — не чёрный экран, а «чем помочь»
        и четыре частых начала; нажатие отправляет как обычное сообщение */
-    if(!все.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err && !чатЧерновик()) h+=чатПустой();
+    if(чатНачалаНужны()) h+=чатПустой();
     h+=recoCard('chat');
   }
   box.innerHTML=h;
@@ -16379,7 +16383,7 @@ document.getElementById('csend').addEventListener('click', cGo);
 document.getElementById('ctext').addEventListener('keydown', function(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); cGo(); }
 });
-document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); if(чатЧерновик() && document.querySelector('#chatlog [data-cq]')) renderChat(false); });
+document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); чатНачалаСверить(); });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files && e.target.files[0]; e.target.value='';
@@ -16391,7 +16395,7 @@ document.getElementById('cfile').addEventListener('change', function(e){
     var el=document.getElementById('ctext'); if(el && window.innerWidth>700) el.focus();
   }).catch(function(){ CHAT.prep=false; CHAT.retry=false; CHAT.err='Не смог прочитать фото'; renderChat(); });
 });
-function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); chatSendState(); }
+function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); chatSendState(); чатНачалаСверить(); }
 document.getElementById('cattach').addEventListener('click', function(e){ if(!CHAT.busy && !CHAT.prep && e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
 
