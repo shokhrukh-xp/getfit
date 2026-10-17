@@ -25,6 +25,9 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  ok(await p.locator('.hbx .hbx-t').innerText().then(t=>t.startsWith('14:48')),'нажатие раскрывает кружок с его временем');
  await p.locator('.hbx-go').click();ok(await p.locator('#p-food').isVisible()&&await p.locator('#mealm.show').isVisible(),'«Подробнее» открывает приём на «Еде»');
  await p.locator('#mealclose').click();await p.waitForTimeout(200);
+ // 17.10: закрыл приём — шаг назад, на «Сегодня», откуда пришёл; дальше — «Еда» вкладкой
+ ok(await p.locator('#p-home').isVisible()&&!(await p.locator('#mealm.show').count()),'закрыл приём — снова «Сегодня»');
+ await p.locator('.l1 [data-page="food"]').click();await p.waitForTimeout(300);
  const rows=await p.locator('#fweek .fd').evaluateAll(es=>es.map(e=>({date:e.querySelector('u').textContent,fact:e.querySelector('.week-fact').textContent,target:e.querySelector('.week-target').textContent})));
  ok(rows.length===7&&rows[0].fact==='2050'&&rows[0].target==='2110','даты, факт и норма отдельными колонками');
  await check('еда');await p.locator('[data-zseg="eat"]:visible').click();await p.locator('[data-eseg="day"]').click();await p.waitForTimeout(400);

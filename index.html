@@ -6443,10 +6443,12 @@ function openProf(pp){ fillMe(); renderProfProg(); renderReco(); renderBuild(); 
 /* 17.10: профиль — список групп, подробности — листом внутри того же окна.
    Его выбор «Группы + строки» (макет profil-maket-2026-10-17). pp — имя
    листа (zd, bt, only, voice, gym, ref), пусто — главный список. */
+var PQPP='';
 function profGo(pp){
   var m=document.getElementById('profm'); if(!m) return;
   var стр=pp ? m.querySelector('.pqpage[data-pp="'+pp+'"]') : null;
   if(pp && !стр) pp='';
+  PQPP=pp;
   m.classList.toggle('pqin', !!pp);
   var main=document.getElementById('pqmain'); if(main) main.hidden=!!pp;
   Array.prototype.forEach.call(m.querySelectorAll('.pqpage'), function(x){ x.hidden = x!==стр; });
@@ -6556,18 +6558,85 @@ function renderZdNudge(){
   el.hidden = !(готов && !спросили && !gget('zd_seen', 0));
   if(!el.hidden) el.innerHTML='<b>Приложение научилось учитывать здоровье.</b> Если есть диабет, давление или что-то, чего тебе нельзя, — скажи, и норма с программой это учтут. Полминуты.';
 }
-var ADMFROM='home', ADMTG=false;
+var ADMFROM='home';
 document.getElementById('profboss').addEventListener('click', function(){
   var был=gget('page','home'); if(был && был!=='admin') ADMFROM=был;
   closeProf(); goPage('admin'); haptic('light');
 });
 function admBack(){ goPage(ADMFROM||'home'); openProf(); haptic('light'); }
-function admTgBack(on){
+/* ══ НАЗАД (17.10) ══
+   Его слова: «с профиля открыл программу, а когда закрываю — переходит на
+   главную страницу, а не на предыдущую профиля, откуда я её открыл. Проверь
+   все страницы и логику их открытия и закрытия». Его выбор: «Крестик в
+   листе» и «Шаг назад везде».
+   1) Закрыть — всегда шаг назад, а не выход на главную: ✕ и тап мимо листа
+      внутри профиля возвращают в список профиля (profclose, фон #profm);
+      лист, открытый ИЗ профиля поверх него (сборка, тренер по цели, «Начать
+      заново», анкета), закрылся — профиль открывается снова на том же месте
+      (ВОЗВРАТ).
+   2) Системная «назад» Telegram видна, пока есть куда возвращаться: верхний
+      лист (его же ✕ / «Отмена» / «← Назад» анкеты), лист профиля → список,
+      день человека из круга, Админ панель → профиль. На вкладках внизу её нет. */
+var ВОЗВРАТ=null;
+/* куда вернуться, когда лист modalId закроется: по умолчанию — в профиль на
+   тот же лист; можно дать свою функцию (срез → тренер → снова срез) */
+function возвратЗапомнить(modalId, вернуть){ var pp=PQPP||''; ВОЗВРАТ={modal:modalId, вернуть:вернуть||function(){ openProf(pp); }}; }
+function возвратПроверить(){
+  if(!ВОЗВРАТ) return;
+  var м=document.getElementById(ВОЗВРАТ.modal);
+  if(м && м.classList.contains('show')) return;
+  var в=ВОЗВРАТ;
+  setTimeout(function(){
+    if(ВОЗВРАТ!==в) return; ВОЗВРАТ=null;
+    /* закрылся — и сразу открылось другое (сборка → профиль, сброс → анкета):
+       туда и шли, профиль поверх не нужен */
+    if(document.querySelector('.modal.show')) return;
+    в.вернуть();
+  }, 0);
+}
+function верхнийЛист(){
+  var все=Array.prototype.slice.call(document.querySelectorAll('.modal.show'));
+  if(!все.length) return null;
+  все.sort(function(a,b){
+    var za=parseInt(getComputedStyle(a).zIndex,10)||0, zb=parseInt(getComputedStyle(b).zIndex,10)||0;
+    if(za!==zb) return za-zb;
+    return (a.compareDocumentPosition(b) & 4) ? -1 : 1;   /* позже в документе — выше */
+  });
+  return все[все.length-1];
+}
+function назадЦель(){
+  var top=верхнийЛист();
+  if(top){
+    if(top.id==='picker'){
+      var пр=document.getElementById('wz-prev');
+      if(пр && !пр.hidden) return function(){ пр.click(); };
+      if(document.body.classList.contains('onb')) return null;   /* первое знакомство не бросают на полпути */
+      return hidePicker;
+    }
+    if(top.id==='profm' && PQPP) return function(){ profGo(''); };
+    var x=top.querySelector('.xbtn, #resetclose');
+    return x ? function(){ x.click(); } : null;
+  }
+  if(typeof UDAY!=='undefined' && UDAY) return closeUserDay;
+  if(gget('page','home')==='admin') return admBack;
+  return null;
+}
+function назад(){ var f=назадЦель(); if(f){ f(); haptic('light'); } назадОбновить(); }
+var BBON=null, BBREG=false;
+function назадОбновить(){
   try{ var bb=TG&&TG.BackButton; if(!bb) return;
-    if(on){ if(!ADMTG){ bb.onClick(admBack); bb.show(); ADMTG=true; } }
-    else if(ADMTG){ bb.offClick(admBack); bb.hide(); ADMTG=false; }
+    if(!BBREG){ bb.onClick(назад); BBREG=true; }
+    var on=!!назадЦель(); if(on===BBON) return; BBON=on;
+    if(on) bb.show(); else bb.hide();
   }catch(e){}
 }
+(function(){
+  try{
+    var набл=new MutationObserver(function(){ возвратПроверить(); назадОбновить(); });
+    Array.prototype.forEach.call(document.querySelectorAll('.modal'), function(m){ набл.observe(m,{attributes:true,attributeFilter:['class']}); });
+    var пр=document.getElementById('wz-prev'); if(пр) набл.observe(пр,{attributes:true,attributeFilter:['hidden']});
+  }catch(e){}
+})();
 document.getElementById('hctx').addEventListener('click', function(e){ if(e.target.closest('#admback')) admBack(); });
 document.getElementById('zdnudge').addEventListener('click', function(){
   gset('zd_seen', 1);
@@ -10689,7 +10758,6 @@ function goPage(p){
      туда, откуда пришёл, и снова открывает профиль. Та же кнопка — системная
      «назад» Telegram. */
   if(p==='admin' && hc) hc.innerHTML='<button type="button" class="hback" id="admback">‹ Профиль</button><b>Админ панель</b>';
-  admTgBack(p==='admin');
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
@@ -10701,6 +10769,7 @@ function goPage(p){
   if(p==='ref') openCatPage();
   if(p==='eat') openEat();
   if(p==='circle') openCircle(); else udayLeave();
+  назадОбновить();
   var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   window.scrollTo({top:0,behavior:'auto'});
@@ -10803,9 +10872,10 @@ if(_meed) _meed.addEventListener('click', function(){
   haptic('light');
 });
 document.getElementById('profbtn').addEventListener('click', function(){ openProf(); haptic('light'); });
-document.getElementById('profclose').addEventListener('click', closeProf);
+/* 17.10: ✕ на листе профиля — назад в список, а не выход на главную (его слова) */
+document.getElementById('profclose').addEventListener('click', function(){ if(PQPP){ profGo(''); haptic('light'); } else closeProf(); });
 document.getElementById('profm').addEventListener('click', function(e){
-  if(e.target.id==='profm'){ closeProf(); return; }
+  if(e.target.id==='profm'){ if(PQPP) profGo(''); else closeProf(); return; }
   var pr=e.target.closest('.pqrow[data-pp]');
   if(pr){ profGo(pr.dataset.pp); haptic('light'); return; }
   if(e.target.closest('#pqback')){ profGo(''); haptic('light'); return; }
@@ -10818,9 +10888,9 @@ document.getElementById('profm').addEventListener('click', function(e){
     if(multi && !CAT){ loadCatalog().then(saveMe).catch(saveMe); } else saveMe();
     return;
   }
-  if(e.target.closest('#pfswitch')){ closeProf(); showPicker(); return; }
+  if(e.target.closest('#pfswitch')){ возвратЗапомнить('picker'); closeProf(); showPicker(); return; }
   if(e.target.closest('#goaltalk')){
-    closeProf(); openCoach();
+    возвратЗапомнить('coachm'); closeProf(); openCoach();
     var ct=document.getElementById('ctext');
     if(ct && !ct.value){ ct.value = goalObj() ? 'Хочу обсудить цель: ' : 'Моя цель: '; try{ ct.focus(); ct.setSelectionRange(ct.value.length, ct.value.length); }catch(_){} }
     haptic('light'); return;
@@ -10839,7 +10909,7 @@ document.getElementById('profm').addEventListener('click', function(e){
       var names=[]; RECO.dis.forEach(function(x){ if(names.indexOf(x.name)<0) names.push(x.name); });
       var msg='Я отметил в профиле, чего не хочу: '+((myData()||{}).dislikes||[]).join(', ')+'. В программе это '+
               names.map(function(n){ return '«'+n+'»'; }).join(' и ')+' — замени на другое на те же мышцы. Предлагай по одному, я буду нажимать кнопку.';
-      closeProf(); openCoach(); coachSend(msg); haptic('medium'); return;
+      возвратЗапомнить('coachm'); closeProf(); openCoach(); coachSend(msg); haptic('medium'); return;
     }
     gset('reco_seen', meSig(myData()||{}));
     renderReco();
@@ -10892,7 +10962,7 @@ document.getElementById('srezm').addEventListener('click', function(e){
   if(b){ srezPull(+b.dataset.srdn); haptic('light'); return; }
   if(e.target.closest('#sr-ask')){
     var q=(SREZ&&SREZ.дальше&&SREZ.дальше.ask)||'';
-    closeSrez(); openCoach();
+    возвратЗапомнить('coachm', function(){ openSrez(); }); closeSrez(); openCoach();
     var t=document.getElementById('ctext');
     if(t && q){ t.value=q; t.dispatchEvent(new Event('input',{bubbles:true})); }
     haptic('medium'); return;
@@ -11394,7 +11464,7 @@ function renderProgCard(){
     '<p class="pcond">'+esc(усл.join(' · '))+'</p>'+
     '<button type="button" class="btn wide" id="progedit" style="margin-top:12px">Изменить и пересобрать</button>';
   var b=document.getElementById('progedit');
-  if(b) b.addEventListener('click', function(){ closeProf(); openSbor(); haptic('light'); });
+  if(b) b.addEventListener('click', function(){ возвратЗапомнить('sborm'); closeProf(); openSbor(); haptic('light'); });
 }
 function aiPayload(){
   var me=myData()||{};
@@ -11582,7 +11652,7 @@ function doReset(scope){
     })
     .catch(function(e){ resetBusy=false; resetState(humanErr(e), true); });
 }
-document.getElementById('profreset').addEventListener('click', function(){ closeProf(); openReset(); haptic('light'); });
+document.getElementById('profreset').addEventListener('click', function(){ возвратЗапомнить('resetm'); closeProf(); openReset(); haptic('light'); });
 document.getElementById('resetclose').addEventListener('click', closeReset);
 document.getElementById('resetm').addEventListener('click', function(e){
   if(e.target.id==='resetm'){ closeReset(); return; }
@@ -12279,7 +12349,8 @@ function hbxGo(){
   if(e.cls==='meal' && e.src){
     /* приём сегодняшний — «Еду» открываем на сегодня, иначе правка уйдёт в другой день */
     if(FOOD.date){ FOOD.date=null; FOOD.day=null; }
-    goPage('food'); openMealView(e.src); return;
+    /* 17.10: закрыл приём — шаг назад, на «Сегодня», откуда пришёл */
+    goPage('food'); openMealView(e.src); возвратЗапомнить('mealm', function(){ goPage('home'); }); return;
   }
   goPage(e.go);
 }
@@ -13029,9 +13100,8 @@ function renderCircle(){
 }
 /* ── страница человека: его еда за день с фото, по приёмам (вместо ленты) ── */
 var UDAY=null, UDOPEN=null;
-function tgBack(on){
-  try{ var bb=TG&&TG.BackButton; if(!bb) return; bb.offClick(closeUserDay); if(on){ bb.onClick(closeUserDay); bb.show(); } else bb.hide(); }catch(e){}
-}
+/* 17.10: системная «назад» — одна на всё приложение (назадОбновить) */
+function tgBack(){ назадОбновить(); }
 function openUserDay(who, name, date){
   UDAY={who:who, name:name||'', date:date||TODAY, d:null, busy:true, err:''}; UDOPEN=null;
   renderCircle(); window.scrollTo({top:0,behavior:'auto'}); tgBack(true); udayPull();

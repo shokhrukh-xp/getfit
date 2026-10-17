@@ -65,8 +65,11 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   ok(!(await p.isVisible('#pq-gym')),где+'и группы «Зал» больше нет');
   await p.click('#pq-only');await p.click('#me-only button[data-v="all"]');await p.waitForTimeout(400);await p.click('#pqback');
 
-  /* закрыл на листе — открылся снова со списка */
+  /* 17.10: ✕ на листе — назад в список (его слова), ✕ в списке — закрыть; открывается всегда со списка */
   await p.click('#pq-voice');await p.click('#profclose');await p.waitForTimeout(300);
+  ok(await p.isVisible('#pqmain')&&await p.$eval('#profm',e=>e.classList.contains('show')),где+'✕ на листе — шаг назад в список, профиль не закрылся');
+  await p.click('#pq-voice');await p.click('#profclose');await p.click('#profclose');await p.waitForTimeout(300);
+  ok(!(await p.$eval('#profm',e=>e.classList.contains('show'))),где+'✕ в списке закрывает профиль');
   await p.click('#profbtn');await p.waitForTimeout(400);
   ok(await p.isVisible('#pqmain')&&!(await p.isVisible('#pqback')),где+'профиль всегда открывается со списка');
 

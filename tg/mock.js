@@ -179,7 +179,13 @@ async function поднять(page, o) {
       showConfirm(t, cb){ (window.__окна = window.__окна || []).push(String(t)); if (cb) cb(true); },
       HapticFeedback: { impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
       MainButton: { show(){}, hide(){}, setText(){}, onClick(){}, offClick(){} },
-      BackButton: { show(){}, hide(){}, onClick(){}, offClick(){} },
+      /* 17.10: «назад» Telegram — проверки видят, показана ли она, и жмут её
+         (window.__назад()) так же, как человек жмёт стрелку в шапке */
+      BackButton: { isVisible: false,
+        show(){ this.isVisible = true; window.__назадВидна = true; },
+        hide(){ this.isVisible = false; window.__назадВидна = false; },
+        onClick(f){ (window.__назадФ = window.__назадФ || []).push(f); },
+        offClick(f){ window.__назадФ = (window.__назадФ || []).filter(x => x !== f); } },
       /* CloudStorage раньше отвечал пустым списком ключей — и любой экран,
          который живёт на истории (Журнал, «Упражнения», итог блока), в
          проверках оставался пустым. Теперь это настоящее хранилище поверх
