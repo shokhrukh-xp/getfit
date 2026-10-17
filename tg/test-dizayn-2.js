@@ -59,6 +59,9 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   /* G · снимок весов подписан */
   await вкладка(p,'home');
   ok(/Снимок весов/.test(await p.textContent('#fmphoto')),где+'G: кнопка снимка весов подписана');
+  const u2=await p.evaluate(()=>{const b=document.getElementById('fmphoto'),sp=b.querySelector('span'),sv=document.getElementById('fmsave');const r=b.getBoundingClientRect(),q=sp.getBoundingClientRect(),v=sv.getBoundingClientRect();
+   return {inside:q.left>=r.left-1&&q.right<=r.right+1,full:sp.scrollWidth<=sp.clientWidth+1,apart:r.right<=v.left+1||r.bottom<=v.top+1}});
+  ok(u2.inside&&u2.full&&u2.apart,где+'U2: подпись «Снимок весов» целиком внутри своей кнопки '+JSON.stringify(u2));
   /* I · пустой чат */
   await p.click('#coachnav');await p.waitForTimeout(500);
   const ч=await p.evaluate(()=>({q:[...document.querySelectorAll('#chatlog [data-cq]')].map(x=>({t:x.textContent,h:x.getBoundingClientRect().height})),
@@ -66,6 +69,14 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   ok(ч.q.length===4&&ч.q.every(x=>x.h>=44),где+'I: в пустом чате четыре начала, кнопки ≥44: '+ч.q.map(x=>x.t).join(' · '));
   ok(/Фото/.test(ч.cam),где+'I: у камеры подпись «Фото»');
   await чист('чат','#coachm');
+  /* U1 · черновик не теряется: при наборе начала уходят, нажатие по началу не стирает текст */
+  await p.fill('#ctext','мой вопрос');await p.waitForTimeout(200);
+  ok(await p.evaluate(()=>!document.querySelector('#chatlog [data-cq]')&&document.getElementById('ctext').value==='мой вопрос'),где+'U1: начал ряд с набранным текстом нет, текст на месте');
+  await p.fill('#ctext','');await p.click('#coachclose');await p.waitForTimeout(300);await p.click('#coachnav');await p.waitForTimeout(500);
+  const u1=await p.evaluate(()=>{const t=document.getElementById('ctext');t.value='не стирай';const q=document.querySelector('#chatlog [data-cq]');if(!q)return {q:false};q.click();
+   return {q:true,v:t.value,sent:/Разбери мой день|Что съесть|Как идёт|Сфоткать/.test([...document.querySelectorAll('#chatlog .msg.me')].map(x=>x.textContent).join(' '))}});
+  ok(u1.q&&u1.v==='не стирай'&&!u1.sent,где+'U1: нажатие по началу при черновике не отправляет и не стирает '+JSON.stringify(u1));
+  await p.evaluate(()=>{document.getElementById('ctext').value='';});await p.click('#coachclose');await p.waitForTimeout(300);await p.click('#coachnav');await p.waitForTimeout(500);
   await p.click('#chatlog [data-cq="Разбери мой день"]');await p.waitForTimeout(600);
   ok(await p.evaluate(()=>/Разбери мой день/.test(document.getElementById('chatlog').textContent)&&!document.querySelector('#chatlog [data-cq]')),где+'I: нажатие отправляет как сообщение, начала уходят');
   await p.click('#coachclose');await p.waitForTimeout(300);
@@ -88,7 +99,7 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
  {const p=await b.newPage({viewport:{width:390,height:844}});const o=opts('dark');o.base=M.БАЗА+'?srez=1';await M.поднять(p,o);await p.waitForTimeout(1200);
   const g=await p.evaluate(()=>{const s=document.querySelector('#srezm .srgrid');if(!s)return null;
    return {cols:getComputedStyle(s).gridTemplateColumns.split(' ').length,wide:!!s.querySelector('.srwide')}});
-  ok(g===null||(g.cols===2),'G: изменения тела — сеткой 2×2'+(g?'':' (на стенде среза нет — пропуск)'));
+  ok(g&&g.cols===2&&g.wide,'G: изменения тела — сеткой 2×2, «против плана» во всю ширину '+JSON.stringify(g));
   await p.close();}
 }finally{await b.close();}
  if(bad){console.log('\n  провалов: '+bad);process.exit(1);}console.log('\n  test-dizayn-2: всё зелёное');})();

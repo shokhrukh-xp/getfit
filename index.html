@@ -3166,6 +3166,12 @@ body.ordmode #list .sstag{color:var(--text)}
 .srgrid .srwide{grid-column:1/-1}
 #hmeas #fmphoto{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
 #hmeas #fmphoto svg{width:18px;height:18px;flex:none}
+/* ревью Codex 17.10: «Снимок весов» не помещался в треть ряда — две равные
+   кнопки во второй строке, поля веса, жира и талии не уже прежнего */
+.vzbottom #hmeas .fmeasq{grid-template-columns:repeat(6,minmax(0,1fr))}
+.vzbottom #hmeas .fmeasq .fld{grid-column:span 2}
+.vzbottom #hmeas #fmphoto{grid-column:1/4}
+.vzbottom #hmeas #fmsave{grid-column:4/-1}
 /* H · итог под дугой: калории · белок · оценка — в один ряд плиток */
 .hdaycard .hrows{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 12px}
 .hdaycard .hrows:has(>.hrow:nth-of-type(4)){grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -13508,7 +13514,7 @@ function closeHtml(герой){
   if(герой){
     var пока0 = !fin && !!d.вместе;
     return '<div class="fclose"><div class="fdone'+(fin?'':' fpend')+'"><span class="fsc"><u>'+(fin?'итог дня':'оценка дня')+'</u><b>'+fmtR(d.r)+'<s> / 10</s></b></span>'+
-      '<small>'+(fin?'итог дня':(пока0?'съеденное пока':'день идёт'))+(d.streak?' · '+streakText(d.streak):'')+' · '+esc(whyText(d.why))+(пока0?'. Итог дня — в полночь, по всей норме':'')+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
+      '<small>'+(fin?'':(пока0?'съеденное пока · ':'день идёт · '))+(d.streak?streakText(d.streak)+' · ':'')+esc(whyText(d.why))+(пока0?'. Итог дня — в полночь, по всей норме':'')+(!fin && d.n<2 ? '. В зачёт недели идут дни с двумя и более приёмами' : '')+'</small></div></div>';
   }
   /* 24.09: пока день идёт, сервер судит съеденное — каждый приём своей долей
      дня, — а не весь день полной нормой. Так и подписываем, иначе «5,8» в
@@ -15764,6 +15770,7 @@ function источникиHTML(src, коротко){
   }).join('')+'</div>';
 }
 var ЧАТ_НАЧАЛА=[['photo','📷 Сфоткать еду'],['Что съесть на ужин?','Что съесть на ужин?'],['Разбери мой день','Разбери мой день'],['Как идёт моя цель?','Как идёт цель?']];
+function чатЧерновик(){ var t=document.getElementById('ctext'); return !!((t && t.value.trim()) || CHAT.att); }
 function чатПустой(){
   return '<div class="chatempty"><b>Чем помочь?</b><p>Пришли фото еды — запишу и оценю. Или спроси словами.</p><div class="chatq">'+
     ЧАТ_НАЧАЛА.map(function(x){ return '<button type="button" data-cq="'+esc(x[0])+'">'+esc(x[1])+'</button>'; }).join('')+'</div></div>';
@@ -15793,13 +15800,16 @@ function renderChat(scroll){
     if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
     /* 17.10, его выбор I: пустой разговор — не чёрный экран, а «чем помочь»
        и четыре частых начала; нажатие отправляет как обычное сообщение */
-    if(!все.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err) h+=чатПустой();
+    if(!все.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err && !чатЧерновик()) h+=чатПустой();
     h+=recoCard('chat');
   }
   box.innerHTML=h;
   box.querySelectorAll('[data-cq]').forEach(function(b){
     b.addEventListener('click', function(){ haptic('light');
       if(b.dataset.cq==='photo'){ var ph=document.getElementById('cphoto'); if(ph) ph.click(); return; }
+      /* ревью Codex 17.10: набранный текст или фото — не стираем, быстрый
+         вопрос тогда не отправляется */
+      if(чатЧерновик()){ renderChat(false); return; }
       coachSend(b.dataset.cq); });
   });
   var retry=document.getElementById('chatretry');
@@ -16369,7 +16379,7 @@ document.getElementById('csend').addEventListener('click', cGo);
 document.getElementById('ctext').addEventListener('keydown', function(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); cGo(); }
 });
-document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); });
+document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); if(чатЧерновик() && document.querySelector('#chatlog [data-cq]')) renderChat(false); });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files && e.target.files[0]; e.target.value='';
