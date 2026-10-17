@@ -26,7 +26,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
     await give(r,{ok:true,measures:o.meas});return true;
    };
    const errors=await M.поднять(p,o);
-   await p.locator('#fw').scrollIntoViewIfNeeded();
+   await p.waitForSelector('#fw');await p.evaluate(()=>document.getElementById('fw').scrollIntoView({block:'nearest'}));
    if(name==='validation'){
     for(const value of ['', 'abc', '20', '-3', '88кг']){
      await p.fill('#fw',value);await p.click('#fmsave');await frame(p);
@@ -76,7 +76,8 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
     assert.equal(o.meas[0].w,null);assert.deepEqual(o.meas.slice(1).map(m=>[m.date,m.w]),weights);
     assert((await p.locator('.vznum').innerText()).includes('95,5'),'Тело показывает отдельную талию');
     assert.equal(await p.locator('[data-vzv="waist"]').getAttribute('aria-selected'),'true');
-    await p.locator('.vz').scrollIntoViewIfNeeded();await shot(p,name,theme,width);
+    /* .vz перерисовывается после записи — прокрутка одним вызовом в странице, без гонки с отрисовкой под нагрузкой */
+    await p.evaluate(()=>document.querySelector('.vz').scrollIntoView({block:'nearest'}));await shot(p,name,theme,width);
     await p.click('.l1 [data-page="gym"]');await p.click('#zseg-gym [data-zseg="log"]');
     await p.waitForFunction(()=>document.querySelector('#logmeas').textContent.includes('талия'));
     assert((await p.locator('#logmeas').innerText()).includes('95,5'),'Журнал не теряет талию без веса');
