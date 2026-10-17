@@ -235,6 +235,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   padding:9px 0;font:inherit;font-size:13px;min-height:44px}
 .wdgrid button[aria-pressed="true"]{background:var(--action);border-color:var(--accent);
   color:var(--on-accent);font-weight:700}
+.sbgroup{margin:20px 0;padding:0}
+.sbgroup h4{font-size:17px;font-weight:700;line-height:1.35;margin:0 0 16px}
+.sbgroup .sblab{font-size:13px;letter-spacing:0}
 .sbrow{margin-bottom:16px}
 .sblab{display:block;font-size:12px;color:var(--dim);letter-spacing:.02em;margin-bottom:7px}
 .sbhint{margin:6px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
@@ -939,6 +942,9 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .mli .mlk{flex:0 0 70px;text-align:right;white-space:nowrap;font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 .mli .mlx{flex:0 0 30px;height:30px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--dim);font-size:15px}
 .mnums label{font-size:12px;color:var(--dim)}
+#ml-form .mnums{grid-template-columns:repeat(4,minmax(0,1fr))}
+#ml-form .mnums label{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;min-width:0}
+#ml-form .mnums input{margin-top:0;padding-right:4px;padding-left:4px}
 .mnums input{display:block;width:100%;margin-top:6px;padding:11px 10px;border-radius:12px;
   border:.5px solid var(--line);background:var(--card-2);color:var(--text);font:inherit;font-size:15px;
   font-variant-numeric:tabular-nums;text-align:center}
@@ -1556,7 +1562,13 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .cirsw .cirgear,.cirsw .cirnew{flex:0 0 auto;min-width:44px;min-height:40px;padding:0 12px;font-size:15px;line-height:1}
 .krow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:.5px solid var(--line-soft)}
 .krow:last-of-type{border-bottom:none}
-.krow .kn{flex:1;min-width:0;font-size:15px}
+.krow .kn{flex:1;min-width:0;font-size:15px;overflow-wrap:anywhere}
+.krow.has-actions{display:grid;grid-template-columns:minmax(0,1fr)}
+.kactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kactions .btn{min-height:44px;min-width:44px;padding:8px;font-size:13px;white-space:normal}
+.kactions .kremove{color:var(--warn-txt);background:var(--warn-bg)}
+ul.kmine{padding-left:18px;font-size:13px}
+ul.kmine li+li{margin-top:8px}
 .krow .kn i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
 .kcode{display:flex;gap:8px;margin-top:8px}
 .kcode input{flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:12px;border:.5px solid var(--line);background:var(--field);color:var(--text);font:inherit;font-size:15px}
@@ -2680,12 +2692,24 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 .startcard b{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text)}
 .startcard .scbtns{display:flex;flex-wrap:wrap;gap:8px}
 .startcard .scbtns .btn{flex:1 1 auto;min-height:44px}
-.howlist{margin:4px 0 12px;padding-left:20px;display:grid;gap:12px}
-.howlist li b{display:block;font-size:15px;font-weight:600;color:var(--text)}
-.howlist li span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.howlist{margin:4px 0 12px;display:grid;gap:16px}
+.howlist section{padding-bottom:16px;border-bottom:1px solid var(--line)}
+.howlist h4{font-size:17px;font-weight:700;margin:0 0 10px}
+.howlist p{font-size:14px;line-height:1.5;color:var(--muted);margin:6px 0 0}
+.howflow{list-style:none;padding:0;margin:0 0 10px;display:flex;gap:4px;align-items:baseline;flex-wrap:wrap}
+.howflow li{font-size:12px;line-height:1.5;color:var(--accent);font-weight:600}
+.howflow li+li:before{content:'→';padding-right:4px;color:var(--muted)}
+.howcommands{margin:10px 0 0;font-size:13px;line-height:1.5}
+.howcommands div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;padding:4px 0}
+.howcommands dt{color:var(--text)}
+.howcommands dd{margin:0;color:var(--muted)}
 /* 14.10: шаги знакомства */
 .wztop{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
-.wztop .wzstep{margin:0 0 0 auto}
+.wztop .wzstep{margin:0}
+.wzprogress{flex:0 1 160px;min-width:0;margin-left:auto;text-align:right}
+.wzpath{display:flex;gap:4px;margin-top:7px;height:3px}
+.wzpath span{flex:1;border-radius:999px;background:var(--line)}
+.wzpath .reached{background:var(--accent)}
 .wzprev{border:0;background:none;padding:0 4px 0 0;min-height:44px;font:inherit;font-size:14px;color:var(--accent)}
 .wzpick{display:grid;gap:10px;margin:6px 0 16px}
 .wzpick button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;min-height:64px;padding:12px 14px;border-radius:14px;border:1px solid var(--line-soft);background:var(--card-2);color:var(--text);font:inherit}
@@ -3418,7 +3442,7 @@ body.ordmode #list .sstag{color:var(--text)}
 </div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
-    <div class="wztop"><button type="button" class="wzprev" id="wz-prev" hidden>← Назад</button><p class="wzstep" id="wzstep" hidden></p></div>
+    <div class="wztop"><button type="button" class="wzprev" id="wz-prev" hidden>← Назад</button><div class="wzprogress"><p class="wzstep" id="wzstep" hidden></p><div class="wzpath" id="wzpath" aria-hidden="true" hidden></div></div></div>
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажи о себе — тренер задаст пару вопросов и соберёт программу.</p>
     <!-- 14.10, его выбор: знакомство по шагам 1–4 (что ведём → параметры →
@@ -3633,22 +3657,28 @@ body.ordmode #list .sstag{color:var(--text)}
   <div class="modalbox">
     <div class="cathead"><h3 id="sbortitle">Собрать программу</h3><button class="xbtn" id="sborclose" aria-label="Закрыть">✕</button></div>
     <p class="mtext" id="sborgoal"></p>
-    <div class="sbrow"><span class="sblab">В КАКИЕ ДНИ</span><div class="wdgrid" id="sb-wd"></div>
+    <section class="sbgroup" aria-labelledby="sb-time-title">
+      <h4 id="sb-time-title">Когда и сколько</h4>
+    <div class="sbrow"><span class="sblab">В какие дни</span><div class="wdgrid" id="sb-wd"></div>
       <p class="sbhint" id="sb-wdh"></p></div>
-    <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sb-min"></div>
+    <div class="sbrow"><span class="sblab">Сколько минут</span><div class="seg" id="sb-min"></div>
       <p class="sbhint" id="sb-minh"></p></div>
+    </section>
+    <section class="sbgroup" aria-labelledby="sb-prefs-title">
+      <h4 id="sb-prefs-title">Условия и предпочтения</h4>
     <!-- Опыт — условие сборки, как дни и минуты, и жить ему здесь, а не
          отдельной строкой в профиле: там он стоял рядом с настройками
          приложения и читался как что-то ещё. -->
-    <div class="sbrow"><span class="sblab">ОПЫТ</span><div class="seg" id="sb-level"></div></div>
-    <div class="sbrow"><span class="sblab">ГДЕ</span><div class="seg" id="sb-place"></div></div>
-    <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">ЧТО ЕСТЬ ДОМА</span><div class="seg multi" id="sb-eq"></div></div>
-    <div class="sbrow"><span class="sblab">УПОР</span><div class="seg multi" id="sb-focus"></div>
+    <div class="sbrow"><span class="sblab">Опыт</span><div class="seg" id="sb-level"></div></div>
+    <div class="sbrow"><span class="sblab">Где</span><div class="seg" id="sb-place"></div></div>
+    <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">Что есть дома</span><div class="seg multi" id="sb-eq"></div></div>
+    <div class="sbrow"><span class="sblab">Упор</span><div class="seg multi" id="sb-focus"></div>
       <p class="sbhint">Выбранным — 12–16 подходов в неделю, остальным 6–8 на удержание</p></div>
-    <div class="sbrow" id="sb-platerow"><span class="sblab">САМЫЙ МАЛЕНЬКИЙ БЛИН</span><div class="seg" id="sb-plate"></div>
+    <div class="sbrow" id="sb-platerow"><span class="sblab">Самый маленький блин</span><div class="seg" id="sb-plate"></div>
       <p class="sbhint">От него зависит, каким шагом растут веса</p></div>
-    <div class="sbrow"><span class="sblab">ЧТО БЕРЕЧЬ</span><div class="seg multi" id="sb-lim"></div></div>
+    <div class="sbrow"><span class="sblab">Что беречь</span><div class="seg multi" id="sb-lim"></div></div>
     <label class="mlab">чего не хочу<input id="sb-dis" type="text" autocomplete="off" placeholder="бёрпи, приседы со штангой"></label>
+    </section>
     <button class="btn prim wide" id="sb-go">Собрать</button>
     <p class="aistate" id="sbstate" hidden></p>
   </div>
@@ -3768,12 +3798,23 @@ body.ordmode #list .sstag{color:var(--text)}
 <div class="modal" id="howm" role="dialog" aria-modal="true" aria-labelledby="howtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="howtitle">Как пользоваться</h3><button class="xbtn" id="howclose" aria-label="Закрыть">✕</button></div>
-    <ol class="howlist">
-      <li><b>Еда</b><span>«Добавить» на «Еде» — фото или пара слов тренеру. Ошибся — нажми на приём и исправь, новая запись не появится.</span></li>
-      <li><b>Зал</b><span>Введи вес и повторы, отметь подход ✓. В конце — «Завершить и сохранить».</span></li>
-      <li><b>Бот в Telegram</b><span>Пиши боту, как другу: фото тарелки или «200 г творога и 2 яйца». Исправить — «творога было 150 г». Команды: «сегодня», «неделя», «отмена» — убрать последнюю запись.</span></li>
-      <li><b>Один дневник</b><span>Что прислал боту — сразу в приложении, и наоборот.</span></li>
-    </ol>
+    <div class="howlist">
+      <section><h4>Еда</h4>
+        <ol class="howflow" aria-label="Как записать еду"><li>Фото или текст</li><li>Запись</li><li>Правка</li></ol>
+        <p>«Добавить» на «Еде» — фото или пара слов тренеру.</p>
+        <p>Ошибся — нажми на приём и исправь, новая запись не появится.</p>
+      </section>
+      <section><h4>Зал</h4>
+        <ol class="howflow" aria-label="Как записать тренировку"><li>Вес и повторы</li><li>Подход ✓</li><li>Сохранение</li></ol>
+        <p>Введи вес и повторы, отметь подход ✓. В конце — «Завершить и сохранить».</p>
+      </section>
+      <section><h4>Бот в Telegram</h4>
+        <p>Пиши боту, как другу: фото тарелки или «200 г творога и 2 яйца».</p>
+        <p>Исправить — «творога было 150 г».</p>
+        <dl class="howcommands"><div><dt>«сегодня»</dt><dd>День</dd></div><div><dt>«неделя»</dt><dd>Неделя</dd></div><div><dt>«отмена»</dt><dd>Убрать последнюю запись</dd></div></dl>
+      </section>
+      <section><h4>Один дневник</h4><p>Что прислал боту — сразу в приложении, и наоборот.</p></section>
+    </div>
     <p class="mtext" id="howfree" hidden></p>
     <!-- 17.10: строка лицензии ушла с карты тела сюда (его выбор F) -->
     <p class="howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
@@ -5590,6 +5631,11 @@ function renderPicker(){
   if(шаг){
     шаг.hidden = WIZ.stage!=='form' || iш<0 || все.length<2;
     шаг.textContent = 'шаг '+(iш+1)+' из '+все.length;
+  }
+  var путь=document.getElementById('wzpath');
+  if(путь){
+    путь.hidden=!шаг || шаг.hidden;
+    путь.innerHTML=все.map(function(_,i){return '<span'+(i<=iш?' class="reached"':'')+'></span>';}).join('');
   }
   var назад=document.getElementById('wz-prev'); if(назад) назад.hidden = WIZ.stage!=='form' || iш<=0 || WIZ.busy;
   var t=document.getElementById('picktitle'), nm=whoName();
@@ -13391,9 +13437,9 @@ function renderKrug(){
   h += '<p class="klab">КТО ВНУТРИ · ' + c.n + '</p>';
   if(!KRUG.люди) h += '<p class="mtext">Загружаю…</p>';
   else h += KRUG.люди.map(function(m){
-    return '<div class="krow"><span class="kn">' + esc(m.me ? 'Ты' : m.name) + (m.owner ? '<i>завёл круг</i>' : '') + '</span>' +
-      (моё && !m.owner ? '<button type="button" class="btn small" data-kboss="' + esc(m.uid) + '">Передать</button>' : '') +
-      (моё && !m.owner ? '<button type="button" class="memx" data-kdel="' + esc(m.uid) + '" aria-label="Убрать">×</button>' : '') + '</div>';
+    return '<div class="krow'+(моё && !m.owner?' has-actions':'')+'"><span class="kn">' + esc(m.me ? 'Ты' : m.name) + (m.owner ? '<i>завёл круг</i>' : '') + '</span>' +
+      (моё && !m.owner ? '<div class="kactions"><button type="button" class="btn small" data-kboss="' + esc(m.uid) + '">Передать</button>' : '') +
+      (моё && !m.owner ? '<button type="button" class="btn small kremove" data-kdel="' + esc(m.uid) + '" aria-label="Убрать участника">Убрать</button></div>' : '') + '</div>';
   }).join('');
   /* 19.09: крестик рядом с человеком до сегодня ничего не решал: код
      круга у него оставался, и он возвращался тем же шагом. Теперь убранные
@@ -13405,7 +13451,7 @@ function renderKrug(){
     }).join('');
   }
   if(моё){
-    h += '<p class="kmine">Круг твой: имя, код и состав меняешь только ты. Убранный крестиком больше не войдёт по коду, пока ты его не вернёшь. «Передать» отдаёт круг человеку целиком: дальше имя, код и состав меняет он, а ты останешься участником и сможешь выйти. Закроешь — таблица исчезнет у всех, записи людей останутся при них.</p>';
+    h += '<ul class="kmine"><li>Круг твой: имя, код и состав меняешь только ты.</li><li>«Убрать» — участник больше не войдёт по коду, пока ты его не вернёшь.</li><li>«Передать» отдаёт круг человеку целиком: дальше имя, код и состав меняет он, а ты останешься участником и сможешь выйти.</li><li>Закроешь — таблица исчезнет у всех, записи людей останутся при них.</li></ul>';
     h += '<button type="button" class="btn wide danger" id="k-drop" style="margin-top:10px">Закрыть круг</button>';
   } else {
     h += '<p class="kmine">Круг завёл кто-то другой — имя и состав меняет он. Ты можешь выйти в любой момент.</p>' +

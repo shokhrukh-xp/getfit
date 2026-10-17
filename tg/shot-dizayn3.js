@@ -1,0 +1,18 @@
+'use strict';
+// Подставной стенд: одни данные до/после, без правки исходников или живой базы.
+// NODE_PATH=... node tg/shot-dizayn3.js <папка>
+const fs=require('fs'),path=require('path'),http=require('http'),{execFileSync}=require('child_process'),{chromium}=require('playwright');
+const ROOT=path.resolve(__dirname,'..'),OUT=path.resolve(process.argv[2]||'/tmp/getfit-dizayn3-shots');fs.mkdirSync(OUT,{recursive:true});
+const before=execFileSync('git',['show','7bb2aea:index.html'],{cwd:ROOT,maxBuffer:8*1024*1024}),after=fs.readFileSync(path.join(ROOT,'index.html'));let html=before;
+const server=http.createServer((req,res)=>{const u=new URL(req.url,'http://local').pathname;if(u==='/'||u==='/index.html'){res.setHeader('Content-Type','text/html; charset=utf-8');return res.end(html)}const f=u.startsWith('/p/')?path.join(__dirname,'fixtures',path.basename(u)):path.join(ROOT,u);if(!f.startsWith(ROOT+'/')||!fs.existsSync(f)){res.statusCode=404;return res.end()}res.setHeader('Content-Type',({'.json':'application/json','.woff2':'font/woff2','.jpg':'image/jpeg','.png':'image/png'})[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f))});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));process.env.GF_PORT=String(server.address().port);const M=require('./mock'),{opts}=require('./shot-clean'),b=await chromium.launch(),rows=[];try{for(const v of ['bylo','stalo']){html=v==='bylo'?before:after;for(const theme of ['dark','light'])for(const width of [320,390])for(const scene of ['priem','sborka','znakomstvo','pomoshch','krug']){const p=await b.newPage({viewport:{width,height:844},deviceScaleFactor:2});let o=opts(theme);if(scene==='znakomstvo')o={theme,newbie:true};if(scene==='krug')o={...o,page:'circle',circle:M.круг()};if(scene==='priem')o.page='food';const errors=await M.поднять(p,o);
+if(scene==='priem'){await p.locator('.fmeal .ft').first().click();await p.click('#mv-edit');await p.locator('#ml-form .mnums').scrollIntoViewIfNeeded()}
+if(scene==='sborka'){await p.click('#profbtn');await p.click('#pq-gym');await p.click('#progedit')}
+if(scene==='pomoshch'){await p.click('#profbtn');await p.click('#profhow')}
+if(scene==='krug'){await p.click('.cirgear');await p.locator('#krugbody .krow').last().scrollIntoViewIfNeeded()}
+await p.waitForTimeout(100);const file=`${scene}-${theme}-${width}-${v}.png`,geometry=scene==='priem'?await p.locator('#ml-form .mnums input').evaluateAll(es=>es.map(e=>({id:e.id,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom,height:e.getBoundingClientRect().height}))):null;await p.screenshot({path:path.join(OUT,file)});rows.push({scene,theme,width,version:v,file,geometry,errors});console.log(file,geometry?JSON.stringify(geometry):'');
+if(scene==='znakomstvo'){
+ const take=async(step)=>{const name=`znakomstvo${step}-${theme}-${width}-${v}.png`;await p.screenshot({path:path.join(OUT,name)});rows.push({scene:'znakomstvo'+step,theme,width,version:v,file:name,errors})};
+ await M.шаги(p,{до:'me'});await take(2);await p.fill('#wz-age','34');await p.fill('#wz-ht','178');await p.fill('#wz-bw','88');await p.click('#wz-me-go');await p.waitForFunction(()=>!document.getElementById('g-go').disabled);await take(3);await p.click('#g-go');await p.waitForSelector('#wzhealth:visible');await take(4);await p.click('#wz-health-go');await p.waitForSelector('#wzform:visible');await take(5);
+}
+await p.close()}}}finally{await b.close();server.close()}fs.writeFileSync(path.join(OUT,'shots.json'),JSON.stringify(rows,null,2));if(rows.some(x=>x.errors.length))process.exitCode=1})().catch(e=>{console.error(e);server.close();process.exitCode=1});
