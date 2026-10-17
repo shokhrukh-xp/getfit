@@ -74,6 +74,13 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   ok(await p.evaluate(()=>!document.querySelector('#profm #probox')),где+'в профиле Pro-ссылок нет');
   await p.click('#profboss');await p.waitForTimeout(500);
   ok(await p.isVisible('#probox')&&await p.isVisible('#pro-make'),где+'в Админ панели — блок «подарить pro»');
+  /* 17.10, его слова: «на странице в админ панели нет кнопки назад» */
+  const нз=await p.$eval('#admback',e=>{const r=e.getBoundingClientRect();return {t:e.textContent.trim(),h:r.height,вид:!!e.offsetParent}}).catch(()=>null);
+  ok(нз&&нз.вид&&/Профиль/.test(нз.t)&&нз.h>=44,где+'в Админ панели есть «‹ Профиль» не меньше 44 px: '+JSON.stringify(нз));
+  await p.click('#admback');await p.waitForTimeout(500);
+  ok(await p.isVisible('#p-home')&&!(await p.isVisible('#p-admin')),где+'назад — на страницу, откуда пришёл');
+  ok(await p.$eval('#profm',e=>e.classList.contains('show'))&&await p.isVisible('#pqmain'),где+'и профиль снова открыт со списка');
+  ok(!(await p.isVisible('#admback')),где+'вне Админ панели кнопки нет');
   ok(!err.length,где+'без ошибок'+(err.length?': '+err.join(' | '):''));
   await p.close();
  }

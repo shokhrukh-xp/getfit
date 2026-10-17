@@ -3005,6 +3005,8 @@ body.ordmode #list .sstag{color:var(--text)}
    (Claude outputs/profil-maket-2026-10-17): аватар-акцент 44 px с точкой,
    когда в профиле ждёт совет; профиль — «Группы + строки»; Pro-ссылки — в
    Админ панель. Лист профиля на фоне --bg, группы — карточками --surface. */
+.hback{display:flex;align-items:center;min-height:44px;margin:-10px 0 -6px;padding:0;border:0;background:none;
+  color:var(--accent-txt);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
 .hright > .profbtn{width:44px;height:44px;border:0;background:var(--action);color:#fff;font-size:17px;font-weight:800;
   box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
 .hright > .profbtn b{color:#fff;font-weight:800}
@@ -6554,9 +6556,19 @@ function renderZdNudge(){
   el.hidden = !(готов && !спросили && !gget('zd_seen', 0));
   if(!el.hidden) el.innerHTML='<b>Приложение научилось учитывать здоровье.</b> Если есть диабет, давление или что-то, чего тебе нельзя, — скажи, и норма с программой это учтут. Полминуты.';
 }
+var ADMFROM='home', ADMTG=false;
 document.getElementById('profboss').addEventListener('click', function(){
+  var был=gget('page','home'); if(был && был!=='admin') ADMFROM=был;
   closeProf(); goPage('admin'); haptic('light');
 });
+function admBack(){ goPage(ADMFROM||'home'); openProf(); haptic('light'); }
+function admTgBack(on){
+  try{ var bb=TG&&TG.BackButton; if(!bb) return;
+    if(on){ if(!ADMTG){ bb.onClick(admBack); bb.show(); ADMTG=true; } }
+    else if(ADMTG){ bb.offClick(admBack); bb.hide(); ADMTG=false; }
+  }catch(e){}
+}
+document.getElementById('hctx').addEventListener('click', function(e){ if(e.target.closest('#admback')) admBack(); });
 document.getElementById('zdnudge').addEventListener('click', function(){
   gset('zd_seen', 1);
   openProf('zd');
@@ -10672,6 +10684,12 @@ function goPage(p){
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
           else hc.innerHTML=({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p]?'<span class="ds-eyebrow">'+({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p])+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
+  /* 17.10, его слова: «на странице в админ панели нет кнопки назад». Админ
+     панель открывается из профиля и вкладки внизу у неё нет — назад ведёт
+     туда, откуда пришёл, и снова открывает профиль. Та же кнопка — системная
+     «назад» Telegram. */
+  if(p==='admin' && hc) hc.innerHTML='<button type="button" class="hback" id="admback">‹ Профиль</button><b>Админ панель</b>';
+  admTgBack(p==='admin');
   paintAvatar();
   if(TABOF[p]==='gym') renderZseg(p);
   if(TABOF[p]==='food') renderFseg(p);
