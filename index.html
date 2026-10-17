@@ -3205,6 +3205,41 @@ body.ordmode #list .sstag{color:var(--text)}
 /* L · рейтинг: легенда образцами, подписи у кнопок круга */
 .lbkey2{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
 .lbkey2 i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+
+/* 17.10: низ «Тела» — темп и срок двумя строками, скобка отклонения на графике */
+.vzbottom .vztemp{padding:2px 0 14px}
+.vzbottom .vztemp p{margin:0;font-size:15px;line-height:1.45;color:var(--text)}
+.vzbottom .vztemp p.ok span{color:var(--ok)}
+.vzbottom .vztemp p.warn{color:var(--warn-txt)}
+.vzbottom .vztemp p.muted{color:var(--muted)}
+.vzbottom .vztemp .vzeta{margin-top:2px;font-size:14px;color:var(--muted)}
+
+/* 17.10: сила по тренировкам — индекс линией, объём полосой, список по нажатию */
+.vzbottom .vzsila2{border-top:1px solid var(--line);padding:14px 0 6px;color:var(--text)}
+.sxhd{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.sxhd span{font-size:14px;color:var(--muted)}
+.sxhd b{font-size:26px;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sxhd b s{text-decoration:none;font-size:13px;font-weight:700;margin-left:6px}
+.sxhd b s.up{color:var(--ok)} .sxhd b s.down{color:var(--warn-txt)}
+.sxchart{margin:8px 0 0}
+.sxchart>svg,.sxvol svg{display:block;width:100%;height:auto}
+.sxvol{display:grid;gap:2px;margin-top:4px}
+.sxvol span{font-size:12px;color:var(--muted)}
+.sxbase,.sxnone{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+.sxnone{font-size:14px}
+.sxdown{margin:10px 0 0;font-size:14px;color:var(--warn-txt)}
+.sxlist summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;list-style:none;cursor:pointer;font-size:14px;color:var(--text)}
+.sxlist summary::-webkit-details-marker{display:none}
+.sxlist summary::after{content:'›';color:var(--muted);transition:transform .15s}
+.sxlist[open] summary::after{transform:rotate(90deg)}
+.sxlist .sxgr{margin:10px 0 6px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.sxlist ul{list-style:none;margin:0;padding:0}
+.sxlist li{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.sxlist li .sxn{font-size:14px;overflow-wrap:anywhere}
+.sxlist li em{font-style:normal;font-size:13px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sxlist li em.dn{color:var(--warn-txt)} .sxlist li em.up{color:var(--ok)} .sxlist li em.eq{color:var(--muted)}
+.vzbottom .vzsila.sxlist{border-top:0;padding-top:0;margin-top:4px;font-size:14px}
+.sxlist li .sxv{grid-column:1/-1;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -12770,56 +12805,131 @@ function vzГрафик(ms, sr, план){
   svg+='<circle cx="'+x(пос.d).toFixed(1)+'" cy="'+y(скольз?ср[ср.length-1].v:пос.v).toFixed(1)+'" r="4.5" fill="var(--bg)" stroke="'+цв+'" stroke-width="2.2"/>'+
     '<text x="'+L+'" y="'+(H-5)+'" class="vzax" text-anchor="start">'+ruDate(все[0].d)+'</text>'+
     '<text x="'+(W-2)+'" y="'+(H-5)+'" class="vzax vz-today" text-anchor="end">сегодня</text>';
+  /* 17.10, его слова: «у нас уже есть хороший график веса … отклонение от
+     плана лучше там и показывать». Скобка у «сегодня» между средней линией и
+     пунктиром плана; число — с сервера (тот же gap, что у тренера). */
+  if(плB && скольз && план.gap!=null){
+    var yС=y(ср[ср.length-1].v), yП=y(плB.v), xs=x(TODAY)-14, верх=Math.min(yС,yП), низ=Math.max(yС,yП);
+    var разн=Math.abs(план.gap), слова = план.onTrack ? 'по плану' : (план.gap>0 ? 'выше' : 'ниже')+' плана на '+vzF1(разн)+' кг';
+    var шир=Math.round(20+слова.length*6.3), ym=Math.max(T+12, Math.min(H-B-12, (верх+низ)/2));
+    if(!план.onTrack && низ-верх>=8) svg+='<path class="vzgap" d="M'+(xs+4)+','+(верх+6).toFixed(1)+' H'+xs+' V'+(низ-4).toFixed(1)+' H'+(xs+4)+'" fill="none" stroke="var(--on-accent)" stroke-width="1.6" stroke-linecap="round"/>';
+    svg+='<g class="vzgapl"><rect x="'+(xs-шир-6)+'" y="'+(ym-12).toFixed(1)+'" width="'+шир+'" height="24" rx="12" fill="#000" opacity=".24"/>'+
+      '<text x="'+(xs-6-шир/2)+'" y="'+(ym+4.5).toFixed(1)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="var(--on-accent)">'+слова+'</text></g>';
+  }
   vzГрафик.кор=кор;
   return svg+пиццы+'</svg>';
 }
 /* 04.10: «сила как монитор мышц» — показываем сравнение сервера, без
-   своего пересчёта процентов и без вывода о потере мышц. Детали — по тапу. */
+   своего пересчёта процентов и без вывода о потере мышц.
+   17.10, его слова: «вот эта часть выглядит ужасно и не понятно» и «а нельзя
+   придумать что-то вроде индекса … всех упражнений, чтобы тоже как график
+   показать?», выбор B (индекс + объём) и «добавь, что это по тренировкам».
+   Три плашки «растёт / стоит / падает» выглядели фильтрами — их нет. Теперь:
+   индекс силы по тренировкам линией (100 — первая неделя с датой, текущая
+   неделя пунктиром), объём отдельной полосой со своей подписью (ревью Codex:
+   тоннаж — другая величина, не фон силы), одна строка о снижении и список
+   упражнений по нажатию. Индекс и список считает сервер (/goal → sila). */
 var VZSILA_OPEN=false;
+function vzСилаСписок(s){
+  var num=function(v){ return typeof v==='number' && isFinite(v) ? String(v).replace('.',',') : '—'; };
+  var set=function(v){ return !v || typeof v!=='object' ? '' : (v.w>0 ? num(v.w)+'×'+num(v.r) : num(v.r)+' повт.'); };
+  var rows=Array.isArray(s.rows) ? s.rows.filter(function(r){ return r && typeof r==='object'; }) : [];
+  if(!rows.length) return '';
+  var порог=2.5, гр=[['dn','Снижение',function(r){ return r.pct!=null && r.pct<=-порог; }],['up','Рост',function(r){ return r.pct!=null && r.pct>=порог; }],
+    ['eq','Без изменений',function(r){ return r.pct!=null && Math.abs(r.pct)<порог; }],['nw','Пока без сравнения',function(r){ return r.pct==null; }]];
+  var h=гр.map(function(g){
+    var рр=rows.filter(g[2]).sort(function(a,b){ return (a.pct||0)-(b.pct||0); }); if(!рр.length) return '';
+    return '<p class="sxgr">'+g[1]+' · '+рр.length+'</p><ul>'+рр.map(function(r){
+      var pct=r.pct!=null ? '<em class="'+g[0]+'">'+(r.pct>0?'+':r.pct<0?'−':'')+num(Math.abs(Math.round(r.pct)))+' %</em>' : '';
+      return '<li><span class="sxn">'+esc(typeof r.name==='string'?r.name:'Упражнение')+'</span>'+pct+'<span class="sxv">'+(r.was?set(r.was)+' → ':'')+set(r.now)+'</span></li>';
+    }).join('')+'</ul>';
+  }).join('');
+  return '<details class="vzsila sxlist"'+(VZSILA_OPEN?' open':'')+'><summary>Все упражнения · '+rows.length+'</summary>'+h+'</details>';
+}
+function vzСилаГрафик(ix){
+  var нед=(ix.weeks||[]).filter(function(w){ return w && typeof w.from==='string'; });
+  /* недели до базы (100) — без точек: ось начинается с базы */
+  while(нед.length && typeof нед[0].i!=='number') нед.shift();
+  var есть=нед.filter(function(w){ return typeof w.i==='number' && isFinite(w.i); });
+  if(есть.length<2) return '';
+  var W=360, H=112, L=6, R=40, T=10, B=20, n=нед.length;
+  var vals=есть.map(function(w){ return w.i; }).concat([100]);
+  var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(1.5,(mx-mn)*0.15); mn-=pad; mx+=pad;
+  var x=function(i){ return L+(W-L-R)*i/(n-1); }, y=function(v){ return T+(H-T-B)*(1-(v-mn)/(mx-mn)); };
+  var f1=function(v){ return String(Math.round(v*10)/10).replace('.',','); };
+  var svg='<svg class="sxsvg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Индекс силы по тренировкам за '+(n-1)+' недель">';
+  svg+='<line x1="'+L+'" x2="'+(W-R+4)+'" y1="'+y(100).toFixed(1)+'" y2="'+y(100).toFixed(1)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>'+
+    '<text x="'+(W-2)+'" y="'+(y(100)+4).toFixed(1)+'" class="vzax" text-anchor="end">100</text>';
+  var верх=Math.round(mx-pad); if(Math.abs(y(верх)-y(100))>16) svg+='<text x="'+(W-2)+'" y="'+(y(верх)+4).toFixed(1)+'" class="vzax" text-anchor="end">'+f1(верх)+'</text>';
+  /* линия — по готовым неделям, пропуск рвёт её; текущая — пунктиром */
+  var сег=[], тек=[];
+  нед.forEach(function(w,i){ if(w.partial) return; if(typeof w.i==='number'){ тек.push([x(i),y(w.i)]); } else if(тек.length){ сег.push(тек); тек=[]; } });
+  if(тек.length) сег.push(тек);
+  сег.forEach(function(p){ if(p.length>1) svg+='<path d="M'+p.map(function(q){ return q[0].toFixed(1)+','+q[1].toFixed(1); }).join(' L')+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>'; });
+  var посл=-1; нед.forEach(function(w,i){ if(!w.partial && typeof w.i==='number') посл=i; });
+  нед.forEach(function(w,i){ if(typeof w.i!=='number' || w.partial) return;
+    svg+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(w.i).toFixed(1)+'" r="'+(i===посл?4.5:2.8)+'" fill="'+(i===посл?'var(--bg)':'var(--accent)')+'"'+(i===посл?' stroke="var(--accent)" stroke-width="2.2"':'')+'/>'; });
+  var идёт=нед[n-1];
+  if(идёт && идёт.partial && typeof идёт.i==='number' && посл>=0)
+    svg+='<path class="sxpart" d="M'+x(посл).toFixed(1)+','+y(нед[посл].i).toFixed(1)+' L'+x(n-1).toFixed(1)+','+y(идёт.i).toFixed(1)+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/>'+
+      '<circle cx="'+x(n-1).toFixed(1)+'" cy="'+y(идёт.i).toFixed(1)+'" r="3" fill="none" stroke="var(--accent)" stroke-width="1.6"/>';
+  svg+='<text x="'+L+'" y="'+(H-4)+'" class="vzax" text-anchor="start">'+ruDate(нед[0].from)+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-4)+'" class="vzax" text-anchor="end">'+(идёт && идёт.partial ? 'неделя идёт' : ruDate(нед[n-1].from))+'</text></svg>';
+  /* объём — отдельная полоса со своей подписью: другая величина, не сила */
+  var тт=нед.map(function(w){ return typeof w.t==='number' && w.t>0 ? w.t : 0; }), тм=Math.max.apply(null,тт);
+  if(тм>0){
+    var h2=30, послТ=-1; нед.forEach(function(w,i){ if(!w.partial && тт[i]>0) послТ=i; });
+    svg+='<div class="sxvol"><svg viewBox="0 0 '+W+' '+h2+'" aria-hidden="true">'+тт.map(function(t,i){ if(!t) return '';
+      var hh=Math.max(2,(h2-2)*t/тм); return '<rect x="'+(x(i)-6).toFixed(1)+'" y="'+(h2-hh).toFixed(1)+'" width="12" height="'+hh.toFixed(1)+'" rx="3" fill="var(--muted)"'+(нед[i].partial?' opacity=".45"':'')+'/>'; }).join('')+
+      '</svg><span>объём'+(послТ>=0?' · '+f1(тт[послТ])+' т за неделю':'')+'</span></div>';
+  }
+  return svg;
+}
 function vzСилаСтрока(s){
   if(!s || typeof s!=='object') return '';
-  var cls=s.verdict==='падает' ? ' warn' : (s.verdict==='мало' ? ' muted' : '');
-  var n=function(v){ return typeof v==='number' && isFinite(v) && v>=0 && Math.floor(v)===v ? String(v) : '—'; };
-  var title=s.verdict==='мало' ? 'Сила: мало занятий за две недели' : '<span class="sila-title">Сила за 2 недели</span><span class="sila-counts"><span class="sila-up">растёт '+n(s.up)+'</span><span class="sila-flat">стоит '+n(s.flat)+'</span><span class="sila-down">падает '+n(s.down)+'</span></span>';
-  var num=function(v){ return typeof v==='number' && isFinite(v) ? String(v).replace('.',',') : '—'; };
-  var set=function(v){
-    if(!v || typeof v!=='object') return 'нет прошлого сравнения';
-    var date=typeof v.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v.date) ? ' · '+esc(ruDate(v.date)) : '';
-    return (v.w===0 ? num(v.r)+' повт.' : num(v.w)+'×'+num(v.r))+date;
-  };
-  var rows=Array.isArray(s.rows) ? s.rows.filter(function(r){ return r && typeof r==='object'; }) : [];
-  var body=rows.map(function(r){
-    var pct=typeof r.pct==='number' && isFinite(r.pct) ? ' ('+(r.pct>0?'+':'')+num(r.pct).replace('-','−')+' %)' : '';
-    return '<li>'+esc(typeof r.name==='string'?r.name:'Упражнение')+'<span>'+set(r.was)+' → '+set(r.now)+pct+'</span></li>';
-  }).join('');
-  if(body) body='<ul>'+body+'</ul>';
-  else if(typeof s.text==='string' && s.text.trim()) body='<p>'+esc(s.text)+'</p>';
-  return body ? '<details class="vzplan vzsila'+cls+'"'+(VZSILA_OPEN?' open':'')+'><summary>'+title+'</summary>'+body+'</details>'
-    : '<p class="vzplan vzsila'+cls+'">'+title+'</p>';
+  var ix=s.index && typeof s.index==='object' ? s.index : null;
+  var f1=function(v){ return String(Math.round(v*10)/10).replace('.',','); };
+  var график = ix && ix.enough ? vzСилаГрафик(ix) : '';
+  var шапка='<div class="sxhd"><span>Сила по тренировкам</span>'+(график && typeof ix.now==='number'
+    ? '<b>'+f1(ix.now)+(typeof ix.ch==='number' ? '<s class="'+(ix.ch>=0?'up':'down')+'">'+(ix.ch>0?'+':ix.ch<0?'−':'')+f1(Math.abs(ix.ch))+' %</s>' : '')+'</b>' : '')+'</div>';
+  var база = график && ix.base ? '<p class="sxbase">100 — неделя с '+ruDate(ix.base)+' · индекс по упражнениям с весом</p>' : '';
+  var пусто = !график ? '<p class="sxnone">'+(s.verdict==='мало' ? 'Мало тренировок, чтобы сравнивать.' : 'Индекс появится, когда будет две недели с тремя одинаковыми упражнениями с весом.')+'</p>' : '';
+  var вниз=typeof s.down==='number' && s.down>0 ? '<p class="sxdown">Снижение в '+s.down+' '+(s.down%10===1&&s.down%100!==11?'упражнении':'упражнениях')+'</p>' : '';
+  return '<div class="vzplan vzsila2">'+шапка+(график?'<div class="sxchart">'+график+'</div>':'')+база+пусто+вниз+vzСилаСписок(s)+'</div>';
+}
+/* 17.10, его слова про низ «Тела»: «выглядит ужасно и не понятно». Было:
+   «План на сегодня … · отстаём на 1,8 кг» и тут же «▶ • Вес идёт по плану»
+   (это темп двух недель, а не позиция — читалось как противоречие) и «при
+   текущем темпе — к 24 августа 2027» без «к чему». Теперь отклонение — на
+   графике (скобка), а здесь две строки: темп двух недель словами и срок
+   цели с её весом. */
+function vzЦельКг(p){
+  if(!p || !(p.w0>0) || !(p.kg>0)) return null;
+  return Math.round((p.w0 + (p.rate>0 ? 1 : -1)*p.kg)*10)/10;
 }
 function vzПланСтрока(){
-  var p=vzПлан(), html='';
-  if(p && p.gap!=null){
-    var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
-    var сег=p.anchorW + p.rate*(t(TODAY)-t(p.anchor))/(7*864e5);
-    html='<p class="vzplan">План на сегодня '+vzF1(сег)+' кг · '+(p.onTrack ? '<b class="ok">идём по графику</b>'
-      : (p.gap>0 ? '<b>отстаём на '+vzF1(Math.abs(p.gap))+' кг</b>' : '<b class="ok">опережаем на '+vzF1(Math.abs(p.gap))+' кг</b>'))+'</p>';
-  }
-  /* 04.10: вердикт и срок уже считает сервер. Показываем его ответ, не
-     выводим «плато» из отдельного замера; «мало» видно и без линии плана. */
   var g=gget('goal',null), progress=g && g.progress, v=progress && progress.verdict, eta=progress && progress.eta;
-  var text=v && typeof v.text==='string' ? v.text.trim() : '';
-  var cls=v && (v.state==='стоит' || v.state==='плато') ? ' warn' : (v && v.state==='мало' ? ' muted' : '');
-  var срок='';
+  /* темп — разница средних этой и прошлой недели (вердикт сервера), его
+     и называем так; позиция «выше/ниже плана» — на графике */
+  var зн=function(x){ return (x>0?'+':x<0?'−':'±')+vzF1(Math.abs(x)); };
+  var нед = v && typeof v.d0==='number' ? 'Средний вес за неделю '+зн(v.d0)+'\u00a0кг' : 'Темп';
+  var темп={'план':[нед+' — в темпе плана','ok'],'быстрее':[нед+' — быстрее плана','ok'],'медленнее':[нед+' — медленнее плана',''],
+    'стоит':[нед+' — без снижения','warn'],'плато':['Две недели без снижения веса','warn'],'мало':['Мало замеров, чтобы судить о темпе','muted']};
+  var т = v && темп[v.state], срок='';
+  var МЕС_К=['январю','февралю','марту','апрелю','маю','июню','июлю','августу','сентябрю','октябрю','ноябрю','декабрю'];
   if(eta && typeof eta.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(eta.date)){
     var d=dLocal(eta.date);
-    if(isFinite(d.getTime()) && isoOf(d)===eta.date)
-      срок='<span class="vzeta">при текущем темпе — к '+d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</span>';
+    if(isFinite(d.getTime()) && isoOf(d)===eta.date){
+      var цель=vzЦельКг(progress), далеко=(d-dLocal(TODAY))/864e5>56;
+      /* ревью Codex: дальний срок — прогноз, а не обещание: месяц и «примерно»,
+         и темп, по которому он посчитан (это тренд, не разница недель) */
+      срок=(цель ? 'Цель '+String(цель).replace('.',',')+' кг' : 'Цель')+' — '+(далеко ? 'примерно к '+МЕС_К[d.getMonth()]+' '+d.getFullYear() : 'к '+d.getDate()+' '+MONTHS[d.getMonth()])+
+        (typeof eta.pace==='number' ? ' при '+зн(eta.pace).replace(/,0$/,'')+'\u00a0кг в\u00a0неделю' : '');
+    }
   }
-  if(text || срок){
-    var names={'стоит':'Неделя без снижения','плато':'Две недели без снижения','мало':'Мало замеров','план':'Вес идёт по плану','медленнее':'Медленнее плана','быстрее':'Быстрее плана'};
-    html+='<div class="vzplan vzverdict'+cls+'">'+(text?'<details class="body-explain"><summary><span class="trend-sign" aria-hidden="true">'+(v.state==='стоит'||v.state==='плато'?'→':'•')+'</span>'+esc(names[v.state]||'Ход веса')+'</summary><p class="vzvtext">'+esc(text)+'</p></details>':'')+срок+'</div>';
-  }
+  var html='';
+  if(т || срок) html='<div class="vzplan vztemp">'+(т?'<p class="'+т[1]+'">'+т[0]+(т[1]==='ok'?' <span aria-hidden="true">✓</span>':'')+'</p>':'')+
+    (срок?'<p class="vzeta">'+срок+'</p>':'')+'</div>';
   return html+vzСилаСтрока(progress && progress.sila);
 }
 function homeBody(){

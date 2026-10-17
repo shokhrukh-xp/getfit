@@ -14,9 +14,10 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  const labels=await p.locator('.hb-meal').evaluateAll(es=>es.map(e=>e.getAttribute('aria-label')));
  ok(labels.slice(0,5).join('|')===['09:53 · завтрак','10:26 · обед','10:28 · перекус','14:03 · перекус','14:48 · перекус'].join('|'),'настоящие времена не подменены раздвинутыми позициями фото');
  ok(await p.locator('.hb-meal .hbtap').evaluateAll(es=>es.every(e=>e.getBoundingClientRect().height>=44)),'события доступны пальцем');
- await check('главная');await p.locator('.body-explain summary').click();
- ok(await p.locator('.vzvtext').innerText()===o.progress.verdict.text,'полный ответ сервера сохранён');
- await p.locator('.vzsila summary').click();ok((await p.locator('.vzsila').innerText()).includes('8 повт.'),'подробности силы доступны');
+ await check('главная');
+ /* 17.10: вердикт — одной строкой темпа (без «▶ •»), длинный текст сервера — тренеру */
+ ok(await p.locator('.vztemp p').first().innerText().then(t=>/без снижения/.test(t)),'темп недели словами');
+ await p.locator('.sxlist summary').click();ok((await p.locator('.sxlist').innerText()).includes('8 повт.'),'подробности силы доступны');
  await check('раскрытое тело');await p.locator('[data-vzv="fat"]').click();await p.locator('[data-vzv="w"]').click();
  // 04.10, вечер: плашка — у группы (веер почти одновременных), фото стоят на своём времени.
  ok(await p.locator('.hbtime').allTextContents().then(xs=>['09:53','10:26','10:28','14:03','14:48'].every(tm=>xs.some(x=>{const [a,z]=x.split('–');return tm>=a&&tm<=(z||a)}))),'плашки сохраняют все времена после обновления главной');

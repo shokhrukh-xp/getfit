@@ -39,7 +39,7 @@ const карточка = page => page.evaluate(() => {
     сегодня: (v.querySelector('.vztd') || {}).textContent || '',
     коридор: !!v.querySelector('svg .vzcor'), легенда: (v.querySelector('.vzlg') || {}).textContent || '',
     линия: !!v.querySelector('svg .vzln'), план: !!v.querySelector('svg .vzpl'),
-    строкаПлана: (v.querySelector('.vzplan') || {}).textContent || '',
+    строкаПлана: ((v.querySelector('.vzgapl text') || {}).textContent || '').replace(/\u00a0/g, ' '),
     графиков: v.querySelectorAll('.vzsvg svg').length
   };
 });
@@ -62,7 +62,7 @@ const карточка = page => page.evaluate(() => {
   дано(к.коридор && /обычный разброс ±0,\d/.test(к.легенда), 'на графике — коридор его обычного разброса: ' + к.легенда);
   дано(к.графиков === 1 && к.линия, 'один график — средний за 7 дней линией');
   дано(к.план, 'у веса — пунктир плана цели');
-  дано(/План на сегодня 86,9 кг · отстаём на 0,7 кг/.test(к.строкаПлана), 'и строка плана с сервера: ' + к.строкаПлана);
+  дано(к.строкаПлана === 'выше плана на 0,7 кг', 'и отклонение с сервера — на графике (17.10): ' + к.строкаПлана);
 
   /* 2. ввод — на главной, а не на «Еде» */
   const где = await page.evaluate(() => ({
