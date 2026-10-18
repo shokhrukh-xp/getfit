@@ -6330,12 +6330,33 @@ function menuStats(k,p,kt,pt){
   return '<div class="menu-stats"><div><span>Калории</span><strong>'+esc(k==null?'—':String(k))+' <small>ккал</small></strong><span>норма '+esc(kt)+'</span></div><div><span>Белок</span><strong>'+esc(p==null?'—':String(p))+' <small>г</small></strong><span>норма '+esc(pt)+' г</span></div></div>';
 }
 function menuNote(text){return text?'<details class="menu-note"><summary>О меню</summary><p>'+esc(text)+'</p></details>':'';}
+/* 18.10: «Пропустил» меняет отметку уже загруженного меню сразу; после
+   перезагрузки те же даты приходят с сервера. Порции/покупки не меняем:
+   недельное меню изначально не добавляет калории за зал по расписанию. */
+function пропускиЗала(){
+  var d=деньСегодня(), out={};
+  if(d) (d.gymSkips||[]).forEach(function(date){ out[date]=1; });
+  if(d && d.gymSkip) out[TODAY]=1;
+  (HIST||[]).forEach(function(w){ if(w && w.date) delete out[w.date]; });
+  return out;
+}
+function менюДеньСПропуском(д){
+  var день=деньСегодня(), проп=пропускиЗала()[д.date] || !!д.залПропущен;
+  // Свежий ответ «Вернуть» важнее уже загруженной серверной копии меню.
+  if(д.date===TODAY && день) проп=!!день.gymSkip;
+  if((HIST||[]).some(function(w){ return w && w.date===д.date; })) проп=false;
+  if(проп) return Object.assign({},д,{зал:false,залПропущен:1});
+  if(д.залПропущен) return Object.assign({},д,{зал:!!д.залПоПлану,залПропущен:0});
+  return д;
+}
 function menuДень(д, span, m){
+  д=менюДеньСПропуском(д);
   var шапка = span==='day'
     ? '<div class="mdh top"><b>Меню на завтра</b><span>'+menuДата(д.date)+'</span></div>'
     : '<div class="mdh"><b>'+menuДата(д.date)+'</b>'+(д.зал?'<span class="mzal">зал</span>':'')+'</div>';
   var части=[];
-  if(span==='day' && д.зал) части.push('день зала');
+  if(д.залПропущен) части.push('зал пропущен · день отдыха');
+  else if(span==='day' && д.зал) части.push('день зала');
   if((д.спорт||[]).length) части.push(esc(д.спорт.join(', ')));
   return шапка+menuStats(д.kcal,д.prot,д.норма.kcal,д.норма.prot)+(части.length?'<p class="mitog">'+части.join(' · ')+'</p>':'')+
     (span==='day'?menuNote(m.note):'')+
@@ -12754,6 +12775,7 @@ function homeNextLine(E){
   return чем;
 }
 function homeWeek(){
+  var проп=пропускиЗала();
   var w=FOOD.week, by={}, freeWeek=false; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
   var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<section class="hweek-block"><h3>Неделя</h3><div class="hweek">';
   for(var i=0;i<7;i++){
@@ -12763,7 +12785,7 @@ function homeWeek(){
       cls = Math.abs(off)<=0.10?'good':((off>0.10||iso<TODAY)?'bad':'going'); }
     /* Только уже загруженные записи и расписание; еда по-прежнему ведёт в день. */
     var gymDone=!foodOnly() && ((HIST||[]).some(function(x){return x.date===iso;}) || (lastDone && lastDone.date===iso));
-    var gymPlan=!foodOnly() && hasSched() && (dt.getDay() in GYM_DAYS);
+    var gymPlan=!foodOnly() && hasSched() && (dt.getDay() in GYM_DAYS) && !проп[iso];
     h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':(cls==='free'?'<span class="hwd-free" aria-label="свободный день">🍕</span>':'<b class="'+cls+'"></b>'))+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'"></i>':'')+'</span></button>';
   }
   return h+'</div><p class="hweek-legend"><span>● еда в норме</span><span>○ вне нормы</span>'+(freeWeek?'<span class="hweek-free">🍕 свободный день</span>':'')+(!foodOnly()?'<span>■ зал · □ план</span>':'')+'</p></section>';
@@ -13163,6 +13185,7 @@ function неделяЗала(){
     });
     if(n){ записи[ключ]=1; датыЗаписей[w.date]=1; if(w.fin || !w.fs) заверш[ключ]=1; }
   });
+  var проп=пропускиЗала(), пропущено=Object.keys(проп).filter(function(d){ return d>=пн && d<=вс && (dLocal(d).getDay() in GYM_DAYS); }).length;
   var вНеделю=Object.keys(GYM_DAYS).length, коэф=CYCLE.length && вНеделю ? вНеделю/CYCLE.length : 1, план={};
   /* ревью Codex Z2: без расписания частота неизвестна — цикл программы не
      выдаём за недельную цель подходов */
@@ -13174,14 +13197,14 @@ function неделяЗала(){
   }); });
   /* ближайший день зала по расписанию, где ещё нет записи */
   var след=null;
-  for(var i=0;i<14 && вНеделю;i++){ var d=днейПосле(TODAY,i); if((dLocal(d).getDay() in GYM_DAYS) && !датыЗаписей[d]){ след=d; break; } }
+  for(var i=0;i<14 && вНеделю;i++){ var d=днейПосле(TODAY,i); if((dLocal(d).getDay() in GYM_DAYS) && !датыЗаписей[d] && !проп[d]){ след=d; break; } }
   /* смена программы посреди недели — только если до неё на этой неделе уже
      были занятия (иначе вся неделя и так по новой программе) */
   var смена=null;
   try{ var ук=JSON.parse(mGet(PROFKEY)||'null'), дт=ук && ук.ch ? new Date(ук.ch) : null;
        if(дт && !isNaN(дт)) смена=дт.getFullYear()+'-'+('0'+(дт.getMonth()+1)).slice(-2)+'-'+('0'+дт.getDate()).slice(-2); }catch(e){}
   if(смена && !(смена>пн && смена<=вс && Object.keys(датыЗаписей).some(function(d){ return d<смена; }))) смена=null;
-  return {смена:смена, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
+  return {пропущено:пропущено, смена:смена, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
 }
 function результатыЗала(){
   if(!HIST) return [];
@@ -13236,9 +13259,10 @@ function залНеделиHtml(){
   if(н.план && н.план<=7){ for(var i=0;i<н.план;i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
   h+='<div class="zksec"><div class="zklab">Завершено занятий<em>'+(точки?'<span class="zkdots" aria-hidden="true">'+точки+'</span>':'')+н.занятий+(н.план?' из '+н.план:'')+'</em></div>';
   var след=н.след ? (н.след===TODAY ? 'сегодня' : WD[dLocal(н.след).getDay()]+', '+ruDate(н.след)) : '';
+  var пропуск = н.пропущено ? н.пропущено+' пропущено' : '';
   var незак = н.безЗаверш>0 ? 'ещё '+н.безЗаверш+' '+plural(н.безЗаверш,['запись','записи','записей'])+' без «Завершить и сохранить»' : '';
   if(!н.занятий && !н.безЗаверш) h+='<p class="zknote">Пока нет завершённых занятий'+(н.план?' · план '+н.план:'')+'</p><button type="button" class="zklink" data-zkgo="gym">Открыть тренировку</button>';
-  else if(незак || след) h+='<p class="zknote">'+[незак, след?'по расписанию — '+след:''].filter(Boolean).join(' · ').replace(/^./,function(c){ return c.toUpperCase(); })+'</p>';
+  if(пропуск || ((н.занятий || н.безЗаверш) && (незак || след))) h+='<p class="zknote">'+[пропуск, незак, след?'по расписанию — '+след:''].filter(Boolean).join(' · ').replace(/^./,function(c){ return c.toUpperCase(); })+'</p>';
   h+='</div>';
   /* 2. подходы по группам — одна шкала на все строки */
   var гр=ГРУППЫ5.map(function(g){ return [g[0], н.факт[g[0]]||0, н.планГр[g[0]]||0]; }).filter(function(g){ return g[1]>0 || g[2]>0; });
@@ -13404,13 +13428,13 @@ function homeWeekGym(){
     if(lastDone && lastDone.date>=пн && lastDone.date<=вс) сделан[lastDone.date]=1;
   }
   (HWACTS||[]).forEach(function(a){ if(a && a.date>=пн && a.date<=вс){ (занят[a.date]=занят[a.date]||[]); if(занят[a.date].indexOf(a.kind)<0) занят[a.date].push(a.kind); } });
-  var план=0, было=0, занятий=0, точки=false, виды=[], естьПлан=false;
+  var план=0, было=0, занятий=0, точки=false, виды=[], естьПлан=false, проп=пропускиЗала(), пропущено=0;
   /* 18.10: «Пропустил» (здесь, в боте или словами тренеру) — сегодня отдых */
   var отдых=!еда && залОтдыхСегодня();
   var вид=function(k){ k=String(k||'').toLowerCase(); if(k && виды.indexOf(k)<0) виды.push(k); };
   var ряд=дни.map(function(д){
-    var залПлан = sched && (д.wd in GYM_DAYS) && !(отдых && д.iso===TODAY), готов = !!сделан[д.iso];
-    if(залПлан) план++; if(готов) было++;
+    var залПлан = sched && (д.wd in GYM_DAYS) && !проп[д.iso], готов = !!сделан[д.iso];
+    if(sched && (д.wd in GYM_DAYS)){ план++; if(проп[д.iso]) пропущено++; } if(готов) было++;
     var cls = готов ? 'done' : (залПлан ? (д.iso<TODAY ? 'miss' : 'plan') : '');
     var были=занят[д.iso]||[], впереди = д.iso>=TODAY && !были.length ? homePlanOn(д.wd) : [];
     if(были.length) занятий+=были.length;
@@ -13449,6 +13473,7 @@ function homeWeekGym(){
   return '<div class="hwg"'+(еда?'':' data-hgo="gym"')+'>'+
     '<div class="hwg-h"><span>'+(еда?'Занятия на неделе':'Зал на неделе')+'</span><b>'+итог+'</b></div>'+
     '<div class="hwg-row">'+ряд+'</div>'+
+    (!еда && пропущено ? '<p class="hwg-leg">'+пропущено+' пропущено</p>' : '')+
     (след ? '<p class="hwg-sub">'+esc(след)+залКн+'</p>' : '')+
     (точки ? '<p class="hwg-leg">'+виды.slice(0,4).map(function(k){ return '<span>'+видЗначок(k)+' '+esc(k)+'</span>'; }).join('')+
       (естьПлан ? '<span class="p"><b>'+видЗначок(виды[виды.length-1])+'</b> по плану</span>' : '')+'</p>' : '')+
