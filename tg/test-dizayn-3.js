@@ -21,7 +21,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   // Сборка: группировка не отрывает контролы от существующих обработчиков.
   await p.click('#profbtn');await p.click('#pq-gym');await p.click('#progedit');
   const groups=await p.locator('#sborm .sbgroup').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,ids:[...e.querySelectorAll('.seg,.wdgrid,input')].map(x=>x.id)})));
-  ok(groups.length===2&&groups[0].title==='Когда и сколько'&&groups[0].ids.join()==='sb-wd,sb-min'&&groups[1].title==='Условия и предпочтения'&&['sb-level','sb-place','sb-eq','sb-focus','sb-plate','sb-lim','sb-dis'].every(id=>groups[1].ids.includes(id)),tag+'два раздела и все прежние условия '+JSON.stringify(groups));
+  ok(groups.length===2&&groups[0].title==='Когда и сколько'&&groups[0].ids.join()==='sb-wd,sb-when,sb-min'&&groups[1].title==='Условия и предпочтения'&&['sb-level','sb-place','sb-eq','sb-focus','sb-plate','sb-lim','sb-dis'].every(id=>groups[1].ids.includes(id)),tag+'два раздела и все прежние условия '+JSON.stringify(groups));
   await p.click('#sb-min [data-v="60"]');
   ok(/24 рабочих подхода|24 рабочих подходов/.test(await p.textContent('#sb-minh')),tag+'минуты меняют прежнюю подсказку подходов');
   await p.click('#sb-place [data-v="home"]');ok(await p.isVisible('#sb-eqrow')&&!await p.isVisible('#sb-platerow'),tag+'дома — инвентарь вместо блина');

@@ -176,6 +176,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* четыре ответа про зал в одну строку не влезают на телефоне — два на два */
 /* «что есть дома» — пять коротких слов, которые не влезают поровну */
 .seg.multi{flex-wrap:wrap}
+/* «Обычно хожу» — пять ответов, в одну строку на телефоне не влезают (18.10) */
+.seg.when{flex-wrap:wrap}
+.seg.when button,.modalbox .seg.when button{flex:1 1 30%}
 .seg.multi button{flex:0 1 auto;padding:9px 12px;overflow:visible;text-overflow:clip}
 .pfnote{margin-top:14px!important;margin-bottom:10px!important}
 .bline{margin:0 0 10px!important;font-size:12px;color:var(--dim)}
@@ -3578,6 +3581,10 @@ body.ordmode #list .sstag{color:var(--text)}
     <div class="cathead"><h3 id="schedtitle">Мои дни</h3><button type="button" class="xbtn" id="schedx" aria-label="Закрыть">✕</button></div>
     <p class="mtext">Дни зала. Программа идёт по кругу: следующий день — за последним сделанным, в любой день недели.</p>
     <div id="schedlist"></div>
+    <h3 style="margin-top:20px">Обычно хожу</h3>
+    <p class="mtext">Если в день зала к этому времени записи нет, тренер спросит, был ли зал.</p>
+    <div class="seg when" id="schedwhen"></div>
+    <p class="mtext" id="schedwhenh" aria-live="polite"></p>
     <h3 style="margin-top:20px">Лёгкая неделя</h3>
     <p class="mtext">Веса встали или падают — семь дней по половине подходов на тех же весах. Тренер включит сам, если веса падают два занятия подряд.</p>
     <div id="deloadbox"></div>
@@ -3734,6 +3741,8 @@ body.ordmode #list .sstag{color:var(--text)}
       <h4 id="sb-time-title">Когда и сколько</h4>
     <div class="sbrow"><span class="sblab">В какие дни</span><div class="wdgrid" id="sb-wd"></div>
       <p class="sbhint" id="sb-wdh"></p></div>
+    <div class="sbrow"><span class="sblab">Обычно хожу</span><div class="seg when" id="sb-when"></div>
+      <p class="sbhint">Если в день зала к этому времени записи нет, тренер спросит, был ли зал.</p></div>
     <div class="sbrow"><span class="sblab">Сколько минут</span><div class="seg" id="sb-min"></div>
       <p class="sbhint" id="sb-minh"></p></div>
     </section>
@@ -7081,7 +7090,40 @@ function renderDeload(){
       '<button class="phrow reset" id="deloadoff">Вернуть обычный объём</button>'
     : '<button class="phrow reset" id="deloadon">Взять лёгкую неделю</button>';
 }
-function openSched(){ renderSched(); renderDeload(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
+function openSched(){ renderSched(); renderDeload(); renderWhen(); loadWhenAuto(); var m=document.getElementById('schedm'); if(m) m.classList.add('show'); }
+/* ── «Обычно хожу» (18.10) ──
+   Его слова: «нужно уточнять время тренировок… если записи в запланированный
+   день и время не было — может спросить про статус». Его выбор: сервер сам
+   берёт время из прошлых тренировок, здесь его можно поправить (me.when).
+   К этому времени без записи тренер один раз спрашивает в ответе на еду. */
+var WHENKEYS=[['auto','По записям'],['morning','Утром'],['day','Днём'],['evening','Вечером'],['any','По-разному']];
+var WHEN_AUTO=null;
+function whenHint(v){
+  if(v==='morning') return 'Если до 11:00 записи нет — спрошу, был ли зал.';
+  if(v==='day') return 'Если до 17:00 записи нет — спрошу, был ли зал.';
+  if(v==='evening') return 'Если до 22:00 записи нет — спрошу, был ли зал.';
+  if(v==='any') return 'Спрошу вечером, если за день записи тренировки нет.';
+  var a=WHEN_AUTO;
+  if(a&&a.вид==='окно') return 'По записям — '+a.label+'. Через час после обычного конца без записи спрошу, был ли зал.';
+  if(a&&a.вид==='any') return 'По записям время разное — спрошу вечером, если записи нет.';
+  if(a&&a.вид==='мало') return 'Записей пока мало — спрошу вечером, если за день тренировки нет.';
+  return '';
+}
+function renderWhen(){
+  var me=myData()||{}, v=me.when||'auto';
+  segSet('schedwhen', segHtml('schedwhen', WHENKEYS, v));
+  var h=document.getElementById('schedwhenh'); if(h) h.textContent=whenHint(v);
+}
+function loadWhenAuto(){
+  fGet('/gym/when?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.ok){ WHEN_AUTO=d.auto||null; renderWhen(); } }).catch(function(){});
+}
+function setWhen(v){
+  var me=myData(); if(!me || WHENKEYS.every(function(x){ return x[0]!==v; })) return;
+  me.when=v; gset('me', me);
+  var pr=syncPush('state/me', {me:me, at:new Date().toISOString()});
+  savedNear(document.querySelector('#schedm .modalbox'), pr);
+  renderWhen(); haptic('light');
+}
 function closeSched(){ var m=document.getElementById('schedm'); if(m) m.classList.remove('show'); }
 
 function setDeload(on){
@@ -7122,7 +7164,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.10 13:16';
+var BUILD = '18.10 14:06';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11222,6 +11264,9 @@ document.getElementById('schedclose').addEventListener('click', function(){ clos
 document.getElementById('schedm').addEventListener('click', function(e){
   if(e.target.id==='schedm') closeSched();
 });
+document.getElementById('schedwhen').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-v]'); if(b) setWhen(b.dataset.v);
+});
 document.getElementById('schedlist').addEventListener('click', function(e){
   var b=e.target.closest('button[data-wd]'); if(!b) return;
   var wd=+b.dataset.wd;
@@ -11690,6 +11735,7 @@ function openSbor(){
   if(wd) wd.innerHTML = WEEK.map(function(d){
     return '<button type="button" data-v="'+d+'" aria-pressed="'+(GYM_DAYS[d]?'true':'false')+'">'+WD[d]+'</button>'; }).join('');
   var set=function(id,list,val,multi){ var el=document.getElementById(id); if(el) el.innerHTML=segHtml(id,list,val,multi); };
+  set('sb-when', WHENKEYS, me.when||'auto');
   set('sb-min', MINKEYS, String(me.min||45));
   set('sb-place', PLACEKEYS2, me.place||'gym');
   set('sb-eq', EQKEYS, me.eq||[], true);
@@ -11738,6 +11784,7 @@ document.getElementById('sb-go').addEventListener('click', function(){
     if(b.getAttribute('aria-pressed')==='true') дни[+b.dataset.v]=1; });
   if(Object.keys(дни).length<2) return;
   GYM_DAYS=schedNorm(дни); set('sched', GYM_DAYS); gset('sched_any', GYM_DAYS); saveSched();
+  me.when=sbPick('sb-when')||me.when||'auto';
   me.min=+sbPick('sb-min')||45;
   me.place=sbPick('sb-place')||'gym';
   me.eq=sbMulti('sb-eq');

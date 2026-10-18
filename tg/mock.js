@@ -246,6 +246,8 @@ async function поднять(page, o) {
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
     if (p === '/s')          return дать({ ok: true });
+    /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
+    if (p === '/gym/when')   return дать(o.gymWhen || { ok: true, when: 'auto', auto: { src: 'auto', вид: 'мало', label: '', спросить: 1260 } });
     /* 02.10: свободный день. o.free — список дат, o.окно — окно и цена, как
        их считает сервер (свободноеОкно); /free ставит и снимает отметку и
        кладёт присланное в o.отмечено. */
