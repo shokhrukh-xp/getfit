@@ -38,6 +38,8 @@ function день(o) {
     /* 18.09: зал входит в норму по факту. Флаг «сегодня день зала, но
        тренировки ещё нет» приходит с сервера отдельным полем. */
     gymPlan: o.gymPlan !== undefined ? o.gymPlan : false,
+    /* 18.10: «Пропустил» — сегодня отдых (gym_day skip на сервере) */
+    gymSkip: o.gymSkip ? 1 : 0,
     /* 14.10, GF-04: незаписанные приёмы дня и ответ человека */
     пробелы: o.пробелы !== undefined ? o.пробелы : null,
     /* 16.10: на сколько вырастет норма после зала и спорта по плану */
@@ -265,6 +267,11 @@ async function поднять(page, o) {
     if (p === '/day/score')  { const date = u.searchParams.get('date') || TODAY;
       if ((o.free || []).includes(date)) return дать({ ok: true, free: true, closed: false, r: null, why: [], n: 0, приёмы: [] });
       return дать(оценка || { ok: true, r: null }); }
+    /* 18.10: «Пропустил» на «Сегодня». o.залОтм — что ушло, o.onGymDay — свой ответ ({status, body}) */
+    if (p === '/gym/day') { const b = JSON.parse(route.request().postData() || '{}'); (o.залОтм = o.залОтм || []).push(b);
+      if (o.onGymDay) { const r = o.onGymDay(b); if (r && r.status) return route.fulfill({ status: r.status, contentType: 'application/json', body: JSON.stringify(r.body || {}) }); }
+      const пр = b.st === 'skip';
+      return дать({ ok: true, date: b.date, st: пр ? 'skip' : '', day: сДатой(Object.assign({}, день_ || день({}), { gymSkip: пр ? 1 : 0, gymPlan: !пр }), b.date) }); }
     if (p === '/free') { const b = JSON.parse(route.request().postData() || '{}'); (o.отмечено = o.отмечено || []).push(b);
       o.free = (o.free || []).filter(d => d !== b.date).concat(b.on === false ? [] : [b.date]).sort();
       return дать({ ok: true, on: b.on !== false, date: b.date, free: o.free, day: сДатой(день_ || день({ meals: [], kcal: 0, prot: 0 }), b.date) }); }
