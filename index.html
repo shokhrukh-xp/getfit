@@ -7122,7 +7122,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '18.10 11:29';
+var BUILD = '18.10 12:36';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -15987,7 +15987,8 @@ document.getElementById('mealm').addEventListener('click', function(e){
 var MEASBUSY=false;
 function measReply(text, kind){
   var el=document.getElementById('fmreply'); el.hidden=false;
-  el.className='freply'+(kind?' '+kind:''); el.textContent=text;
+  /* 18.10: ответ тренера несёт **жирные** заголовки (строка «За сутки») */
+  el.className='freply'+(kind?' '+kind:''); el.innerHTML='<span>'+жирный(esc(text))+'</span>';   /* .freply — flex: текст одним элементом */
 }
 function measBusy(on){
   MEASBUSY=on;
@@ -16219,6 +16220,8 @@ function чатПустой(){
    переходах «пусто ↔ черновик» (ревью Codex 17.10, R2) */
 function чатНачалаНужны(){ var в=CHAT.items; return !!в && !в.length && !CHAT.prep && !CHAT.pending && !CHAT.pendingImg && !CHAT.err && !чатЧерновик(); }
 function чатНачалаСверить(){ if(чатНачалаНужны() !== !!document.querySelector('#chatlog [data-cq]')) renderChat(false); }
+/* 18.10, фаза 2: сообщения тренера несут **жирные** заголовки (как в боте) */
+function жирный(h){ return String(h).replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>'); }
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
@@ -16235,7 +16238,7 @@ function renderChat(scroll){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
       if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
-      return шапка+ответТренера(esc(c.text), chatВремя(c.ts), '', c.src, c.menu, (c===живая && !CHAT.pending)?кнопкиHTML(c.act):'');
+      return шапка+ответТренера(жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, (c===живая && !CHAT.pending)?кнопкиHTML(c.act):'');
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
