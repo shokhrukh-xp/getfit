@@ -13750,16 +13750,17 @@ function starsHtml(st){ if(!st) return ''; return '<em title="'+esc(st.why)+'">'
 /* 18.10: «Отправить себе в чат» — как «В Telegram» в меню: сама повторяет
    (отправитьВЧат), не вышло и так — текст сервера под кнопкой и «Повторить»
    тем же op. Раньше ошибка терялась, а кнопка просто снова была активной.
-   Состояние — по ref, а не в кнопке: перерисовка круга его не сбрасывает. */
+   Состояние — по ref, а не в кнопке: перерисовка круга его не сбрасывает.
+   Ушло — кнопка неактивна, как было: второй случайный тап не шлёт дубль. */
 var RECSEND={};
 function рецептКнопка(ref){
   var s=RECSEND[ref]||{};
   return (s.err?'<p class="mwarn" role="status">Не удалось отправить. '+esc(s.err)+'</p>':'')+
-    '<button type="button" class="btn" data-recipe="'+esc(ref)+'"'+(s.busy?' disabled aria-busy="true"':'')+'>'+
+    '<button type="button" class="btn" data-recipe="'+esc(ref)+'"'+(s.busy?' disabled aria-busy="true"':s.ok?' disabled':'')+'>'+
     (s.busy?'Отправляю…':s.err?'Повторить':s.ok?'Отправлено в чат ✓':'Отправить себе в чат')+'</button>';
 }
 function рецептОтправить(ref){
-  var s=RECSEND[ref]||(RECSEND[ref]={}); if(s.busy) return;
+  var s=RECSEND[ref]||(RECSEND[ref]={}); if(s.busy||s.ok) return;
   var owner=ref.split(':')[0], id=ref.slice(owner.length+1);
   if(!s.op) s.op=номерОтправки();
   s.busy=true; s.err=''; s.ok=false; renderCircle(); haptic('light');

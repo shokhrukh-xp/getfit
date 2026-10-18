@@ -9,8 +9,10 @@
    2. Рецепт из круга: 502 «Дошло не всё» трижды — текст сервера под кнопкой и
       «Повторить»; «Повторить» идёт тем же op; потом ok — «Отправлено в чат ✓».
       Перерисовка круга состояние не сбрасывает.
-   3. Отказ по делу (tg_closed, 4xx) — без автоповтора, сразу текст сервера.
-   4. Обрыв связи — тоже повтор; после успеха новая отправка — новый op. */
+   3. Отказ по делу (tg_closed, 4xx, 200 с ok:false) — без автоповтора, сразу
+      текст сервера; «Повторить» — тем же op.
+   4. Обрыв связи — тоже повтор; ушло — кнопка неактивна, второй тап не шлёт.
+      Меню после успеха — новый op. */
 const {chromium}=require('playwright'),M=require('./mock'),assert=require('assert/strict');
 let failures=0;
 const ok=(c,m)=>{if(!c){failures++;console.error('FAIL',m);}else console.log('ok',m);};
@@ -67,28 +69,26 @@ const быстро=p=>p.evaluate(()=>{ОТПРАВКА_ПАУЗЫ=[30,30];});
   await p.locator('.plate').first().click();
   ok((await текст())==='Повторить'&&await p.locator('.plate.open .mwarn').count()===1,'рецепт: свернул и раскрыл — ошибка не стёрлась');
 
-  ответы=[{s:200,d:{ok:true}}];
-  await btn().click();
-  await until(async()=>(await текст())==='Отправлено в чат ✓','успех');
-  ok(sent.length===4&&sent[3].op===sent[0].op,'рецепт: «Повторить» — тем же op, сервер дошлёт недостающее');
-  ok(await p.locator('.plate.open .mwarn').count()===0,'рецепт: после успеха ошибки нет');
-
   ответы=[{s:403,d:{error:'Бот закрыт — открой @GetFit_MyBot и нажми «Старт».',code:'tg_closed'}}];
   await btn().click();
-  await until(async()=>(await текст())==='Повторить','отказ tg_closed');
-  ok(sent.length===5,'рецепт: бот закрыт — без автоповтора');
-  ok(sent[4].op!==sent[0].op,'рецепт: новая отправка после успеха — новый op');
+  await until(()=>sent.length===4,'четвёртый запрос');await until(async()=>(await текст())==='Повторить','отказ tg_closed');
+  ok(sent.length===4,'рецепт: бот закрыт — без автоповтора');
+  ok(sent[3].op===sent[0].op,'рецепт: «Повторить» — тем же op, сервер дошлёт недостающее');
   ok((await p.locator('.plate.open .mwarn').innerText()).includes('Бот закрыт'),'рецепт: причина отказа видна');
+
+  ответы=[{s:200,d:{ok:false,error:'Рецепта нет.'}}];
+  await btn().click();
+  await until(()=>sent.length===5,'пятый запрос');await until(async()=>(await текст())==='Повторить','отказ ok:false');
+  ok(sent.length===5,'рецепт: 200 с ok:false — отказ по делу, без автоповтора');
 
   ответы=[{abort:true},{s:200,d:{ok:true}}];
   await btn().click();
   await until(async()=>(await текст())==='Отправлено в чат ✓','успех после обрыва');
-  ok(sent.length===7&&sent[5].op===sent[6].op,'рецепт: обрыв связи — повтор сам, тем же op');
-
-  ответы=[{s:200,d:{ok:false,error:'Рецепта нет.'}}];
-  await btn().click();
-  await until(async()=>(await текст())==='Повторить','отказ ok:false');
-  ok(sent.length===8,'рецепт: 200 с ok:false — отказ по делу, без автоповтора');
+  ok(sent.length===7&&sent[5].op===sent[0].op&&sent[6].op===sent[0].op,'рецепт: обрыв связи — повтор сам, тем же op');
+  ok(await p.locator('.plate.open .mwarn').count()===0,'рецепт: после успеха ошибки нет');
+  ok(await btn().isDisabled(),'рецепт: ушло — кнопка неактивна, как было до 18.10');
+  await btn().evaluate(e=>e.click());await new Promise(r=>setTimeout(r,100));
+  ok(sent.length===7,'рецепт: тап по «Отправлено в чат ✓» второй раз не шлёт');
   assert.deepEqual(errors,[]);await p.close();}
 }catch(e){failures++;console.error('FAIL',e.message);}finally{await b.close();}
 process.exitCode=failures?1:0;})().catch(e=>{console.error(e);process.exitCode=1;});
