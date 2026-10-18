@@ -19,7 +19,8 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   /* H · итог под дугой: три плитки в ряд */
   const h=await p.evaluate(()=>{const r=document.querySelector('.hdaycard .hrows'),rows=[...r.querySelectorAll('.hrow')];
    return {cols:getComputedStyle(r).gridTemplateColumns.split(' ').length,n:rows.length,top:new Set(rows.map(x=>Math.round(x.getBoundingClientRect().top))).size}});
-  ok(h.n===3&&h.cols===3&&h.top===1,где+'H: калории, белок, оценка — одним рядом '+JSON.stringify(h));
+  /* 18.10: в день зала по расписанию стенда (воскресенье) плиток четыре — сеткой 2×2 (так задумано CSS :has) */
+  ok((h.n===3&&h.cols===3&&h.top===1)||(h.n===4&&h.cols===2&&h.top===2),где+'H: калории, белок, оценка — одним рядом (с залом — 2×2) '+JSON.stringify(h));
 
   /* B · шапка «Моего дня» и приёмы */
   await вкладка(p,'food');
