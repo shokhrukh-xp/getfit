@@ -16,7 +16,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const kind 
   await give(r,mode==='ok'?{ok:true}:{ok:false,error:'Отправка недоступна'},mode==='http'?503:200);return true;
  }};
  const errors=await M.поднять(p,o);
- await p.evaluate(()=>{ОТПРАВКА_ПАУЗЫ=[30,30];});
+ await p.evaluate(()=>{window.__паузыОтправки=[30,30];});
  if(kind==='send'){
   await p.click('[data-eseg="buy"]');
   const btn=p.locator('[data-msend="day:buy"]');await btn.click();

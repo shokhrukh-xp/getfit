@@ -14132,6 +14132,9 @@ function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{
    сервера. Меняет решение 07.10 «автоповтора нет» — его выбор «везде
    одинаково». */
 var ОТПРАВКА_ПАУЗЫ=[2000,5000];
+/* стенд укорачивает паузы через window.__паузыОтправки: код приложения внутри
+   функции, и присваивание ОТПРАВКА_ПАУЗЫ из проверки до него не доходило */
+function паузыОтправки(){ return (window.__паузыОтправки && window.__паузыОтправки.length) ? window.__паузыОтправки : ОТПРАВКА_ПАУЗЫ; }
 function номерОтправки(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
 function отправкаПовторима(e){
   if(!e || e.code==='tg_closed' || e.code==='sub') return false;
@@ -14145,7 +14148,7 @@ function отправитьВЧат(path, body){
       if(!d || d.ok!==true){ var e=new Error((d&&d.error)||'Сервер не подтвердил отправку.'); e.code=(d&&d.code)||''; e.status=200; throw e; }
       return d;
     }).catch(function(e){
-      if(n<ОТПРАВКА_ПАУЗЫ.length && отправкаПовторима(e)) return new Promise(function(r){ setTimeout(r, ОТПРАВКА_ПАУЗЫ[n++]); }).then(раз);
+      var пз=паузыОтправки(); if(n<пз.length && отправкаПовторима(e)) return new Promise(function(r){ setTimeout(r, пз[n++]); }).then(раз);
       throw e;
     });
   }

@@ -19,7 +19,7 @@ const ok=(c,m)=>{if(!c){failures++;console.error('FAIL',m);}else console.log('ok
 const until=async(fn,m)=>{for(let i=0;i<500;i++){if(await fn())return;await new Promise(r=>setTimeout(r,10));}throw new Error('Не дождался: '+m);};
 const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',body:JSON.stringify(d)});
 /* Паузы между повторами на стенде — 30 мс вместо 2 и 5 с */
-const быстро=p=>p.evaluate(()=>{ОТПРАВКА_ПАУЗЫ=[30,30];});
+const быстро=p=>p.evaluate(()=>{window.__паузыОтправки=[30,30];});
 (async()=>{const b=await chromium.launch();try{
  /* 1. Меню и покупки */
  {const p=await b.newPage({viewport:{width:390,height:844}});p.setDefaultTimeout(5000);
