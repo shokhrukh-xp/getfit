@@ -6199,7 +6199,7 @@ function readMeForm(){
    просьбе в разговоре — сам тренер его не присылает (его ответ). Числа —
    норма дня, подгонка порций, покупки в сырых весах — считает сервер,
    здесь только показ. Отметки в списке покупок — в этом телефоне. */
-var MENUWEEKDATE='', EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='', MENUSENDBUSY='', MENUSENDERR={};
+var MENUWEEKDATE='', EATSEG='now', MENU=null, MENUBUSY='', MENUERR='', MENUREC={}, MENURECBUSY='', MENUSENT='', MENUSENDBUSY='', MENUSENDERR={}, MENUSENDOP={};
 /* 25.09, его выбор (vybor-13-segodnya.png, «Б»): «Сейчас» → «Сегодня» — меню на
    остаток дня сверху, каталог под кнопкой. Ключ 'now' оставлен: на него
    ссылаются чат и проверки. */
@@ -6295,10 +6295,11 @@ function menuОтправить(v){
   if(MENUSENDBUSY) return;
   var p=v.split(':'); MENUSENDBUSY=v; delete MENUSENDERR[v];
   if(MENUSENT===v) MENUSENT='';
+  /* 18.10: «Повторить» после неудачи — тем же op: сервер дошлёт недостающее */
+  var op=MENUSENDOP[v]||(MENUSENDOP[v]=номерОтправки());
   renderEat();
-  fPost('/menu/send', {uid:syncUid(), span:p[0], what:p[1]}).then(function(d){
-    if(!d || d.ok!==true) throw new Error((d&&d.error)||'Сервер не подтвердил отправку.');
-    MENUSENT=v; haptic('ok');
+  отправитьВЧат('/menu/send', {uid:syncUid(), span:p[0], what:p[1], op:op}).then(function(){
+    MENUSENT=v; delete MENUSENDOP[v]; haptic('ok');
   }).catch(function(e){ MENUSENDERR[v]=humanErr(e); haptic('err'); })
     .then(function(){ MENUSENDBUSY=''; renderEat(); });
 }
@@ -13746,6 +13747,27 @@ function udayHtml(){
   return h;
 }
 function starsHtml(st){ if(!st) return ''; return '<em title="'+esc(st.why)+'">'+'★'.repeat(st.n)+'☆'.repeat(5-st.n)+'</em>'; }
+/* 18.10: «Отправить себе в чат» — как «В Telegram» в меню: сама повторяет
+   (отправитьВЧат), не вышло и так — текст сервера под кнопкой и «Повторить»
+   тем же op. Раньше ошибка терялась, а кнопка просто снова была активной.
+   Состояние — по ref, а не в кнопке: перерисовка круга его не сбрасывает. */
+var RECSEND={};
+function рецептКнопка(ref){
+  var s=RECSEND[ref]||{};
+  return (s.err?'<p class="mwarn" role="status">Не удалось отправить. '+esc(s.err)+'</p>':'')+
+    '<button type="button" class="btn" data-recipe="'+esc(ref)+'"'+(s.busy?' disabled aria-busy="true"':'')+'>'+
+    (s.busy?'Отправляю…':s.err?'Повторить':s.ok?'Отправлено в чат ✓':'Отправить себе в чат')+'</button>';
+}
+function рецептОтправить(ref){
+  var s=RECSEND[ref]||(RECSEND[ref]={}); if(s.busy) return;
+  var owner=ref.split(':')[0], id=ref.slice(owner.length+1);
+  if(!s.op) s.op=номерОтправки();
+  s.busy=true; s.err=''; s.ok=false; renderCircle(); haptic('light');
+  отправитьВЧат('/recipe', {uid:syncUid(), owner:owner, id:id, op:s.op}).then(function(){
+    s.ok=true; s.op=''; haptic('ok');
+  }).catch(function(e){ s.err=humanErr(e); haptic('err'); })
+    .then(function(){ s.busy=false; renderCircle(); });
+}
 function plateHtml(m){
   var open = UDOPEN===m.ref;
   var who = '<b class="plwho">'+(m.t?esc(m.t):esc(m.kind||'приём'))+(m.likes?' · 👍 '+m.likes:'')+'</b>';
@@ -13762,7 +13784,7 @@ function plateHtml(m){
     '<div class="plact">'+
       (m.me?'':'<button type="button" class="btn'+(m.liked?' on':'')+'" data-like="'+esc(m.ref)+'"'+(m.likeBusy?' disabled aria-busy="true"':'')+'>👍'+(m.likes?' '+m.likes:'')+'</button>')+
       (m.likeError?'<p class="reaction-error" role="status">'+esc(m.likeError)+'</p>':'')+
-      '<button type="button" class="btn" data-recipe="'+esc(m.ref)+'">Отправить себе в чат</button>'+
+      рецептКнопка(m.ref)+
       (m.stars?'<span class="plwhy">'+starsHtml(m.stars)+' — '+esc(m.stars.why)+'</span>':'')+
       (m.likers&&m.likers.length?'<span class="plwhy">👍 '+esc(m.likers.join(', '))+(m.liked?' и ты':'')+'</span>':(m.me&&m.likes?'<span class="plwhy">👍 '+m.likes+'</span>':''))+
     '</div></div>';
@@ -13789,12 +13811,7 @@ document.getElementById('cirbody').addEventListener('click', function(e){
     return;
   }
   var rc=e.target.closest('[data-recipe]'); if(rc){
-    var ref2=rc.dataset.recipe, owner=ref2.split(':')[0], id=ref2.slice(owner.length+1);
-    rc.disabled=true; rc.textContent='Отправляю…';
-    fPost('/recipe',{uid:syncUid(), owner:owner, id:id}).then(function(d){
-      if(d&&d.ok){ rc.textContent='Отправлено в чат ✓'; haptic('ok'); } else { rc.disabled=false; rc.textContent='Отправить себе в чат'; haptic('err'); if(d&&d.error) say(d.error); }
-    }).catch(function(){ rc.disabled=false; rc.textContent='Отправить себе в чат'; haptic('err'); });
-    return;
+    рецептОтправить(rc.dataset.recipe); return;
   }
   var pl=e.target.closest('[data-pl]'); if(pl){ UDOPEN = UDOPEN===pl.dataset.pl ? null : pl.dataset.pl; renderCircle(); haptic('light'); return; }
   var lw=e.target.closest('[data-lbwho]'); if(lw){ openUserDay(lw.dataset.lbwho, lw.dataset.lbname||''); haptic('light'); return; }
@@ -14064,6 +14081,36 @@ function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.jso
 function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
   if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; throw e; }
   return d; }); }); }
+/* 18.10, его слова: «найди решение чтобы даже не приходилось нажимать
+   повторить. Нужно чтобы всё срабатывало с первого раза». Отправка в чат
+   (рецепт из круга, меню и покупки) сама повторяет запрос до трёх раз
+   — через 2 и 5 с; человек видит только «Отправляю…». Повтор безопасен:
+   у отправки свой номер op, повторы идут с ним же, и сервер по нему досылает
+   только недошедшие части — фото рецепта второй раз не придёт. Повторяем,
+   когда нет связи, ответ не дождались, или сервер ответил 5xx/429. Отказ по
+   делу (бот закрыт — tg_closed, подписка, 4xx, 200 с ok:false) — сразу текст
+   сервера. Меняет решение 07.10 «автоповтора нет» — его выбор «везде
+   одинаково». */
+var ОТПРАВКА_ПАУЗЫ=[2000,5000];
+function номерОтправки(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function отправкаПовторима(e){
+  if(!e || e.code==='tg_closed' || e.code==='sub') return false;
+  if(!e.status) return true;
+  return e.status>=500 || e.status===429;
+}
+function отправитьВЧат(path, body){
+  var n=0;
+  function раз(){
+    return fPost(path, body).then(function(d){
+      if(!d || d.ok!==true){ var e=new Error((d&&d.error)||'Сервер не подтвердил отправку.'); e.code=(d&&d.code)||''; e.status=200; throw e; }
+      return d;
+    }).catch(function(e){
+      if(n<ОТПРАВКА_ПАУЗЫ.length && отправкаПовторима(e)) return new Promise(function(r){ setTimeout(r, ОТПРАВКА_ПАУЗЫ[n++]); }).then(раз);
+      throw e;
+    });
+  }
+  return раз();
+}
 /* Человек не должен видеть текст Google про квоты и биллинг: у жены Шохруха
    такой абзац вылез прямо в профиле, когда она просто заполняла анкету.
    Наружу — одна понятная фраза, техника уходит в консоль. */

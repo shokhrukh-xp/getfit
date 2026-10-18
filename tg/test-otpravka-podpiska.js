@@ -16,20 +16,24 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const kind 
   await give(r,mode==='ok'?{ok:true}:{ok:false,error:'Отправка недоступна'},mode==='http'?503:200);return true;
  }};
  const errors=await M.поднять(p,o);
+ await p.evaluate(()=>{ОТПРАВКА_ПАУЗЫ=[30,30];});
  if(kind==='send'){
   await p.click('[data-eseg="buy"]');
   const btn=p.locator('[data-msend="day:buy"]');await btn.click();
   await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').disabled);
   await until(()=>sent.length===1);assert.equal(sent.length,1);assert.equal(sent[0].span,'day');assert.equal(sent[0].what,'buy');
   await btn.dispatchEvent('click');assert.equal(sent.length,1,'Нет повторного запроса в полёте');
-  await until(()=>release);release();release=null;await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Повторить');
+  /* 18.10: 503 — повтор сам, до трёх раз тем же op (test-otpravka-povtor); «Повторить» — после третьего */
+  for(let i=0;i<3;i++){await until(()=>release);release();release=null;}
+  await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Повторить');
+  assert.equal(sent.length,3,'503 — три попытки сами');assert.equal(new Set(sent.map(x=>x.op)).size,1,'повторы — одним op');
   assert((await p.locator('#eatbody').innerText()).includes('Не удалось отправить'));
-  await p.click('[data-eseg="day"]');await p.click('[data-eseg="buy"]');assert.equal(await btn.innerText(),'Повторить');assert.equal(sent.length,1);
+  await p.click('[data-eseg="day"]');await p.click('[data-eseg="buy"]');assert.equal(await btn.innerText(),'Повторить');assert.equal(sent.length,3);
   if(shots)await p.screenshot({path:path.join(shots,`send-error-${theme}-${width}.png`)});
   mode='logical';await btn.click();await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').disabled);await until(()=>release);release();release=null;
-  await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Повторить');assert.equal(sent.length,2,'HTTP 200 с ok:false тоже отказ');
+  await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Повторить');assert.equal(sent.length,4,'HTTP 200 с ok:false тоже отказ, без автоповтора');
   mode='ok';await btn.click();await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').disabled);await until(()=>release);release();release=null;
-  await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Отправил ✓');assert.equal(sent.length,3);assert.equal(await p.locator('#eatbody .mwarn').count(),0);
+  await p.waitForFunction(()=>document.querySelector('[data-msend="day:buy"]').textContent==='Отправил ✓');assert.equal(sent.length,5);assert.equal(await p.locator('#eatbody .mwarn').count(),0);
  }else{
   await p.evaluate(()=>{window.__invoices=0;Telegram.WebApp.openInvoice=(link,cb)=>{window.__invoices++;window.__invoiceLink=link;cb('cancelled');};});
   await p.click('#profbtn');await p.click('#sub-on');await p.locator('#sub-buy').waitFor();
