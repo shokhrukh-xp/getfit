@@ -2317,6 +2317,8 @@ body.onb #picker .modalbox::before{display:none}
 .hwg-e.p{opacity:.45;filter:grayscale(1)}
 .hwg-e.none{visibility:hidden}
 .hwg-sub{margin:10px 0 0;font-size:13px;color:var(--dim)}
+.hwg-sub .hskip{min-height:44px;padding:0 6px;font-size:13px;font-weight:700;color:var(--accent);background:none;border:0;cursor:pointer}
+.hwg-sub .hskiperr{display:block}
 .hwg-leg{margin:6px 0 0;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
 .hwg-leg .p{color:var(--dim)}
 .hwg-leg .p b{font-weight:400;opacity:.45;filter:grayscale(1)}
@@ -6375,10 +6377,15 @@ function сегодняПроверить(фон){
   }
   if(!((d.targets||{}).kcal>0)) return;
   var sig=подписьДня(d), m=сегодняСвежее();
-  if(m && m.sig===sig) return;
+  /* 18.10: меню собрано под день зала, а зал сегодня пропущен («Пропустил» в
+     приложении или боте) — норма та же, подпись та же, а меню устарело:
+     пересобираем один раз (ключ с «|отдых», чтобы сбой не крутил сборку). */
+  var отдых=!!(m && m.зал && d.gymSkip);
+  if(m && m.sig===sig && !отдых) return;
   if(фон && !m) return;
-  if(MENUTRY===sig) return;
-  MENUTRY=sig; menuСобрать('today');
+  var ключ=sig+(отдых?'|отдых':'');
+  if(MENUTRY===ключ) return;
+  MENUTRY=ключ; menuСобрать('today');
 }
 function сегодняHTML(){
   if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
@@ -6393,7 +6400,7 @@ function сегодняHTML(){
       '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="today">Собрать меню на сегодня</button></div>';
   }
   h+='<div class="mdh top"><b>Меню на остаток дня</b><span>'+menuДата(m.date)+'</span></div>';
-  if(занят) h+='<p class="mnote">Пересобираю под новый остаток — до минуты'+точки+'</p>';
+  if(занят) h+='<p class="mnote">'+(m.зал&&(деньСегодня()||{}).gymSkip?'Зал сегодня пропущен — пересобираю меню под день отдыха':'Пересобираю под новый остаток')+' — до минуты'+точки+'</p>';
   else if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
   h+=menuStats(m.съел.kcal,m.съел.prot,m.норма.kcal,m.норма.prot)+'<div class="menu-left"><span>Осталось</span><b>'+m.ост.kcal+' ккал</b><b>'+m.ост.prot+' г белка</b></div>'+(m.зал?'<p class="mitog">день зала</p>':'');
   (m.съедено||[]).forEach(function(x){
@@ -13397,9 +13404,11 @@ function homeWeekGym(){
   }
   (HWACTS||[]).forEach(function(a){ if(a && a.date>=пн && a.date<=вс){ (занят[a.date]=занят[a.date]||[]); if(занят[a.date].indexOf(a.kind)<0) занят[a.date].push(a.kind); } });
   var план=0, было=0, занятий=0, точки=false, виды=[], естьПлан=false;
+  /* 18.10: «Пропустил» (здесь, в боте или словами тренеру) — сегодня отдых */
+  var отдых=!еда && залОтдыхСегодня();
   var вид=function(k){ k=String(k||'').toLowerCase(); if(k && виды.indexOf(k)<0) виды.push(k); };
   var ряд=дни.map(function(д){
-    var залПлан = sched && (д.wd in GYM_DAYS), готов = !!сделан[д.iso];
+    var залПлан = sched && (д.wd in GYM_DAYS) && !(отдых && д.iso===TODAY), готов = !!сделан[д.iso];
     if(залПлан) план++; if(готов) было++;
     var cls = готов ? 'done' : (залПлан ? (д.iso<TODAY ? 'miss' : 'plan') : '');
     var были=занят[д.iso]||[], впереди = д.iso>=TODAY && !были.length ? homePlanOn(д.wd) : [];
@@ -13418,28 +13427,57 @@ function homeWeekGym(){
   if(еда) итог = занятий+'<em>'+plural(занятий,['занятие','занятия','занятий'])+'</em>';
   else if(sched) итог = было+' из '+Math.max(план,было)+'<em>'+plural(Math.max(план,было),['тренировки','тренировок','тренировок'])+'</em>';
   else итог = было+'<em>'+plural(было,['тренировка','тренировки','тренировок'])+' на неделе</em>';
-  var след='';
+  var след='', залКн='';
   if(!еда){
     var lw=lastWorkout(), закрыт=!!(lw && lw.date===TODAY);
     var dk = закрыт ? nextAfter(lw.day) : homeDayKey(), dd=DAYS[dk], имя = dd && dd.sub ? dd.sub.toLowerCase() : '';
     if(sched){
-      for(var k=(закрыт?1:0); k<14; k++){
+      for(var k=(закрыт||отдых?1:0); k<14; k++){
         var x=new Date(nd.getTime()+k*864e5);
         if(!(x.getDay() in GYM_DAYS)) continue;
         var сп=homePlanOn(x.getDay());
         след = (k===0 ? 'Сегодня' : 'Следующая — '+(k===1 ? 'завтра' : WD[x.getDay()]+' '+x.getDate())) +
                (имя ? ': '+имя : '') + (сп.length ? ' · '+сп.join(', ') : '');
+        if(k===0 && !сделан[TODAY]) залКн=залКнопка(false);
         break;
       }
+      /* сегодня был день зала, но отмечен пропуск — говорим и даём вернуть */
+      if(отдых && !закрыт && !сделан[TODAY] && (nd.getDay() in GYM_DAYS)){ след='Сегодня отдых — зал пропущен'+(след?' · '+след.charAt(0).toLowerCase()+след.slice(1):''); залКн=залКнопка(true); }
     } else if(имя) след = 'Следующая: '+имя;
   }
   return '<div class="hwg"'+(еда?'':' data-hgo="gym"')+'>'+
     '<div class="hwg-h"><span>'+(еда?'Занятия на неделе':'Зал на неделе')+'</span><b>'+итог+'</b></div>'+
     '<div class="hwg-row">'+ряд+'</div>'+
-    (след ? '<p class="hwg-sub">'+esc(след)+'</p>' : '')+
+    (след ? '<p class="hwg-sub">'+esc(след)+залКн+'</p>' : '')+
     (точки ? '<p class="hwg-leg">'+виды.slice(0,4).map(function(k){ return '<span>'+видЗначок(k)+' '+esc(k)+'</span>'; }).join('')+
       (естьПлан ? '<span class="p"><b>'+видЗначок(виды[виды.length-1])+'</b> по плану</span>' : '')+'</p>' : '')+
     '</div>';
+}
+/* ── «ПРОПУСТИЛ» НА «СЕГОДНЯ» (18.10) ──
+   Задача из списка после «Зал сегодня был?» в боте: «кнопка „Пропустил“ на
+   экране „Сегодня“ в приложении, через те же отметки сервера (gym_day), чтобы
+   пропуск отмечался и без бота». Кнопка — в строке «Сегодня: …» недели, пока
+   тренировка не записана. Пропуск — сегодня отдых: «+~N за зал» уходит, меню
+   на сегодня, собранное под зал, пересобирается (сегодняПроверить), программа
+   ждёт. «Вернуть» снимает отметку. Запись повторяется сама один раз (обрыв
+   связи, 5xx) — отметка одна и та же, повтор безопасен. */
+var ЗАЛОТМ={busy:'', err:''};
+function залОтдыхСегодня(){ var d=HOME.day; return !!(d && d.date===TODAY && d.gymSkip); }
+function залКнопка(отдых){
+  var st=отдых?'':'skip';
+  return ' <button type="button" class="lnk hskip" data-gymskip="'+st+'"'+(ЗАЛОТМ.busy?' disabled aria-busy="true"':'')+'>'+
+    (ЗАЛОТМ.busy===('s'+st)?'Отмечаю…':(отдых?'Вернуть':'Пропустил'))+'</button>'+
+    (ЗАЛОТМ.err?'<span class="mwarn hskiperr" role="status">'+esc(ЗАЛОТМ.err)+'</span>':'');
+}
+function залОтметить(st){
+  if(ЗАЛОТМ.busy) return;
+  ЗАЛОТМ.busy='s'+st; ЗАЛОТМ.err=''; homeDirty();
+  var n=0;
+  var раз=function(){ return fPost('/gym/day', {uid:syncUid(), date:TODAY, st:st}).catch(function(e){
+    if(n++<1 && (!e.status || e.status>=500)) return new Promise(function(r){ setTimeout(r, 1500); }).then(раз);
+    throw e; }); };
+  раз().then(function(d){ ЗАЛОТМ.busy=''; освежить(d.day); haptic('ok'); })
+    .catch(function(e){ ЗАЛОТМ.busy=''; ЗАЛОТМ.err=humanErr(e); homeDirty(); haptic('err'); });
 }
 /* 24.09, его просьба: кнопка занятия — внизу главной, у всех. С «Еды» она
    ушла; лист тот же (sportadd → openSport). */
@@ -13547,6 +13585,7 @@ function renderHome(){
        тренером, где еда и записывается (и фото там же). */
     if(e.target.closest('[data-hact]')){ openCoach(); haptic('light'); return; }
     var vv=e.target.closest('[data-vzv]'); if(vv){ vzВидЗадать(vv.dataset.vzv); renderHome(); haptic('light'); return; }
+    var gs=e.target.closest('[data-gymskip]'); if(gs){ if(!gs.disabled) залОтметить(gs.dataset.gymskip); haptic('light'); return; }
     var g=e.target.closest('[data-hgo]'); if(g){ goPage(g.dataset.hgo); haptic('light'); }
   });
 })();
