@@ -3309,6 +3309,7 @@ body.ordmode #list .sstag{color:var(--text)}
 .uprow.hl{background:var(--tint);border-radius:12px;transition:background .3s}
 .vztop .vzgapline{margin:6px 0 0;font-size:15px;font-weight:700;color:var(--on-accent)}
 .vztop .vznum em:not(.dn):not(.up){background:rgba(0,0,0,.24)}
+.delivery{margin:12px 0;padding:14px;border:1px solid var(--line,#d4e2e3);border-radius:14px}.delivery p{margin:8px 0}.deliverydish{display:flex;gap:12px;margin:14px 0;padding-top:14px;border-top:1px solid #d4e2e3}.deliverydish img{width:96px;height:96px;object-fit:cover;border-radius:12px}.deliverydish>div{min-width:0}.delivery .muted{font-size:12px;opacity:.75}.delivery button{min-height:44px;white-space:normal}.deliverydish p{font-size:13px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -7326,7 +7327,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '19.10 14:01';
+var BUILD = '19.10 17:05';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16623,6 +16624,71 @@ function chatДень(ts){
   if(день===вчера) return 'вчера';
   return d.getDate()+' '+MONTHS[d.getMonth()];
 }
+/* 19.10: поиск в разговоре. Координаты не сохраняются: каждый новый поиск
+   заново просит платформу определить текущее место. Разрешением управляет ОС. */
+var DELIVERY_CACHE={}, DELIVERY_BOOT='';
+function deliveryOwner(){return syncUid()+':'+localDataSession().epoch;}
+function deliveryKey(id){return deliveryOwner()+':'+id;}
+function deliverySafeURL(value,photo){try{var u=new URL(value);return u.protocol==='https:'&&(photo?['eda.yandex','avatars.mds.yandex.net'].indexOf(u.hostname)>=0:u.hostname==='eats.yandex.com'&&/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?r\//.test(u.pathname))?u.href:'';}catch(e){return '';}}
+function deliveryAttr(s){return esc(String(s||'')).replace(/"/g,'&quot;');}
+function deliveryHTML(acts){
+ var a=(acts||[]).find(function(x){return x.type==='delivery'&&/^[a-f0-9-]{36}$/.test(x.id||'');});if(!a)return '';
+ var id=a.id,key=deliveryKey(id),cache=DELIVERY_CACHE[key];
+ if(!cache){DELIVERY_CACHE[key]={loading:true};setTimeout(function(){deliveryLoad(id);},0);}
+ var s=cache&&cache.data,phase=s?s.phase:a.phase;
+ var h='<div class="delivery" data-delivery="'+id+'">';
+ if(cache&&cache.error)h+='<p role="status">'+esc(cache.error)+'</p><button type="button" data-delivery-retry="'+id+'">Повторить</button>';
+ else if(phase==='location')h+='<button type="button" class="btn" data-delivery-start="'+id+'"'+(cache&&cache.locating?' disabled':'')+'>'+(cache&&cache.locating?'Определяю текущее место…':'Найти рядом')+'</button><p class="muted">Для этого поиска используем текущую локацию. Разрешение можно изменить в настройках устройства.</p>';
+ else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Обычно 1–3 минуты после очереди. Можно продолжать пользоваться приложением.</p>';
+ else if(phase==='done'&&s&&s.result){
+  var r=s.result;h+='<p>'+esc(r.address||'Рядом с вами')+'</p>';
+  h+=(r.recommendations||[]).slice(0,5).map(function(d,i){var photo=deliverySafeURL(d.imageURL,true),url=deliverySafeURL(d.restaurantURL,false);return '<article class="deliverydish">'+(photo?'<img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(photo)+'" alt="'+deliveryAttr(d.name)+'">':'<span class="muted">Фото в меню отсутствует</span>')+'<div><b>'+(i+1)+'. '+esc(d.name)+'</b><p>'+esc(d.restaurant)+' · '+esc(Number(d.priceUZS).toLocaleString('ru-RU'))+' сум</p><p>'+esc(d.reason||'')+'</p>'+(url?'<button type="button" data-delivery-url="'+deliveryAttr(url)+'">Открыть ресторан в Яндексе</button>':'')+'</div></article>';}).join('');
+  if(!(r.recommendations||[]).length)h+='<p>Подходящих блюд в проверенных меню нет. Можно изменить пожелания в чате.</p>';
+  h+='<p class="muted">'+esc(r.note||'Цены без доставки и сборов. Калории и белок не проверены.')+'</p>';
+ }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите тренеру.')+'</p>';
+ else h+='<p role="status">Загружаю подбор…</p>';
+ return h+'</div>';
+}
+function deliveryLoad(id){
+ var owner=deliveryOwner(),key=deliveryKey(id),c=DELIVERY_CACHE[key]||(DELIVERY_CACHE[key]={});if(c.fetching)return c.promise||Promise.resolve();
+ c.fetching=true;
+ return c.promise=fGet('/delivery?uid='+encodeURIComponent(syncUid())+'&id='+encodeURIComponent(id)).then(function(d){
+  if(owner!==deliveryOwner())return;
+  if(!d||!d.ok)throw new Error(d&&d.error||'Не удалось получить подбор.');
+  c.data=d.delivery;c.error='';c.failures=0;
+  if(['search','starting'].indexOf(c.data.phase)>=0){clearTimeout(c.timer);c.timer=setTimeout(function(){if(owner===deliveryOwner())deliveryLoad(id);},5000);}
+ }).catch(function(e){if(owner!==deliveryOwner())return;c.error=humanErr(e);if(c.data&&['search','starting'].indexOf(c.data.phase)>=0&&(c.failures||0)<6){c.failures=(c.failures||0)+1;c.timer=setTimeout(function(){if(owner===deliveryOwner())deliveryLoad(id);},10000);}})
+ .then(function(){c.fetching=false;if(owner===deliveryOwner())renderChat(false);});
+}
+function deliveryPosition(){
+ return new Promise(function(resolve,reject){
+  var done=false,timer=setTimeout(function(){finish(new Error('Не удалось определить место. Проверьте доступ к геолокации в настройках и повторите.'));},22000);
+  function finish(err,p){if(done)return;done=true;clearTimeout(timer);if(err)reject(err);else if(!p||!Number.isFinite(p.latitude)||!Number.isFinite(p.longitude)||p.accuracy>2000)reject(new Error('Место определено неточно. Повторите геолокацию.'));else resolve({latitude:p.latitude,longitude:p.longitude,accuracy:p.accuracy==null?null:p.accuracy,at:Date.now()});}
+  var lm=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.LocationManager;
+  if(lm&&(!Telegram.WebApp.isVersionAtLeast||Telegram.WebApp.isVersionAtLeast('8.0'))){try{lm.init(function(){if(done)return;if(!lm.isLocationAvailable){finish(new Error('Геолокация недоступна. Проверьте разрешение Telegram в настройках устройства.'));return;}lm.getLocation(function(p){finish(p?null:new Error('Доступ к геолокации не получен. Разрешите его в настройках Telegram.'),p?{latitude:p.latitude,longitude:p.longitude,accuracy:p.horizontal_accuracy==null?(p.accuracy==null?null:p.accuracy):p.horizontal_accuracy}:null);});});return;}catch(e){}}
+  if(!navigator.geolocation){finish(new Error('Геолокация недоступна в этом браузере.'));return;}
+  navigator.geolocation.getCurrentPosition(function(p){finish(null,p.coords);},function(){finish(new Error('Не удалось определить место. Разрешите геолокацию в настройках приложения и повторите.'));},{enableHighAccuracy:false,maximumAge:0,timeout:18000});
+ });
+}
+function deliveryStart(id){
+ var owner=deliveryOwner(),key=deliveryKey(id),c=DELIVERY_CACHE[key]||(DELIVERY_CACHE[key]={});if(c.locating)return;
+ c.locating=true;c.error='';renderChat(false);
+ return deliveryPosition().then(function(point){if(owner!==deliveryOwner())throw new Error('Пользователь или дневник изменился.');return fPost('/delivery/start',{uid:syncUid(),id:id,point:point});})
+ .then(function(d){if(owner!==deliveryOwner())return;if(!d||!d.ok)throw new Error(d&&d.error||'Не удалось запустить поиск.');c.data=d.delivery;c.error='';return deliveryLoad(id);})
+ .catch(function(e){if(owner===deliveryOwner())c.error=humanErr(e);})
+ .then(function(){c.locating=false;if(owner===deliveryOwner())renderChat(false);});
+}
+function deliveryBind(box){
+ box.querySelectorAll('[data-delivery-start]').forEach(function(b){b.onclick=function(){deliveryStart(b.dataset.deliveryStart);};});
+ box.querySelectorAll('[data-delivery-retry]').forEach(function(b){b.onclick=function(){var c=DELIVERY_CACHE[deliveryKey(b.dataset.deliveryRetry)];if(c)c.error='';if(c&&c.data&&c.data.phase==='location')deliveryStart(b.dataset.deliveryRetry);else deliveryLoad(b.dataset.deliveryRetry);};});
+ box.querySelectorAll('[data-delivery-url]').forEach(function(b){b.onclick=function(){var u=deliverySafeURL(b.dataset.deliveryUrl,false);if(u)вебОткрыть(u);};});
+ box.querySelectorAll('.deliverydish img').forEach(function(img){img.onerror=function(){var p=document.createElement('span');p.className='muted';p.textContent='Фото не загрузилось';img.replaceWith(p);};});
+ var id;try{id=new URL(location.href).searchParams.get('delivery');}catch(e){}
+ if(id&&/^[a-f0-9-]{36}$/.test(id)&&DELIVERY_BOOT!==deliveryKey(id)&&box.querySelector('[data-delivery="'+id+'"]')){
+  DELIVERY_BOOT=deliveryKey(id);var bootOwner=deliveryOwner();setTimeout(function(){deliveryLoad(id).then(function(){var c=DELIVERY_CACHE[deliveryKey(id)];if(bootOwner===deliveryOwner()&&c&&c.data&&c.data.phase==='location')deliveryStart(id);});},0);
+ }
+}
+
 function ответТренера(текст, время, cls, src, menu, кнопки){
   return '<div class="turn"><div class="who"><img src="img/logo-64.png" alt="">тренер'+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
@@ -16667,7 +16733,7 @@ function renderChat(scroll){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
       if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
-      return шапка+ответТренера(жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, (c===живая && !CHAT.pending)?кнопкиHTML(c.act):'');
+      return шапка+ответТренера(жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery';})): '')+deliveryHTML(c.act));
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
@@ -16680,6 +16746,7 @@ function renderChat(scroll){
     h+=recoCard('chat');
   }
   box.innerHTML=h;
+  deliveryBind(box);
   box.querySelectorAll('[data-cq]').forEach(function(b){
     b.addEventListener('click', function(){ haptic('light');
       if(b.dataset.cq==='photo'){ var ph=document.getElementById('cphoto'); if(ph) ph.click(); return; }
@@ -17274,6 +17341,8 @@ document.getElementById('cfile').addEventListener('change', function(e){
 function cAttSet(b64){ CHAT.att=b64||null; renderAtt('cattach', CHAT.att, 'фото прикреплено — допиши вопрос или просто отправь'); chatSendState(); чатНачалаСверить(); }
 document.getElementById('cattach').addEventListener('click', function(e){ if(!CHAT.busy && !CHAT.prep && e.target.closest('[data-att]')){ cAttSet(null); haptic('light'); } });
 
+
+window.addEventListener('load',function(){if(new URL(location.href).searchParams.has('delivery'))setTimeout(function(){openCoach();},1000);});
 
 /* ── init ── */
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
