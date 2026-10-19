@@ -60,6 +60,8 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
+- **Codex, 19.10 · облачный выпуск** — yandex-search/ops/, tests/yandex-updater.cjs, README: настройка read-only deploy key и обновлятеля sonar, без изменений Worker/UI. Прямая просьба помочь облачному Claude публиковать в прод.
+
 
 
 
