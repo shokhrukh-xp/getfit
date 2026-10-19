@@ -60,8 +60,6 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
-- Codex, 19.10 — учёт уже съеденного в советах; src/index.js и tests/, codex/coach-photo-speed, /tmp/gf-photo-speed. Без выпуска.
-
 
 
 
