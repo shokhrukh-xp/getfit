@@ -7327,7 +7327,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '19.10 17:45';
+var BUILD = '19.10 18:25';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16646,8 +16646,8 @@ function deliveryHTML(acts){
  var s=cache&&cache.data,phase=s?s.phase:a.phase;
  var h='<div class="delivery" data-delivery="'+id+'">';
  if(cache&&cache.error)h+='<p role="status">'+esc(cache.error)+'</p><button type="button" data-delivery-retry="'+id+'">Повторить</button>';
- else if(phase==='location')h+='<button type="button" class="btn" data-delivery-start="'+id+'"'+(cache&&cache.locating?' disabled':'')+'>'+(cache&&cache.locating?'Определяю текущее место…':'Найти рядом')+'</button><p class="muted">Для этого поиска используем текущую локацию. Разрешение можно изменить в настройках устройства.</p>';
- else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Первые варианты появятся здесь; можно продолжать пользоваться приложением.</p>';
+ else if(phase==='location')h+=(s&&s.preferences?'<p>Ищу: '+esc(s.preferences.want||'любое блюдо')+'. Бюджет: '+esc(s.preferences.budgetMode==='unlimited'?'без лимита':Number(s.preferences.budget).toLocaleString('ru-RU')+' сум')+'. Исключения: '+esc(s.preferences.exclude||'нет')+'. Изменить пожелания можно сообщением тренеру.</p>':'')+'<button type="button" class="btn" data-delivery-start="'+id+'"'+(cache&&cache.locating?' disabled':'')+'>'+(cache&&cache.locating?'Определяю текущее место…':'Найти рядом')+'</button><p class="muted">Для этого поиска используем текущую локацию. Разрешение можно изменить в настройках устройства.</p>';
+ else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Первые пять появятся здесь. Если начали в боте — они также придут в исходный чат, остальные меню проверятся в фоне.</p>';
  if((phase==='search'||phase==='starting')&&s&&s.preview)h+=deliveryCards(s.preview,true);
  if(phase==='done'&&s&&s.result){h+=deliveryCards(s.result,false);
  }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите тренеру.')+'</p>';
@@ -16675,11 +16675,17 @@ function deliveryPosition(){
   navigator.geolocation.getCurrentPosition(function(p){finish(null,p.coords);},function(){finish(new Error('Не удалось определить место. Разрешите геолокацию в настройках приложения и повторите.'));},{enableHighAccuracy:false,maximumAge:0,timeout:18000});
  });
 }
+function deliveryReturnToBot(id,src){
+ var q;try{q=new URL(location.href).searchParams;}catch(e){return false;}
+ var w=window.Telegram&&Telegram.WebApp;
+ if((q.get('return')!=='tg'&&!(q.get('return')===null&&src==='tg'))||q.get('delivery')!==id||!w||!w.initData||typeof w.close!=='function')return false;
+ try{if(typeof w.disableClosingConfirmation==='function')w.disableClosingConfirmation();w.close();return true;}catch(e){return false;}
+}
 function deliveryStart(id){
  var owner=deliveryOwner(),key=deliveryKey(id),c=DELIVERY_CACHE[key]||(DELIVERY_CACHE[key]={});if(c.locating)return;
  c.locating=true;c.error='';renderChat(false);
  return deliveryPosition().then(function(point){if(owner!==deliveryOwner())throw new Error('Пользователь или дневник изменился.');return fPost('/delivery/start',{uid:syncUid(),id:id,point:point});})
- .then(function(d){if(owner!==deliveryOwner())return;if(!d||!d.ok)throw new Error(d&&d.error||'Не удалось запустить поиск.');c.data=d.delivery;c.error='';return deliveryLoad(id);})
+ .then(function(d){if(owner!==deliveryOwner())return;if(!d||!d.ok)throw new Error(d&&d.error||'Не удалось запустить поиск.');c.data=d.delivery;c.error='';if(['search','done'].indexOf(c.data.phase)>=0&&deliveryReturnToBot(id,c.data.src))return;return deliveryLoad(id);})
  .catch(function(e){if(owner===deliveryOwner())c.error=humanErr(e);})
  .then(function(){c.locating=false;if(owner===deliveryOwner())renderChat(false);});
 }
