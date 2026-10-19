@@ -60,8 +60,6 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
-- Codex, 19.10: подбор Yandex в тренере, отдельные worktree /private/tmp/getfit-yandex-{sync,app}, ветка codex/yandex-coach. Сервер src/index.js/src/main.js, приложение index.html, отдельные проверки. Общие копии не править. Выпуск Claude после запроса пользователя «подключим … в бою».
-
 
 
 
