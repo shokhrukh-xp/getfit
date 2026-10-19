@@ -10,13 +10,14 @@ const {chromium}=require('playwright'),M=require('./mock'),assert=require('node:
  const o={chat:[{role:'assistant',text:'Предпочтения понял',ts:Date.now(),act:[{type:'delivery',id,phase:'location'}]}],onCoach:()=>({ok:true,reply:'Новый подбор',meals:[],act:[{type:'delivery',id:id2,phase:'location'}]}),handleRoute:async r=>{
   const u=new URL(r.request().url());if(!u.pathname.startsWith('/delivery'))return false;let which=u.searchParams.get('id');
   if(u.pathname==='/delivery/start'){const body=JSON.parse(r.request().postData());starts.push(body);which=body.id;phase='search';}
-  await r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,delivery:{id:which,phase,stage:'Проверяю доступные меню',result:phase==='done'?result:null}})});return true;
+  await r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,delivery:{id:which,phase,stage:'Проверяю доступные меню',preview:phase==='search'?{...result,restaurantsChecked:8,restaurantsTotal:30}:null,result:phase==='done'?{...result,restaurantsChecked:30,restaurantsTotal:30}:null}})});return true;
  }};
  if(width===390)o.base=M.БАЗА+'?delivery='+id;
  const errors=await M.поднять(p,o);if(width!==390){await p.click('#coachnav');await p.getByRole('button',{name:'Найти рядом',exact:true}).click();}
  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('Проверяю доступные меню'));
  assert.equal(starts.length,1);assert(Math.abs(starts[0].point.latitude-41.31)<1e-8);assert.equal(await p.evaluate(()=>testGPSOptions.maximumAge),0,'кеш геолокации не используется');
- phase='done';await p.waitForSelector('.deliverydish',{timeout:12000});
+ await p.waitForSelector('.deliverydish',{timeout:12000});assert.equal(await p.locator('.deliverydish').count(),5);assert((await p.locator('#chatlog').textContent()).includes('поиск продолжается'));phase='done';await p.waitForFunction(()=>!document.querySelector('#chatlog').textContent.includes('Первые варианты'));
+ await p.waitForSelector('.deliverydish',{timeout:12000});
  assert.equal(await p.locator('.deliverydish').count(),5);assert.equal(await p.locator('.deliverydish img').count(),5);
  assert(!await p.locator('.delivery').evaluate(e=>e.scrollWidth>e.clientWidth+1),'карточки помещаются на телефоне');
  if(width===390)await p.screenshot({path:'/tmp/getfit-yandex-coach-cards.png'});

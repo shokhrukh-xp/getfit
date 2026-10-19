@@ -7327,7 +7327,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '19.10 17:05';
+var BUILD = '19.10 17:45';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16631,6 +16631,14 @@ function deliveryOwner(){return syncUid()+':'+localDataSession().epoch;}
 function deliveryKey(id){return deliveryOwner()+':'+id;}
 function deliverySafeURL(value,photo){try{var u=new URL(value);return u.protocol==='https:'&&(photo?['eda.yandex','avatars.mds.yandex.net'].indexOf(u.hostname)>=0:u.hostname==='eats.yandex.com'&&/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?r\//.test(u.pathname))?u.href:'';}catch(e){return '';}}
 function deliveryAttr(s){return esc(String(s||'')).replace(/"/g,'&quot;');}
+function deliveryCards(r,partial){
+  var h="";h+='<p>'+esc(r.address||'Рядом с вами')+'</p>';
+  h+=(r.recommendations||[]).slice(0,5).map(function(d,i){var photo=deliverySafeURL(d.imageURL,true),url=deliverySafeURL(d.restaurantURL,false);return '<article class="deliverydish">'+(photo?'<img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(photo)+'" alt="'+deliveryAttr(d.name)+'">':'<span class="muted">Фото в меню отсутствует</span>')+'<div><b>'+(i+1)+'. '+esc(d.name)+'</b><p>'+esc(d.restaurant)+' · '+esc(Number(d.priceUZS).toLocaleString('ru-RU'))+' сум</p><p>'+esc(d.reason||'')+'</p>'+(url?'<button type="button" data-delivery-url="'+deliveryAttr(url)+'">Открыть ресторан в Яндексе</button>':'')+'</div></article>';}).join('');
+  if(!(r.recommendations||[]).length)h+='<p>'+(partial?'Пока проверяю меню — подходящие варианты ещё не найдены.':'Подходящих блюд в проверенных меню нет. Можно изменить пожелания в чате.')+'</p>';
+  h+='<p class="muted">'+esc(r.note||'Цены без доставки и сборов. Калории и белок не проверены.')+'</p>';
+ 
+ return (partial?'<p><b>Первые варианты — поиск продолжается</b></p>':'')+h;
+}
 function deliveryHTML(acts){
  var a=(acts||[]).find(function(x){return x.type==='delivery'&&/^[a-f0-9-]{36}$/.test(x.id||'');});if(!a)return '';
  var id=a.id,key=deliveryKey(id),cache=DELIVERY_CACHE[key];
@@ -16639,14 +16647,11 @@ function deliveryHTML(acts){
  var h='<div class="delivery" data-delivery="'+id+'">';
  if(cache&&cache.error)h+='<p role="status">'+esc(cache.error)+'</p><button type="button" data-delivery-retry="'+id+'">Повторить</button>';
  else if(phase==='location')h+='<button type="button" class="btn" data-delivery-start="'+id+'"'+(cache&&cache.locating?' disabled':'')+'>'+(cache&&cache.locating?'Определяю текущее место…':'Найти рядом')+'</button><p class="muted">Для этого поиска используем текущую локацию. Разрешение можно изменить в настройках устройства.</p>';
- else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Обычно 1–3 минуты после очереди. Можно продолжать пользоваться приложением.</p>';
- else if(phase==='done'&&s&&s.result){
-  var r=s.result;h+='<p>'+esc(r.address||'Рядом с вами')+'</p>';
-  h+=(r.recommendations||[]).slice(0,5).map(function(d,i){var photo=deliverySafeURL(d.imageURL,true),url=deliverySafeURL(d.restaurantURL,false);return '<article class="deliverydish">'+(photo?'<img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(photo)+'" alt="'+deliveryAttr(d.name)+'">':'<span class="muted">Фото в меню отсутствует</span>')+'<div><b>'+(i+1)+'. '+esc(d.name)+'</b><p>'+esc(d.restaurant)+' · '+esc(Number(d.priceUZS).toLocaleString('ru-RU'))+' сум</p><p>'+esc(d.reason||'')+'</p>'+(url?'<button type="button" data-delivery-url="'+deliveryAttr(url)+'">Открыть ресторан в Яндексе</button>':'')+'</div></article>';}).join('');
-  if(!(r.recommendations||[]).length)h+='<p>Подходящих блюд в проверенных меню нет. Можно изменить пожелания в чате.</p>';
-  h+='<p class="muted">'+esc(r.note||'Цены без доставки и сборов. Калории и белок не проверены.')+'</p>';
+ else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Первые варианты появятся здесь; можно продолжать пользоваться приложением.</p>';
+ if((phase==='search'||phase==='starting')&&s&&s.preview)h+=deliveryCards(s.preview,true);
+ if(phase==='done'&&s&&s.result){h+=deliveryCards(s.result,false);
  }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите тренеру.')+'</p>';
- else h+='<p role="status">Загружаю подбор…</p>';
+ else if(!['location','search','starting'].includes(phase)&&!(cache&&cache.error))h+='<p role="status">Загружаю подбор…</p>';
  return h+'</div>';
 }
 function deliveryLoad(id){
@@ -16733,7 +16738,7 @@ function renderChat(scroll){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
       if(c.role==='user') return шапка+'<div class="msg me">'+esc(c.text)+'</div>';
-      return шапка+ответТренера(жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery';})): '')+deliveryHTML(c.act));
+      return шапка+ответТренера(жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery';})): '')+((все.slice(все.indexOf(c)+1).some(function(n){return (n.act||[]).some(function(a){return a.type==='delivery'&&(c.act||[]).some(function(b){return b.type==='delivery'&&b.id===a.id;});});}))?'':deliveryHTML(c.act)));
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
