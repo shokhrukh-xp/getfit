@@ -3,20 +3,20 @@
 const {chromium}=require('playwright'),M=require('./mock'),assert=require('node:assert/strict'),path=require('node:path');
 (async()=>{const b=await chromium.launch();try{
  for(const width of [320,390]){
- const p=await b.newPage({viewport:{width,height:900}}),starts=[];const id='11111111-1111-1111-1111-111111111111',id2='22222222-2222-2222-2222-222222222222';let phase='location';
- const result={address:'Тестовая точка',note:'Проверена часть меню. Цены без доставки.',recommendations:Array.from({length:5},(_,i)=>({name:'Курица '+i,restaurant:'Кафе '+i,priceUZS:30000+i*1000,restaurantURL:'https://eats.yandex.com/en-uz/r/cafe'+i,imageURL:'https://eda.yandex/images/test'+i+'.jpeg',reason:'По вашему запросу'}))};
+ const p=await b.newPage({viewport:{width,height:900}}),starts=[];const id='11111111-1111-1111-1111-111111111111',id2='22222222-2222-2222-2222-222222222222';let phase='location',visible=1;
+ const result={address:'Тестовая точка',note:'Проверена часть меню. Цены без доставки.',recommendations:Array.from({length:5},(_,i)=>({name:'Курица '+i,restaurant:'Кафе '+i,priceUZS:30000+i*1000,restaurantURL:'https://eats.yandex.com/en-uz/r/cafe'+i,imageURL:'https://eda.yandex/images/test'+i+'.jpeg',reason:'Оценка 200–450 ккал за 200 г; остаток дня 900 из 2000 ккал. Цель: снижение веса.'}))};
  await p.route('https://eda.yandex/images/test*',r=>r.fulfill({path:path.join(__dirname,'fixtures/a.jpg'),contentType:'image/jpeg'}));
  await p.addInitScript(()=>{window.testGPS=0;Object.defineProperty(navigator,'geolocation',{configurable:true,value:{getCurrentPosition(ok,fail,opts){testGPS++;window.testGPSOptions=opts;ok({coords:{latitude:41.3+testGPS/100,longitude:69.2,accuracy:20}});}}});});
  const o={chat:[{role:'assistant',text:'Предпочтения понял',ts:Date.now(),act:[{type:'delivery',id,phase:'location'}]}],onCoach:()=>({ok:true,reply:'Новый подбор',meals:[],act:[{type:'delivery',id:id2,phase:'location'}]}),handleRoute:async r=>{
   const u=new URL(r.request().url());if(!u.pathname.startsWith('/delivery'))return false;let which=u.searchParams.get('id');
   if(u.pathname==='/delivery/start'){const body=JSON.parse(r.request().postData());starts.push(body);which=body.id;phase='search';}
-  await r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,delivery:{id:which,phase,stage:'Проверяю доступные меню',preview:phase==='search'?{...result,restaurantsChecked:8,restaurantsTotal:30}:null,result:phase==='done'?{...result,restaurantsChecked:30,restaurantsTotal:30}:null}})});return true;
+  await r.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,delivery:{id:which,phase,stage:'Проверяю доступные меню',preview:phase==='search'?{...result,recommendations:result.recommendations.slice(0,visible),restaurantsChecked:8,restaurantsTotal:30}:null,result:phase==='done'?{...result,restaurantsChecked:30,restaurantsTotal:30}:null}})});return true;
  }};
  if(width===390)o.base=M.БАЗА+'?delivery='+id;
  const errors=await M.поднять(p,o);if(width!==390){await p.click('#coachnav');await p.getByRole('button',{name:'Найти рядом',exact:true}).click();}
  await p.waitForFunction(()=>document.querySelector('#chatlog').textContent.includes('Проверяю доступные меню'));
  assert.equal(starts.length,1);assert(Math.abs(starts[0].point.latitude-41.31)<1e-8);assert.equal(await p.evaluate(()=>testGPSOptions.maximumAge),0,'кеш геолокации не используется');
- await p.waitForSelector('.deliverydish',{timeout:12000});assert.equal(await p.locator('.deliverydish').count(),5);assert((await p.locator('#chatlog').textContent()).includes('поиск продолжается'));phase='done';await p.waitForFunction(()=>!document.querySelector('#chatlog').textContent.includes('Первые варианты'));
+ await p.waitForSelector('.deliverydish',{timeout:12000});assert.equal(await p.locator('.deliverydish').count(),1);assert((await p.locator('.deliverydish').textContent()).includes('200–450 ккал'));visible=2;await p.waitForFunction(()=>document.querySelectorAll('.deliverydish').length===2);visible=5;await p.waitForFunction(()=>document.querySelectorAll('.deliverydish').length===5);assert.equal(new Set(await p.locator('.deliverydish p:first-of-type').allTextContents()).size,5);assert((await p.locator('#chatlog').textContent()).includes('поиск продолжается'));phase='done';await p.waitForFunction(()=>!document.querySelector('#chatlog').textContent.includes('Первые варианты'));
  await p.waitForSelector('.deliverydish',{timeout:12000});
  assert.equal(await p.locator('.deliverydish').count(),5);assert.equal(await p.locator('.deliverydish img').count(),5);
  assert(!await p.locator('.delivery').evaluate(e=>e.scrollWidth>e.clientWidth+1),'карточки помещаются на телефоне');

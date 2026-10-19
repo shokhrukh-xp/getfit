@@ -7327,7 +7327,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '19.10 18:25';
+var BUILD = '19.10 21:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16647,7 +16647,7 @@ function deliveryHTML(acts){
  var h='<div class="delivery" data-delivery="'+id+'">';
  if(cache&&cache.error)h+='<p role="status">'+esc(cache.error)+'</p><button type="button" data-delivery-retry="'+id+'">Повторить</button>';
  else if(phase==='location')h+=(s&&s.preferences?'<p>Ищу: '+esc(s.preferences.want||'любое блюдо')+'. Бюджет: '+esc(s.preferences.budgetMode==='unlimited'?'без лимита':Number(s.preferences.budget).toLocaleString('ru-RU')+' сум')+'. Исключения: '+esc(s.preferences.exclude||'нет')+'. Изменить пожелания можно сообщением тренеру.</p>':'')+'<button type="button" class="btn" data-delivery-start="'+id+'"'+(cache&&cache.locating?' disabled':'')+'>'+(cache&&cache.locating?'Определяю текущее место…':'Найти рядом')+'</button><p class="muted">Для этого поиска используем текущую локацию. Разрешение можно изменить в настройках устройства.</p>';
- else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Первые пять появятся здесь. Если начали в боте — они также придут в исходный чат, остальные меню проверятся в фоне.</p>';
+ else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Блюда появляются по одному, до пяти из разных заведений. Если начали в боте — они также придут в исходный чат, остальные меню проверятся в фоне.</p>';
  if((phase==='search'||phase==='starting')&&s&&s.preview)h+=deliveryCards(s.preview,true);
  if(phase==='done'&&s&&s.result){h+=deliveryCards(s.result,false);
  }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите тренеру.')+'</p>';
