@@ -60,6 +60,8 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
+- **Codex, 19.10 · Яндекс у тренера** — изолированные ветки `codex/yandex-coach`: сервер `src/index.js`, `wrangler.toml`, `tests/yandex-delivery.cjs`; приложение `index.html`, `tg/test-yandex-delivery.js`. По прямому поручению Шохруха: сервис sonar и подключение к боевому тренеру.
+
 
 
 
