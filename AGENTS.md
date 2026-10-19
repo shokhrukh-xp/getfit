@@ -60,6 +60,8 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
+- **Codex, 19.10 · Первые пять и возврат в бот** — `src/index.js`, `tests/yandex-delivery.cjs`, `tests/yandex-preview.cjs`, `yandex-search/*`; приложение `index.html`, `tg/test-yandex-delivery.js`. Ранняя выдача фото в Telegram, фоновые остальные меню, возврат после GPS и новые пожелания без повтора сохранённых настроек.
+
 
 
 
