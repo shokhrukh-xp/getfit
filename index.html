@@ -17140,7 +17140,7 @@ function coachSend(text, image){
   if(ta){ ta.value=''; ta.style.height='auto'; }
   renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
-  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date})
+  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1})
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -17148,6 +17148,10 @@ function coachSend(text, image){
         {role:'assistant', text:d.reply||'Записал.', ts:сейчас, src:d.src||[], menu:d.menu||null, act:(d.act&&d.act.length)?d.act:null}]);
       CHAT.pick=false;
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
+      if(d.needsRetry){
+        CHAT.drafts[date]={text:text||'',image:image||null,err:'',retry:true};
+        if(CHAT.date===date) chatDraftRestore();
+      }
       if(d.бесплатно && SUB){ SUB.бесплатно=d.бесплатно; }
       if(d.day){
         if(d.day.date===TODAY) HOME.day=d.day;
