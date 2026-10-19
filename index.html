@@ -3783,6 +3783,11 @@ body.ordmode #list .sstag{color:var(--text)}
   <div class="modalbox">
     <div class="cathead pqhead"><button type="button" class="pqback" id="pqback" hidden>‹ Профиль</button><h3 id="proftitle">Профиль</h3><button class="xbtn" id="profclose" aria-label="Закрыть">✕</button></div>
 
+    <div id="profileload" class="mtext" role="status" aria-live="polite">
+      <p id="profileloadtext">Загружаем профиль… Пожалуйста, подожди.</p>
+      <button type="button" class="btn wide" id="profileretry" hidden>Повторить загрузку</button>
+    </div>
+    <div id="profilecontent" hidden inert>
     <div class="pqmain" id="pqmain">
       <div class="pqid">
         <span class="pqava" id="pqava" aria-hidden="true"></span>
@@ -3790,7 +3795,7 @@ body.ordmode #list .sstag{color:var(--text)}
         <button type="button" id="meedit">изменить</button>
       </div>
       <div class="me" id="mefields" hidden>
-        <label>пол<select id="me-sex"><option value="m">муж</option><option value="f">жен</option></select></label>
+        <label>пол<select id="me-sex"><option value="">не указан</option><option value="m">муж</option><option value="f">жен</option></select></label>
         <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
         <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
         <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
@@ -3879,6 +3884,7 @@ body.ordmode #list .sstag{color:var(--text)}
       <p class="refsum" id="refsum2"></p>
       <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
     </section>
+    </div>
   </div>
 </div>
 <!-- 14.10: «Как пользоваться» — отдельно от «Начать заново» -->
@@ -6033,11 +6039,12 @@ function takeGoal(gobj, progress){
   if(ch){ me.goal=legacyOf(me.wt, me.gym); gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
   renderGoalCard(); renderNudge(); renderProfProg();
 }
-function goalPull(){
-  return tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()))
-    .then(function(r){ return r.json(); })
+function goalPull(strict, accept, signal){
+  return tgFetch(SYNCURL+'/goal?uid='+encodeURIComponent(syncUid()),{signal:signal})
+    .then(function(r){ if(strict && !r.ok) throw new Error('Цель пока не загрузилась.'); return r.json(); })
     .then(function(d){
-      if(!d || !d.ok) return;
+      if(!d || !d.ok){if(strict)throw new Error('Цель пока не загрузилась.');return;}
+      if(accept && !accept())throw new Error('Загрузка устарела.');
       /* лёгкую неделю включил тренер по разбору — веса падали два занятия
          подряд. Один раз на каждый такой разбор, и с объяснением на экране. */
       if(d.deload && d.deload.on && d.deload.from && gget('deload_srv',null)!==d.deload.from){
@@ -6046,11 +6053,11 @@ function goalPull(){
         if(!deloadOn() && !(manual && manual.from>=d.deload.from)){ setDeload(true,{from:d.deload.from}); paintNote(''); try{ TG && TG.showAlert && TG.showAlert('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
       }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
-      else { var g=gget('goal',null); if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
+      else { var g=gget('goal',null); if(strict)gset('goal',null);else if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
       renderGoalCard(); homeDirty();   /* 30.09: пунктир плана на карточке «Тело» */
       /* ревью Codex Z1: рабочие веса теперь в Журнале — поздний ответ дорисовывает и его */
       var жр=document.getElementById('p-log'); if(жр && !жр.classList.contains('hide')) renderLogSila();
-    }).catch(function(){});
+    }).catch(function(e){if(strict)throw e;});
 }
 function renderGoalCard(){
   var el=document.getElementById('goalcard'); if(!el) return;
@@ -6138,7 +6145,7 @@ function syncBwFromMeas(){
 }
 function meSumText(){
   var me=myData()||{}, из=[];
-  из.push(me.sex==='f'?'жен':'муж');
+  if(me.sex==='f' || me.sex==='m') из.push(me.sex==='f'?'жен':'муж');
   /* 17.10: неразрывный пробел — в строке профиля «88,1» и «кг» не расходятся по строкам */
   if(me.age) из.push(me.age+'\u00a0'+plural(me.age,['год','года','лет']));
   if(me.ht) из.push(me.ht+'\u00a0см');
@@ -6152,7 +6159,7 @@ function fillMe(){
   var b=document.getElementById('me-bw'), h=document.getElementById('me-ht'),
       a=document.getElementById('me-age'), x=document.getElementById('me-sex');
   if(b) b.value=me.bw||''; if(h) h.value=me.ht||'';
-  if(a) a.value=me.age||''; if(x) x.value=me.sex||'m';
+  if(a) a.value=me.age||''; if(x) x.value=me.sex||'';
   /* пол, возраст и рост правят редко — прячем под «изменить», вес показываем
      из замеров (его просьба 11.09: «зачем держать их здесь редактируемыми») */
   var t=document.getElementById('mesumt'); if(t) t.textContent=meSumText();
@@ -6774,11 +6781,70 @@ function saveMe(event){
   var near=edited.closest('#profm .mlab, #profm .pf, #profm #mefields, #profm details, #profm .profblock')||document.querySelector('#profm .modalbox');
   savedNear(near,pending,function(){return сохранитьСостояние('state/me',{me:myData()||{},at:new Date().toISOString()});});
 }
-function openProf(pp){ settingsPaint();fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
+function openProf(pp){ profileLoad();settingsPaint();fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
   здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med); бтРендер();
   try{ renderProgCard(); }catch(e){}
   profGo(pp||'');
   var m=document.getElementById('profm'); if(m) m.classList.add('show'); }
+/* 19.10: на новом компьютере Карина увидела «муж» и пустую цель до
+   загрузки анкеты. До подтверждения сервера не выдаём копию за верные данные;
+   ошибка и настоящее отсутствие анкеты — разные состояния. */
+var PROFILELOAD={state:'idle',promise:null,authoritative:false};
+function profileLoadPaint(){
+  var ready=PROFILELOAD.state==='ready',bad=PROFILELOAD.state==='error';
+  var content=document.getElementById('profilecontent'),note=document.getElementById('profileload');
+  if(content){content.hidden=!ready;content.inert=!ready;}
+  if(note)note.hidden=ready;
+  document.getElementById('profileloadtext').textContent=bad?'Не удалось загрузить профиль. Проверь соединение и попробуй ещё раз.':'Загружаем профиль… Пожалуйста, подожди.';
+  document.getElementById('profileretry').hidden=!bad;
+  var m=document.getElementById('profm');if(m)m.setAttribute('aria-busy',String(!ready&&!bad));
+}
+function profileLegacyMe(){
+  var cached=myData();
+  if(cached && meFull())return Promise.resolve({me:cached});
+  var key=csKey('state/me');
+  if(!CS){var v=mGet(key);return Promise.resolve(v?JSON.parse(v):{me:cached||{}});}
+  return new Promise(function(resolve,reject){
+    var timer=setTimeout(function(){reject(new Error('Telegram не ответил.'));},8000);
+    CS.getItem(key,function(err,value){clearTimeout(timer);if(err){reject(new Error('Telegram не ответил.'));return;}
+      try{resolve(value?JSON.parse(value):{me:cached||{}});}catch(e){reject(e);}
+    });
+  });
+}
+function profileLoad(){
+  if(PROFILELOAD.promise)return PROFILELOAD.promise;
+  var uid=syncUid(),token={},timer,retry=PROFILELOAD.state==='error',ctl=new AbortController(),markAtStart=+MARKS.me||0;
+  PROFILELOAD.token=token;PROFILELOAD.state='loading';profileLoadPaint();
+  var deadline=new Promise(function(resolve,reject){timer=setTimeout(function(){ctl.abort();reject(new Error('Профиль пока не загрузился.'));},20000);});
+  var job=ensureDataSession(retry).then(pushDirty).then(function(){
+    return tgFetch(SYNCURL+'/all?uid='+encodeURIComponent(uid),{signal:ctl.signal}).then(function(r){if(!r.ok)throw new Error('Профиль пока не загрузился.');return r.json();});
+  }).then(function(d){
+    if(!d || !Array.isArray(d.state))throw new Error('Нет ответа с профилем.');
+    var st=d.state.find(function(x){return x.key==='me';});
+    if(st && (!st.data || !st.data.me || typeof st.data.me!=='object' || Array.isArray(st.data.me)))throw new Error('Нет ответа с профилем.');
+    return (st?Promise.resolve(st.data):profileLegacyMe()).then(function(body){
+      if(!body || !body.me || typeof body.me!=='object' || Array.isArray(body.me))throw new Error('Нет ответа с профилем.');
+      return {body:body,st:st};
+    });
+  });
+  var p=Promise.race([job,deadline]).then(function(result){
+    if(PROFILELOAD.token!==token || uid!==syncUid() || DATASESSION.blocked)throw new Error('Дневник изменился.');
+    // Точные несохранённые правки остаются поверх подтверждённой анкеты.
+    var jobs=settingsQueue(uid).me||[];
+    var newer=result.st && (+MARKS.me||0)>markAtStart && (+MARKS.me||0)>+result.st.updated;
+    settingsApply('me',newer?{me:myData()||{}}:result.body,jobs);PROFILELOAD.authoritative=!!result.st;
+    if(result.st && !jobs.length && !newer)markSet('me',+result.st.updated);
+    return Promise.race([goalPull(true,function(){return PROFILELOAD.token===token && PROFILELOAD.state==='loading' && uid===syncUid();},ctl.signal),deadline]);
+  }).then(function(){
+    if(PROFILELOAD.token!==token || uid!==syncUid() || DATASESSION.blocked)throw new Error('Дневник изменился.');
+    fillMe();здРендер('zd','zdbody','zdsum',(myData()||{}).med);бтРендер();renderProfProg();pqVals();
+    PROFILELOAD.state='ready';
+  }).catch(function(){if(PROFILELOAD.token===token)PROFILELOAD.state='error';})
+    .then(function(){clearTimeout(timer);if(PROFILELOAD.token===token){PROFILELOAD.promise=null;profileLoadPaint();}});
+  PROFILELOAD.promise=p;return p;
+}
+document.getElementById('profileretry').addEventListener('click',function(){profileLoad();});
+window.addEventListener('online',function(){if(PROFILELOAD.state==='error' && document.getElementById('profm').classList.contains('show'))profileLoad();});
 /* 17.10: профиль — список групп, подробности — листом внутри того же окна.
    Его выбор «Группы + строки» (макет profil-maket-2026-10-17). pp — имя
    листа (zd, bt, only, voice, gym, ref), пусто — главный список. */
@@ -9989,7 +10055,7 @@ function initDb(){
     if(sn && sn.exists){
       var b=JSON.parse(JSON.stringify(sn.data()||{}));
       /* профиль общий на все программы: облако главнее пустого локального */
-      if(b.me && typeof b.me==='object' && !hasGoal(myData()||{})){ gset('me', b.me);settingsRemember('me',b); }
+      if(b.me && typeof b.me==='object' && !PROFILELOAD.authoritative && !hasGoal(myData()||{})){ gset('me', b.me);settingsRemember('me',b); }
     }
     if(get('undo_subs_pending',false)){set('undo_subs_pending',false);saveSubs();return {exists:false};}
     return DB.doc('state/subs').get();
