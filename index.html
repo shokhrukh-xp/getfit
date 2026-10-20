@@ -4834,6 +4834,7 @@ function savedNear(anchor, promise, retry){
     if(node._gen!==gen)return;node.textContent='Сохранено';node.className='save-notice';
     node._timer=setTimeout(function(){if(node._gen===gen)node.textContent='';},3000);
   }).catch(function(err){if(node._gen===gen){
+    clearTimeout(node._timer); // 20.10: чужой таймер «Сохранено» не стирает ошибку
     if(err && err.code==='settings_storage'){node.textContent=err.message;node.className='save-notice bad';return;}
     if(err && err.settingsKey)node.dataset.settings=err.settingsKey;
     if(err && err.code==='settings_conflict'){
@@ -9306,7 +9307,11 @@ function settingsPost(body){
 function settingsNotice(key,err){
   document.querySelectorAll('.save-notice[data-settings="'+key+'"]').forEach(function(n){
     if(err){return;} // ошибку ближайший обработчик покажет у места правки
-    n.textContent='Сохранено';n.className='save-notice';clearTimeout(n._timer);n._timer=setTimeout(function(){n.textContent='';},3000);
+    /* 20.10: таймер стирал текст вслепую — если за эти 3 с в ту же надпись
+       пришёл вопрос «Какой выбор оставить?» (savedNear другой правки того же
+       ключа), он исчезал вместе с кнопками, и выбрать было нечем. Стираем
+       только своё «Сохранено» */
+    n.textContent='Сохранено';n.className='save-notice';clearTimeout(n._timer);n._timer=setTimeout(function(){if(n.textContent==='Сохранено')n.textContent='';},3000);
   });
 }
 // 19.10: сервер принял здоровье/параметры, но главная показывала старую норму.

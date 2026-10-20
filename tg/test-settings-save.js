@@ -39,6 +39,16 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
  {const f=fixture(),{p}=await start(b,f);await p.click('#pq-voice');f.fail=true;await p.click('#me-voice [data-v="fun"]');await p.locator('.save-notice.bad').waitFor();await p.evaluate(()=>{for(const k of Object.keys(localStorage))if(k.includes('settings_queue_'))localStorage.removeItem(k)});f.fail=false;await p.reload();await sleep(2000);await p.click('#profbtn');await p.locator('#settingsstatus').filter({hasText:'Какой выбор оставить'}).waitFor();assert.equal(f.me().voice,'standard');await p.getByRole('button',{name:'Мой выбор',exact:true}).click();await until(()=>f.me().voice==='fun','подтверждённая старая правка');await p.close();console.log('PASS старая очередь без информации о полях просит выбор, не затирает сервер');}
  // Сервер принял, ответ потерян. Следующий повтор — квитанция, не старая запись.
  {const f=fixture(),{p}=await start(b,f);await p.click('#pq-voice');f.lost=true;await p.click('#me-voice [data-v="fun"]');await p.locator('.save-notice.bad').waitFor();assert.equal(f.me().voice,'fun');await until(()=>p.locator('.save-notice.bad').count().then(n=>n===0),'автоповтор после потерянного ответа');assert.equal(new Set(f.requests.filter(x=>x.key==='me').map(x=>x.patch.op)).size,1);await shot(p,'autosaved');await p.close();console.log('PASS потерянный ответ: автоматический повтор с тем же номером, Сохранено без второго действия');}
+ /* 20.10: после каждого «Сохранено» оставался таймер, который через 3 с
+    стирал надпись вслепую. Конфликт в эти 3 с (другой телефон поменял то же
+    поле) — «Какой выбор оставить?» исчезал вместе с кнопками. */
+ {const f=fixture(),{p,errors}=await start(b,f);await p.click('#bttoggle');
+  await p.fill('#bt-family','3');await p.locator('#bt-family').blur();await until(()=>f.me().byt.family===3,'семья 3 сохранена');
+  const other=f.me();other.byt.family=6;f.sq.prepare("UPDATE state SET data=?,updated=? WHERE uid='svc_settings' AND key='me'").run(JSON.stringify({me:other}),Date.now()+1000);
+  await p.fill('#bt-family','5');await p.locator('#bt-family').blur();const вопрос=p.locator('#btbox .save-notice.bad').filter({hasText:'Какой выбор оставить'});await вопрос.waitFor();
+  await sleep(3500);assert(await вопрос.isVisible(),'вопрос о конфликте не стёрт таймером прежнего «Сохранено»');
+  await вопрос.getByRole('button',{name:'С другого устройства',exact:true}).click();await until(()=>f.me().byt.family===6,'оставлен выбор другого телефона');
+  assert.deepEqual(errors,[]);await p.close();console.log('PASS вопрос о конфликте не исчезает через 3 с после «Сохранено»');}
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});
 
 module.exports={fixture,start,server:c,until,sleep};
