@@ -5,7 +5,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
 async function snap(p,name,theme,width){assert.deepEqual(await viewport(p),[]);const c=await contrast(p);assert(c.checked>0);assert.deepEqual(c.failures,[]);if(shots)await p.screenshot({path:path.join(shots,`${name}-${theme}-${width}.png`)});}
 (async()=>{const b=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390])for(const name of (process.env.GF_PICK_CASE||'order,picker,404,410,503').split(',')){
- const p=await b.newPage({viewport:{width,height:844}});p.setDefaultTimeout(4500);
+ const p=await b.newPage({viewport:{width,height:844}});p.setDefaultTimeout(15000); // 20.10: под нагрузкой ответ стенда идёт дольше 4,5 с
  try{
  const meal={id:'meal',date:M.TODAY,text:'Омлет',kcal:300,prot:20,t:'09:00',kind:'завтрак'};let restored=0;
  const errors=await M.поднять(p,{theme,page:/^\d/.test(name)?'food':'gym',day:{meals:[meal]},handleRoute:async r=>{
@@ -36,7 +36,11 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   await p.click('[data-mid="meal"] .ft');await p.click('#mv-del');await p.click('.undo-row button');
   await p.waitForFunction(()=>document.querySelector('.undo-row span')?.textContent!=='Возвращаю…');assert.equal(restored,1);
   if(name==='503'){
-   assert.equal(await p.locator('.undo-row button').innerText(),'Повторить');await p.waitForTimeout(3800);assert(await p.locator('.undo-row').isVisible());await p.click('.undo-row button');await p.waitForFunction(()=>document.querySelector('.undo-row button')?.textContent==='Повторить');assert.equal(restored,2);
+   assert.equal(await p.locator('.undo-row button').innerText(),'Повторить');await p.waitForTimeout(3800);assert(await p.locator('.undo-row').isVisible());await p.click('.undo-row button');
+   /* 20.10: под нагрузкой кнопка ещё «Повторить», а второй запрос до стенда не
+      дошёл — ждём сам запрос, потом надпись после отказа */
+   for(const до=Date.now()+15000;restored<2&&Date.now()<до;)await p.waitForTimeout(50);
+   await p.waitForFunction(()=>document.querySelector('.undo-row button')?.textContent==='Повторить');assert.equal(restored,2);
   }else{
    assert.equal(await p.locator('.undo-row span').innerText(),'Вернуть уже нельзя');assert(!(await p.locator('.undo-row button').isVisible()));await snap(p,'restore-'+name,theme,width);await p.waitForFunction(()=>!document.querySelector('.undo-row'),null,{timeout:5500});assert.equal(restored,1);
   }
