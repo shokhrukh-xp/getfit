@@ -7328,7 +7328,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '20.10 11:55';
+var BUILD = '20.10 13:25';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16641,9 +16641,15 @@ function deliveryOwner(){return syncUid()+':'+localDataSession().epoch;}
 function deliveryKey(id){return deliveryOwner()+':'+id;}
 function deliverySafeURL(value,photo){try{var u=new URL(value);return u.protocol==='https:'&&(photo?['eda.yandex','avatars.mds.yandex.net'].indexOf(u.hostname)>=0:u.hostname==='eats.yandex.com'&&/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?r\//.test(u.pathname))?u.href:'';}catch(e){return '';}}
 function deliveryAttr(s){return esc(String(s||'')).replace(/"/g,'&quot;');}
+/* 20.10, его слова «Я бы хотел видеть как хорошо каждый из вариантов
+   соответствует моим нормам»: сервер пишет карточку строками — «Подходит к цели:
+   N из 10», белок · жиры, углеводы · сахар, калории. Строки — строками, балл —
+   жирным; старый текст одной строкой показывается как был. */
+function deliveryReason(d){var lines=String(d.reason||'').split('\n').filter(Boolean);if(!lines.length)return '';
+ return '<p class="dreason">'+lines.map(function(l){return d.fit&&/^Подходит к цели/.test(l)?'<b>'+esc(l)+'</b>':esc(l);}).join('<br>')+'</p>';}
 function deliveryCards(r,partial){
   var h="";h+='<p>'+esc(r.address||'Рядом с вами')+'</p>';
-  h+=(r.recommendations||[]).slice(0,5).map(function(d,i){var photo=deliverySafeURL(d.imageURL,true),url=deliverySafeURL(d.restaurantURL,false);return '<article class="deliverydish">'+(photo?'<img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(photo)+'" alt="'+deliveryAttr(d.name)+'">':'<span class="muted">Фото в меню отсутствует</span>')+'<div><b>'+(i+1)+'. '+esc(d.name)+'</b><p>'+esc(d.restaurant)+' · '+esc(Number(d.priceUZS).toLocaleString('ru-RU'))+' сум</p><p>'+esc(d.reason||'')+'</p>'+(url?'<button type="button" data-delivery-url="'+deliveryAttr(url)+'">Открыть ресторан в Яндексе</button>':'')+'</div></article>';}).join('');
+  h+=(r.recommendations||[]).slice(0,5).map(function(d,i){var photo=deliverySafeURL(d.imageURL,true),url=deliverySafeURL(d.restaurantURL,false);return '<article class="deliverydish">'+(photo?'<img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(photo)+'" alt="'+deliveryAttr(d.name)+'">':'<span class="muted">Фото в меню отсутствует</span>')+'<div><b>'+(i+1)+'. '+esc(d.name)+'</b><p>'+esc(d.restaurant)+' · '+esc(Number(d.priceUZS).toLocaleString('ru-RU'))+' сум</p>'+deliveryReason(d)+(url?'<button type="button" data-delivery-url="'+deliveryAttr(url)+'">Открыть ресторан в Яндексе</button>':'')+'</div></article>';}).join('');
   if(!(r.recommendations||[]).length)h+='<p>'+(partial?'Пока проверяю меню — подходящие варианты ещё не найдены.':'Подходящих блюд в проверенных меню нет. Можно изменить пожелания в чате.')+'</p>';
   h+='<p class="muted">'+esc(r.note||'Цены без доставки и сборов. Калории и белок не проверены.')+'</p>';
  
