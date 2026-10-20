@@ -3,7 +3,9 @@
    отказ, потерянный ответ, закрытие/повторный запуск и конфликт. */
 const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./shot-clean'),assert=require('assert/strict'),fs=require('fs'),path=require('path'),vm=require('vm'),{DatabaseSync}=require('node:sqlite'),bounds=require('./viewport-check'),contrast=require('./contrast-check');
 const source=fs.readFileSync(path.join(__dirname,'../../getfit-sync/src/index.js'),'utf8'),c=vm.createContext({console,Date,Response,Request,URL,TextEncoder,crypto,setTimeout,clearTimeout});vm.runInContext(source.replace(/^import[^\n]+\n/,'const БЛЮДА=[];\n').replace('export default {','globalThis.worker={'),c);
-const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async(f,t)=>{for(let i=0;i<1000;i++){if(await f())return;await sleep(15)}throw Error('Не дождался: '+t)};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),until=async(f,t)=>{const до=Date.now()+30000;while(Date.now()<до){if(await f())return;await sleep(15)}throw Error('Не дождался: '+t)};
+/* 20.10: until — по часам (30 с), а не 1000 попыток: под нагрузкой одна
+   попытка с чтением страницы идёт дольше 15 мс, и срок плыл */
 function fixture(){const sq=new DatabaseSync(':memory:');sq.exec('CREATE TABLE state(uid TEXT,key TEXT,data TEXT,updated INTEGER,PRIMARY KEY(uid,key));');const st=sql=>{let a=[];const o={bind(...v){a=v;return o},async first(){return sq.prepare(sql).get(...a)||null},async all(){return {results:sq.prepare(sql).all(...a)}},async run(){return {meta:{changes:sq.prepare(sql).run(...a).changes}}}};return o};
  let chain=Promise.resolve();const DB={prepare:st,batch(qs){const run=async()=>{sq.exec('BEGIN');try{const a=[];for(const q of qs)a.push(await q.run());sq.exec('COMMIT');return a}catch(e){sq.exec('ROLLBACK');throw e}};const p=chain.then(run);chain=p.catch(()=>{});return p}};
  const initial={...opts('dark').me,voice:'standard',when:'evening',med:{bp:0},byt:{family:2,where:['дома']}};

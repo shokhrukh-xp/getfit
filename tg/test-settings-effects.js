@@ -14,7 +14,10 @@ const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./sho
   // Не меняем вкладку: здоровье → норма в уже открытой главной.
   if(!process.env.GF_EMPTY_ONLY){await p.click('#zdtoggle');await p.click('#zd-dia [data-v="t2"]');await p.click('#zd-osl [data-v="kid"]');await until(()=>f.me().med.kid===1,'ограничение сохранено');
   await until(()=>f.reads?.some(x=>x.kid===1),'норма перечитана после сохранения здоровья без смены вкладки');
-  const after=f.reads.find(x=>x.kid===1);assert.match(await p.locator('#fday [data-fk="prot"] .fh b').innerText(),new RegExp('/ '+after.prot+'(?:[– \u00a0]|$)'),'новая граница белка уже отрисована');assert(after.prot<server.targets({...f.me(),med:{}},null,0,0,0).prot);
+  const after=f.reads.find(x=>x.kid===1),граница=new RegExp('/ '+after.prot+'(?:[– \u00a0]|$)');
+  /* 20.10: ответ /day уже у стенда, а отрисовка под нагрузкой (6 потоков на
+     4 ядра) приходит позже — ждём её, а не читаем строку в тот же миг */
+  await until(async()=>граница.test(await p.locator('#fday [data-fk="prot"] .fh b').innerText()),'новая граница белка отрисована');assert(after.prot<server.targets({...f.me(),med:{}},null,0,0,0).prot);
   await p.click('#pqback');}await p.click('#profclose');await p.click('.l1 [data-page="gym"]');await p.click('#schedbtn');
   // Все семь — отдых. Пустой объект означает выбор, не отсутствие настройки.
   while(await p.locator('#schedlist .schrow.on').count())await p.locator('#schedlist .schrow.on').first().click();

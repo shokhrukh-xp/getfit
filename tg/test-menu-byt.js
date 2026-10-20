@@ -6,6 +6,11 @@ const { chromium } = require('playwright');
 const M = require('./mock');
 let плохо = 0;
 const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') + т); if (!у) плохо++; };
+/* 20.10: под нагрузкой (6 потоков на 4 ядра) паузы 300–900 мс и «медленный
+   сервер» на 1,5 с не совпадали с тем, что успела страница: проверка читала
+   экран до ответа или уже после него. Теперь ждём само условие (до 15 с), а
+   медленный ответ сервера держим, пока проверка его не отпустит. */
+const ждать = async (f, мс = 15000) => { const до = Date.now() + мс; while (Date.now() < до) { if (await f()) return true; await new Promise(r => setTimeout(r, 50)); } return !!(await f()); };
 const ЗАВТРА = M.Д(-1);
 const ME = { sex: 'm', age: 34, ht: 178, bw: 88, wt: 'down', gym: 'muscle' };
 const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), note: '', дни: [{ date: ЗАВТРА, зал: false, спорт: [], норма: { kcal: 1800, prot: 140 }, kcal: 1700, prot: 130, белокМало: 0,
@@ -29,7 +34,8 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   await page.screenshot({ path: '/tmp/gf-menu-byt.png', fullPage: true });
   await page.click('#mb-where [data-v="дом"]'); await page.click('#mb-where [data-v="столовая"]');
   await page.click('#mb-cook [data-v="сам"]'); await page.click('#mb-min [data-v="30"]');
-  await page.click('[data-mbyt="save"]'); await page.waitForTimeout(900);
+  await page.click('[data-mbyt="save"]');
+  await ждать(async () => о.просили && о.просили.includes('day') && !(await page.isVisible('#mbyt')));
   const me = await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
   дано(JSON.stringify(me.byt) === JSON.stringify({ where: ['дом', 'столовая'], cook: 'сам', min: 30 }), 'быт записан в профиль: ' + JSON.stringify(me.byt));
   дано(о.просили && о.просили.includes('day'), 'после ответов меню собирается');
@@ -41,7 +47,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   const о2 = { theme: 'dark', wait: 2400, page: 'eat', me: ME, bytAsk: true, menu: { завтра: ЗАВТРА },
     onMenu: route => { const б = JSON.parse(route.request().postData() || '{}'); (о2.просили = о2.просили || []).push(б.span); return { ok: false, нет: 'нет' }; } };
   await M.поднять(page, о2);
-  await page.click('[data-mbyt="skip"]'); await page.waitForTimeout(700);
+  await page.click('[data-mbyt="skip"]'); await ждать(() => о2.просили && о2.просили.includes('today'));
   дано(о2.просили && о2.просили.includes('today'), '«Пропустить» — меню на сегодня собирается сразу');
   дано(await page.evaluate(() => localStorage.getItem('shp_v1_byt_ask')) === '1', 'и вопрос больше не задаётся');
   await page.click('#eatbody [data-eseg="week"]'); await page.waitForTimeout(300);
@@ -58,7 +64,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
      Первая запись падает — меню не собираем, ответы целы; вторая медленная — ждём её */
   page = await br.newPage({ viewport: { width: 390, height: 900 } });
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
-  let записей = 0;
+  let записей = 0, отпустить, придержан = new Promise(r => { отпустить = r; });
   const о4 = { theme: 'light', wait: 2400, page: 'eat', me: ME, bytAsk: true, menu: { завтра: ЗАВТРА },
     onMenu: route => { const б = JSON.parse(route.request().postData() || '{}'); (о4.просили = о4.просили || []).push(б.span); return МЕНЮ; },
     handleRoute: async route => {
@@ -66,12 +72,12 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
       if (u.pathname !== '/s' || !/byt/.test(тело)) return false;
       записей++;
       if (записей === 1) { await route.fulfill({ status: 500, contentType: 'application/json', body: '{"ok":false}' }); return true; }
-      await new Promise(r => setTimeout(r, 1500));
+      await придержан;
       await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); return true;
     } };
   await M.поднять(page, о4);
   await page.click('#mb-cook [data-v="семья"]'); await page.click('#mb-min [data-v="15"]');
-  await page.click('[data-mbyt="save"]'); await page.waitForTimeout(900);
+  await page.click('[data-mbyt="save"]'); await ждать(async () => записей >= 1 && await page.isVisible('#mbyt .mwarn'));
   дано(записей >= 1, 'ответы ушли на сервер: ' + записей); const после1 = записей;
   дано(!(о4.просили || []).length, 'сервер не принял — меню не собирается');
   дано(await page.isVisible('#mbyt .mwarn'), 'и сказано, что не сохранилось');
@@ -79,10 +85,10 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   await page.click('#eatbody [data-eseg="week"]'); await page.waitForTimeout(300);
   const нг = await page.$('#eatbody [data-mgen="week"]'); if (нг) { await нг.click(); await page.waitForTimeout(300); }
   дано(!(о4.просили || []).length && await page.isVisible('#mbyt'), 'другая вкладка тоже ждёт быт, а не собирает по старому');
-  await page.click('[data-mbyt="save"]'); await page.waitForTimeout(500);
+  await page.click('[data-mbyt="save"]'); await ждать(() => записей > после1);
   дано(!(о4.просили || []).length, 'пока сервер думает — меню не просим');
   дано(await page.isDisabled('[data-mbyt="save"]'), 'кнопка «Сохраняю…» не жмётся дважды');
-  await page.waitForTimeout(1600);
+  отпустить(); await ждать(() => (о4.просили || []).length === 1); await page.waitForTimeout(300);
   дано(записей > после1 && (о4.просили || []).length === 1, 'после «ok» — ровно одна сборка: ' + JSON.stringify(о4.просили));
   дано(await page.evaluate(() => localStorage.getItem('shp_v1_byt_dirty')) === '0', 'флаг «не доехало» снят');
   await br.close();
