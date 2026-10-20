@@ -298,7 +298,14 @@
   `yandex-search/` из main ключом только на чтение, гоняет его проверки в
   одноразовом контейнере без сети, ждёт свободного сервиса без обрыва поисков, подменяет
   `*.mjs` + `VERSION` и перезапускает только `getfit-yandex`; не здоров —
-  откат. package.json, deploy.sh, seccomp, прокси — только руками. Выпуск
+  откат. package.json, deploy.sh, seccomp, прокси — только руками. 20.10, его вопрос «как мне подключить тебя к серверу чтобы ты мог сам
+  все проверять?» и выбор «sonar сам пишет отчёт»: каждая запись журнала
+  обновлятеля (хвост update.log, память, состояние службы, при красных —
+  test.log) уходит изнутри контейнера ключом сервиса в Worker
+  /delivery/ops → `_cache/yandex_ops` (20 последних); root-ключ и SSH в
+  облако не идут. `update.sh report` — только отчёт. Новый update.sh
+  ставится руками один раз: `git -C /opt/getfit-yandex/repo checkout -q
+  FETCH_HEAD && sh /opt/getfit-yandex/repo/yandex-search/ops/setup.sh`. Выпуск
   сервиса = push в main getfit-sync (после его «да»); руками файлы в
   `/opt/getfit-yandex/app` не править — таймер их перезапишет. Версия —
   `/build?yandex=1`. Тест «Авторизация, очередь…» больше не зависит от
