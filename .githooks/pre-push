@@ -3,8 +3,38 @@
 # сборки с воркером. Красное — push не уходит.
 # Включается один раз на копию:  git config core.hooksPath .githooks
 # Обойти только с его согласия:  git push --no-verify
+#
+# 20.10, его вопрос «Это нормально что хук гоняет все проверки каждый раз и
+# занимает так много времени?» и выбор «первый»: в облаке (4 ядра, 3 потока)
+# все наборы идут ~16 минут, и шли даже на push, где менялся один AGENTS.md.
+# Теперь: в push меняются только тексты (*.md, docs/) и сам хук — наборы
+# приложения не гоняем, метку сборки сверяем всегда. Любой другой файл
+# (index.html, tg/, catalog.json, img/ …), новая ветка без общей истории с
+# origin/main или запуск руками без списка ссылок — все наборы, как раньше.
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+NULL=0000000000000000000000000000000000000000
+FULL=0; REFS=0
+while read lref lsha rref rsha; do
+  [ "$lsha" = "$NULL" ] && continue
+  REFS=1
+  if [ "$rsha" = "$NULL" ]; then rsha=$(git merge-base "$lsha" origin/main 2>/dev/null) || { FULL=1; continue; }; fi
+  FILES=$(git diff --name-only "$rsha" "$lsha" 2>/dev/null) || { FULL=1; continue; }
+  if [ -n "$FILES" ] && printf '%s\n' "$FILES" | grep -qvE '^(docs/|\.githooks/)|\.md$'; then FULL=1; fi
+done
+[ $REFS = 1 ] || FULL=1
+if [ $FULL = 0 ]; then
+  APPB=$(sed -n "s/^var BUILD = '\([^']*\)'.*/\1/p" index.html | head -1)
+  if [ -f ../getfit-sync/src/index.js ]; then
+    SRVB=$(sed -n "s/^const APP_BUILD = '\([^']*\)'.*/\1/p" ../getfit-sync/src/index.js | head -1)
+    if [ "$APPB" != "$SRVB" ]; then
+      echo "  ✗ МЕТКИ СБОРКИ РАЗНЫЕ: приложение «$APPB», воркер «$SRVB». Меняются вместе."
+      echo "pre-push: красное — push остановлен."; exit 1
+    fi
+  fi
+  echo "pre-push: меняются только тексты (*.md, docs/, .githooks/) — наборы приложения не гоняю. Метка сборки $APPB сверена."
+  exit 0
+fi
 echo "pre-push: проверки приложения…"
 if sh tg/run.sh > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
