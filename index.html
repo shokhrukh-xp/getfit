@@ -9392,7 +9392,12 @@ function syncPush(path, body){
     }
     if(p.indexOf('state/')===0){
       var key=p.slice(6);
-      if(SETTINGS_KEYS.indexOf(key)>=0)return Promise.resolve().then(function(){return settingsSave(key,body);});
+      /* 20.10: часть вызовов («отдай своё» в cloudPull, prof, hurt, me) шлёт
+         и забывает. Отказ сервера в них всплывал необработанным, reportErr
+         писал в строку «Тренировки» «Сбой — promise: Нет подтверждения
+         сервера.» (на стенде — красный test-telo-nedelya под нагрузкой). Пустой catch только снимает этот шум: кто ждёт
+         ответа (сохранитьСостояние), отказ получает, повтор идёт своим таймером */
+      if(SETTINGS_KEYS.indexOf(key)>=0){var sp=Promise.resolve().then(function(){return settingsSave(key,body);});sp.catch(function(){});return sp;}
       return syncPost('/s',{uid:uid,key:key,data:body}).then(function(res){
         if(uid!==syncUid())return res;
         if(res&&res.ok){markSet(key,+res.updated||Date.now());dirtySet(key,false);}else dirtySet(key,true);
