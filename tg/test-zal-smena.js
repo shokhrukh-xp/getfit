@@ -39,6 +39,14 @@ const ЖУРНАЛ = [з(1, 'A2'), з(45, 'A1')];
 const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, гантели, обычное)', e: 'Dumbbell One-Arm Triceps Extension',
   i: 'Dumbbell_One-Arm_Triceps_Extension', m: 'triceps', p: '', sets: 3, reps: '8–12', rest: 90, cues: [], id: 't1' }] };
 
+/* 5. присед и жим ногами растят приводящие и ягодицы, а не бицепс бедра
+   (МРТ: Kubo 2019, Plotkin 2023) — разметка каталога это учитывает */
+{ const CAT = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'catalog.json'), 'utf8'));
+  const пр = CAT.ex.filter(e => e.m === 'quadriceps' && e.c === 'strength' && /squat|leg press/i.test(e.e));
+  дано(пр.every(e => !(e.sm || []).includes('hamstrings')), 'у приседов и жимов ногами бицепс бедра не вспомогательная: ' + пр.filter(e => (e.sm || []).includes('hamstrings')).map(e => e.i).slice(0, 3).join(', '));
+  const fs = пр.find(e => e.i === 'Barbell_Full_Squat');
+  дано(!!fs && fs.sm.includes('adductors') && fs.sm.includes('glutes'), 'глубокий присед — приводящие и ягодицы: ' + (fs && fs.sm.join(','))); }
+
 (async () => {
   const br = await chromium.launch();
   const page = await br.newPage({ viewport: { width: 390, height: 1400 } });
