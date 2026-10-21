@@ -4441,7 +4441,7 @@ function rirNow(){
 function repsOf(e, dk){ return (typeof repsTime==='function') ? repsTime(e.reps, e) : e.reps; }
 function allDays(){ return PROF.heavy.concat(PROF.lightDays); }
 
-function applyProfile(p, silent){
+function applyProfile(p, silent, сбросДня){
   if(!PROFILES[p]) p='shp';
   var сменаПрограммы = !!(profile && profile!==p);
   if(сменаПрограммы){ HIST=null; histLoading=null; }   /* история другой программы */
@@ -4474,7 +4474,10 @@ function applyProfile(p, silent){
      пустоту: EXTRA на тот момент ещё не загружен. */
   try{ var _чист=0; Object.keys(DAYS).forEach(function(k){ _чист+=чиститьДобавленные(k); }); if(_чист) saveSubs(); }catch(e){}
   lastDone = get('lastdone', null);
-  var pick = get('pick_'+TODAY, null);
+  /* 21.10 (ревью Codex R1): после явной смены программы сегодняшний выбор
+     дня был про прежнюю — его не держим, день считает очередь заново */
+  if(сбросДня) set('pick_'+TODAY, null);
+  var pick = сбросДня ? null : get('pick_'+TODAY, null);
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
   if(!DAYS[day]) day = CYCLE[0];
   gset('profile', p);
@@ -5973,7 +5976,11 @@ function choose(p, новая){
   if(firstRun && !gget('startdate', null)) gset('startdate', TODAY);
   firstRun=false;
   wzSaveMe();
-  applyProfile(p);
+  /* 21.10 (ревью Codex R1): ch должен быть на месте ДО расчёта дня — иначе
+     очередь новой программы ведёт вчерашнее занятие прежней */
+  var чСмены = сменил ? new Date().toISOString() : ((прежУк && прежУк.ch) || null);
+  if(сменил){ try{ mSet(PROFKEY, JSON.stringify(Object.assign({}, прежУк||{}, {p:p, ch:чСмены}))); }catch(e){} }
+  applyProfile(p, false, сменил);
   /* дни недели человек отметил сам — они важнее дней, зашитых в программу */
   if(WIZ.touched){ GYM_DAYS=schedNorm(wizDays().reduce(function(o,d){ o[d]=1; return o; },{}));
     saveSched(); renderDayseg(); renderDayHead(); renderTodaybar(); }
@@ -5981,7 +5988,7 @@ function choose(p, новая){
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
      иначе на новом устройстве его негде было бы искать */
   var ук={p:p, at:new Date().toISOString(), start: gget('startdate', null),
-          ch: сменил ? new Date().toISOString() : ((прежУк && прежУк.ch) || null),
+          ch: чСмены,
           tg: TGUSER ? {id:TGUSER.id, n:whoName(), u:TGUSER.username||''} : null};
   if(DB){ csSet(PROFKEY, JSON.stringify(ук)).catch(function(){});
     /* и в базу: CloudStorage на части устройств глухой, а знать, какая
@@ -9585,12 +9592,15 @@ function adoptState(key, b){
          устройство, где нажали, а не сервер в момент доставки */
       var свой=null; try{ свой=JSON.parse(mGet(PROFKEY)||'null'); }catch(e){}
       if(свой && свой.p && свой.at && b.at && String(b.at) <= String(свой.at)) return false;
+      /* 21.10 (ревью Codex R1): смена программы на другом устройстве — новый ch.
+         Обычный повторный синк (тот же ch) выбор дня не трогает. */
+      var новаяСмена = !!(b.ch && (!свой || !свой.ch || String(b.ch) > String(свой.ch)));
       if(b.p) csSet(PROFKEY, JSON.stringify(b)).catch(function(){});
       /* дата старта — самая ранняя из известных: с неё считаются недели и фаза,
          и устройство, где она сбилась на сегодня, иначе навсегда в первой */
       var сд=gget('startdate', null);
       if(b.start && (!сд || String(b.start) < String(сд))) gset('startdate', b.start);
-      if(b.p && PROFILES[b.p]){ hidePicker(); if(b.p!==profile) applyProfile(b.p); return true; }
+      if(b.p && PROFILES[b.p]){ hidePicker(); if(b.p!==profile || новаяСмена) applyProfile(b.p, false, новаяСмена); return true; }
       return !!b.start;
     }
     if(key==='me'){
@@ -12252,7 +12262,9 @@ function снятьПравкиПрошлой(keys){
   }); });
   Object.keys(EXTRA||{}).forEach(function(d){ if(свой(d)){ n+=(EXTRA[d]||[]).length; delete EXTRA[d]; } });
   Object.keys(PAIRS||{}).forEach(function(d){ if(свой(d)){ n+=(PAIRS[d]||[]).length; delete PAIRS[d]; } });
-  Object.keys(ORD||{}).forEach(function(d){ if(свой(d)) delete ORD[d]; });
+  /* ревью Codex R2: порядок — тоже правка; без счёта saveSubs не звался,
+     и applyProfile перечитывал старый ORD с диска */
+  Object.keys(ORD||{}).forEach(function(d){ if(свой(d)){ delete ORD[d]; n++; } });
   return n;
 }
 function aiApply(целиком){

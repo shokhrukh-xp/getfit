@@ -39,26 +39,32 @@ const ЖУРНАЛ = [з(1, 'A2'), з(45, 'A1')];
 const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, гантели, обычное)', e: 'Dumbbell One-Arm Triceps Extension',
   i: 'Dumbbell_One-Arm_Triceps_Extension', m: 'triceps', p: '', sets: 3, reps: '8–12', rest: 90, cues: [], id: 't1' }] };
 
-/* 5. присед и жим ногами растят приводящие и ягодицы, а не бицепс бедра
-   (МРТ: Kubo 2019, Plotkin 2023) — разметка каталога это учитывает */
+/* 5. Разметка каталога — ЭВРИСТИКА, а не доказанный вклад в рост. По МРТ
+   обычный двусторонний присед растит приводящие и ягодицы, а бицепс бедра —
+   нет (Kubo 2019, Plotkin 2023); жим ногами — тот же механизм. Одноногие,
+   сплит-, прыжковые, сисси и толчок не изучены — их разметку не трогали
+   (ревью Codex 21.10). Проверяем только опорные двусторонние строки. */
 { const CAT = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', 'catalog.json'), 'utf8'));
-  const пр = CAT.ex.filter(e => e.m === 'quadriceps' && e.c === 'strength' && /squat|leg press/i.test(e.e));
-  дано(пр.every(e => !(e.sm || []).includes('hamstrings')), 'у приседов и жимов ногами бицепс бедра не вспомогательная: ' + пр.filter(e => (e.sm || []).includes('hamstrings')).map(e => e.i).slice(0, 3).join(', '));
-  const fs = пр.find(e => e.i === 'Barbell_Full_Squat');
-  дано(!!fs && fs.sm.includes('adductors') && fs.sm.includes('glutes'), 'глубокий присед — приводящие и ягодицы: ' + (fs && fs.sm.join(','))); }
+  const по = id => CAT.ex.find(e => e.i === id) || {};
+  ['Barbell_Full_Squat', 'Barbell_Squat', 'Front_Barbell_Squat', 'Leg_Press', 'Hack_Squat'].forEach(id => {
+    const sm = по(id).sm || [];
+    дано(!sm.includes('hamstrings') && sm.includes('adductors'), id + ': приводящие, не бицепс бедра — ' + sm.join(','));
+  });
+  дано((по('Bulgarian_Split_Squat').sm || []).includes('hamstrings'), 'болгарский сплит-присед не трогали: ' + (по('Bulgarian_Split_Squat').sm || []).join(',')); }
 
 (async () => {
   const br = await chromium.launch();
   const page = await br.newPage({ viewport: { width: 390, height: 1400 } });
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
-  /* программу сменили сегодня — так её помечает явный выбор (ch в указателе) */
+  /* 21.10, ревью Codex R1: программу меняли давно (ch 60 дней назад) — очередь
+     идёт от вчерашнего A2 к A3; после явной пересборки сегодня — сразу A1 */
   await page.addInitScript(() => { try {
-    const ук = JSON.stringify({ p: 'ai', at: new Date().toISOString(), start: null, ch: new Date().toISOString() });
+    const ук = JSON.stringify({ p: 'ai', at: new Date(Date.now() - 60 * 864e5).toISOString(), start: null, ch: new Date(Date.now() - 60 * 864e5).toISOString() });
     ['tgcs_app_profile', 'tgcs_@308687648_app_profile'].forEach(k => { if (!localStorage.getItem(k)) localStorage.setItem(k, ук); });
     localStorage.removeItem('shp_v1_startdate');
   } catch (e) {} });
   let перестроено = false;
-  const ош = await M.поднять(page, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, prog: ПРОГ, profile: 'ai', me: ME,
+  const ош = await M.поднять(page, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME,
     hist: ЖУРНАЛ, layer: { extra: ЛИШНЕЕ },
     onCoach: () => { перестроено = true;
       return { ok: true, reply: 'Пересобрал программу целиком.',
@@ -72,9 +78,10 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   const sd = await page.evaluate(() => localStorage.getItem('shp_v1_startdate'));
   дано(sd === JSON.stringify(M_Д45()), 'дата старта взята из журнала: ' + sd);
 
-  /* 2. очередь — с Дня 1, вчерашний день прошлой программы её не ведёт */
+  /* 2. без смены программы очередь идёт как шла: вчера A2 — сегодня A3 */
   const открыт = await page.$eval('#dayseg button[aria-pressed="true"]', b => b.dataset.day).catch(() => '');
-  дано(открыт === 'A1', 'открыт День 1, а не следующий за вчерашним «днём 2» прошлой программы: ' + открыт);
+  дано(открыт === 'A3', 'программа не менялась — после вчерашнего A2 открыт A3: ' + открыт);
+  await page.click('#dayseg button[data-day="A1"]'); await page.waitForTimeout(500);
 
   /* 4. добавленное руками в прошлой программе пока на месте (программа пришла не выбором) */
   const день1 = () => page.$eval('#list', e => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
@@ -92,10 +99,75 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   await page.fill('#ctext', 'Пересобери программу'); await page.click('#csend'); await page.waitForTimeout(1800);
   дано(перестроено, 'просьба ушла тренеру');
   await page.evaluate(() => { const m = document.getElementById('coachm'); if (m) m.classList.remove('show'); });
+  /* выбран был A2 (кикбэк) — после явной смены программы открыт A1, без перезагрузки */
+  const после = await page.$eval('#dayseg button[aria-pressed="true"]', b => b.dataset.day).catch(() => '');
+  дано(после === 'A1', 'после пересборки сразу открыт День 1, а не выбранный до неё A2: ' + после);
+  const ук = await page.evaluate(() => { for (const k of ['tgcs_app_profile', 'tgcs_@308687648_app_profile']) { const v = localStorage.getItem(k); if (v) return JSON.parse(v); } return null; });
+  дано(!!ук && ук.ch && ук.ch.slice(0, 10) === new Date().toISOString().slice(0, 10), 'в указателе — сегодняшняя смена: ' + (ук && ук.ch));
   await page.click('#dayseg button[data-day="A1"]').catch(() => {}); await page.waitForTimeout(700);
   дано(!/одной рукой/.test(await день1()), 'после новой программы второго трицепса из прошлой в Дне 1 нет');
   const extra = await page.evaluate(() => localStorage.getItem('shp_v1_ai_extra'));
   дано(!extra || extra === '{}', 'и в сохранённых правках его нет: ' + extra);
+
+
+  /* после перезагрузки — тот же День 1, а не прежний выбор */
+  await page.reload(); await page.waitForTimeout(2800);
+  const послеПерезагрузки = await page.$eval('#dayseg button[aria-pressed="true"]', b => b.dataset.day).catch(() => '');
+  дано(послеПерезагрузки === 'A1', 'и после перезагрузки — День 1: ' + послеПерезагрузки);
+
+  /* 6. ревью Codex R2: единственная правка — свой порядок. Пересборка его
+     снимает, и это сохраняется (раньше saveSubs не звался) */
+  const p2 = await br.newPage({ viewport: { width: 390, height: 1400 } });
+  await p2.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+  const ош2 = await M.поднять(p2, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME,
+    hist: ЖУРНАЛ, layer: { ord: { A1: ['A1:2', 'A1:1', 'A1:0'] } },
+    onCoach: () => ({ ok: true, reply: 'Пересобрал программу целиком.',
+      rebuild: { prog: JSON.parse(JSON.stringify(ПРОГ)), at: Date.now() + 1, why: 'новый блок' } }) });
+  дано(ош2.length === 0, 'вторая страница поднялась без ошибок ' + (ош2[0] || ''));
+  await p2.click('#dayseg button[data-day="A1"]').catch(() => {}); await p2.waitForTimeout(500);
+  const первое = () => p2.$eval('#list .exrow', e => e.textContent.replace(/\s+/g, ' ')).catch(() => '');
+  дано(/канат/.test(await первое()), 'до пересборки свой порядок: первым трицепс — ' + (await первое()).slice(0, 40));
+  await p2.click('#coachnav'); await p2.waitForTimeout(600);
+  await p2.fill('#ctext', 'Пересобери программу'); await p2.click('#csend'); await p2.waitForTimeout(1800);
+  await p2.evaluate(() => { const m = document.getElementById('coachm'); if (m) m.classList.remove('show'); });
+  const ord = await p2.evaluate(() => localStorage.getItem('shp_v1_ai_ord'));
+  дано(!ord || ord === '{}', 'снятый порядок сохранён: ' + ord);
+  await p2.reload(); await p2.waitForTimeout(2800);
+  await p2.click('#dayseg button[data-day="A1"]').catch(() => {}); await p2.waitForTimeout(500);
+  дано(/Подтягивания/.test(await первое()), 'после перезагрузки — порядок программы: ' + (await первое()).slice(0, 40));
+
+  /* 7. ревью Codex R1, второе устройство: здесь сегодня выбран A2, из облака
+     приходит указатель со СВЕЖЕЙ сменой — выбор снят, открыт День 1.
+     Тот же ch при повторном синке выбор не трогает. */
+  const второе = async (chОблака, подпись, ждём) => {
+    global.__allHits = 0;
+    const pg = await br.newPage({ viewport: { width: 390, height: 1400 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    const давно = new Date(Date.now() - 60 * 864e5).toISOString();
+    await pg.addInitScript(([д, сег]) => { try {
+      const ук = JSON.stringify({ p: 'ai', at: д, start: null, ch: д });
+      ['tgcs_app_profile', 'tgcs_@308687648_app_profile'].forEach(k => localStorage.setItem(k, ук));
+      localStorage.setItem('shp_v1_ai_pick_' + сег, JSON.stringify('A2'));
+    } catch (e) {} }, [давно, M.TODAY]);
+    const облако = { p: 'ai', at: new Date().toISOString(), start: null, ch: chОблака === 'давно' ? давно : new Date().toISOString() };
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'gym', wait: 4200, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      handleRoute: async route => { const u = new URL(route.request().url());
+        if (u.pathname !== '/all') return false;
+        global.__allHits = (global.__allHits || 0) + 1;
+        await route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ state: [{ key: 'prof', updated: Date.now(), data: облако }], workouts: [], meals: [], measures: [] }) });
+        return true; } });
+    дано(о.length === 0, подпись + ': страница поднялась без ошибок ' + (о[0] || ''));
+    for (let i = 0; i < 20 && !(global.__allHits > 0); i++) await pg.waitForTimeout(500);
+    await pg.waitForTimeout(1200);
+    дано(global.__allHits > 0, подпись + ': снимок облака забран');
+    const д = await pg.$eval('#dayseg button[aria-pressed="true"]', b => b.dataset.day).catch(() => '');
+    дано(д === ждём, подпись + ': открыт ' + д + ', ждали ' + ждём);
+    if (д !== ждём) console.log('    отладка: /all ' + (global.__allHits || 0) + ', указатель ' + await pg.evaluate(() => Object.keys(localStorage).filter(k => /app_profile|pick_/.test(k)).map(k => k + '=' + localStorage.getItem(k)).join(' | ')));
+    await pg.close();
+  };
+  await второе('сейчас', 'второе устройство, смена пришла из облака', 'A1');
+  await второе('давно', 'второе устройство, повторный синк без смены', 'A2');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
