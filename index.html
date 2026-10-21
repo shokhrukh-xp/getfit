@@ -10435,13 +10435,14 @@ function volumeWeek(){
    равно должна вести на этот слот, иначе «какую кнопку? не вижу её». */
 /* 21.10: правка тренера знает день (day = номер дня программы). Без него
    «махи — 4 подхода» вставали только в первый день с таким упражнением, а
-   тренер отвечал «в первый и третий». Есть день — ищем в нём; не нашли там —
-   как раньше, по всей программе. */
+   тренер отвечал «в первый и третий». Есть день — ищем ТОЛЬКО в нём: нет там
+   упражнения или такого дня — правка не встаёт никуда (ревью Codex R1), а не
+   в чужой слот. Без дня (старые правки) — как раньше, по всей программе. */
 function findEx(name, dayN){
-  var q=String(name||'').toLowerCase().trim(), hit=null, hitBase=null;
+  var q=String(name||'').toLowerCase().trim();
   if(!q) return null;
-  var дк=(+dayN>0) ? CYCLE[+dayN-1] : null;
-  if(дк){ var вДне=findExIn(q, [дк]); if(вДне) return вДне; }
+  var н=Math.round(+dayN);
+  if(н>=1){ var дк=CYCLE[н-1]; return дк ? findExIn(q, [дк]) : null; }
   return findExIn(q, CYCLE);
 }
 function findExIn(q, дни){
@@ -17284,11 +17285,11 @@ function applyAuto(list, opts){
       var can=recoCan(c); if(!can){ ids.push(c.id); return; }   /* упражнения уже нет в программе — снимаем */
       var hit=can.hit;
       if(can.kind==='sets'){
-        ADJ[(hit.e && hit.e.k) || subKey(hit.dk, hit.di)]=Math.max(1, Math.min(8, Math.round(+c.sets)));
+        ADJ[(hit.e && hit.e.k) || subKey(hit.dk, hit.di)]=Math.max(1, Math.min(8, Math.round(+c.sets))); c.applied=true;
         done.push(hit.e.n+' — '+Math.round(+c.sets)+' '+plural(Math.round(+c.sets),['подход','подхода','подходов'])); ids.push(c.id); return;
       }
       var найдено=recoTarget(c, hit);
-      if(найдено){ SUBS[(hit.e && hit.e.k) || subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i, m:найдено.m||'', sm:(найдено.sm||[]).slice()}; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
+      if(найдено){ SUBS[(hit.e && hit.e.k) || subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i, m:найдено.m||'', sm:(найдено.sm||[]).slice()}; c.applied=true; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
       else notFound.push(c);
     });
     if(ids.length){
@@ -17391,14 +17392,15 @@ function takeChanges(d){
        «спрашивает» больше нет ни у кого: правка встаёт сейчас, а карточка
        показывает картинками, что именно встало. Раньше здесь была кнопка при
        словах «кнопка не нужна» — два места спорили. */
-    if((c.what==='swap'||c.what==='sets') && recoCan(c) && (c.what!=='swap' || recoPick(c, recoCan(c).hit))){
-      applyAuto([c], {quiet:true});
-      c.applied=true;
-    }
-    ещё.forEach(function(x){ if(recoCan(x) && (x.what!=='swap' || recoPick(x, recoCan(x).hit))){ applyAuto([x], {quiet:true}); x.applied=true; } });
-    RECO2=c; gset('coach_reco', c); renderReco2();
+    /* ревью Codex R3: весь пакет — одним applyAuto и после каталога, если в
+       нём есть хоть одна замена; «встало» — только по результату */
+    var пакет=[c].concat(ещё).filter(function(x){
+      return (x.what==='swap'||x.what==='sets') && recoCan(x) && (x.what!=='swap' || recoPick(x, recoCan(x).hit)); });
+    var шаг = пакет.length ? applyAuto(пакет, {quiet:true}) : Promise.resolve([]);
+    шаг.catch(function(){}).then(function(){ RECO2=c; gset('coach_reco', c); renderReco2(); });   /* applied ставит сам applyAuto */
   };
-  if(c.what==='swap' && !CAT){ loadCatalog().then(показать).catch(показать); } else показать();
+  var нуженКаталог=[c].concat(ещё).some(function(x){ return x.what==='swap'; });
+  if(нуженКаталог && !CAT){ loadCatalog().then(показать).catch(показать); } else показать();
 }
 
 function coachSend(text, image){

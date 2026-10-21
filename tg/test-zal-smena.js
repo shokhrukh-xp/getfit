@@ -224,6 +224,45 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
     дано(/5 × /.test(в1) && /5 × /.test(в3), 'махи стали по 5 подходов и в Дне 1, и в Дне 3: «' + в1.slice(0, 50) + '» / «' + в3.slice(0, 50) + '»');
     await pg.close(); }
 
+  /* 10б. ревью Codex R1: правка с днём, где упражнения нет (день 2) или
+     дня нет (7), никуда не встаёт; правка с верным днём — встаёт */
+  { const pg = await br.newPage({ viewport: { width: 390, height: 1400 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    const махи = 'Подъём через сторону (гантели, сбоку)', жим = 'Жим (наклон вверх, гантели)';
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      onCoach: () => ({ ok: true, reply: 'Ставлю.',
+        changes: [{ what: 'sets', ex: махи, sets: 6, day: 2, text: махи + ' (день 2): 6', why: 'тест' },
+                  { what: 'sets', ex: махи, sets: 7, day: 7, text: махи + ' (день 7): 7', why: 'тест' },
+                  { what: 'sets', ex: 'Подтягивания (обычные)', sets: 5, day: 1, text: 'Подтягивания: 5', why: 'тест' }] }) });
+    дано(о.length === 0, 'отрицательные дни: страница поднялась без ошибок ' + (о[0] || ''));
+    await pg.click('#coachnav'); await pg.waitForTimeout(600);
+    await pg.fill('#ctext', 'Махи — 6 подходов в дне 2'); await pg.click('#csend'); await pg.waitForTimeout(1500);
+    await pg.evaluate(() => { const m = document.getElementById('coachm'); if (m) m.classList.remove('show'); });
+    const adj = JSON.parse(await pg.evaluate(() => localStorage.getItem('shp_v1_ai_adj')) || '{}');
+    дано(adj['A1:1'] == null, 'махи из Дня 1 не тронуты правками для дней 2 и 7: ' + JSON.stringify(adj));
+    дано(adj['A1:0'] === 5, 'правка с верным днём встала: подтягивания 5 — ' + JSON.stringify(adj));
+    await pg.close(); }
+
+  /* 10в. ревью Codex R3: «подходы + замена», каталог ещё не пришёл — встают обе */
+  { const pg = await br.newPage({ viewport: { width: 390, height: 1400 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    let отдать = null; const каталогЖдёт = new Promise(r => { отдать = r; });
+    await pg.route('**/catalog.json*', async r => { await каталогЖдёт; r.continue().catch(() => {}); });
+    const махи = 'Подъём через сторону (гантели, сбоку)', жим = 'Жим (наклон вверх, гантели)';
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      onCoach: () => ({ ok: true, reply: 'Ставлю.', changes: [
+        { what: 'sets', ex: махи, sets: 5, day: 1, text: махи + ' (день 1): 5', why: 'тест' },
+        { what: 'swap', ex: жим, to: махи, toId: 'Side_Lateral_Raise', toName: махи, day: 3, text: 'Заменить «' + жим + '» на ' + махи, why: 'тест' }] }) });
+    дано(о.length === 0, 'пакет при медленном каталоге: страница поднялась без ошибок ' + (о[0] || ''));
+    await pg.click('#coachnav'); await pg.waitForTimeout(600);
+    await pg.fill('#ctext', 'Махи 5 подходов, а жим в третьем дне замени на махи'); await pg.click('#csend'); await pg.waitForTimeout(1500);
+    отдать(); await pg.waitForTimeout(2500);
+    const сл = await pg.evaluate(() => ({ adj: JSON.parse(localStorage.getItem('shp_v1_ai_adj') || '{}'), subs: JSON.parse(localStorage.getItem('shp_v1_ai_subs') || '{}') }));
+    дано(сл.adj['A1:1'] === 5, 'подходы встали: ' + JSON.stringify(сл.adj));
+    дано(сл.subs['A3:1'] && сл.subs['A3:1'].i === 'Side_Lateral_Raise', 'и замена в Дне 3 встала, хотя каталог пришёл позже: ' + JSON.stringify(сл.subs));
+    await pg.close(); }
+
+
   /* 11. фазы своей программы — свои описания, без чисел готовой «friend» */
   { const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
     дано(/phases:AI_PHASES/.test(src) && !/phases:PROFILES\.friend\.phases/.test(src), 'своя программа берёт свои фазы');
