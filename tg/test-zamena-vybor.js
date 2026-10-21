@@ -26,16 +26,18 @@ const RECO = { id: 'r-zam-1', what: 'swap', ex: МАХИ, day: 1, to: 'махи 
 const ME = { sex: 'm', age: 38, ht: 178, bw: 86, goal: 'muscle', wt: 'keep', gym: 'muscle', level: 'mid', place: 'gym', only: 'all', lim: [], eq: [] };
 
 async function открыть(br, o) {
+  o = o || {};
   const page = await br.newPage({ viewport: { width: 390, height: 900 } });
   /* кадры каталога — с CDN; на стенде отдаём крошечную картинку, чтобы видеть, что они есть */
   const ПИКС = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
   await page.route('**://cdn.jsdelivr.net/**', r => r.fulfill({ status: 200, contentType: 'image/png', body: ПИКС }).catch(() => {}));
   const reco = [];
   page.on('request', r => { if (/\/reco$/.test(r.url()) && r.method() === 'POST') reco.push(r.postData() || ''); });
-  if (o && o.безКаталога) await page.route('**/catalog.json*', r => r.abort().catch(() => {}));
+  if (o.безКаталога) await page.route('**/catalog.json*', r => r.abort().catch(() => {}));
+  if (o.пустойКаталог) await page.route('**/catalog.json*', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ex":[]}' }));
   /* 👎 на одном из похожих — его в вариантах быть не должно */
   await page.addInitScript(() => { try { localStorage.setItem('shp_v1_ai_nope', JSON.stringify({ 'One-Arm_Side_Laterals': { n: 'x', at: 1, m: 'shoulders' } })); } catch (e) {} });
-  const ош = await M.поднять(page, { page: 'gym', wait: 2600, prog: ПРОГ, profile: 'ai', me: ME, reco: RECO });
+  const ош = await M.поднять(page, { page: 'gym', wait: 2600, prog: o.prog || ПРОГ, profile: 'ai', me: ME, reco: o.reco || RECO });
   return { page, ош, reco };
 }
 const слот = page => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('shp_v1_ai_subs') || '{}'); } catch (e) { return {}; } });
@@ -105,6 +107,32 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   await page.click('#catbody [data-catretry]');
   await page.waitForTimeout(1500);
   дано((await page.$$('#catbody [data-pick]')).length > 3, 'после «Повторить» — список');
+
+  await page.close();
+
+  /* ── 5. совет тренера уже стоит в программе (день 2) — первым его не ставим ── */
+  ({ page } = await открыть(br, { reco: Object.assign({}, RECO, { id: 'r-zam-2', toId: 'Seated_Side_Lateral_Raise', to: 'подъём через сторону сидя' }) }));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+  const ид2 = await page.$$eval('#coachreco .ropt', bs => bs.map(b => b.dataset.ci));
+  дано(ид2.length >= 4 && !ид2.includes('Seated_Side_Lateral_Raise'), 'упражнение из другого дня не предлагается: ' + ид2.join(', '));
+  await page.close();
+
+  /* ── 5б. своё упражнение без id, но с точным именем каталога — тоже «в программе» ── */
+  const ПРОГ2 = JSON.parse(JSON.stringify(ПРОГ));
+  ПРОГ2.days[1].ex.push(Object.assign(у('', 'Подъём через сторону (сидя, блок)', 'shoulders', 'cable'), { id: undefined }));
+  ({ page } = await открыть(br, { prog: ПРОГ2, reco: Object.assign({}, RECO, { id: 'r-zam-3', toId: 'One-Arm_Incline_Lateral_Raise' }) }));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+  const ид3 = await page.$$eval('#coachreco .ropt', bs => bs.map(b => b.dataset.ci));
+  дано(ид3.length >= 4 && !ид3.includes('Cable_Seated_Lateral_Raise'), 'своё без id с именем каталога не предлагается: ' + ид3.join(', '));
+  await page.close();
+
+  /* ── 6. пустой ответ каталога — сбой, а не «загружено»: повтор идёт в сеть ── */
+  ({ page } = await открыть(br, { пустойКаталог: true }));
+  await page.waitForTimeout(2000);
+  await page.unroute('**/catalog.json*');
+  await page.click('#coachreco button[data-reco2="cat"]');
+  await page.waitForTimeout(2000);
+  дано((await page.$$('#catbody [data-pick]')).length > 3, 'после пустого ответа каталог загрузился заново');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

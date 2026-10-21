@@ -4561,7 +4561,7 @@ function loadCatalog(){
   var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD);
   var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); }); };
   catLoading = раз().catch(function(){ return new Promise(function(ok){ setTimeout(ok, 1200); }).then(раз); })
-    .then(function(j){ if(!j || !j.ex) throw new Error('catalog empty'); CAT=j; catLoading=false; return j; })
+    .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); CAT=j; catLoading=false; return j; })
     .catch(function(e){ catLoading=false; throw e; });
   return catLoading;
 }
@@ -17239,12 +17239,17 @@ function recoTargetHtml(c, can){
 function recoВарианты(c, can){
   if(!CAT || !CAT.ex || !can || can.kind!=='swap') return [];
   var hit=can.hit, out=[], взято={};
-  var вПрограмме={};
-  (CYCLE||[]).forEach(function(dk){ exList(dk).forEach(function(x){ var i=x.cat||x.id; if(i) вПрограмме[i]=1; }); });
+  /* что уже в программе: по id каталога, а у своих упражнений без id — по
+     точному имени, русскому или английскому (ревью Codex R1) */
+  var вПрограмме={}, имена={};
+  var взятьИмя=function(x){ [x.n, x.en, x.e].forEach(function(n){ n=noYo(n).trim(); if(n) имена[n]=1; }); };
+  (CYCLE||[]).forEach(function(dk){ exList(dk).forEach(function(x){ var i=x.cat||x.id; if(i) вПрограмме[i]=1; взятьИмя(x); }); });
   var base=((DAYS[hit.dk]||{}).ex||[])[hit.di];
-  if(base && base.id) вПрограмме[base.id]=1;
+  if(base){ if(base.id) вПрограмме[base.id]=1; взятьИмя(base); }
+  var занято=function(x){ return !!(вПрограмме[x.i] || имена[noYo(x.n).trim()] || имена[noYo(x.e).trim()]); };
   var перв=recoPick(c, hit);
-  if(перв && !NOPE[перв.i]){ out.push(перв); взято[перв.i]=1; }
+  /* совет тренера тоже не берём, если он уже стоит в программе (ревью Codex R1) */
+  if(перв && !NOPE[перв.i] && !занято(перв)){ out.push(перв); взято[перв.i]=1; }
   var м=мышцаЕго(hit.e);
   /* похожесть: та же основная мышца, тот же характер (изоляция/база), то же
      движение по первому слову («Подъём через сторону» к подъёмам, не к жимам),
@@ -17264,7 +17269,7 @@ function recoВарианты(c, can){
     s+=образцы.some(function(o){ return o.q && o.q===x.q; }) ? 0 : 1;
     return s;
   };
-  var все=кандидаты(hit.e, hit.dk).filter(function(x){ return !взято[x.i] && !вПрограмме[x.i]; });
+  var все=кандидаты(hit.e, hit.dk).filter(function(x){ return !взято[x.i] && !занято(x); });
   var по=все.map(function(x, i){ return {x:x, s:счёт(x), i:i}; }).sort(function(a,b){ return a.s-b.s || a.i-b.i; });
   по.some(function(o){ if(out.length>=5) return true; out.push(o.x); взято[o.x.i]=1; return false; });
   return out;
