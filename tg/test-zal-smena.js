@@ -65,7 +65,7 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   } catch (e) {} });
   let перестроено = false;
   const ош = await M.поднять(page, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME,
-    hist: ЖУРНАЛ, layer: { extra: ЛИШНЕЕ },
+    hist: ЖУРНАЛ, layer: { extra: ЛИШНЕЕ, adj: { 'A1:0': 2 } },
     onCoach: () => { перестроено = true;
       return { ok: true, reply: 'Пересобрал программу целиком.',
         rebuild: { prog: JSON.parse(JSON.stringify(ПРОГ)), at: Date.now(), why: 'новый блок' } }; } });
@@ -108,6 +108,11 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   дано(!/одной рукой/.test(await день1()), 'после новой программы второго трицепса из прошлой в Дне 1 нет');
   const extra = await page.evaluate(() => localStorage.getItem('shp_v1_ai_extra'));
   дано(!extra || extra === '{}', 'и в сохранённых правках его нет: ' + extra);
+  /* 21.10, его выбор «Снимать»: ручные подходы прошлой программы тоже сняты */
+  const adj = await page.evaluate(() => localStorage.getItem('shp_v1_ai_adj'));
+  дано(!adj || adj === '{}', 'ручное число подходов прошлой программы снято: ' + adj);
+  const подт = await page.evaluate(() => { const r = [...document.querySelectorAll('#list .exrow')].find(x => /Подтягивания/.test(x.textContent)); return r ? r.textContent.replace(/\s+/g, ' ') : ''; });
+  дано(/4 × 6–8|4 × 10–12/.test(подт), 'подтягивания — подходы новой программы (4), а не прежние 2: ' + подт.slice(0, 70));
 
 
   /* после перезагрузки — тот же День 1, а не прежний выбор */
@@ -197,6 +202,33 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   const махи = { n: 'Подъём через сторону (гантели, сбоку)', e: 'Side Lateral Raise', i: 'Side_Lateral_Raise' };
   const безМ = await планПлечи(махи), сМ = await планПлечи(Object.assign({ m: 'shoulders', sm: [] }, махи));
   дано(сМ > безМ, 'без каталога махи-замена с сохранённой мышцей остаются в плане на плечи: ' + сМ + ' против ' + безМ + ' в старом виде');
+
+  /* 10. правка тренера с днём: махи в Дне 1 и в Дне 3 — по 5 подходов.
+     Раньше правка без дня вставала только в первый день с таким именем. */
+  { const ДВА = JSON.parse(JSON.stringify(ПРОГ));
+    ДВА.days[2].ex.push(у('Side_Lateral_Raise', 'Подъём через сторону (гантели, сбоку)', 'Side Lateral Raise', 'shoulders', 'dumbbell', 'Средняя дельта', 3));
+    const pg = await br.newPage({ viewport: { width: 390, height: 1400 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    const махи = 'Подъём через сторону (гантели, сбоку)';
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ДВА, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      onCoach: () => ({ ok: true, reply: 'Ставлю по 5 подходов махам в первом и третьем днях.',
+        changes: [{ what: 'sets', ex: махи, sets: 5, day: 1, text: махи + ' (день 1): 5 подходов', why: 'по просьбе' },
+                  { what: 'sets', ex: махи, sets: 5, day: 3, text: махи + ' (день 3): 5 подходов', why: 'по просьбе' }] }) });
+    дано(о.length === 0, 'правка по дням: страница поднялась без ошибок ' + (о[0] || ''));
+    await pg.click('#coachnav'); await pg.waitForTimeout(600);
+    await pg.fill('#ctext', 'Махи в Дне 1 и в Дне 3 — по 5 подходов'); await pg.click('#csend'); await pg.waitForTimeout(1800);
+    await pg.evaluate(() => { const m = document.getElementById('coachm'); if (m) m.classList.remove('show'); });
+    const махиВ = async дк => { await pg.click('#dayseg button[data-day="' + дк + '"]').catch(() => {}); await pg.waitForTimeout(600);
+      return pg.evaluate(() => { const r = [...document.querySelectorAll('#list .exrow')].find(x => /Подъём через сторону/.test(x.textContent)); return r ? r.textContent.replace(/\s+/g, ' ') : ''; }); };
+    const в1 = await махиВ('A1'), в3 = await махиВ('A3');
+    дано(/5 × /.test(в1) && /5 × /.test(в3), 'махи стали по 5 подходов и в Дне 1, и в Дне 3: «' + в1.slice(0, 50) + '» / «' + в3.slice(0, 50) + '»');
+    await pg.close(); }
+
+  /* 11. фазы своей программы — свои описания, без чисел готовой «friend» */
+  { const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8');
+    дано(/phases:AI_PHASES/.test(src) && !/phases:PROFILES\.friend\.phases/.test(src), 'своя программа берёт свои фазы');
+    const ai = src.slice(src.indexOf('var AI_PHASES='), src.indexOf('function installAiProg('));
+    дано(!/\d\s*×\s*\d/.test(ai), 'в описаниях фаз своей программы нет «N × повторы» чужой программы'); }
 
   await второе('сейчас', 'второе устройство, смена пришла из облака', 'A1');
   await второе('давно', 'второе устройство, повторный синк без смены', 'A2');

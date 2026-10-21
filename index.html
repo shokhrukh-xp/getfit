@@ -10433,11 +10433,21 @@ function volumeWeek(){
    тренер на сервере может знать программу без замен и назвать «Ягодичный
    мостик (штанга)», когда в слоте уже стоит гиперэкстензия, — кнопка всё
    равно должна вести на этот слот, иначе «какую кнопку? не вижу её». */
-function findEx(name){
+/* 21.10: правка тренера знает день (day = номер дня программы). Без него
+   «махи — 4 подхода» вставали только в первый день с таким упражнением, а
+   тренер отвечал «в первый и третий». Есть день — ищем в нём; не нашли там —
+   как раньше, по всей программе. */
+function findEx(name, dayN){
   var q=String(name||'').toLowerCase().trim(), hit=null, hitBase=null;
   if(!q) return null;
+  var дк=(+dayN>0) ? CYCLE[+dayN-1] : null;
+  if(дк){ var вДне=findExIn(q, [дк]); if(вДне) return вДне; }
+  return findExIn(q, CYCLE);
+}
+function findExIn(q, дни){
+  var hit=null, hitBase=null;
   var same=function(n){ n=String(n||'').toLowerCase(); return n && (n===q || n.indexOf(q)===0 || q.indexOf(n)===0); };
-  CYCLE.forEach(function(dk){
+  дни.forEach(function(dk){
     var base=(DAYS[dk]||{}).ex||[], list=exList(dk);
     list.forEach(function(e,di){ if(!hit && same(e.n)) hit={dk:dk, di:di, e:e}; });
     base.forEach(function(b,bi){
@@ -12026,6 +12036,18 @@ function сброситьСлоты(dk, былоEx, сталоEx){
   if(убрано) delete ORD[dk];                       /* порядок был про другие строки */
   return убрано;
 }
+/* 21.10: фазы своей программы. Недели, запас и сдвиг подходов — те же, что
+   были (взяты у готовой «friend»), но описания свои: там стояли «3 × 10–12»,
+   «4 × 6–10» — числа чужой программы, а подходы и повторы своей задаёт она
+   сама. */
+var AI_PHASES=[
+  {id:'f1', s:'Ф1', t:'Фаза 1 · Вход', ds:-1, rir:4, w:[1,4],
+   d:'<p><b>На подход меньше в каждом упражнении</b>, запас 4 повтора.</p><p>Первые недели — выучить движения и привыкнуть ходить по графику. Успех этой фазы — посещаемость, а не веса.</p>'},
+  {id:'f2', s:'Ф2', t:'Фаза 2 · Нагрузка', ds:0, rir:3, w:[5,8],
+   d:'<p><b>Полные подходы программы</b>, запас 3 повтора. Двойная прогрессия: дошёл до верхней границы повторов во всех подходах — добавляй вес.</p>'},
+  {id:'f3', s:'Ф3', t:'Фаза 3 · Уплотнение', ds:0, rir:2, w:[9,99],
+   d:'<p>Те же подходы, <b>запас 2 повтора</b> — ближе к отказу. Рост мышц тем больше, чем ближе к отказу заканчивается подход; упражнения при этом не меняются.</p>'}
+];
 function installAiProg(prog){
   if(!prog || !prog.days || !prog.days.length) return null;
   var keys=[], счищено=0;
@@ -12060,7 +12082,7 @@ function installAiProg(prog){
   }
   PROFILES.ai={ name:(gp.wt&&gp.gym) ? progName(gp.gym,gp.wt,keys.length) : (prog.name||'Моя программа'), goal:goalText(me)||'Собрана под твой профиль',
     sub:(prog.note||'').slice(0,160), heavy:keys, lightDays:[], gymDays:gd,
-    start:[t.getFullYear(),t.getMonth(),t.getDate()], phases:PROFILES.friend.phases, fit:fit, custom:true };
+    start:[t.getFullYear(),t.getMonth(),t.getDate()], phases:AI_PHASES, fit:fit, custom:true };
   return 'ai';
 }
 /* ── УПОР: что человек выбрал, а не что модель угадала из текста цели ──
@@ -12265,7 +12287,9 @@ function снятьПравкиПрошлой(keys){
   [SUBS, ADJ, SKIP].forEach(function(o){ Object.keys(o||{}).forEach(function(k){
     var d=String(k).split(':')[0], хвост=String(k).slice(d.length+1);
     if(!свой(d)) return;
-    if(!нов[d] || хвост.charAt(0)==='x'){ delete o[k]; n++; }
+    /* 21.10, его выбор «Снимать»: ручное число подходов было про прежнюю
+       программу — новая приходит со своими (тяга блока 3 вместо 4 у него) */
+    if(!нов[d] || хвост.charAt(0)==='x' || o===ADJ){ delete o[k]; n++; }
   }); });
   Object.keys(EXTRA||{}).forEach(function(d){ if(свой(d)){ n+=(EXTRA[d]||[]).length; delete EXTRA[d]; } });
   Object.keys(PAIRS||{}).forEach(function(d){ if(свой(d)){ n+=(PAIRS[d]||[]).length; delete PAIRS[d]; } });
@@ -17059,9 +17083,12 @@ function pushVolume(){
 }
 /* Что из предложенного приложение умеет сделать само. Если не умеет — кнопки
    не будет: обещать «применить» и не применить хуже, чем не обещать. */
+function recoId(c){
+  return String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'')+(c.day && c.what!=='day' ? '|d'+c.day : '');
+}
 function recoCan(c){
   if(!c || !c.text) return null;
-  var hit=findEx(c.ex);
+  var hit=findEx(c.ex, c.day);
   if(!hit) return null;
   if(c.what==='sets' && +c.sets>0) return {kind:'sets', hit:hit};
   if(c.what==='swap') return {kind:'swap', hit:hit};
@@ -17315,7 +17342,7 @@ function recoPull(){
       RBO = (d && d.rebuild_offer) || null; renderRb();
       if(d && d.auto && d.auto.length) applyAuto(d.auto);
       var c = d && d.reco; if(!c || !c.text) return;
-      if(!c.id) c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
+      if(!c.id) c.id = recoId(c);
       if(!сразу && gget('reco2_seen',null)===c.id) return;
       RECO2=c; gset('coach_reco', c);
       if(сразу && recoCan(c)) applyReco2();
@@ -17351,7 +17378,11 @@ function takeChanges(d){
   /* правка дня уже применена программой целиком: карточка с кнопкой «Другое»
      здесь предложила бы отменить то, чего в ней нет */
   if(c.what==='day') return;
-  c.id = String(c.text).slice(0,60)+'|'+(c.what||'')+'|'+(c.ex||'')+'|'+(c.to||'')+'|'+(c.sets||'');
+  /* 21.10: правок подходов и замен может прийти несколько — по одной на день.
+     Встают все; карточка показывает первую. */
+  var ещё=d.changes.slice(1).filter(function(x){ return x && x.text && (x.what==='sets' || x.what==='swap'); });
+  ещё.forEach(function(x){ x.id=recoId(x); });
+  c.id = recoId(c);
   /* человек попросил сейчас — показываем, даже если такое же предложение
      раньше отклонял: «Понятно» на прошлой неделе не должно прятать кнопку сегодня */
   gset('reco2_seen', null);
@@ -17364,6 +17395,7 @@ function takeChanges(d){
       applyAuto([c], {quiet:true});
       c.applied=true;
     }
+    ещё.forEach(function(x){ if(recoCan(x) && (x.what!=='swap' || recoPick(x, recoCan(x).hit))){ applyAuto([x], {quiet:true}); x.applied=true; } });
     RECO2=c; gset('coach_reco', c); renderReco2();
   };
   if(c.what==='swap' && !CAT){ loadCatalog().then(показать).catch(показать); } else показать();
