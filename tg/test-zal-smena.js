@@ -166,6 +166,19 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
     if (д !== ждём) console.log('    отладка: /all ' + (global.__allHits || 0) + ', указатель ' + await pg.evaluate(() => Object.keys(localStorage).filter(k => /app_profile|pick_/.test(k)).map(k => k + '=' + localStorage.getItem(k)).join(' | ')));
     await pg.close();
   };
+  /* 8. замена в строке: мышца — у самой замены, а не подпись прежнего
+     упражнения (махи на месте жима под углом — не «верх груди») */
+  { const pg = await br.newPage({ viewport: { width: 390, height: 1400 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'gym', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      layer: { subs: { 'A3:1': { n: 'Подъём через сторону (гантели, сбоку)', e: 'Side Lateral Raise', i: 'Side_Lateral_Raise' } } } });
+    дано(о.length === 0, 'замена: страница поднялась без ошибок ' + (о[0] || ''));
+    await pg.click('#dayseg button[data-day="A3"]').catch(() => {}); await pg.waitForTimeout(900);
+    const ряд = await pg.evaluate(() => { const r = [...document.querySelectorAll('#list .exrow')].find(x => /Подъём через сторону/.test(x.textContent));
+      return r ? r.textContent.replace(/\s+/g, ' ') : ''; });
+    дано(!!ряд && !/верх груди/i.test(ряд) && /плечи|дельт/i.test(ряд), 'у замены мышца своя, не «верх груди»: ' + ряд.slice(0, 80));
+    await pg.close(); }
+
   await второе('сейчас', 'второе устройство, смена пришла из облака', 'A1');
   await второе('давно', 'второе устройство, повторный синк без смены', 'A2');
 

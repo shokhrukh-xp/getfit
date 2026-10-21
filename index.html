@@ -4639,7 +4639,10 @@ function exList(dk){
     if(SKIP[k]) return;                       /* убрано человеком */
     var s=SUBS[k];
     if(!s){ var c={}; for(var q in e) c[q]=e[q]; c.k=k; out.push(c); return; }
-    out.push({ p:e.p, n:s.n, en:s.e, sets:e.sets, reps:e.reps, rest:e.rest, ss:e.ss,
+    /* 21.10: подпись строки (p) — про прежнее упражнение. Замена махов на месте
+       «Сведения в кроссовере» показывала «грудь», а недельный объём (MMAP по p)
+       и KPI зала считали махи грудью. У замены мышцы — из каталога по её id. */
+    out.push({ p:'', base_p:e.p, n:s.n, en:s.e, sets:e.sets, reps:e.reps, rest:e.rest, ss:e.ss,
                cat:s.i, sub:true, cues:s.cues||[], why:'', ph:null, fig:null, k:k });
   });
   (EXTRA[dk]||[]).forEach(function(x,xi){
@@ -11912,7 +11915,7 @@ document.getElementById('list').addEventListener('click', function(e){
   var b=e.target.closest('button[data-swap]'); if(!b) return;
   var di=+b.dataset.swap, base=exList(day)[di]||{};
   var вкат=(CAT&&base.cat)?(CAT.ex||[]).filter(function(x){ return x.i===base.cat; })[0]:null;
-  openCatalog({dk:day, k:base.k, di:di, muscle:base.m||MUSCLEOF[base.p]||'',
+  openCatalog({dk:day, k:base.k, di:di, muscle:base.m||MUSCLEOF[base.p||base.base_p]||мышцаЕго(base)||'',
                c:(вкат&&вкат.c)||'strength'});   /* у своей программы мышца известна из каталога */
 });
 
