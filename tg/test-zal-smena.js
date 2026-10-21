@@ -179,6 +179,25 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
     дано(!!ряд && !/верх груди/i.test(ряд) && /плечи|дельт/i.test(ряд), 'у замены мышца своя, не «верх груди»: ' + ряд.slice(0, 80));
     await pg.close(); }
 
+  /* 9. ревью Codex R1 (замена): мышцы замены хранятся при ней — без каталога
+     (не доехал) её подходы не выпадают из недельного объёма. Сравнение: та же
+     замена в старом виде (без m) — так её видел код до правки. */
+  const планПлечи = async (замена) => {
+    const pg = await br.newPage({ viewport: { width: 390, height: 1800 } });
+    await pg.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
+    await pg.route('**/catalog.json*', r => r.abort().catch(() => {}));
+    const о = await M.поднять(pg, { theme: 'dark', time: '07:10', page: 'home', wait: 2800, preserveReload: true, prog: ПРОГ, profile: 'ai', me: ME, hist: ЖУРНАЛ,
+      layer: { subs: { 'A3:1': замена } } });
+    дано(о.length === 0, 'без каталога: страница поднялась без ошибок ' + (о[0] || ''));
+    const строки = await pg.$$eval('.zkrow', ns => ns.map(n => n.textContent.replace(/\s+/g, ' ').trim())).catch(() => []);
+    await pg.close();
+    const m = (строки.find(t => /^Плечи/.test(t)) || '').match(/из (\d+(?:,\d)?)/);
+    return m ? parseFloat(m[1].replace(',', '.')) : 0;
+  };
+  const махи = { n: 'Подъём через сторону (гантели, сбоку)', e: 'Side Lateral Raise', i: 'Side_Lateral_Raise' };
+  const безМ = await планПлечи(махи), сМ = await планПлечи(Object.assign({ m: 'shoulders', sm: [] }, махи));
+  дано(сМ > безМ, 'без каталога махи-замена с сохранённой мышцей остаются в плане на плечи: ' + сМ + ' против ' + безМ + ' в старом виде');
+
   await второе('сейчас', 'второе устройство, смена пришла из облака', 'A1');
   await второе('давно', 'второе устройство, повторный синк без смены', 'A2');
 

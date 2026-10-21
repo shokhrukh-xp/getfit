@@ -4642,7 +4642,9 @@ function exList(dk){
     /* 21.10: подпись строки (p) — про прежнее упражнение. Замена махов на месте
        «Сведения в кроссовере» показывала «грудь», а недельный объём (MMAP по p)
        и KPI зала считали махи грудью. У замены мышцы — из каталога по её id. */
-    out.push({ p:'', base_p:e.p, n:s.n, en:s.e, sets:e.sets, reps:e.reps, rest:e.rest, ss:e.ss,
+    var скат = (s.m ? null : catById(s.i)) || {};   /* старые замены без m — из каталога, когда он есть */
+    out.push({ p:'', base_p:e.p, n:s.n, en:s.e, m:s.m||скат.m||'', sm:(s.sm||скат.sm||[]).slice(),
+               sets:e.sets, reps:e.reps, rest:e.rest, ss:e.ss,
                cat:s.i, sub:true, cues:s.cues||[], why:'', ph:null, fig:null, k:k });
   });
   (EXTRA[dk]||[]).forEach(function(x,xi){
@@ -4792,7 +4794,9 @@ function тупик(e){
 }
 var NOPEALL = '';
 function applySub(k, item){
-  if(item) SUBS[k] = {n:item.n, e:item.e, i:item.i}; else delete SUBS[k];
+  /* 21.10 (ревью Codex R1): мышцы замены храним при ней — без каталога
+     (не доехал, сеть) запись и объём не теряют её подходы */
+  if(item) SUBS[k] = {n:item.n, e:item.e, i:item.i, m:item.m||'', sm:(item.sm||[]).slice()}; else delete SUBS[k];
   if(item && k){ SUBNEW[k]=Date.now(); subСнять(); } else if(k) delete SUBNEW[k];
   saveSubs(); rebuildSess();
   renderList(); paintNote(''); haptic('medium');
@@ -9936,7 +9940,7 @@ function sessionBody(){
        зависеть от того, загрузился ли каталог на этом устройстве */
     /* 07.10: единица подхода — sec, min (кардио), m (метры) или reps; у кардио
        ещё «как шло» — по нему сервер считает траты (MET × минуты) */
-    var ед=unitCode(e), зап={ n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null,
+    var ед=unitCode(e), зап={ n:e.n, id:(e.id||e.cat||null), p:e.p||null, m:e.m||null, sm:(e.sm&&e.sm.length)?e.sm.slice():undefined,
       unit:ед,
       sets:done.map(function(v){
         var w=parseFloat(String(v.w).replace(',','.')), r=parseFloat(String(v.r).replace(',','.'));
@@ -17257,7 +17261,7 @@ function applyAuto(list, opts){
         done.push(hit.e.n+' — '+Math.round(+c.sets)+' '+plural(Math.round(+c.sets),['подход','подхода','подходов'])); ids.push(c.id); return;
       }
       var найдено=recoTarget(c, hit);
-      if(найдено){ SUBS[(hit.e && hit.e.k) || subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i}; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
+      if(найдено){ SUBS[(hit.e && hit.e.k) || subKey(hit.dk,hit.di)]={n:найдено.n, e:найдено.e, i:найдено.i, m:найдено.m||'', sm:(найдено.sm||[]).slice()}; done.push(hit.e.n+' → '+найдено.n); ids.push(c.id); }
       else notFound.push(c);
     });
     if(ids.length){
