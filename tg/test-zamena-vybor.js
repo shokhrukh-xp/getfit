@@ -35,6 +35,7 @@ async function открыть(br, o) {
   page.on('request', r => { if (/\/reco$/.test(r.url()) && r.method() === 'POST') reco.push(r.postData() || ''); });
   if (o.безКаталога) await page.route('**/catalog.json*', r => r.abort().catch(() => {}));
   if (o.пустойКаталог) await page.route('**/catalog.json*', r => r.fulfill({ status: 200, contentType: 'application/json', body: '{"ex":[]}' }));
+  if (o.пустойРаз) { let n = 0; await page.route('**/catalog.json*', r => (++n === 1) ? r.fulfill({ status: 200, contentType: 'application/json', body: '{"ex":[]}' }) : r.fallback()); }
   /* 👎 на одном из похожих — его в вариантах быть не должно */
   await page.addInitScript(() => { try { localStorage.setItem('shp_v1_ai_nope', JSON.stringify({ 'One-Arm_Side_Laterals': { n: 'x', at: 1, m: 'shoulders' } })); } catch (e) {} });
   const ош = await M.поднять(page, { page: 'gym', wait: 2600, prog: o.prog || ПРОГ, profile: 'ai', me: ME, reco: o.reco || RECO });
@@ -133,6 +134,13 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   await page.click('#coachreco button[data-reco2="cat"]');
   await page.waitForTimeout(2000);
   дано((await page.$$('#catbody [data-pick]')).length > 3, 'после пустого ответа каталог загрузился заново');
+
+  await page.close();
+
+  /* ── 7. первый ответ пустой, второй исправный — тихий повтор сам дотягивает каталог ── */
+  ({ page } = await открыть(br, { пустойРаз: true }));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 6000 }).catch(() => {});
+  дано((await page.$$('#coachreco .ropt')).length >= 4, 'пустой первый ответ — варианты всё равно пришли (тихий повтор)');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

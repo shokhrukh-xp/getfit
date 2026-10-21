@@ -4559,9 +4559,11 @@ function loadCatalog(){
   /* 21.10: в зале сеть рвётся — один тихий повтор через секунду, прежде
      чем говорить «не удалось»; ответ не 200 — тоже сбой, а не пустой каталог */
   var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD);
-  var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); }); };
+  /* одна попытка = ответ + JSON + проверка состава: пустой каталог тоже повторяем (ревью Codex P3) */
+  var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); })
+    .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); return j; }); };
   catLoading = раз().catch(function(){ return new Promise(function(ok){ setTimeout(ok, 1200); }).then(раз); })
-    .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); CAT=j; catLoading=false; return j; })
+    .then(function(j){ CAT=j; catLoading=false; return j; })
     .catch(function(e){ catLoading=false; throw e; });
   return catLoading;
 }
