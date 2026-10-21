@@ -12,6 +12,7 @@ const дано = (у, т) => { console.log((у ? '  ok  ' : '  ПРОВАЛ  ') 
 const список = [
   { uid: '308687648', name: 'Шохрух', by: 'owner', created: Date.now() - 50 * 864e5, kind: 'grand', until: 0, приёмов: 300, последний: '2026-10-21', привёл: 3, был: Date.now() },
   { uid: '8741722652', name: 'Xplorence', by: 'open', created: Date.now() - 9 * 864e5, kind: 'sub', until: Date.now() + 20 * 864e5, приёмов: 3, последний: '2026-10-14', привёл: 0, был: Date.now() - 7 * 864e5 },
+  { uid: '14', name: 'X" onfocus="window.__взлом=1" data-x="', by: 'open', created: Date.now() - 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0, был: Date.now() - 864e5 },
   { uid: '13', name: 'Andrew Nee', by: 'bot', created: Date.now() - 2 * 864e5, kind: null, until: 0, приёмов: 0, последний: null, привёл: 0, был: Date.now() - 12 * 864e5 }
 ];
 
@@ -34,8 +35,14 @@ const список = [
   await page.click('#profboss'); await page.waitForTimeout(1300);
   if (await page.$('#admall')) { await page.click('#admall'); await page.waitForTimeout(300); }
   const кнопки = await page.$$eval('[data-admdel]', bs => bs.map(b => ({ uid: b.dataset.admdel, имя: b.getAttribute('aria-label'), h: b.getBoundingClientRect().height })));
-  дано(кнопки.length === 2 && !кнопки.some(b => b.uid === '308687648'), '«Удалить» у каждого, кроме самого владельца: ' + JSON.stringify(кнопки.map(b => b.uid)));
+  дано(кнопки.length === 3 && !кнопки.some(b => b.uid === '308687648'), '«Удалить» у каждого, кроме самого владельца: ' + JSON.stringify(кнопки.map(b => b.uid)));
   дано(кнопки.every(b => b.h >= 44 && /Удалить /.test(b.имя)), 'кнопка 44 px и называет человека для экранного чтеца');
+
+  /* имя с кавычками — просто текст, а не обработчик (ревью Codex R1) */
+  const злое = await page.$('[data-admdel="14"]');
+  await злое.focus(); await page.waitForTimeout(100);
+  дано(!(await page.evaluate(() => window.__взлом)) && !(await злое.getAttribute('onfocus')), 'имя с кавычками не стало обработчиком');
+  дано((await злое.getAttribute('data-name')) === 'X" onfocus="window.__взлом=1" data-x="', 'и в подтверждение уходит целиком');
 
   /* отмена — ничего не уходит */
   await page.evaluate(() => { window.Telegram.WebApp.showConfirm = (t, cb) => { (window.__окна = window.__окна || []).push(String(t)); cb(false); }; });

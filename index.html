@@ -15098,9 +15098,12 @@ function admЧеловек(x){
     (x.привёл?' · привёл '+x.привёл:'')+тихо+'</i>'+admБыл(x.был)+'</span>'+
     '<span class="adpill '+(платит?'pay':вечный?'free':'off')+'">'+
     (платит?'платит':вечный?'бессрочно':'не платит')+'</span>'+
-    (String(x.uid)!==String(admЯ())?'<button type="button" class="addel" data-admdel="'+esc(String(x.uid))+'" data-name="'+esc(x.name||('id '+x.uid))+'" aria-label="Удалить '+esc(x.name||('id '+x.uid))+'">Удалить</button>':'')+
+    (String(x.uid)!==String(admЯ())?'<button type="button" class="addel" data-admdel="'+escAttr(String(x.uid))+'" data-name="'+escAttr(x.name||('id '+x.uid))+'" aria-label="'+escAttr('Удалить '+(x.name||('id '+x.uid)))+'">Удалить</button>':'')+
     '</div>';
 }
+/* имя человека в атрибуте: esc() не трогает кавычки, и имя вида
+   X" onfocus="… становилось обработчиком в админке владельца (ревью Codex R1) */
+function escAttr(t){ return String(t==null?'':t).replace(/[&<>"'`]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]; }); }
 function admЯ(){ return (TGUSER && TGUSER.id) ? String(TGUSER.id) : ''; }
 /* 21.10, его слова: «всё безвозвратно, если в будущем захочет — может снова
    с нуля начать». Сервер стирает дневник, вход, подписку, круги; платежи
@@ -15112,7 +15115,7 @@ function admУдалить(uid, имя){
     if(!ok) return;
     ADMBUSY=true;
     fPost('/admin/user/del', {uid:syncUid(), who:uid})
-      .then(function(){ ADMBUSY=false; haptic('ok'); say('Удалено: '+имя); admPull(); })
+      .then(function(d){ ADMBUSY=false; haptic('ok'); say('Удалено: '+имя+(d && d.cleanupPending ? '. Фото ещё дочищаются в хранилище — это само.' : '')); admPull(); })
       .catch(function(err){ ADMBUSY=false; haptic('err'); say(humanErr(err)); });
   };
   if(TG && TG.showConfirm) TG.showConfirm(т, дальше); else дальше(window.confirm(т));
