@@ -2493,10 +2493,10 @@ body.onb #picker .modalbox::before{display:none}
 .vzg-c b{display:block;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vzg-c b s{text-decoration:none;font-size:14px;font-weight:500;margin-left:4px;letter-spacing:0;color:var(--dim)}
 .vzg-c em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
-.vzg-l b{opacity:.72}
+.vzg-goal b{opacity:.72}
 .vzg-r{text-align:right}
 .vzg-tr{position:relative;height:6px;border-radius:6px;background:var(--field);margin-bottom:13px}
-.vzg-tr i{position:absolute;top:0;bottom:0;right:0;border-radius:6px;background:currentColor;opacity:.85}
+.vzg-tr i{position:absolute;top:0;bottom:0;left:0;border-radius:6px;background:currentColor;opacity:.85}
 .vzg-tr u{position:absolute;top:50%;width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--bg);border:3px solid currentColor;transform:translate(-50%,-50%)}
 .vzg-eq{background:none;border-top:2px dashed var(--field);height:0;border-radius:0}
 .vzgline{margin:10px 0 0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -13379,9 +13379,12 @@ function vzЦель(ms, sr){
     try{ сохр=JSON.parse(mGet(ключ)||'null'); }catch(e){}
     if(сохр && сохр.from===от && сохр.v>0) r={v:+сохр.v, ед:'кг', держать:true};
     else if(от){
-      var a=vzДн(от,7), b=vzДн(от,35);
+      /* дни 8–35 при дне старта = 1: from+7 … from+34. Окно полное, только
+         если загруженный ряд (последние 60 замеров, подряд) начинается не
+         позже его начала — иначе ранняя часть могла выпасть (ревью Codex) */
+      var a=vzДн(от,7), b=vzДн(от,34);
       var vs=ms.filter(function(m){ return m.date>=a && m.date<=b && sr.f(m)!=null; }).map(sr.f);
-      var окноЕсть = ms.some(function(m){ return m.date<=a; }) || (FOOD.first && FOOD.first.date<=a && ms.length && ms[0].date<=b);
+      var окноЕсть = ms.length>0 && ms[0].date<=a;
       if(vs.length>=3 && (b<TODAY || vs.length>=7) && окноЕсть){
         var база=Math.round(vs.reduce(function(x,y){ return x+y; },0)/vs.length*10)/10;
         if(b<TODAY) try{ mSet(ключ, JSON.stringify({from:от, v:база})); }catch(e){}
@@ -13409,16 +13412,18 @@ function vzРабочиеВеса(){
 }
 /* 21.10, его снимки и слова: «слишком много текста. Справа — то, что есть
    сейчас, слева — цель, всё пропорционально и лаконично». Голова карточки
-   при цели: слева «цель», справа «сейчас», одинаковым кеглем; между ними —
-   путь от старта (справа) к цели (слева), точка — где он сейчас. Под ними
+   при цели: слева «сейчас», справа «цель», одинаковым кеглем; между ними —
+   путь от старта (слева) к цели (справа), точка — где он сейчас. Под ними
    одна строка: сколько осталось и неделя. */
 function vzЧ(ц, x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); }
 function vzГоловаЦели(ц, главное, ед, нед, sr, откл){
-  var л='<div class="vzg-c vzg-l"><span>'+(ц.держать?'держать':'цель')+(ц.доп?' · '+ц.доп:'')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b></div>';
-  var п='<div class="vzg-c vzg-r"><span>сейчас</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
+  /* 21.10, его второе слово: «поменяй их местами» — сейчас слева, цель справа:
+     путь читается слева направо, от того, где он, к тому, куда идёт */
+  var п='<div class="vzg-c vzg-goal vzg-r"><span>'+(ц.держать?'держать':'цель')+(ц.доп?' · '+ц.доп:'')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b></div>';
+  var л='<div class="vzg-c vzg-now vzg-l"><span>сейчас</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
   var путь='';
-  if(ц.доля!=null){ var x=((1-ц.доля)*100).toFixed(1);
-    путь='<div class="vzg-tr" role="img" aria-label="пройдено '+Math.round(ц.доля*100)+' % пути к цели"><i style="left:'+x+'%"></i><u style="left:'+x+'%"></u></div>'; }
+  if(ц.доля!=null){ var x=(ц.доля*100).toFixed(1);
+    путь='<div class="vzg-tr" role="img" aria-label="пройдено '+Math.round(ц.доля*100)+' % пути к цели"><i style="width:'+x+'%"></i><u style="left:'+x+'%"></u></div>'; }
   else путь='<div class="vzg-tr vzg-eq" aria-hidden="true"></div>';
   var стр=[];
   if(!ц.держать) стр.push(ц.ост<=0.05 ? 'цель достигнута' : 'осталось '+vzЧ(ц, ц.ост)+'\u00a0'+ед);
@@ -13819,10 +13824,12 @@ function homeBody(){
   return '<div class="vz"><div class="vztop">'+
     '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
-    (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл)+(sr.k==='mus' ? vzРабочиеВеса() : '') :
+    (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл) :
       '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
       '<p class="vzsub">'+под+'</p>'+сег+
       (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёшь по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : ''))+
+    /* рабочие веса — у мышц всегда, есть цель или нет (ревью Codex R4) */
+    (sr.k==='mus' ? vzРабочиеВеса() : '')+
     '<div class="vzsvg">'+график+'</div>'+
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+

@@ -17,7 +17,7 @@ const meas = Array.from({ length: 56 }, (_, i) => { const w = 86.6 + i * 0.1, fa
     prot: 16, waist: i % 7 === 0 ? +(92 + i * 0.1).toFixed(1) : undefined }; });
 const голова = p => p.evaluate(() => { const h = document.querySelector('#homebody .vzgh'), l = document.querySelector('#homebody .vzgline');
   const т = e => e ? e.innerText.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim() : '';
-  return { л: т(h && h.querySelector('.vzg-l')), п: т(h && h.querySelector('.vzg-r')), строка: т(l), путь: !!(h && h.querySelector('.vzg-tr u')) }; });
+  return { л: т(h && h.querySelector('.vzg-goal')), п: т(h && h.querySelector('.vzg-now')), строка: т(l), путь: !!(h && h.querySelector('.vzg-tr u')) }; });
 (async () => {
   const br = await chromium.launch();
   for (const [theme, width] of [['dark', 390], ['light', 320]]) {
@@ -29,7 +29,9 @@ const голова = p => p.evaluate(() => { const h = document.querySelector('#
     дано(чипы.join(',') === 'вес,жир,мышцы,талия', где + 'вкладки — вес, жир, мышцы, талия: ' + чипы);
     await page.click('[data-vzv="w"]'); await page.waitForTimeout(200);
     let г = await голова(page);
-    дано(/^цель 75 ?кг$/.test(г.л) && /^сейчас \d+,\d ?кг$/.test(г.п), где + 'вес: слева цель, справа сейчас: ' + г.л + ' | ' + г.п);
+    дано(/^цель 75 ?кг$/.test(г.л) && /^сейчас \d+,\d ?кг$/.test(г.п), где + 'вес: слева сейчас, справа цель: ' + г.л + ' | ' + г.п);
+    дано(await page.evaluate(() => { const a = document.querySelector('#homebody .vzg-now').getBoundingClientRect(), b = document.querySelector('#homebody .vzg-goal').getBoundingClientRect(); return a.right < b.left; }),
+      где + '«сейчас» слева, «цель» справа (его «поменяй их местами»)');
     дано(г.путь && /^осталось \d+(,\d)? кг( · (выше|ниже) плана на \d|( · по плану)|$)/.test(г.строка), где + 'между ними путь, под ними одна строка: ' + г.строка);
     дано(await page.locator('#homebody .vzsub, #homebody .vztd, #homebody p.vzgapline').count() === 0, где + 'лишних строк под головой нет');
     await page.click('[data-vzv="fat"]'); await page.waitForTimeout(200);
@@ -47,6 +49,16 @@ const голова = p => p.evaluate(() => { const h = document.querySelector('#
     дано(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), где + 'помещается по ширине');
     await page.close();
   }
+  /* ревью Codex R1/R4: окно дней 8–35 выпало из загруженной истории (цель
+     давно, загружены последние 8 замеров, сохранённой базы нет) — цели
+     мышц нет, а строка рабочих весов на месте */
+  const p3 = await br.newPage({ viewport: { width: 390, height: 900 } });
+  const ош3 = await M.поднять(p3, { theme: 'dark', page: 'home', time: '19:40', goal: Object.assign({}, цель, { from: M.Д(150) }), progress, meas: meas.slice(0, 8), me: { sex: 'm', age: 34, ht: 178, bw: 86.2 } });
+  await p3.click('[data-vzv="mus"]'); await p3.waitForTimeout(200);
+  дано(!ош3.length && await p3.locator('#homebody .vzgh').count() === 0, 'окна базы мышц в истории нет — цель мышц не выдумывается');
+  дано(await p3.locator('#homebody .vzsil').count() === 1, 'а рабочие веса у мышц показаны и без цели');
+  дано(await p3.evaluate(() => { try { return localStorage.getItem('shp_v1_vz_mus_base') === null && !Object.keys(localStorage).some(k => /vz_mus_base/.test(k) && localStorage.getItem(k)); } catch (e) { return true; } }), 'и неполная база не запомнена');
+  await p3.close();
   /* без цели и роста — строки цели нет, ничего не ломается */
   const p2 = await br.newPage({ viewport: { width: 390, height: 900 } });
   const ош2 = await M.поднять(p2, { theme: 'dark', page: 'home', time: '19:40', meas, me: { sex: 'm', age: 34, bw: 86.2 } });
