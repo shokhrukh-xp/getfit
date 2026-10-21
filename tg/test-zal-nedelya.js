@@ -38,8 +38,8 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   const пн=(()=>{const t=new Date(M.TODAY+'T12:00:00');t.setDate(t.getDate()-((t.getDay()+6)%7));return t.toISOString().slice(0,10);})();
   const ждём=1+(M.Д(3)>=пн?1:0);
   дано(new RegExp('^Завершено занятий '+ждём+' из 3$').test(зан),где+'завершено занятий (без незавершённой): '+зан);
-  const пз=числа(await z.locator('.zksec').first().locator('.zknote').innerText());
-  дано(/^Ещё 1 запись без «Завершить и сохранить»/.test(пз),где+'незавершённая запись названа отдельно: '+пз);
+  /* 21.10, его выбор «Только главное»: под кружками строк нет */
+  дано(await z.locator('.zksec').first().locator('.zknote').count()===0,где+'под «Завершено занятий» — без строк «по расписанию…»');
   дано(await z.locator('.zkdots i').count()===3 && await z.locator('.zkdots i.on').count()===ждём,где+'точки по плану');
   /* подходы: присед 3×(ноги 1) + румынская 3×(ноги 1) = 6 на ноги, а не сумма мышц */
   const гр=await z.locator('.zkrow').evaluateAll(rs=>rs.map(r=>({n:r.querySelector('b').textContent,f:r.querySelector('s strong').textContent,w:r.querySelector('.zkbar').getBoundingClientRect().width})));
@@ -49,12 +49,8 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   дано(гр.length>=3 && гр.every(g=>Math.abs(g.w-гр[0].w)<1),где+'одна шкала: полосы одной длины');
   дано(await z.locator('.zkbar u').evaluateAll(us=>us.every(u=>getComputedStyle(u).boxShadow!=='none')),где+'черта плана с обводкой — видна поверх заливки');
   /* результаты: присед вес ↑ при тех же повторах, жим повторы ↑ при том же весе; облегчённое не учтено */
-  const рез=await z.locator('.zkr').evaluateAll(rs=>rs.map(r=>r.innerText.replace(/ /g,' ').replace(/\s+/g,' ')));
-  дано(рез.length===2,где+'два результата: '+JSON.stringify(рез));
-  дано(рез.some(t=>/Приседания со штангой ↑ \+2,5 кг 8 повт\. · 72,5 → 75 кг · /.test(t)),где+'присед: +2,5 кг при тех же повторах');
-  дано(рез.some(t=>/Жим лёжа ↑ \+2 повт\. 55 кг · 8 → 10 повт\. · /.test(t)),где+'жим: +2 повт. при том же весе');
-  дано(!рез.some(t=>/40/.test(t)),где+'облегчённое занятие не сравнивается');
-  дано(!рез.some(t=>/45|47,5/.test(t)),где+'одноимённое упражнение с чужим id не попадает в результаты');
+  /* 21.10: «Результатов» и сноски под полосками нет — веса в Журнале по ссылке */
+  дано(await z.locator('.zkr').count()===0 && !/Результаты|черта/.test(await z.innerText()),где+'без «Результатов» и сноски про черту');
   дано((гр.find(g=>g.n==='Грудь')||{}).f==='3',где+'повтор той же записи не удваивает подходы: грудь 3');
   дано(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),где+'помещается по ширине');
   дано(!err.length,где+'без ошибок '+err.join(' | '));
@@ -65,37 +61,15 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   }
   await p.close();
  }
- /* его выбор «Клик по результату»: результат ведёт к истории упражнения в Журнале */
- {const p=await br.newPage({viewport:{width:390,height:700}});
-  await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
-  const o=opts('dark');o.hist=журнал;const err=await M.поднять(p,o);await p.waitForTimeout(900);
-  const к=p.locator('.zk button.zkr',{hasText:'Жим лёжа'});
-  дано(await к.count()===1 && /история в Журнале/.test(await к.getAttribute('aria-label')),'результат — кнопка с понятной подписью');
-  const h=await к.evaluate(b=>b.getBoundingClientRect().height);дано(h>=44,'цель нажатия не меньше 44: '+h);
-  await к.click();await p.waitForTimeout(500);
-  const r=await p.evaluate(id=>{const e=document.querySelector('#p-log:not(.hide) .uprow[data-exk="'+id+'"]');if(!e)return null;const b=e.getBoundingClientRect();return {hl:e.classList.contains('hl'),top:b.top,bot:b.bottom};},Ж);
-  дано(!!r && r.hl && r.top>=0 && r.bot<=700,'Журнал открыт на этом упражнении, строка подсвечена и видна '+JSON.stringify(r));
-  дано(!err.length,'клик по результату без ошибок '+err.join(' | '));
-  await p.close();}
- /* его выбор «Смена программы посреди недели» (ревью Codex U3): смену ставит только явный
-    выбор человека — другая программа; повторный выбор той же — не смена; переживает повторный вход */
- {const пн=(()=>{const t=new Date(M.TODAY+'T12:00:00');t.setDate(t.getDate()-((t.getDay()+6)%7));return t.toISOString().slice(0,10);})();
-  const раньше=журнал.some(w=>w.date>=пн && w.date<M.TODAY);
-  const выбрать=(p,prof)=>p.evaluate(x=>{const b=document.createElement('button');b.type='button';b.dataset.prof=x;document.getElementById('picker').appendChild(b);b.click();b.remove();},prof);
-  const заметка=async p=>{await p.click('.l1 [data-page="home"]');await p.waitForTimeout(700);return числа(await p.locator('.zk .zksec').nth(1).innerText());};
+ /* «Клик по результату» (17.10) снят вместе с «Результатами» 21.10 — переход к весам: «Рабочие веса и объём» (проверено выше) */
+ /* 21.10: сноски «программа сменилась…» нет (его выбор «Только главное»); после смены программы полоски на месте, текста о смене нет */
+ {const выбрать=(p,prof)=>p.evaluate(x=>{const b=document.createElement('button');b.type='button';b.dataset.prof=x;document.getElementById('picker').appendChild(b);b.click();b.remove();},prof);
   const p=await br.newPage({viewport:{width:390,height:900}});
   await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_shp_sched',JSON.stringify({1:1,3:1,5:1}));localStorage.setItem('shp_v1_friend_sched',JSON.stringify({1:1,3:1,5:1}))}catch(e){}});
   const o=opts('dark');o.hist=журнал;const err=await M.поднять(p,o);await p.waitForTimeout(900);
-  дано(!/сменилась/.test(числа(await p.locator('.zk').innerText())),'без выбора программы — не смена');
-  await выбрать(p,'shp');await p.waitForTimeout(500);
-  дано(!/сменилась/.test(await заметка(p)),'выбор той же программы — не смена');
-  await выбрать(p,'friend');await p.waitForTimeout(800);
-  const t=await заметка(p);
-  дано(раньше ? /программа сменилась \S+, \d\d\.\d\d — черта по новой программе, подходы — за всю неделю/.test(t) : !/сменилась/.test(t),
-   'другая программа посреди недели — названо (если до смены были занятия этой недели): '+t);
-  await p.reload();await p.waitForTimeout(1500);
-  const t2=числа(await p.locator('.zk .zksec').nth(1).innerText());
-  дано(t2===t,'повторный вход не сдвигает и не теряет смену: '+t2);
+  await выбрать(p,'friend');await p.waitForTimeout(800);await p.click('.l1 [data-page="home"]');await p.waitForTimeout(700);
+  const t=числа(await p.locator('.zk').innerText());
+  дано(!/сменилась|черта/.test(t) && await p.locator('.zk .zkrow').count()>=3,'после смены программы — полоски без сноски: '+t.slice(0,80));
   дано(!err.length,'смена программы без ошибок '+err.join(' | '));
   await p.close();}
  /* старые записи без схемы fs — завершённые (до этой доработки отметки не было) */
@@ -133,7 +107,7 @@ const числа=t=>t.replace(/ /g,' ').replace(/\s+/g,' ').trim();
   const o=opts('dark');o.hist=[];await M.поднять(p,o);await p.waitForTimeout(900);
   const t=числа(await p.locator('.zk').innerText());
   дано(/Завершено занятий 0 из 3/.test(t) && /Пока нет завершённых занятий · план 3/.test(t),'новичок: 0 из 3 и строка без красного');
-  дано(/Появятся после повторного занятия/.test(t),'новичок: результатов нет — объяснение');
+  дано(!/Результаты|Появятся после/.test(t),'новичок: блока «Результаты» нет (21.10, «Только главное»)');
   дано(await p.locator('.zk [data-zkgo="gym"]').count()===1,'новичок: вход в тренировку');
   await p.close();}
  /* только еда — блока нет */

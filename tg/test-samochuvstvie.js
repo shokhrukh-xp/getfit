@@ -77,7 +77,7 @@ async function нажать(page, текст){
     'на подход меньше в каждом упражнении, кроме упражнений на время: ' + было.map(x => x.план).join(',') + ' → ' + стало.map(x => x.план).join(','));
   дано(стало.every(x => x.таблица === x.план), 'таблица подходов пересобрана: ' + стало.map(x => x.таблица).join(','));
   await page.click('#coachclose'); await page.waitForTimeout(300);
-  await page.click('[data-hgo="gym"]').catch(() => {}); await page.waitForTimeout(700);
+  await page.click('.l1 [data-page="gym"]').catch(() => {}); await page.waitForTimeout(700);
   const строка = await page.$eval('#phaseline', n => n.textContent);
   дано(/Облегчено на сегодня/.test(строка) && /на подход меньше/.test(строка) && /3–4 повтора/.test(строка) && /Программа прежняя/.test(строка), 'над днём строка: ' + строка.slice(0, 80));
   const назад = await page.$('#easyoff');

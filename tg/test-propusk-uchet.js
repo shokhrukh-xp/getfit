@@ -15,10 +15,9 @@ const week={ok:true,span:'week',from:T,дни:Array.from({length:7},(_,i)=>recor
   const errors=await M.поднять(p,o);await p.locator('.zk .zklab').first().waitFor();
   const stats=()=>p.locator('.zk').innerText();
   assert((await stats()).includes('из 3'));const bars=await p.locator('.zkrow s').allTextContents();
-  await p.locator('[data-gymskip="skip"]').click();await p.waitForFunction(()=>document.querySelector('.zk').textContent.includes('1 пропущено'));
+  await p.locator('[data-gymskip="skip"]').click();await p.waitForFunction(()=>document.querySelector('.hweek-block').textContent.includes('1 пропущено'));
   assert.match(await stats(),new RegExp('Завершено занятий\\s*'+hist.length+' из 3'));
   assert.deepEqual(await p.locator('.zkrow s').allTextContents(),bars,'план подходов не уменьшается');
-  assert.match(await p.locator('.hwg-h').innerText(),/из 3/,'верхний счётчик тоже сохраняет исходный план');
   assert.match(await p.locator('.hweek-block').innerText(),/1 пропущено/);
   assert(!/по расписанию — сегодня/.test(await stats()));
   await p.locator('.zk').scrollIntoViewIfNeeded();assert.deepEqual(await bounds(p),[]);assert.deepEqual((await contrast(p,'.zk')).failures,[]);
@@ -27,12 +26,12 @@ const week={ok:true,span:'week',from:T,дни:Array.from({length:7},(_,i)=>recor
   assert.match(await p.locator('#eatbody').innerText(),/зал пропущен · день отдыха/);assert.equal(await p.locator('#eatbody .mzal').count(),0);assert.match(await p.locator('#eatbody').innerText(),/Рис с курицей/);
   assert.deepEqual(await bounds(p),[]);assert.deepEqual((await contrast(p,'#eatbody')).failures,[]);
   if(process.env.GF_SHOTS)await p.locator('#eatbody').screenshot({path:path.join(process.env.GF_SHOTS,'menu-'+theme+'-'+width+'.png')});
-  await p.click('.l1 [data-page="home"]');await p.locator('[data-gymskip=""]').click();await p.waitForFunction(()=>!document.querySelector('.zk').textContent.includes('пропущено'));
+  await p.click('.l1 [data-page="home"]');await p.locator('[data-gymskip=""]').click();await p.waitForFunction(()=>!document.querySelector('.hweek-block').textContent.includes('пропущено'));
   assert.match(await stats(),/из 3/);await p.click('.l1 [data-page="food"]');await p.locator('[data-zseg="eat"]:visible').click();await p.click('[data-eseg="week"]');
   assert.equal(await p.locator('#eatbody .mzal').count(),1,'Вернуть возвращает зал и без пересборки меню');assert(!/зал пропущен/.test(await p.locator('#eatbody').innerText()));
   assert.deepEqual(errors,[]);console.log('PASS '+theme+' '+width+': счётчик с пропуском, прежний план, меню и отмена, контраст/viewport');await p.close();
  }
  // При загрузке с другого устройства/после полуночи даты приходят с сервера.
  {const p=await b.newPage({viewport:{width:320,height:844}});await p.addInitScript(s=>localStorage.setItem('shp_v1_shp_sched',JSON.stringify(s)),{0:1,1:1,2:1,3:1,4:1,5:1,6:1});
-  const o=opts('dark');Object.assign(o,{hist:[],day:{gymSkip:0,gymSkips:[mon,mon]},menu:{week,завтра:M.Д(-1)}});await M.поднять(p,o);assert.match(await p.locator('.zk').innerText(),/1 пропущено/);await p.reload();await p.locator('.zk').waitFor();await p.waitForFunction(()=>document.querySelector('.zk').textContent.includes('1 пропущено'));assert(!/2 пропущено/.test(await p.locator('.zk').innerText()));await p.close();console.log('PASS серверные даты и перезагрузка: пропуск не теряется и не удваивается');}
+  const o=opts('dark');Object.assign(o,{hist:[],day:{gymSkip:0,gymSkips:[mon,mon]},menu:{week,завтра:M.Д(-1)}});await M.поднять(p,o);assert.match(await p.locator('.hweek-block').innerText(),/1 пропущено/);await p.reload();await p.locator('.hweek-block').waitFor();await p.waitForFunction(()=>document.querySelector('.hweek-block').textContent.includes('1 пропущено'));assert(!/2 пропущено/.test(await p.locator('.hweek-block').innerText()));await p.close();console.log('PASS серверные даты и перезагрузка: пропуск не теряется и не удваивается');}
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

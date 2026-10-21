@@ -2487,6 +2487,13 @@ body.onb #picker .modalbox::before{display:none}
 .vznum em.dn{color:var(--done-txt);background:rgba(var(--done-rgb),.13)}
 .vznum em.up{color:var(--warn-txt);background:rgba(var(--warn-rgb),.13)}
 .vzsub{margin:4px 0 0;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;line-height:1.4}
+/* 21.10: цель на карточке «Тело» — шкала пути от старта и одна строка */
+.vzgoal{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:8px 0 2px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vzgoal b{font-weight:600;color:var(--text)}
+.vzgbar{flex:0 0 64px;height:6px;border-radius:6px;background:var(--field);overflow:hidden}
+.vzgbar i{display:block;height:100%;border-radius:6px;background:currentColor;color:var(--accent)}
+.vzsil{display:block;border:0;background:none;padding:0;min-height:32px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;margin-top:2px;text-align:left}
+.vzsil::after{content:' ›'}
 .vzsvg svg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}
 .vzax{font-family:Manrope,system-ui,sans-serif;font-size:12px;fill:var(--dim);font-variant-numeric:tabular-nums}
 .vzlg{display:flex;flex-wrap:wrap;gap:4px 16px;margin:4px 0 0;font-size:12px;color:var(--dim);align-items:center}
@@ -3039,6 +3046,9 @@ body.ordmode #list .sstag{color:var(--text)}
 .hright > .profbtn{width:44px;height:44px;border:0;background:var(--action);color:#fff;font-size:17px;font-weight:800;
   box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
 .hright > .profbtn b{color:#fff;font-weight:800}
+.profbtn{position:relative}
+.profbtn .pstreak{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);padding:1px 6px;border-radius:999px;
+  background:var(--card);color:var(--text);border:1px solid var(--line);font-style:normal;font-size:11px;font-weight:700;line-height:15px;white-space:nowrap}
 .hright > .profbtn svg{width:22px;height:22px}
 .hright > .profbtn.attn{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.18)}
 .hright > .profbtn.attn::before{content:"";position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:999px;
@@ -11499,6 +11509,16 @@ function paintAvatar(){
   var n=String(whoName()||'').trim(); if(!n) return;
   var l=n.charAt(0).toUpperCase();
   if(b.dataset.l!==l){ b.dataset.l=l; b.innerHTML='<b>'+esc(l)+'</b>'; }
+  paintStreak();
+}
+/* 21.10: серия дней с записью еды — 🔥 с числом у значка профиля */
+function paintStreak(){
+  var b=document.getElementById('profbtn'); if(!b) return;
+  var n=+(((CIRC||{}).me||{}).streak)||0, i=b.querySelector('.pstreak');
+  if(!n){ if(i) i.remove(); b.setAttribute('aria-label','Профиль'); return; }
+  if(!i){ i=document.createElement('i'); i.className='pstreak'; i.setAttribute('aria-hidden','true'); b.appendChild(i); }
+  i.textContent='🔥'+n;
+  b.setAttribute('aria-label','Профиль · серия '+n+' '+plural(n,['день','дня','дней'])+' подряд с записью еды');
 }
 
 /* ══════════ ДАШБОРД ══════════ */
@@ -13184,24 +13204,6 @@ function homeWeight(){
   if(!стар && ms.length>1) стар=ms[ms.length-1];
   return {w:+last.w, d:(стар && стар.date!==last.date) ? (+last.w - +стар.w) : null};
 }
-/* 24.09, его слова: «непонятно написано, что я 2-й из 4 22 дня подряд — это
-   же не так». Это два разных факта в одной строке: место — СЕГОДНЯ, а серия —
-   дни подряд с записью еды (streakOf: закрытые дни). Разводим по строкам и
-   подписываем каждую (его выбор из двух вариантов). */
-function homeRating(){
-  var b=(CIRC&&CIRC.board)||[], me=(CIRC&&CIRC.me)||{}, streak=+me.streak||0, h='';
-  if(b.length>1){
-    var гл=function(r){ return (r.today && r.today.r!=null) ? r.today.r : -1; };
-    var вт=function(r){ return r.ravg==null ? -1 : r.ravg; };
-    var сп=b.slice().sort(function(x,y){ return (гл(y)-гл(x)) || (вт(y)-вт(x)); });
-    var i=0; сп.forEach(function(r,j){ if(r.me) i=j+1; });
-    h+='<button type="button" class="hline" data-hgo="circle"><span>Рейтинг</span><b>'+(i ? i+'-й из '+b.length : '—')+'<em>сегодня</em></b></button>';
-  }
-  h+='<button type="button" class="hline" data-hgo="circle"><span>Серия</span><b>'+
-    (streak ? '🔥 '+streak+' '+plural(streak,['день','дня','дней'])+'<em>подряд с записью еды</em>'
-            : '—<em>записывай еду каждый день</em>')+'</b></button>';
-  return h;
-}
 /* ══ тело за три недели: вес, жир и мышцы ══
    Его просьба 11.09: «блок весы заменить на линейный график и сюда ещё
    добавить линию мышц, чтобы понимать, он растёт или падает».
@@ -13223,6 +13225,11 @@ function bodySeries(){
       return m.fatkg!=null ? +m.fatkg : ((m.w!=null && m.fat!=null) ? Math.round(+m.w*+m.fat)/100 : null); }},
     {k:'prot', n:'белок тела', нейтр:true, вниз:false, порог:0.3, f:function(m){
       return m.prot!=null ? +m.prot : null; }},
+    /* 21.10, его слова: «белок тела — что это вообще значит, мышцы? понятнее
+       показать массу мышц». Весы дают «мышечную массу» (масса без жира и
+       костей, вместе с водой) — это оценка, поэтому без красного и зелёного */
+    {k:'mus', n:'мышцы', нейтр:true, вниз:false, порог:0.3, f:function(m){
+      return m.muscle!=null ? +m.muscle : null; }},
     /* Талия — единственное здесь, что меряет сантиметр, а не весы. На дефиците
        она врёт меньше веса: вода и гликоген её почти не двигают. Строки нет,
        пока нет замера, — пустого места на главном не появляется. */
@@ -13282,8 +13289,8 @@ function замерыВзять(d){
   if(Array.isArray(d.free)) FOOD.free=d.free;
   if(d.вода) FOOD.вода=d.вода;
 }
-var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['prot','белок тела'],['waist','талия']];
-function vzВид(){ try{ return localStorage.getItem('gf_vz')||'w'; }catch(e){ return 'w'; } }
+var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['mus','мышцы'],['prot','белок тела'],['waist','талия']];
+function vzВид(){ try{ var v=localStorage.getItem('gf_vz')||'w'; return v==='prot' ? 'mus' : v; }catch(e){ return 'w'; } }
 function vzВидЗадать(k){ try{ localStorage.setItem('gf_vz',k); }catch(e){} }
 function vzСерия(k){ var r=null; bodySeries().forEach(function(s){ if(s.k===k) r=s; }); return r; }
 function vzДн(iso, n){ return ymd(new Date(new Date(iso+'T12:00:00').getTime()+n*864e5)); }
@@ -13330,6 +13337,59 @@ function vzГладко(P){
 /* План цели для пунктира — тот же, что у тренера и на срезе (goalProgress
    на сервере, 30.09): от конца первых двух недель (anchor, средний вес той
    недели — anchorW), дальше темп цели. Первые две недели — вода, плана нет. */
+/* ── ЦЕЛЬ НА КАРТОЧКЕ «ТЕЛО» ──
+   21.10, его просьба: «на этих карточках показывать целевые показатели, к
+   которым я иду». Его выбор кнопками: жир — к весу цели при сохранённой
+   массе без жира (75 − 63,6 ≈ 11 кг); талия — половина роста (граница
+   низкого риска, 89 см при 178); мышцы — держать уровень начала (дни 8–35
+   от старта цели: первая неделя — вода); вес — цель из «Цели». */
+function vzЦель(ms, sr){
+  var g=gget('goal',null)||{}, p=g.progress, me=myData()||{};
+  var цельВес = vzЦельКг(p), ср=function(k){ var s=vzСерия(k); var a=s && vzСреднее(ms, s, TODAY); return a ? a.v : null; };
+  var старт=function(){ var s0=(FOOD.first && sr.f(FOOD.first)!=null) ? FOOD.first : null;
+    ms.forEach(function(m){ if(!s0 && sr.f(m)!=null) s0=m; }); return s0 ? sr.f(s0) : null; };
+  var сейчас = sr.k==='waist' ? (vzПоследний(ms, sr) ? sr.f(vzПоследний(ms, sr)) : null) : ср(sr.k);
+  if(сейчас==null) return null;
+  var r=null;
+  if(sr.k==='w' && цельВес) r={v:цельВес, ед:'кг', от:(p && p.w0>0) ? +p.w0 : старт()};
+  else if(sr.k==='fat' && цельВес){
+    var w=ср('w'), f=ср('fat'); if(w==null || f==null) return null;
+    var v=Math.max(0, цельВес-(w-f)); r={v:v, ед:'кг', от:старт(), доп:' (≈'+Math.round(v/цельВес*100)+'\u00a0%)'};
+  }
+  else if(sr.k==='waist' && +me.ht>120) r={v:Math.round(+me.ht/2), ед:'см', от:старт()};
+  else if(sr.k==='mus'){
+    var от=g.from || (FOOD.first && FOOD.first.date) || null, a=от ? vzДн(от,7) : null, b=от ? vzДн(от,35) : null;
+    var vs=ms.filter(function(m){ return a && m.date>=a && m.date<=b && sr.f(m)!=null; }).map(sr.f);
+    if(vs.length<3) vs=ms.filter(function(m){ return sr.f(m)!=null; }).slice(0,7).map(sr.f);
+    if(vs.length<3) return null;
+    r={v:vs.reduce(function(x,y){ return x+y; },0)/vs.length, ед:'кг', держать:true};
+  }
+  if(!r) return null;
+  r.сейчас=сейчас;
+  if(!r.держать && r.от!=null && r.от!==r.v) r.доля=Math.max(0, Math.min(1, (r.от-сейчас)/(r.от-r.v)));
+  return r;
+}
+/* 21.10, его выбор «Мышцы + строка силы»: весы плохо ловят изменения мышц,
+   надёжнее — рабочие веса. Его слово 17.10 — «Рабочие веса», не «сила». */
+function vzРабочиеВеса(){
+  var s=((gget('goal',null)||{}).progress||{}).sila, ix=s && typeof s.index==='object' ? s.index : null;
+  if(!ix || !ix.enough || typeof ix.ch!=='number' || !ix.base) return '';
+  var ch=ix.ch, cls=ch>=1 ? 'sila-up' : ch<=-1 ? 'sila-down' : 'sila-flat';
+  return '<button type="button" class="vzgoal vzsil" data-zkgo="log" aria-label="Рабочие веса — в Журнале"><span class="'+cls+'">рабочие веса '+
+    (ch>0?'+':ch<0?'−':'±')+vzF1(Math.abs(ch))+'\u00a0%</span> с '+ruDate(ix.base)+'</button>';
+}
+function vzЦельHtml(ц){
+  if(!ц) return '';
+  /* «75 кг», а не «75,0 кг»; талия — целыми сантиметрами */
+  var ч=function(x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); };
+  if(ц.держать){
+    var раз=ц.сейчас-ц.v;
+    return '<p class="vzgoal"><span><b>цель — держать '+ч(ц.v)+'\u00a0'+ц.ед+'</b>'+(Math.abs(раз)>=0.1 ? ' · сейчас '+vzЗн(раз) : '')+'</span></p>';
+  }
+  var ост=ц.сейчас-ц.v, дошёл = ост<=0;
+  return '<p class="vzgoal">'+(ц.доля!=null ? '<span class="vzgbar" aria-hidden="true"><i style="width:'+(ц.доля*100).toFixed(0)+'%"></i></span>' : '')+
+    '<span><b>цель '+ч(ц.v)+'\u00a0'+ц.ед+(ц.доп||'')+'</b>'+(дошёл ? ' · достигнута' : ' · осталось '+vzF1(ост).replace(/,0$/,''))+'</span></p>';
+}
 function vzПлан(){
   var g=gget('goal',null), p=g && g.progress;
   return (p && p.anchor && p.anchorW!=null && p.rate && !p.early) ? p : null;
@@ -13356,8 +13416,8 @@ function vzКоридор(pts, ср){
   var sd=Math.sqrt(r.reduce(function(a,x){ return a+x*x; },0)/r.length);
   return Math.max(0.2, Math.min(1.5, Math.round(2*sd*10)/10));
 }
-function vzГрафик(ms, sr, план){
-  vzГрафик.кор=null; vzГрафик.откл=null;
+function vzГрафик(ms, sr, план, цель){
+  vzГрафик.кор=null; vzГрафик.откл=null; vzГрафик.цель=false;
   var W=360, H=150, L=6, R=40, T=8, B=22, цв=vzЦвет(sr.k);
   var t=function(d){ return new Date(d+'T12:00:00').getTime(); };
   var все=ms.filter(function(m){ return m.date>=vzДн(TODAY,-34) && sr.f(m)!=null; }).map(function(m){ return {d:m.date, v:sr.f(m)}; });
@@ -13376,6 +13436,11 @@ function vzГрафик(ms, sr, план){
     var нач = план.anchor>все[0].d ? план.anchor : все[0].d, в=function(d){ return план.anchorW + план.rate*(t(d)-t(план.anchor))/(7*864e5); };
     плA={d:нач, v:в(нач)}; плB={d:TODAY, v:в(TODAY)}; vals.push(плA.v, плB.v);
   }
+  /* цель — пунктиром поперёк, если она рядом с данными (талия, мышцы);
+     далёкую (75 кг при 86) не рисуем: график сжался бы в линию — она в строке над ним */
+  var цельV=null;
+  if(цель && !(план && sr.k==='w')){ var мн0=Math.min.apply(null,vals), мк0=Math.max.apply(null,vals), раз0=Math.max((мк0-мн0)*0.6, sr.k==='waist'?4:0.5);
+    if(цель.v>=мн0-раз0 && цель.v<=мк0+раз0){ цельV=цель.v; vals.push(цельV); } }
   var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals), pad=Math.max(0.25,(mx-mn)*0.12); mn-=pad; mx+=pad;
   var y=function(v){ return T+(H-T-B)*(1-(v-mn)/(mx-mn)); };
   var шаг=[0.1,0.2,0.5,1,2,5,10].filter(function(s){ return (mx-mn)/s<=4.2; })[0]||10;
@@ -13402,6 +13467,8 @@ function vzГрафик(ms, sr, план){
     svg+='<path class="vzcor" d="'+верх+' L'+низ.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' L')+' Z" fill="var(--field)" opacity=".85"/>';
   }
   svg+='<path d="'+путь+' L'+линия[линия.length-1][0].toFixed(1)+','+(H-B)+' L'+линия[0][0].toFixed(1)+','+(H-B)+' Z" fill="url(#vzg)"/>';
+  if(цельV!=null){ vzГрафик.цель=true; var yц=y(цельV).toFixed(1);
+    svg+='<line class="vzgoalln" x1="'+L+'" x2="'+(W-R+4)+'" y1="'+yц+'" y2="'+yц+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>'; }
   if(плA) svg+='<line class="vzpl" x1="'+x(плA.d).toFixed(1)+'" y1="'+y(плA.v).toFixed(1)+'" x2="'+x(плB.d).toFixed(1)+'" y2="'+y(плB.v).toFixed(1)+'" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round"/>'+
     '<circle cx="'+x(плB.d).toFixed(1)+'" cy="'+y(плB.v).toFixed(1)+'" r="2.5" fill="var(--muted)"/>';
   if(скольз) pts.forEach(function(p,i){
@@ -13588,47 +13655,8 @@ function неделяЗала(){
   if(смена && !(смена>пн && смена<=вс && Object.keys(датыЗаписей).some(function(d){ return d<смена; }))) смена=null;
   return {пропущено:пропущено, смена:смена, пн:пн, вс:вс, занятий:Object.keys(заверш).length, безЗаверш:Object.keys(записи).length-Object.keys(заверш).length, план:вНеделю||null, факт:факт, планГр:план, след:след};
 }
-function результатыЗала(){
-  if(!HIST) return [];
-  var от=днейПосле(TODAY,-27), прог={}, имя=function(n){ return String(n||'').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim(); };
-  /* ревью Codex Z4: при известных id — только совпадение id; имя — для записей
-     и упражнений программы без id (старые записи до каталога) */
-  var безId={};
-  CYCLE.forEach(function(dk){ exList(dk).forEach(function(e){ var i=e.cat||e.id; if(i) прог['i:'+i]=1; else безId[имя(e.n)]=1; прог['n:'+имя(e.n)]=1; }); });
-  var по={};
-  HIST.forEach(function(w){
-    if(!w || w.easy || w.date<от || w.date>TODAY) return;
-    (w.ex||[]).forEach(function(x){
-      var годные=подходыНаПовторы(x); if(!годные.length) return;
-      var id=x.id||x.cat||'', ключ=(id?'i:'+id:'n:'+имя(x.n))+'|'+(x.unit||'reps');
-      if(!(id ? (прог['i:'+id] || безId[имя(x.n)]) : прог['n:'+имя(x.n)])) return;
-      var b=null; годные.forEach(function(v){ var c={w:+v.w||0, r:+v.r}; var sc=c.w>0?e1rm(c.w,c.r):c.r, sb=b?(b.w>0?e1rm(b.w,b.r):b.r):-1; if(sc>sb) b=c; });
-      var z=по[ключ]=по[ключ]||{ключ:ключ, n:x.n, x:x, даты:{}};
-      var был=z.даты[w.date]; if(!был || (b.w>0?e1rm(b.w,b.r):b.r) > (был.w>0?e1rm(был.w,был.r):был.r)) z.даты[w.date]=b;
-    });
-  });
-  var кандидаты=Object.keys(по).map(function(k){ var z=по[k], д=Object.keys(z.даты).sort(); z.д=д; return z; }).filter(function(z){ return z.д.length>=2; });
-  кандидаты.sort(function(a,b){ return b.д.length-a.д.length || (a.д[a.д.length-1]<b.д[b.д.length-1]?1:a.д[a.д.length-1]>b.д[b.д.length-1]?-1:0) || (a.ключ<b.ключ?-1:1); });
-  var out=[], занято={};
-  кандидаты.forEach(function(z){
-    if(out.length>=2) return;
-    var g=группыПодхода(z.x)||{}, глав=Object.keys(g).filter(function(k){ return g[k]===1; })[0]||Object.keys(g)[0]||'?';
-    if(занято[глав]) return; занято[глав]=1;
-    var д2=z.д[z.д.length-1], д1=z.д[z.д.length-2];
-    out.push({n:z.n, was:z.даты[д1], now:z.даты[д2], d1:д1, d2:д2, k:(z.x.id||('n:'+нормИмя(z.x.n)))});
-  });
-  return out;
-}
-function залРезультатHtml(r){
-  var f=function(v){ return String(Math.round(v*100)/100).replace('.',','); };
-  var a=r.was, b=r.now, что, сдвиг, cls='eq';
-  if(a.w===0 && b.w===0){ что=a.r+' → '+b.r+' повт.'; сдвиг=b.r-a.r ? (b.r>a.r?'↑ +':'↓ −')+Math.abs(b.r-a.r)+' повт.' : ''; if(b.r!==a.r) cls=b.r>a.r?'up':'dn'; }
-  else if(a.w===b.w){ что=f(a.w)+' кг · '+a.r+' → '+b.r+' повт.'; сдвиг=b.r-a.r ? (b.r>a.r?'↑ +':'↓ −')+Math.abs(b.r-a.r)+' повт.' : ''; if(b.r!==a.r) cls=b.r>a.r?'up':'dn'; }
-  else if(a.r===b.r){ что=a.r+' повт. · '+f(a.w)+' → '+f(b.w)+' кг'; сдвиг=(b.w>a.w?'↑ +':'↓ −')+f(Math.abs(b.w-a.w))+' кг'; cls=b.w>a.w?'up':'dn'; }
-  else { что=f(a.w)+'×'+a.r+' → '+f(b.w)+'×'+b.r; сдвиг=(b.w>a.w?'+':'−')+f(Math.abs(b.w-a.w))+' кг, '+(b.r>a.r?'+':'−')+Math.abs(b.r-a.r)+' повт.'; }
-  var д1=r.d1.split('-'), д2=r.d2.split('-'), даты=(д1[1]===д2[1] ? д1[2] : д1[2]+'.'+д1[1])+'→'+д2[2]+'.'+д2[1];
-  return '<button type="button" class="zkr" data-zkex="'+esc(r.k)+'" aria-label="'+esc(String(r.n||'Упражнение'))+' — история в Журнале"><b>'+esc(String(r.n||'Упражнение'))+'</b><em class="'+cls+'">'+(сдвиг||'без изменений')+'</em><span>'+что+' · '+даты+'</span></button>';
-}
+/* «Результаты» в «Зале на неделе» убраны 21.10 (его выбор «Только главное»):
+   веса и их ход — в Журнале по ссылке «Рабочие веса и объём». */
 function залНеделиHtml(){
   if(foodOnly()) return '';
   var н=неделяЗала();
@@ -13640,11 +13668,10 @@ function залНеделиHtml(){
   var точки='';
   if(н.план && н.план<=7){ for(var i=0;i<н.план;i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
   h+='<div class="zksec"><div class="zklab">Завершено занятий<em>'+(точки?'<span class="zkdots" aria-hidden="true">'+точки+'</span>':'')+н.занятий+(н.план?' из '+н.план:'')+'</em></div>';
-  var след=н.след ? (н.след===TODAY ? 'сегодня' : WD[dLocal(н.след).getDay()]+', '+ruDate(н.след)) : '';
-  var пропуск = н.пропущено ? н.пропущено+' пропущено' : '';
-  var незак = н.безЗаверш>0 ? 'ещё '+н.безЗаверш+' '+plural(н.безЗаверш,['запись','записи','записей'])+' без «Завершить и сохранить»' : '';
   if(!н.занятий && !н.безЗаверш) h+='<p class="zknote">Пока нет завершённых занятий'+(н.план?' · план '+н.план:'')+'</p><button type="button" class="zklink" data-zkgo="gym">Открыть тренировку</button>';
-  if(пропуск || ((н.занятий || н.безЗаверш) && (незак || след))) h+='<p class="zknote">'+[пропуск, незак, след?'по расписанию — '+след:''].filter(Boolean).join(' · ').replace(/^./,function(c){ return c.toUpperCase(); })+'</p>';
+  /* 21.10, его слова: «в секции про тренировку слишком много текста»; выбор
+     «Только главное»: кружки, полоски подходов и ссылка на веса. Строки
+     «по расписанию…», сноска о смене программы и «Результаты» убраны. */
   h+='</div>';
   /* 2. подходы по группам — одна шкала на все строки */
   var гр=ГРУППЫ5.map(function(g){ return [g[0], н.факт[g[0]]||0, н.планГр[g[0]]||0]; }).filter(function(g){ return g[1]>0 || g[2]>0; });
@@ -13655,12 +13682,8 @@ function залНеделиHtml(){
       var план=g[2]>=0.5;
       return '<div class="zkrow"><b>'+g[0]+'</b><div class="zkbar" aria-hidden="true"><i style="width:'+(g[1]/мх*100).toFixed(1)+'%"></i>'+(план?'<u style="left:'+(g[2]/мх*100).toFixed(1)+'%"></u>':'')+'</div>'+
         '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+ч(g[2]):(н.план?' · вне плана':''))+'</s></div>';
-    }).join('')+'</div><p class="zknote">'+(!н.план ? 'дни зала не заданы — недельного плана нет' : н.смена ? 'программа сменилась '+WD[dLocal(н.смена).getDay()]+', '+ruDate(н.смена)+' — черта по новой программе, подходы — за всю неделю' : 'черта — сколько стоит в текущей программе на неделю')+'</p></div>';
+    }).join('')+'</div>'+(!н.план ? '<p class="zknote">дни зала не заданы — недельного плана нет</p>' : '')+'</div>';
   }
-  /* 3. результаты в упражнениях */
-  var рр=результатыЗала();
-  h+='<div class="zksec"><div class="zklab">Результаты</div>'+(рр.length ? '<div class="zkres">'+рр.map(залРезультатHtml).join('')+'</div>'
-    : '<p class="zknote">Появятся после повторного занятия с теми же упражнениями.</p>')+'</div>';
   h+='<button type="button" class="zklink" data-zkgo="log" aria-label="Рабочие веса и объём — в Журнале">Рабочие веса и объём</button>';
   return h+'</div>';
 }
@@ -13716,6 +13739,7 @@ function homeBody(){
       '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+'<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
+  if(есть.some(function(v){ return v[0]==='mus'; })) есть=есть.filter(function(v){ return v[0]!=='prot'; });
   var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид=есть[0][0];
   var sr=vzСерия(вид), пос=vzПоследний(ms, sr), ед=sr.ед||'кг';
   /* «за день» — от последнего замера ЭТОЙ величины: талию меряют не каждое
@@ -13734,12 +13758,15 @@ function homeBody(){
   var поСред = !!(ср && ср.n>=2);
   var главное = поСред ? ср.v : sr.f(пос);
   var старт=(FOOD.first && sr.f(FOOD.first)!=null && FOOD.first.date<свои[0].date) ? FOOD.first : свои[0];
-  var всего = старт.date<пос.date ? главное-sr.f(старт) : null, от=старт.date;
+  /* у мышц «с 01.09» не пишем: первая неделя дефицита — вода и гликоген
+     (62,5 → 60,8 у него), и это число 11.09 его уже напугало */
+  var всего = (старт.date<пос.date && sr.k!=='mus') ? главное-sr.f(старт) : null, от=старт.date;
   var вода=свобВода(), мокро=вода[пос.date];
   var план = вид==='w' ? vzПлан() : null;
-  var график=vzГрафик(ms, sr, план), кор=vzГрафик.кор, откл=vzГрафик.откл;
+  var цель=vzЦель(ms, sr);
+  var график=vzГрафик(ms, sr, план, цель), кор=vzГрафик.кор, откл=vzГрафик.откл;
   var под=[поСред ? 'средний за 7 дней' : (пос.date!==TODAY ? 'замер '+ruDate(пос.date) : null),
-    всего!=null ? 'с '+ruDate(от)+' '+vzЗн(всего) : null, (sr.k==='prot'||sr.k==='fat') ? 'оценка весов' : null].filter(Boolean).join(' · ');
+    всего!=null ? 'с '+ruDate(от)+' '+vzЗн(всего) : null, (sr.k==='prot'||sr.k==='fat'||sr.k==='mus') ? 'оценка весов' : null].filter(Boolean).join(' · ');
   var сег = поСред ? '<p class="vztd">'+(пос.date===TODAY ? 'сегодня ' : 'замер '+ruDate(пос.date)+' ')+'<b>'+vzF1(sr.f(пос))+'</b>'+
       (sr.под ? ' ('+sr.под(пос)+')' : '')+(дн!=null ? ' · за день '+vzЗн(дн) : '')+(мокро ? ' — вода' : '')+'</p>' : '';
   /* скачок после свободного дня объясняем словами под графиком — сразу,
@@ -13751,13 +13778,13 @@ function homeBody(){
     '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
     '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
-    '<p class="vzsub">'+под+'</p>'+сег+
+    vzЦельHtml(цель)+(sr.k==='mus' ? vzРабочиеВеса() : '')+'<p class="vzsub">'+под+'</p>'+сег+
     (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёшь по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : '')+
     '<div class="vzsvg">'+график+'</div>'+
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
       (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
-      (план?'<span><i class="pl"></i>план цели</span>':'')+'</p>'+
+      (план?'<span><i class="pl"></i>план цели</span>':'')+(vzГрафик.цель?'<span><i class="pl"></i>цель</span>':'')+'</p>'+
     '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():залНеделиHtml())+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
@@ -13919,15 +13946,13 @@ function renderHome(){
   var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
     homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeRows()+'</section>'+
-    homeWeek()+homeBody()+'<div class="hstats">'+homeRating()+'</div>'+homeWeekGym()+homeSport();
-  /* 04.10, Фокус: существующий итог зала идёт рядом с рейтингом и серией.
-     Итоги и все занятия берём из прежней недели, расчёт не дублируем. */
-  var итогЗала=box.querySelector('.hwg[data-hgo="gym"] .hwg-h'), статистика=box.querySelector('.hstats');
-  if(итогЗала && статистика){
-    var кнопкаЗала=document.createElement('button'); кнопкаЗала.type='button';
-    кнопкаЗала.className='hline hwg-h'; кнопкаЗала.dataset.hgo='gym';
-    кнопкаЗала.innerHTML=итогЗала.innerHTML; итогЗала.remove(); статистика.appendChild(кнопкаЗала);
-  }
+    homeWeek()+homeBody()+homeWeekGym()+homeSport();
+  /* 21.10, его слова: «секцию внизу убери совсем — огонёк и число серии можно
+     показать у значка профиля, а всё остальное уже есть на странице
+     рейтинга». Рейтинг — в «Рейтинге», серия — 🔥 на профиле, «Зал на
+     неделе» — кружки в разделе «Зал» карточки «Тело». */
+  var итогЗала=box.querySelector('.hwg[data-hgo="gym"] .hwg-h'); if(итогЗала) итогЗала.remove();
+  paintStreak();
   /* 04.10, ревью: одна неделя вместо повторных кружков. Их общий переход
      в зал сохранён кнопкой «Зал на неделе» в статистике (перехода по дате
      у старых кружков не было). Значки занятий и подписи не теряем. */

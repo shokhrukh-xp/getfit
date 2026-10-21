@@ -31,16 +31,18 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     const строки = Array.from(box.querySelectorAll('.hline')).map(e => e.textContent.replace(/\s+/g, ' ').trim());
     const w = box.querySelector('.hweek-block');
     return { строки, текст: box.textContent,
-      неделя: w ? { шапка: box.querySelector('.hstats .hwg-h').textContent.replace(/\s+/g, ' ').trim(),
-        дни: Array.from(w.querySelectorAll('.hwd')).map(e => ({ d: e.dataset.hday, on: e.classList.contains('on'),
+      серия: ((document.querySelector('#profbtn .pstreak') || {}).textContent || ''), стат: !!box.querySelector('.hstats, .hwg-h'),
+      неделя: w ? { дни: Array.from(w.querySelectorAll('.hwd')).map(e => ({ d: e.dataset.hday, on: e.classList.contains('on'),
           c: e.querySelector('.hwd-gym').className, n: e.querySelector('.hwd-date').textContent, a: e.querySelector('.hwg-e').className, зн: e.querySelector('.hwg-e').textContent })),
         подпись: (w.querySelector('.hwg-sub') || {}).textContent || '', легенда: (w.querySelector('.hwg-leg') || {}).textContent || '' } : null,
       кнопка: (() => { const b = document.getElementById('addsport3'); return b ? { видна: !!b.offsetParent, после: !!(w && w.contains(b) && (w.querySelector('.hweek').compareDocumentPosition(b) & 4)) } : null; })() };
   });
-  /* рейтинг и серия — два факта, две строки */
-  дано(!в.строки.some(с => /\d-й из \d.*подряд/.test(с)), 'место и серия больше не в одной строке: ' + в.строки.join(' | '));
-  дано(в.строки.some(с => /^Рейтинг\s*\d-й из \d+\s*сегодня$/.test(с)), 'рейтинг подписан «сегодня»');
-  дано(в.строки.some(с => /^Серия\s*🔥 6 дней\s*подряд с записью еды$/.test(с)), 'серия подписана, что это за дни: «подряд с записью еды»');
+  /* 21.10, его просьба: «секцию внизу убери совсем — огонёк и число серии
+     можно показать у значка профиля, а всё остальное уже есть на странице
+     рейтинга» */
+  дано(!в.стат && !в.строки.some(с => /Рейтинг|Серия/.test(с)), 'полосы «Рейтинг · Серия · Зал на неделе» на главной нет');
+  дано(в.серия === '🔥6', 'серия — 🔥 с числом у значка профиля: ' + в.серия);
+  дано(/серия 6 дней подряд с записью еды/.test(await page.getAttribute('#profbtn', 'aria-label') || ''), 'у кнопки профиля — подпись серии для чтеца экрана');
   дано(!/Завтра/.test(в.текст), 'строки «Завтра» больше нет');
   /* неделя */
   const н = в.неделя;
@@ -54,7 +56,6 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
     const мимо = н.дни.filter((x, i) => i < dow && [2, 4].includes(i));
     дано(мимо.every(x => /miss/.test(x.c)), 'прошедший день зала без тренировки — пунктиром' + (мимо.length ? '' : ' (сегодня таких нет)'));
     дано(н.дни.filter((x, i) => ![0, 2, 4].includes(i)).every(x => !/plan|miss|done/.test(x.c)), 'дни отдыха — просто дата');
-    дано(/^Зал на неделе\s*1 из 3\s*тренировок$/.test(н.шапка), 'в шапке — сколько сделано из запланированного: ' + н.шапка);
     /* 24.09: точки он не понял («можно путать с занятием в зале») — значок вида */
     дано(н.дни[0].зн === '🎾' && !/ p| none/.test(н.дни[0].a), 'теннис в понедельник — яркий 🎾 под датой');
     дано(dow > 5 || (н.дни[5].зн === '🎾' && / p/.test(н.дни[5].a)), 'теннис по плану в субботу — бледный 🎾' + (dow > 5 ? ' (суббота уже прошла)' : ''));
@@ -64,9 +65,6 @@ const ЗАНЯТИЯ = [{ id: 'a1', date: пн, t: '18:00', kind: 'теннис'
   }
   дано(!!в.кнопка && в.кнопка.видна && в.кнопка.после, '«+ Занятие вне зала» — внутри Недели, под днями');
   дано(await page.locator('.hwg-c,.hwg-row').count()===0, 'повторных кружков и второго ряда дней нет');
-  await page.click('.hstats [data-hgo="gym"]');
-  дано(await page.locator('#p-gym').isVisible(), 'прежний переход кружков в зал доступен через итог в статистике');
-  await page.click('.l1 [data-page="home"]');
   await page.click('#addsport3'); await page.waitForTimeout(600);
   дано(await page.evaluate(() => !!document.querySelector('#sportm.show')), 'кнопка открывает лист занятия');
   await page.close();

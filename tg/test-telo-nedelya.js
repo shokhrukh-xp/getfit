@@ -20,7 +20,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   if(u.pathname==='/coach'){const d=JSON.parse(r.request().postData());sent.push(d);await give(r,{ok:true,reply:'Записал'});return true;}return false;
  }});
  if(name==='labels'){
-  assert.equal(await p.locator('[data-vzv="prot"]').innerText(),'белок тела');await p.click('[data-vzv="prot"]');await p.locator('.vzhd').scrollIntoViewIfNeeded();await snap(p,'body-protein',theme,width);
+  assert.equal(await p.locator('[data-vzv="mus"]').innerText(),'мышцы');assert.equal(await p.locator('[data-vzv="prot"]').count(),0);await p.click('[data-vzv="mus"]');await p.locator('.vzhd').scrollIntoViewIfNeeded();await snap(p,'body-protein',theme,width);
   await p.goto(M.БАЗА+'?srez=1');await p.locator('#srezm.show').waitFor();assert.equal(await p.locator('#srtitle').innerText(),'Изменения тела');await snap(p,'body-changes',theme,width);
  }else if(name==='menu'){
   await p.click('[data-eseg="week"]');await p.locator('[data-menu-day]').first().waitFor();assert.equal(await p.locator('[data-menu-day]').count(),7);assert.equal(await p.locator('#eatbody .mnrow').count(),1);
