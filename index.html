@@ -1677,6 +1677,9 @@ ul.kmine li+li{margin-top:8px}
 .adpill.pay{background:rgba(var(--done-rgb),.14);color:var(--done-txt)}
 .adpill.free{background:var(--accent-ghost);color:var(--accent-txt)}
 .adpill.off{background:var(--field);color:var(--dim)}
+/* 21.10: удалить человека — тихая кнопка в конце строки, подтверждение окном */
+.addel{flex-shrink:0;min-height:44px;min-width:44px;padding:0 8px;background:none;border:none;color:var(--dim);font:inherit;font-size:12px;cursor:pointer}
+.addel:active{opacity:.6}
 .admore{width:100%;min-height:44px;text-align:center;color:var(--accent-txt);font:inherit;font-size:13px;background:none;border:none;cursor:pointer}
 .adbars{display:flex;align-items:flex-end;gap:6px;height:40px;margin-top:12px}
 .adbars i{flex:1 1 0;max-width:26px;background:var(--field);border-radius:12px 12px 0 0;display:block;min-height:3px}
@@ -15094,11 +15097,31 @@ function admЧеловек(x){
     admДата(x.created)+' · '+esc(кто)+' · '+(x.приёмов||0)+' '+plural(x.приёмов||0,['приём','приёма','приёмов'])+
     (x.привёл?' · привёл '+x.привёл:'')+тихо+'</i>'+admБыл(x.был)+'</span>'+
     '<span class="adpill '+(платит?'pay':вечный?'free':'off')+'">'+
-    (платит?'платит':вечный?'бессрочно':'не платит')+'</span></div>';
+    (платит?'платит':вечный?'бессрочно':'не платит')+'</span>'+
+    (String(x.uid)!==String(admЯ())?'<button type="button" class="addel" data-admdel="'+esc(String(x.uid))+'" data-name="'+esc(x.name||('id '+x.uid))+'" aria-label="Удалить '+esc(x.name||('id '+x.uid))+'">Удалить</button>':'')+
+    '</div>';
+}
+function admЯ(){ return (TGUSER && TGUSER.id) ? String(TGUSER.id) : ''; }
+/* 21.10, его слова: «всё безвозвратно, если в будущем захочет — может снова
+   с нуля начать». Сервер стирает дневник, вход, подписку, круги; платежи
+   остаются для учёта. Окно называет человека и что пропадёт. */
+function admУдалить(uid, имя){
+  if(ADMBUSY) return;
+  var т='Удалить «'+имя+'» безвозвратно?\n\nСотрётся всё: дневник, фото, тренировки, замеры, разговор с тренером, подписка, баллы и его круги. Вернуть нельзя. Если откроет бота снова — начнёт с нуля.';
+  var дальше=function(ok){
+    if(!ok) return;
+    ADMBUSY=true;
+    fPost('/admin/user/del', {uid:syncUid(), who:uid})
+      .then(function(){ ADMBUSY=false; haptic('ok'); say('Удалено: '+имя); admPull(); })
+      .catch(function(err){ ADMBUSY=false; haptic('err'); say(humanErr(err)); });
+  };
+  if(TG && TG.showConfirm) TG.showConfirm(т, дальше); else дальше(window.confirm(т));
 }
 document.getElementById('admbody').addEventListener('click', function(e){
   if(e.target.closest('#admall')){ ADMALL=true; renderAdmin(); return; }
   if(e.target.closest('#admless')){ ADMALL=false; renderAdmin(); return; }
+  var дел=e.target.closest('[data-admdel]');
+  if(дел){ admУдалить(дел.dataset.admdel, дел.dataset.name||''); return; }
   var pd=e.target.closest('[data-prodrop]');
   if(pd){ if(ADMBUSY) return; ADMBUSY=true;
     fPost('/pro/link', {uid:syncUid(), drop:pd.dataset.prodrop})
