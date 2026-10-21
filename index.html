@@ -3961,7 +3961,8 @@ function figSvg(k){
 var FRAMES={abduction:1,abwheel:1,bench:1,benchdb:1,calf:1,chop:1,crunch:1,curl:1,
             dbrow:1,facepull:1,fly:1,hipthrust:1,hyper:1,lat:1,lateral:1,legext:1,
             legpress:1,legraise:1,lunge:1,ohp:1,pallof:1,plank:1,pullup:1,rdl:1,
-            reardelt:1,row:1,rowcable:1,sideplank:1,squat:1,triceps:1};
+            reardelt:1,row:1,rowcable:1,sideplank:1,squat:1,triceps:1,
+            kickback:1};   /* 21.10: отведение ноги назад — кадры кикбэка на блоке (free-exercise-db) */
 /* Адрес папки с фотографиями собираем абсолютным. Telegram открывает Mini App
    с параметрами в адресе, и относительный путь «img/…» в некоторых клиентах
    разрешается не от папки приложения, а от корня сайта — картинки молча падают
@@ -4457,6 +4458,7 @@ function applyProfile(p, silent){
   if(sd){ var a=String(sd).split('-'); START = new Date(+a[0], +a[1]-1, +a[2]); }
   else   { START = new Date(PROF.start[0], PROF.start[1], PROF.start[2]); }
   week = weekNow();
+  if(!sd && p==='ai') try{ стартИзИстории(true); }catch(e){}   /* дальше applyProfile рисует сам */
   LAST = get('last', {});
   SUBS = get('subs', {});
   ADJ  = get('adj', {});
@@ -5920,7 +5922,7 @@ function wzApply(){
   wzSaveMe();
   var дни=wizDays();
   AIPROG=WIZ.prog; WIZ.prog=null; WIZ.stage='form'; WIZ.qa=[]; WIZ.ask=null;
-  aiApply();
+  aiApply(true);
   /* расписание пишется под ключ профиля, а профиль меняется внутри aiApply —
      поэтому дни сохраняем после него, иначе они уйдут в чужой ключ */
   if(дни.length){
@@ -7615,11 +7617,23 @@ function dayHere(k){
   var m=String(k).match(/(\d+)\s*$/); if(!m) return null;
   return CYCLE[+m[1]-1] || null;
 }
+/* 21.10: день смены программы (ch в указателе профиля, ставится только явным
+   выбором). Занятие по прежней программе раньше этого дня очередь новой не
+   ведёт: у него на 3-дневной вчерашний «день 4» старой не значил ничего, и
+   «следующий» прыгал — День 1 до прихода облака, День 3 после. Занятие в
+   сам день смены остаётся: тогда верна плашка «сегодня закрыт». */
+function сменаПрогДата(){
+  try{ var ук=JSON.parse(mGet(PROFKEY)||'null'), дт=ук && ук.ch ? new Date(ук.ch) : null;
+       if(дт && !isNaN(дт)) return ymd(дт); }catch(e){}
+  return null;
+}
 function lastWorkout(){
-  var ak = lastDone ? dayHere(lastDone.day) : null;
+  var см = сменаПрогДата();
+  var ak = (lastDone && !(см && lastDone.date < см)) ? dayHere(lastDone.day) : null;
   var a = ak ? {day:ak, date:lastDone.date} : null;
-  var bk = (HIST && HIST[0]) ? dayHere(HIST[0].day) : null;
-  var b = bk ? {day:bk, date:HIST[0].date} : null;
+  var h0 = (HIST && HIST[0] && !(см && HIST[0].date < см)) ? HIST[0] : null;
+  var bk = h0 ? dayHere(h0.day) : null;
+  var b = bk ? {day:bk, date:h0.date} : null;
   if(a && b) return a.date>=b.date ? a : b;
   return a||b;
 }
@@ -8565,7 +8579,7 @@ function техHTML(e){
   } else h+='<p class="tnone">Описания этого упражнения пока нет — посмотри видео.</p>';
   h+='<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'">▶ Видео</a>'+
      '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div>';
-  if(шаги) h+='<p class="tsrc">Текст — free-exercise-db (общественное достояние), перевод и сокращение GetFit.</p>';
+  if(шаги) h+='<p class="tsrc">'+(e.cat && catOwn(e.cat) ? 'Текст — GetFit.' : 'Текст — free-exercise-db (общественное достояние), перевод и сокращение GetFit.')+'</p>';
   return h;
 }
 function openTech(di){
@@ -10905,6 +10919,28 @@ function renderMeasSummary(){
    Один загруженный список тренировок обслуживает и журнал, и подсказки
    на карточках упражнений. Грузится один раз, дальше живёт в памяти. */
 var HIST=null, histLoading=null;
+/* 21.10: ДАТА СТАРТА — ИЗ ИСТОРИИ, ЕСЛИ ЕЁ НЕТ. У него 'startdate' не было
+   (занимается с сентября, до появления ключа), а своя программа при каждом
+   запуске ставит старт = сегодня (installAiProg). Итог — вечная 1-я неделя:
+   «Вход», на подход меньше и запас 4, хотя Журнал пишет «5 недель». Неделя
+   по замыслу считается от того, когда человек начал сам, — это первая
+   запись зала. Только если ключа нет: свой старт не трогаем. И только для
+   своей программы: у готовых старт — их собственная дата (PROF.start). */
+function стартИзИстории(тихо){
+  if(profile!=='ai' || !PROF || !PROF.custom) return false;
+  if(gget('startdate', null) || !HIST || !HIST.length) return false;
+  var d=String(HIST[HIST.length-1].date||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d>=TODAY) return false;
+  gset('startdate', d);
+  var a=d.split('-'); START=new Date(+a[0], +a[1]-1, +a[2]);
+  var было=week; week=weekNow();
+  if(!тихо && week!==было){
+    try{ renderPhase(); }catch(e){}
+    try{ if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess(); }catch(e){}
+    try{ renderWeek(); renderList(); }catch(e){}
+  }
+  return true;
+}
 
 function loadHist(force){
   if(HIST && !force) return Promise.resolve(HIST);
@@ -10918,7 +10954,9 @@ function loadHist(force){
         if(w.ex && w.ex.length) out.push(w);
       });
       out.sort(function(a,b){ return a.date<b.date?1:-1; });
-      HIST=out; histLoading=null; return out;
+      HIST=out; histLoading=null;
+      try{ стартИзИстории(); }catch(e){}
+      return out;
     }).catch(function(e){ histLoading=null; throw e; });
   return histLoading;
 }
@@ -11191,7 +11229,8 @@ var BWK = {squat:0.50, bench:0.40, benchdb:0.30, ohp:0.22, row:0.35, rowcable:0.
            facepull:0.15, fly:0.12, calf:0.40, pallof:0.10, abduction:0.30,
            /* движения, которые встречаются только в собранных программах */
            gobletsquat:0.22, dead:0.60, legcurl:0.22, chestpress:0.35, ohpm:0.25,
-           dbrow:0.18, shrug:0.50, pullover:0.15, upright:0.15, adduction:0.30};
+           dbrow:0.18, shrug:0.50, pullover:0.15, upright:0.15, adduction:0.30,
+           kickback:0.20};
 /* Стартовый вес подсказывается по шаблону движения (ph). В готовых программах
    он проставлен руками; в собранной тренером его нет — а первый раз человеку
    как раз важнее всего, с чего начать. Угадываем по английскому названию:
@@ -11227,6 +11266,8 @@ var PHNAME=[
      20 кг на штанге смешивались со сгибанием на бицепс (01.10) */
   [/wrist/i,'wrist'],
   [/(curl)/i,'curl'],
+  /* 21.10: «Glute Kickback Machine» ловилось правилом трицепса ниже */
+  [/(glute kickback|leg(ged)? (cable )?kickback|hip kickback)/i,'kickback'],
   [/(triceps|pushdown|skullcrusher|kickback|dip machine|french press)/i,'triceps'],
   [/pallof/i,'pallof'],
   [/(hip abduction|abductor)/i,'abduction'],
@@ -12196,7 +12237,25 @@ function renderAiPreview(prog){
      '<button type="button" class="btn" id="aidrop">Не надо</button></div></div>';
   box.innerHTML=h;
 }
-function aiApply(){
+/* 21.10: ПРАВКИ ПРОШЛОЙ ПРОГРАММЫ — НЕ ПРО НОВУЮ. Замена в строке, где стоит
+   то же движение, остаётся (сброситьСлоты), но добавленные руками упражнения,
+   свои пары и порядок были про старые дни: после перехода с 4 дней на 3 в его
+   новом Дне 1 рядом с канатом остался второй трицепс из старого дня. Дни,
+   которых в новой программе нет (A4 на трёх днях), снимаются целиком. */
+function снятьПравкиПрошлой(keys){
+  var нов={}, n=0; (keys||[]).forEach(function(k){ нов[k]=1; });
+  var свой=function(d){ return /^A\d+$/.test(d); };
+  [SUBS, ADJ, SKIP].forEach(function(o){ Object.keys(o||{}).forEach(function(k){
+    var d=String(k).split(':')[0], хвост=String(k).slice(d.length+1);
+    if(!свой(d)) return;
+    if(!нов[d] || хвост.charAt(0)==='x'){ delete o[k]; n++; }
+  }); });
+  Object.keys(EXTRA||{}).forEach(function(d){ if(свой(d)){ n+=(EXTRA[d]||[]).length; delete EXTRA[d]; } });
+  Object.keys(PAIRS||{}).forEach(function(d){ if(свой(d)){ n+=(PAIRS[d]||[]).length; delete PAIRS[d]; } });
+  Object.keys(ORD||{}).forEach(function(d){ if(свой(d)) delete ORD[d]; });
+  return n;
+}
+function aiApply(целиком){
   if(!AIPROG) return;
   /* Имена НЕ подменяем именами из истории. Раньше здесь имя из старой записи
      вписывалось в саму программу и сохранялось навсегда: после переименования
@@ -12205,6 +12264,7 @@ function aiApply(){
      id; запись занятия хранит своё и сверяется по id. */
   gset('sched_any', GYM_DAYS);
   var k=installAiProg(AIPROG); if(!k) return;
+  if(целиком){ var снято=снятьПравкиПрошлой(PROFILES.ai.heavy); if(снято){ ПРОГ_СЧИЩЕНО+=снято; saveSubs(); } }
   gset('ai_prog', AIPROG);
   if(AIPROG.stamp){ RBO=null; gset('rb_seen', AIPROG.stamp); renderRb(); }
   var str=JSON.stringify(AIPROG);
@@ -12226,7 +12286,7 @@ function aiApply(){
   closeProf(); haptic('ok');
 }
 document.getElementById('aibox').addEventListener('click', function(e){
-  if(e.target.closest('#aiapply')) aiApply();
+  if(e.target.closest('#aiapply')) aiApply(true);
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
 });
 
@@ -16965,6 +17025,10 @@ function esc(t){ return String(t||'').replace(/[&<>]/g,function(c){ return {'&':
 var RECO2=null;
 function pushVolume(){
   if(!HIST) return;
+  /* 21.10: при запуске, пока своя программа не доехала, applyProfile падает во
+     встроенную — и тренер получил таблицу «5 дней» вместо его 3-дневной */
+  try{ var ук=JSON.parse(mGet(PROFKEY)||'null'); if(ук && ук.p && ук.p!==profile) return; }catch(e){}
+  if(profile==='ai' && !(PROF && PROF.custom)) return;
   try{
     var v=volumeWeek();
     if(!v.rows.length) return;
@@ -17197,7 +17261,7 @@ function applyAuto(list, opts){
 function applyRebuild(rb){
   if(!rb || !rb.prog || !rb.prog.days || gget('rebuilt_at',null)===rb.at) return;
   gset('rebuilt_at', rb.at);
-  AIPROG=rb.prog; aiApply();
+  AIPROG=rb.prog; aiApply(!rb.day);   /* весь блок заново — правки прошлой сняты; один день — ниже */
   var счищено = ПРОГ_СЧИЩЕНО;
   /* День просили переделать ЦЕЛИКОМ — значит и добавленные в него руками
      упражнения были про прежний день. Оставить их — это снова показать не ту
