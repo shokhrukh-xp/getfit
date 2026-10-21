@@ -17442,9 +17442,19 @@ function coachSend(text, image){
       if(d.plan) takePlan(d.plan);
       if(d.byt) takeByt(d.byt);
       if(d.voice) takeVoice(d.voice);
-      if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.acts && d.acts.length) || d.plan)){
+      if(d.day && ((d.meals && d.meals.length) || d.fixed || (d.deleted && d.deleted.length) || (d.acts && d.acts.length) || d.plan)){
         if(d.day.date===fDate()) FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[];
         renderFoodDay(); renderPlanBox(); }
+      /* 21.10: тренер удалил приём по просьбе — та же плашка «Удалено · Вернуть»,
+         что у удаления руками; возврат — той же операцией на сервере */
+      (Array.isArray(d.deleted)?d.deleted:[]).forEach(function(x){
+        if(!x||!x.id||!x.op) return; var uidD=syncUid();
+        undoOffer(function(){ return mealMutation('/meal/restore',{uid:uidD,id:x.id,operation:x.op}).then(function(r){
+          if(!r||!r.ok||!r.day) throw new Error('Сервер не подтвердил возврат.');
+          if(r.day.date===fDate()){ FOOD.day=r.day; renderFoodDay(); }
+          if(r.day.date===TODAY) HOME.day=r.day;
+          освежить(r.day); }); });
+      });
       if(d.measure){ fGet('/measures?uid='+encodeURIComponent(syncUid())).then(function(x){ if(x&&x.measures){ замерыВзять(x); renderMeas(); } }).catch(function(){}); }
       takeChanges(d);
     })
