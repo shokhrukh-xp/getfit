@@ -34,7 +34,7 @@ const голова = p => p.evaluate(() => { const h = document.querySelector('#
     дано(await page.locator('#homebody .vzsub, #homebody .vztd, #homebody p.vzgapline').count() === 0, где + 'лишних строк под головой нет');
     await page.click('[data-vzv="fat"]'); await page.waitForTimeout(200);
     г = await голова(page);
-    дано(/^цель \d+(,\d)? ?кг ≈\d+ %$/.test(г.л), где + 'жир: цель в кг и процент от веса цели: ' + г.л);
+    дано(/^цель · ≈\d+ % \d+(,\d)? ?кг$/.test(г.л), где + 'жир: цель в кг и процент от веса цели: ' + г.л);
     await page.click('[data-vzv="mus"]'); await page.waitForTimeout(200);
     г = await голова(page);
     дано(/^держать 60,[23] ?кг$/.test(г.л) && !г.путь, где + 'мышцы: «держать» — база дней 8–35 от старта цели: ' + г.л);

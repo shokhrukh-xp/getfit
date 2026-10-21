@@ -2488,19 +2488,20 @@ body.onb #picker .modalbox::before{display:none}
 .vznum em.up{color:var(--warn-txt);background:rgba(var(--warn-rgb),.13)}
 .vzsub{margin:4px 0 0;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;line-height:1.4}
 /* 21.10: голова «Тела» при цели — «цель» слева, «сейчас» справа, путь между */
-.vzgh{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:center;gap:14px;margin-top:8px}
+.vzgh{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:end;gap:14px;margin-top:8px}
 .vzg-c span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 .vzg-c b{display:block;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vzg-c b s{text-decoration:none;font-size:14px;font-weight:500;margin-left:4px;letter-spacing:0;color:var(--dim)}
 .vzg-c em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
 .vzg-l b{opacity:.72}
 .vzg-r{text-align:right}
-.vzg-tr{position:relative;height:6px;border-radius:6px;background:var(--field);margin-top:14px}
+.vzg-tr{position:relative;height:6px;border-radius:6px;background:var(--field);margin-bottom:13px}
 .vzg-tr i{position:absolute;top:0;bottom:0;right:0;border-radius:6px;background:currentColor;opacity:.85}
 .vzg-tr u{position:absolute;top:50%;width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--bg);border:3px solid currentColor;transform:translate(-50%,-50%)}
 .vzg-eq{background:none;border-top:2px dashed var(--field);height:0;border-radius:0}
 .vzgline{margin:10px 0 0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .vzgline .dn{color:var(--on-accent)} .vzgline .up{color:var(--on-accent)}
+.vztop .vzgline .vzgapline{display:inline;margin:0;padding:0;font:inherit;font-weight:600;color:var(--on-accent)}
 .vzsil{display:block;border:0;background:none;padding:0;min-height:32px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;margin-top:2px;text-align:left}
 .vzsil::after{content:' ›'}
 .vzsvg svg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}
@@ -13413,7 +13414,7 @@ function vzРабочиеВеса(){
    одна строка: сколько осталось и неделя. */
 function vzЧ(ц, x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); }
 function vzГоловаЦели(ц, главное, ед, нед, sr, откл){
-  var л='<div class="vzg-c vzg-l"><span>'+(ц.держать?'держать':'цель')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b>'+(ц.доп?'<em>'+ц.доп+'</em>':'')+'</div>';
+  var л='<div class="vzg-c vzg-l"><span>'+(ц.держать?'держать':'цель')+(ц.доп?' · '+ц.доп:'')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b></div>';
   var п='<div class="vzg-c vzg-r"><span>сейчас</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
   var путь='';
   if(ц.доля!=null){ var x=((1-ц.доля)*100).toFixed(1);
