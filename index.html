@@ -1360,6 +1360,21 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .reco2 .rtarget .rtx b{font-size:13px;line-height:1.3;color:var(--text)}
 .reco2 .rtarget .rtx i{font-style:normal;font-size:12px;color:var(--dim);line-height:1.35}
 .reco2 .rtarget .rtx s{text-decoration:none;font-size:12px;color:var(--muted)}
+/* 21.10: замена — выбор из нескольких, глазами. Строка = кнопка: кадр, имя, снаряд */
+.reco2 .rwhy{margin:2px 0 8px;font-size:13px;line-height:1.45;color:var(--dim)}
+.reco2 .rwhy b{font-weight:500;color:var(--text)}
+.reco2 .ropts{display:flex;flex-direction:column;gap:6px;margin:6px 0 2px}
+.reco2 .ropts>s{text-decoration:none;font-size:12px;color:var(--muted);margin-bottom:2px}
+.reco2 .ropt{display:flex;align-items:center;gap:10px;width:100%;padding:7px;border-radius:12px;
+  background:var(--card-solid);border:.5px solid var(--line-soft);color:var(--text);font:inherit;text-align:left}
+.reco2 .ropt:active{opacity:.6}
+.reco2 .ropt.first{border-color:var(--accent-2)}
+.reco2 .ropt .fig2{flex:0 0 84px;width:84px;border-radius:9px}
+.reco2 .ropt .fig{flex:0 0 84px;width:84px;max-width:84px}
+.reco2 .ropt .rtx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.reco2 .ropt .rtx b{font-size:13px;font-weight:500;line-height:1.3}
+.reco2 .ropt .rtx i{font-style:normal;font-size:12px;color:var(--dim)}
+.reco2 .ropt .rtx em{font-style:normal;font-size:11px;color:var(--accent-txt)}
 
 /* карточка упражнения */
 .card{padding:13px 13px 11px;margin-bottom:9px}
@@ -4541,14 +4556,22 @@ function loadCatalog(){
   /* ?v=сборка: иначе правки каталога доезжают только после того, как браузер
      сам решит сбросить кэш. 11.09 переименовали 337 упражнений — без этого
      человек ещё сутки видел бы старые имена. */
-  catLoading = fetch(BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)).then(function(r){ return r.json(); })
-    .then(function(j){ CAT=j; catLoading=false; return j; })
+  /* 21.10: в зале сеть рвётся — один тихий повтор через секунду, прежде
+     чем говорить «не удалось»; ответ не 200 — тоже сбой, а не пустой каталог */
+  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD);
+  var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); }); };
+  catLoading = раз().catch(function(){ return new Promise(function(ok){ setTimeout(ok, 1200); }).then(раз); })
+    .then(function(j){ if(!j || !j.ex) throw new Error('catalog empty'); CAT=j; catLoading=false; return j; })
     .catch(function(e){ catLoading=false; throw e; });
   return catLoading;
 }
 
 /* ── замены: {'D1:2': {...}} на профиль ── */
 var SUBS = {};
+/* 21.10: правки дня уже пришли с сервера — запасная копия из CloudStorage
+   Telegram их больше не перекрывает (см. initDb, «state/subs») */
+var SUBS_С_СЕРВЕРА = false;
+var AIPROG_С_СЕРВЕРА = false;
 /* Упражнения, добавленные в день сверх программы (например, по разбору
    недельного объёма). Идут в конец дня, чтобы не сдвигать номера слотов. */
 var EXTRA = {}, SKIP = {};
@@ -4942,9 +4965,16 @@ function openCatalog(ctx){
   if(t) t.textContent = (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
   var s=document.getElementById('catsearch'); if(s) s.value='';
   document.getElementById('catbody').innerHTML='<p class="mtext">Загружаю каталог…</p>';
-  loadCatalog().then(function(){ renderCatalog(); })
-    .catch(function(){ document.getElementById('catbody').innerHTML=
-      '<p class="mtext">Не удалось загрузить каталог. Проверь интернет и попробуй ещё раз.</p>'; });
+  var повтор='<button type="button" class="btn wide" data-catretry="1">Повторить</button>';
+  loadCatalog().then(function(){
+    try{ renderCatalog(); }
+    catch(err){
+      try{ console.error('renderCatalog', err); }catch(e){}
+      document.getElementById('catbody').innerHTML=
+        '<p class="mtext">Каталог загрузился, но не открылся — это ошибка приложения, не сети.</p>'+повтор;
+    }
+  }).catch(function(){ document.getElementById('catbody').innerHTML=
+      '<p class="mtext">Не удалось загрузить каталог — похоже, пропала сеть.</p>'+повтор; });
 }
 function closeCatalog(){
   var m=document.getElementById('catalog'); if(m) m.classList.remove('show');
@@ -9609,6 +9639,7 @@ function adoptState(key, b){
   try{
     if(key==='aiprog'){
       if(!b.days || !b.days.length) return false;
+      AIPROG_С_СЕРВЕРА=true;
       AIPROG=b; gset('ai_prog', b); installAiProg(b);
       if(profile==='ai') applyProfile('ai');
       return true;
@@ -9645,6 +9676,7 @@ function adoptState(key, b){
     }
     if(key==='subs'){
       if(!b.s || typeof b.s!=='object') return false;
+      SUBS_С_СЕРВЕРА = true;
       SUBS=b.s; set('subs',SUBS);
       if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
       if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
@@ -10073,7 +10105,10 @@ function initDb(){
   setTimeout(syncBoot, 1500);   /* после того как профиль применён */
   ensureDataSession().then(function(){return csGetBig(AIKEY);}).then(function(str){
     /* своя программа приезжает из облака раньше указателя на неё */
-    if(str){ try{ var pr=JSON.parse(str); if(pr && pr.days){ gset('ai_prog', pr); installAiProg(pr); if(profile==='ai') applyProfile('ai'); } }catch(e){} }
+    /* 21.10: та же гонка, что с правками дня (см. «state/subs» ниже): копия
+       Telegram не ставится поверх программы, которую прислал сервер или
+       которая уже есть на устройстве, — только на чистом устройстве */
+    if(str && !AIPROG_С_СЕРВЕРА && !gget('ai_prog', null)){ try{ var pr=JSON.parse(str); if(pr && pr.days){ gset('ai_prog', pr); installAiProg(pr); if(profile==='ai') applyProfile('ai'); } }catch(e){} }
     return csGet(PROFKEY);
   }).then(function(v){
     /* на новом устройстве профиль приезжает из облака — спрашивать второй раз незачем */
@@ -10122,9 +10157,18 @@ function initDb(){
     if(get('undo_subs_pending',false)){set('undo_subs_pending',false);saveSubs();return {exists:false};}
     return DB.doc('state/subs').get();
   }).then(function(sn){
-    if(sn && sn.exists){
+    /* 21.10, его программа: в 16:16 правки на сервере перезаписались копией
+       от 18.10. Копия в CloudStorage Telegram перестала обновляться (большая
+       запись не ложится), а этот шаг ставил её поверх: если сервер успевал
+       прийти раньше (CloudStorage в вебе отвечает секундами), старое
+       оказывалось в памяти поверх свежего, и первая же правка (очередь
+       тренера при запуске) уходила на сервер как «изменение». Теперь копию
+       берём, только если своих правок на устройстве нет вовсе и сервер их
+       ещё не прислал — и запоминаем её как известную базу, а не как правку. */
+    if(sn && sn.exists && !SUBS_С_СЕРВЕРА && get('subs', null)==null){
       var b=JSON.parse(JSON.stringify(sn.data()||{}));
       if(b.s && typeof b.s==='object'){
+        settingsRemember('subs', {s:b.s, adj:b.adj||{}, x:b.x||{}, sk:b.sk||{}, ord:b.ord||{}, pr:b.pr||{}});
         SUBS=b.s; set('subs',SUBS);
         if(b.adj && typeof b.adj==='object'){ ADJ=b.adj; set('adj',ADJ); }
         if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
@@ -11811,6 +11855,7 @@ document.getElementById('wzchat').addEventListener('keydown', function(e){
 document.getElementById('catclose').addEventListener('click', closeCatalog);
 document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.id==='catalog'){ closeCatalog(); return; }
+  if(e.target.closest('[data-catretry]')){ openCatalog(catCtx); haptic('light'); return; }
   if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}
   if(e.target.closest('#catwide')){catMuscle='';catGroup='';catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
   var group=e.target.closest('[data-pickgroup]');
@@ -17186,6 +17231,57 @@ function recoTargetHtml(c, can){
   return '<div class="rtarget">'+mediaFor({cat:x.i, n:x.n, fig:''})+
     '<div class="rtx"><b>'+esc(x.n)+'</b><i>вместо: '+esc(было)+'</i>'+(mus?'<s>'+esc(mus)+'</s>':'')+'</div></div>';
 }
+/* 21.10, его слова: «если тренер предлагает заменить, он должен объяснить
+   почему и посоветовать чем — желательно сразу 4–5 упражнений на выбор».
+   Первым — то, что назвал тренер; дальше похожие из каталога на ту же мышцу
+   (своя основная мышца впереди: махи в сторону — к махам, а не к тяге к
+   подбородку), без отвергнутых 👎 и без того, что уже стоит в программе. */
+function recoВарианты(c, can){
+  if(!CAT || !CAT.ex || !can || can.kind!=='swap') return [];
+  var hit=can.hit, out=[], взято={};
+  var вПрограмме={};
+  (CYCLE||[]).forEach(function(dk){ exList(dk).forEach(function(x){ var i=x.cat||x.id; if(i) вПрограмме[i]=1; }); });
+  var base=((DAYS[hit.dk]||{}).ex||[])[hit.di];
+  if(base && base.id) вПрограмме[base.id]=1;
+  var перв=recoPick(c, hit);
+  if(перв && !NOPE[перв.i]){ out.push(перв); взято[перв.i]=1; }
+  var м=мышцаЕго(hit.e);
+  /* похожесть: та же основная мышца, тот же характер (изоляция/база), то же
+     движение по первому слову («Подъём через сторону» к подъёмам, не к жимам),
+     потом снаряд — к тому, что было, и к тому, что советует тренер */
+  var свой=catById(hit.e.cat||hit.e.id) || {n:hit.e.n, q:hit.e.q, mc:''};
+  var образцы=[свой].concat(перв?[перв]:[]);
+  var движ=function(x){ return noYo(String(x&&x.n||'').split('(')[0]).trim(); };
+  var слово=function(x){ return движ(x).split(' ')[0]; };
+  var счёт=function(x){
+    var s=(x.m===м?0:8);
+    s+=образцы.some(function(o){ return o.mc && o.mc===x.mc; }) ? 0 : 3;
+    /* «Подъём через сторону» — к нему же; просто «Подъём» (перед собой) — дальше */
+    s+=образцы.some(function(o){ return движ(o) && движ(o)===движ(x); }) ? 0
+      : образцы.some(function(o){ return слово(o) && слово(o)===слово(x); }) ? 2 : 4;
+    /* подгруппа: средняя дельта к средней, задняя (m2 «rear delts») — к задней */
+    s+=образцы.some(function(o){ return (o.m2||'')===(x.m2||''); }) ? 0 : 2;
+    s+=образцы.some(function(o){ return o.q && o.q===x.q; }) ? 0 : 1;
+    return s;
+  };
+  var все=кандидаты(hit.e, hit.dk).filter(function(x){ return !взято[x.i] && !вПрограмме[x.i]; });
+  var по=все.map(function(x, i){ return {x:x, s:счёт(x), i:i}; }).sort(function(a,b){ return a.s-b.s || a.i-b.i; });
+  по.some(function(o){ if(out.length>=5) return true; out.push(o.x); взято[o.x.i]=1; return false; });
+  return out;
+}
+function recoOptsHtml(c, can){
+  var в=recoВарианты(c, can); if(!в.length) return '';
+  var base=((DAYS[can.hit.dk]||{}).ex||[])[can.hit.di], было=(base&&base.n)||can.hit.e.n;
+  var перв=recoPick(c, can.hit);
+  return '<div class="ropts"><s>Чем заменить «'+esc(было)+'» — нажми на вариант</s>'+в.map(function(x, i){
+    var сн=(CAT.equip&&CAT.equip[x.q])||x.q||'';
+    var совет = (i===0 && перв && перв.i===x.i);
+    return '<button type="button" class="ropt'+(совет?' first':'')+'" data-reco2="pick" data-ci="'+esc(x.i)+'">'+
+      mediaFor({cat:x.i, n:x.n, fig:''})+
+      '<span class="rtx"><b>'+esc(x.n)+'</b>'+(сн?'<i>'+esc(сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
+  }).join('')+'</div>';
+}
+var recoКатЖдём=false, recoКатСбой=false;
 function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
   if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
@@ -17198,6 +17294,16 @@ function recoCard(где){
     return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер заменил</u><p>'+esc(c.text)+'</p>'+цель+
       (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
       '<div class="rb">'+другое+'<button type="button" data-reco2="no">Понятно</button></div></div>';
+  }
+  if(can && can.kind==='swap'){
+    /* каталог ещё не пришёл — варианты дорисуются, как только придёт */
+    if(!CAT && !recoКатЖдём && !recoКатСбой){ recoКатЖдём=true; loadCatalog().then(function(){ recoКатЖдём=false; renderReco2(); }, function(){ recoКатЖдём=false; recoКатСбой=true; renderReco2(); }); }
+    var опц=recoOptsHtml(c, can);
+    return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает замену</u><p>'+esc(c.text)+'</p>'+
+      (c.why?'<p class="rwhy"><b>Почему:</b> '+esc(c.why)+'</p>':'')+
+      (опц || (CAT || recoКатСбой ? '' : '<p class="rwhy">Загружаю варианты…</p>'))+
+      '<div class="rb"><button type="button"'+(опц?'':' class="go"')+' data-reco2="cat">'+(опц?'Весь каталог':'Выбрать в каталоге')+'</button>'+
+      '<button type="button" data-reco2="no">Не сейчас</button></div></div>';
   }
   return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+цель+
     (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
@@ -17323,23 +17429,29 @@ function applyReco2(){
   }
   /* замена: каталог мог ещё не загрузиться — тогда ждём и пробуем снова */
   var сделать=function(){
-    var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
     var найдено=recoTarget(c, hit);
-    if(найдено){
-      applySub((hit.e && hit.e.k) || subKey(hit.dk, hit.di), найдено);
-      gset('reco2_seen', c.id); recoDone(); renderReco2(); haptic('ok');
-      /* показываем результат: замену человек просил, чтобы её увидеть */
-      closeCoach(); goPage('gym');
-      if(hit.dk!==day){ day=hit.dk; set('day', day); renderDayseg(); renderDayHead(); renderList(); }
-      return;
-    }
-    /* не нашли — не притворяемся: открываем каталог на нужной мышце,
-       человек выберет сам, и замена встанет тем же путём */
-    gset('reco2_seen', c.id); recoDone(); renderReco2();
-    closeCoach();
-    openCatalog({dk:hit.dk, di:hit.di, muscle:hit.e.m||(вкат&&вкат.m)||'', c:(вкат&&вкат.c)||'strength'});
+    if(найдено){ recoПоставить(c, hit, найдено); return; }
+    recoКаталог(c, hit);
   };
   if(CAT) сделать(); else loadCatalog().then(сделать).catch(сделать);
+}
+/* выбранная замена встаёт в программу, и человек видит её на своём месте */
+function recoПоставить(c, hit, вещь){
+  if(вещь && NOPE[вещь.i]){ delete NOPE[вещь.i]; сохранитьМнение(); }   /* выбрал сам — значит, уже не «не моё» */
+  applySub((hit.e && hit.e.k) || subKey(hit.dk, hit.di), вещь);
+  gset('reco2_seen', c.id); recoDone(); renderReco2(); haptic('ok');
+  closeCoach(); goPage('gym');
+  if(hit.dk!==day){ day=hit.dk; set('day', day); renderDayseg(); renderDayHead(); renderList(); }
+}
+/* весь каталог на нужной мышце. 21.10: без k выбор из каталога ложился в
+   SUBS['undefined'] — программа не менялась, хотя каталог закрывался */
+function recoКаталог(c, hit){
+  var вкат=(CAT&&hit.e.cat)?(CAT.ex||[]).filter(function(x){ return x.i===hit.e.cat; })[0]:null;
+  gset('reco2_seen', c.id); recoDone(); renderReco2();
+  closeCoach();
+  if(hit.dk!==day){ day=hit.dk; set('day', day); renderDayseg(); renderDayHead(); renderList(); }
+  openCatalog({dk:hit.dk, di:hit.di, k:(hit.e && hit.e.k) || subKey(hit.dk, hit.di),
+               muscle:hit.e.m||(вкат&&вкат.m)||'', c:(вкат&&вкат.c)||'strength'});
 }
 /* Правка, предложенная в чате Telegram, живёт на сервере: CloudStorage
    виден только приложению, поэтому бот кладёт её в state и вешает под
@@ -17429,6 +17541,12 @@ function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
   if(b.dataset.reco2==='do'){ applyReco2(); return; }
   var c=RECO2 || gget('coach_reco', null);
+  if((b.dataset.reco2==='pick' || b.dataset.reco2==='cat') && c){
+    var can=recoCan(c); if(!can || can.kind!=='swap'){ renderReco2(); return; }
+    if(b.dataset.reco2==='cat'){ recoКаталог(c, can.hit); haptic('light'); return; }
+    var вещь=catById(b.dataset.ci); if(!вещь){ recoКаталог(c, can.hit); return; }
+    recoПоставить(c, can.hit, вещь); return;
+  }
   if(b.dataset.reco2==='else' && c){
     /* не то — просим другую замену на тот же слот; старое предложение снимаем */
     var can=recoCan(c), x=can?recoPick(c, can.hit):null;
