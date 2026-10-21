@@ -42,7 +42,7 @@ const сверить=async(page,где)=>{
    const cls=await v.locator('p').first().getAttribute('class');
    дано(cls.includes('warn')===['стоит','плато'].includes(state) && cls.includes('muted')===(state==='мало'),'выделение по состоянию: '+state);
    const срок=state==='мало' ? null : (await v.locator('.vzeta').innerText()).replace(/ /g,' ');
-   дано(state==='мало' ? await v.locator('.vzeta').count()===0 : /^Цель 75 кг — к \d+ [а-я]+ при −0,5 кг в неделю$/.test(срок),'срок с целью и темпом, без eta скрыт: '+срок);
+   дано(state==='мало' ? await v.locator('.vzeta').count()===0 : /^Цель — к \d+ [а-я]+ при −0,5 кг в неделю$/.test(срок),'срок с целью и темпом, без eta скрыт: '+срок);
    дано(!(await v.innerText()).includes('Вердикт:'),'длинный серверный текст — тренеру, не сюда');
    if(state!=='мало') await сверить(page,'состояние '+state);
    дано(errors.length===0,'без ошибок браузера: '+state);
@@ -57,7 +57,7 @@ const сверить=async(page,где)=>{
    await M.поднять(page,{meas,goal:цель,progress:{...план,anchorW,gap:-0.5,onTrack:false,verdict:{state:'план',d0:-0.6},eta:{date:'2027-08-24',pace:-.3}}});
    const м=await сверить(page,'якорь '+anchorW);
    дано(ждём.test(м),'метка на графике: '+м);
-   дано(/^Цель 75 кг — примерно к августу 2027 при −0,3 кг в неделю$/.test((await page.locator('.vztemp .vzeta').innerText()).replace(/ /g,' ')),'дальний срок — месяц и «примерно»');
+   дано(/^Цель — примерно к августу 2027 при −0,3 кг в неделю$/.test((await page.locator('.vztemp .vzeta').innerText()).replace(/ /g,' ')),'дальний срок — месяц и «примерно»');
    дано(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'помещается на 320');
    await page.close();
   }

@@ -9,7 +9,7 @@ const цель = { text: '75 кг к концу января', wt: 'down', rate:
 const progress = { anchor: M.Д(19), anchorW: 88.3, rate: -0.67, w0: 92.3, kg: 17.3, gap: 0.7,
   verdict: { state: 'медленнее', d0: -0.3 }, eta: { pace: -0.5, weeks: 22, date: '2027-03-20' },
   sila: { verdict: 'растёт', up: 2, flat: 1, down: 0, rows: [], text: '', index: { base: M.Д(28), now: 103.4, ch: 3.4, enough: true, weeks: [] } } };
-const meas = M.замеры().map((m, i) => i % 3 === 0 ? Object.assign({}, m, { waist: 92 + i * 0.4 }) : m);
+const meas = Array.from({ length: 56 }, (_, i) => { const w = 86.6 + i * 0.1, fat = 26.4 + i * 0.03; return { date: M.Д(i), w: +w.toFixed(1), fat: +fat.toFixed(1), fatkg: +(w * fat / 100).toFixed(1), muscle: +(60.2 + (i > 40 ? 0.6 : 0)).toFixed(1), prot: 16, waist: i % 7 === 0 ? +(92 + i * 0.1).toFixed(1) : undefined }; });
 (async () => {
   const br = await chromium.launch();
   for (const тема of ['dark', 'light']) {
@@ -25,7 +25,7 @@ const meas = M.замеры().map((m, i) => i % 3 === 0 ? Object.assign({}, m, {
     }
     await page.locator('[data-vzv="fat"]').click(); await page.waitForTimeout(200);
     const зал = page.locator('#homebody .zk'); if (await зал.count()) await зал.screenshot({ path: path.join(OUT, тема + '-zal.png') });
-    console.log(тема, 'текст цели:', await page.$$eval('#homebody .vzgoal', ns => ns.map(n => n.textContent)));
+    
     await page.close();
   }
   await br.close();

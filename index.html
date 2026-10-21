@@ -2487,11 +2487,20 @@ body.onb #picker .modalbox::before{display:none}
 .vznum em.dn{color:var(--done-txt);background:rgba(var(--done-rgb),.13)}
 .vznum em.up{color:var(--warn-txt);background:rgba(var(--warn-rgb),.13)}
 .vzsub{margin:4px 0 0;font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;line-height:1.4}
-/* 21.10: цель на карточке «Тело» — шкала пути от старта и одна строка */
-.vzgoal{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin:8px 0 2px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.vzgoal b{font-weight:600;color:var(--text)}
-.vzgbar{flex:0 0 64px;height:6px;border-radius:6px;background:var(--field);overflow:hidden}
-.vzgbar i{display:block;height:100%;border-radius:6px;background:currentColor;color:var(--accent)}
+/* 21.10: голова «Тела» при цели — «цель» слева, «сейчас» справа, путь между */
+.vzgh{display:grid;grid-template-columns:auto minmax(40px,1fr) auto;align-items:center;gap:14px;margin-top:8px}
+.vzg-c span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.vzg-c b{display:block;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vzg-c b s{text-decoration:none;font-size:14px;font-weight:500;margin-left:4px;letter-spacing:0;color:var(--dim)}
+.vzg-c em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
+.vzg-l b{opacity:.72}
+.vzg-r{text-align:right}
+.vzg-tr{position:relative;height:6px;border-radius:6px;background:var(--field);margin-top:14px}
+.vzg-tr i{position:absolute;top:0;bottom:0;right:0;border-radius:6px;background:currentColor;opacity:.85}
+.vzg-tr u{position:absolute;top:50%;width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:var(--bg);border:3px solid currentColor;transform:translate(-50%,-50%)}
+.vzg-eq{background:none;border-top:2px dashed var(--field);height:0;border-radius:0}
+.vzgline{margin:10px 0 0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.vzgline .dn{color:var(--on-accent)} .vzgline .up{color:var(--on-accent)}
 .vzsil{display:block;border:0;background:none;padding:0;min-height:32px;font:inherit;font-size:13px;color:var(--muted);cursor:pointer;margin-top:2px;text-align:left}
 .vzsil::after{content:' ›'}
 .vzsvg svg{display:block;width:100%;height:auto;margin-top:10px;overflow:visible}
@@ -13290,7 +13299,7 @@ function замерыВзять(d){
   if(d.вода) FOOD.вода=d.вода;
 }
 var VZ_ВИДЫ=[['w','вес'],['fat','жир'],['mus','мышцы'],['prot','белок тела'],['waist','талия']];
-function vzВид(){ try{ var v=localStorage.getItem('gf_vz')||'w'; return v==='prot' ? 'mus' : v; }catch(e){ return 'w'; } }
+function vzВид(){ try{ return localStorage.getItem('gf_vz')||'w'; }catch(e){ return 'w'; } }
 function vzВидЗадать(k){ try{ localStorage.setItem('gf_vz',k); }catch(e){} }
 function vzСерия(k){ var r=null; bodySeries().forEach(function(s){ if(s.k===k) r=s; }); return r; }
 function vzДн(iso, n){ return ymd(new Date(new Date(iso+'T12:00:00').getTime()+n*864e5)); }
@@ -13344,7 +13353,7 @@ function vzГладко(P){
    низкого риска, 89 см при 178); мышцы — держать уровень начала (дни 8–35
    от старта цели: первая неделя — вода); вес — цель из «Цели». */
 function vzЦель(ms, sr){
-  var g=gget('goal',null)||{}, p=g.progress, me=myData()||{};
+  var g=gget('goal',null)||{}, p=g.progress, gl=g.goal||{}, me=myData()||{};
   var цельВес = vzЦельКг(p), ср=function(k){ var s=vzСерия(k); var a=s && vzСреднее(ms, s, TODAY); return a ? a.v : null; };
   var старт=function(){ var s0=(FOOD.first && sr.f(FOOD.first)!=null) ? FOOD.first : null;
     ms.forEach(function(m){ if(!s0 && sr.f(m)!=null) s0=m; }); return s0 ? sr.f(s0) : null; };
@@ -13353,19 +13362,38 @@ function vzЦель(ms, sr){
   var r=null;
   if(sr.k==='w' && цельВес) r={v:цельВес, ед:'кг', от:(p && p.w0>0) ? +p.w0 : старт()};
   else if(sr.k==='fat' && цельВес){
-    var w=ср('w'), f=ср('fat'); if(w==null || f==null) return null;
-    var v=Math.max(0, цельВес-(w-f)); r={v:v, ед:'кг', от:старт(), доп:' (≈'+Math.round(v/цельВес*100)+'\u00a0%)'};
+    /* масса без жира — из парных замеров (вес и жир одного утра), ревью Codex */
+    var фж=vzСерия('fat'), безЖ=vzСреднее(ms, {f:function(m){ var f=фж.f(m); return (m.w!=null && f!=null) ? +m.w-f : null; }}, TODAY);
+    if(!безЖ) return null;
+    var v=Math.max(0, цельВес-безЖ.v); r={v:v, ед:'кг', от:старт(), доп:'≈'+Math.round(v/цельВес*100)+'\u00a0%'};
   }
   else if(sr.k==='waist' && +me.ht>120) r={v:Math.round(+me.ht/2), ед:'см', от:старт()};
   else if(sr.k==='mus'){
-    var от=g.from || (FOOD.first && FOOD.first.date) || null, a=от ? vzДн(от,7) : null, b=от ? vzДн(от,35) : null;
-    var vs=ms.filter(function(m){ return a && m.date>=a && m.date<=b && sr.f(m)!=null; }).map(sr.f);
-    if(vs.length<3) vs=ms.filter(function(m){ return sr.f(m)!=null; }).slice(0,7).map(sr.f);
-    if(vs.length<3) return null;
-    r={v:vs.reduce(function(x,y){ return x+y; },0)/vs.length, ед:'кг', держать:true};
+    /* ревью Codex R1: старт — дата ЭТОЙ цели (goal.goal.from); база — дни 8–35
+       от старта (первая неделя — вода), считается один раз и запоминается:
+       /measures отдаёт только последние 60 замеров, и окно потом уходит.
+       Нет окна и нет сохранённой — цели не показываем, недавние замеры за
+       стартовые не выдаём. */
+    var от=gl.from||null, ключ='vz_mus_base', сохр=null;
+    try{ сохр=JSON.parse(mGet(ключ)||'null'); }catch(e){}
+    if(сохр && сохр.from===от && сохр.v>0) r={v:+сохр.v, ед:'кг', держать:true};
+    else if(от){
+      var a=vzДн(от,7), b=vzДн(от,35);
+      var vs=ms.filter(function(m){ return m.date>=a && m.date<=b && sr.f(m)!=null; }).map(sr.f);
+      var окноЕсть = ms.some(function(m){ return m.date<=a; }) || (FOOD.first && FOOD.first.date<=a && ms.length && ms[0].date<=b);
+      if(vs.length>=3 && (b<TODAY || vs.length>=7) && окноЕсть){
+        var база=Math.round(vs.reduce(function(x,y){ return x+y; },0)/vs.length*10)/10;
+        if(b<TODAY) try{ mSet(ключ, JSON.stringify({from:от, v:база})); }catch(e){}
+        r={v:база, ед:'кг', держать:true};
+      }
+    }
+    if(!r) return null;
   }
   if(!r) return null;
   r.сейчас=сейчас;
+  /* ревью Codex R2: направление — от старта к цели (снижение или набор) */
+  var вниз = r.от!=null ? r.от>r.v : сейчас>r.v;
+  r.ост = вниз ? сейчас-r.v : r.v-сейчас;
   if(!r.держать && r.от!=null && r.от!==r.v) r.доля=Math.max(0, Math.min(1, (r.от-сейчас)/(r.от-r.v)));
   return r;
 }
@@ -13375,20 +13403,30 @@ function vzРабочиеВеса(){
   var s=((gget('goal',null)||{}).progress||{}).sila, ix=s && typeof s.index==='object' ? s.index : null;
   if(!ix || !ix.enough || typeof ix.ch!=='number' || !ix.base) return '';
   var ch=ix.ch, cls=ch>=1 ? 'sila-up' : ch<=-1 ? 'sila-down' : 'sila-flat';
-  return '<button type="button" class="vzgoal vzsil" data-zkgo="log" aria-label="Рабочие веса — в Журнале"><span class="'+cls+'">рабочие веса '+
+  return '<button type="button" class="vzsil" data-zkgo="log" aria-label="Рабочие веса — в Журнале"><span class="'+cls+'">рабочие веса '+
     (ch>0?'+':ch<0?'−':'±')+vzF1(Math.abs(ch))+'\u00a0%</span> с '+ruDate(ix.base)+'</button>';
 }
-function vzЦельHtml(ц){
-  if(!ц) return '';
-  /* «75 кг», а не «75,0 кг»; талия — целыми сантиметрами */
-  var ч=function(x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); };
-  if(ц.держать){
-    var раз=ц.сейчас-ц.v;
-    return '<p class="vzgoal"><span><b>цель — держать '+ч(ц.v)+'\u00a0'+ц.ед+'</b>'+(Math.abs(раз)>=0.1 ? ' · сейчас '+vzЗн(раз) : '')+'</span></p>';
-  }
-  var ост=ц.сейчас-ц.v, дошёл = ост<=0;
-  return '<p class="vzgoal">'+(ц.доля!=null ? '<span class="vzgbar" aria-hidden="true"><i style="width:'+(ц.доля*100).toFixed(0)+'%"></i></span>' : '')+
-    '<span><b>цель '+ч(ц.v)+'\u00a0'+ц.ед+(ц.доп||'')+'</b>'+(дошёл ? ' · достигнута' : ' · осталось '+vzF1(ост).replace(/,0$/,''))+'</span></p>';
+/* 21.10, его снимки и слова: «слишком много текста. Справа — то, что есть
+   сейчас, слева — цель, всё пропорционально и лаконично». Голова карточки
+   при цели: слева «цель», справа «сейчас», одинаковым кеглем; между ними —
+   путь от старта (справа) к цели (слева), точка — где он сейчас. Под ними
+   одна строка: сколько осталось и неделя. */
+function vzЧ(ц, x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); }
+function vzГоловаЦели(ц, главное, ед, нед, sr, откл){
+  var л='<div class="vzg-c vzg-l"><span>'+(ц.держать?'держать':'цель')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b>'+(ц.доп?'<em>'+ц.доп+'</em>':'')+'</div>';
+  var п='<div class="vzg-c vzg-r"><span>сейчас</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
+  var путь='';
+  if(ц.доля!=null){ var x=((1-ц.доля)*100).toFixed(1);
+    путь='<div class="vzg-tr" role="img" aria-label="пройдено '+Math.round(ц.доля*100)+' % пути к цели"><i style="left:'+x+'%"></i><u style="left:'+x+'%"></u></div>'; }
+  else путь='<div class="vzg-tr vzg-eq" aria-hidden="true"></div>';
+  var стр=[];
+  if(!ц.держать) стр.push(ц.ост<=0.05 ? 'цель достигнута' : 'осталось '+vzЧ(ц, ц.ост)+'\u00a0'+ед);
+  else { var раз=ц.сейчас-ц.v; стр.push(Math.abs(раз)<0.1 ? 'на уровне цели' : vzЗн(раз)+' к цели'); }
+  /* у веса вместо недели — отклонение от плана (17.10: «выше плана на 1,7»);
+     неделя у веса — строкой темпа под графиком */
+  if(откл && sr.k==='w') стр.push('<span class="vzgapline">'+(откл.по ? 'по плану' : откл.слова)+'</span>');
+  else if(нед) стр.push('<span class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</span>');
+  return '<div class="vzgh">'+л+путь+п+'</div><p class="vzgline">'+стр.join(' · ')+'</p>';
 }
 function vzПлан(){
   var g=gget('goal',null), p=g && g.progress;
@@ -13717,7 +13755,8 @@ function vzПланСтрока(){
       var цель=vzЦельКг(progress), далеко=(d-dLocal(TODAY))/864e5>56;
       /* ревью Codex: дальний срок — прогноз, а не обещание: месяц и «примерно»,
          и темп, по которому он посчитан (это тренд, не разница недель) */
-      срок=(цель ? 'Цель '+String(цель).replace('.',',')+' кг' : 'Цель')+' — '+(далеко ? 'примерно к '+МЕС_К[d.getMonth()]+' '+d.getFullYear() : 'к '+d.getDate()+' '+MONTHS[d.getMonth()])+
+      /* 21.10: вес цели уже стоит слева в голове карточки — здесь только срок */
+      срок='Цель — '+(далеко ? 'примерно к '+МЕС_К[d.getMonth()]+' '+d.getFullYear() : 'к '+d.getDate()+' '+MONTHS[d.getMonth()])+
         (typeof eta.pace==='number' ? ' при '+зн(eta.pace).replace(/,0$/,'')+'\u00a0кг в\u00a0неделю' : '');
     }
   }
@@ -13740,7 +13779,9 @@ function homeBody(){
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
   if(есть.some(function(v){ return v[0]==='mus'; })) есть=есть.filter(function(v){ return v[0]!=='prot'; });
-  var вид=vzВид(); if(!есть.some(function(v){ return v[0]===вид; })) вид=есть[0][0];
+  /* ревью Codex R3: «белок тела» → «мышцы» только когда мышцы есть */
+  var вид=vzВид(); if(вид==='prot' && есть.some(function(v){ return v[0]==='mus'; })) вид='mus';
+  if(!есть.some(function(v){ return v[0]===вид; })) вид=есть[0][0];
   var sr=vzСерия(вид), пос=vzПоследний(ms, sr), ед=sr.ед||'кг';
   /* «за день» — от последнего замера ЭТОЙ величины: талию меряют не каждое
      утро, и от сегодняшнего взвешивания без талии дельты не было */
@@ -13777,9 +13818,10 @@ function homeBody(){
   return '<div class="vz"><div class="vztop">'+
     '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
-    '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
-    vzЦельHtml(цель)+(sr.k==='mus' ? vzРабочиеВеса() : '')+'<p class="vzsub">'+под+'</p>'+сег+
-    (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёшь по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : '')+
+    (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл)+(sr.k==='mus' ? vzРабочиеВеса() : '') :
+      '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
+      '<p class="vzsub">'+под+'</p>'+сег+
+      (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёшь по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : ''))+
     '<div class="vzsvg">'+график+'</div>'+
     '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
       (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
