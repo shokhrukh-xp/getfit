@@ -7399,7 +7399,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '21.10 20:50';
+var BUILD = '22.10 08:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -9427,7 +9427,7 @@ function settingsDrain(uid,key){
         throw settingsError(r,key);
       }
       jobs.shift();if(!jobs.length)delete q[key];settingsStore(uid,q);SETTINGSRETRY[id]=0;
-      if(settingsApply(key,r.data||job.data,jobs))markSet(key,+r.updated||Date.now());dirtySet(key,!!jobs.length);settingsRefresh(key,job.changes);if(!jobs.length)settingsNotice(key);
+      if(settingsApply(key,r.data||job.data,jobs))markSet(key,+r.updated||Date.now());dirtySet(key,!!jobs.length);settingsRefresh(key,job.changes);if(!jobs.length)settingsNotice(key);if(key==='subs'&&!jobs.length)правкиДошли();
       return jobs.length?run():r;
     });
   };
@@ -9545,9 +9545,28 @@ function workSend(uid,id){
       if(res && res.code==='conflict' && cur){cur.conflict=res;workStore(uid,s);}
     });
   }
-  WORKFLIGHT[key]=next().catch(function(){SYNCOK=false;}).then(function(){delete WORKFLIGHT[key];paintSync();});
+  WORKFLIGHT[key]=next().catch(function(){SYNCOK=false;}).then(function(){delete WORKFLIGHT[key];paintSync();
+    /* 22.10: не принял сервер (связь в зале, 5xx) — досылаем сами, без кнопки */
+    var job=workState(uid).pending[id];
+    if(!job){WORKRETRY_N[key]=0;if(uid===syncUid())подходыДошли();}
+    else if(!job.conflict)workRetryLater(uid,id);
+  });
   return WORKFLIGHT[key];
 }
+/* 22.10, его снимок из зала: «правки не дошли в облако» висело красным,
+   хотя повтор через 13 с уже доставил их на сервер. Сбой связи — не ошибка
+   человека: данные на телефоне, досылаем сами (2 с, 5 с, 15 с, дальше раз в
+   минуту), строка спокойная. Красное — только когда нужен его выбор. */
+var WORKRETRY={}, WORKRETRY_N={};
+function workRetryLater(uid,id){
+  var key=uid+':'+id;if(WORKRETRY[key])return;
+  var n=WORKRETRY_N[key]||0;WORKRETRY_N[key]=n+1;
+  WORKRETRY[key]=setTimeout(function again(){
+    if(document.hidden||navigator.onLine===false){WORKRETRY[key]=setTimeout(again,60000);return;}
+    delete WORKRETRY[key];if(uid!==syncUid())return;workSend(uid,id);
+  },[2000,5000,15000,60000][Math.min(3,n)]);
+}
+function подходыЖдут(id){var j=workState(syncUid()).pending[id];return !!(j&&!j.conflict);}
 function workFlush(){
   var uid=syncUid();
   return Promise.all(Object.keys(workState(uid).pending).map(function(id){return workSend(uid,id);}));
@@ -9883,7 +9902,8 @@ function dayEditRepaint(){
   if(el.querySelector('[data-selfpick]')){
     var tail=el.querySelector('.db-save-tail');
     if(!tail){tail=document.createElement('span');tail.className='db-save-tail';el.appendChild(tail);}
-    var text={saving:'отправляю правки в облако…',saved:'Сохранено в облаке',local:'сохранено на телефоне',err:'На телефоне сохранено · правки не дошли в облако'}[DAYEDIT_SAVE]||'';
+    правкиСверить();
+    var text={saving:'отправляю правки в облако…',retry:'связь прервалась, правки отправлю сам',saved:'Сохранено в облаке',local:'сохранено на телефоне',err:'На телефоне сохранено · правки не дошли в облако'}[DAYEDIT_SAVE]||'';
     tail.textContent=text?' · '+text:'';tail.className='db-save-tail'+(DAYEDIT_SAVE==='err'?' bad':'');return;
   }
   if(el.textContent===WORK_NOTE_TEXT)paintNote('');
@@ -9893,27 +9913,54 @@ function dayEditSaved(promise,cloud){
   Promise.resolve(promise).then(function(){
     if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';dayEditRepaint();
     DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';dayEditRepaint();}},3000);
-  }).catch(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='err';dayEditRepaint();}});
+  }).catch(function(e){if(gen!==DAYEDIT_GEN)return;
+    DAYEDIT_SAVE=правкаНадолго(e)?'err':'retry';
+    /* очередь сама повторяет обрыв и 5xx; отказ без статуса — подталкиваем */
+    if(DAYEDIT_SAVE==='retry')setTimeout(function(){settingsDrain(syncUid(),'subs').catch(function(){});},5000);
+    dayEditRepaint();});
+}
+function правкаНадолго(e){return !!(e&&(e.code==='settings_conflict'||e.code==='settings_storage'||(e.status>=400&&e.status<500&&e.status!==429)));}
+/* Строка отвечает по очереди: правок в ней нет — значит сервер их принял */
+function правкиСверить(){
+  if(DAYEDIT_SAVE!=='retry'&&DAYEDIT_SAVE!=='err')return false;
+  var jobs=(settingsQueue(syncUid()).subs)||[];
+  if(jobs.length){if(jobs[0].conflict)DAYEDIT_SAVE='err';return false;}
+  DAYEDIT_SAVE='saved';clearTimeout(DAYEDIT_TIMER);var gen=DAYEDIT_GEN;
+  DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN&&DAYEDIT_SAVE==='saved'){DAYEDIT_SAVE='';dayEditRepaint();}},3000);
+  return true;
+}
+function правкиДошли(){if(правкиСверить())dayEditRepaint();}
+/* досланные сами подходы: строка зелёная, «Завершить» дописывает своё */
+var ФИН_ДОСЛАТЬ=null;
+function подходыДошли(){
+  if(Object.keys(workState(syncUid()).pending).length)return;
+  if(ФИН_ДОСЛАТЬ){var f=ФИН_ДОСЛАТЬ;ФИН_ДОСЛАТЬ=null;try{f();}catch(e){}}
+  if(WORK_NOTE!=='retry'&&WORK_NOTE!=='err')return;
+  lastSavedAt=new Date();dirty=false;неУехало=false;охрана();
+  paintNote(countDone()?'saved':'empty');
 }
 function paintNote(k){
   var el=document.getElementById('dbnote'); if(!el) return;
   var key=sKey();if(key!==WORK_NOTE_KEY){WORK_NOTE_KEY=key;WORK_NOTE='local';}
   if(k)WORK_NOTE=k;
+  правкиСверить();
   var n=countDone(), state=WORK_NOTE||'local';
   var head = n ? n+' '+plural(n,['подход','подхода','подходов'])+' отмечено' : 'ни один подход не отмечен';
   var tail={local:'сохранено на телефоне',saving:'сохраняю…',
     saved:'Сохранено в облаке',err:'не отправлено, данные на телефоне',
+    retry:'на телефоне · связь прервалась, отправлю сам',
     empty:'жми ✓ справа от подхода или «всё» над ними'}[state]||'';
   var err=state==='err'||DAYEDIT_SAVE==='err';
   if(DAYEDIT_SAVE==='err')tail='На телефоне сохранено · правки не дошли в облако'+(state==='err'?' · подходы тоже':'');
+  else if(state!=='err' && DAYEDIT_SAVE==='retry')tail='На телефоне сохранено · связь прервалась, отправлю сам';
   else if(state!=='err' && DAYEDIT_SAVE==='saving')tail='На телефоне сохранено · отправляю правки в облако…';
   else if(state!=='err' && DAYEDIT_SAVE==='saved')tail=state==='saved'?'Сохранено в облаке':
     'Сохранено: правки в облаке'+(n?(state==='saving'?' · подходы отправляются':' · подходы на телефоне'):'');
   else if(DAYEDIT_SAVE==='local' && state!=='err')tail='сохранено на телефоне';
   el.textContent=head+(tail?' · '+tail:'');
-  if(err){
+  if(err||state==='retry'||DAYEDIT_SAVE==='retry'){
     var повтор=document.createElement('button'); повтор.type='button'; повтор.className='dbretry';
-    повтор.textContent='Повторить'; повтор.onclick=повторитьОтправку;
+    повтор.textContent=err?'Повторить':'Отправить сейчас'; повтор.onclick=повторитьОтправку;
     el.appendChild(повтор);
   }
   WORK_NOTE_TEXT=el.textContent;
@@ -10083,9 +10130,10 @@ function повторитьОтправку(){
   paintNote('saving');
   Promise.all([workFlush(), pushDirty()]).catch(function(){}).then(function(){
     var wok=!Object.keys(workState(syncUid()).pending).length;
-    if(DAYEDIT_SAVE==='err' && !DIRTY.subs) DAYEDIT_SAVE='saved';
+    if((DAYEDIT_SAVE==='err'||DAYEDIT_SAVE==='retry') && !DIRTY.subs) DAYEDIT_SAVE='saved';
     if(wok){ dirty=false; неУехало=false; охрана(); }
-    paintNote(wok ? (countDone() ? 'saved' : 'empty') : 'err');
+    var ждут=Object.keys(workState(syncUid()).pending).some(подходыЖдут);
+    paintNote(wok ? (countDone() ? 'saved' : 'empty') : ждут ? 'retry' : 'err');
   });
 }
 var PUSHGEN=0;
@@ -10102,7 +10150,7 @@ function pushDb(){
     lastSavedAt=new Date(); dirty=false; paintNote('saved'); вПолёте=false; неУехало=false; охрана();
     /* подсказки «в прошлый раз» — служебная запись, её сбой не красит строку */
     сохранитьLAST(body.updated).catch(function(){});
-  }).catch(function(){ if(gen!==PUSHGEN) return; dirty=true; paintNote('err'); вПолёте=false; неУехало=true; охрана(); });
+  }).catch(function(){ if(gen!==PUSHGEN) return; dirty=true; paintNote(подходыЖдут(body.date+'_'+body.day)?'retry':'err'); вПолёте=false; неУехало=true; охрана(); });
 }
 function initDb(){
   DB = STORE;
@@ -10340,7 +10388,7 @@ function finishSave(){
     if(!DB){ finSay('На телефоне · '+label,'ok'); paintNote('local'); return; }
     finSay('Сохраняю…','busy');
     var t0=Date.now();
-    сохранитьТренировку(body).then(function(){
+    var готово=function(){
       lastSavedAt=new Date(); dirty=false; вПолёте=false; неУехало=false; охрана();
       finSay('Сохранено ✓ '+label,'ok'); paintNote('saved'); haptic('ok');
       try{ renderFinSum(body); }catch(e){}
@@ -10359,9 +10407,10 @@ function finishSave(){
         var rec={w:l.w==null?'':l.w, r:l.r==null?'':l.r, d:body.date, s:arr.map(function(y){return [y.w==null?'':y.w, y.r==null?'':y.r];})};
         LAST[e.n]=rec; if(e.cat) LAST['#'+e.cat]=rec; });
       return сохранитьLAST(body.updated);
-    }).then(function(){
-      setTimeout(function(){ if(finBtn.classList.contains('ok')) finReset(); }, 4000);
-    }).catch(function(err){
+    };
+    var погасить=function(){ setTimeout(function(){ if(finBtn.classList.contains('ok')) finReset(); }, 4000); };
+    ФИН_ДОСЛАТЬ=null;
+    сохранитьТренировку(body).then(готово).then(погасить).catch(function(err){
       /* Тренировка уже в облаке — это сказала зелёная кнопка. Не доехала
          только карта подсказок, и те же данные ушли на наш сервер тем же
          вызовом. Красное «Сбой» под зелёным «Сохранено» — это два ответа
@@ -10370,6 +10419,12 @@ function finishSave(){
         /* 09.10: тренировку принял сервер — строка уже зелёная; сбой
            служебной карты подсказок в строку не выносим */
         try{ console.log('getfit cloud/last:', (err&&err.message)||err); }catch(_){}
+      }
+      else if(подходыЖдут(body.date+'_'+body.day)){
+        /* 22.10: связь — тренировка на телефоне и уйдёт сама; когда сервер
+           примет, кнопка станет «Сохранено ✓», подсказки допишутся */
+        finSay('На телефоне · отправлю сам',''); paintNote('retry'); вПолёте=false; неУехало=true; охрана();
+        ФИН_ДОСЛАТЬ=function(){ Promise.resolve().then(готово).then(погасить).catch(function(e){ try{ console.log('getfit cloud/last:', (e&&e.message)||e); }catch(_){} }); };
       }
       else { finSay('Не отправлено · на телефоне','bad'); paintNote('err'); reportErr('store',err); haptic('err'); вПолёте=false; неУехало=true; охрана(); }
     });

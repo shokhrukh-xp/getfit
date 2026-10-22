@@ -3,8 +3,8 @@
 // на телефоне», хотя все 20 подходов уже были на сервере. Строка отвечала по
 // запасной копии в CloudStorage Telegram. Его выбор «Статус по серверу»:
 //  1) копия в Telegram не легла, сервер принял — «Сохранено в облаке», не красное;
-//  2) сервер не принял — красное «не отправлено, данные на телефоне» и «Повторить»;
-//  3) «Повторить», когда сервер снова на связи, — зелёное;
+//  2) сервер не принял — 22.10: спокойное «отправлю сам», не красное;
+//  3) сервер снова на связи — зелёное само, без нажатия;
 //  4) «Завершить и сохранить» при сбое только Telegram — «Сохранено ✓».
 const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./shot-clean');
 let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++}
@@ -24,19 +24,18 @@ const сбойW=u=>u.pathname==='/w', ответ503=r=>r.fulfill({status:503,con
   let н=await нота(p);
   ok(/1 подход отмечено · Сохранено в облаке/.test(н.т)&&!/bad/.test(н.к),theme+': копия в Telegram не легла, сервер принял — зелёное: '+н.т);
   ok(!/Telegram/.test(н.т),theme+': про Telegram в строке ни слова');
-  // 2) сервер не принял
+  // 2) сервер не принял — 22.10: обрыв/5xx не красный, данные на телефоне, досылаем сами
   await p.route(сбойW,ответ503);
   await p.locator('.setrow .ok').nth(1).click();
-  await p.waitForFunction(()=>/не отправлено/.test(document.getElementById('dbnote').textContent),null,{timeout:9000}).catch(()=>{});
+  await p.waitForFunction(()=>/отправлю сам/.test(document.getElementById('dbnote').textContent),null,{timeout:9000}).catch(()=>{});
   н=await нота(p);
-  ok(/2 подхода отмечено · не отправлено, данные на телефоне\s*Повторить/.test(н.т)&&/bad/.test(н.к)&&н.кн,theme+': сервер не принял — красное с «Повторить»: '+н.т);
+  ok(/2 подхода отмечено · на телефоне · связь прервалась, отправлю сам\s*Отправить сейчас/.test(н.т)&&!/bad/.test(н.к)&&н.кн,theme+': сервер не принял — спокойное «отправлю сам» с кнопкой: '+н.т);
   await p.locator('#dbnote').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-status-server-err-'+theme+'.png'});
-  // 3) «Повторить» — сервер снова принимает
+  // 3) сервер снова на связи — зелёное само, без нажатия
   await p.unroute(сбойW,ответ503);
-  await p.click('#dbnote button');
-  await p.waitForFunction(()=>/Сохранено в облаке/.test(document.getElementById('dbnote').textContent),null,{timeout:9000}).catch(()=>{});
+  await p.waitForFunction(()=>/Сохранено в облаке/.test(document.getElementById('dbnote').textContent),null,{timeout:12000}).catch(()=>{});
   н=await нота(p);
-  ok(/2 подхода отмечено · Сохранено в облаке/.test(н.т)&&!/bad/.test(н.к)&&!н.кн,theme+': после «Повторить» — зелёное: '+н.т);
+  ok(/2 подхода отмечено · Сохранено в облаке/.test(н.т)&&!/bad/.test(н.к)&&!н.кн,theme+': повтор сам — зелёное без нажатия: '+н.т);
   // 4) «Завершить» при сбое только Telegram
   await p.locator('.card.exact .allb').click();await p.waitForTimeout(400);
   await p.click('#finish');await M.ответитьДлительность(p,45);await p.waitForTimeout(900);

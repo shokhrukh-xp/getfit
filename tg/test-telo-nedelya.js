@@ -47,11 +47,11 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   assert(!(await p.locator('#dbnote').innerText()).includes('не дошли'),'сбой копии в Telegram не красит строку');
   const сбойS=u=>u.pathname==='/s', ответ503=r=>r.fulfill({status:503,contentType:'application/json',body:'{"ok":false}'});
   await p.route(сбойS,ответ503);
-  await p.click('#ordopen');await p.click('[data-orddn="0"]');await p.click('#orddone');await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('правки не дошли в облако'));await p.locator('#dbnote').scrollIntoViewIfNeeded();await snap(p,'save-error',theme,width);
+  await p.click('#ordopen');await p.click('[data-orddn="0"]');await p.click('#orddone');await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('связь прервалась, отправлю сам'));assert(!(await p.locator('#dbnote').getAttribute('class')).includes('bad'),'22.10: обрыв связи не красит строку');await p.locator('#dbnote').scrollIntoViewIfNeeded();await snap(p,'save-error',theme,width);
   await p.unroute(сбойS,ответ503);await p.evaluate(()=>Telegram.WebApp.CloudStorage.setItem=window.__oldSet);await p.click('#ordopen');await p.click('[data-orddn="0"]');await p.click('#orddone');await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('Сохранено: правки в облаке'));assert(!(await p.locator('#dbnote').innerText()).includes('не дошли'));await p.waitForFunction(()=>document.querySelector('#dbnote').textContent.includes('сохранено на телефоне'));
   await p.route(сбойS,ответ503);
   await p.locator('#list [data-pickex]').filter({hasNot:p.locator('.sstag')}).first().click();await p.locator('[data-nope]').first().click();await p.locator('[data-noped]').first().click();await p.locator('[data-selfpick]').waitFor();
-  await p.waitForFunction(()=>document.querySelector('#dbnote .db-save-tail')?.textContent.includes('правки не дошли в облако'));assert(await p.locator('[data-selfpick]').isVisible(),'Ошибка сохранения не убирает выбор замены');
+  await p.waitForFunction(()=>document.querySelector('#dbnote .db-save-tail')?.textContent.includes('правки отправлю сам'));assert(await p.locator('[data-selfpick]').isVisible(),'Ошибка сохранения не убирает выбор замены');
 
  }
  assert.deepEqual(errors,[]);console.log('ok',name,theme,width);
