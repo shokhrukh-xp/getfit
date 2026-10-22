@@ -4439,26 +4439,35 @@ function катНадо(){
     if(катПопыток++ < 3) setTimeout(function(){ if(!CAT) катНадо(); }, 2500);
   });
 }
-function mediaFor(e){
+/* 22.10, его слова «картинки фото грузятся очень долго»: кадры каталога шли
+   с jsDelivr по 850 px и ~73 КБ, а показываются кружком 44–128 px. Теперь
+   миниатюры 300 px (~9 КБ) лежат у нас в img/t/ (tools/miniatury.py), с того
+   же адреса, что приложение. Полный кадр — только в листе техники (big).
+   Миниатюры нет (каталог пополнился) — кадр сам берётся полным (data-full,
+   обработчик error ниже). */
+function кадр(ph, cat, n, big){
+  var full = cat ? CDN+encodeURI(cat)+'/'+n+'.jpg' : IMGDIR+ph+'-'+n+'.jpg'+IMGV;
+  if(big) return '<img src="'+full+'" alt="" loading="lazy">';
+  /* свои кадры — в img/t/o/: «plank» и каталожный «Plank» на маке (регистр не различается) — один файл */
+  return '<img src="'+IMGDIR+'t/'+(cat ? encodeURI(cat) : 'o/'+ph)+'-'+n+'.jpg'+IMGV+'" data-full="'+full+'" alt="" loading="lazy">';
+}
+function mediaFor(e, big){
   var own = e.cat ? catOwn(e.cat) : null;
   if(own){
     if(own.ph && FRAMES[own.ph]) return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
-           '<img src="'+IMGDIR+own.ph+'-0.jpg'+IMGV+'" alt="" loading="lazy">'+
-           '<img src="'+IMGDIR+own.ph+'-1.jpg'+IMGV+'" alt="" loading="lazy">'+
+           кадр(own.ph,null,0,big)+кадр(own.ph,null,1,big)+
            '</div>';
     return figSvg(own.fig || e.fig) || '';
   }
-  if(e.cat){        /* упражнение из каталога — два кадра с CDN */
+  if(e.cat){        /* упражнение из каталога — два кадра (миниатюры у нас, полные — CDN) */
     катНадо();      /* свои упражнения знает только каталог, см. ниже */
     return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
-           '<img src="'+CDN+encodeURI(e.cat)+'/0.jpg" alt="" loading="lazy">'+
-           '<img src="'+CDN+encodeURI(e.cat)+'/1.jpg" alt="" loading="lazy">'+
+           кадр(null,e.cat,0,big)+кадр(null,e.cat,1,big)+
            '</div>';
   }
   if(e.ph && FRAMES[e.ph]){
     return '<div class="fig2" role="img" aria-label="'+e.n+' — начальная и рабочая фаза" data-fig="'+(e.fig||'')+'">'+
-           '<img src="'+IMGDIR+e.ph+'-0.jpg'+IMGV+'" alt="" loading="lazy">'+
-           '<img src="'+IMGDIR+e.ph+'-1.jpg'+IMGV+'" alt="" loading="lazy">'+
+           кадр(e.ph,null,0,big)+кадр(e.ph,null,1,big)+
            '</div>';
   }
   return figSvg(e.fig);
@@ -4469,6 +4478,9 @@ function mediaFor(e){
 document.addEventListener('error', function(ev){
   var im=ev.target;
   if(!im || im.tagName!=='IMG') return;
+  /* миниатюры нет — один раз берём полный кадр, а уже его сбой — как раньше */
+  var полный=im.getAttribute('data-full');
+  if(полный){ im.removeAttribute('data-full'); im.src=полный; return; }
   var box=im.parentNode;
   if(box && box.className==='fig2'){
     if(box.getAttribute('data-failed')) return;
@@ -4931,7 +4943,8 @@ function applyProfile(p, silent, сбросДня){
    Названия переведены составным словарём (ядро движения + уточнения); число в
    заголовке страницы считается из файла, а не зашито.
    Файл catalog.json грузится один раз при первом открытии каталога, не при старте.
-   Картинки берём с CDN jsDelivr, в репозиторий их не тащим. */
+   Полные картинки — с CDN jsDelivr; с 22.10 миниатюры 300 px для списков —
+   у нас в img/t/ (см. кадр() и tools/miniatury.py). */
 var CAT=null, catLoading=false, catCtx=null, catMuscle='', catQuery='';
 /* группы упражнений в программе названы по-своему — сопоставляем их с мышцами каталога,
    чтобы окно замены открывалось сразу на нужной группе */
@@ -5514,8 +5527,8 @@ function catTag(x){
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
   return '<div class="catitem'+(NOPE[x.i]?' nope':'')+'" data-i="'+CAT.ex.indexOf(x)+'">'+
-    (x.own ? (x.ph && FRAMES[x.ph] ? '<img loading="lazy" src="'+IMGDIR+x.ph+'-0.jpg'+IMGV+'" alt="">' : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
-           : '<img loading="lazy" src="'+CDN+encodeURI(x.i)+'/0.jpg" alt="">')+
+    (x.own ? (x.ph && FRAMES[x.ph] ? кадр(x.ph,null,0) : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
+           : кадр(null,x.i,0))+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
     '<span class="cattag">'+catTag(x)+'</span>'+
     /* ТЯЖЁЛЫЙ ВАРИАНТ — не отдельная строка каталога. Присед с паузой и
@@ -7936,7 +7949,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '22.10 23:15';
+var BUILD = '23.10 00:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -9168,11 +9181,11 @@ function техШаги(e){
 }
 /* два кадра крупно: берём их из той же миниатюры, что на карточке */
 function техКадры(e){
-  var d=document.createElement('div'); d.innerHTML=mediaFor(e);
+  var d=document.createElement('div'); d.innerHTML=mediaFor(e, true);   /* крупно — полный кадр */
   var im=[].slice.call(d.querySelectorAll('img')).map(function(x){ return x.getAttribute('src'); }).filter(Boolean);
   /* кадр не пришёл (CDN, сеть) — убираем его, а не показываем белую рамку */
   if(im.length) return '<div class="tfr">'+im.slice(0,2).map(function(u){ return '<img src="'+u+'" alt="" loading="lazy" onerror="this.remove()">'; }).join('')+'</div>';
-  return '<div class="tfr">'+mediaFor(e)+'</div>';
+  return '<div class="tfr">'+mediaFor(e, true)+'</div>';
 }
 function техHTML(e){
   var шаги=техШаги(e), свои=!шаги && e.cues && e.cues.length ? e.cues : null, список=шаги||свои;
@@ -9760,11 +9773,12 @@ function adoptDataSession(d){
      у которого здесь ничего не было, и тот, чей дневник удалил владелец, — оба
      не понимали, о чём речь. Говорим, только если на этом устройстве был дневник. */
   var былЗдесь=false; try{ var м0=gget('me',null); былЗдесь=!!(м0 && (м0.age||м0.bw)); }catch(e){}
-  return wipeCloud(all,s.epoch).then(function(pending){
+  /* 22.10 (ревью Codex R1): миниатюры фото стираются ДО перезагрузки — иначе запись на диск не успевает */
+  return wipeCloud(all,s.epoch).then(function(pending){ return фкСтереть(syncUid()).then(function(){
     wipeLocal(all);gset(key,s);gset('cloud_cleanup',pending?{all:all,cutoff:s.epoch}:null);
     gset('reset_notice', былЗдесь ? 'Дневник начат заново — старые записи на этом устройстве убраны.' : '');
     location.reload();throw new Error('Дневник обновляется после сброса.');
-  });
+  }); });
 }
 function cleanupNotice(pending){
   var el=document.getElementById('cleanupnotice');
@@ -9812,35 +9826,221 @@ function tgFetch(url, opts){
   });
 }
 /* Private image URLs are fetched with Telegram headers, never embedded as
-   public src/href. Blob URLs live only while their elements are on screen. */
+   public src/href.
+   22.10, его слова «картинки фото грузятся очень долго» и выбор «храни на
+   телефоне» (его вопрос «это для всех сработает?» — да, у каждого на своём
+   устройстве и под своим аккаунтом). Раньше каждая перерисовка и каждый
+   возврат в приложение заново качали снимок целиком (до 1280 px, через
+   Telegram на сервере) ради кружка в 40–92 px. Теперь:
+   • миниатюра — /photo?s=t (сервер отдаёт средний размер Telegram), а если
+     сервер прислал полный (старый снимок) — уменьшаем здесь до 320 px;
+   • миниатюра ложится в IndexedDB «gf-photos» под ключом uid|t|ключ —
+     у другого аккаунта на этом телефоне другой uid; стирается при сбросе
+     (wipeLocal), не больше ФК_МАКС штук, старые уходят первыми;
+   • в памяти — один blob-URL на снимок для всех кружков сразу;
+   • крупное фото (раскрытая тарелка в круге, data-photo-big) — полный
+     снимок, только в памяти;
+   • доступ проверяется по-прежнему: снимок из кэша показываем сразу, а
+     сервер спрашиваем (&check=1, без байтов), можно ли его видеть; закрыли
+     доступ (вышел из круга, сброс) — снимок пропадает и с телефона. */
 var PRIVATEPHOTOS=new Map();
-function photoAttr(url,svg){
+/* ревью Codex (foto-review R1–R4):
+   • поколение кэша (gen): сброс, очистка, смена аккаунта и отказ в доступе
+     его увеличивают — поздний ответ уже ничего не кладёт ни на диск, ни в
+     память, ни на экран (R1);
+   • отказ в доступе (404/403) убирает снимок целиком — оба размера, ждущие
+     загрузки, кружки на экране; до конца сеанса без нового разрешения его не
+     показываем (R2);
+   • чужие тарелки (круг, день друга) на телефон не пишутся вовсе — только в
+     память на этот сеанс, каждый новый сеанс спрашивает сервер; выход из
+     круга их сбрасывает (R3). Свои фото — из кэша сразу, проверка следом;
+   • подрезка до ФК_МАКС — в начале каждого сеанса и дальше каждые 25 (R4). */
+/* повторное ревью (foto-rereview R1, R2): поколения раздельные — gen (весь
+   кэш: сброс, новый сеанс), kgen[ключ] (отказ одного снимка), sgen (чужие
+   снимки: выход из круга). Отказ одного фото не гасит загрузки других, а
+   запоздавший ответ проверки старого сеанса не отменяет новое разрешение. */
+var ФК_МАКС=400, ФК_МИНИ=320, ФКЭШ={p:null, mem:new Map(), ждут:new Map(), из:new Set(), нет:new Set(), gen:0, sgen:0, kgen:{}, n:0, подрезан:false};
+var ФКИД=0;
+function photoAttr(url,svg,big,shared){
   try{
     var u=new URL(url,location.href),api=new URL(SYNCURL);
     if(u.origin===api.origin && (u.pathname==='/photo'||u.pathname.indexOf('/p/')===0)){
       var key=u.pathname==='/photo'?u.searchParams.get('key'):u.pathname.slice(3).replace(/\.jpe?g$/,'');
-      return 'data-private-photo="'+esc(key)+'"';
+      return 'data-private-photo="'+esc(key)+'"'+(big?' data-photo-big="1"':'')+(shared?' data-photo-shared="1"':'');
     }
   }catch(e){}
   return (svg?'href':'src')+'="'+esc(url)+'"';
 }
+function фкБаза(){
+  if(ФКЭШ.p) return ФКЭШ.p;
+  ФКЭШ.p=new Promise(function(res){
+    try{
+      var r=indexedDB.open('gf-photos',1);
+      r.onupgradeneeded=function(){ try{ r.result.createObjectStore('p'); }catch(e){} };
+      r.onsuccess=function(){ res(r.result); };
+      r.onerror=r.onblocked=function(){ res(null); };
+    }catch(e){ res(null); }   /* приватный режим, старый WebView — просто без кэша */
+  });
+  return ФКЭШ.p;
+}
+function фкВзять(k){
+  return фкБаза().then(function(db){
+    if(!db) return null;
+    return new Promise(function(res){
+      try{ var q=db.transaction('p').objectStore('p').get(k);
+        q.onsuccess=function(){ var v=q.result; res(v&&v.d ? new Blob([v.d],{type:v.m||'image/jpeg'}) : null); };
+        q.onerror=function(){ res(null); };
+      }catch(e){ res(null); }
+    });
+  });
+}
+/* ArrayBuffer, а не Blob: в старых WebView iOS Blob в IndexedDB ломался */
+function фкПоложить(k,blob,gen,key,kg){
+  (blob.arrayBuffer ? blob.arrayBuffer() : Promise.reject()).then(function(d){
+    return фкБаза().then(function(db){
+      if(!db || ФКЭШ.gen!==gen || (key && (ФКЭШ.kgen[key]||0)!==(kg||0))) return;
+      try{ db.transaction('p','readwrite').objectStore('p').put({d:d,m:blob.type||'image/jpeg',t:Date.now()},k); }catch(e){}
+      if(!ФКЭШ.подрезан || ++ФКЭШ.n%25===0){ ФКЭШ.подрезан=true; фкПодрезать(db); }
+    });
+  }).catch(function(){});
+}
+function фкПодрезать(db){
+  try{
+    var st=db.transaction('p','readwrite').objectStore('p'), все=[];
+    st.openCursor().onsuccess=function(e){
+      var c=e.target.result;
+      if(c){ все.push([c.value&&c.value.t||0,c.primaryKey]); c.continue(); return; }
+      /* оставляем на шаг (25) меньше предела — до следующей подрезки не перерастём ФК_МАКС */
+      var оставить=ФК_МАКС-25;
+      if(все.length<=оставить) return;
+      все.sort(function(a,b){ return a[0]-b[0]; });
+      все.slice(0,все.length-оставить).forEach(function(x){ st.delete(x[1]); });
+    };
+  }catch(e){}
+}
+/* сброс дневника: миниатюры этого аккаунта уходят вместе с ним; обещание — после записи на диск */
+function фкСтереть(uid){
+  фкОчиститьПамять();
+  return фкБаза().then(function(db){
+    if(!db) return;
+    return new Promise(function(res){
+      try{ var tx=db.transaction('p','readwrite'); tx.objectStore('p').delete(IDBKeyRange.bound(String(uid)+'|',String(uid)+'|￿'));
+        tx.oncomplete=tx.onerror=tx.onabort=function(){ res(); };
+      }catch(e){ res(); }
+    });
+  });
+}
+function фкОчиститьПамять(){ ФКЭШ.gen++; ФКЭШ.mem.forEach(function(u){ URL.revokeObjectURL(u); }); ФКЭШ.mem.clear(); ФКЭШ.ждут.clear(); ФКЭШ.из.clear(); }
+/* выход из круга: чужие снимки этого сеанса — вон из памяти */
+function фкОбщиеСброс(){
+  ФКЭШ.sgen++;
+  ФКЭШ.mem.forEach(function(u,k){ if(/^[^|]*\|s/.test(k)){ URL.revokeObjectURL(u); ФКЭШ.mem.delete(k); } });
+  ФКЭШ.ждут.forEach(function(v,k){ if(/^[^|]*\|s/.test(k)) ФКЭШ.ждут.delete(k); });
+  PRIVATEPHOTOS.forEach(function(v,el){ if(el.hasAttribute('data-photo-shared')){ el.removeAttribute('src'); el.removeAttribute('href'); el.removeAttribute('data-photo-loading'); PRIVATEPHOTOS.delete(el); } });
+}
+/* сервер сказал «нельзя»: снимок целиком — оба размера, ждущие, кружки, диск */
+function фкУбрать(key,uid){
+  uid=uid||syncUid(); ФКЭШ.kgen[key]=(ФКЭШ.kgen[key]||0)+1; ФКЭШ.нет.add(key);
+  ФКЭШ.mem.forEach(function(u,k){ if(k.slice(k.lastIndexOf('|')+1)===key){ URL.revokeObjectURL(u); ФКЭШ.mem.delete(k); } });
+  ФКЭШ.ждут.forEach(function(v,k){ if(k.slice(k.lastIndexOf('|')+1)===key) ФКЭШ.ждут.delete(k); });
+  ФКЭШ.из.delete(uid+'|t|'+key);
+  фкБаза().then(function(db){ if(db) try{ db.transaction('p','readwrite').objectStore('p').delete(uid+'|t|'+key); }catch(e){} });
+  PRIVATEPHOTOS.forEach(function(v,el){
+    if(el.getAttribute('data-private-photo')===key){ el.removeAttribute('src'); el.removeAttribute('href'); el.setAttribute('aria-label','Фото недоступно'); }
+  });
+}
+/* уменьшить до ФК_МИНИ: createImageBitmap, а где его нет (старый iOS) — через <img> */
+function фкКартинка(blob){
+  if(window.createImageBitmap) return createImageBitmap(blob).then(function(bm){ return {src:bm,w:bm.width,h:bm.height,close:function(){ if(bm.close) bm.close(); }}; });
+  return new Promise(function(res,rej){ var u=URL.createObjectURL(blob),im=new Image();
+    im.onload=function(){ res({src:im,w:im.naturalWidth,h:im.naturalHeight,close:function(){ URL.revokeObjectURL(u); }}); };
+    im.onerror=function(){ URL.revokeObjectURL(u); rej(new Error('img')); }; im.src=u; });
+}
+function фкУменьшить(blob){
+  return фкКартинка(blob).then(function(к){
+    var k=Math.min(1,ФК_МИНИ/Math.max(к.w,к.h));
+    if(k>=1 && blob.size<=80000){ к.close(); return blob; }
+    var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(к.w*k)); c.height=Math.max(1,Math.round(к.h*k));
+    c.getContext('2d').drawImage(к.src,0,0,c.width,c.height); к.close();
+    return new Promise(function(res){ c.toBlob(function(b){ res(b||null); },'image/jpeg',0.82); });
+  }).catch(function(){ return null; });   /* не вышло уменьшить — на диск не кладём (лимит места) */
+}
+var СТАРО={устарел:1};
+/* один снимок — один запрос, сколько бы кружков его ни ждали */
+function фкАдрес(key,big,shared){
+  var uid=syncUid(), gen=ФКЭШ.gen, sgen=ФКЭШ.sgen, kg=ФКЭШ.kgen[key]||0, k=uid+'|'+(shared?'s':'')+(big?'b':'t')+'|'+key;
+  if(ФКЭШ.нет.has(key)) return Promise.reject(new Error('Фото недоступно'));
+  if(ФКЭШ.mem.has(k)) return Promise.resolve(ФКЭШ.mem.get(k));
+  if(ФКЭШ.ждут.has(k)) return ФКЭШ.ждут.get(k);
+  var свежо=function(){ return ФКЭШ.gen===gen && (ФКЭШ.kgen[key]||0)===kg && (!shared || ФКЭШ.sgen===sgen) && syncUid()===uid && !ФКЭШ.нет.has(key); };
+  var pr=((big||shared)?Promise.resolve(null):фкВзять(k)).then(function(blob){
+    if(!свежо()) throw СТАРО;
+    if(blob){ ФКЭШ.из.add(k); return blob; }
+    return tgFetch(SYNCURL+'/photo?uid='+encodeURIComponent(uid)+'&key='+encodeURIComponent(key)+(big?'':'&s=t'),{cache:'no-store'})
+      .then(function(r){
+        if(r.status===404||r.status===403){ if(свежо()) фкУбрать(key,uid); throw new Error('Фото недоступно'); }
+        if(!r.ok) throw new Error('Фото недоступно');
+        var мини=r.headers.get('X-Photo-Size')==='t';
+        return r.blob().then(function(b){
+          if(!свежо()) throw СТАРО;
+          if(big||shared) return b;
+          return (мини && b.size<=80000 ? Promise.resolve(b) : фкУменьшить(b)).then(function(m){
+            if(!свежо()) throw СТАРО;
+            if(m) фкПоложить(k,m,gen,key,kg);
+            return m||b;
+          });
+        });
+      });
+  }).then(function(blob){
+    if(!свежо()) throw СТАРО;
+    var u=URL.createObjectURL(blob); ФКЭШ.mem.set(k,u); ФКЭШ.ждут.delete(k);
+    if(ФКЭШ.mem.size>200){ var старый=ФКЭШ.mem.keys().next().value; URL.revokeObjectURL(ФКЭШ.mem.get(старый)); ФКЭШ.mem.delete(старый); }
+    return u;
+  },function(e){ if(ФКЭШ.ждут.get(k)===pr) ФКЭШ.ждут.delete(k); throw e; });
+  ФКЭШ.ждут.set(k,pr);
+  return pr;
+}
 function clearPrivatePhotos(){
+  ФКПРОВ.clear(); ФКЭШ.нет.clear();   /* новый сеанс — доступ спрашиваем заново */
   PRIVATEPHOTOS.forEach(function(value,el){
-    if(value.url)URL.revokeObjectURL(value.url);
     el.removeAttribute('src');el.removeAttribute('href');el.removeAttribute('data-photo-loading');
   });PRIVATEPHOTOS.clear();
+  фкОчиститьПамять();
 }
 function loadPrivatePhotos(){
-  PRIVATEPHOTOS.forEach(function(value,el){if(!el.isConnected){if(value.url)URL.revokeObjectURL(value.url);PRIVATEPHOTOS.delete(el);}});
+  PRIVATEPHOTOS.forEach(function(value,el){if(!el.isConnected)PRIVATEPHOTOS.delete(el);});
   document.querySelectorAll('[data-private-photo]:not([data-photo-loading])').forEach(function(el){
-    var entry={url:null};el.setAttribute('data-photo-loading','1');PRIVATEPHOTOS.set(el,entry);
-    tgFetch(SYNCURL+'/photo?uid='+encodeURIComponent(syncUid())+'&key='+encodeURIComponent(el.getAttribute('data-private-photo')),{cache:'no-store'})
-      .then(function(r){if(!r.ok)throw new Error('Фото недоступно');return r.blob();})
-      .then(function(blob){
-        if(!el.isConnected || PRIVATEPHOTOS.get(el)!==entry)return;
-        entry.url=URL.createObjectURL(blob);el.setAttribute(el.tagName.toLowerCase()==='image'?'href':'src',entry.url);
-      }).catch(function(){if(PRIVATEPHOTOS.get(el)===entry)el.setAttribute('aria-label','Фото недоступно');});
+    var entry={},key=el.getAttribute('data-private-photo');el.setAttribute('data-photo-loading','1');PRIVATEPHOTOS.set(el,entry);
+    фкАдрес(key, el.hasAttribute('data-photo-big'), el.hasAttribute('data-photo-shared'))
+      .then(function(url){
+        if(!el.isConnected || PRIVATEPHOTOS.get(el)!==entry || ФКЭШ.нет.has(key))return;
+        el.setAttribute(el.tagName.toLowerCase()==='image'?'href':'src',url);
+        фкПроверить(key);
+      }).catch(function(e){
+        if(PRIVATEPHOTOS.get(el)!==entry) return;
+        /* устарело (сброс, отказ другого снимка, выход из круга) — снимаем отметку и пробуем снова:
+           разрешённое загрузится, запрещённое сразу откажет по ФКЭШ.нет без сети */
+        if(e===СТАРО){ el.removeAttribute('data-photo-loading'); PRIVATEPHOTOS.delete(el); if(el.isConnected) setTimeout(loadPrivatePhotos,0); return; }
+        el.setAttribute('aria-label','Фото недоступно');
+      });
   });
+}
+/* свой снимок пришёл из кэша телефона — один раз за сессию спрашиваем сервер,
+   виден ли он ещё; нет — убираем отовсюду (фкУбрать). Сеть недоступна —
+   свой снимок остаётся (офлайн-дневник); чужие в кэш не попадают вовсе. */
+var ФКПРОВ=new Map();
+function фкПроверить(key){
+  var uid=syncUid(), k=uid+'|t|'+key;
+  if(!ФКЭШ.из.has(k) || ФКПРОВ.has(k)) return;
+  var id=++ФКИД, gen=ФКЭШ.gen, kg=ФКЭШ.kgen[key]||0;
+  ФКПРОВ.set(k,id);
+  tgFetch(SYNCURL+'/photo?uid='+encodeURIComponent(uid)+'&key='+encodeURIComponent(key)+'&s=t&check=1',{cache:'no-store'})
+    .then(function(r){
+      /* ответ старого сеанса или старой проверки — мимо (foto-rereview R2) */
+      if(ФКПРОВ.get(k)!==id || ФКЭШ.gen!==gen || (ФКЭШ.kgen[key]||0)!==kg || syncUid()!==uid) return;
+      if(r.status===404 || r.status===403) фкУбрать(key,uid);
+    })
+    .catch(function(){});
 }
 new MutationObserver(loadPrivatePhotos).observe(document.body,{childList:true,subtree:true});
 function gateShow(code, msg){
@@ -13046,6 +13246,7 @@ function resetState(t, плохо){
 var RESET_G=['sync_dirty','sync_marks','onbdraft','hurt','deload_user','deload_srv','reco2_seen','rebuilt_at','me','goal','profile','startdate','ai_prog','sched_any','reco_seen','coach_reco','vol_sig','page'];
 var RESET_P=['sched','subs','adj','last','lastdone','day','extra','deload','ai_sched'];
 function wipeLocal(всё){
+  try{ фкСтереть(syncUid()); }catch(e){}   /* 22.10: миниатюры фото этого аккаунта */
   try{
     var убрать=[];
     for(var i=0;i<localStorage.length;i++){
@@ -13100,11 +13301,11 @@ function doReset(scope){
   wipeServer(всё,op).then(function(result){
       if(!result.session)throw new Error('Сервер не подтвердил сброс. Данные на устройстве сохранены.');
       DATASESSION.blocked=true;clearTimeout(ctimer);clearPrivatePhotos();
-      return wipeCloud(всё,result.session.epoch).then(function(pending){
+      return wipeCloud(всё,result.session.epoch).then(function(pending){ return фкСтереть(syncUid()).then(function(){
         wipeLocal(всё);gset(key,result.session);gset(opKey,null);gset('cloud_cleanup',pending?{all:всё,cutoff:result.session.epoch}:null);
         gset('reset_notice',result.cleanupPending?'Дневник удалён. Фотографии недоступны; очистка хранилища продолжается.':'Дневник сброшен.');
         location.reload();
-      });
+      }); });
     })
     .catch(function(e){ resetBusy=false; resetState(humanErr(e), true); });
 }
@@ -15010,7 +15211,7 @@ function plateHtml(m){
   var who = '<b class="plwho">'+(m.t?esc(m.t):esc(m.kind||'приём'))+(m.likes?' · 👍 '+m.likes:'')+'</b>';
   var nums = '<i class="plnum">'+m.kcal+' ккал · белок '+m.prot+' г'+(m.stars?' · '+starsHtml(m.stars):'')+'</i>';
   var items = (m.items||[]).map(function(x){ return esc(x.name)+(x.g?' '+Math.round(x.g)+' г':''); });
-  var ph = m.img ? '<img loading="lazy" '+photoAttr(m.img,false)+' alt="">' : 'без фото';
+  var ph = m.img ? '<img loading="lazy" '+photoAttr(m.img,false,open,!m.me)+' alt="">' : 'без фото';   /* раскрытая тарелка — во всю ширину, полный снимок */
   if(!open) return '<div class="plate" data-pl="'+esc(m.ref)+'"><div class="plph">'+ph+'</div><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+
     (items.length?'<u>'+items.slice(0,4).join(' · ')+(items.length>4?' · …':'')+'</u>':'')+'</div></div>';
   return '<div class="plate open" data-pl="'+esc(m.ref)+'"><div class="pltx">'+who+'<i>'+esc(m.text)+'</i>'+nums+'</div>'+
@@ -15147,7 +15348,7 @@ function кругДействие(path, body, закрыть){
   if(KRUGBUSY) return; KRUGBUSY = true;
   fPost(path, Object.assign({ uid: syncUid() }, body))
     .then(function(d){
-      if(d && d.ok){ haptic('ok'); if(закрыть) closeKrug(); кругПосле();
+      if(d && d.ok){ haptic('ok'); if(path==='/circle/leave') фкОбщиеСброс(); if(закрыть) closeKrug(); кругПосле();
                      if(!закрыть && KRUG && KRUG.c) setTimeout(function(){ if(KRUG) openKrug(KRUG.c.id); }, 400); }
       else { KRUGBUSY = false; haptic('err'); say((d && d.error) || 'Не вышло.'); }
     })

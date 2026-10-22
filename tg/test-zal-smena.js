@@ -91,7 +91,8 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   await page.click('#dayseg button[data-day="A2"]'); await page.waitForTimeout(700);
   const ряд = await page.evaluate(() => { const r = [...document.querySelectorAll('#list .exrow')].find(x => /Отведение ноги назад/.test(x.textContent));
     return r ? { img: (r.querySelector('img') || {}).src || '', txt: r.textContent.replace(/\s+/g, ' ') } : null; });
-  дано(!!ряд && /img\/kickback-0\.jpg/.test(ряд.img), 'у «Отведения ноги назад» есть кадр: ' + (ряд && ряд.img.split('/').pop()));
+  /* 22.10: в списке — миниатюра img/t/o/kickback-0.jpg, полный кадр — в data-full */
+  дано(!!ряд && /img\/(t\/o\/)?kickback-0\.jpg/.test(ряд.img), 'у «Отведения ноги назад» есть кадр: ' + (ряд && ряд.img.split('/').pop()));
   дано(!!ряд && /4 × 10–12/.test(ряд.txt), 'и полные 4 подхода программы: ' + (ряд && ряд.txt.slice(0, 70)));
 
   /* 4. пересборка всей программы снимает прежние правки дней */
@@ -103,7 +104,8 @@ const ЛИШНЕЕ = { A1: [{ n: 'Разгибание (одной рукой, �
   const после = await page.$eval('#dayseg button[aria-pressed="true"]', b => b.dataset.day).catch(() => '');
   дано(после === 'A1', 'после пересборки сразу открыт День 1, а не выбранный до неё A2: ' + после);
   const ук = await page.evaluate(() => { for (const k of ['tgcs_app_profile', 'tgcs_@308687648_app_profile']) { const v = localStorage.getItem(k); if (v) return JSON.parse(v); } return null; });
-  дано(!!ук && ук.ch && ук.ch.slice(0, 10) === new Date().toISOString().slice(0, 10), 'в указателе — сегодняшняя смена: ' + (ук && ук.ch));
+  /* 23.10: сверка с днём стенда (M.TODAY), а не с датой UTC машины — с 00:00 до 05:00 по Ташкенту они расходились */
+  дано(!!ук && ук.ch && ук.ch.slice(0, 10) === new Date(M.TODAY + 'T12:00:00Z').toISOString().slice(0, 10), 'в указателе — сегодняшняя смена: ' + (ук && ук.ch));
   await page.click('#dayseg button[data-day="A1"]').catch(() => {}); await page.waitForTimeout(700);
   дано(!/одной рукой/.test(await день1()), 'после новой программы второго трицепса из прошлой в Дне 1 нет');
   const extra = await page.evaluate(() => localStorage.getItem('shp_v1_ai_extra'));
