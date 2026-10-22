@@ -27,18 +27,20 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
  if(u.pathname==='/meal/add')throw new Error('Возврат не должен пересоздавать приём');
  return false;
  }};
+ /* 22.10: обрыв и 5xx запись повторяет сама (fPostНадёжно) — паузы стенда короткие, счёт запросов с повторами */
+ await p.addInitScript(()=>{window.__паузыОтправки=[100,100];});
  const errors=await M.поднять(p,o);
  if(name==='meal'||name==='edit'||name==='network'){
  await p.click('[data-fnav="-1"]');await p.locator('[data-mid="original"]').waitFor();await p.click('[data-mid="original"] .ft');
  if(name==='network'){
   await p.click('#mv-del');await p.waitForFunction(()=>document.querySelector('.undo-row span')?.textContent.includes('Не удалось подтвердить'));
-  await p.click('.undo-row button');await p.locator('[data-mid="original"]').waitFor();await p.waitForFunction(()=>!document.querySelector('.undo-row'));assert.deepEqual(rows,[meal]);assert.equal(ops.length,2);
+  await p.click('.undo-row button');await p.locator('[data-mid="original"]').waitFor();await p.waitForFunction(()=>!document.querySelector('.undo-row'));assert.deepEqual(rows,[meal]);assert.equal(ops.length,4);
  }else if(name==='meal'){
   await p.click('#mv-del');assert.equal(await p.locator('[data-mid="original"]').count(),0,'Удаление видно до ответа');
   await until(()=>release);await p.click('.undo-row button');assert.equal(ops.length,1,'Возврат ждёт удаления');release();release=null;
   await p.waitForFunction(()=>document.querySelector('.undo-row button')?.textContent==='Повторить');await snap(p,'restore-error',theme,width);
   restoreBad=false;await p.click('.undo-row button');await p.locator('[data-mid="original"]').waitFor();assert.deepEqual(rows,[meal]);
-  assert.equal(ops.filter(x=>x[0]==='restore').length,2);assert((await p.locator('#fday').innerText()).includes('Калории'));
+  assert.equal(ops.filter(x=>x[0]==='restore').length,4);assert((await p.locator('#fday').innerText()).includes('Калории'));
   delay=false;await p.click('[data-mid="original"] .ft');await p.click('#mv-del');await snap(p,'undo',theme,width);
   await p.waitForFunction(()=>!document.querySelector('.undo-row'),null,{timeout:7500});assert.equal(await p.locator('[data-mid="original"]').count(),0,'Пять секунд истекли: не восстановлено автоматически');
  }else{
@@ -47,7 +49,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   await p.click('[data-mid="original"] .ft');await p.click('#mv-edit');assert.equal(await p.locator('#ml-text').inputValue(),meal.text);
   await p.fill('#ml-note','Новая заметка');await p.click('#mealclose');await p.click('#ml-keep');await p.waitForFunction(()=>document.querySelector('#ml-hint').textContent==='Не удалось сохранить');
   assert(await p.locator('#mealm').isVisible());assert.equal(await p.locator('#ml-note').inputValue(),'Новая заметка');
-  saveBad=false;await p.click('#ml-keep');await p.waitForFunction(()=>!document.querySelector('#mealm').classList.contains('show'));assert.equal(saved.length,2);assert.equal(saved[1].date,meal.date);
+  saveBad=false;await p.click('#ml-keep');await p.waitForFunction(()=>!document.querySelector('#mealm').classList.contains('show'));assert.equal(saved.length,4);assert.equal(saved[3].date,meal.date);
   await p.click('[data-mid="original"] .ft');await p.click('#mv-edit');await p.click('#mealclose');assert(!(await p.locator('#mealm').isVisible()),'Без правок закрывается без вопроса');
  }
  }else if(name==='extra'){

@@ -41,11 +41,11 @@ for(const theme of ['light','dark'])for(const width of [320,430])for(const heigh
 }
 // Отказ по HTTP, по JSON и сети; успешный повтор, затем отказ снять реакцию.
 for(const theme of ['light','dark']){
- let mode='http',calls=0;const p=await b.newPage({viewport:{width:320,height:844}});
+ let mode='http',calls=0;const p=await b.newPage({viewport:{width:320,height:844}});await p.addInitScript(()=>{window.__паузыОтправки=[100,100];});
  await M.поднять(p,{theme,page:'circle',handleRoute:async route=>{if(new URL(route.request().url()).pathname!=='/react')return false;calls++;await new Promise(r=>setTimeout(r,150));if(mode==='network')await route.abort();else await route.fulfill({status:mode==='http'?503:200,contentType:'application/json',body:JSON.stringify(mode==='success'?{ok:true,likes:9,liked:true}:{ok:false})});return true;}});
  await p.locator('[data-lbwho]:not(.lbme)').first().click();await p.locator('.plate').first().click();
  const button=p.locator('[data-like]').first(),initial=await button.innerText();
- for(const failure of ['http','json','network']){mode=failure;const was=calls;await button.evaluate(e=>{e.click();e.click()});await p.locator('.reaction-error').waitFor();ok(calls===was+1,'повтор во время запроса не отправляется '+failure);ok(await button.innerText()===initial&&!await button.evaluate(e=>e.classList.contains('on')),'F4: откат реакции '+failure);ok((await p.locator('.reaction-error').innerText()).includes('Не удалось сохранить'),'отказ объяснён');}
+ for(const failure of ['http','json','network']){mode=failure;const was=calls;await button.evaluate(e=>{e.click();e.click()});await p.locator('.reaction-error').waitFor();ok(calls===was+(failure==='json'?1:3),'повтор во время запроса не отправляется '+failure+' (22.10: обрыв и 5xx — две попытки сами)');ok(await button.innerText()===initial&&!await button.evaluate(e=>e.classList.contains('on')),'F4: откат реакции '+failure);ok((await p.locator('.reaction-error').innerText()).includes('Не удалось сохранить'),'отказ объяснён');}
  mode='success';await button.click();await p.waitForFunction(()=>document.querySelector('[data-like]').textContent.includes('9'));ok(await p.locator('.reaction-error').count()===0&&await button.evaluate(e=>e.classList.contains('on')),'успешный повтор подтверждён сервером');
  mode='http';await button.click();await p.locator('.reaction-error').waitFor();ok((await button.innerText()).includes('9')&&await button.evaluate(e=>e.classList.contains('on')),'отказ снять реакцию возвращает подтверждённое состояние');await p.close();
 }

@@ -9,7 +9,7 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),fs=requir
   await p.reload();await sleep(1800);await p.click('.l1 [data-page="gym"]');await p.click('#schedbtn');await p.locator('#deloadoff').waitFor({state:'visible'});
   await p.click('#deloadoff');await until(()=>Object.values(doc().by).some(x=>x.on===false),'отмена подтверждена');
   await a.reload();await sleep(1800);await a.click('.l1 [data-page="gym"]');await a.click('#schedbtn');await a.locator('#deloadon').waitFor({state:'visible'});assert(Object.values(doc().by).every(x=>!x.on));
-  f.fail=true;await a.click('#deloadon');await a.locator('#schedm .save-notice.bad').waitFor();assert(Object.values(doc().by).every(x=>!x.on));f.fail=false;await a.evaluate(()=>window.dispatchEvent(new Event('online')));await until(()=>Object.values(doc().by).some(x=>x.on),'досылка лёгкой недели');
+  f.fail=true;await a.click('#deloadon');await a.locator('#schedm .save-notice').filter({hasText:'отправлю сам'}).waitFor();assert(Object.values(doc().by).every(x=>!x.on));f.fail=false;await a.evaluate(()=>window.dispatchEvent(new Event('online')));await until(()=>Object.values(doc().by).some(x=>x.on),'досылка лёгкой недели');
   assert.deepEqual(A.errors,[]);assert.deepEqual(B.errors,[]);await a.close();await p.close();console.log('PASS '+theme+width+': лёгкая неделя и отмена — между устройствами, отказ и повтор');
  }
  const src=fs.readFileSync(require('path').join(__dirname,'../index.html'),'utf8');

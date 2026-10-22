@@ -77,19 +77,18 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
     } };
   await M.поднять(page, о4);
   await page.click('#mb-cook [data-v="семья"]'); await page.click('#mb-min [data-v="15"]');
-  await page.click('[data-mbyt="save"]'); await ждать(async () => записей >= 1 && await page.isVisible('#mbyt .mwarn'));
-  дано(записей >= 1, 'ответы ушли на сервер: ' + записей); const после1 = записей;
+  /* 22.10: первая запись упала (500) — это обрыв, не отказ: ответы на телефоне,
+     очередь дошлёт сама, меню соберётся после «ok» сервера, без второго нажатия */
+  await page.click('[data-mbyt="save"]'); await ждать(async () => записей >= 1 && await page.isVisible('#mbyt .mbwait'));
+  дано(записей >= 1, 'ответы ушли на сервер: ' + записей);
   дано(!(о4.просили || []).length, 'сервер не принял — меню не собирается');
-  дано(await page.isVisible('#mbyt .mwarn'), 'и сказано, что не сохранилось');
+  дано(await page.isVisible('#mbyt .mbwait') && !(await page.isVisible('#mbyt .mwarn')), 'сказано спокойно: отправлю сам и соберу');
   дано(await page.$eval('#mb-cook [data-v="семья"]', b => b.getAttribute('aria-pressed')) === 'true', 'ответы на карточке целы');
-  await page.click('#eatbody [data-eseg="week"]'); await page.waitForTimeout(300);
-  const нг = await page.$('#eatbody [data-mgen="week"]'); if (нг) { await нг.click(); await page.waitForTimeout(300); }
-  дано(!(о4.просили || []).length && await page.isVisible('#mbyt'), 'другая вкладка тоже ждёт быт, а не собирает по старому');
-  await page.click('[data-mbyt="save"]'); await ждать(() => записей > после1);
-  дано(!(о4.просили || []).length, 'пока сервер думает — меню не просим');
   дано(await page.isDisabled('[data-mbyt="save"]'), 'кнопка «Сохраняю…» не жмётся дважды');
+  await ждать(() => записей >= 2);
+  дано(!(о4.просили || []).length, 'пока сервер думает над повтором — меню не просим');
   отпустить(); await ждать(() => (о4.просили || []).length === 1); await page.waitForTimeout(300);
-  дано(записей > после1 && (о4.просили || []).length === 1, 'после «ok» — ровно одна сборка: ' + JSON.stringify(о4.просили));
+  дано((о4.просили || []).length === 1, 'после «ok» — ровно одна сборка, сама: ' + JSON.stringify(о4.просили));
   дано(await page.evaluate(() => localStorage.getItem('shp_v1_byt_dirty')) === '0', 'флаг «не доехало» снят');
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

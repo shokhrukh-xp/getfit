@@ -4901,7 +4901,11 @@ function savedNear(anchor, promise, retry){
       node.textContent='Изменено на другом устройстве. Какой выбор оставить?';node.className='save-notice bad';
       [['С другого устройства',false],['Мой выбор',true]].forEach(function(v){var b=document.createElement('button');b.type='button';b.className='btn small';b.textContent=v[0];b.onclick=function(){savedNear(anchor,settingsResolve(err.settingsKey,v[1]),retry);};node.appendChild(b);});settingsPaint();return;
     }
-    node.textContent=err&&err.settingsKey&&(!err.status||err.status===429||err.status>=500)?'На телефоне сохранено. Повторю автоматически.':'На телефоне сохранено. Не удалось синхронизировать.';node.className='save-notice bad';
+    /* 22.10: обрыв и 5xx очередь настроек дошлёт сама (settingsNotice скажет
+       «Сохранено») — это не ошибка человека, строка спокойная */
+    var сама=err&&err.settingsKey&&(!err.status||err.status===429||err.status>=500);
+    node.textContent=сама?'На телефоне сохранено · связь прервалась, отправлю сам':'На телефоне сохранено. Не удалось синхронизировать.';node.className='save-notice'+(сама?'':' bad');
+    if(сама)return;
     if(retry){var b=document.createElement('button');b.type='button';b.className='btn small';b.textContent='Повторить';
       b.onclick=function(){savedNear(anchor,Promise.resolve().then(retry),retry);};node.appendChild(b);}
   }});
@@ -6343,7 +6347,7 @@ function menuСвежее(span){
    готовыми («грудка гриль» в «Готовых блюдах»), а часть — сырыми, и курица
    встала в покупки дважды. Пока быт пуст и вопрос не пропущен, вместо сборки —
    три коротких вопроса; ответы ложатся в быт профиля (тот же, что в «Быт и еда»). */
-var MENUBYT='', MENUBYTBUSY=false, MENUBYTERR='';
+var MENUBYT='', MENUBYTBUSY=false, MENUBYTERR='', MENUBYTWAIT='';
 /* byt_dirty: ответы записаны у себя, но сервер их ещё не подтвердил — меню
    без них соберётся по старому быту, поэтому карточка держится до «ok» */
 function бытНужен(){
@@ -6360,6 +6364,7 @@ function бытКарточка(span){
     '<div class="pf pfcol"><span class="pfl">кто готовит</span>'+здSeg('mb-cook', [['сам','сам(а)'],['семья','семья'],['не готовлю','не готовлю']], b.cook||'', false)+'</div>'+
     '<div class="pf pfcol"><span class="pfl">минут на готовку в день</span>'+здSeg('mb-min', МБ_MIN, b.min?String(b.min):'', false)+'</div>'+
     (MENUBYTERR?'<p class="mwarn">'+esc(MENUBYTERR)+'</p>':'')+
+    (MENUBYTWAIT?'<p class="rec mbwait" role="status">'+esc(MENUBYTWAIT)+'</p>':'')+
     '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mbyt="save"'+(MENUBYTBUSY?' disabled':'')+'>'+(MENUBYTBUSY?'Сохраняю…':'Собрать меню')+'</button>'+
     '<button type="button" class="btn" data-mbyt="skip">Пропустить</button></div>'+
     '<p class="invnote">Поменять можно в профиле → «Быт и еда».</p></div>';
@@ -6617,8 +6622,13 @@ function menuКлик(e){
     /* сначала снять ответы с карточки — renderEat её перерисует */
     var сохр; try{ сохр=бытСохранить(); }catch(err){ сохр=Promise.reject(err); }
     MENUBYTBUSY=true; MENUBYTERR=''; renderEat();
-    сохр.then(function(){ MENUBYTBUSY=false; запуск(); }, function(){
-      MENUBYTBUSY=false; MENUBYTERR='Не получилось сохранить ответы — проверь связь и нажми ещё раз. Меню пока не собираю.'; renderEat(); });
+    var неудача=function(){ MENUBYTBUSY=false; MENUBYTWAIT=''; MENUBYTERR='Не получилось сохранить ответы — проверь связь и нажми ещё раз. Меню пока не собираю.'; renderEat(); };
+    сохр.then(function(){ MENUBYTBUSY=false; MENUBYTWAIT=''; запуск(); }, function(e){
+      /* 22.10: обрыв — ответы на телефоне, очередь дошлёт; ждём её до минуты
+         и собираем меню сами, без «нажми ещё раз» */
+      if(!(e && e.settingsKey && !правкаНадолго(e))) return неудача();
+      MENUBYTWAIT='Связь прервалась — ответы на телефоне. Отправлю сам и соберу меню.'; renderEat();
+      очередьДошла('me', 60000).then(function(){ gset('byt_ask',1); gset('byt_dirty',0); try{ бтРендер(); }catch(_){} MENUBYTBUSY=false; MENUBYTWAIT=''; запуск(); }, неудача); });
     return true; }
   var md=e.target.closest('[data-menu-day]');
   if(md){MENUWEEKDATE=md.dataset.menuDay;renderEat();haptic('light');return true;}
@@ -7399,7 +7409,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '22.10 08:30';
+var BUILD = '22.10 09:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -8303,7 +8313,7 @@ function spToday(){
    крестика человек не должен */
 function spDel(id){
   if(!id) return;
-  fPost('/act/del', {uid:syncUid(), id:id}).then(function(d){
+  fPostНадёжно('/act/del', {uid:syncUid(), id:id}).then(function(d){
     if(d && d.day){ FOOD.day=d.day; try{ renderFoodDay(); }catch(e){} }
     освежить(d && d.day);
     SPTODAY=(SPTODAY||[]).filter(function(a){ return a.id!==id; });
@@ -8374,7 +8384,7 @@ document.getElementById('sp-save').addEventListener('click', function(){
   if(!имя || !(SPORT.min>0)) return;
   planPut(имя, SPORT.days, SPORT.min, SPORT.int);
   spBusy=true; var b=this; b.disabled=true; b.textContent='Записываю…';
-  fPost('/act/add', {uid:syncUid(), date:TODAY, kind:имя, min:SPORT.min, intensity:SPORT.int})
+  fPostНадёжно('/act/add', {op:номерОтправки(), uid:syncUid(), date:TODAY, kind:имя, min:SPORT.min, intensity:SPORT.int})
     .then(function(d){
       spBusy=false; b.disabled=false; b.textContent='Записать';
       if(d && d.act) spRemember(d.act.kind);
@@ -9488,7 +9498,7 @@ function syncPush(path, body){
       if(SETTINGS_KEYS.indexOf(key)>=0){var sp=Promise.resolve().then(function(){return settingsSave(key,body);});sp.catch(function(){});return sp;}
       return syncPost('/s',{uid:uid,key:key,data:body}).then(function(res){
         if(uid!==syncUid())return res;
-        if(res&&res.ok){markSet(key,+res.updated||Date.now());dirtySet(key,false);}else dirtySet(key,true);
+        if(res&&res.ok){markSet(key,+res.updated||Date.now());dirtySet(key,false);}else{dirtySet(key,true);грязноеДослать();}
         return res;
       });
     }
@@ -9729,6 +9739,11 @@ function adoptState(key, b){
   return false;
 }
 /* дослать то, что не уехало: локальная копия важнее старой серверной */
+/* 22.10: несохранённый служебный ключ раньше ждал следующего открытия */
+var ГРЯЗНОЕ_Т=null;
+function грязноеДослать(){ if(ГРЯЗНОЕ_Т) return; ГРЯЗНОЕ_Т=setTimeout(function again(){
+  if(document.hidden||navigator.onLine===false){ ГРЯЗНОЕ_Т=setTimeout(again,60000); return; }
+  ГРЯЗНОЕ_Т=null; pushDirty(); },30000); }
 function pushDirty(){
   var queued=settingsQueue(syncUid());Object.keys(queued).forEach(function(k){dirtySet(k,true);});
   var ks=Object.keys(DIRTY); if(!ks.length) return Promise.resolve();
@@ -9918,6 +9933,15 @@ function dayEditSaved(promise,cloud){
     /* очередь сама повторяет обрыв и 5xx; отказ без статуса — подталкиваем */
     if(DAYEDIT_SAVE==='retry')setTimeout(function(){settingsDrain(syncUid(),'subs').catch(function(){});},5000);
     dayEditRepaint();});
+}
+/* очередь настроек опустела — сервер принял; конфликт или срок — отказ */
+function очередьДошла(key, мс){
+  var uid=syncUid(), до=Date.now()+мс;
+  return new Promise(function(ok,нет){ (function смотри(){
+    var j=settingsQueue(uid)[key]||[];
+    if(!j.length) return ok();
+    if(j[0].conflict || uid!==syncUid() || Date.now()>до) return нет(new Error('очередь'));
+    setTimeout(смотри,1000); })(); });
 }
 function правкаНадолго(e){return !!(e&&(e.code==='settings_conflict'||e.code==='settings_storage'||(e.status>=400&&e.status<500&&e.status!==429)));}
 /* Строка отвечает по очереди: правок в ней нет — значит сервер их принял */
@@ -10291,7 +10315,11 @@ function finSay(t,cls){ finBtn.textContent=t; finBtn.className='btn'+(cls?' '+cl
 function finReset(){ clearTimeout(finT); finArmed=false; finSay(ДЕНЬ_ДАТА?'Сохранить изменения':'Завершить и сохранить',''); }
 function reportErr(where, err){
   var m=where+': '+(err && (err.message||err.code) || String(err));
-  var el=document.getElementById('dbnote'); if(el){ el.textContent='Сбой — '+m; el.className='dbnote bad'; }
+  /* 22.10: «Сбой — promise: …» красным под тренировкой писал любой
+     необработанный отказ в приложении, даже не про зал, и висел до следующей
+     отметки. Про сохранение строка говорит сама (paintNote); здесь — только
+     журнал ошибок и консоль */
+  try{ console.log('getfit сбой '+m); }catch(_){}
   try{ if(DB) DB.collection('errors').add({m:m, at:new Date().toISOString(), ua:navigator.userAgent, day:day}); }catch(e){}
 }
 function readScreen(){
@@ -10428,7 +10456,7 @@ function finishSave(){
       }
       else { finSay('Не отправлено · на телефоне','bad'); paintNote('err'); reportErr('store',err); haptic('err'); вПолёте=false; неУехало=true; охрана(); }
     });
-    setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Сервер не отвечает','bad'); reportErr('store','timeout 15s'); haptic('err'); } },15000);
+    setTimeout(function(){ if(finBtn.classList.contains('busy') && Date.now()-t0>14000){ finSay('Сервер отвечает долго · всё на телефоне',''); reportErr('store','timeout 15s'); } },15000);
   }catch(err){ finSay('Ошибка','bad'); reportErr('finish',err); }
 }
 finBtn.addEventListener('click', finishSave);
@@ -14428,7 +14456,7 @@ document.getElementById('cirbody').addEventListener('click', function(e){
     if(m.likeBusy) return;
     var before={liked:m.liked,likes:m.likes}, on=!m.liked;
     m.likeBusy=true; m.likeError=''; m.liked=on; m.likes=Math.max(0,(m.likes||0)+(on?1:-1)); renderCircle(); haptic('light');
-    fPost('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){
+    fPostНадёжно('/react',{uid:syncUid(), kind:'meal', ref:ref, on:on?1:0}).then(function(d){
       if(!d || !d.ok) throw new Error('reaction');
       m.likes=d.likes; m.liked=d.liked; m.likeBusy=false; renderCircle();
     }).catch(function(){
@@ -14727,6 +14755,19 @@ function отправкаПовторима(e){
   if(!e || e.code==='tg_closed' || e.code==='sub') return false;
   if(!e.status) return true;
   return e.status>=500 || e.status===429;
+}
+/* 22.10, его слова «проверь весь код на такие ошибки»: запись, которую сервер
+   мог принять, а ответ потерялся (связь в зале, 5xx), повторяем сами тем же
+   запросом. Повтор безопасен: замер ложится на дату, правка приёма и отметки
+   ставят значение, удаление приёма идёт с operation, занятие и сахар — с
+   номером op (сервер второй раз не запишет). Ошибку человек видит, только
+   если сервер так и не ответил. */
+function fPostНадёжно(path, body){
+  var n=0;
+  function раз(){ return fPost(path, body).catch(function(e){
+    var пз=паузыОтправки(); if(n<пз.length && отправкаПовторима(e)) return new Promise(function(r){ setTimeout(r, пз[n++]); }).then(раз);
+    throw e; }); }
+  return раз();
 }
 function отправитьВЧат(path, body){
   var n=0;
@@ -15405,7 +15446,7 @@ function gluSave(){
   if(v==null || v<=0){ glReply('Впиши замер — например 5,6.','bad'); return; }
   GLU.busy=true;
   var b=document.getElementById('glsave'); if(b) b.disabled=true;
-  fPost('/glu/add', {uid:syncUid(), v:v, kind:GLPICK, date:fDate()}).then(function(d){
+  fPostНадёжно('/glu/add', {op:номерОтправки(), uid:syncUid(), v:v, kind:GLPICK, date:fDate()}).then(function(d){
     GLU.busy=false; if(b) b.disabled=false;
     if(!d||!d.ok){ glReply('Не похоже на замер сахара. Жду число от 1 до 33 в ммоль/л или от 20 до 600 в мг/дл.','bad'); return; }
     el.value='';
@@ -15434,7 +15475,7 @@ document.getElementById('glugroup').addEventListener('click', function(e){
   if(k){ GLPICK=k.dataset.glk; renderGlu(); haptic('light'); return; }
   var s=e.target.closest('#glsave'); if(s){ gluSave(); return; }
   var d=e.target.closest('[data-gldel]');
-  if(d){ fPost('/glu/del', {uid:syncUid(), id:d.dataset.gldel, date:fDate()})
+  if(d){ fPostНадёжно('/glu/del', {uid:syncUid(), id:d.dataset.gldel, date:fDate()})
       .then(function(){ gluPull(); haptic('light'); }).catch(function(){}); return; }
 });
 document.getElementById('glv').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); gluSave(); } });
@@ -16056,12 +16097,12 @@ function renderPlanBox(){
   el.hidden=true; el.innerHTML='';
 }
 function planDo(k, min, int, date){
-  return fPost('/act/add', {uid:syncUid(), date:date||TODAY, kind:k, min:min, intensity:int||'mod', note:'по плану'})
+  return fPostНадёжно('/act/add', {op:номерОтправки(), uid:syncUid(), date:date||TODAY, kind:k, min:min, intensity:int||'mod', note:'по плану'})
     .then(function(d){ if(d&&d.day){ FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[]; renderFoodDay(); renderPlanBox(); }
       haptic('ok'); освежить(d && d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); });
 }
 function planOff(k, date){
-  return fPost('/act/off', {uid:syncUid(), date:date||TODAY, kind:k})
+  return fPostНадёжно('/act/off', {uid:syncUid(), date:date||TODAY, kind:k})
     .then(function(d){ if(d&&d.day){ FOOD.day=d.day; if(d.day.date===TODAY) TODAYPLAN=d.day.plan||[]; renderFoodDay(); renderPlanBox(); }
       haptic('light'); освежить(d && d.day); }).catch(function(err){ fReply(humanErr(err),'bad'); });
 }
@@ -16287,7 +16328,7 @@ document.getElementById('svm').addEventListener('click', function(e){ if(e.targe
 document.getElementById('svgo').addEventListener('click', function(){
   var d=FOOD.day; if(!d || !d.free) return;
   var кн=this; кн.disabled=true;
-  fPost('/free', {uid:syncUid(), date:d.date||fDate(), on:!d.free.on}).then(function(r){
+  fPostНадёжно('/free', {uid:syncUid(), date:d.date||fDate(), on:!d.free.on}).then(function(r){
     if(Array.isArray(r.free)) FOOD.free=r.free;
     if(r.day){ FOOD.day=r.day; }
     svЗакрыть(); haptic('ok'); освежить(r.day);
@@ -16641,7 +16682,7 @@ function mealSave(){
   });
   if(!body.text){ document.getElementById('ml-hint').textContent='Без описания приём не сохранить.'; return; }
   var btn=document.getElementById('ml-save'); btn.disabled=true;MEALBUSY=true;document.getElementById('ml-keep').disabled=true;document.getElementById('ml-discard').disabled=true;document.getElementById('ml-form').inert=true;
-  fPost('/meal/upd', body).then(function(d){
+  fPostНадёжно('/meal/upd', body).then(function(d){
     if(!d || !d.ok || !d.day)throw new Error('Сервер не подтвердил сохранение.');
     MEALBUSY=false;
     /* запись могла уехать в другой день — открываем тот, куда она легла */
@@ -16661,8 +16702,8 @@ function mealMutation(path, body){
   /* Потерянный ответ не должен навсегда блокировать «Вернуть». Повтор
      restore безопасен благодаря тому же operation на сервере. */
   return new Promise(function(resolve,reject){
-    var timer=setTimeout(function(){reject(new Error('Сервер не ответил.'));},15000);
-    fPost(path,body).then(function(d){clearTimeout(timer);resolve(d);},function(e){clearTimeout(timer);reject(e);});
+    var timer=setTimeout(function(){reject(new Error('Сервер не ответил.'));},25000);
+    fPostНадёжно(path,body).then(function(d){clearTimeout(timer);resolve(d);},function(e){clearTimeout(timer);reject(e);});
   });
 }
 function deleteMeal(id){
@@ -16700,7 +16741,7 @@ document.getElementById('fmeals').addEventListener('click', function(e){
   var po=e.target.closest('[data-poff]');
   if(po){ planOff(po.dataset.poff, fDate()); return; }
   var ab=e.target.closest('[data-adel]');
-  if(ab){ fPost('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
+  if(ab){ fPostНадёжно('/act/del', {uid:syncUid(), id:ab.dataset.adel}).then(function(d){ FOOD.day=d.day; haptic('light'); освежить(d.day); homeActsPull(true); }).catch(function(err){ fReply(humanErr(err),'bad'); }); return; }
   if(e.target.closest('.fact')) return;
   var row=e.target.closest('.fmeal[data-mid]'); if(!row) return;
   if(подсказкаВидна('food')) подсказкаУбрать('food');
@@ -16803,7 +16844,7 @@ document.getElementById('fmsave').addEventListener('click', function(){
   if(raw.ffat) body.fat=val.ffat;
   if(raw.fwaist) body.waist=val.fwaist;
   measBusy(true); measReply('Сохраняю замер…','wait');
-  fPost('/measure',body).then(function(d){
+  fPostНадёжно('/measure',body).then(function(d){
     if(!d || !Array.isArray(d.measures)) throw new Error('Не удалось получить сохранённый замер.');
     замерыВзять(d); syncBwFromMeas();
     if(!raw.fw && raw.fwaist) vzВидЗадать('waist');
@@ -17698,6 +17739,7 @@ function coachSend(text, image){
   if(ta){ ta.value=''; ta.style.height='auto'; }
   renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
+  var сверить=false, отправлено=Date.now();
   fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1})
     .then(function(d){
       var сейчас=Date.now();
@@ -17744,8 +17786,35 @@ function coachSend(text, image){
       CHAT.drafts[date]={text:text||'', image:image||null, err:humanErr(e), retry:true};
       if(CHAT.date===date) chatDraftRestore();
       haptic('err');
+      if(отправкаПовторима(e)) сверить=true;
     })
-    .then(function(){ CHAT.busy=false; renderChat(); });
+    .then(function(){ CHAT.busy=false; renderChat(); if(сверить) чатСверить(text||'', !!image, отправлено, date); });
+}
+/* 22.10: ответ потерялся по дороге (связь, 5xx), а сервер сообщение принял и
+   записал еду. Без сверки на экране «ошибка» и черновик, а «Повторить»
+   записал бы приём второй раз. Читаем историю: наше сообщение там есть и на
+   него ответили — показываем ответ, черновик убираем, день перечитываем. */
+function чатСверить(text, сФото, с, date){
+  var искать=String(text||'').trim();
+  return fGet('/chat?uid='+encodeURIComponent(syncUid())).then(function(d){
+    /* часы телефона и сервера могут расходиться — окно 10 мин, а старое
+       такое же сообщение («кофе» дважды) отсекаем: оно уже было у нас */
+    var ч=(d&&d.ok&&d.chat)||[], i, было={};
+    (CHAT.items||[]).forEach(function(x){ if(x && x.ts) было[x.ts]=1; });
+    for(i=ч.length-1;i>=0;i--){ var x=ч[i];
+      if(x.role!=='user' || было[x.ts] || !(+x.ts>=с-600000)) continue;
+      var т=String(x.text||''), фото=/ \[фото[^\]]*\]$/.test(т)||/^\[фото/.test(т);
+      if(т.replace(/\s*\[фото[^\]]*\]$/,'').trim()===искать && фото===сФото) break; }
+    if(i<0 || !ч.slice(i+1).some(function(x){ return x.role==='assistant'; })) return false;
+    if(CHAT.busy) return false;
+    var dr=CHAT.drafts[date]; if(dr && dr.retry && String(dr.text||'').trim()===искать) CHAT.drafts[date]={};
+    if(CHAT.date===date){ var ta=document.getElementById('ctext');
+      /* поле ещё держит то же сообщение — убираем; человек начал новое — не трогаем */
+      if(ta && ta.value.trim()===искать) chatDraftRestore(); else { CHAT.err=''; CHAT.retry=false; } }
+    CHAT.items=ч; renderChat(); haptic('ok');
+    try{ освежить(); }catch(_){}
+    return true;
+  }).catch(function(){ return false; });
 }
 /* 04.10: тренер — четвёртая кнопка панели; текущую страницу не меняем. */
 document.getElementById('coachnav').addEventListener('click', function(){ openCoach(); haptic('light'); });

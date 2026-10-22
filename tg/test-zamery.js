@@ -13,6 +13,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
   try{
    let sent=[],bad=name==='failure';
    /* 13.10: реплика тренера после замера — отдельный набор test-zamer-slovo; здесь её нет */
+   await p.addInitScript(()=>{window.__паузыОтправки=[100,100];});
    const o={theme,meas:name==='empty'?[]:M.замеры().filter(m=>m.date!==M.TODAY),measSay:null};
    o.handleRoute=async r=>{
     const u=new URL(r.request().url());
@@ -46,7 +47,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
    if(name==='failure'){
     await p.fill('#fw','88,2');await p.fill('#ffat','26,5');await p.fill('#fwaist','95,5');
     await p.click('#fmsave');await p.waitForFunction(()=>!document.querySelector('#fmsave').disabled);
-    assert.equal(sent.length,1);
+    assert.equal(sent.length,3,'22.10: 503 — две попытки сами, потом ошибка');
     assert((await p.locator('#hmeas').innerText()).includes('Не удалось сохранить замер'),'A4: ошибка рядом с формой, не на скрытой Еде');
     assert(await p.locator('#fmreply').isVisible(),'A4: сообщение видно');
     for(const [id,value] of [['fw','88,2'],['ffat','26,5'],['fwaist','95,5']])assert.equal(await p.locator('#'+id).inputValue(),value);
@@ -58,7 +59,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
     assert.equal(await p.locator('#fw').inputValue(),'88,2');assert.equal(await p.locator('#fwaist').inputValue(),'95,5');
     await shot(p,'photo-error',theme,width);
     bad=false;await p.click('#fmsave');await p.waitForFunction(()=>document.querySelector('#fmreply').textContent==='Замер записан');
-    assert.equal(sent.length,2);assert.equal(await p.locator('#fw').inputValue(),'');assert.equal(await p.locator('#fwaist').inputValue(),'');
+    assert.equal(sent.length,4);assert.equal(await p.locator('#fw').inputValue(),'');assert.equal(await p.locator('#fwaist').inputValue(),'');
    }
    if(name==='waist'||name==='empty'){
     if(name==='empty'){

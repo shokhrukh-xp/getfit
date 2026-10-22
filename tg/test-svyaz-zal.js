@@ -12,7 +12,10 @@ const нота=p=>p.evaluate(()=>{const e=document.getElementById('dbnote');retu
 (async()=>{const b=await chromium.launch();try{
   const p=await b.newPage({viewport:{width:390,height:844}});p.setDefaultTimeout(15000);
   const o=opts('dark');o.page='gym';
-  const err=await M.поднять(p,o);await p.waitForTimeout(500);
+  let снимок=0;p.on('response',r=>{if(new URL(r.url()).pathname==='/all')снимок++;});
+  const err=await M.поднять(p,o);
+  /* под нагрузкой прогона хранилище поднимается позже: правка до этого — «на телефоне», не облако */
+  for(const до=Date.now()+15000;!снимок&&Date.now()<до;)await p.waitForTimeout(100);await p.waitForTimeout(800);
   await p.evaluate(()=>{window.__красное=[];const смотреть=()=>{const e=document.getElementById('dbnote');if(!e)return;
     if(/\bbad\b/.test(e.className)||e.querySelector('.bad'))window.__красное.push(e.textContent);};
     new MutationObserver(смотреть).observe(document.body,{subtree:true,childList:true,attributes:true,characterData:true});});
