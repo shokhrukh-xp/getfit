@@ -48,8 +48,9 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   const l=await p.evaluate(()=>({why:document.querySelectorAll('#cirbody .cirwhy').length,key:(document.querySelector('#cirbody .lbkey2')||{}).textContent||'',
    chips:[...document.querySelectorAll('.cirsw .mchip')].map(x=>x.textContent.trim())}));
   ok(l.why===0,где+'L: висящей строки «за что сняты баллы» нет');
-  ok(/7\+/.test(l.key)&&/ниже 7/.test(l.key)&&/сегодня/.test(l.key)&&l.key.length<60,где+'L: легенда точек — одной строкой: '+l.key);
-  ok(l.chips.includes('⚙ круг')&&l.chips.includes('+ новый'),где+'L: у кнопок круга есть слова');
+  /* 22.10, Р3 (его выбор «Легенды → пометки на графике»): строки-легенды нет, у точек — подсказка дня */
+  ok(!l.key&&await p.$$eval('#cirbody .lbdots s[title]',x=>x.length)>0,где+'L: легенды точек нет, смысл — в цвете и подсказке точки');
+  ok(l.chips.includes('круг')&&l.chips.includes('+ новый'),где+'L: у кнопок круга есть слова');
   await чист('рейтинг');
   /* F · карта тела и каталог */
   await вкладка(p,'gym','[data-zseg="log"]');

@@ -30,7 +30,11 @@ const СЛУЧАИ=[
    ok(await p.locator('.hclk-svg .hb-todo path').count()===0,'знака «−» больше нет '+tag);}
   const строка=await p.locator('.day-status').innerText();
   if(с.left===0)ok(/на сегодня всё|дальше только если голоден|хватит/.test(строка),'после ужина — только если голоден '+tag+' '+строка);
-  if(с.left>1){const rp=160-prot,мясо=Math.round(rp/с.left/0.22/10)*10;ok(строка.includes('по ~'+мясо+' г'),'белок делится на оставшиеся основные приёмы ('+с.left+') '+tag+' '+строка);}
+  /* 22.10, редизайн: «чем закрыть остаток» — в песочной карточке следующего
+     приёма под витриной, в строке под дугой его больше нет (не дублируем). */
+  if(с.left>1){const rp=160-prot,мясо=Math.round(rp/с.left/0.22/10)*10,карточка=await p.locator('.hnextm').innerText();
+   ok(карточка.includes('по ~'+мясо+' г'),'белок делится на оставшиеся основные приёмы ('+с.left+') '+tag+' '+карточка);
+   ok(!строка.includes('по ~'+мясо+' г'),'в строке под дугой совет не повторяется '+tag+' '+строка);}
   await p.locator('#coachnav').click();
   const hint=await p.locator('#ctext').getAttribute('placeholder');
   ok(с.ждём.length?hint==='Еда: '+с.ждём[0].split(' · ')[1]:hint==='Еда или вопрос','чат ждёт тот же приём, что и дуга '+tag+' '+hint);

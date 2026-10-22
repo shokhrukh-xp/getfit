@@ -34,7 +34,7 @@ const карточка = page => page.evaluate(() => {
     цвет: (v.querySelector('.vznum em') || {}).className || '', под: v.querySelector('.vzsub').textContent,
     сегодня: (v.querySelector('.vztd') || {}).textContent || '', вода: v.querySelectorAll('svg .vzwet').length,
     метка: v.querySelectorAll('svg .vzsvl').length, пицца: v.querySelectorAll('svg .vzsvp').length, строка: (v.querySelector('.vzsv') || {}).textContent || '',
-    легенда: (v.querySelector('.vzlg') || {}).textContent || '', красныхЗамеров: v.querySelectorAll('svg .vzout').length };
+    легенда: [...v.querySelectorAll('svg .vzlab')].map(x => x.textContent).join(' · '),   /* 22.10: подписи на графике вместо легенды */ красныхЗамеров: v.querySelectorAll('svg .vzout').length };
 });
 
 (async () => {
@@ -53,7 +53,7 @@ const карточка = page => page.evaluate(() => {
   дано(к && /Скачок после свободного дня \d\d\.\d\d — это вода, гликоген и соль, а не жир/.test(к.строка) && /Три утра после него не идут в средний вес/.test(к.строка),
     'под графиком сказано, что скачок — вода: ' + (к && к.строка.slice(0, 90)));
   // 07.10, его слова: «всё равно не понятно и слишком много текста» — о свободном дне в легенде ни строки, его знак — 🍕 на графике
-  дано(к && /обычный разброс ±/.test(к.легенда) && !/свободн|вода/.test(к.легенда), 'в легенде — коридор, о свободном дне ни строки: ' + (к && к.легенда));
+  дано(к && /разброс ±/.test(к.легенда) && !/свободн|вода/.test(к.легенда), 'в легенде — коридор, о свободном дне ни строки: ' + (к && к.легенда));
   const цветДня = await page.evaluate(() => getComputedStyle(document.querySelector('#homebody .vztd')).color);
   const цветКрасный = await page.evaluate(() => { const e = document.createElement('i'); e.style.color = 'var(--warn-txt)'; document.body.appendChild(e); const c = getComputedStyle(e).color; e.remove(); return c; });
   дано(цветДня !== цветКрасный, '«за день» не красится: ' + цветДня);

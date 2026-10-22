@@ -16,7 +16,8 @@ const ЕДА = [
 const часы = page => page.evaluate(() => ({
   метки: Array.from(document.querySelectorAll('.hb[aria-label]')).map(e => e.getAttribute('aria-label')),
   плюс: !!document.querySelector('.hb-next'),
-  совет: (document.querySelector('.hnext') || {}).textContent || '',
+  /* 22.10, редизайн: чем закрыть белок — в карточке следующего приёма под витриной */
+  совет: (document.querySelector('.hnextm') || document.querySelector('.hnext') || {}).textContent || '',
   /* 12.09: поля на главной больше нет — разговор один, за круглой кнопкой.
      Подсказку в нём читаем, открыв разговор. */
   кнопка: (document.querySelector('#ctext') || {}).placeholder || ''

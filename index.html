@@ -2743,7 +2743,7 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 @keyframes cmin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.cmring,.cmbub{animation:none}}
 /* 22.10, проход новичком: образцы 34/176/89 читались как уже вписанные числа — бледнее и курсивом */
-#wzme .mnums input::placeholder{color:var(--dim);opacity:.5;font-style:italic}
+#wzme .mnums input::placeholder{color:var(--muted);opacity:1;font-style:italic}
 .startcard b{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text)}
 .startcard .scbtns{display:flex;flex-wrap:wrap;gap:8px}
 .startcard .scbtns .btn{flex:1 1 auto;min-height:44px}
@@ -3352,6 +3352,392 @@ body.ordmode #list .sstag{color:var(--text)}
 .vztop .vzgapline{margin:6px 0 0;font-size:15px;font-weight:700;color:var(--on-accent)}
 .vztop .vznum em:not(.dn):not(.up){background:rgba(0,0,0,.24)}
 .delivery{margin:12px 0;padding:14px;border:1px solid var(--line,#d4e2e3);border-radius:14px}.delivery p{margin:8px 0}.deliverydish{display:flex;gap:12px;margin:14px 0;padding-top:14px;border-top:1px solid #d4e2e3}.deliverydish img{width:96px;height:96px;object-fit:cover;border-radius:12px}.deliverydish>div{min-width:0}.delivery .muted{font-size:12px;opacity:.75}.delivery button{min-height:44px;white-space:normal}.deliverydish p{font-size:13px;line-height:1.5}
+
+/* ══ 22.10 · ДИЗАЙН-АУДИТ, ПАКЕТ А (его выбор «Глубокая полировка»;
+   Claude + Codex D1–D20 + Gemini G1–G20). Стиль «Фокус · бирюза» не меняется. */
+/* A1: цифры одной ширины везде — нормы, веса и счётчики не «прыгают» */
+body{font-variant-numeric:tabular-nums}
+/* A2: значки SVG рядом с текстом — по центру строки */
+.ik{flex:none;vertical-align:-2px}
+a.ebtn,.exfoot .ebtn,.mchip,.lnk,.vid{gap:6px}
+.vid{display:inline-flex;align-items:center}
+.lnk .ik{margin-left:3px}
+.fbc .ikchev{vertical-align:-3px;transition:transform .2s}
+.fbc.up .ikchev{transform:rotate(180deg)}
+.swb .ik{vertical-align:-2px}
+.gx .grow b::after{content:""!important;display:inline-block;width:6px;height:6px;margin:0 2px 3px 8px;
+  border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);opacity:.55!important;font-size:0}
+/* «◠»: скругление 12px превращало галочку свёртки в дугу */
+.exchev{border-radius:1px!important}
+/* A3: листы выезжают, фон темнеет; нажатие слегка сжимает кнопку */
+@keyframes gfscrim{from{background-color:transparent}}
+/* только сдвиг: прозрачность на время выезда роняла контраст (проверки ds1/профиля) */
+@keyframes gfsheet{from{transform:translateY(28px)}to{transform:none}}
+.modal.show{animation:gfscrim .22s ease-out}
+.modal.show .modalbox{animation:gfsheet .26s cubic-bezier(.2,.8,.2,1)}
+.btn,.ebtn,.pbtn,.mchip,.rsbtn,.tbtn,.fbtn,.nudge,.pqrow,.schrow,.chip,.l1 button,#coachnav{transition:transform .12s ease-out}
+.btn:active,.ebtn:active,.pbtn:active,.mchip:active,.rsbtn:active,.tbtn:active,.fbtn:active,.nudge:active,.schrow:active,.l1 button:active,#coachnav:active{transform:scale(.97)}
+.pqrow:active{transform:scale(.99)}
+/* A4: заготовка вместо «Загружаю…» */
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skel{display:grid;gap:10px;padding:14px 2px}
+.skel i{display:block;height:12px;border-radius:6px;background:var(--track);
+  background-image:linear-gradient(90deg,transparent 0,rgba(255,255,255,.45) 50%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;
+  animation:gfskel 1.3s ease-in-out infinite}
+[data-theme="dark"] .skel i{background-image:linear-gradient(90deg,transparent 0,rgba(255,255,255,.06) 50%,transparent 100%)}
+@keyframes gfskel{from{background-position:150% 0}to{background-position:-50% 0}}
+.fh-dot{display:none}
+/* A5: образцы в «Новом замере» не путаются с вписанным числом */
+.fmeasq input::placeholder{color:var(--muted);opacity:1;font-style:italic;font-weight:400}   /* ревью Codex R4: не прозрачнее — контраст ≥ 4,5 */
+.nomo .modal.show,.nomo .modal.show .modalbox,.nomo .skel i{animation:none!important}
+/* только наши кнопки: «:active» у SVG-группы дуги снимал её transform-атрибут, и нажатие уезжало мимо */
+.nomo :is(.btn,.ebtn,.pbtn,.mchip,.rsbtn,.tbtn,.fbtn,.nudge,.schrow,.pqrow,.l1 button,#coachnav):active{transform:none!important}
+@media (prefers-reduced-motion:reduce){
+  .modal.show,.modal.show .modalbox,.skel i{animation:none}
+  .btn:active,.ebtn:active,.pbtn:active,.mchip:active,.rsbtn:active,.tbtn:active,.fbtn:active,.nudge:active,.schrow:active,.pqrow:active,.l1 button:active,#coachnav:active{transform:none}
+}
+
+/* ══ 22.10 · ДИЗАЙН-АУДИТ: ПАКЕТЫ Б, В И РЕШЁННЫЕ СПОРНЫЕ (Р1–Р5) ══ */
+/* Б1: дни программы на 320 — «сегодня» помещается в чип (Codex D1) */
+@media (max-width:359px){
+  .gym-day .dayseg{gap:4px}
+  .gym-day .dayseg button{padding:0 2px;min-width:0}
+  .gym-day .dayseg button b{font-size:12px;letter-spacing:-.1px}
+  .gym-day .dayseg button i{font-size:11px;letter-spacing:-.2px;white-space:nowrap}
+}
+/* Б2: «Заменить / Видео / Убрать» в одну строку, удаление — тихим текстом (D2–D3) */
+.exfoot .ebtn,#techm .tbtns .ebtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.exfoot .ebtn.drop{background:transparent;border-color:transparent;color:var(--muted);font-weight:500}
+/* Б3: профиль на узком экране — статус под строкой, а не узкой колонкой справа (D4) */
+@media (max-width:360px){
+  .pqrow{flex-wrap:wrap;align-items:center}
+  .pqrow .pqt{flex:1 1 calc(100% - 40px)}
+  .pqrow .pqv{order:3;flex:0 0 100%;max-width:none;text-align:left;margin:2px 0 0;font-size:12px;font-weight:600;color:var(--accent-txt)}
+  .pqrow .pqv:empty{display:none}
+  .pqrow .pqch{position:absolute;right:12px;top:50%;transform:translateY(-50%)}
+  .pqrow{padding-right:32px}
+}
+/* Б4: подписка — главное преимущество крупнее, кнопка отделена от промокода (D13–D14) */
+#subm .subin li:first-child{font-size:15px;font-weight:600;color:var(--text)}
+#subm .subin li:not(:first-child){color:var(--muted)}
+#subm #sub-buy{margin-bottom:6px}
+#subm #sub-promo{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+/* В1: знакомство на всю высоту, «Далее» внизу под большим пальцем */
+body.onb #picker .modalbox{display:flex;flex-direction:column;min-height:100%}
+body.onb #picker .modalbox > :is(#wzonly,#wzme,#wzhealth,#wzgoal):not([hidden]){display:flex;flex-direction:column;flex:1 0 auto}
+body.onb :is(#wz-only-go,#wz-me-go,#wz-health-go,#g-go){margin-top:auto;position:sticky;bottom:calc(14px + var(--pad-bottom,0px));z-index:2}
+body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal) > :is(#wz-only-go,#wz-me-go,#wz-health-go,#g-go){margin-top:auto}
+body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;height:4px}
+/* ревью Codex R3: в коротком окне плавающая кнопка закрывала варианты — там она просто после полей */
+@media (max-height:700px){ body.onb :is(#wz-only-go,#wz-me-go,#wz-health-go,#g-go){position:static} }
+/* В2: «в зале» — сетка 2×2 вместо 3+1; числа в полях крупнее (D9) */
+#g-gym{display:grid!important;grid-template-columns:1fr 1fr;gap:8px}
+#g-gym button{width:100%;margin:0}
+#wzme .mnums input{font-size:20px;font-weight:700;min-height:54px;text-align:center}
+#wzme .mnums{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mchip .ik,[data-cq] .ik{margin-right:6px;vertical-align:-3px}
+#wzme .mnums input::placeholder{font-weight:500}
+/* Р1: срез тела — изменения нейтральным цветом; зелёный не значит «хорошо» (D5) */
+.srgrid .srr s,.srgrid .srr s.dn,.srgrid .srr s.up{color:var(--text)}
+/* Р2: плашки знакомства и профиля — одной строкой (D8) */
+#onbbar:not([hidden]),#nudge:not([hidden]){display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;min-height:44px}
+#onbbar .nbt,.nudge .nbt{flex:1;min-width:0;font-weight:600;font-size:14px;color:var(--text)}
+#onbbar .nbt::before,.nudge .nbt::before{content:"";display:inline-block;width:7px;height:7px;margin:0 9px 1px 0;border-radius:99px;background:var(--warn)}
+#onbbar .nbgo,.nudge .nbgo{flex:none;font-size:14px;font-weight:700;color:var(--accent-txt)}
+#onbbar .nbgo::after,.nudge .nbgo::after{content:"";display:inline-block;width:6px;height:6px;margin:0 2px 1px 7px;border-right:1.8px solid currentColor;border-top:1.8px solid currentColor;transform:rotate(45deg)}
+/* Р3: значки дня в «Неделе» и подписи на графике вместо легенд */
+.hwd-dots{gap:5px;min-height:14px}
+.hwd b,.hwd-gym{display:inline-flex!important;width:auto!important;height:auto!important;background:none!important;border:0!important;border-radius:0!important;color:var(--track)}
+.hwd b.good{color:var(--done)} .hwd b.bad{color:var(--warn)} .hwd b.going{color:var(--accent-txt)}
+.hwd b.free{color:var(--muted)}
+.hwd-gym{color:transparent}
+.hwd-gym:not(.done):not(.plan){display:none!important}
+.hwd-gym.done{color:var(--accent-txt)} .hwd-gym.plan{color:var(--dim);opacity:.55}
+.hweek-block .hwd.on b,.hweek-block .hwd.on .hwd-gym{color:var(--on-accent)!important;opacity:1}
+.hweek-block .hwd.on .hwd-gym.plan{opacity:.6}
+.hweek-block .hwd.on b:not(.good):not(.bad):not(.going){opacity:.45}
+/* ревью Codex R2: статус и формой, не только цветом — на залитом «сегодня» все значки белые */
+.hwd b.good::after,.hwd-gym.done::after{content:"✓";font-size:9px;font-weight:800;margin-left:1px;line-height:1}
+.hwd b.bad::after{content:"!";font-size:10px;font-weight:800;margin-left:1px;line-height:1}
+.vzlab{font-size:11px;font-weight:600;opacity:.9}
+.vztop .vzlab{fill:var(--on-accent);opacity:.8}
+.lbdots s.lbd-today{background:transparent!important;box-shadow:inset 0 0 0 2px var(--accent)}
+/* Р4: тёмная тема — тонкий край карточек, чтобы они не сливались с #000 (Gemini G20) */
+:root[data-theme="dark"] :is(.vz,.fday,.fmeals,.hdaycard,.hstats,#eatbody,#p-eat .group,#p-circle .group,#p-circle .tile,.gym-day,#list,#logsum .tile,#logmusbox,#p-ref .catgrp,#p-ref .catlist,.pqid,.pqgroup,.group){box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+/* Р5: «+ Занятие вне зала» на главной — тихой строкой (главное место — «Тренировка») */
+.hsport{background:transparent!important;border:1px dashed var(--line)!important;color:var(--accent-txt)!important;font-weight:600}
+/* ═══ 22.10 · Редизайн «Бирюза, но смелее» — его выбор из трёх направлений
+   (макеты docs/reviews/2026-10-22-redizain/, «В · Бирюза, но смелее» и её
+   тёмная тема). Его слова перед этим: «я не вижу разницы, я ожидал что будет
+   редизайн и апгрейд на более качественный дизайн». Порядок — «по этапам, со
+   снимками»; этот слой — этап 1, основа: палитра обеих тем, песочный второй
+   цвет, бирюзовые «витрины» (--hero), плавающая тёмная панель, вкладки-пилюли,
+   квадратный аватар, карточки 26 px. Расчёты, дуга и порядок блоков — прежние.
+   Новые токены: --sand (заливка целей и действий, текст на ней --sand-ink),
+   --sand-bg / --sand-txt (тихая песочная плашка), --hero (фон витрины,
+   белый текст), --hero-ink (крупные заголовки страниц). ═══ */
+:root{
+  --bg:#E6F0EF;
+  --surface:#FFFFFF;
+  --tint:#E2EFEE; --field:#EEF5F4;
+  --line:#D8E5E4; --tab-line:#CFDFDE;
+  --text:#0F2A2E; --muted:#4E6A6E; --faint:#4E6A6E;
+  --accent:#0F6670; --accent-rgb:15,102,112;
+  --action:#0B4F5A; --on-accent-muted:#D6EBEE;
+  --sand:#F4B860; --sand-ink:#4A3000; --sand-bg:#FFF1DC; --sand-txt:#7A5212;
+  --hero:radial-gradient(120% 90% at 88% 0%,rgba(47,179,166,.3) 0%,rgba(47,179,166,0) 55%),linear-gradient(160deg,#0E636D 0%,#083F48 100%);
+  --hero-sand:#FFD69E;   /* песочный ТЕКСТ на витрине: светлее заливки, ≥4,5:1 по всей витрине (ревью Codex R4) */
+  --hero-edge:0 18px 36px rgba(11,79,90,.24);
+  --hero-ink:#0B4F5A;
+  --navbg:#0B4F5A;
+  --plan-line:#C98A2E;   /* пунктир плана на белом графике: песочный темнее (R3) */
+  --r:26px;
+}
+:root[data-theme="dark"]{
+  --bg:#050B0C;
+  --surface:#0D191B;
+  --tint:rgba(47,179,166,.14); --field:#122326;
+  --line:#17292C; --tab-line:#1C3134;
+  --text:#E6F2F1; --muted:#8AA5A8; --faint:#8AA5A8;
+  --accent:#2FB3A6; --accent-rgb:47,179,166;
+  --action:#13707A; --prime:var(--action); --on-accent-muted:#CDE7EC;
+  --sand:#F4B860; --sand-ink:#4A3000; --sand-bg:#241B0E; --sand-txt:#F4B860;
+  --hero:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%);
+  --hero-sand:#FFD69E;
+  --hero-edge:0 0 0 1px rgba(47,179,166,.2);
+  --hero-ink:#E6F2F1;
+  --navbg:rgba(16,34,37,.92);
+  --plan-line:#F4B860;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+  --bg:#050B0C;
+  --surface:#0D191B;
+  --tint:rgba(47,179,166,.14); --field:#122326;
+  --line:#17292C; --tab-line:#1C3134;
+  --text:#E6F2F1; --muted:#8AA5A8; --faint:#8AA5A8;
+  --accent:#2FB3A6; --accent-rgb:47,179,166;
+  --action:#13707A; --prime:var(--action); --on-accent-muted:#CDE7EC;
+  --sand:#F4B860; --sand-ink:#4A3000; --sand-bg:#241B0E; --sand-txt:#F4B860;
+  --hero:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%);
+  --hero-sand:#FFD69E;
+  --hero-edge:0 0 0 1px rgba(47,179,166,.2);
+  --hero-ink:#E6F2F1;
+  --navbg:rgba(16,34,37,.92);
+  --plan-line:#F4B860;
+  }
+}
+/* заголовок страницы — крупнее и цветом витрины */
+.hctx>b,body:has(.l1 button:not([data-page="home"])[aria-selected="true"]) .hctx b,body.onadmin .hctx b{font-size:34px;letter-spacing:-.035em;color:var(--hero-ink)}
+.hctx .ds-eyebrow{color:var(--muted);letter-spacing:.02em;text-transform:none;font-size:13px}
+/* аватар — скруглённый квадрат цвета витрины, серия — песочной меткой */
+.hright > .profbtn{border-radius:16px;background:var(--navbg);box-shadow:none}
+:root[data-theme="dark"] .hright > .profbtn{background:#13707A}
+.hright > .profbtn.attn{box-shadow:0 0 0 3px rgba(244,184,96,.35)}
+.hright > .profbtn.attn::before{background:var(--sand)}
+.profbtn .pstreak{background:var(--sand);color:var(--sand-ink);border:2px solid var(--bg);font-weight:800;bottom:-8px;left:auto;right:-8px;transform:none}
+/* плавающая панель */
+.l1{left:12px;right:12px;bottom:calc(10px + var(--pad-bottom));padding-bottom:0;border-radius:26px;
+  background:var(--navbg);border:0;box-shadow:0 14px 30px rgba(11,79,90,.30);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+:root[data-theme="dark"] .l1{box-shadow:0 0 0 1px #1C3437,0 14px 30px rgba(0,0,0,.6)}
+.l1-in{max-width:616px}
+.l1 button{min-height:64px;color:rgba(255,255,255,.62);font-weight:700;font-size:11.5px}
+.l1 button[aria-selected="true"]{color:#fff}
+.l1 button[aria-selected="true"] svg{color:var(--sand)}
+#coachnav{color:#E6F5F4}
+#coachnav svg{box-sizing:content-box;width:20px;height:20px;padding:7px;margin:-6px 0 -3px;border-radius:12px;background:var(--sand);color:var(--sand-ink)}
+#coachnav.attn::after{top:2px;left:calc(50% + 12px);border-color:var(--navbg)}
+.timer{bottom:calc(88px + var(--pad-bottom))}
+/* ревью Codex R6: таймер отдыха — такая же плавающая карточка, как панель */
+.timer{left:12px;right:12px;border-radius:22px;box-shadow:0 12px 28px rgba(11,79,90,.22);background:var(--surface)}
+:root[data-theme="dark"] .timer{box-shadow:0 0 0 1px var(--line),0 12px 28px rgba(0,0,0,.5)}
+/* вкладки страниц — пилюли: выбранная залита цветом витрины */
+.zseg{gap:6px;border-bottom:0;margin:12px 0 16px;overflow-x:auto;scrollbar-width:none}
+.zseg::-webkit-scrollbar{display:none}
+.zseg button{flex:0 0 auto;min-height:40px;padding:8px 16px;border:0;border-radius:14px;background:rgba(255,255,255,.62);color:var(--muted);font-size:14px;font-weight:700}
+:root[data-theme="dark"] .zseg button{background:var(--field)}
+.zseg button[aria-pressed="true"]{background:var(--navbg);color:#fff;border:0;font-weight:800}
+:root[data-theme="dark"] .zseg button[aria-pressed="true"]{background:#13707A}
+/* карточки и кнопки */
+.group,.vz,.fday,.fmeals,.hdaycard,.hstats,#eatbody .group,#p-eat .group,#p-circle .group,.gym-day,.pqgroup{border-radius:var(--r)}
+.btn.prim,.fbtn.go{background:var(--action);border-radius:16px;font-weight:800}
+.btn{border-radius:14px}
+/* ── этап 2 · «Сегодня» (22.10, редизайн «Бирюза, но смелее») ──
+   Карточка дня — бирюзовая витрина: дуга, число и четыре показателя белым по
+   бирюзе, заливки полос — песочные, коридор — светлой полосой. Раскрытый
+   кружок (.hbx) остаётся светлой карточкой поверх — у него свои цвета. */
+.hdaycard{background:var(--hero);box-shadow:var(--hero-edge);color:#fff;position:relative;overflow:hidden;padding:10px 0 14px}
+.hdaycard::after{content:"";position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;border:34px solid rgba(255,255,255,.05);pointer-events:none}
+:root[data-theme="dark"] .hdaycard{box-shadow:var(--hero-edge)!important}
+.hdaycard .hcring{stroke:rgba(255,255,255,.32)}
+.hdaycard .hctk{stroke:rgba(255,255,255,.5)}
+.hdaycard .hctick{fill:rgba(255,255,255,.6)}
+.hdaycard .hch{fill:rgba(255,255,255,.72)}
+.hdaycard .hcw{fill:rgba(255,255,255,.82)}
+.hdaycard .hb .hbcut{fill:rgba(255,255,255,.96)}
+.hdaycard .hb-next .hbbg,.hdaycard .hb-gymon .hbbg{fill:var(--sand);stroke:rgba(255,255,255,.96);stroke-width:2.5;stroke-dasharray:none}
+.hdaycard .hb-next .hbi,.hdaycard .hb-gymon .hbi{stroke:var(--sand-ink)}
+.hdaycard .hb-todo .hbbg{stroke:rgba(11,79,90,.45)} .hdaycard .hb-todo .hbi{stroke:#0B4F5A} .hdaycard .hb-todo .hbt{fill:#0B4F5A}
+.hdaycard .hbtime rect{fill:rgba(4,38,44,.72);stroke:none}
+.hdaycard .hbtime text{fill:#fff}
+.hdaycard .hbtime.hbplan text{fill:#FCE3BC;font-weight:700}
+.hdaycard .hctr b{color:#fff;font-size:54px;letter-spacing:-.055em}
+@media(max-width:359px){.hdaycard .hctr b{font-size:44px}}
+.hdaycard .hclk{margin-top:-22px}
+.hdaycard .hctr b.over{color:#FFB8A3}
+.hdaycard .hctr b.okover{color:#A6EBCB}
+.hdaycard .hctr b.hfree{color:#fff;font-size:24px;letter-spacing:-.01em;line-height:1.2}
+/* раскрытый кружок — светлая карточка поверх витрины: свой цвет текста, не белый */
+.hdaycard .hbx{color:var(--text);top:32px;left:8px;right:8px;min-height:calc(100% - 32px)}   /* дуга поднята на 22 px (.hclk): раскрытие ниже края и скруглённых углов витрины */
+.hdaycard .hbx::before{background:rgba(6,50,57,.62);opacity:1}
+.hdaycard .hctr u{color:#E6F5F4}
+.hdaycard .hctr i{color:rgba(255,255,255,.8)}
+.hdaycard .hctr i em,.hdaycard .hctr i em.hgood{color:var(--hero-sand)}
+.hdaycard .hctr i em.hbad{color:#FFB8A3}
+.hdaycard .hctr .hcl .hbad{color:rgba(255,255,255,.8)}
+.hdaycard .day-status{color:#E6F5F4}
+.hdaycard .day-status em,.hdaycard .day-status em.hgood{color:#fff;font-weight:600}
+.hdaycard .day-status em.hbad{color:#FFB8A3}
+.hdaycard .hrows{position:relative;z-index:1}
+.hdaycard .hrows>.hrow{background:rgba(255,255,255,.12);border-radius:18px}
+.hdaycard .hrow u{color:rgba(255,255,255,.8);font-weight:600}
+.hdaycard .hrow b{color:#fff;font-weight:800}
+.hdaycard .hrow b s{color:#E6F5F4}
+.hdaycard .htr{background:rgba(255,255,255,.2)}
+/* Смысл цвета полос прежний (08.10, «Черты + цвет»): ниже коридора — акцент,
+   в коридоре — зелёный, сверх — предупреждение / серое. На витрине те же роли
+   получают свои цвета: токены переопределены только внутри показателей, так
+   что normFill и черты работают без изменений. */
+.hdaycard .hrows{--accent:var(--sand);--accent-txt:var(--hero-sand);--done:#86E3B5;--warn:#FF9B80;--dim:rgba(255,255,255,.55);--mid:var(--sand);--text:#fff;--surface:#0B4F5A;--corr:rgba(255,255,255,.26)}
+.hdaycard .ds-zone{color:#E6F5F4}
+.hdaycard .ds-zone::before{background:rgba(255,255,255,.3)}
+/* карточка следующего приёма */
+.hnextm{display:grid;grid-template-columns:52px minmax(0,1fr) 40px;gap:12px;align-items:center;width:100%;margin:-8px 0 14px;padding:12px 14px;border:0;border-radius:24px;
+  background:var(--sand-bg);color:var(--sand-txt);font:inherit;text-align:left;cursor:pointer}
+:root[data-theme="dark"] .hnextm{box-shadow:inset 0 0 0 1px #3A2C14}
+.hnm-i{width:52px;height:52px;border-radius:17px;background:var(--sand);color:var(--sand-ink);display:grid;place-items:center}
+.hnm-i svg{width:26px;height:26px}
+.hnm-t{min-width:0}
+.hnm-t b{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;color:var(--text)}
+.hnm-t small{display:block;margin-top:2px;font-size:13px;font-weight:600;line-height:1.35;color:var(--sand-txt)}
+.hnm-go{width:40px;height:40px;border-radius:14px;background:var(--surface);color:var(--sand-txt);display:grid;place-items:center}
+:root[data-theme="dark"] .hnm-go{background:#2E2416}
+.hnm-go svg{width:20px;height:20px}
+.hnextm:active{transform:scale(.98)}
+.nomo .hnextm:active{transform:none}
+/* неделя — белая карточка, сегодня залит цветом витрины */
+.hweek-block{background:var(--surface);border-radius:var(--r);padding:14px 10px 12px;margin:0 0 14px}
+.hweek-block>h3{padding:0 6px}
+.hweek-block .hwd{border-radius:16px}
+.hweek-block .hwd.on{background:var(--navbg)}
+:root[data-theme="dark"] .hweek-block .hwd.on{background:#13707A}
+.hweek-block .hwd.on b.good,.hweek-block .hwd.on b.going{color:var(--sand)!important}
+.hweek-block .hwg-sub{padding:0 6px}
+/* «Тело» — белая карточка с бирюзовым графиком и песочным планом */
+.vztop{background:var(--surface);color:var(--text);--text:inherit;--muted:inherit;--dim:inherit;--line-soft:inherit;--field:inherit;--bg:inherit}
+.vztop .vzhd u,.vztop .vznum em,.vztop .vznum b,.vztop .vzch button{color:var(--text)}
+.vztop .vzhd u{font-size:19px;font-weight:800;color:var(--hero-ink)}
+.vztop .vznum b{color:var(--hero-ink)}
+.vztop .vzch button.on,.vztop .vzch button.on span{color:#fff}
+.vztop .vzch button.on{background:transparent}
+.vztop .vzch button.on span{background:var(--navbg)}
+:root[data-theme="dark"] .vztop .vzch button.on span{background:#13707A}
+.vztop .vzln{stroke:var(--accent)}
+.vztop .vzpl{stroke:var(--plan-line)}
+.vztop .vzgap{stroke:var(--text)}
+.vztop .vzgapl{fill:var(--text);stroke:var(--surface)}   /* ревью Codex R3: была белая скобка на белом */
+.vztop svg circle[stroke]{stroke:var(--accent)}
+.vztop svg .vzpt{fill:var(--faint)}
+.vztop #vzg stop{stop-color:var(--accent)!important}
+.vztop .vzlg span:first-child i{background:var(--accent)!important}
+.vztop .vzgapline,.vztop .vzgline .vzgapline{color:var(--text)}
+.vztop .vznum em:not(.dn):not(.up){background:var(--field);color:var(--muted)}
+.vztop .vzlab{fill:var(--muted)}
+.vzbottom{border-top:1px solid var(--line)}
+/* ── этап 3 · «Еда» (22.10, редизайн «Бирюза, но смелее») ──
+   Итог дня — витрина (как карточка дня на «Сегодня»), приёмы — с крупным
+   фото, «Добавить …» — песочная кнопка действия. Шкалы и их цвета прежние. */
+.food-hero{background:var(--hero);box-shadow:var(--hero-edge);border-radius:30px;padding:20px 18px 18px;position:relative;overflow:hidden}
+.food-hero::after{content:"";position:absolute;right:-70px;bottom:-110px;width:220px;height:220px;border-radius:50%;border:32px solid rgba(255,255,255,.05);pointer-events:none}
+.food-hero .fh-l{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#E6F5F4}
+.food-hero .food-remaining{font-size:58px;letter-spacing:-.055em}
+.food-hero .fh-u{font-size:16px;color:#E6F5F4}
+.food-hero .fsc u{color:#E6F5F4}
+.food-hero .fsc b{font-size:32px}
+.food-hero .fsc b s{color:#E6F5F4}
+.food-hero .fclose .fdone small{position:relative;z-index:1}
+.food-hero.food-free{background:var(--surface);box-shadow:none}
+@media(max-width:359px){ .food-hero .food-remaining{font-size:46px} }
+.fnorm-label{font-weight:700;color:var(--muted)}
+.fmealgroup h3,.lh{color:var(--hero-ink)}
+.fmealgroup h3{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.fmealgroup .fmeal{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:0}
+.fmealgroup .fmeal+.fmeal{border-top:1px solid var(--line)}
+.fmealgroup .fmth{width:72px;height:72px;border-radius:20px;border:0;grid-row:auto;grid-column:auto}
+.fmealgroup .fmth.fmno{display:grid;place-items:center;background:var(--field);color:var(--muted)}
+.fmealgroup .fmth.fmno svg{width:28px;height:28px}
+.fmealgroup .ft{grid-column:auto;grid-row:auto;font-size:15px;font-weight:700;line-height:1.3;color:var(--text);min-width:0}
+.fmealgroup .ft>i{display:block;font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.fmealgroup .fn{grid-column:auto;grid-row:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:12px;color:var(--muted);white-space:nowrap}
+.fmealgroup .fn b{font-size:19px;font-weight:800;color:var(--hero-ink);letter-spacing:-.02em}
+.fmealgroup .fn i{font-style:normal;font-size:12px;font-weight:700;color:var(--sand-txt);background:var(--sand-bg);border-radius:9px;padding:2px 7px;margin-top:2px}
+@media(max-width:359px){ .fmealgroup .fmeal{grid-template-columns:56px minmax(0,1fr) auto;gap:10px} .fmealgroup .fmth{width:56px;height:56px;border-radius:16px} }
+/* Р4 давал тонкий край всему блоку дня, а внутри теперь витрина и карточка — край у каждой свой */
+:root[data-theme="dark"] .fday{box-shadow:none!important}
+#food-add{background:var(--sand);color:var(--sand-ink);border-radius:20px;min-height:58px;padding:12px 18px}
+#food-add span{font-weight:800;font-size:16px}
+#food-add small,.food-add small{color:var(--sand-ink);font-weight:600}
+/* ── этап 4 · «Тренировка» (22.10, редизайн «Бирюза, но смелее») ──
+   День программы — витрина: подпись, крупное название, полоса подходов
+   песочным, выбор дня — светлые пилюли на бирюзе. Совет на сегодня у
+   упражнения — песочной плашкой (это цель на подход). */
+.gym-day{background:var(--hero);box-shadow:var(--hero-edge);border-radius:30px;padding:18px 16px 16px;color:#fff;position:relative;overflow:hidden}
+.gym-day::after{content:"";position:absolute;right:-60px;top:-90px;width:200px;height:200px;border-radius:50%;border:30px solid rgba(255,255,255,.05);pointer-events:none}
+:root[data-theme="dark"] .gym-day{box-shadow:var(--hero-edge)!important}
+.gym-day .dayhd u,.gym-day .dayhd u.rest,.gym-day .dayhd u.done{color:#E6F5F4;font-size:13px;font-weight:700;letter-spacing:.01em}
+.gym-day .dayhd b{font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1.12;margin:6px 0 12px;color:#fff}
+.gym-day .dhtr>span{height:8px;background:rgba(255,255,255,.2)}
+.gym-day .dhtr>span s,.gym-day .dhtr>span s.full{background:var(--sand)}
+.gym-day .dhtr em{color:#fff}
+.gym-day .dhtr em i{color:rgba(255,255,255,.8)}
+.gym-day .dayseg{position:relative;z-index:1}
+.gym-day .dayseg button{border:0;background:rgba(255,255,255,.13);border-radius:14px;min-height:48px}
+.gym-day .dayseg button b{color:#fff}
+.gym-day .dayseg button i{color:#E6F5F4}
+.gym-day .dayseg button[aria-pressed="true"]{background:#fff}
+.gym-day .dayseg button[aria-pressed="true"] b{color:#0B4F5A}
+.gym-day .dayseg button[aria-pressed="true"] i{color:#355E63}
+.gym-day .dayseg button[data-next="1"]::after{background:var(--sand);box-shadow:0 0 0 3px rgba(244,184,96,.25)}
+.gym-day .dayseg button[data-done="1"]{background:rgba(255,255,255,.2)}
+.gym-day .dayseg button[data-done="1"] b{color:var(--hero-sand)}
+.gym-day .dayseg button[data-done="1"][aria-pressed="true"]{background:#fff}
+.gym-day .dayseg button[data-done="1"][aria-pressed="true"] b{color:#14744E}
+.gym-day .dayseg button[data-done="1"][aria-pressed="true"] i{color:#355E63}
+.gym-day .dayseg button[data-light="1"][aria-pressed="true"]{background:#fff;border:0}
+.gym-day .dayseg button[data-light="1"][aria-pressed="true"] b,.gym-day .dayseg button[data-light="1"][aria-pressed="true"] i{color:#14744E}
+.exrow{grid-template-columns:56px 1fr auto}
+.exrow .exph,.exrow .exph .fig2,.exrow .exph .fig{width:56px;border-radius:16px}
+.exrow .exph,.exrow .exph .fig{height:56px}
+.exrow .exrn b{font-weight:800;color:var(--text)}
+.exrow .exrv s{font-weight:800;color:var(--hero-ink)}
+.card.exact .exthumb{border-radius:20px;overflow:hidden}
+.card.exact .rec{border-left:0;border-radius:18px;background:var(--sand-bg);color:var(--text)}
+:root[data-theme="dark"] .card.exact .rec{box-shadow:inset 0 0 0 1px #3A2C14}
+.card.exact .rec u,.card.exact .rec>b:first-child{color:var(--sand-txt)}
+.card.exact .rec .today-label{color:var(--sand-txt)}
+tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sand)}
+/* ── этап 5 · листы, профиль, знакомство (22.10, редизайн) ──
+   Листы — скруглённее и с заголовком цветом витрины; главная кнопка листа —
+   цвета витрины, как везде. Знакомство — те же пилюли и витринный цвет. */
+.modal .modalbox{border-radius:30px 30px 0 0}
+.modalbox h3{color:var(--hero-ink);font-weight:800;letter-spacing:-.01em}
+.modalbox::before{background:var(--line)}
+#profm .pqhead h3{color:var(--hero-ink)}
+.modalbox .seg button[aria-pressed="true"]{background:var(--navbg);color:#fff;border-color:transparent;font-weight:700}
+:root[data-theme="dark"] .modalbox .seg button[aria-pressed="true"]{background:#13707A}
+#profm .pqopts .seg button[aria-pressed="true"]{background:var(--tint);color:var(--text);border-color:var(--accent)}
+.pqava{border-radius:18px;background:var(--navbg)}
+:root[data-theme="dark"] .pqava{background:#13707A}
 </style>
 </head>
 <body>
@@ -3481,7 +3867,7 @@ body.ordmode #list .sstag{color:var(--text)}
         </div>
         <h3 class="lh" id="grph" hidden>Разнообразие недели</h3>
         <div class="group" id="grpg" hidden></div>
-        <div class="group wear-surface"><h3 class="lh" id="wrh" hidden>Шаги и сон <button type="button" class="lnk" data-wrcoach="1">Прислать ↗</button></h3>
+        <div class="group wear-surface"><h3 class="lh" id="wrh" hidden>Шаги и сон <button type="button" class="lnk" data-wrcoach="1">Прислать<svg class="ik" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 16 16 8M10 8h6v6"/></svg></button></h3>
         <div id="wrg" hidden></div></div>
       </div>
     </section>
@@ -3501,13 +3887,13 @@ body.ordmode #list .sstag{color:var(--text)}
     <section class="page hide" id="p-eat">
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="fseg-eat"></div>
-        <div id="eatbody"><p class="empt">Загружаю…</p></div>
+        <div id="eatbody"><div class="skel" role="status"><span class="sr">Загружаю…</span><i style="width:62%"></i><i style="width:92%"></i><i style="width:78%"></i></div></div>
       </div>
     </section>
     <section class="page hide" id="p-circle">
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="fseg-circle"></div>
-        <div id="cirbody"><p class="empt">Загружаю…</p></div>
+        <div id="cirbody"><div class="skel" role="status"><span class="sr">Загружаю…</span><i style="width:62%"></i><i style="width:92%"></i><i style="width:78%"></i></div></div>
       </div>
     </section>
     <!-- Админ панель владельца. Сверху ответ на «я в плюсе?», потом то, что
@@ -3833,7 +4219,7 @@ body.ordmode #list .sstag{color:var(--text)}
       <div class="pqid">
         <span class="pqava" id="pqava" aria-hidden="true"></span>
         <div class="pqidt"><b id="pqname"></b><p class="mesum"><span id="mesumt"></span></p></div>
-        <button type="button" id="meedit">изменить</button>
+        <button type="button" id="meedit">Изменить</button>
       </div>
       <div class="me" id="mefields" hidden>
         <label>пол<select id="me-sex"><option value="">не указан</option><option value="m">муж</option><option value="f">жен</option></select></label>
@@ -3944,6 +4330,28 @@ body.ordmode #list .sstag{color:var(--text)}
 <script>
 (function(){
 'use strict';
+/* 22.10, дизайн-аудит (его выбор «Глубокая полировка», пакет А): значки —
+   одного рисунка SVG вместо текстовых ▼ ▶ ⚙ 📷 ↗, которые в разных шрифтах
+   выглядят по-разному и отрываются от подписи на 320. */
+var ИК={
+  play:'<svg class="ik" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  gear:'<svg class="ik" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  cam:'<svg class="ik" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h1.5l1.5-2h6l1.5 2H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></svg>',
+  ext:'<svg class="ik" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 16 16 8M10 8h6v6"/></svg>',
+  fork:'<svg class="ik" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v7a2 2 0 0 0 2 2v9M9 3v5M5 3v5M17 21V3c-2 0-3.5 2.5-3.5 6 0 2 1 3 3.5 3"/></svg>',
+  gym:'<svg class="ik" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 7v10M3.5 9.5v5M17.5 7v10M20.5 9.5v5M6.5 12h11"/></svg>',
+  chev:'<svg class="ik ikchev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>'
+};
+/* 22.10, пакет А: вместо «Загружаю…» — бледная заготовка того, что придёт.
+   Текст остаётся для экранного диктора (и для проверок), глазом его не видно. */
+/* 22.10: на стенде проверок движение выключено (mock ставит gf_nomo): замеры
+   положения и контраста в первые 260 мс выезда листа иначе ловят середину анимации */
+try{ if(localStorage.getItem('gf_nomo')==='1') document.documentElement.classList.add('nomo'); }catch(e){}
+function скелет(строк, текст){
+  var n=строк||3, h='<div class="skel" role="status"><span class="sr">'+(текст||'Загружаю…')+'</span>';
+  for(var i=0;i<n;i++) h+='<i style="width:'+(i===0?62:i%2?92:78)+'%"></i>';
+  return h+'</div>';
+}
 
 var PATTERNS = ['КОЛ','НАКЛ','Г·ЖИМ','В·ЖИМ','Г·ТЯГА','В·ТЯГА'];
 
@@ -4082,7 +4490,7 @@ function ytHref(name){
     encodeURIComponent(String(name||'')+' техника выполнения');
 }
 function ytLink(name){
-  return '<a class="vid" target="_blank" rel="noopener" href="'+ytHref(name)+'">▶ Видео техники</a>';
+  return '<a class="vid" target="_blank" rel="noopener" href="'+ytHref(name)+'">'+ИК.play+'Видео техники</a>';
 }
 
 var DAYS={
@@ -5457,7 +5865,8 @@ function renderWzMe(){
   if(document.getElementById('wz-voice')){ segSet('wz-voice', segHtml('voice',VOICEKEYS,WIZ.voice||me.voice||null)); голосПодсказка('wz-voice-hint', WIZ.voice||me.voice); }
   [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
     var el=document.getElementById(x[0]);
-    if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=me[x[1]];
+    /* 22.10, A1: дробь — запятой, как везде в приложении (было «88.1») */
+    if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=String(me[x[1]]).replace('.',',');
   });
   var e=document.getElementById('wz-me-err');
   if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
@@ -6649,7 +7058,7 @@ function сегодняПроверить(фон){
   MENUTRY=ключ; menuСобрать('today');
 }
 function сегодняHTML(){
-  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  if(!MENU){ menuPull(); return скелет(4); }
   var m=сегодняСвежее(), занят=MENUBUSY==='today', h='';
   /* пересборка упёрлась в вопросы о быте — без карточки старое меню висело бы молча */
   if(MENUBYT==='today' && бытНужен()) return бытКарточка('today');
@@ -6683,7 +7092,7 @@ function сегодняHTML(){
 }
 function menuHTML(){
   if(EATSEG==='buy') return buyHTML();
-  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  if(!MENU){ menuPull(); return скелет(4); }
   var span = EATSEG==='week'?'week':'day', m=menuСвежее(span), h='';
   if(MENUBYT===span && бытНужен()) return бытКарточка(span);
   if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю из твоей же еды — минуту-полторы, можно пока открыть другую вкладку':'Собираю меню на завтра из твоей же еды — до минуты, можно пока открыть другую вкладку')+'<span class="dots"><i></i><i></i><i></i></span></p>';
@@ -6711,7 +7120,7 @@ function menuHTML(){
   return h;
 }
 function buyHTML(){
-  if(!MENU){ menuPull(); return '<p class="podall">Загружаю…</p>'; }
+  if(!MENU){ menuPull(); return скелет(4); }
   var m=menuСвежее('week')||menuСвежее('day');
   if(!m) return '<p class="podall">Список покупок собирается из меню. Собери меню на завтра или на неделю — покупки появятся здесь.</p>'+
     '<div class="btnrow mbtns"><button type="button" class="btn" data-mgo="day">Меню на завтра</button><button type="button" class="btn prim" data-mgo="week">Меню на неделю</button></div>';
@@ -7134,11 +7543,9 @@ function renderOnb(){
   var надо = !своя && me.only!=='food' && ((черн && черн.prog) || !hasGoal(me) || !meFull());
   if(!надо){ el.hidden=true; return ''; }
   el.hidden=false;
-  el.innerHTML = (черн && черн.prog)
-    ? 'Программа собрана — <b>осталось ответить, и она станет твоей →</b>'
-    : (hasGoal(me) && meFull()
-        ? 'Остался один шаг — <b>соберу программу за полминуты →</b>'
-        : 'Знакомство не закончено — <b>без него нет ни нормы еды, ни программы →</b>');
+  /* 22.10, Р2 (его выбор «Плашки компактнее»): одна строка — точка, суть, действие */
+  el.innerHTML = '<span class="nbt">'+((черн && черн.prog) ? 'Программа собрана — осталось ответить'
+    : (hasGoal(me) && meFull() ? 'Остался один шаг — собрать программу' : 'Знакомство не закончено'))+'</span><b class="nbgo">'+((черн && черн.prog) ? 'Ответить' : (hasGoal(me) && meFull() ? 'Собрать' : 'Продолжить'))+'</b>';
   return 'да';
 }
 function renderNudge(){
@@ -7149,7 +7556,7 @@ function renderNudge(){
   var me=myData()||{};
   var нет=[]; if(!me.bw) нет.push('вес'); if(!hasGoal(me)) нет.push('цель'); if(!me.age||!me.ht) нет.push('возраст и рост');
   if(!нет.length){ el.hidden=true; return; }
-  el.hidden=false; el.innerHTML='Заполни профиль — '+нет.join(', ')+' — и <b>подскажу стартовые веса и норму еды →</b>';
+  el.hidden=false; el.innerHTML='<span class="nbt">Заполни профиль: '+нет.join(', ')+'</span><b class="nbgo">Заполнить</b>';   /* 22.10, Р2 */
 }
 document.getElementById('zdbox').addEventListener('click', function(e){
   /* 17.10: строка #zdtoggle теперь в списке профиля и открывает этот лист (profGo) */
@@ -7529,7 +7936,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '22.10 19:50';
+var BUILD = '22.10 23:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -8139,7 +8546,7 @@ function setGrid(e,di,подвал){
       '<td class="cn">'+(k+1)+'</td>'+
       '<td class="cb">'+(было?esc(было):'·')+'</td>'+
       (wt?'<td class="cw">'+поле('w','decimal',опц?'дополнительный вес, кг':'вес, кг')+'</td>':'')+
-      (время?'<td class="cs'+(isMin(e)?' mm':'')+'"><button type="button" class="swb'+(isMin(e)?' mm':'')+'" data-watch="1" aria-label="Засечь время">▶</button></td>':'')+
+      (время?'<td class="cs'+(isMin(e)?' mm':'')+'"><button type="button" class="swb'+(isMin(e)?' mm':'')+'" data-watch="1" aria-label="Засечь время">'+ИК.play+'</button></td>':'')+
       '<td class="cr">'+поле('r','numeric',unitR(e))+'</td>'+
       '<td class="cok"><button type="button" class="ok" data-ok="1" aria-pressed="'+(!!v.done)+
         '" aria-label="Подход '+(k+1)+' сделан">'+(v.done?'✓':'○')+'</button></td></tr>';
@@ -8719,7 +9126,7 @@ function низКарточки(e,di){
   var больно = hurtOn(e.n);
   return '<div class="exfoot">'+
       '<button type="button" class="ebtn swp'+(больно?' hrt':'')+'" data-nope="'+di+'" aria-expanded="false" aria-label="Заменить упражнение">Заменить</button>'+
-      '<a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'" aria-label="Видео: как делать '+e.n+'">▶ Видео</a>'+
+      '<a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'" aria-label="Видео: как делать '+e.n+'">'+ИК.play+'<span>Видео</span></a>'+
       '<button type="button" class="ebtn drop" data-drop="'+di+'" aria-label="Убрать упражнение из этого дня">Убрать</button>'+
     '</div>'+
     '<div class="exnope" id="exnope'+di+'" hidden>'+
@@ -8775,7 +9182,7 @@ function техHTML(e){
       '<ol class="tsteps">'+список.map(function(t){
         return '<li'+(/^(Совет|Осторожно|Вариант):/.test(t)?' class="tip"':'')+'>'+esc(t)+'</li>'; }).join('')+'</ol>';
   } else h+='<p class="tnone">Описания этого упражнения пока нет — посмотри видео.</p>';
-  h+='<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'">▶ Видео</a>'+
+  h+='<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'">'+ИК.play+'<span>Видео</span></a>'+
      '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div>';
   if(шаги) h+='<p class="tsrc">'+(e.cat && catOwn(e.cat) ? 'Текст — GetFit.' : 'Текст — free-exercise-db (общественное достояние), перевод и сокращение GetFit.')+'</p>';
   return h;
@@ -11181,7 +11588,7 @@ function renderLog(){
   var box=document.getElementById('logprog'); if(!box) return;
   loadBlock().then(function(){ try{ renderProgress(); }catch(e){} });
   if(!DB){ box.innerHTML='<p class="empt">Хранилище ещё не готово, открой вкладку через секунду.</p>'; return; }
-  box.innerHTML='<p class="empt">Загружаю…</p>';
+  box.innerHTML=скелет(4);
   loadHist(true).then(function(){
     renderLogSum(); renderMus(); renderProgress(); renderLogSila();
   }).catch(function(e){ console.error('journal', e); box.innerHTML='<p class="empt">Не удалось загрузить журнал. Попробуй позже.</p>'; });
@@ -11622,7 +12029,7 @@ function watchBtns(){
     /* идущее время пишем в саму кнопку, а НЕ в поле подхода: поле подхватывает
        автосохранение, и «Отмена» уже не смогла бы вернуть прежнее значение */
     /* кардио идёт минутами — в кнопке «12:05», у планки — секунды как были */
-    b.textContent = on ? (WATCH.min ? fmt(watchSec()) : String(watchSec())) : '▶';
+    if(on) b.textContent = WATCH.min ? fmt(watchSec()) : String(watchSec()); else b.innerHTML = ИК.play;
     b.setAttribute('aria-label', on ? 'Остановить и записать' : 'Засечь время');
   });
 }
@@ -11795,7 +12202,7 @@ function renderTodaybar(){
   var n=new Date();
   /* статус дня переехал в шапку дня (11.09): тут остаётся дата и «мои дни» */
   var out='<span class="td">'+n.getDate()+' '+MONTHS[n.getMonth()]+', '+DNL[n.getDay()]+'</span>'+
-          '<button class="tsedit" id="schedbtn" type="button">мои дни</button>';
+          '<button class="tsedit" id="schedbtn" type="button">Мои дни</button>';
   el.innerHTML=out;
 }
 
@@ -13292,7 +13699,9 @@ function homeClock(){
   /* 04.10, ревью: одна подсказка вместо двух соседних про дальнейшую еду.
      Статус оценки и совет сервера сохраняем; рядом только недостающая
      конкретика (белок продуктом / есть лишь по голоду). Итогу дня её не добавляем. */
-  var tip=совет || гл || 'всё в норме', next=homeNextLine(E);
+  /* 22.10: «чем закрыть остаток» теперь в песочной карточке под витриной —
+     в строке под дугой его не повторяем (два места об одном). */
+  var tip=совет || гл || 'всё в норме', next=homeNextCardE(E) ? '' : homeNextLine(E);
   if(next && !(sc && sc.closed)){
     if(next==='на сегодня всё · дальше только если голоден'){
       // Не повторяем «дальше»: после совета остаётся только условие голода.
@@ -13442,6 +13851,28 @@ function homeNextLine(E){
                        : 'белок закроют ~'+мясо+' г мяса или рыбы');
   return чем;
 }
+/* 22.10, редизайн «Бирюза, но смелее» (его выбор): под витриной дня —
+   песочная карточка следующего приёма: «Ужин к 19:40 · ~N ккал · чем закрыть
+   белок». Нажатие — чат тренера, как «+» на дуге (его выбор «Чат тренера»).
+   Те же условия, что у «+»: есть план приёма, норма не закрыта, не свободный
+   день. Калории — остаток нормы поровну на оставшиеся основные приёмы, «~». */
+function homeNextCardE(E){
+  var d=HOME.day||{}, t=d.targets||{};
+  /* ревью Codex R5: итог дня подведён — следующий приём не предлагаем (как раньше в строке под дугой) */
+  if(homeСвоб() || (HOME.sc && HOME.sc.closed) || !t.kcal || !E || !E.plan || E.plan.at==null) return null;
+  var rem=Math.round(t.kcal-(+d.kcal||0)); if(rem<=0) return null;
+  return {rem:rem, left:E.plan.left||1};
+}
+function homeNextCard(){
+  var E=hcEvents(), н=homeNextCardE(E); if(!н) return '';
+  var ккал=Math.max(10, Math.round(н.rem/н.left/10)*10), имя=E.plan.name||'еда';
+  var когда = E.plan.at<=E.nowH+0.05 ? ' — сейчас' : ' к '+hcHM(E.plan.at);
+  var t=имя.charAt(0).toUpperCase()+имя.slice(1)+когда, чем=homeNextLine(E);
+  return '<button type="button" class="hnextm" data-hact="eat" aria-label="'+esc(t)+': записать или спросить тренера">'+
+    '<span class="hnm-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1-3.5 3.5-3.5 7 0 2 1.5 3 3.5 3"/></svg></span>'+
+    '<span class="hnm-t"><b>'+esc(t)+'</b><small>~'+hNum(ккал)+' ккал'+(чем?' · '+esc(чем):'')+'</small></span>'+
+    '<span class="hnm-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>';
+}
 function homeWeek(){
   var проп=пропускиЗала();
   var w=FOOD.week, by={}, freeWeek=false; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
@@ -13454,9 +13885,12 @@ function homeWeek(){
     /* Только уже загруженные записи и расписание; еда по-прежнему ведёт в день. */
     var gymDone=!foodOnly() && ((HIST||[]).some(function(x){return x.date===iso;}) || (lastDone && lastDone.date===iso));
     var gymPlan=!foodOnly() && hasSched() && (dt.getDay() in GYM_DAYS) && !проп[iso];
-    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':(cls==='free'?'<span class="hwd-free" aria-label="свободный день">🍕</span>':'<b class="'+cls+'"></b>'))+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'"></i>':'')+'</span></button>';
+    h+='<button type="button" class="hwd'+(iso===TODAY?' on':'')+'" data-hday="'+iso+'"'+(fut?' disabled':'')+'><span class="hwd-name">'+WD[dt.getDay()]+'</span><strong class="hwd-date">'+dt.getDate()+'</strong><span class="hwd-dots">'+(fut?'':(cls==='free'?'<span class="hwd-free" aria-label="свободный день">🍕</span>':'<b class="'+cls+'" aria-label="'+({good:'еда в норме',bad:'еда вне нормы',going:'день идёт'}[cls]||'еды нет')+'">'+ИК.fork+'</b>'))+(!foodOnly()?'<i class="hwd-gym'+(gymDone?' done':(gymPlan?' plan':''))+'" aria-label="'+(gymDone?'тренировка записана':(gymPlan?'зал по плану':'без тренировки'))+'">'+ИК.gym+'</i>':'')+'</span></button>';
   }
-  return h+'</div><p class="hweek-legend"><span>● еда в норме</span><span>○ вне нормы</span>'+(freeWeek?'<span class="hweek-free">🍕 свободный день</span>':'')+(!foodOnly()?'<span>■ зал · □ план</span>':'')+'</p></section>';
+  /* 22.10, Р3 (его выбор «Легенды → пометки на графике»): под днём — значок
+     еды и значок зала, цвет — смысл (зелёный в норме, красный мимо, бледный
+     зал — по плану). Строка «● еда в норме ○ вне нормы ■ зал · □ план» ушла. */
+  return h+'</div></section>';
 }
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
@@ -13753,8 +14187,8 @@ function vzГрафик(ms, sr, план, цель){
   }
   /* свободные дни — пунктирной вертикалью под всем остальным; 🍕 — поверх
      всего в конце, в верхнем запасе шкалы (pad), где точек нет */
-  var пиццы='';
-  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1);
+  var пиццы='', пиццыX=[];
+  if(скольз) свобСписок().forEach(function(f){ if(f<все[0].d || f>TODAY) return; var xx=x(f).toFixed(1); пиццыX.push(+xx);
     svg+='<line class="vzsvl" x1="'+xx+'" x2="'+xx+'" y1="'+(T+13)+'" y2="'+(H-B)+'" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="3 3" opacity=".7"/>';
     пиццы+='<text class="vzsvp" x="'+xx+'" y="'+(T+8)+'" text-anchor="middle" font-size="13"><title>свободный день '+ruDate(f)+'</title>🍕</text>'; });
   /* плавно — только средний за 7 дней: через редкие точки талии кривая
@@ -13802,6 +14236,33 @@ function vzГрафик(ms, sr, план, цель){
       svg+='<text class="vzgapl" x="'+(xs-5)+'" y="'+(ym+5).toFixed(1)+'" text-anchor="end" font-size="15" font-weight="700" fill="var(--on-accent)" paint-order="stroke" stroke="rgba(0,0,0,.28)" stroke-width="3">'+(разн>0?'+':'−')+vzF1(Math.abs(разн))+'</text>';
     }
   }
+  /* 22.10, Р3: подписи у самих линий вместо строки легенды под графиком.
+     «среднее» — над началом линии (над коридором), коридор — у нижнего края
+     посередине, план — по другую сторону своего пунктира, цель — у правого края. */
+  /* ревью Codex R1: подпись не ложится на 🍕 (верхняя полоса T…T+20) и на
+     соседнюю подпись — из двух мест (над/под) берём свободное, иначе не пишем */
+  var занято=[]; пиццыX.forEach(function(px){ занято.push([px-9, T-4, px+9, T+20]); });
+  var поставь=function(cls, x0, ys, текст, якорь){
+    var ш=текст.length*6.1, л=якорь==='middle'?x0-ш/2:x0;
+    for(var k=0;k<ys.length;k++){ var yy=Math.max(T+10, Math.min(H-B-4, ys[k])), r=[л-3, yy-11, л+ш+3, yy+3];
+      if(занято.some(function(z){ return r[0]<z[2] && z[0]<r[2] && r[1]<z[3] && z[1]<r[3]; })) continue;
+      занято.push(r);
+      svg+='<text class="vzax vzlab '+cls+'" x="'+x0.toFixed(1)+'" y="'+yy.toFixed(1)+'"'+(якорь?' text-anchor="'+якорь+'"':'')+'>'+текст+'</text>'; return; }
+  };
+  if(скольз && линия.length){
+    var н0=ср[0], пл0=плA ? y(плA.v) : null;
+    var линВерх = кор!=null ? y(н0.v+кор) : линия[0][1];
+    var линНиз  = кор!=null ? y(н0.v-кор) : линия[0][1];
+    var планНиже = пл0!=null && пл0>линия[0][1];
+    var сначалаВерх = планНиже || пл0==null;
+    поставь('vzlab-ln', линия[0][0]+2, сначалаВерх ? [линВерх-5, линНиз+12] : [линНиз+12, линВерх-5], 'среднее за 7 дней');
+    if(кор!=null && ср.length>=3){
+      var см=ср[Math.floor(ср.length*0.55)];
+      поставь('vzlab-cor', x(см.d), планНиже ? [y(см.v+кор)-5, y(см.v-кор)+12] : [y(см.v-кор)+12, y(см.v+кор)-5], 'разброс ±'+vzF1(кор), 'middle');
+    }
+    if(плA) поставь('vzlab-pl', x(плA.d)+2, планНиже ? [пл0+13, пл0-6] : [пл0-6, пл0+13], 'план');
+  }
+  if(цельV!=null) svg+='<text class="vzax vzlab vzlab-goal" x="'+(W-R).toFixed(1)+'" y="'+(Math.max(T+10, y(цельV)-5)).toFixed(1)+'" text-anchor="end">цель</text>';
   vzГрафик.кор=кор;
   return svg+пиццы+'</svg>';
 }
@@ -13981,7 +14442,7 @@ function залНеделиHtml(){
     h+='<div class="zksec"><div class="zklab">Подходы на неделе</div><div class="zkrows">'+гр.map(function(g){
       var план=g[2]>=0.5;
       return '<div class="zkrow"><b>'+g[0]+'</b><div class="zkbar" aria-hidden="true"><i style="width:'+(g[1]/мх*100).toFixed(1)+'%"></i>'+(план?'<u style="left:'+(g[2]/мх*100).toFixed(1)+'%"></u>':'')+'</div>'+
-        '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+ч(g[2]):(н.план?' · вне плана':''))+'</s></div>';
+        '<s><strong>'+ч(g[1])+'</strong>'+(план?' из '+Math.round(g[2]):(н.план?' · вне плана':''))+'</s></div>';   /* 22.10, A1: цель целым — «из 29,5» читалось как ошибка */
     }).join('')+'</div>'+(!н.план ? '<p class="zknote">дни зала не заданы — недельного плана нет</p>' : '')+'</div>';
   }
   h+='<button type="button" class="zklink" data-zkgo="log" aria-label="Рабочие веса и объём — в Журнале">Рабочие веса и объём</button>';
@@ -14087,10 +14548,7 @@ function homeBody(){
     /* рабочие веса — у мышц всегда, есть цель или нет (ревью Codex R4) */
     (sr.k==='mus' ? vzРабочиеВеса() : '')+
     '<div class="vzsvg">'+график+'</div>'+
-    '<p class="vzlg"><span><i style="background:'+vzЦвет(sr.k)+'"></i>'+(sr.k==='waist'?'замеры':'средний за 7 дней')+'</span>'+
-      (sr.k!=='waist'?'<span><i class="pt" style="background:var(--muted)"></i>замер</span>':'')+
-      (кор!=null?'<span><i class="cor"></i>обычный разброс ±'+vzF1(кор)+'</span>':'')+
-      (план?'<span><i class="pl"></i>план цели</span>':'')+(vzГрафик.цель?'<span><i class="pl"></i>цель</span>':'')+'</p>'+
+    /* 22.10, Р3: легенда — подписями на самом графике (vzГрафик) */
     '</div><div class="vzbottom">'+(вид==='w'?vzПланСтрока():залНеделиHtml())+свСтрока+
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
@@ -14252,7 +14710,7 @@ function renderHome(){
   var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
     homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeRows()+'</section>'+
-    homeWeek()+homeBody()+homeWeekGym()+homeSport();
+    homeNextCard()+homeWeek()+homeBody()+homeWeekGym()+homeSport();
   /* 21.10, его слова: «секцию внизу убери совсем — огонёк и число серии можно
      показать у значка профиля, а всё остальное уже есть на странице
      рейтинга». Рейтинг — в «Рейтинге», серия — 🔥 на профиле, «Зал на
@@ -14393,7 +14851,7 @@ function renderCircle(){
   var sg=document.getElementById('fseg-circle'); if(sg) sg.hidden=!!UDAY;
   if(UDAY){ box.innerHTML=udayHtml(); return; }
   if(!CIRC && CIRCERROR){ box.innerHTML=circleErrorHtml(); return; }
-  if(!CIRC){ box.innerHTML='<p class="empt">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; return; }
+  if(!CIRC){ box.innerHTML=SYNCOK===false?'<p class="empt">Сервер не отвечает.</p>':скелет(4); return; }
   var me=CIRC.me||{}, list=CIRC.circles||[], cur=null;
   list.forEach(function(c){ if(c.id===CIRC.circle) cur=c; });
   var h=circleErrorHtml();
@@ -14404,7 +14862,7 @@ function renderCircle(){
   h+='<div class="cirsw">'+list.map(function(c){
        return '<button type="button" class="mchip'+(c.id===CIRC.circle?' on':'')+'" data-cir="'+esc(c.id)+'">'+esc(c.name)+' <s>'+c.n+'</s></button>';
      }).join('')+
-     (cur?'<button type="button" class="mchip cirgear" data-krug="'+esc(cur.id)+'" aria-label="Настроить круг «'+esc(cur.name)+'»">⚙ круг</button>':'')+
+     (cur?'<button type="button" class="mchip cirgear" data-krug="'+esc(cur.id)+'" aria-label="Настроить круг «'+esc(cur.name)+'»">'+ИК.gear+'круг</button>':'')+
      '<button type="button" class="mchip cirnew" id="cirnew" aria-label="Завести круг">+ новый</button></div>';
   var td=me.today||null;
   /* Человек не в круге — плитки «— / 10» показывать нечестно: это места под
@@ -14427,7 +14885,7 @@ function renderCircle(){
   var b=CIRC.board||[];
 
   if(CIRC.loading && CIRCERROR){ box.innerHTML=h; return; }
-  if(CIRC.loading){ h+='<p class="empt">Загружаю «'+esc(cur.name)+'»…</p>'; box.innerHTML=h; return; }
+  if(CIRC.loading){ h+=скелет(4,'Загружаю «'+esc(cur.name)+'»…'); box.innerHTML=h; return; }
   if(b.length<2){
     h+='<div class="group cirempty">В круге «'+esc(cur.name)+'» пока только ты.<br>Код для приглашения<b>'+esc(cur.code)+'</b>'+
       '<button type="button" class="btn small" data-cshare="'+esc(cur.id)+'">Поделиться</button>'+
@@ -14440,7 +14898,7 @@ function renderCircle(){
     var втор = function(r){ return r.ravg==null?-1:r.ravg; };
     var список = b.slice().sort(function(x,y){ return (глав(y)-глав(x)) || (втор(y)-втор(x)) || ((y.streak||0)-(x.streak||0)); });
     h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+список.map(function(r,i){
-      var dots=(r.days||[]).map(function(st){ return '<s class="'+(st?'lbd-'+st:'')+'"></s>'; }).join('');
+      var dots=(r.days||[]).map(function(st,k){ return '<s class="'+(st?'lbd-'+st:'')+'" title="'+['пн','вт','ср','чт','пт','сб','вс'][k]+': '+({ok:'7+',low:'ниже 7',today:'сегодня'}[st]||'нет зачёта')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
       var число = has?fmtR(t.r):'—';
       var класс = has?(t.closed?'':' live'):' dim';
@@ -14450,8 +14908,9 @@ function renderCircle(){
       return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+класс+'">'+число+'</span></div>';
     }).join('')+'</div>'+
-    /* 17.10, его выбор L: легенда образцами в одну строку, без абзаца */
-    '<p class="lbkey lbkey2"><span>пн–вс:</span><i><s class="lbd-ok"></s>7+</i><i><s class="lbd-low"></s>ниже 7</i><i><s class="lbd-today"></s>сегодня</i><i><s></s>нет зачёта</i></p>';
+    /* 22.10, Р3: строка-легенда ушла — зелёный/красный читаются сами, сегодня — кольцом,
+       подсказка дня — в title точки */
+    '';
   }
   /* 19.09, его решение: каждый решает за себя. В таблице человек есть
      всегда — балл и есть смысл круга; тарелки с фото показывает тот, кто
@@ -15711,7 +16170,7 @@ function подПослеТекст(п){
 }
 function renderPod(){
   var box=document.getElementById('fpod'); if(!box) return;
-  if(!POD){ box.innerHTML='<p class="podall">Загружаю…</p>'; return; }
+  if(!POD){ box.innerHTML=скелет(3); return; }
   if(fDate()!==TODAY){ box.innerHTML='<p class="podall">Подбор — про сегодня. Вернись на сегодняшний день.</p>'; return; }
   if(POD['безНормы']){ box.innerHTML='<p class="podall">Норма ещё не посчитана — заполни анкету на главной, и подбор заработает.</p>'; return; }
   if(POD['всё']){ box.innerHTML='<p class="podall"><b>На сегодня всё.</b> Калории и белок закрыты — дальше только если правда голоден.</p>'; return; }
@@ -16006,7 +16465,7 @@ var FBWHY={};   /* 27.09: что значит коридор этой шкалы
 var FBUNIT={kcal:'ккал',prot:'г белка',fat:'г жира',fib:'г клетчатки',sug:'г сахара в еде'};
 function fbTap(key){ return key ? ' fbtap'+(FBOPEN===key?' fbon':'') : ''; }
 function fbAttr(key){ return key ? ' data-fk="'+key+'" role="button" tabindex="0" aria-expanded="'+(FBOPEN===key?'true':'false')+'"' : ''; }
-function fbChev(key){ return key ? '<span class="fbc">'+(FBOPEN===key?'▲':'▼')+'</span>' : ''; }
+function fbChev(key){ return key ? '<span class="fbc'+(FBOPEN===key?' up':'')+'">'+ИК.chev+'</span>' : ''; }
 function fbSplit(key){
   var by={}, total=0;
   ((FOOD.day&&FOOD.day.meals)||[]).forEach(function(m){
@@ -16246,8 +16705,9 @@ function foodHeroHtml(d, line){
   /* 17.10, его выбор «B · шапка дня»: подпись мелко, число крупно, единица рядом;
      текст строки сервера не меняется ни на букву (test-ds3). «Сверх нормы» —
      тоже число, раньше оно терялось в абзаце. */
-  if(!fin) text=text.replace(/(До нормы(?: ещё|:)?|Сверх нормы) ([\d \u00a0]+)( ккал)/, function(_,a,n,u){
-    return '<span class="fh-l">'+a+'</span> <strong class="food-remaining'+(/Сверх/.test(a)?' fh-over':'')+'">'+n+'</strong><span class="fh-u">'+u+'</span>'; });
+  /* 22.10, A1: точка после «ккал» под крупным числом выглядела опечаткой — прячем её глазу, текст строки прежний */
+  if(!fin) text=text.replace(/(До нормы(?: ещё|:)?|Сверх нормы) ([\d \u00a0]+)( ккал)(\.(?=\s*$))?/, function(_,a,n,u,т){
+    return '<span class="fh-l">'+a+'</span> <strong class="food-remaining'+(/Сверх/.test(a)?' fh-over':'')+'">'+n+'</strong><span class="fh-u">'+u+'</span>'+(т?'<span class="fh-dot" aria-hidden="true">.</span>':''); });
   return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml(true)+'</section>';
 }
 /* 14.10, GF-02: без подписки — 3 записи еды через ИИ в день. Сколько
@@ -16287,7 +16747,7 @@ function renderFoodDay(){
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
   add.querySelector('small').textContent=едаБесплатноСлово();
   renderGaps(d);
-  if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : '<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
+  if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : (SYNCOK===false?'<p class="fline">Сервер не отвечает.</p>':скелет(3)); ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
   /* норма дня — сумма: база + зал + спорт вне зала; показываем, из чего она,
      когда есть что показывать (иначе это просто число) */
@@ -17203,11 +17663,11 @@ function источникиHTML(src, коротко){
     return '<button type="button" data-src="'+q(x.u)+'" title="'+q(x.p||'')+'" aria-label="'+q(x.k+(x.t?', '+x.t:'')+(x.p?': '+x.p:''))+'">📄 <b>'+esc(x.k)+'</b>'+(x.t&&!коротко?' '+esc(x.t):'')+'</button>';
   }).join('')+'</div>';
 }
-var ЧАТ_НАЧАЛА=[['photo','📷 Сфоткать еду'],['Что съесть на ужин?','Что съесть на ужин?'],['Разбери мой день','Разбери мой день'],['Как идёт моя цель?','Как идёт цель?']];
+var ЧАТ_НАЧАЛА=[['photo','Сфоткать еду'],['Что съесть на ужин?','Что съесть на ужин?'],['Разбери мой день','Разбери мой день'],['Как идёт моя цель?','Как идёт цель?']];
 function чатЧерновик(){ var t=document.getElementById('ctext'); return !!((t && t.value.trim()) || CHAT.att); }
 function чатПустой(){
   return '<div class="chatempty"><b>Чем помочь?</b><p>Пришли фото еды — запишу и оценю. Или спроси словами.</p><div class="chatq">'+
-    ЧАТ_НАЧАЛА.map(function(x){ return '<button type="button" data-cq="'+esc(x[0])+'">'+esc(x[1])+'</button>'; }).join('')+'</div></div>';
+    ЧАТ_НАЧАЛА.map(function(x){ return '<button type="button" data-cq="'+esc(x[0])+'">'+(x[0]==='photo'?ИК.cam:'')+esc(x[1])+'</button>'; }).join('')+'</div></div>';
 }
 /* пустой разговор без черновика — показать четыре начала; сверка на обоих
    переходах «пусто ↔ черновик» (ревью Codex 17.10, R2) */
@@ -17218,7 +17678,7 @@ function жирный(h){ return String(h).replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1<
 function renderChat(scroll){
   var box=document.getElementById('chatlog'); if(!box) return;
   var h='';
-  if(CHAT.items===null) h='<div class="msg intro">Загружаю…</div>';
+  if(CHAT.items===null) h=скелет(3);
   else {
     /* Лента не должна расти бесконечно: показываем последние шесть реплик,
        остальное — по кнопке. */
