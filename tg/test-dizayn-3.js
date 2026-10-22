@@ -27,12 +27,8 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   await p.click('#sb-place [data-v="home"]');ok(await p.isVisible('#sb-eqrow')&&!await p.isVisible('#sb-platerow'),tag+'дома — инвентарь вместо блина');
   await p.click('#sb-place [data-v="gym"]');ok(!await p.isVisible('#sb-eqrow')&&await p.isVisible('#sb-platerow'),tag+'зал — блин вместо домашнего инвентаря');await clean('#sborm');
   await p.click('#sborclose');await p.waitForSelector('#profm.show #progedit');ok(await p.textContent('#proftitle')==='Программа'&&await p.isVisible('#progedit'),tag+'закрытие сборки возвращает в лист программы');
-  await p.click('#pqback');await p.click('#profhow');
-  const help=await p.textContent('#howm');
-  ok(await p.locator('#howm .howlist h4').allTextContents().then(a=>a.join()==='Еда,Зал,Бот в Telegram,Один дневник'),tag+'тематические заголовки справки');
-  ok(await p.locator('#howm .howflow').count()===2,tag+'короткие цепочки еды и зала');
-  ok(['новая запись не появится','Завершить и сохранить','200 г творога и 2 яйца','творога было 150 г','«сегодня»','«неделя»','«отмена»','Убрать последнюю запись','и наоборот','body-muscles, Apache-2.0'].every(t=>help.includes(t)),tag+'все инструкции, примеры, команды и лицензия на месте');await clean('#howm');
-  await p.click('#howclose');ok(await p.isVisible('#profhow'),tag+'справка закрывается обратно в профиль');await p.click('#profclose');
+  /* 22.10: «Как пользоваться» убрана (его выбор) — вместо неё подсказки по месту, test-podskazki-po-mestu */
+  await p.click('#pqback');ok(!(await p.locator('#profhow').count())&&/body-muscles, Apache-2.0/.test(await p.textContent('#profm')),tag+'справки в профиле нет, лицензия анатомии — внизу');await p.click('#profclose');
   await p.click('.l1 [data-page="food"]');await p.click('[data-zseg="circle"]:visible');await p.locator('.cirgear').click();
   await p.waitForSelector('#krugbody [data-kdel]');
   const actions=await p.locator('#krugbody [data-kdel],#krugbody [data-kboss]').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {t:e.textContent,w:r.width,h:r.height,x:r.left,y:r.top,right:r.right,bottom:r.bottom}}));
@@ -49,7 +45,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   await n.fill('#wz-ht','178');await n.fill('#wz-bw','88');await n.click('#wz-me-go');await n.waitForFunction(()=>!document.getElementById('g-go').disabled);await step(3,5);await n.click('#g-go');await step(4,5);await n.click('#wz-health-go');await step(5,5);
   await n.click('#wz-go');await n.waitForSelector('.aiprev');ok(!await n.isVisible('#wzpath'),tag+'индикатор скрыт после анкеты');ok(!ne.length,tag+'знакомство без ошибок');await n.close();
   const f=await b.newPage({viewport:{width,height:844}});await M.поднять(f,{theme,newbie:true});await f.click('#wz-only [data-only="food"]');await f.click('#wz-only-go');ok(await f.textContent('#wzstep')==='шаг 2 из 4'&&await f.locator('#wzpath span').count()===4,tag+'«только еда» — честные четыре части, без лишнего шага зала');await f.close();
-  const free=await b.newPage({viewport:{width,height:844}});await M.поднять(free,{...opts(theme),sub:'нет'});await free.click('#profbtn');await free.click('#profhow');ok(await free.isVisible('#howfree')&&/3 записи еды в день/.test(await free.textContent('#howfree'))&&/в Pro/.test(await free.textContent('#howfree')),tag+'справка сохраняет бесплатный лимит и Pro');await free.close();
+  /* 22.10: строка про бесплатный лимит жила в справке; справки нет — лимит виден на «Еде» у «Добавить приём» */
  }
 }finally{await b.close()}
 if(bad){console.log('ПРОВАЛОВ: '+bad);process.exit(1)}console.log('test-dizayn-3: всё зелёное')})().catch(e=>{console.error(e);process.exit(1)});

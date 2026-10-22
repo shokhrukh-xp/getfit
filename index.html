@@ -2729,20 +2729,24 @@ body{padding-bottom:calc(164px + var(--pad-bottom,0px) + var(--tmr-h,0px))}
 .hint1{display:flex;align-items:center;gap:8px;margin:8px 0;padding:6px 6px 6px 12px;border-radius:12px;background:var(--card-2);border:.5px solid var(--line-soft);font-size:13px;color:var(--text)}
 .hint1 span{flex:1}
 .hint1 .xbtn{min-width:44px;min-height:44px}
+/* 22.10, его выбор «По месту, по одной»: подсказка у самой кнопки — рамка пульсирует, строка рядом */
+#cmark{position:fixed;inset:0;pointer-events:none;z-index:290}
+#cmark[hidden]{display:none}
+.cmring{position:fixed;border-radius:14px;border:2px solid var(--accent);animation:cmpulse 1.6s ease-out infinite}
+@keyframes cmpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 45%,transparent)}70%{box-shadow:0 0 0 12px color-mix(in srgb,var(--accent) 0%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+.cmbub{position:fixed;pointer-events:auto;max-width:min(320px,calc(100vw - 32px));display:flex;align-items:center;gap:8px;padding:8px 6px 8px 14px;border-radius:14px;background:var(--text);color:var(--surface);font-size:14px;line-height:1.4;box-shadow:0 6px 24px rgba(0,0,0,.22);animation:cmin .28s ease-out both}
+.cmbub b{font-weight:600}
+.cmbub span{flex:1;position:relative}
+.cmbub button{flex:none;min-height:44px;min-width:44px;padding:0 12px;border:0;border-radius:10px;background:color-mix(in srgb,var(--surface) 16%,transparent);color:var(--surface);font:inherit;font-weight:600;cursor:pointer}
+.cmbub i{position:absolute;width:12px;height:12px;background:var(--text);transform:rotate(45deg)}
+.cmbub.up i{bottom:-6px}.cmbub.down i{top:-6px}
+@keyframes cmin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.cmring,.cmbub{animation:none}}
+/* 22.10, проход новичком: образцы 34/176/89 читались как уже вписанные числа — бледнее и курсивом */
+#wzme .mnums input::placeholder{color:var(--dim);opacity:.5;font-style:italic}
 .startcard b{display:block;font-size:16px;font-weight:600;margin-bottom:10px;color:var(--text)}
 .startcard .scbtns{display:flex;flex-wrap:wrap;gap:8px}
 .startcard .scbtns .btn{flex:1 1 auto;min-height:44px}
-.howlist{margin:4px 0 12px;display:grid;gap:16px}
-.howlist section{padding-bottom:16px;border-bottom:1px solid var(--line)}
-.howlist h4{font-size:17px;font-weight:700;margin:0 0 10px}
-.howlist p{font-size:14px;line-height:1.5;color:var(--muted);margin:6px 0 0}
-.howflow{list-style:none;padding:0;margin:0 0 10px;display:flex;gap:4px;align-items:baseline;flex-wrap:wrap}
-.howflow li{font-size:12px;line-height:1.5;color:var(--accent);font-weight:600}
-.howflow li+li:before{content:'→';padding-right:4px;color:var(--muted)}
-.howcommands{margin:10px 0 0;font-size:13px;line-height:1.5}
-.howcommands div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;padding:4px 0}
-.howcommands dt{color:var(--text)}
-.howcommands dd{margin:0;color:var(--muted)}
 /* 14.10: шаги знакомства */
 .wztop{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
 .wztop .wzstep{margin:0}
@@ -3411,7 +3415,6 @@ body.ordmode #list .sstag{color:var(--text)}
         <div id="coachreco" hidden></div>
         <div id="rbbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
-        <p class="hint1" id="gymhint" hidden><span>Введи вес и повторы, затем отметь подход ✓</span><button type="button" class="xbtn" data-hint="gym" aria-label="Понятно">✕</button></p>
         <div id="list"></div>
         <p class="dbnote" id="dbnote" role="status"></p>
         <div class="finsum" id="finsum" hidden></div>
@@ -3447,7 +3450,6 @@ body.ordmode #list .sstag{color:var(--text)}
         <div class="fday" id="fday"></div>
         <div class="group fmealgroup"><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
-        <p class="hint1" id="foodhint" hidden><span>Нажми на приём, чтобы исправить</span><button type="button" class="xbtn" data-hint="food" aria-label="Понятно">✕</button></p>
         <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов тренеру</small></button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
              с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
@@ -3870,12 +3872,13 @@ body.ordmode #list .sstag{color:var(--text)}
 
       <h4 class="pqlab">Приложение</h4>
       <div class="pqgroup">
-        <button type="button" class="pqrow" id="profhow"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17h.01"/></svg></span><span class="pqt"><b>Как пользоваться</b></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" id="profboss" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg></span><span class="pqt"><b>Админ панель</b><small>деньги, люди, Pro-ссылки</small></span><i class="pqch">›</i></button>
       </div>
 
       <div class="pqfoot">
         <p class="mtext bline" id="buildline"></p>
+        <!-- 22.10: «Как пользоваться» убрана (его выбор) — строка лицензии анатомии живёт здесь -->
+        <p class="foot howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
         <button class="btn wide danger" id="profreset">Начать заново</button>
         <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
       </div>
@@ -3924,32 +3927,6 @@ body.ordmode #list .sstag{color:var(--text)}
       <button type="button" class="btn wide" id="refspend" hidden>Оплатить месяц баллами</button>
     </section>
     </div>
-  </div>
-</div>
-<!-- 14.10: «Как пользоваться» — отдельно от «Начать заново» -->
-<div class="modal" id="howm" role="dialog" aria-modal="true" aria-labelledby="howtitle">
-  <div class="modalbox">
-    <div class="cathead"><h3 id="howtitle">Как пользоваться</h3><button class="xbtn" id="howclose" aria-label="Закрыть">✕</button></div>
-    <div class="howlist">
-      <section><h4>Еда</h4>
-        <ol class="howflow" aria-label="Как записать еду"><li>Фото или текст</li><li>Запись</li><li>Правка</li></ol>
-        <p>«Добавить» на «Еде» — фото или пара слов тренеру.</p>
-        <p>Ошибся — нажми на приём и исправь, новая запись не появится.</p>
-      </section>
-      <section><h4>Зал</h4>
-        <ol class="howflow" aria-label="Как записать тренировку"><li>Вес и повторы</li><li>Подход ✓</li><li>Сохранение</li></ol>
-        <p>Введи вес и повторы, отметь подход ✓. В конце — «Завершить и сохранить».</p>
-      </section>
-      <section><h4>Бот в Telegram</h4>
-        <p>Пиши боту, как другу: фото тарелки или «200 г творога и 2 яйца».</p>
-        <p>Исправить — «творога было 150 г».</p>
-        <dl class="howcommands"><div><dt>«сегодня»</dt><dd>Итог дня</dd></div><div><dt>«неделя»</dt><dd>Итог недели</dd></div><div><dt>«отмена»</dt><dd>Убрать последнюю запись</dd></div></dl>
-      </section>
-      <section><h4>Один дневник</h4><p>Что прислал боту — сразу в приложении, и наоборот.</p></section>
-    </div>
-    <p class="mtext" id="howfree" hidden></p>
-    <!-- 17.10: строка лицензии ушла с карты тела сюда (его выбор F) -->
-    <p class="howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -4328,6 +4305,12 @@ var PROFILES = {
   }
 };
 
+/* 22.10, проход новичком: «Сила · вес на месте · 3 дня» при цели «похудеть»
+   читалось как «с этой программой не похудею». Вес ведёт цель человека,
+   готовая программа — только про зал: слово про вес у готовой не показываем.
+   Собранной (custom) имя строит тренер под цель — её не трогаем. */
+function имяПрог(P){ P=P||PROF; if(!P) return ''; return P.custom ? (P.name||'') : String(P.name||'').replace(/ · вес (?:вниз|вверх|на месте)/,''); }
+function цельПрог(P){ P=P||PROF; if(!P) return ''; return P.custom ? (P.goal||'') : String(P.goal||'').replace(/^вес [^,]*,\s*/,''); }
 var profile=null, PROF=null, CYCLE=[], DNAME={}, GYM_DAYS={}, PHASES=[], booted=false;
 /* ── расписание и очередь дней ──
    Раньше день программы был привязан к дню недели: «вторник — ноги». Это
@@ -4519,7 +4502,7 @@ function applyProfile(p, silent, сбросДня){
   day = (pick && DAYS[pick]) ? pick : suggestedDay();
   if(!DAYS[day]) day = CYCLE[0];
   gset('profile', p);
-  var pn=document.getElementById('profname'); if(pn) pn.textContent='программа «'+PROF.name+'»';
+  var pn=document.getElementById('profname'); if(pn) pn.textContent='программа «'+имяПрог()+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   if(silent) return;
   booted = true;
@@ -5286,20 +5269,141 @@ document.addEventListener('click', function(e){
   if(b.dataset.start==='food') openCoach(TODAY);
   else if(b.dataset.start==='gym') goPage('gym');
 });
-/* одноразовые подсказки: показали — человек закрыл или сделал то, о чём она */
+/* одноразовые подсказки 14.10 (строки под приёмами и в зале) с 22.10 — подсказки
+   по месту ниже; старые ключи только переводим на новые */
 function подсказкаВидна(k){ return !gget('hint_'+k,0); }
-function подсказкаУбрать(k){ gset('hint_'+k,1); var el=document.getElementById(k+'hint'); if(el) el.hidden=true; }
-document.addEventListener('click', function(e){
-  var x=e.target.closest('[data-hint]'); if(x){ подсказкаУбрать(x.dataset.hint); haptic('light'); return; }
-  if(e.target.closest('#profhow')){ openHow(); haptic('light'); return; }
-  if(e.target.closest('#howclose')){ var m=document.getElementById('howm'); if(m) m.classList.remove('show'); return; }
-});
-function openHow(){
-  var m=document.getElementById('howm'); if(!m) return;
-  var f=document.getElementById('howfree');
-  if(f){ var без=безПро(); f.hidden=!без; f.textContent=без?'Без подписки — 3 записи еды в день. Разговор, меню и программа под тебя — в Pro.':''; }
-  m.classList.add('show');
+function подсказкаУбрать(k){ gset('hint_'+k,1); cmDone(k==='gym'?'set':k==='food'?'foodfix':k); }
+/* ══ 22.10: ПОДСКАЗКИ ПО МЕСТУ ══
+   Его слова: «можно сделать подсказки всплывающими там где кнопка/функция,
+   чтобы не читать инструкцию как отдельный документ, а анимированно показать
+   и дать попробовать по ходу». Выбор: «По месту, по одной», «Как
+   пользоваться» — убрать. Одна подсказка за раз: пульсирующая рамка на
+   настоящей кнопке и строка рядом. Нажал саму кнопку (или «Понятно») — больше
+   не вернётся. Следующая — когда человек сам дойдёт до своей функции (цель на
+   экране), и не раньше чем через полминуты после предыдущей. Только тем, кто
+   прошёл знакомство после выпуска (cm_on): старожилам тур ни к чему. */
+var CM_GAP=30000;
+var CM=[
+  {k:'coach', where:'home', sel:'#coachnav',
+   t:function(){ return '<b>Тренер</b> — фото еды, вопрос или «что заказать в Evos с доставкой». Нажми и попробуй.'; }},
+  {k:'meas', where:'home', after:'coach', sel:'#fw', on:'focus',
+   t:function(){ return 'Вес — сюда, утром натощак. По нему тренер подстраивает норму.'; }},
+  {k:'foodadd', where:'food', sel:'#food-add',
+   t:function(){ return 'Фото тарелки или пара слов — посчитаю калории и белок.'; }},
+  {k:'foodfix', where:'food', after:'foodadd', sel:'#fmeals .fmeal[data-mid]',
+   t:function(){ return 'Ошибся — нажми на приём и поправь. Новой записи не появится.'; }},
+  /* упражнения в зале свёрнуты в строки — сначала открыть, потом ячейки;
+     вторая идёт сразу за первой (сразу), иначе человек уже в карточке, а
+     подсказки нет */
+  {k:'set', where:'gym', sel:'#list .setrow .cell', on:'none', сразу:true, also:['ex'],
+   t:function(){ return 'Впиши вес и повторы, потом отметь подход ✓.'; }},
+  {k:'ex', where:'gym', sel:'#list .exrow',
+   t:function(){ return 'Нажми на упражнение — внутри вес, повторы и подходы.'; }},
+  {k:'finish', where:'gym', after:'set', sel:'#finish', need:function(){ try{ return countDone()>0; }catch(e){ return false; } },
+   t:function(){ return 'В конце — сюда: день сохранится и отметится ✓.'; }},
+  {k:'chat', where:'coachm', sel:'#ctext', on:'input',
+   t:function(){ return 'Можно и про кафе: «что взять в Evos с доставкой» — найду его в Яндекс Еде рядом и подберу блюда под твою норму'+(безПро()?' (с Тренером).':'.'); }},
+  {k:'bot', where:'coachm', after:'chat', sel:'#ctext', on:'input',
+   t:function(){ return 'Всё то же можно писать боту в Telegram — это один дневник.'; }}
+];
+var CMCUR=null, CMEL=null, CMRAF=0;
+function cmВыкл(){ try{ return localStorage.getItem('gf_nocm')==='1'; }catch(e){ return false; } }
+function cmСделано(k){ return +gget('cm_'+k,0)||0; }
+function cmDone(k){
+  if(!cmСделано(k)) gset('cm_'+k, Date.now());
+  CM.forEach(function(c){ if(c.k===k) (c.also||[]).forEach(function(a){ if(!cmСделано(a)) gset('cm_'+a, Date.now()); }); });
+  if(CMCUR && CMCUR.k===k) cmHide();
 }
+function cmВидно(el){
+  if(!el || el.closest('[hidden]') || el.closest('.page.hide')) return false;
+  var r=el.getBoundingClientRect();
+  if(r.width<4 || r.height<4) return false;
+  /* по ходу: цель уже на экране — сами не прокручиваем. Нижняя панель
+     разделов закрывает низ страницы: ячейка под ней — не на экране */
+  var низ=innerHeight+1, nav=document.getElementById('l1');
+  if(nav && !nav.contains(el) && !el.closest('.modal')){ var nr=nav.getBoundingClientRect(); if(nr.height && nr.top>innerHeight/2) низ=nr.top; }
+  return r.top>=40 && r.bottom<=низ;
+}
+function cmЭкран(where){
+  if(document.body.classList.contains('onb')) return false;
+  var модалки=Array.prototype.slice.call(document.querySelectorAll('.modal.show'));
+  if(where==='coachm') return модалки.length===1 && модалки[0].id==='coachm';
+  if(модалки.length) return false;
+  var p=document.getElementById('p-'+where);
+  return !!p && !p.classList.contains('hide');
+}
+function cmЦель(c){
+  var list=document.querySelectorAll(c.sel);
+  for(var i=0;i<list.length;i++) if(cmВидно(list[i])) return list[i];
+  return null;
+}
+function cmГотова(c){
+  if(cmСделано(c.k)) return false;
+  if(c.after){ var a=cmСделано(c.after); if(!a || Date.now()-a<CM_GAP) return false; }
+  if(c.need && !c.need()) return false;
+  if(c.where==='home' && gget('startcard',0)) return false;      /* сначала «С чего начнём?» */
+  return cmЭкран(c.where);
+}
+function cmTick(){
+  if(cmВыкл() || !gget('cm_on',0) || document.hidden) { if(CMCUR) cmHide(); return; }
+  if(CMCUR){
+    if(cmСделано(CMCUR.k) || !cmЭкран(CMCUR.where)){ cmHide(); return; }
+    var e=cmЦель(CMCUR); if(!e){ cmHide(); return; }
+    CMEL=e; return;
+  }
+  /* после любой подсказки — пауза, чтобы они не шли очередью */
+  var последняя=0; CM.forEach(function(c){ последняя=Math.max(последняя, cmСделано(c.k)); });
+  var пауза=последняя && Date.now()-последняя<CM_GAP;
+  for(var i=0;i<CM.length;i++){
+    var c=CM[i]; if((пауза && !c.сразу) || !cmГотова(c)) continue;
+    var el=cmЦель(c); if(!el) continue;
+    cmShow(c, el); return;
+  }
+}
+function cmShow(c, el){
+  var box=document.getElementById('cmark');
+  if(!box){ box=document.createElement('div'); box.id='cmark'; document.body.appendChild(box); }
+  CMCUR=c; CMEL=el;
+  box.innerHTML='<div class="cmring" aria-hidden="true"></div>'+
+    '<div class="cmbub" role="status" aria-live="polite"><i aria-hidden="true"></i><span>'+c.t()+'</span>'+
+    '<button type="button" data-cmok="1">Понятно</button></div>';
+  box.hidden=false;
+  cmPlace();
+}
+function cmHide(){
+  CMCUR=null; CMEL=null; cancelAnimationFrame(CMRAF); CMRAF=0;
+  var box=document.getElementById('cmark'); if(box){ box.hidden=true; box.innerHTML=''; }
+}
+function cmPlace(){
+  cancelAnimationFrame(CMRAF); CMRAF=0;
+  var box=document.getElementById('cmark'); if(!CMCUR || !CMEL || !box) return;
+  var r=CMEL.getBoundingClientRect(), ring=box.querySelector('.cmring'), b=box.querySelector('.cmbub');
+  if(!ring || !b) return;
+  var pad=5;
+  ring.style.left=(r.left-pad)+'px'; ring.style.top=(r.top-pad)+'px';
+  ring.style.width=(r.width+pad*2)+'px'; ring.style.height=(r.height+pad*2)+'px';
+  var bw=b.offsetWidth, bh=b.offsetHeight, W=document.documentElement.clientWidth;
+  var x=Math.min(Math.max(16, r.left+r.width/2-bw/2), W-16-bw);
+  /* под целью, если влезает; иначе над ней (нижняя панель, «Завершить») */
+  var вниз = r.bottom+pad+12+bh <= innerHeight-8;
+  var y = вниз ? r.bottom+pad+12 : r.top-pad-12-bh;
+  b.style.left=x+'px'; b.style.top=Math.max(8,y)+'px';
+  b.classList.toggle('down', вниз); b.classList.toggle('up', !вниз);
+  var стр=b.querySelector('i'); if(стр) стр.style.left=Math.min(Math.max(12, r.left+r.width/2-x-6), bw-24)+'px';
+  CMRAF=requestAnimationFrame(cmPlace);
+}
+/* нажал саму кнопку — подсказка сделала своё; «Понятно» — тоже конец */
+document.addEventListener('click', function(e){
+  if(e.target.closest('[data-cmok]')){ if(CMCUR) cmDone(CMCUR.k); haptic('light'); return; }
+  if(CMCUR && (CMCUR.on||'click')==='click' && CMEL && CMEL.contains(e.target)) cmDone(CMCUR.k);
+}, true);
+document.addEventListener('focusin', function(e){
+  if(CMCUR && CMCUR.on==='focus' && CMEL && CMEL.contains(e.target)) cmDone(CMCUR.k);
+}, true);
+document.addEventListener('input', function(e){
+  if(CMCUR && CMCUR.on==='input' && CMEL && CMEL.contains(e.target)) cmDone(CMCUR.k);
+}, true);
+setInterval(cmTick, 700);
 function foodOnly(){ return ((myData()||{}).only||'all')==='food'; }
 function applyOnly(){
   var f=foodOnly();
@@ -5358,6 +5462,18 @@ function renderWzMe(){
   var e=document.getElementById('wz-me-err');
   if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
 }
+/* 22.10, проход новичком: ошибка «Заполни возраст…» висела, пока не нажмёшь
+   «Далее», хотя поле уже заполнено. Теперь сверяем на каждом вводе и
+   оставляем только то, чего ещё не хватает. */
+document.addEventListener('input', function(e){
+  if(!WIZ.meErr || !e.target.closest('#wzme .mnums')) return;
+  var v=readWzMe(), нет=[];
+  if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
+  if(!v.ht || v.ht<120 || v.ht>230) нет.push('рост');
+  if(!v.bw || v.bw<35 || v.bw>250) нет.push('вес');
+  WIZ.meErr=нет.length ? 'Заполни '+нет.join(', ')+' — без этого не подскажу ни стартовые веса, ни норму еды.' : '';
+  var er=document.getElementById('wz-me-err'); if(er){ er.hidden=!WIZ.meErr; er.textContent=WIZ.meErr; }
+});
 function readWzMe(){
   var num=function(id){ var el=document.getElementById(id); return el ? дробь(el.value) : null; };
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
@@ -5575,7 +5691,7 @@ function renderWzList(){
     h+='<button class="pbtn best" data-prof="'+k+'"><em>твоя программа</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
   });
   if(готовые){
-    if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно, первая подходит тебе больше всех. Свою под тебя соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
+    if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно и только про зал: вес ведём по твоей цели. Первая ближе всех к твоим дням и опыту. Свою под тебя соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
     else if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
     var scored=Object.keys(PROFILES).filter(function(k){ return !PROFILES[k].custom; }).map(function(k){
       return {k:k, s:fitScore(k, {wt:goalPair(me).wt, gym:goalPair(me).gym, level:me.level||'new', place:WIZ.place}, wizDays().length)};
@@ -5584,7 +5700,7 @@ function renderWzList(){
       var P=PROFILES[x.k];
       /* имя строится по правилу и может совпасть с именем своей программы —
          подпись «готовая» их различает */
-      h+='<button class="pbtn" data-prof="'+x.k+'"><em class="dim">готовая</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
+      h+='<button class="pbtn" data-prof="'+x.k+'"><em class="dim">готовая</em><b>'+esc(имяПрог(P))+'</b><u>'+esc(цельПрог(P))+'</u><i>'+esc(P.sub)+'</i></button>';
     });
   } else if(WIZ.stage==='form' && WIZ.step==='form'){
     /* запасной выход должен быть с самого начала: у кого программа уже есть,
@@ -5986,7 +6102,7 @@ function wzApply(){
   if(!WIZ.prog) return;
   wzСтоп();
   var первый=firstRun;
-  if(firstRun) gset('startcard',1);
+  if(firstRun){ gset('startcard',1); gset('cm_on',1); }
   чернСтереть();
   wzSaveMe();
   var дни=wizDays();
@@ -6036,10 +6152,11 @@ function choose(p, новая){
      смену не ставят (ревью Codex U3). */
   var прежУк=null; try{ прежУк=JSON.parse(mGet(PROFKEY)||'null'); }catch(e){}
   var сменил=!!новая || (!!profile && p!==profile);
-  if(firstRun) gset('startcard',1);
+  if(firstRun){ gset('startcard',1); gset('cm_on',1); }
   hidePicker();
   чернСтереть();
   if(firstRun && !gget('startdate', null)) gset('startdate', TODAY);
+  var былПервый=firstRun;
   firstRun=false;
   wzSaveMe();
   /* 21.10 (ревью Codex R1): ch должен быть на месте ДО расчёта дня — иначе
@@ -6048,7 +6165,10 @@ function choose(p, новая){
   if(сменил){ try{ mSet(PROFKEY, JSON.stringify(Object.assign({}, прежУк||{}, {p:p, ch:чСмены}))); }catch(e){} }
   applyProfile(p, false, сменил);
   /* дни недели человек отметил сам — они важнее дней, зашитых в программу */
-  if(WIZ.touched){ GYM_DAYS=schedNorm(wizDays().reduce(function(o,d){ o[d]=1; return o; },{}));
+  /* 22.10, проход новичком: отметил пн/ср/пт по умолчанию, ничего не трогая, —
+     и получил дни готовой программы (вт/чт/вс): «сегодня зал» в четверг. При
+     знакомстве дни из анкеты — всегда его. */
+  if((WIZ.touched || былПервый) && wizDays().length){ GYM_DAYS=schedNorm(wizDays().reduce(function(o,d){ o[d]=1; return o; },{}));
     saveSched(); renderDayseg(); renderDayHead(); renderTodaybar(); }
   WIZ.touched=false;
   /* указатель на профиль лежит в фиксированном ключе, БЕЗ префикса профиля —
@@ -6963,7 +7083,7 @@ function pqVals(){
   set('pq-onlysub', only==='food' ? '«еда и зал» вернёт вкладку «Тренировка»' : '«только еда» уберёт зал со всех экранов');
   set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
-  var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? PROF.name : '';
+  var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? имяПрог() : '';
   set('pq-gymsub', имяП ? имяП+(дни && !/\d\s*(день|дня|дней)/.test(имяП) ? ' · '+дни+' '+plural(дни,['день','дня','дней'])+' в неделю' : '') : 'по ней собирается день в «Тренировке»');
   var совет=profAttn();
   set('pv-gym', совет ? 'есть совет' : '');
@@ -7143,7 +7263,7 @@ function renderProfProg(){
   /* имя программы само по себе путало («Набор формы» читалось как набор
      массы при цели похудеть) — рядом всегда стоит, на что она нацелена */
   /* 10.09: «сменить» (готовые программы) убрано — вторая дорога рядом с «Собрать под меня» путала; готовые остались внутри «Начать заново» */
-  el.innerHTML='<span>программа <b>'+PROF.name+'</b>'+(PROF.goal?'<i>'+PROF.goal.toLowerCase()+'</i>':'')+'</span>';
+  el.innerHTML='<span>программа <b>'+esc(имяПрог())+'</b>'+(цельПрог()?'<i>'+esc(цельПрог().toLowerCase())+'</i>':'')+'</span>';
 }
 
 /* ══════════ ПРАВИЛА: ПОДХОДИТ ЛИ ПРОГРАММА ══════════
@@ -7409,7 +7529,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '22.10 09:10';
+var BUILD = '22.10 19:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -8531,7 +8651,6 @@ function ordБросить(e){
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
-  var gh=document.getElementById('gymhint'); if(gh) gh.hidden=!подсказкаВидна('gym') || !!ДЕНЬ_ДАТА;
   /* 07.10: прошлый день недели — тот же список, правка той записи; «Очистить
      день» и «+ Занятие вне зала» (они про сегодня) прячет CSS */
   var gw=document.getElementById('gym-work');
@@ -9230,9 +9349,13 @@ function adoptDataSession(d){
   if(s.epoch===old.epoch){gset(key,s);return retryCloudCleanup().then(function(pending){cleanupNotice(d.cleanupPending||pending);return s;});}
   DATASESSION.blocked=true;clearTimeout(ctimer);clearPrivatePhotos();
   var all=old.epoch<s.full_epoch;
+  /* 22.10, проход новичком: «Дневник сброшен на другом устройстве» видел человек,
+     у которого здесь ничего не было, и тот, чей дневник удалил владелец, — оба
+     не понимали, о чём речь. Говорим, только если на этом устройстве был дневник. */
+  var былЗдесь=false; try{ var м0=gget('me',null); былЗдесь=!!(м0 && (м0.age||м0.bw)); }catch(e){}
   return wipeCloud(all,s.epoch).then(function(pending){
     wipeLocal(all);gset(key,s);gset('cloud_cleanup',pending?{all:all,cutoff:s.epoch}:null);
-    gset('reset_notice','Дневник сброшен на другом устройстве. Устаревшая копия удалена.');
+    gset('reset_notice', былЗдесь ? 'Дневник начат заново — старые записи на этом устройстве убраны.' : '');
     location.reload();throw new Error('Дневник обновляется после сброса.');
   });
 }
@@ -11639,7 +11762,7 @@ function goPage(p){
   if(p==='eat') openEat();
   if(p==='circle') openCircle(); else udayLeave();
   назадОбновить();
-  var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+PROF.name+'»';
+  var pn=document.getElementById('profname'); if(pn && PROF) pn.textContent='программа «'+имяПрог()+'»';
   var pw=document.getElementById('profwho'); if(pw) pw.textContent = whoName() ? whoName()+' · ' : '';
   window.scrollTo({top:0,behavior:'auto'});
 }
@@ -12362,7 +12485,7 @@ function renderProgCard(){
   var усл=[уп, (me.place==='home'?'дома':'в зале'), (me.min||45)+' мин'];
   if(me.place!=='home') усл.push('блин '+String(me.plate||2.5).replace('.',',')+' кг');
   if((me.lim||[]).length) усл.push('беречь: '+me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', '));
-  box.innerHTML='<h4>'+esc((PROF&&PROF.name)||'Программа')+'</h4>'+
+  box.innerHTML='<h4>'+esc(имяПрог()||'Программа')+'</h4>'+
     '<i>'+(дни.length?дни.map(function(d){ return WD[d]; }).join(', ')+' · '+дни.length+' '+plural(дни.length,['день','дня','дней'])+' в неделю':'дни не выбраны')+'</i>'+
     '<p class="pcond">'+esc(усл.join(' · '))+'</p>'+
     '<button type="button" class="btn wide" id="progedit" style="margin-top:12px">Изменить и пересобрать</button>';
@@ -12415,7 +12538,7 @@ function aiBuild(снова){
         var сек=60;
         var шаг=function(){
           if(сек<=0){ clearInterval(aiWait); aiWait=null; aiBuild(true); return; }
-          aiState('Тренер сейчас занят. Попробую сам через '+сек+' с — ждать необязательно, программа «'+((PROF&&PROF.name)||'')+'» тебе уже подобрана.');
+          aiState('Тренер сейчас занят. Попробую сам через '+сек+' с — ждать необязательно, программа «'+имяПрог()+'» тебе уже подобрана.');
           сек--;
         };
         шаг(); aiWait=setInterval(шаг, 1000);
@@ -14980,6 +15103,7 @@ function renderSub(){
   var l=document.getElementById('sub-list');
   if(l) l.innerHTML=['Разбор еды без ограничений — фото и словами: калории, белок, жиры, клетчатка',
     'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
+    'Кафе и доставка: найду заведение в Яндекс Еде рядом и подберу блюда под твою норму',
     'Сборка программы под тебя и правки по ходу',
     'Недельный разбор: что получилось, что менять'].map(function(t){ return '<li>'+t+'</li>'; }).join('');
   var b=document.getElementById('sub-buy');
@@ -16162,7 +16286,6 @@ function renderFoodDay(){
   var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
   add.querySelector('small').textContent=едаБесплатноСлово();
-  var fh=document.getElementById('foodhint'); if(fh) fh.hidden=!(d && (d.meals||[]).length && подсказкаВидна('food'));
   renderGaps(d);
   if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : '<p class="fline">'+(SYNCOK===false?'Сервер не отвечает.':'Загружаю…')+'</p>'; ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;

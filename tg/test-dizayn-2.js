@@ -54,9 +54,9 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   /* F · карта тела и каталог */
   await вкладка(p,'gym','[data-zseg="log"]');
   const f=await p.evaluate(()=>({sub:(document.querySelector('#logmusbox .chartsub')||{}).textContent||'',attr:document.querySelectorAll('#logmusbox .attr').length,
-   how:(document.querySelector('#howm .howattr')||{}).textContent||''}));
+   how:(document.querySelector('#profm .howattr')||{}).textContent||''}));
   ok(f.sub.length<90&&/обводка/.test(f.sub),где+'F: подпись карты — одной строкой: '+f.sub);
-  ok(f.attr===0&&/body-muscles/.test(f.how),где+'F: лицензия анатомии — в «Как пользоваться»');
+  ok(f.attr===0&&/body-muscles/.test(f.how),где+'F: лицензия анатомии — внизу профиля (справку убрали 22.10)');
   /* G · снимок весов подписан */
   await вкладка(p,'home');
   ok(/Снимок весов/.test(await p.textContent('#fmphoto')),где+'G: кнопка снимка весов подписана');
