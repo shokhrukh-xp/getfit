@@ -10,7 +10,13 @@
       узнал, что правка сделана;
    3. «Весь каталог» открывает выбор на этом месте, и выбранное встаёт в
       программу (раньше без ключа оно ложилось в SUBS['undefined']);
-   4. каталог не загрузился — «Повторить» вместо тупика, после повтора список. */
+   4. каталог не загрузился — «Повторить» вместо тупика, после повтора список.
+   23.10, его слова: «мне не понятно что на что он хочет заменить, в каком дне
+   по какой причине ("Почему: по просьбе" — чьей просьбе?)… прямо в карточке
+   упражнения предлагалась замена и с показом на что» (выбор «А» по макету):
+   карточка стоит под строкой упражнения в его дне, строка зачёркнута; крупно
+   совет тренера и «Заменить»; остальные варианты — по «Другие»; общая причина
+   сервера («по просьбе») — словами человека из чата. */
 const { chromium } = require('playwright');
 const M = require('./mock');
 let плохо = 0;
@@ -38,7 +44,7 @@ async function открыть(br, o) {
   if (o.пустойРаз) { let n = 0; await page.route('**/catalog.json*', r => (++n === 1) ? r.fulfill({ status: 200, contentType: 'application/json', body: '{"ex":[]}' }) : r.fallback()); }
   /* 👎 на одном из похожих — его в вариантах быть не должно */
   await page.addInitScript(() => { try { localStorage.setItem('shp_v1_ai_nope', JSON.stringify({ 'One-Arm_Side_Laterals': { n: 'x', at: 1, m: 'shoulders' } })); } catch (e) {} });
-  const ош = await M.поднять(page, { page: 'gym', wait: 2600, prog: o.prog || ПРОГ, profile: 'ai', me: ME, reco: o.reco || RECO });
+  const ош = await M.поднять(page, { page: 'gym', wait: 2600, prog: o.prog || ПРОГ, profile: 'ai', me: ME, reco: o.reco || RECO, chat: o.chat });
   return { page, ош, reco };
 }
 const слот = page => page.evaluate(() => { try { return JSON.parse(localStorage.getItem('shp_v1_ai_subs') || '{}'); } catch (e) { return {}; } });
@@ -65,10 +71,16 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   дано(!ид.includes('One-Arm_Side_Laterals'), 'отвергнутого 👎 нет');
   дано(к.опц.slice(0, 4).every(x => !/сзади|в наклоне/.test(x.n)), 'задняя дельта не впереди средней: ' + к.опц.map(x => x.n).join(' | '));
   дано(к.опц.filter(x => /^Подъём через сторону/.test(x.n)).length >= 4, 'похожие — подъёмы через сторону, а не жимы: ' + к.опц.map(x => x.n).join(' | '));
-  дано(к.кнопки.join('|') === 'Весь каталог|Не сейчас', 'внизу «Весь каталог» и «Не сейчас»: ' + к.кнопки.join('|'));
+  дано(к.кнопки.join('|') === 'Заменить|Другие|✕', 'внизу «Заменить», «Другие» и ✕: ' + к.кнопки.join('|'));
+  const место = await page.evaluate(() => { const e = document.getElementById('coachreco'), п = e && e.previousElementSibling;
+    return { вСписке: !!(e && e.closest('#list')), подМахами: !!(п && п.matches('[data-pickex="0"]') && п.classList.contains('swapping')),
+      скрыто: [...e.querySelectorAll('.rmore .ropt')].length, видно: [...e.querySelectorAll('.rmain .ropt')].length }; });
+  дано(место.вСписке && место.подМахами, 'карточка — под строкой махов в их дне, строка зачёркнута: ' + JSON.stringify(место));
+  дано(место.видно === 1 && место.скрыто >= 3, 'крупно — один совет тренера, остальные по «Другие»: ' + JSON.stringify(место));
 
   /* ── 2. нажал вариант ── */
   const второй = к.опц[1];
+  await page.click('#coachreco button[data-reco2="more"]');
   await page.click('#coachreco .ropt[data-ci="' + второй.id + '"]');
   await page.waitForTimeout(500);
   const s1 = await слот(page);
@@ -82,7 +94,8 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   /* ── 3. весь каталог ── */
   ({ page, ош, reco } = await открыть(br));
   await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
-  await page.click('#coachreco button[data-reco2="cat"]');
+  await page.click('#coachreco button[data-reco2="more"]');
+  await page.click('#coachreco .rmore button[data-reco2="cat"]');
   await page.waitForTimeout(700);
   const кат = await page.evaluate(() => ({ открыт: document.getElementById('catalog').classList.contains('show'),
     заголовок: document.getElementById('cattitle').textContent, строк: document.querySelectorAll('#catbody [data-pick]').length }));
@@ -131,7 +144,7 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   ({ page } = await открыть(br, { пустойКаталог: true }));
   await page.waitForTimeout(2000);
   await page.unroute('**/catalog.json*');
-  await page.click('#coachreco button[data-reco2="cat"]');
+  await page.click('#coachreco button[data-reco2="cat"]:visible');
   await page.waitForTimeout(2000);
   дано((await page.$$('#catbody [data-pick]')).length > 3, 'после пустого ответа каталог загрузился заново');
 
@@ -141,6 +154,61 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   ({ page } = await открыть(br, { пустойРаз: true }));
   await page.waitForSelector('#coachreco .ropt', { timeout: 6000 }).catch(() => {});
   дано((await page.$$('#coachreco .ropt')).length >= 4, 'пустой первый ответ — варианты всё равно пришли (тихий повтор)');
+  await page.close();
+
+  /* ── 8. «Заменить» ставит совет тренера; общая причина — словами человека ── */
+  ({ page } = await открыть(br, { reco: Object.assign({}, RECO, { id: 'r-zam-8', why: 'по просьбе' }) }));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+  const why8 = await page.$eval('#coachreco', e => e.textContent.replace(/\s+/g, ' '));
+  дано(!/Почему: по просьбе/.test(why8) && /Ты (писал|попросил)/.test(why8), 'вместо «Почему: по просьбе» — чьи слова: ' + why8.slice(0, 160));
+  await page.click('#coachreco .rb3 .go');
+  await page.waitForTimeout(500);
+  const s8 = await слот(page);
+  дано(s8['A1:0'] && s8['A1:0'].i === 'Cable_Seated_Lateral_Raise', '«Заменить» поставил совет тренера: ' + JSON.stringify(s8['A1:0'] || null));
+  await page.close();
+
+  /* ── 8б. ревью Codex R1 (v6 → rereview): цитату из чата не подбираем — связи с предложением нет; всегда «Ты попросил в чате» ── */
+  const сейчас = Date.now();
+  for (const [имя, чат, ждём] of [
+    ['просьба, потом еда', [{ role: 'user', text: 'Замени подъём через сторону, болит плечо', ts: сейчас - 3600e3 }, { role: 'user', text: 'Запиши обед: плов', ts: сейчас - 60e3 }], /Ты попросил в чате/],
+    ['чужое упражнение со словом из названия', [{ role: 'user', text: 'Замени жим гантелей на тренажёр', ts: сейчас - 60e3 }], /Ты попросил в чате/],
+    ['отрицание', [{ role: 'user', text: 'Не заменяй подъём через сторону', ts: сейчас - 60e3 }], /Ты попросил в чате/],
+    ['другой день', [{ role: 'user', text: 'Замени подъём через сторону в Дне 3', ts: сейчас - 60e3 }], /Ты попросил в чате/],
+    ['только еда', [{ role: 'user', text: 'Запиши обед: плов', ts: сейчас - 60e3 }], /Ты попросил в чате/],
+    ['без времени', [{ role: 'user', text: 'Замени подъём через сторону' }], /Ты попросил в чате/],
+    ['старое', [{ role: 'user', text: 'Замени подъём через сторону', ts: сейчас - 5 * 864e5 }], /Ты попросил в чате/],
+    ['про другое упражнение', [{ role: 'user', text: 'Замени жим ногами', ts: сейчас - 60e3 }], /Ты попросил в чате/]]) {
+    ({ page } = await открыть(br, { chat: чат, reco: Object.assign({}, RECO, { id: 'r-zam-8b-' + имя, why: 'по просьбе' }) }));
+    await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    const т = (await page.$eval('#coachreco .rwhy', e => e.textContent).catch(() => '')).replace(/\s+/g, ' ');
+    дано(ждём.test(т) && !/Ты писал|плов|жим|Не заменяй|Дне 3/.test(т), 'причина «' + имя + '»: ' + т);
+    await page.close();
+  }
+
+  /* ── 8в. ревью Codex R2: суперсет — зачёркнуто именно заменяемое, а не партнёр ── */
+  const ПРОГСС = JSON.parse(JSON.stringify(ПРОГ)); ПРОГСС.days[0].ex[0].ss = 1; ПРОГСС.days[0].ex[1].ss = 1;
+  for (const раскрыть of [null, 0, 1]) {
+    ({ page } = await открыть(br, { prog: ПРОГСС }));
+    await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+    if (раскрыть !== null) { await page.click('#list [data-pickex="' + раскрыть + '"]').catch(() => {}); await page.waitForTimeout(400); }
+    const з = await page.evaluate(() => [...document.querySelectorAll('#list .swapping')].map(e => (e.querySelector('.exrn b, .exname') || {}).textContent || ''));
+    дано(з.length === 1 && /^(А|A)?\s*Подъём через сторону \(гантели, сбоку\)$/.test(з[0].trim()), 'суперсет, раскрыто ' + раскрыть + ': зачёркнуты только махи: ' + JSON.stringify(з));
+    const подпись = await page.$eval('#coachreco .rinl>u', e => e.textContent).catch(() => '');
+    дано(раскрыть === null || /«Подъём через сторону/.test(подпись) || з.length === 1, 'в раскрытой паре карточка называет, что меняем: ' + подпись);
+    await page.close();
+  }
+
+  /* ── 9. открыт другой день — над днём одна строка и «Показать» ── */
+  ({ page } = await открыть(br));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+  await page.click('#dayseg button[data-day]:not([aria-pressed="true"])');
+  await page.waitForTimeout(400);
+  const далеко = await page.evaluate(() => { const e = document.getElementById('coachreco'); return { вне: !e.closest('#list'), т: e.textContent.replace(/\s+/g, ' '), кн: !!e.querySelector('[data-reco2="show"]') }; });
+  дано(далеко.вне && /Замена в Дне 1/i.test(далеко.т) && далеко.кн, 'другой день: «Замена в Дне 1» и «Показать»: ' + JSON.stringify(далеко));
+  await page.click('#coachreco [data-reco2="show"]');
+  await page.waitForTimeout(400);
+  дано(await page.evaluate(() => !!document.getElementById('coachreco').closest('#list')), '«Показать» открывает день, карточка снова под упражнением');
 
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

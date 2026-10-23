@@ -56,7 +56,7 @@ async function витрины(p,корни,tag){
  const ЕДА=[{id:1,t:'09:26',kind:'завтрак',kcal:520,prot:48,img:'/p/a.jpg'},{id:2,t:'14:35',kind:'обед',kcal:634,prot:60,img:'/p/b.jpg'}];
  const НОРМА={kcal:2110,prot:165,fat:{min:52,max:78},fib:30,sug:50};
  /* 1. контраст витрин по пикселям */
- for(const theme of ['light','dark'])for(const width of [320,390,430])for(const [page,корни,time] of [['home',['.hdaycard'],'19:40'],['food',['.food-hero'],'19:40'],['gym',['.gym-day'],'18:05']]){
+ for(const theme of ['light','dark'])for(const width of [320,390,430])for(const [page,корни,time] of [['home',['.hdaycard'],'19:40'],['food',['.food-hero'],'19:40'],['gym',['.gym-day'],'18:05'],['circle',['.cirhero'],'19:40']]   /* 23.10: витрина «Рейтинга» (ревью Codex R3) */){
   const p=await b.newPage({viewport:{width,height:844},deviceScaleFactor:1});
   await M.поднять(p,{theme,page,time,hist:M.журнал(),meas:M.замеры()});await p.waitForTimeout(500);
   await p.locator(корни[0]).scrollIntoViewIfNeeded();

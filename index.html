@@ -3831,6 +3831,91 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 #ml-hint{margin-top:8px}
 :root[data-theme="dark"] :is(.catitem .catpick,.pickgroups~* .catpick){background:rgba(122,219,208,.12)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(.catitem .catpick,.pickgroups~* .catpick){background:rgba(122,219,208,.12)}}
+
+/* 23.10: замена от тренера — в карточке упражнения (его выбор «А» по макету) */
+#list .swapping .exrn b,#list .exhead.swapping .exname{text-decoration:line-through;text-decoration-color:var(--sand)}
+#list .swapping .exph,#list .exhead.swapping .exthumb{opacity:.45}
+.reco2.rinl,.reco2.rfar{border-radius:18px;background:rgba(244,184,96,.10);border:1px solid rgba(244,184,96,.35);padding:12px;margin:6px 0 12px;box-shadow:none}
+.reco2.rinl>u,.reco2.rfar u{display:block;text-decoration:none;font-size:12px;font-weight:800;color:var(--sand-txt);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+:root[data-theme="dark"] .reco2.rinl>u,:root[data-theme="dark"] .reco2.rfar u{color:var(--sand)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .reco2.rinl>u,:root:not([data-theme="light"]) .reco2.rfar u{color:var(--sand)}}
+.reco2.rinl .rmain .ropt{border:0;background:transparent;padding:0}
+.reco2.rinl .rmain .ropt em{display:none}
+.reco2.rinl .rwhy{margin:8px 0 10px;font-size:13px;color:var(--muted)}
+.reco2.rinl .rwhy q{color:var(--text);quotes:"«" "»"}
+.reco2 .rb3{display:grid;grid-template-columns:2fr 1fr 44px;gap:8px}
+.reco2 .rb3 button{min-height:44px;margin:0}
+.reco2.rinl .rb3 button{border:0;background:var(--field);color:var(--accent-txt);font-weight:700;border-radius:14px}
+.reco2.rinl .rb3 button.go{background:var(--sand);color:var(--sand-ink)}
+.reco2.rinl .rb3 button.rx{color:var(--muted)}
+.reco2 .rmore{margin-top:10px}
+.reco2 .rmore .rcat{width:100%;min-height:44px;margin-top:6px}
+.reco2.rfar{display:flex;align-items:center;gap:12px}
+.reco2.rfar span{flex:1;min-width:0}.reco2.rfar u{margin:0 0 2px}.reco2.rfar b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+.reco2.rfar .go{flex:none;min-height:44px;padding:0 16px;border-radius:14px;background:var(--sand);color:var(--sand-ink);border:0;font-weight:700}
+
+/* 23.10, его снимок: «в панели навигации кнопки не в середине, а смещены наверх».
+   Кнопка тянулась на 64 px, а значок с подписью стояли от верха — снизу копился
+   пустой зазор. Теперь значок и подпись — по центру по вертикали; у «Тренера»
+   песочная плашка без отрицательных полей, той же высоты, что строка значка. */
+.l1 button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-top:0;padding-bottom:0}
+.l1 button svg{margin:5px 0}            /* значок 24 + 5 + 5 = 34 — как плашка «Тренера», подписи на одной линии */
+#coachnav svg{margin:0}
+
+/* 23.10: прошлый день в «Моём дне» — числа видно, слова по нажатию */
+.food-hero.fh-fin{grid-template-columns:minmax(0,1fr) auto;align-items:end}
+.fh-fin .fhn{display:flex;flex-direction:column;gap:2px}
+.fh-fin .fhn .fh-l{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.85}
+.fh-fin .fh-big{font-size:44px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;color:var(--on-accent)}
+.fh-fin .fh-u{font-size:14px;opacity:.85}
+.fh-fin .fdone small{display:none}
+.fhwhy{grid-column:1/-1;border-top:1px solid rgba(255,255,255,.22);padding-top:4px;margin-top:6px}
+.fhwhy summary{min-height:40px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-size:14px;font-weight:700;color:var(--on-accent)}
+.fhwhy summary::-webkit-details-marker{display:none}
+.fhwhy summary::before{content:'›';font-size:18px}.fhwhy[open] summary::before{content:'⌄'}
+.fhwhy .food-hero-copy,.fhwhy .fhwhy-r{font-size:13px;line-height:1.45;margin:0 0 8px;color:var(--on-accent);opacity:.9}
+
+.vzsila2 .sxk{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.sxhow summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-size:13px;color:var(--muted)}
+.sxhow summary::-webkit-details-marker{display:none}
+.sxhow summary::before{content:'›';font-size:18px}.sxhow[open] summary::before{content:'⌄'}
+.sxhow p{font-size:13px;color:var(--muted);margin:0 0 6px}
+
+.bmnet{display:inline}
+.bmnet summary{display:inline-flex;align-items:center;gap:4px;cursor:pointer;list-style:none;color:var(--accent-txt);margin-left:4px;min-height:32px}
+.bmnet summary::-webkit-details-marker{display:none}
+.bmnet summary::after{content:'›'}.bmnet[open] summary::after{content:'⌄'}
+.bmnet[open]{display:block;color:var(--muted)}
+
+/* 23.10 · «Рейтинг»: витрина + компактный список (его выбор) */
+.cirhero{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:stretch;padding:16px;border-radius:24px;background:var(--hero);color:#fff;margin:0 0 14px;box-shadow:0 14px 30px rgba(11,79,90,.22)}
+.cirhero:not(:has(.chplace)){grid-template-columns:1fr}
+.cirhero .chplace{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:82px;padding:4px 8px 4px 2px;border-right:1px solid rgba(255,255,255,.22)}
+.cirhero .chplace u,.cirhero .tile u{text-decoration:none;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff}
+.cirhero .chplace b{font-size:40px;line-height:1;font-weight:800;margin:4px 0 2px;color:#fff}
+.cirhero .chplace b small{font-size:16px;font-weight:700;margin-left:1px}
+.cirhero .chplace i{font-style:normal;font-size:12px;color:#fff;white-space:nowrap}
+.cirhero .cirtiles{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#p-circle .cirhero .cirtiles .tile{background:rgba(0,0,0,.26);border:0;box-shadow:none!important;border-radius:16px;padding:12px;color:#fff}
+.cirhero .cirtiles .tile b{color:#fff;font-size:22px}
+.cirhero .cirtiles .tile b small{color:#fff}
+.cirhero .cirtiles .tile i{color:#fff;font-style:normal;font-size:12px}
+#p-circle .lbhead{grid-template-columns:0 34px 1fr auto auto;padding:4px 0 6px}
+#p-circle .lbhead span:nth-child(-n+3){visibility:hidden}
+#p-circle .lbrow{grid-template-columns:0 34px 1fr auto auto;gap:10px}
+#p-circle .lbrow .pos{overflow:hidden;width:0;font-size:0}
+#p-circle .lbrow .who i{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+@media (max-width:359px){
+  .cirhero{grid-template-columns:1fr}
+  .cirhero .chplace{flex-direction:row;gap:10px;justify-content:flex-start;border-right:0;border-bottom:1px solid rgba(255,255,255,.22);padding:0 0 10px}
+  .cirhero .chplace b{font-size:30px;margin:0}
+  #p-circle .lbrow .lbdots{gap:2px}
+  #p-circle .lbrow .lbdots s{flex-basis:7px;width:7px;height:7px}
+}
+#p-circle .lbrow .ava{width:34px;height:34px;border-radius:12px;background:var(--tint);color:var(--accent-txt);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+#p-circle .lbrow.lbme .ava{background:var(--action);color:#fff}
+#p-circle .lbrow.lbme{box-shadow:none;background:transparent}
+#p-circle .lbrow .sc{font-size:18px;font-weight:800}
 </style>
 </head>
 <body>
@@ -8041,7 +8126,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '23.10 09:15';
+var BUILD = '23.10 10:25';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -9192,7 +9277,9 @@ function renderList(){
           .filter(Boolean).join(' · ')+
         '. <button type="button" id="dayreset">Вернуть как было</button></p>' : '')+
      '</div>';
-  box.innerHTML=h;
+  recoДомой(); box.innerHTML=h;
+  /* карточка замены зависит от открытого дня: под упражнением или строкой «Замена в Дне N» */
+  var crEl=document.getElementById('coachreco'); if(crEl){ var crH=recoCard('gym'); crEl.hidden=!crH; crEl.innerHTML=crH; recoPlace(); }
   /* 13.09: «хочу поиграть в теннис, но не могу найти, как добавить» — искал
      в конце дня зала. 24.09 он же: рядом с «+ Добавить упражнение» путается,
      поэтому — под «Завершить и сохранить». */
@@ -11635,15 +11722,16 @@ function renderMus(){
   var закрыто=всего.filter(function(k){ return (сет[k]||0)>=MPOROG; }).length;
   var нет=всего.filter(function(k){ return !(сет[k]>0); }).map(function(k){ return MNAME[k].toLowerCase(); });
   var хвост=нет.length>4 ? нет.slice(0,4).join(', ')+' и ещё '+(нет.length-4) : нет.join(', ');
+  /* 23.10, «цифры видно, слова по нажатию»: список нетронутых групп — по нажатию, целиком */
   var сводка='<b'+(закрыто?'':' class="down"')+'>'+закрыто+'</b> из '+всего.length+
-    ' групп — норма закрыта.'+(нет.length?' Не было: '+хвост+'.':'');
+    ' групп — норма закрыта.'+(нет.length?'<details class="bmnet"><summary>Не было: '+нет.length+' '+plural(нет.length,['группа','группы','групп'])+'</summary>'+esc(нет.join(', '))+'</details>':'');
   box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Карта тела</h4></div>'+
     /* 17.10, его выбор F: одна строка; числа порогов — в легенде под картой */
     '<p class="chartsub">7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+'</p>'+
     svg+
     '<div class="muskey"><i>подходов за 7 дней</i><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
     '<i><span class="sw2"></span>'+MPOROG+'+ подходов — норма закрыта</i></div>'+
-    '<p class="musdet" id="musdet">'+сводка+'</p></div>';
+    '<div class="musdet" id="musdet">'+сводка+'</div></div>';
 
   /* данные нажатия берём с последней отрисовки, а не из замыкания первой:
      обработчик вешается один раз, а карта перерисовывается после каждой тренировки */
@@ -14638,12 +14726,15 @@ function vzСилаСтрока(s){
      рабочие веса с учётом повторов, а не измеренная сила; выбрал «Рабочие веса» */
   var шапка='<div class="sxhd"><span>Рабочие веса по тренировкам</span>'+(ch!=null
     ? '<b class="'+(ch>=0?'up':'down')+'">'+(ch>0?'+':ch<0?'−':'')+f1(Math.abs(ch))+' %</b>' : '')+'</div>'+
-    (ch!=null && ix.base ? '<p class="sxwhat">в среднем по упражнениям, с учётом повторов — к\u00a0неделе с\u00a0'+ruDate(ix.base)+'</p>' : '');
+    (ch!=null && ix.base ? '<p class="sxk">к\u00a0неделе с\u00a0'+ruDate(ix.base)+'</p>' : '');
+  /* 23.10, «цифры видно, слова по нажатию»: как считается и за какую неделю число — под «Как считается» */
+  var как = ch!=null && ix.base ? '<p class="sxwhat">в среднем по упражнениям, с учётом повторов — к\u00a0неделе с\u00a0'+ruDate(ix.base)+'</p>' : '';
   /* ревью Codex: дата и покрытие рядом с числом — после пропусков оно не «текущее» */
   var база = график && ix.base ? '<p class="sxbase">Последняя неделя — с '+ruDate(ix.nowWeek)+(typeof ix.nowPairs==='number'?', по '+ix.nowPairs+' '+(ix.nowPairs%10===1&&ix.nowPairs%100!==11?'упражнению':'упражнениям')+' с весом':'')+'</p>' : '';
   var пусто = !график ? '<p class="sxnone">'+(s.verdict==='мало' ? 'Мало тренировок, чтобы сравнивать.' : 'График появится, когда будет две недели с тремя одинаковыми упражнениями с весом.')+'</p>' : '';
   var вниз=typeof s.down==='number' && s.down>0 ? '<p class="sxdown">Ниже прошлого раза — в '+s.down+' '+(s.down%10===1&&s.down%100!==11?'упражнении':'упражнениях')+'</p>' : '';
-  return '<div class="vzplan vzsila2">'+шапка+(график?'<div class="sxchart">'+график+'</div>':'')+база+пусто+вниз+vzСилаСписок(s)+'</div>';
+  var раскр = (как||база) ? '<details class="sxhow"><summary>Как считается</summary>'+как+база+'</details>' : '';
+  return '<div class="vzplan vzsila2">'+шапка+(график?'<div class="sxchart">'+график+'</div>':'')+пусто+вниз+vzСилаСписок(s)+раскр+'</div>';
 }
 /* ── ЗАЛ НА НЕДЕЛЕ: три KPI (17.10) ──
    Его вопрос «а какие KPI вообще используют те, кто тренируется в зале?»,
@@ -15167,9 +15258,18 @@ function renderCircle(){
       '<button type="button" class="btn" id="cirgo">Войти по коду</button></div>';
     return;
   }
-  h+='<div class="tiles cirtiles" style="margin-top:0">'+
+  /* 23.10, его слова: «на странице рейтинга ничего не поменялось, всё по старому
+     дизайну»; выбор — «Витрина + компактный список». Наверху бирюзовая витрина,
+     как на «Сегодня»: место, сегодня, неделя (балл прошлой недели — внутри
+     «недели», решение 20.09); ниже строки с буквой-аватаром, без колонок «кто»
+     и «пн–вс» — над баллами одна подпись «сегодня» (таблица дневная, 20.09). */
+  var b0=CIRC.board||[], глав0=function(r){ return r.today&&r.today.r!=null?r.today.r:-1; }, втор0=function(r){ return r.ravg==null?-1:r.ravg; };
+  var пор0=b0.slice().sort(function(x,y){ return (глав0(y)-глав0(x)) || (втор0(y)-втор0(x)) || ((y.streak||0)-(x.streak||0)); });
+  var я0=пор0.filter(function(r){ return r.me; })[0], место=я0 ? пор0.indexOf(я0)+1 : 0, есть0=я0 && (глав0(я0)>=0 || втор0(я0)>=0);
+  h+='<section class="cirhero">'+(b0.length>=2 && есть0 ? '<div class="chplace"><u>место</u><b>'+место+'<small>-е</small></b><i>из '+пор0.length+(я0&&я0.streak?' · 🔥 '+я0.streak:'')+'</i></div>' : '')+
+     '<div class="tiles cirtiles" style="margin-top:0">'+
      '<div class="tile"><u>сегодня</u><b>'+(td&&td.r!=null?fmtR(td.r):'—')+' <small>/ 10</small></b><i>'+(td&&td.r!=null ? (td.closed?'итог дня':'день идёт') : 'ещё ничего не записано')+'</i></div>'+
-     '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+(me.lastr!=null?'прошлая '+fmtR(me.lastr):weekSub(me))+'</i></div></div>'+
+     '<div class="tile"><u>неделя</u><b>'+(me.ravg==null?'—':fmtR(me.ravg))+' <small>/ 10</small></b><i>'+(me.lastr!=null?'прошлая '+fmtR(me.lastr):weekSub(me))+'</i></div></div></section>'+
      '';   /* 17.10, его выбор L: «за что сняты баллы» — в «Моём дне», здесь строка висела без подписи */
   var b=CIRC.board||[];
 
@@ -15186,15 +15286,16 @@ function renderCircle(){
     var глав = function(r){ return r.today&&r.today.r!=null?r.today.r:-1; };
     var втор = function(r){ return r.ravg==null?-1:r.ravg; };
     var список = b.slice().sort(function(x,y){ return (глав(y)-глав(x)) || (втор(y)-втор(x)) || ((y.streak||0)-(x.streak||0)); });
-    h+='<div class="group lb"><div class="lbhead"><span></span><span>кто</span><span>пн–вс</span><span>сегодня</span></div>'+список.map(function(r,i){
+    h+='<div class="group lb"><div class="lbhead"><span></span><span></span><span></span><span>сегодня</span></div>'+список.map(function(r,i){
       var dots=(r.days||[]).map(function(st,k){ return '<s class="'+(st?'lbd-'+st:'')+'" title="'+['пн','вт','ср','чт','пт','сб','вс'][k]+': '+({ok:'7+',low:'ниже 7',today:'сегодня'}[st]||'нет зачёта')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
       var число = has?fmtR(t.r):'—';
       var класс = has?(t.closed?'':' live'):' dim';
       var под = r.ravg!=null?'неделя '+fmtR(r.ravg):'';
+      var буква = esc(String(r.me?(whoName()||'Я'):(r.name||'?')).trim().charAt(0).toUpperCase()||'?');
       var пусто = !has && r.ravg==null;
       if(пусто && !под) под = 'пока без записей';
-      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+streakText(r.streak):'')+'</i></span>'+
+      return '<div class="lbrow'+(r.me?' lbme':'')+'" data-lbwho="'+esc(r.uid)+'" data-lbname="'+esc(r.me?'Ты':r.name)+'"><span class="pos">'+(пусто?'—':(i+1))+'</span><span class="ava">'+буква+'</span><span class="who"><b>'+esc(r.me?'Ты':r.name)+'</b><i>'+под+(r.streak?(под?' · ':'')+'🔥 '+r.streak:'')+'</i></span>'+
              '<span class="lbdots">'+dots+'</span><span class="sc'+класс+'">'+число+'</span></div>';
     }).join('')+'</div>'+
     /* 22.10, Р3: строка-легенда ушла — зелёный/красный читаются сами, сегодня — кольцом,
@@ -16999,6 +17100,18 @@ function foodHeroHtml(d, line){
   /* 22.10, A1: точка после «ккал» под крупным числом выглядела опечаткой — прячем её глазу, текст строки прежний */
   if(!fin) text=text.replace(/(До нормы(?: ещё|:)?|Сверх нормы) ([\d \u00a0]+)( ккал)(\.(?=\s*$))?/, function(_,a,n,u,т){
     return '<span class="fh-l">'+a+'</span> <strong class="food-remaining'+(/Сверх/.test(a)?' fh-over':'')+'">'+n+'</strong><span class="fh-u">'+u+'</span>'+(т?'<span class="fh-dot" aria-hidden="true">.</span>':''); });
+  /* 23.10, его снимок «Вчера» и слова «на странице все еще куча текста, как
+     будто документ открыт а не приложение»; выбор — «цифры видно, слова по
+     нажатию». Прошлый/закрытый день: крупно съедено из нормы и оценка; строка
+     сервера (без изменений, test-ds3) и за что сняты баллы — по «Почему N». */
+  if(fin){
+    var кр=closeHtml(true), почему='';
+    кр=кр.replace(/<small>([\s\S]*?)<\/small>/, function(_,x){ почему=x; return ''; });
+    var бал=(DAYSC && DAYSC.r!=null) ? fmtR(DAYSC.r) : '';
+    return '<section class="food-hero fh-fin"><div class="fhn"><span class="fh-l">съедено</span>'+
+      '<b class="fh-big">'+String(Math.round(d.kcal||0))+'</b><span class="fh-u"> / '+String(Math.round(d.targets.kcal))+' ккал</span></div>'+кр+
+      '<details class="fhwhy"><summary>'+(бал?'Почему '+бал:'Как прошёл день')+'</summary><p class="food-hero-copy">'+text+'</p>'+(почему?'<p class="fhwhy-r">'+почему+'</p>':'')+'</details></section>';
+  }
   return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml(true)+'</section>';
 }
 /* 14.10, GF-02: без подписки — 3 записи еды через ИИ в день. Сколько
@@ -18276,6 +18389,23 @@ function recoВарианты(c, can){
   по.some(function(o){ if(out.length>=5) return true; out.push(o.x); взято[o.x.i]=1; return false; });
   return out;
 }
+function recoOptHtml(x, совет){
+  var сн=(CAT.equip&&CAT.equip[x.q])||x.q||'';
+  return '<button type="button" class="ropt'+(совет?' first':'')+'" data-reco2="pick" data-ci="'+esc(x.i)+'">'+
+    mediaFor({cat:x.i, n:x.n, fig:''})+
+    '<span class="rtx"><b>'+esc(x.n)+'</b>'+(сн?'<i>'+esc(сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
+}
+/* «Почему: по просьбе» — чьей? (его вопрос 23.10). Общая причина сервера —
+   значит, просил сам человек: показываем его слова из чата, если они есть. */
+/* «Почему: по просьбе» — чьей? (его вопрос 23.10). Общая причина сервера
+   значит, что просил сам человек. Цитату не подбираем: связи предложения с
+   конкретной репликой в данных нет, а поиск по словам находил чужие просьбы
+   (ревью Codex v6 R1). Когда сервер начнёт присылать исходные слова — показать их. */
+function recoПочему(c){
+  var w=String(c.why||'').trim(); if(!w) return '';
+  if(/^(по просьбе|по твоей просьбе|ты попросил[а]? заменить)$/i.test(w)) return 'Ты попросил в чате';
+  return '<b>Почему:</b> '+esc(w);
+}
 function recoOptsHtml(c, can){
   var в=recoВарианты(c, can); if(!в.length) return '';
   var base=((DAYS[can.hit.dk]||{}).ex||[])[can.hit.di], было=(base&&base.n)||can.hit.e.n;
@@ -18305,12 +18435,37 @@ function recoCard(где){
   if(can && can.kind==='swap'){
     /* каталог ещё не пришёл — варианты дорисуются, как только придёт */
     if(!CAT && !recoКатЖдём && !recoКатСбой){ recoКатЖдём=true; loadCatalog().then(function(){ recoКатЖдём=false; renderReco2(); }, function(){ recoКатЖдём=false; recoКатСбой=true; renderReco2(); }); }
-    var опц=recoOptsHtml(c, can);
-    return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает замену</u><p>'+esc(c.text)+'</p>'+
-      (c.why?'<p class="rwhy"><b>Почему:</b> '+esc(c.why)+'</p>':'')+
-      (опц || (CAT || recoКатСбой ? '' : '<p class="rwhy">Загружаю варианты…</p>'))+
-      '<div class="rb"><button type="button"'+(опц?'':' class="go"')+' data-reco2="cat">'+(опц?'Весь каталог':'Выбрать в каталоге')+'</button>'+
-      '<button type="button" data-reco2="no">Не сейчас</button></div></div>';
+    /* 23.10, его слова: «мне не понятно что на что он хочет заменить, в каком
+       дне по какой причине ("Почему: по просьбе" — чьей просьбе?). Было бы
+       удобнее и понятнее если прямо в карточке упражнения предлагалась замена
+       и с показом на что». Выбор по макету — «А, в карточке упражнения».
+       На «Тренировке» карточка встаёт под строкой заменяемого упражнения в его
+       дне (recoPlace), старое зачёркнуто; крупно — совет тренера, «Заменить»
+       одним касанием; 4–5 вариантов (решение 21.10) — по «Другие». Открыт
+       другой день — над днём одна строка «Замена в Дне N» и «Показать». */
+    var в=CAT?recoВарианты(c, can):[], перв=в[0];
+    var base=((DAYS[can.hit.dk]||{}).ex||[])[can.hit.di], было=(base&&base.n)||can.hit.e.n;
+    var почему=recoПочему(c);
+    if(где!=='chat' && can.hit.dk!==day){
+      return '<div class="reco2 rfar"><span><u>✦ Замена в '+esc(dayShort(can.hit.dk).replace(/^День/,'Дне'))+'</u><b>'+esc(было)+'</b></span>'+
+        '<button type="button" class="go" data-reco2="show">Показать</button></div>';
+    }
+    if(!перв){
+      return '<div class="reco2 rinl '+(где==='chat'?'inchat':'')+'"><u>✦ Тренер предлагает заменить «'+esc(было)+'»</u>'+
+        (почему?'<p class="rwhy">'+почему+'</p>':'')+
+        (CAT || recoКатСбой ? '' : '<p class="rwhy">Загружаю варианты…</p>')+
+        '<div class="rb"><button type="button" class="go" data-reco2="cat">Выбрать в каталоге</button>'+
+        '<button type="button" data-reco2="no">Не сейчас</button></div></div>';
+    }
+    var другие=в.slice(1);
+    return '<div class="reco2 rinl '+(где==='chat'?'inchat':'')+'"><u>'+(где==='chat'?'✦ Заменить «'+esc(было)+'» на':'✦ Тренер: заменить на')+'</u>'+
+      '<div class="ropts rmain">'+recoOptHtml(перв, true)+'</div>'+
+      (почему?'<p class="rwhy">'+почему+'</p>':'')+
+      '<div class="rb rb3"><button type="button" class="go" data-reco2="pick" data-ci="'+esc(перв.i)+'">Заменить</button>'+
+      (другие.length?'<button type="button" data-reco2="more" aria-expanded="false">Другие</button>':'<button type="button" data-reco2="cat">Каталог</button>')+
+      '<button type="button" class="rx" data-reco2="no" aria-label="Не сейчас">✕</button></div>'+
+      '<div class="rmore" hidden><div class="ropts">'+другие.map(function(x){ return recoOptHtml(x, false); }).join('')+'</div>'+
+      '<button type="button" class="rcat" data-reco2="cat">Весь каталог</button></div></div>';
   }
   return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>тренер предлагает</u><p>'+esc(c.text)+'</p>'+цель+
     (c.why?'<p><i>'+esc(c.why)+'</i></p>':'')+
@@ -18371,11 +18526,37 @@ function rbClick(e){
   if(RBO) gset('rb_seen', RBO.stamp);
   renderRb(); renderReco(); haptic('light');
 }
+function recoДомой(){
+  var el=document.getElementById('coachreco'), rb=document.getElementById('rbbox');
+  if(el && rb && el.parentNode!==rb.parentNode) rb.parentNode.insertBefore(el, rb);
+}
+/* под строкой заменяемого упражнения, если его день открыт; строка зачёркнута */
+function recoPlace(){
+  var el=document.getElementById('coachreco'), box=document.getElementById('list'); if(!el||!box) return;
+  Array.prototype.forEach.call(box.querySelectorAll('.swapping'), function(x){ x.classList.remove('swapping'); });
+  var c=RECO2 || gget('coach_reco', null), can=(c && !el.hidden && !c.applied) ? recoCan(c) : null;
+  if(!can || can.kind!=='swap' || can.hit.dk!==day){ recoДомой(); return; }
+  var di=can.hit.di, ряд=box.querySelector('[data-pickex="'+di+'"]'), метка=ряд;
+  /* ревью Codex R2: в раскрытом суперсете помечаем шапку именно этого
+     упражнения, а не всю пару (иначе зачёркивался партнёр) */
+  if(!ряд && раскрытыйEx()===di){
+    ряд=box.querySelector('article.exact');
+    var шап=ряд && ряд.querySelector('.exttl[data-shut="'+di+'"]');
+    метка=шап ? шап.closest('.exhead') : null;
+  } else if(ряд && ряд.closest('article.exact')) ряд=ряд.closest('article.exact');
+  if(!ряд){ recoДомой(); return; }
+  if(метка) метка.classList.add('swapping');
+  ряд.parentNode.insertBefore(el, ряд.nextSibling);
+  /* между зачёркнутым и карточкой лежат подходы или партнёр — называем, что меняем */
+  var u=el.querySelector('.rinl>u');
+  if(u && ряд!==метка && !/«/.test(u.textContent)){ var bn=((DAYS[can.hit.dk]||{}).ex||[])[can.hit.di]; u.textContent='✦ Заменить «'+((bn&&bn.n)||can.hit.e.n)+'» на'; }
+}
 function renderReco2(){
   var el=document.getElementById('coachreco');
   if(el){
     var h=recoCard('gym');
     el.hidden=!h; el.innerHTML=h;
+    recoPlace();
   }
   /* карточка живёт в двух местах сразу — чат перерисовываем, если он открыт */
   if(чатОткрыт() && !reco2Rendering){
@@ -18547,7 +18728,16 @@ function recoPull(){
 function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
   if(b.dataset.reco2==='do'){ applyReco2(); return; }
+  if(b.dataset.reco2==='more'){
+    var box=b.closest('.reco2'), m=box&&box.querySelector('.rmore'); if(!m) return;
+    m.hidden=!m.hidden; b.setAttribute('aria-expanded', String(!m.hidden)); haptic('light'); return;
+  }
   var c=RECO2 || gget('coach_reco', null);
+  if(b.dataset.reco2==='show' && c){
+    var cs=recoCan(c), кн=cs && document.querySelector('#dayseg button[data-day="'+cs.hit.dk+'"]');
+    if(кн) кн.click();   /* тот же путь, что выбор дня руками: сессия дня, шапка, список */
+    return;
+  }
   if((b.dataset.reco2==='pick' || b.dataset.reco2==='cat') && c){
     var can=recoCan(c); if(!can || can.kind!=='swap'){ renderReco2(); return; }
     if(b.dataset.reco2==='cat'){ recoКаталог(c, can.hit); haptic('light'); return; }
