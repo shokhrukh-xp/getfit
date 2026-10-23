@@ -34,7 +34,7 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   ok(await p.locator('#fmeals .fx, #fmeals [data-fdel]').count()===0,где+'B: «×» у приёмов нет — удалить можно в листе приёма');
   /* D · шаги и сон */
   const w=await p.evaluate(()=>{const g=document.querySelector('.wear-surface .wrnone');return g&&g.textContent});
-  ok(w==='Пришли тренеру скриншот шагов и сна — числа появятся здесь.',где+'D: одна строка вместо абзаца');
+  ok(w==='Пришли скриншот шагов и сна — числа появятся здесь.',где+'D: одна строка вместо абзаца');
   await чист('Еда');
   /* C · меню */
   await p.click('[data-zseg="eat"]:visible');await p.waitForTimeout(300);const дн=p.locator('[data-eseg="day"]');if(await дн.count()){await дн.click();await p.waitForTimeout(500);}

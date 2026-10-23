@@ -3786,6 +3786,51 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 .sportlow .sptoday{text-align:center}
 #resetm p.rsnote{margin:-6px 0 12px;font-size:12px;text-align:center;color:var(--muted)}
 .svhow{margin-top:8px;font-size:13px}.svhow summary{cursor:pointer;color:var(--accent-txt);font-weight:600;min-height:44px;display:flex;align-items:center}.svhow p{margin:4px 0 0;color:var(--muted);line-height:1.45}
+
+/* ═══ Слой 7 (23.10, его «пройдись сам по всем страницам… чтобы оценить», выбор «оценить и сразу
+   исправить», обе темы, 390 и 320 px). Что было не так — на снимках обхода:
+   вкладки страниц обрезались на 320 («Рейти…», «Катало…»), значки дней недели налезали друг на
+   друга, плитки журнала и рейтинга на 320 вставали в столбик, у меню «Другое меню» ломалось в две
+   строки, а «В Telegram» нет; кнопки выбора в листах были разной ширины; ▶ у одних раскрытий и › у
+   других; кружки покупок в тёмной не видны; «выбрать» в каталоге на светлой сливалось с карточкой. */
+.zseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible}
+.zseg button{padding:8px 4px;text-align:center;white-space:nowrap}
+@media (max-width:359px){.zseg button{padding:8px 2px}}
+.hweek-block .hwd-dots{flex-direction:column;gap:3px}
+@media (max-width:359px){.zkdots{display:none}.zklab{white-space:nowrap}}
+#logsum.tiles,#p-circle .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cirsw{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.cirsw::-webkit-scrollbar{display:none}
+.cirsw .mchip{flex:0 0 auto;white-space:nowrap}
+.mbtns .btn{white-space:nowrap;padding-left:8px;padding-right:8px}
+.dayedit-actions .btn{white-space:nowrap}
+@media (max-width:359px){.dayedit-actions #addex{font-size:12.5px;padding:10px 4px}}
+#dbnote{text-align:center}
+.bitem i{border-color:var(--muted)}
+.catitem .catpick,.pickgroups~* .catpick{background:var(--surface)}
+.pickgroups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.pickgroups .mchip{padding:8px 4px;text-align:center;justify-content:center}
+.menu-note summary,.week-explain summary{list-style:none;display:flex;align-items:center;gap:8px}
+.menu-note summary::-webkit-details-marker,.week-explain summary::-webkit-details-marker{display:none}
+.menu-note summary::before,.week-explain summary::before{content:'›';font-size:18px;flex:none}
+.menu-note[open]>summary::before,.week-explain[open]>summary::before{content:'⌄'}
+:is(#sb-level,#sb-place,#wz-min,#wz-place,#dur-min,#sp-min,#sp-int,#g-wt) button{flex:1 1 0;min-width:0}
+@media (max-width:359px){
+  #mealm .pf{flex-direction:column;align-items:stretch;gap:6px}
+  #mealm .pf .pfl{flex:none}
+  #onbbar .nbt,.nudge .nbt{font-size:13px}
+  #mealm .pf .seg{flex-wrap:nowrap}
+  #mealm .pf .seg button{flex:1 1 0;min-width:0;padding-left:2px;padding-right:2px}
+  #zd-dia,#wz-dia{display:grid;grid-template-columns:repeat(6,minmax(0,1fr))}
+  #zd-dia>*,#wz-dia>*{grid-column:span 2;margin:0}
+  #zd-dia>:nth-child(n+4),#wz-dia>:nth-child(n+4){grid-column:span 3}
+  .pqrow:has(.pqv:not(:empty)) .pqt small{display:none}
+}
+.mnums label{display:flex;flex-direction:column;justify-content:flex-end}
+.wztop{align-items:flex-end}
+#ml-hint{margin-top:8px}
+:root[data-theme="dark"] :is(.catitem .catpick,.pickgroups~* .catpick){background:rgba(122,219,208,.12)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) :is(.catitem .catpick,.pickgroups~* .catpick){background:rgba(122,219,208,.12)}}
 </style>
 </head>
 <body>
@@ -7996,7 +8041,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '23.10 08:15';
+var BUILD = '23.10 09:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16446,7 +16491,9 @@ function renderPod(){
    здесь, пока не сменится версия: фильтры считаются на телефоне и потому
    отвечают мгновенно, а не через сеть на каждое нажатие.
    Своя еда идёт первой и помечена: её числа человек проверял сам. */
-var CAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN='0';
+/* 23.10, ревью Codex R1: каталог блюд жил в той же CAT, что каталог упражнений (объявлена дважды) —
+   после «Что съесть» выбор упражнения падал на CAT.ex. У блюд своя переменная. */
+var DCAT=null, CATKUH='', CATOSN='', CATQ='', CATOPEN='0';
 function catПрочесть(){
   try{ var r=JSON.parse(localStorage.getItem('gf_dishes')||'null');
        if(r && r.v && r.блюда) return r; }catch(e){}
@@ -16454,10 +16501,10 @@ function catПрочесть(){
 }
 function catПодтянуть(){
   var было=catПрочесть();
-  if(было){ CAT=было; renderEat(); }
+  if(было){ DCAT=было; renderEat(); }
   return fGet('/dishes?uid='+encodeURIComponent(syncUid())).then(function(d){
     if(!d||!d.ok) return;
-    if(!было || было.v!==d.v){ CAT=d; try{ localStorage.setItem('gf_dishes', JSON.stringify(d)); }catch(e){} renderEat(); }
+    if(!было || было.v!==d.v){ DCAT=d; try{ localStorage.setItem('gf_dishes', JSON.stringify(d)); }catch(e){} renderEat(); }
   }).catch(function(){});
 }
 function openEat(){ if(!POD) podPull(); else { renderEat(); podPull(); } catПодтянуть(); }
@@ -16468,7 +16515,7 @@ function catБаза(){
   ((POD&&POD.примерка)||[]).forEach(function(v){
     из.push({ n:v.text, kp:v.kcal, pp:v.prot, cp:v.fib, fp:v.fat||0, свой:1, id:v.id, кух:'из дневника', осн:'из дневника' });
   });
-  ((CAT&&CAT.блюда)||[]).forEach(function(b){
+  ((DCAT&&DCAT.блюда)||[]).forEach(function(b){
     из.push({ n:b.n, g:b.g, kp:b.kp, pp:b.pp, cp:b.cp, fp:b.fp||0, свой:0, кух:b.кух, осн:b.осн, точно:b.точно, ттк:b.ттк, url:b.url });
   });
   var q=CATQ.toLowerCase().replace(/ё/g,'е');
@@ -16546,7 +16593,7 @@ function renderEat(){
      Проверку свежести — после отрисовки: сборка сама перерисует вкладку. */
   setTimeout(function(){ try{ сегодняПроверить(false); }catch(e){} }, 0);
   var h=eatSegHTML()+сегодняHTML();
-  var всегоБлюд=CAT ? catБаза().length : 0;
+  var всегоБлюд=DCAT ? catБаза().length : 0;
   h+='<button type="button" class="catopen" id="catopen" aria-expanded="'+CATSHOW+'"><span><b>Каталог блюд</b><s>'+
      (всегоБлюд ? всегоБлюд+' '+plural(всегоБлюд,['блюдо','блюда','блюд']) : 'по цели и кухне')+'</s></span><i>'+(CATSHOW?'⌃':'›')+'</i></button>';
   if(!CATSHOW){ box.innerHTML=h; return; }
@@ -16554,7 +16601,7 @@ function renderEat(){
   /* «Своё» было неточным словом: это не «сам приготовил», а прошлые записи —
      еда оттуда вполне могла быть из доставки или заведения. Его замечание
      17.09. Поэтому и «Где поесть» у таких строк теперь есть. */
-  var кухни=((CAT&&CAT.кухни)||[]).slice(); if(POD&&(POD.примерка||[]).length) кухни.unshift('из дневника');
+  var кухни=((DCAT&&DCAT.кухни)||[]).slice(); if(POD&&(POD.примерка||[]).length) кухни.unshift('из дневника');
   /* Счёт по каждому значению фильтра — с учётом ДРУГОГО фильтра и поиска:
      иначе «рыба 16» врёт, когда уже выбрана итальянская кухня. */
   var база=catБаза();
@@ -16564,7 +16611,7 @@ function renderEat(){
     if(!CATKUH || x.кух===CATKUH) сОсн[x.осн]=(сОсн[x.осн]||0)+1;
   });
   h+=catРяд('Кухня','ckuh',CATKUH,кухни,сКух,база.filter(function(x){return !CATOSN||x.осн===CATOSN;}).length);
-  h+=catРяд('Основа','cosn',CATOSN,((CAT&&CAT.основы)||[]),сОсн,база.filter(function(x){return !CATKUH||x.кух===CATKUH;}).length);
+  h+=catРяд('Основа','cosn',CATOSN,((DCAT&&DCAT.основы)||[]),сОсн,база.filter(function(x){return !CATKUH||x.кух===CATKUH;}).length);
   h+='<input type="search" class="eatq" id="eatq" placeholder="Найти блюдо" autocomplete="off" value="'+esc(CATQ)+'">';
   h+='<div class="eatsort">'+СОРТ.map(function(x){
       var он=CATSORT===x[0];
@@ -17098,7 +17145,7 @@ function renderFoodDay(){
            /* 17.10, его выбор B: «×» у каждой строки убран — мимо пальцем
               стирался приём; удалить — «Удалить» в листе приёма */
   }).join('');
-  if((d.meals||[]).length && !(св && св.on)) (box.querySelector('.fnorm')||box).innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'День закроется автоматически в 00:00 по Ташкенту.')+'</p>';
+  if((d.meals||[]).length && !(св && св.on)) (box.querySelector('.fnorm')||box).innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'Закроется сам в 00:00 по Ташкенту.')+'</p>';
   if(св && св.on && !ml.innerHTML){ ml.innerHTML='<p class="empt">Записей нет — и не нужно.</p>'; return; }
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
@@ -17118,7 +17165,7 @@ function свобДней(n){ return n+' '+plural(n,['день','дня','дне
 function свобСтрокаHtml(св){
   if(!св || !св.окно) return '';
   var о=св.окно, ц=о.цена||{};
-  var под = о.открыто ? 'по твоему темпу сейчас можно' : (ц.дней ? 'вне окна — срок цели +'+свобДней(ц.дней) : 'день без записи еды и оценки');
+  var под = о.открыто ? 'сейчас можно' : (ц.дней ? 'вне окна — срок цели +'+свобДней(ц.дней) : 'день без записи еды и оценки');
   return '<button type="button" class="svrow" data-svob="1"><span>Свободный день<small>'+esc(под)+'</small></span>'+
     (о.открыто ? '<em class="ok">окно открыто</em>' : '<em>окно с '+ruDate(о.след)+'</em>')+'</button>';
 }
@@ -17234,7 +17281,7 @@ function renderWear(){
   var н=w.шагиСон;
   if(!н || (!н.днейШаги && !н.ночей)){
     /* 17.10, его выбор D: одна строка вместо абзаца; подробности — по нажатию */
-    b.innerHTML='<p class="wrnone">Пришли тренеру скриншот шагов и сна — числа появятся здесь.</p>'+
+    b.innerHTML='<p class="wrnone">Пришли скриншот шагов и сна — числа появятся здесь.</p>'+
       '<details class="wrmore"><summary>Откуда и зачем</summary><p>Подойдёт снимок из «Здоровья», Samsung Health или Mi Fitness. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p></details>';
     return;
   }
