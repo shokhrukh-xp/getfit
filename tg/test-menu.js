@@ -47,7 +47,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   дано(!!(await page.$('#eatbody #fpod')) && !!(await page.$('#eatbody .eatrow')), 'по кнопке — прежний подбор и каталог');
 
   await page.click('#eatbody [data-eseg="day"]'); await page.waitForTimeout(300);
-  дано(/Меню на завтра — из того, что ты обычно ешь/.test(await page.textContent('#eatbody')), 'меню ещё нет — объяснено, что это будет');
+  дано(/Под норму завтра — из твоих блюд/.test(await page.textContent('#eatbody')), 'меню ещё нет — объяснено, что это будет');
   await page.click('#eatbody [data-mgen="day"]'); await page.waitForTimeout(150);
   дано(/Собираю меню на завтра/.test(await page.textContent('#eatbody')), 'пока собирается — это видно');
   await page.waitForTimeout(1000);
@@ -67,7 +67,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
 
   await page.click('#eatbody [data-eseg="buy"]'); await page.waitForTimeout(300);
   const б = (await page.textContent('#eatbody')).replace(/\s+/g, ' ');
-  дано(/Покупки на завтра/.test(б) && /На 2 чел\., примерно · в сырых весах · дома уже есть: Рис/.test(б), 'покупки: на семью, сырые веса, что дома');
+  дано(/Покупки на завтра/.test(б) && /2 чел\. · сырой вес · дома: рис/.test(б), 'покупки: на семью, сырые веса, что дома');
   дано(/Мясо и птица/.test(б) && /Куриная грудка — 600 г/.test(б) && /Яйцо куриное — 6 шт/.test(б), 'по отделам, с количеством');
   await page.click('#eatbody [data-buy="Творог 5%"]'); await page.waitForTimeout(150);
   await page.click('#eatbody [data-eseg="day"]'); await page.click('#eatbody [data-eseg="buy"]'); await page.waitForTimeout(200);

@@ -169,7 +169,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
     дано(await page.isVisible('#' + id), 'в листе спрашивается ' + id);
   const дней = await page.$$eval('#sb-wd button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').length);
   дано(дней >= 2, 'дни подставлены из расписания: ' + дней);
-  дано(/подходов за занятие/.test(await page.textContent('#sb-minh')),
+  дано(/подход\S* за занятие/.test(await page.textContent('#sb-minh')),
     'сказано, во что превращаются минуты: ' + (await page.textContent('#sb-minh')));
 
   /* «всё тело ровно» и точечный упор вместе не бывают */

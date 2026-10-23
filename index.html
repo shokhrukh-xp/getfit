@@ -3653,7 +3653,6 @@ body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;he
 .vztop .vzgapline,.vztop .vzgline .vzgapline{color:var(--text)}
 .vztop .vznum em:not(.dn):not(.up){background:var(--field);color:var(--muted)}
 .vztop .vzlab{fill:var(--muted)}
-.vzbottom{border-top:1px solid var(--line)}
 /* ── этап 3 · «Еда» (22.10, редизайн «Бирюза, но смелее») ──
    Итог дня — витрина (как карточка дня на «Сегодня»), приёмы — с крупным
    фото, «Добавить …» — песочная кнопка действия. Шкалы и их цвета прежние. */
@@ -3738,6 +3737,55 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 #profm .pqopts .seg button[aria-pressed="true"]{background:var(--tint);color:var(--text);border-color:var(--accent)}
 .pqava{border-radius:18px;background:var(--navbg)}
 :root[data-theme="dark"] .pqava{background:#13707A}
+/* ── 23.10 · редизайн, доводка: центровка, симметрия, меньше текста ──
+   Его слова: «обрати внимание на центровку и симметричность всех элементов,
+   мелкие детали … больше всего влияют на восприятие» и «минимизируй
+   количество текста». Группы выбора в листах — ровными рядами (одинаковая
+   ширина в ряду, неполный ряд растянут по центру), подзаголовки листов —
+   одного вида, вторичные кнопки списков — тихие пилюли. */
+#sp-kind{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+/* ревью Codex R1 (23.10): на 320 px и в полном списке четыре в ряд не вмещают «плавание»,
+   «велосипед», «настольный теннис» — там две колонки; ряды одной высоты, нечётный хвост во всю ширину */
+#sp-kind{grid-auto-rows:minmax(44px,auto)}
+#sp-kind>*{padding-left:6px;padding-right:6px;white-space:normal}
+#sp-kind.all{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:359px){#sp-kind{grid-template-columns:repeat(2,minmax(0,1fr))}#sp-kind>:last-child:nth-child(odd){grid-column:span 2}}
+#sp-kind.all>:last-child:nth-child(odd){grid-column:span 2}
+#schedwhen,#sb-when{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+#schedwhen>*,#sb-when>*{grid-column:span 2;min-width:0}
+#schedwhen>:nth-child(n+4),#sb-when>:nth-child(n+4){grid-column:span 3}
+#sb-focus{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}
+#sb-focus>*{grid-column:span 4;min-width:0}
+#sb-focus>:first-child{grid-column:span 12}   /* ревью Codex: «всё тело ровно» своей строкой, шесть групп — 3×2 */
+:is(#sp-kind,#schedwhen,#sb-when,#sb-focus)>*{margin:0;justify-content:center;text-align:center}
+.sheeth{margin:22px 0 8px;font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--hero-ink)}
+.catpick{border:0;background:var(--tint);color:var(--accent);font-weight:700;min-height:40px;min-width:72px;display:inline-flex;align-items:center;justify-content:center}
+/* тёмная: акцент #2FB3A6 на бирюзовой подложке — 4,36:1, мельче нормы (test-ds1) */
+:root[data-theme="dark"] .catpick{color:#7ADBD0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .catpick{color:#7ADBD0}}
+.mauto{margin:12px 0 0;font-size:12px;color:var(--muted);text-align:center}
+#eatbody>.podall,#eatbody .podall:only-of-type{text-align:center}
+.cirnote{text-align:center}
+.lbkey{text-align:center}
+.modalbox h3.sheeth{margin:22px 0 8px;font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--hero-ink)}
+/* подписи полей в листах — одного вида: строчные, 13 px, приглушённые */
+.sblab,.sbgroup .sblab,.klab{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+/* цель в профиле — витрина, как главные блоки экранов */
+#profm .goalcard{background:var(--hero);box-shadow:var(--hero-edge);border:0;border-radius:24px;color:#fff;--text:#fff;--muted:#E6F5F4;--accent-txt:var(--hero-sand)}
+#profm .goalcard .gl{color:#E6F5F4}
+#profm .goalcard .gt{color:#fff}
+#profm .goalcard .gp{color:#E6F5F4}
+#profm .goalcard .pqgbar{background:rgba(255,255,255,.2)}
+#profm .goalcard .pqgbar b{background:var(--sand)}
+#profm .goalcard .pqgbar u{background:#fff}
+#profm .goalcard #goaltalk{background:#fff;border:0;color:#0B4F5A}
+#profm .modalbox .xbtn{background:var(--surface)}   /* лист профиля на --bg: тинт сливался с фоном */
+.week-summary{text-align:center}   /* три итога недели — по центру своих колонок */
+/* 23.10, полировка: главное действие пары — залитое, второе — подложкой (было две почти одинаковые) */
+.reco .rbtns .btn.go,.aiprev .rbtns .btn.go{background:var(--action);border-color:var(--action);color:#fff}
+.sportlow .sptoday{text-align:center}
+#resetm p.rsnote{margin:-6px 0 12px;font-size:12px;text-align:center;color:var(--muted)}
+.svhow{margin-top:8px;font-size:13px}.svhow summary{cursor:pointer;color:var(--accent-txt);font-weight:600;min-height:44px;display:flex;align-items:center}.svhow p{margin:4px 0 0;color:var(--muted);line-height:1.45}
 </style>
 </head>
 <body>
@@ -4011,14 +4059,13 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 <div class="modal" id="schedm" role="dialog" aria-modal="true" aria-labelledby="schedtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="schedtitle">Мои дни</h3><button type="button" class="xbtn" id="schedx" aria-label="Закрыть">✕</button></div>
-    <p class="mtext">Дни зала. Программа идёт по кругу: следующий день — за последним сделанным, в любой день недели.</p>
+    <p class="mtext">Программа идёт по кругу — с любого дня.</p>
     <div id="schedlist"></div>
-    <h3 style="margin-top:20px">Обычно хожу</h3>
-    <p class="mtext">Если в день зала к этому времени записи нет, тренер спросит, был ли зал.</p>
+    <h3 class="sheeth">Обычно хожу</h3>
     <div class="seg when" id="schedwhen"></div>
     <p class="mtext" id="schedwhenh" aria-live="polite"></p>
-    <h3 style="margin-top:20px">Лёгкая неделя</h3>
-    <p class="mtext">Веса встали или падают — семь дней по половине подходов на тех же весах. Тренер включит сам, если веса падают два занятия подряд.</p>
+    <h3 class="sheeth">Лёгкая неделя</h3>
+    <p class="mtext">7 дней по половине подходов. Тренер включит сам, если веса падают.</p>
     <div id="deloadbox"></div>
     <button class="btn wide" id="schedclose">Готово</button>
   </div>
@@ -4068,7 +4115,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
       <label>клетчатка, г<input id="ml-fib" type="number" inputmode="numeric" min="0" max="200" step="1"></label>
     </div>
     <p class="mtext" id="ml-hint"></p>
-    <label class="mlab">как готовил — для круга, необязательно<textarea id="ml-note" rows="2" maxlength="500" placeholder="творог смешать с йогуртом, сверху ягоды"></textarea></label>
+    <label class="mlab">как готовил (видно в круге)<textarea id="ml-note" rows="2" maxlength="500" placeholder="творог смешать с йогуртом, сверху ягоды"></textarea></label>
     <label class="mlchk"><input type="checkbox" id="ml-hide"> не показывать эту тарелку в круге</label>
     <div class="btnrow">
       <button class="btn prim" id="ml-save">Сохранить</button>
@@ -4095,14 +4142,14 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
          двух местах». Кнопки было две: одна записывала занятие, другая
          заводила повторение — читались они одинаково. Осталась одна, а
          повторение стало свойством занятия, как и должно быть. -->
-    <div class="sbrow" id="sp-planrow" hidden><span class="sblab">УЖЕ ПОВТОРЯЕТСЯ</span>
+    <div class="sbrow" id="sp-planrow" hidden><span class="sblab">Уже повторяется</span>
       <div class="splan" id="sp-plan"></div></div>
-    <div class="sbrow"><span class="sblab">ЧТО</span><div class="seg multi" id="sp-kind"></div>
+    <div class="sbrow"><span class="sblab">Что</span><div class="seg multi" id="sp-kind"></div>
       <label class="mlab" id="sp-ownrow" hidden>своё название<input id="sp-own" type="text" autocomplete="off" maxlength="24" placeholder="джиу-джитсу"></label></div>
-    <div class="sbrow"><span class="sblab">СКОЛЬКО МИНУТ</span><div class="seg" id="sp-min"></div>
+    <div class="sbrow"><span class="sblab">Сколько минут</span><div class="seg" id="sp-min"></div>
       <label class="mlab" id="sp-minrow" hidden>минут<input id="sp-minown" type="number" inputmode="numeric" min="1" max="600" placeholder="75"></label></div>
-    <div class="sbrow"><span class="sblab">КАК ШЛО</span><div class="seg" id="sp-int"></div></div>
-    <div class="sbrow"><span class="sblab">ПОВТОРЯТЬ</span><div class="pldays" id="sp-days"></div>
+    <div class="sbrow"><span class="sblab">Как шло</span><div class="seg" id="sp-int"></div></div>
+    <div class="sbrow"><span class="sblab">Повторять</span><div class="pldays" id="sp-days"></div>
       <p class="spdn" id="sp-dayn"></p></div>
     <p class="rec" id="sp-itog"></p>
     <button class="btn prim wide" id="sp-save">Записать</button>
@@ -4159,7 +4206,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
   <div class="modalbox">
     <div class="cathead"><h3 id="durtitle">Сколько шло занятие</h3><button class="xbtn" id="durclose" aria-label="Закрыть">✕</button></div>
     <p class="mtext" id="dur-why"></p>
-    <div class="sbrow"><span class="sblab">МИНУТ</span><div class="seg" id="dur-min"></div>
+    <div class="sbrow"><span class="sblab">Минут</span><div class="seg" id="dur-min"></div>
       <label class="mlab" id="dur-ownrow" hidden>минут<input id="dur-own" type="number" inputmode="numeric" min="5" max="240" placeholder="75"></label></div>
     <p class="rec" id="dur-itog"></p>
     <button class="btn prim wide" id="dur-save">Записать</button>
@@ -4174,7 +4221,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
     <div class="sbrow"><span class="sblab">В какие дни</span><div class="wdgrid" id="sb-wd"></div>
       <p class="sbhint" id="sb-wdh"></p></div>
     <div class="sbrow"><span class="sblab">Обычно хожу</span><div class="seg when" id="sb-when"></div>
-      <p class="sbhint">Если в день зала к этому времени записи нет, тренер спросит, был ли зал.</p></div>
+</div>
     <div class="sbrow"><span class="sblab">Сколько минут</span><div class="seg" id="sb-min"></div>
       <p class="sbhint" id="sb-minh"></p></div>
     </section>
@@ -4235,15 +4282,14 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 
       <h4 class="pqlab">О тебе</h4>
       <div class="pqgroup">
-        <button type="button" class="pqrow" data-pp="zd" id="zdtoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="pqt"><b>Здоровье</b><small>ограничения для нормы, меню и зала</small></span><span class="pqv" id="zdsum">не заполнено</span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>на скольких готовишь, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="zd" id="zdtoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="pqt"><b>Здоровье</b><small>учтёт норма и меню</small></span><span class="pqv" id="zdsum">не заполнено</span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>готовка, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
       </div>
-      <p class="pqnote">Отсюда тренер считает нормы и собирает меню.</p>
 
       <h4 class="pqlab">Тренер</h4>
       <div class="pqgroup">
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>как тренер пишет и шутит</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab gymonly">Зал</h4>
@@ -4272,7 +4318,6 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 
     <!-- ── листы внутри профиля ── -->
     <section class="pqpage zdbox" data-pp="zd" id="zdbox" data-title="Здоровье" hidden>
-      <p class="pqlead">Это учитывают норма еды, темп цели, меню и зал.</p>
       <div class="invbody" id="zdbody" hidden></div>
     </section>
     <!-- 24.09, этап 2: быт — из него тренер собирает меню -->
@@ -4318,11 +4363,12 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
   <div class="modalbox">
     <h3 id="resettitle">Начать заново</h3>
-    <p class="mtext">Знакомство пройдёт с самого начала: тренер снова спросит о тебе и соберёт программу. Выбери, что делать с записями.</p>
+    <p class="mtext">Тренер заново спросит о тебе и соберёт программу.</p>
     <div class="rsopts">
-      <button type="button" class="rsbtn" data-reset="prog"><b>Пересобрать программу</b><i>Профиль и программа сбросятся, знакомство начнётся заново. Тренировки, еда и замеры останутся — веса подхватятся в новой программе.</i></button>
-      <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть дневник</b><i>Удалятся профиль, программа, тренировки, еда, замеры, фото и переписка в приложении. Другие устройства очистятся при подключении. Подписка и участие в кругах сохранятся. Уже отправленные сообщения и сохранённые копии фото у получателей останутся.</i></button>
+      <button type="button" class="rsbtn" data-reset="prog"><b>Пересобрать программу</b><i>Профиль и программа сбросятся. Еда, замеры и тренировки останутся.</i></button>
+      <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть дневник</b><i>Дневник и профиль удалятся на всех устройствах. Подписка и круги останутся.</i></button>
     </div>
+    <p class="mtext rsnote">Отправленные сообщения и копии фото у других останутся.</p>
     <p class="mtext" id="resetstate" hidden></p>
     <button class="btn wide" id="resetclose">Отмена</button>
   </div>
@@ -6708,11 +6754,11 @@ function renderGoalCard(){
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
     h+='<div class="gt">'+esc(goalText(me))+'</div>'+
-       '<p class="gp">Числа и срока пока нет. Скажи тренеру, сколько и к какому сроку, — он проверит, реально ли это, и посчитает норму еды под темп.</p>'+
+       '<p class="gp">Уточни вес и срок с тренером.</p>'+
        '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
   } else {
     h+='<div class="gt">Цель не задана</div>'+
-       '<p class="gp">Без неё не посчитать ни норму еды, ни стартовые веса. Расскажи тренеру, чего хочешь, — он доспросит и предложит, что реально.</p>'+
+       '<p class="gp">Без цели норма — на поддержание.</p>'+
        '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
   }
   el.innerHTML=h;
@@ -6975,7 +7021,7 @@ function menuПриём(x, span, m){
      едят как есть) — кнопки «Рецепт» нет (его выбор из трёх). Меню до 25.09
      пометок не знает: там сервер скажет «готовое» по нажатию. */
   var рец = (x.готовое || (r && r.готовое))
-    ? '<p class="msost mgot">Готовить не нужно'+((x.гот||[]).length?': '+esc(x.гот.map(function(n){return String(n).toLowerCase();}).join(', ')):'')+' — покупаешь готовым или ешь как есть</p>'
+    ? '<p class="msost mgot">Готовить не нужно'+((x.гот||[]).length?': '+esc(x.гот.map(function(n){return String(n).toLowerCase();}).join(', ')):'')+' — готовое, без рецепта</p>'
     : (r && r.шаги)
     ? '<ol class="mrec">'+r.шаги.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ol>'+
       (r.семья>1 ? '<p class="msost">На '+r.семья+' чел.: '+(r.состав||[]).filter(function(i){ return i.наСемью; }).map(function(i){ return esc(String(i.name).toLowerCase())+' '+i.наСемью+' г'; }).join(' · ')+'</p>' : '')+
@@ -7077,9 +7123,9 @@ function сегодняHTML(){
   if(MENUBYT==='today' && бытНужен()) return бытКарточка('today');
   var точки='<span class="dots"><i></i><i></i><i></i></span>';
   if(!m){
-    if(занят) return '<p class="podall">Собираю меню на остаток дня из твоей же еды — до минуты, можно пока открыть другую вкладку'+точки+'</p>';
+    if(занят) return '<p class="podall">Собираю меню на остаток дня — до минуты. Можно открыть другую вкладку'+точки+'</p>';
     return (MENUERR?'<p class="mwarn">'+esc(MENUERR)+'</p>':'')+
-      '<p class="podall">Меню на остаток дня — из того, что ты обычно ешь, с граммами под то, что осталось от нормы.</p>'+
+      '<p class="podall">Под остаток нормы — из твоих блюд.</p>'+
       '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="today">Собрать меню на сегодня</button></div>';
   }
   h+='<div class="mdh top"><b>Меню на остаток дня</b><span>'+menuДата(m.date)+'</span></div>';
@@ -7098,7 +7144,8 @@ function сегодняHTML(){
     if(д.белокМало) h+='<p class="mwarn">Белка не хватает '+д.белокМало+' г — добери перекусом.</p>';
     h+=д.приёмы.map(function(x){ return menuПриём(x, 'today', m); }).join('');
   }
-  h+='<details class="menu-note"><summary>↻ Обновляется автоматически</summary><p>Пересоберу сам, когда запишешь еду или изменится норма.</p></details>';
+  /* 23.10, его «минимизируй текст»: «обновляется само» — одна тихая строка без раскрытия */
+  h+='<p class="mauto">↻ Пересоберу сам, когда запишешь еду или изменится норма</p>';
   if(!m.всё) h+='<div class="btnrow mbtns"><button type="button" class="btn" data-mgen="today">Другое меню</button>'+
      menuSendButton('today:menu')+'</div>';
   return h;
@@ -7108,11 +7155,11 @@ function menuHTML(){
   if(!MENU){ menuPull(); return скелет(4); }
   var span = EATSEG==='week'?'week':'day', m=menuСвежее(span), h='';
   if(MENUBYT===span && бытНужен()) return бытКарточка(span);
-  if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю из твоей же еды — минуту-полторы, можно пока открыть другую вкладку':'Собираю меню на завтра из твоей же еды — до минуты, можно пока открыть другую вкладку')+'<span class="dots"><i></i><i></i><i></i></span></p>';
+  if(MENUBUSY===span) return '<p class="podall">'+(span==='week'?'Собираю меню на неделю — минуту-полторы. Можно открыть другую вкладку':'Собираю меню на завтра — до минуты. Можно открыть другую вкладку')+'<span class="dots"><i></i><i></i><i></i></span></p>';
   if(MENUERR) h+='<p class="mwarn">'+esc(MENUERR)+'</p>';
   if(!m) return h+'<p class="podall">'+(span==='week'
-      ? 'Меню на неделю — круг из твоих же блюд: 2–3 завтрака и 3–4 обеда и ужина, чтобы готовить два-три раза в неделю. Порции — под норму каждого дня, покупки — списком.'
-      : 'Меню на завтра — из того, что ты обычно ешь, с граммами под норму завтрашнего дня.')+'</p>'+
+      ? 'Круг из 2–3 завтраков и 3–4 обедов и ужинов — из твоих блюд, под норму каждого дня, покупки — списком.'
+      : 'Под норму завтра — из твоих блюд.')+'</p>'+
     '<div class="btnrow mbtns"><button type="button" class="btn prim" data-mgen="'+span+'">'+(span==='week'?'Собрать меню на неделю':'Собрать меню на завтра')+'</button></div>';
   if(span==='week') h+='<div class="mdh top"><b>Меню на неделю</b><span>с '+menuДата(m.from)+'</span></div>';
   /* 07.10 B4: вместо семи меню подряд — выбранный день; порядок и даты
@@ -7135,11 +7182,11 @@ function menuHTML(){
 function buyHTML(){
   if(!MENU){ menuPull(); return скелет(4); }
   var m=menuСвежее('week')||menuСвежее('day');
-  if(!m) return '<p class="podall">Список покупок собирается из меню. Собери меню на завтра или на неделю — покупки появятся здесь.</p>'+
+  if(!m) return '<p class="podall">Появятся, когда соберёшь меню.</p>'+
     '<div class="btnrow mbtns"><button type="button" class="btn" data-mgo="day">Меню на завтра</button><button type="button" class="btn prim" data-mgo="week">Меню на неделю</button></div>';
   var p=m.покупки||{отделы:[],дома:[]}, span=m.span, отм=gget('buy_'+span+'_'+m.from,{})||{};
   var h='<div class="mdh top"><b>Покупки '+(span==='week'?'на неделю':'на завтра')+'</b><span>'+(span==='week'?'с ':'')+menuДата(m.from)+'</span></div>';
-  h+='<p class="mitog">'+(p.семья>1?'На '+p.семья+' чел., примерно · ':'')+'в сырых весах'+((p.дома||[]).length?' · дома уже есть: '+esc(p.дома.join(', ')):'')+'</p>';
+  h+='<p class="mitog">'+(p.семья>1?p.семья+' чел. · ':'')+'сырой вес'+((p.дома||[]).length?' · дома: '+esc(p.дома.join(', ').toLowerCase()):'')+'</p>';
   if(p.пояснение) h+='<details class="menu-note" id="bpoyas"><summary>Как посчитан вес</summary><p>'+esc(p.пояснение)+'</p></details>';
   (p.отделы||[]).forEach(function(o){
     h+='<div class="botd">'+esc(o.отдел)+'</div>'+o.список.map(function(x){
@@ -7299,7 +7346,7 @@ function здBody(pfx, med){
        '</div>';
   h += ряд('ещё', здSeg(pfx+'-more', ЗД_ЕЩЁ, {bp:med.bp===1,preg:med.preg===1}, true));
   h += '<label class="mlab">чего не ешь по здоровью<input id="'+pfx+'-no" type="text" autocomplete="off" maxlength="200" placeholder="лактоза, орехи, глютен" value="'+esc(med.no||'')+'"></label>';
-  h += '<p class="invnote">Видно только тебе — в рейтинге круга этого нет. Дозы приложение не трогает: инсулин и лекарства назначает врач.</p>';
+  h += '<p class="invnote">Видно только тебе. Лекарства и дозы — только врач.</p>';
   return h;
 }
 /* Если блока на экране нет, возвращаем то, что было: иначе профиль,
@@ -7502,7 +7549,7 @@ function pqVals(){
   var ava=document.getElementById('pqava'); if(ava){ var l=имя?имя.charAt(0).toUpperCase():''; if(ava.dataset.l!==l){ ava.dataset.l=l; ava.innerHTML=l?esc(l):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.6 3.6-6 8-6s8 2.4 8 6"/></svg>'; } }
   var only=me.only||'all';
   set('pv-only', lbl(ONLYKEYS, only));
-  set('pq-onlysub', only==='food' ? '«еда и зал» вернёт вкладку «Тренировка»' : '«только еда» уберёт зал со всех экранов');
+  set('pq-onlysub', 'экраны приложения');   /* ревью Codex: подпись не повторяет значение справа */
   set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
   var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? имяПрог() : '';
@@ -7884,9 +7931,9 @@ function whenHint(v){
   if(v==='evening') return 'Если до 22:00 записи нет — спрошу, был ли зал.';
   if(v==='any') return 'Спрошу вечером, если за день записи тренировки нет.';
   var a=WHEN_AUTO;
-  if(a&&a.вид==='окно') return 'По записям — '+a.label+'. Через час после обычного конца без записи спрошу, был ли зал.';
-  if(a&&a.вид==='any') return 'По записям время разное — спрошу вечером, если записи нет.';
-  if(a&&a.вид==='мало') return 'Записей пока мало — спрошу вечером, если за день тренировки нет.';
+  if(a&&a.вид==='окно') return 'По записям — '+a.label+'.';
+  if(a&&a.вид==='any') return 'По записям время разное.';
+  if(a&&a.вид==='мало') return 'Записей пока мало.';
   return '';
 }
 function renderWhen(){
@@ -7949,7 +7996,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '23.10 00:10';
+var BUILD = '23.10 08:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -8023,7 +8070,7 @@ function renderPhase(){
     return;
   }
   if(deloadOn()){
-    el.innerHTML='<b>Лёгкая неделя</b> · половина подходов, те же веса, запас 4 повтора. Это не отдых из слабости — так возвращается тяга к следующей неделе.';
+    el.innerHTML='<b>Лёгкая неделя</b> · половина подходов, те же веса, запас 4 повтора.';
     return;
   }
   var p=phaseNow();
@@ -8703,7 +8750,7 @@ function spChips(){
   if(!SPORT.all && все.length>список.length)
     h += '<button type="button" data-spmore="1" aria-pressed="false">ещё '+(все.length-список.length)+' →</button>';
   h += '<button type="button" data-spown="1" aria-pressed="'+(!!SPORT.own)+'">своё</button>';
-  box.innerHTML = h;
+  box.innerHTML = h; box.classList.toggle('all', !!SPORT.all);
   var row=document.getElementById('sp-ownrow'); if(row) row.hidden = !SPORT.own;
 }
 function spMin(){
@@ -8741,8 +8788,8 @@ function spItog(){
       if(spName().trim()!==имя || SPORT.min!==p.min || SPORT.int!==p.intensity) return;  /* ответ устарел */
       el.innerHTML='<b>+'+p.kcal+' ккал к норме еды</b>'+
         '<i>'+esc(p.kind)+' · '+p.min+' мин · MET '+String(p.met).replace('.',',')+
-        (p.known ? ' · Compendium 2011, не по часам'
-                 : ' · такого вида в справочнике нет — считаю по средним') + '</i>';
+        (p.known ? ' · Compendium'
+                 : ' · по средним') + '</i>';
     }).catch(function(){ el.innerHTML='<i>Не удалось посчитать — запишу, прибавку увидишь в дне.</i>'; });
   }, 260);
 }
@@ -8785,8 +8832,7 @@ function durИтог(){
   var el=document.getElementById('dur-itog'), b=document.getElementById('dur-save'); if(!el) return;
   if(!(DUR.min>0)){ el.innerHTML='<i>Выбери время или впиши своё.</i>'; if(b) b.disabled=true; return; }
   var на=DUR.min/Math.max(1,DUR.n);
-  el.innerHTML = DUR.n+' '+plural(DUR.n,['подход','подхода','подходов'])+' за '+DUR.min+' '+
-    plural(DUR.min,['минуту','минуты','минут'])+' — по '+на.toFixed(1).replace('.',',')+' минуты на подход.';
+  el.innerHTML = '~'+на.toFixed(1).replace('.',',')+' мин на подход';
   if(b) b.disabled=false;
 }
 function openDur(n, замер, потом){
@@ -8794,10 +8840,9 @@ function openDur(n, замер, потом){
   DUR={n:n, замер:замер, min:замер, own:false, потом:потом||null};
   var долго = замер > 10*n;
   var w=document.getElementById('dur-why');
-  if(w) w.textContent='Таймер насчитал '+замер+' '+plural(замер,['минуту','минуты','минут'])+
-    ' — на '+n+' '+plural(n,['подход','подхода','подходов'])+
-    (долго ? ' это слишком долго. Похоже, занятие давно кончилось, а приложение открыли позже.'
-           : ' это слишком быстро. Он включается с первого записанного подхода, так что мог опоздать.');
+  if(w) w.textContent=замер+' '+plural(замер,['минута','минуты','минут'])+
+    ' на '+n+' '+plural(n,['подход','подхода','подходов'])+
+    (долго ? ' — похоже, приложение открыли позже.' : ' — похоже, таймер опоздал.');
   durМин(); durИтог(); m.classList.add('show');
 }
 function closeDur(){ var m=document.getElementById('durm'); if(m) m.classList.remove('show'); DUR.потом=null; }
@@ -9109,7 +9154,7 @@ function renderList(){
   var sl=document.getElementById('sportlow');
   if(sl) sl.innerHTML=
      '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
-     '<p class="sptoday">Теннис, бег, плавание, прогулка — всё, что не зал. Идёт в день и поднимает норму еды.</p>';
+     '<p class="sptoday">Теннис, бег, прогулка — поднимает норму еды.</p>';   /* 23.10: короче; подпись — его решение 24.09 «с подписью» (test-sport) */
   /* дорожка в шапке считает закрытые подходы — она меняется вместе со списком */
   var hh=document.getElementById('nexthint');
   if(hh && typeof suggestedDay==='function'){
@@ -9197,7 +9242,7 @@ function техHTML(e){
   } else h+='<p class="tnone">Описания этого упражнения пока нет — посмотри видео.</p>';
   h+='<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(e.en||e.n)+'">'+ИК.play+'<span>Видео</span></a>'+
      '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div>';
-  if(шаги) h+='<p class="tsrc">'+(e.cat && catOwn(e.cat) ? 'Текст — GetFit.' : 'Текст — free-exercise-db (общественное достояние), перевод и сокращение GetFit.')+'</p>';
+  if(шаги) h+='<p class="tsrc">'+(e.cat && catOwn(e.cat) ? 'Текст — GetFit' : 'Текст — free-exercise-db, перевод GetFit')+'</p>';
   return h;
 }
 function openTech(di){
@@ -11379,7 +11424,7 @@ function renderLogSum(){
   var план=Object.keys(GYM_DAYS).length, семь=0, семьПод=0, сер=weekStreak();
   HIST.forEach(function(w){ if((new Date(TODAY)-new Date(w.date))/864e5<7){ (w.ex||[]).forEach(function(x){ (x.sets||[]).forEach(function(v){ if(v.r!=null){ семьПод++; if(v.w!=null && наПовторы(x)) семь+=v.w*v.r; } }); }); } });
   box.innerHTML =
-    tile('эта неделя', c.sess+(план?' <small>/ '+план+'</small>':''), lastD==null ? 'занятий' : (lastD===0?'последняя сегодня':'последняя '+lastD+' '+plural(lastD,['день','дня','дней'])+' назад')) +
+    tile('эта неделя', c.sess+(план?' <small>/ '+план+'</small>':''), lastD==null ? 'занятий' : 'последняя '+daysAgoRu(lastD)) +
     tile('подряд', сер, plural(сер,['неделя','недели','недель'])+' без пропуска');
   /* 10.09: тоннаж и «всего тренировок» убраны — цифры ради цифр; объём виден
      на карте мышц ниже, прогрессия — в «Прогрессе». */
@@ -11546,11 +11591,10 @@ function renderMus(){
   var нет=всего.filter(function(k){ return !(сет[k]>0); }).map(function(k){ return MNAME[k].toLowerCase(); });
   var хвост=нет.length>4 ? нет.slice(0,4).join(', ')+' и ещё '+(нет.length-4) : нет.join(', ');
   var сводка='<b'+(закрыто?'':' class="down"')+'>'+закрыто+'</b> из '+всего.length+
-    ' групп закрыли норму.'+(нет.length?' Не трогал: '+хвост+'.':'')+
-    ' Нажми на мышцу — покажу подробности.';
+    ' групп — норма закрыта.'+(нет.length?' Не было: '+хвост+'.':'');
   box.innerHTML='<div class="chartbox"><div class="charthead"><h4>Карта тела</h4></div>'+
     /* 17.10, его выбор F: одна строка; числа порогов — в легенде под картой */
-    '<p class="chartsub">7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+' · ярче — свежее, обводка — норма закрыта</p>'+
+    '<p class="chartsub">7 дней · '+занятий+' '+plural(занятий,['занятие','занятия','занятий'])+'</p>'+
     svg+
     '<div class="muskey"><i>подходов за 7 дней</i><i><span class="sw"></span>сегодня → '+MFADE+' дней</i>'+
     '<i><span class="sw2"></span>'+MPOROG+'+ подходов — норма закрыта</i></div>'+
@@ -13007,7 +13051,7 @@ function sbПодходов(){
 function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
   var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выбери хотя бы два дня';
-  var m=document.getElementById('sb-minh'); if(m) m.textContent = 'это '+п+' рабочих подходов за занятие, около '+(п*д)+' в неделю';
+  var m=document.getElementById('sb-minh'); if(m) m.textContent = п+' '+plural(п,['подход','подхода','подходов'])+' за занятие · ~'+(п*д)+' в неделю';
   var g=document.getElementById('sb-go'); if(g) g.disabled = д<2;
 }
 function openSbor(){
@@ -13027,8 +13071,7 @@ function openSbor(){
   var d=document.getElementById('sb-dis'); if(d) d.value=(me.dislikes||[]).join(', ');
   var g=document.getElementById('sborgoal');
   if(g){ var gt=goalObj();
-    g.textContent = gt&&gt.text ? ('Цель уже согласована: '+gt.text+'. Её здесь не меняем — ниже только то, от чего зависит сама программа.')
-                                : 'Ниже — только то, от чего зависит сама программа.'; }
+    g.textContent = gt&&gt.text ? ('Цель: '+gt.text+'.') : ''; g.hidden=!g.textContent; }
   sbPlaceUI(); sbСчёт();
   var m=document.getElementById('sborm'); if(m) m.classList.add('show');
 }
@@ -15118,13 +15161,13 @@ function renderCircle(){
      хочет. Строка стоит под таблицей, а не в профиле: решение принимается
      там, где видно, о чём оно. */
   var откр = me.open !== false;
-  h+='<p class="klab" style="margin-top:18px">ЧТО ВИДНО СОСЕДЯМ</p>'+
+  h+='<p class="klab" style="margin-top:18px">Что видно соседям</p>'+
      '<div class="lbseg" style="margin-top:0"><button type="button" data-vid="1" aria-pressed="'+откр+'">Тарелки и фото</button>'+
      '<button type="button" data-vid="0" aria-pressed="'+(!откр)+'">Только балл</button></div>'+
      '<p class="lbkey">'+(откр
-       ? 'Соседи по кругам открывают твой день и видят еду с фото — и могут её оценить. Отдельную тарелку можно спрятать на «Еде».'
-       : 'В таблице ты остаёшься — балл, дни недели и серия видны. Еду и фото соседи не увидят, и оценить их нельзя.')+'</p>';
-  h+='<p class="cirnote">Оценка дня — из 10, по своей норме: калории, белок, жир, клетчатка, сахар в еде. Нажми на человека — увидишь его еду за день и за что снято. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
+       ? 'Соседи видят твою еду и могут её оценить. Тарелку можно скрыть.'
+       : 'В таблице ты есть, еду соседи не увидят.')+'</p>';
+  h+='<p class="cirnote">Балл — из 10, каждому по своей норме. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
   if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
     'Пока день идёт, оценивается съеденное: каждый приём — своей долей дня, недобор не штраф, перебор — да. В полночь фиксируется итог по всей норме.<br>'+
     'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
@@ -15311,14 +15354,14 @@ function renderKrug(){
   if(t) t.textContent = c.name;
   var h = '';
   if(моё){
-    h += '<p class="klab">НАЗВАНИЕ</p><div class="kcode"><input id="k-name" type="text" autocomplete="off" maxlength="24" value="' + esc(c.name) + '">' +
+    h += '<p class="klab">Название</p><div class="kcode"><input id="k-name" type="text" autocomplete="off" maxlength="24" value="' + esc(c.name) + '">' +
          '<button type="button" class="btn small" id="k-rename">Сохранить</button></div>';
   }
-  h += '<p class="klab">КОД ДЛЯ ПРИГЛАШЕНИЯ</p>' +
+  h += '<p class="klab">Код для приглашения</p>' +
        '<div class="kcode"><input id="k-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" value="' + esc(c.code) + '"' + (моё ? '' : ' readonly') + '>' +
        (моё ? '<button type="button" class="btn small" id="k-code-save">Сменить</button>' : '') + '</div>' +
        '<button type="button" class="btn wide" data-cshare="' + esc(c.id) + '" style="margin-top:8px">Отправить приглашение</button>';
-  h += '<p class="klab">КТО ВНУТРИ · ' + c.n + '</p>';
+  h += '<p class="klab">Кто внутри · ' + c.n + '</p>';
   if(!KRUG.люди) h += '<p class="mtext">Загружаю…</p>';
   else h += KRUG.люди.map(function(m){
     return '<div class="krow'+(моё && !m.owner?' has-actions':'')+'"><span class="kn">' + esc(m.me ? 'Ты' : m.name) + (m.owner ? '<i>завёл круг</i>' : '') + '</span>' +
@@ -15335,10 +15378,10 @@ function renderKrug(){
     }).join('');
   }
   if(моё){
-    h += '<ul class="kmine"><li>Круг твой: имя, код и состав меняешь только ты.</li><li>«Убрать» — участник больше не войдёт по коду, пока ты его не вернёшь.</li><li>«Передать» отдаёт круг человеку целиком: дальше имя, код и состав меняет он, а ты останешься участником и сможешь выйти.</li><li>Закроешь — таблица исчезнет у всех, записи людей останутся при них.</li></ul>';
+    h += '<ul class="kmine"><li>Имя, код и состав меняешь только ты.</li><li>«Убрать» — больше не войдёт по коду.</li><li>«Передать» — круг другому, ты останешься участником.</li><li>«Закрыть» — таблица исчезнет у всех.</li></ul>';
     h += '<button type="button" class="btn wide danger" id="k-drop" style="margin-top:10px">Закрыть круг</button>';
   } else {
-    h += '<p class="kmine">Круг завёл кто-то другой — имя и состав меняет он. Ты можешь выйти в любой момент.</p>' +
+    h += '<p class="kmine">Круг ведёт другой участник.</p>' +
          '<button type="button" class="btn wide danger" id="k-leave" style="margin-top:10px">Выйти из круга</button>';
   }
   box.innerHTML = h;
@@ -15897,7 +15940,7 @@ function renderAdmin(){
   if(в.length) h+='<div class="adatt"><b>'+в.length+' '+plural(в.length,['платит','платят','платят'])+
     ', но не заходил'+(в.length===1?'':'и')+' неделю.</b> '+
     в.slice(0,4).map(function(x){ return esc(x.name); }).join(', ')+
-    (в.length>4?' и ещё '+(в.length-4):'')+'. Обычно это отписка в следующем месяце.</div>';
+    (в.length>4?' и ещё '+(в.length-4):'')+'.</div>';
   /* 3. Числа. */
   h+='<div class="adstrip">'+
      admПлитка('людей', л.всего)+admПлитка('платят', дс.платных)+admПлитка('бессрочно', дс.вечных)+
@@ -15937,7 +15980,7 @@ function renderAdmin(){
   var activePro=pro.filter(function(x){return !used(x);}), activePromo=promo.filter(function(x){return !used(x);});
   if(activePro.length) h+='<h3 class="adh">pro-ссылки</h3>'+activePro.map(function(x){return linkRow(x,true);}).join('');
   h+='<h3 class="adh">промокоды</h3>'+activePromo.map(function(x){return linkRow(x,false);}).join('');
-  if(activePro.length||activePromo.length) h+='<p class="adnote" id="adgrant-note">Отключение запрещает новые активации. Выданный доступ сохранится.</p>';
+  if(activePro.length||activePromo.length) h+='<p class="adnote" id="adgrant-note">Выданный доступ сохранится.</p>';
   var pastPro=pro.filter(used),pastPromo=promo.filter(used),pastCount=pastPro.length+pastPromo.length;
   if(pastCount) h+='<details class="adhistory"><summary>История · '+pastCount+'</summary>'+
     (pastPro.length?'<h3 class="adh">pro-ссылки</h3>'+pastPro.map(function(x){return linkRow(x,true);}).join(''):'')+
@@ -15946,7 +15989,7 @@ function renderAdmin(){
   '<div class="adcode"><input id="adm-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="24" placeholder="новый код">'+
   '<input id="adm-n" class="nn" type="number" inputmode="numeric" min="1" max="10000" placeholder="20">'+
   '<button type="button" class="btn small prim" id="adm-add">Завести</button></div>'+
-  '<p class="adnote" style="margin-top:8px">Второе поле — на скольких человек хватит кода. Код даёт полный доступ навсегда, такой же, как у тех, кто был до появления цены.</p>';
+  '<p class="adnote" style="margin-top:8px">Число — на скольких хватит кода. Доступ навсегда.</p>';
   box.innerHTML=h;
 }
 function admПлитка(имя, знач){ return '<div class="ads"><u>'+имя+'</u><b>'+чис(знач)+'</b></div>'; }
@@ -16505,7 +16548,7 @@ function renderEat(){
   var h=eatSegHTML()+сегодняHTML();
   var всегоБлюд=CAT ? catБаза().length : 0;
   h+='<button type="button" class="catopen" id="catopen" aria-expanded="'+CATSHOW+'"><span><b>Каталог блюд</b><s>'+
-     (всегоБлюд ? всегоБлюд+' '+plural(всегоБлюд,['блюдо','блюда','блюд'])+' · ' : '')+'цель приёма, фильтры по кухне и основе</s></span><i>'+(CATSHOW?'⌃':'›')+'</i></button>';
+     (всегоБлюд ? всегоБлюд+' '+plural(всегоБлюд,['блюдо','блюда','блюд']) : 'по цели и кухне')+'</s></span><i>'+(CATSHOW?'⌃':'›')+'</i></button>';
   if(!CATSHOW){ box.innerHTML=h; return; }
   h+='<div id="fpod"></div>';
   /* «Своё» было неточным словом: это не «сам приготовил», а прошлые записи —
@@ -17090,14 +17133,18 @@ function svОткрыть(){
   var темп = о.темп!=null ? 'темп за две недели '+vzЗн(о.темп)+' кг/нед'+(о.план ? ' при плане −'+з(Math.abs(о.план))+(о.доля!=null ? ' ('+Math.round(о.доля*100)+' % плана)' : '') : '')
                           : 'темпа пока нет — мало взвешиваний';
   var окно = о.открыто
-    ? '<b class="ok">Окно открыто</b> — по твоему темпу такой день сейчас вписывается в план.'+(ц.дней ? '<small>Цена всё равно есть: около '+свобДней(ц.дней)+' срока цели (~'+ц.ккал+' ккал сверх плана).</small>' : '')
-    : 'Следующее окно — <b>'+ruDate(о.след)+'</b>'+(о.прошлый ? ' (прошлый свободный — '+ruDate(о.прошлый)+')' : '')+'.'+
-      (ц.дней ? '<small>Сейчас этот день сдвинет срок цели примерно на '+свобДней(ц.дней)+' (~'+ц.ккал+' ккал сверх плана, ~'+з(ц.кг)+' кг). Отметить всё равно можно.</small>' : '');
+    ? '<b class="ok">Окно открыто</b> — вписывается в план.'+(ц.дней ? '<small>Цена: ~'+свобДней(ц.дней)+' срока цели (~'+ц.ккал+' ккал).</small>' : '')
+    : 'Следующее окно — <b>'+ruDate(о.след)+'</b>.'+
+      (ц.дней ? '<small>Сейчас сдвинет срок цели примерно на '+свобДней(ц.дней)+'. Отметить всё равно можно.</small>' : '');
   document.getElementById('svbody').innerHTML =
-    '<p class="svp">День без записи еды: приложение не просит записывать и не ставит оценку, тренер не спрашивает про еду. <b>Серия не рвётся</b>, зал — как обычно.</p>'+
-    '<p class="svp">Наутро весы покажут <b>+0,5–2 кг</b> — это вода, гликоген и соль, а не жир; уходит за 2–4 дня. Три утра после него не идут в средний вес, «за неделю» и план.</p>'+
-    '<p class="svp">Норма следующего дня — обычная. «Отрабатывать» не нужно: голодный день после свободного запускает цикл «переедание → вина → ограничение».</p>'+
-    '<div class="svwin">Как часто: <b>раз в '+свобДней(о.шаг||7)+'</b><small>'+esc(темп)+'. Темп на уровне плана — раз в 7 дней, 70–100 % плана — раз в 14, ниже — раз в 21. Окно открывает темп, а не «заслуга».</small></div>'+
+    /* 23.10, его «минимизируй текст»: три абзаца — в три короткие строки */
+    '<p class="svp">Без записи и оценки. <b>Серия не рвётся.</b></p>'+
+    '<p class="svp">Утром <b>+0,5–2 кг</b> — вода, уйдёт за 2–4 дня.</p>'+
+    '<p class="svp">Завтра — обычная норма, отрабатывать не нужно.</p>'+
+    '<div class="svwin">Как часто: <b>раз в '+свобДней(о.шаг||7)+'</b><small>'+esc(темп)+'</small>'+
+      /* ревью Codex R3: правило окна и три утра — по раскрытию, не на основном виде */
+      '<details class="svhow"><summary>Как считается</summary><p>Три утра после него не идут в средний вес и план. '+
+      'Темп на уровне плана — раз в 7 дней, 70–100 % плана — раз в 14, ниже — раз в 21.</p></details></div>'+
     '<div class="svwin">'+окно+'</div>';
   var кн=document.getElementById('svgo');
   кн.textContent = св.on ? 'Снять отметку с '+(iso===TODAY?'сегодня':ruDate(iso)) : (iso===TODAY ? 'Сегодня — свободный день' : 'Отметить '+свобДень(iso)+' свободным');
@@ -17361,8 +17408,8 @@ function mealNums(){
     if(t) el.value = t[k];
   });
   document.getElementById('ml-hint').textContent = its.length
-    ? 'Итог — сумма состава: поправь вес любой строки или убери лишнее, и числа сойдутся сами.'
-    : 'Числа считал тренер по фото — если знаешь точнее, поправь здесь.';
+    ? 'Итог — сумма состава.'
+    : 'Оценка по фото — поправь, если знаешь точнее.';
 }
 /* 24.09, его просьба: нажатие на запись показывает, почему у приёма такой
    балл и что было бы лучше; правка — кнопкой «Изменить» в той же шторке.

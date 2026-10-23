@@ -54,9 +54,10 @@ const вкладка=async(p,t,z)=>{await p.click('.l1 [data-page="'+t+'"]');awa
   await чист('рейтинг');
   /* F · карта тела и каталог */
   await вкладка(p,'gym','[data-zseg="log"]');
-  const f=await p.evaluate(()=>({sub:(document.querySelector('#logmusbox .chartsub')||{}).textContent||'',attr:document.querySelectorAll('#logmusbox .attr').length,
+  const f=await p.evaluate(()=>({sub:(document.querySelector('#logmusbox .chartsub')||{}).textContent||'',key:(document.querySelector('#logmusbox .muskey')||{}).textContent||'',attr:document.querySelectorAll('#logmusbox .attr').length,
    how:(document.querySelector('#profm .howattr')||{}).textContent||''}));
-  ok(f.sub.length<90&&/обводка/.test(f.sub),где+'F: подпись карты — одной строкой: '+f.sub);
+  /* 23.10, его «минимизируй текст»: «ярче — свежее, обводка — норма» уже говорит легенда под картой — в подписи только дни и занятия */
+  ok(f.sub.length<40&&/норма закрыта/.test(f.key)&&/сегодня/.test(f.key),где+'F: подпись карты короткая, смысл цвета и обводки — в легенде: '+f.sub+' | '+f.key);
   ok(f.attr===0&&/body-muscles/.test(f.how),где+'F: лицензия анатомии — внизу профиля (справку убрали 22.10)');
   /* G · снимок весов подписан */
   await вкладка(p,'home');

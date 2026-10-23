@@ -31,7 +31,7 @@ const НОВЫЙ = { id: 'z1016_b1', kind: 'обед', text: 'Рыба с рис
   await page.screenshot({ path: '/tmp/gf-menu-odno-zavtra.png', fullPage: true });
   дано(await page.isVisible('#mizned'), '«Завтра» при неделе — подписано, что это день из недели');
   const т = (await page.textContent('#eatbody')).replace(/\s+/g, ' ');
-  дано(/Готовить не нужно: плов с говядиной — покупаешь готовым или ешь как есть/.test(т), 'готовое блюдо — объяснено, что его покупают: ' + (т.match(/Готовить[^.]*/) || [''])[0]);
+  дано(/Готовить не нужно: плов с говядиной — готовое, без рецепта/.test(т), 'готовое блюдо — объяснено, что его покупают: ' + (т.match(/Готовить[^.]*/) || [''])[0]);
   await page.click('#eatbody [data-mgen="day"]'); await page.waitForTimeout(900);
   дано(о.просили && о.просили.span === 'day', '«Другое меню» на завтра попросило сервер');
   await page.click('#eatbody [data-eseg="week"]'); await page.waitForTimeout(400);
