@@ -186,6 +186,13 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
     await page.close();
   }
 
+  /* ── 8г. 23.10: сервер прислал его слова (ask) — карточка цитирует их ── */
+  ({ page } = await открыть(br, { reco: Object.assign({}, RECO, { id: 'r-zam-8g', why: 'по просьбе', ask: 'Замени махи, стоя качаюсь корпусом' }) }));
+  await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
+  const т8г = (await page.$eval('#coachreco .rwhy', e => e.textContent).catch(() => '')).replace(/\s+/g, ' ');
+  дано(/^Ты писал: «?Замени махи, стоя качаюсь корпусом»?$/.test(т8г.trim()), 'с ask — его слова: ' + т8г);
+  await page.close();
+
   /* ── 8в. ревью Codex R2: суперсет — зачёркнуто именно заменяемое, а не партнёр ── */
   const ПРОГСС = JSON.parse(JSON.stringify(ПРОГ)); ПРОГСС.days[0].ex[0].ss = 1; ПРОГСС.days[0].ex[1].ss = 1;
   for (const раскрыть of [null, 0, 1]) {
