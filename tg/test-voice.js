@@ -10,6 +10,9 @@ const мой=p=>p.evaluate(()=>{try{return JSON.parse(localStorage.getItem('shp_
 async function поднять(b,width,theme,o){
  const p=await b.newPage({viewport:{width,height:900}});const ушло=[];
  p.on('request',r=>{try{const u=new URL(r.url());if(u.pathname==='/s'){const d=JSON.parse(r.postData()||'{}');if(d.key==='me')ушло.push(d.data&&d.data.me&&d.data.me.voice);}}catch(e){}});
+ /* 24.10, этап 4: карточку «Настройте своего тренера» человек отложил — тогда, как
+    прежде, на главной карточка характера (её и проверяем здесь; знакомство — test-trener-pod-sebya) */
+ await p.addInitScript(()=>{try{localStorage.setItem('shp_v1_trcard_off','1')}catch(e){}});
  const err=await M.поднять(p,Object.assign({theme},o||{}));await p.waitForTimeout(400);return {p,err,ушло};
 }
 (async()=>{const b=await chromium.launch();try{

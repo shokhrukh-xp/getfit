@@ -3329,6 +3329,49 @@ body.ordmode #list .sstag{color:var(--text)}
 #subm .subin li::before{content:'✓';position:absolute;left:2px;top:10px;width:auto;height:auto;margin:0;border-radius:0;background:none;
   color:var(--accent-txt);font-weight:800;line-height:1.45}
 #subm .subfree{padding:10px 12px;border-radius:12px;background:var(--tint);font-size:13px;color:var(--muted)}
+/* ══ 24.10 этап 4: тренер под себя — карточка на главной и лист знакомства ══ */
+.trcard{background:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%);color:#FFFFFF;border:0;padding:16px}
+.trcard .trtop{display:flex;gap:12px;align-items:center}
+.trcard .trava{width:48px;height:48px;border-radius:50%;background:#0A4248;box-shadow:0 0 0 2px #FFD69E;display:grid;place-items:center;flex:none}
+.trcard .trava img{width:27px;height:auto}
+.trcard b{display:block;font-size:17px;font-weight:800;color:#FFFFFF}
+.trcard .trsub{display:block;margin-top:2px;font-size:13px;line-height:1.4;color:#E9F6F4}
+.trcard .trbtns{display:flex;gap:8px;margin-top:12px}
+.trcard .trbtns button{min-height:46px;border-radius:14px;border:0;font:600 15px inherit;font-family:inherit;padding:0 16px}
+.trcard .trbtns .trgo{flex:1 1 auto;background:#F4B860;color:#4A3000;font-weight:700}
+.trcard .trbtns .trno{background:rgba(255,255,255,.14);color:#FFFFFF}
+#trenm{z-index:130}
+#trenm .modalbox{display:flex;flex-direction:column;gap:14px;min-height:72vh}
+.trhd{display:flex;align-items:center;gap:10px}
+.trhd .trback{border:0;background:none;color:var(--accent-txt);font:600 15px inherit;font-family:inherit;min-height:44px;padding:0 4px}
+.trhd .trbars{flex:1 1 auto;display:flex;gap:5px}
+.trhd .trbars i{flex:1 1 0;height:4px;border-radius:2px;background:var(--line)}
+.trhd .trbars i.on{background:var(--accent)}
+.trhd .trn{font-size:13px;color:var(--muted)}
+.trbig{display:flex;justify-content:center}
+.trava2{width:84px;height:84px;border-radius:50%;background:var(--field);box-shadow:0 0 0 2px var(--accent);display:grid;place-items:center}
+.trava2 img{width:46px;height:auto}
+.trh{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.trp{margin:0;font-size:14px;line-height:1.45;color:var(--muted)}
+#trname{height:52px;border-radius:14px;border:2px solid var(--accent);background:var(--field);color:var(--text);font:700 18px inherit;font-family:inherit;padding:0 14px;width:100%;box-sizing:border-box}
+.trchips{display:flex;flex-wrap:wrap;gap:8px}
+.trchips button{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 15px inherit;font-family:inherit}
+.trchips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#04201D}
+.trgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tropt{border-radius:18px;border:2px solid var(--line);background:var(--field);color:var(--text);padding:14px;text-align:left;font-family:inherit;display:flex;flex-direction:column;gap:4px;min-height:56px}
+.tropt b{font-size:16px;font-weight:800}
+.tropt span{font-size:13px;color:var(--muted);line-height:1.4}
+.tropt[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--field))}
+.trgrid .tropt{align-items:center;text-align:center}
+.trlist{display:flex;flex-direction:column;gap:8px}
+.trsay{display:flex;gap:8px;align-items:flex-end}
+.trsay .trava3{width:30px;height:30px;border-radius:50%;background:var(--field);display:grid;place-items:center;flex:none}
+.trsay .trava3 img{width:17px;height:auto}
+.trsay div{background:var(--field);border-radius:18px 18px 18px 6px;padding:10px 12px;font-size:14px;line-height:1.45}
+.trsay small{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.trft{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.trft .trnext{min-height:52px;border-radius:16px;border:0;background:#F4B860;color:#4A3000;font:700 16px inherit;font-family:inherit}
+.trft .trskip{border:0;background:none;color:var(--muted);font:500 13px inherit;font-family:inherit;min-height:44px}
 /* 24.10 Wellböl: моменты бренда (макеты «бренд в приложении») */
 #subm .subico{display:block;width:56px;height:auto;margin:2px 0 8px}
 #subm #sub-buy{background:#F4B860;border-color:#F4B860;color:#4A3000}
@@ -4021,6 +4064,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
         <button type="button" class="nudge onb" id="zdnudge" hidden></button>
         <!-- 14.10, его выбор: после знакомства — «С чего начнём?», один раз -->
         <div class="nudge onb startcard" id="startcard" role="group" aria-labelledby="sctitle" hidden></div>
+        <div class="nudge onb trcard" id="trcard" role="group" aria-labelledby="trtitle" hidden></div>
         <div class="nudge onb vnudge" id="voicenudge" role="group" aria-labelledby="vntitle" hidden></div>
         <div class="hwrap" id="homebody"></div>
         <!-- 30.09, его просьба: ввод замера — с «Еды» на главную, под карточку
@@ -4379,6 +4423,8 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
     <div class="srsw" id="sr-sw"></div>
   </div>
 </div>
+<!-- 24.10 этап 4: знакомство с тренером — имя, образ, характер, обращение -->
+<div class="modal" id="trenm" role="dialog" aria-modal="true" aria-labelledby="trh"><div class="modalbox" id="trbox"></div></div>
 <div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="subtitle">Wellböl Pro</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
@@ -4496,6 +4542,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
       <div class="pqgroup">
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="pq-tren"><span class="pqic"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab gymonly">Зал</h4>
@@ -5924,9 +5971,10 @@ function takeVoice(v){
   try{ fillMe(); }catch(e){} renderVoiceNudge();
 }
 function renderVoiceNudge(){
+  try{ renderCoachCard(); }catch(e){}
   var el=document.getElementById('voicenudge'); if(!el) return;
   var me=myData()||{};
-  var надо=meFull() && hasGoal(me) && !me.voice && !gget('startcard',0);
+  var надо=meFull() && hasGoal(me) && !me.voice && !gget('startcard',0) && !тренерКарточкаНадо() && !me.coach_at;
   el.hidden=!надо; if(!надо) return;
   if(el.firstChild) return;
   el.innerHTML='<b id="vntitle">Какой тренер вам нужен?</b><span class="vnsub">Поменять можно в профиле или просто написать тренеру.</span>'+
@@ -6235,6 +6283,8 @@ function wzMeSave(тихо){
   var было=[me.sex,me.age,me.ht,me.bw].join('|');
   me.sex=v.sex; me.age=v.age; me.ht=v.ht; me.bw=v.bw; me.only=v.only||'all';
   if(v.voice && v.voice!==me.voice){ me.voice=v.voice; me.voice_at=new Date().toISOString(); }
+  /* 24.10 этап 4: новые люди — на «вы»; кто уже пользуется, остаётся на «ты», пока не выберет */
+  if(firstRun && !me.addr) me.addr='vy';
   /* здоровье — отдельный шаг (14.10): здесь его не трогаем */
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
@@ -7765,6 +7815,7 @@ function pqVals(){
   set('pv-only', lbl(ONLYKEYS, only));
   set('pq-onlysub', 'экраны приложения');   /* ревью Codex: подпись не повторяет значение справа */
   set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
+  set('pv-tren', (me.coach_name ? me.coach_name+' · ' : '')+(me.addr==='vy' ? 'на «вы»' : 'на «ты»'));
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
   var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? имяПрог() : '';
   set('pq-gymsub', имяП ? имяП+(дни && !/\d\s*(день|дня|дней)/.test(имяП) ? ' · '+дни+' '+plural(дни,['день','дня','дней'])+' в неделю' : '') : 'по ней собирается день в «Тренировке»');
@@ -7933,6 +7984,99 @@ document.getElementById('zdnudge').addEventListener('click', function(){
   renderZdNudge(); haptic('light');
 });
 document.getElementById('nudge').addEventListener('click', function(){ openProf(); haptic('light'); });
+/* ══ ТРЕНЕР ПОД СЕБЯ (24.10, этап 4) ══
+   Его идея: «дадим пользователям давать имя тренеру самим, выбирать его
+   характер, пол». Макеты 4.0–4.6 (холст «бренд в приложении»), его правка:
+   «очевиднее пиши, например „Дайте имя своему тренеру“». Хранится в профиле:
+   me.coach_name, me.coach_sex ('m'|'f'), me.addr ('vy'|'ty'), me.coach_at;
+   характер — прежний me.voice. Тем, кто уже пользуется, — карточка один раз,
+   до выбора всё как было (его характер и «ты»). Образ тренера — только как он
+   говорит о себе; нормы — по анкете человека. */
+var ТРЕНЕР_ИМЕНА=['Зиё','Лола','Камол','Тана','Кай'];
+var ТР={step:1,name:'',sex:'m',voice:'standard',addr:'vy',изКарточки:false};
+function имяТренера(){ var me=myData()||{}; return String(me.coach_name||'').trim(); }
+function тренерКарточкаНадо(){
+  var me=myData()||{};
+  return !!(meFull() && hasGoal(me) && !me.coach_at && !gget('trcard_off',0) && !gget('startcard',0));
+}
+function renderCoachCard(){
+  var el=document.getElementById('trcard'); if(!el) return;
+  var on=тренерКарточкаНадо(); el.hidden=!on; if(!on) return;
+  if(el.firstChild) return;
+  el.innerHTML='<div class="trtop"><span class="trava"><img src="img/wb-mark-128.png" alt=""></span><span><b id="trtitle">Настройте своего тренера</b>'+
+    '<span class="trsub">Имя, образ, характер и обращение — меньше минуты.</span></span></div>'+
+    '<div class="trbtns"><button type="button" class="trgo" data-tr="open">Настроить</button><button type="button" class="trno" data-tr="later">Позже</button></div>';
+}
+function тренерПример(){
+  var f=ТР.sex==='f', вы=ТР.addr==='vy', з=f?'Записала':'Записал';
+  if(ТР.voice==='hard') return 'Плов на 350 г — смелое решение. '+з+' 610 ккал. Белок на ужин сам себя не съест: '+(вы?'вам':'тебе')+' ещё 98 г.';
+  if(ТР.voice==='fun') return 'Плов — это святое. '+з+' 610 ккал. '+(вы?'Добавьте':'Добавь')+' на ужин белка, ещё 98 г, и день будет отличный.';
+  return з+' плов, 350 г — 610 ккал. До нормы белка ещё 98 г: на ужин '+(вы?'возьмите':'возьми')+' рыбу или курицу.';
+}
+function openTren(изКарточки){
+  var me=myData()||{};
+  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
+      addr:me.addr==='vy'?'vy':(me.addr==='ty'?'ty':(me.voice||me.coach_at?'ty':'vy')),изКарточки:!!изКарточки};
+  renderTren();
+  var m=document.getElementById('trenm'); if(m) m.classList.add('show');
+  haptic('light');
+}
+function closeTren(){ var m=document.getElementById('trenm'); if(m) m.classList.remove('show'); }
+function renderTren(){
+  var box=document.getElementById('trbox'); if(!box) return;
+  var n=ТР.step, имя=ТР.name.trim()||'Тренер', h='';
+  h+='<div class="trhd">'+(n>1?'<button type="button" class="trback" data-tr="back">← Назад</button>':'<button type="button" class="trback" data-tr="skip" aria-label="Закрыть">✕</button>')+
+    '<span class="trbars" aria-hidden="true">'+[1,2,3,4].map(function(i){ return '<i'+(i<=n?' class="on"':'')+'></i>'; }).join('')+'</span><span class="trn">'+n+' из 4</span></div>';
+  var пример='<div class="trsay"><span class="trava3"><img src="img/wb-mark-128.png" alt=""></span><div><small>'+esc(имя)+' · '+esc(lbl(VOICEKEYS,ТР.voice))+(n===4?' · '+(ТР.addr==='vy'?'на «вы»':'на «ты»'):'')+'</small>'+esc(тренерПример())+'</div></div>';
+  if(n===1){
+    h+='<div class="trbig"><span class="trava2"><img src="img/wb-mark-128.png" alt=""></span></div>'+
+      '<h3 class="trh" id="trh">Дайте имя своему тренеру</h3><p class="trp">Это имя тренер будет использовать в чате и в боте. Впишите своё или выберите из подсказок.</p>'+
+      '<input id="trname" type="text" maxlength="24" autocomplete="off" placeholder="Например, Кай" value="'+esc(ТР.name)+'" aria-label="Имя тренера">'+
+      '<div class="trchips">'+ТРЕНЕР_ИМЕНА.map(function(x){ return '<button type="button" data-trname="'+x+'" aria-pressed="'+(ТР.name===x)+'">'+x+'</button>'; }).join('')+'</div>';
+  } else if(n===2){
+    h+='<h3 class="trh" id="trh">Выберите образ тренера</h3><p class="trp">Мужчина или женщина — влияет только на то, как тренер говорит о себе: «записал» или «записала». Нормы считаются по вашей анкете.</p>'+
+      '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px"><img src="img/wb-mark-128.png" alt="" style="width:30px"></span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>';
+  } else if(n===3){
+    h+='<h3 class="trh" id="trh">Выберите характер тренера</h3><p class="trp">Ниже — как '+esc(имя)+' ответит, если вы напишете «плов 350 г».</p>'+
+      '<div class="trlist">'+VOICEKEYS.map(function(x){ return '<button type="button" class="tropt" data-trvoice="'+x[0]+'" aria-pressed="'+(ТР.voice===x[0])+'"><b>'+x[1][0].toUpperCase()+x[1].slice(1)+'</b><span>'+esc(VOICEHINT[x[0]])+'</span></button>'; }).join('')+'</div>'+пример;
+  } else {
+    h+='<h3 class="trh" id="trh">Выберите обращение</h3><p class="trp">Как '+esc(имя)+' будет говорить с вами: на «вы» или на «ты». Поменять можно в любой момент в профиле.</p>'+
+      '<div class="trgrid">'+[['vy','На «вы»'],['ty','На «ты»']].map(function(x){ return '<button type="button" class="tropt" data-traddr="'+x[0]+'" aria-pressed="'+(ТР.addr===x[0])+'"><b>'+x[1]+'</b></button>'; }).join('')+'</div>'+пример;
+  }
+  h+='<div class="trft"><button type="button" class="trnext" data-tr="next">'+(n<4?'Дальше':'Готово')+'</button>'+
+    (n<4?'<button type="button" class="trskip" data-tr="skip">Пропустить — настроить позже в профиле</button>':'')+'</div>';
+  box.innerHTML=h;
+}
+function тренерСохранить(){
+  var me=myData()||{}, сейчас=new Date().toISOString();
+  me.coach_name=ТР.name.trim().slice(0,24); me.coach_sex=ТР.sex; me.addr=ТР.addr; me.coach_at=сейчас;
+  if(ТР.voice && ТР.voice!==me.voice){ me.voice=ТР.voice; me.voice_at=сейчас; }
+  gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:сейчас}).catch(function(){});
+  closeTren(); haptic('ok');
+  try{ fillMe(); }catch(e){} renderCoachCard(); renderVoiceNudge();
+  try{ if(typeof renderChat==='function') renderChat(); }catch(e){}
+}
+document.getElementById('trenm').addEventListener('click', function(e){
+  if(e.target.id==='trenm'){ closeTren(); return; }
+  var nm=document.getElementById('trname'); if(nm) ТР.name=nm.value;
+  var b=e.target.closest('[data-tr],[data-trname],[data-trsex],[data-trvoice],[data-traddr]'); if(!b) return;
+  if(b.dataset.trname){ ТР.name=b.dataset.trname; renderTren(); haptic('light'); return; }
+  if(b.dataset.trsex){ ТР.sex=b.dataset.trsex; renderTren(); haptic('light'); return; }
+  if(b.dataset.trvoice){ ТР.voice=b.dataset.trvoice; renderTren(); haptic('light'); return; }
+  if(b.dataset.traddr){ ТР.addr=b.dataset.traddr; renderTren(); haptic('light'); return; }
+  var a=b.dataset.tr;
+  if(a==='back'){ ТР.step=Math.max(1,ТР.step-1); renderTren(); return; }
+  if(a==='next'){ if(ТР.step<4){ ТР.step++; renderTren(); } else тренерСохранить(); return; }
+  if(a==='skip'){ if(ТР.изКарточки) gset('trcard_off',1); closeTren(); renderCoachCard(); renderVoiceNudge(); return; }
+});
+document.getElementById('trenm').addEventListener('input', function(e){ if(e.target.id==='trname') ТР.name=e.target.value; });
+document.getElementById('trcard').addEventListener('click', function(e){
+  var b=e.target.closest('[data-tr]'); if(!b) return;
+  if(b.dataset.tr==='open') openTren(true);
+  else { gset('trcard_off',1); renderCoachCard(); renderVoiceNudge(); haptic('light'); }
+});
+document.getElementById('pq-tren').addEventListener('click', function(){ openTren(false); });
 document.getElementById('voicenudge').addEventListener('click', function(e){
   var b=e.target.closest('button[data-voice]'); if(!b) return;
   голосЗадать(b.dataset.voice); try{ fillMe(); }catch(_){} renderVoiceNudge(); haptic('medium');
@@ -18143,7 +18287,7 @@ function deliveryBind(box){
 }
 
 function ответТренера(текст, время, cls, src, menu, кнопки){
-  return '<div class="turn"><div class="who"><img src="img/wb-mark-128.png" alt="">тренер'+
+  return '<div class="turn"><div class="who"><img src="img/wb-mark-128.png" alt="">'+esc(имяТренера()||'тренер')+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
     (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+(кнопки||'')+'</div>';
 }
