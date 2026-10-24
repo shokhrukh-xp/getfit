@@ -35,7 +35,12 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       дано((await page.inputValue('#trname')) === 'Лола', тема + ': подсказка вписывает имя');
       await page.click('#trenm [data-tr="next"]');
       дано(/Выберите образ тренера/.test(await лист.innerText()), тема + ': шаг 2 — образ');
-      await page.click('#trenm [data-trsex="f"]'); await page.click('#trenm [data-tr="next"]');
+      await page.click('#trenm [data-trsex="f"]');
+      /* 24.10: аватар — шесть на образ, выбранный уходит в профиль и в чат */
+      дано((await page.locator('#trenm [data-trav]').count()) === 6 && (await page.getAttribute('#trenm [data-trav="f1"]', 'aria-pressed')) === 'true', тема + ': шесть аватаров, отмечен первый');
+      await page.click('#trenm [data-trav="f3"]');
+      дано((await page.getAttribute('#trenm [data-trav="f3"]', 'aria-pressed')) === 'true', тема + ': выбран аватар f3');
+      await page.click('#trenm [data-tr="next"]');
       дано(/Выберите характер тренера/.test(await лист.innerText()), тема + ': шаг 3 — характер');
       await page.click('#trenm [data-trvoice="hard"]');
       дано(/Записала 610 ккал/.test(await лист.innerText()), тема + ': пример в женском роде');
@@ -46,11 +51,14 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       await page.screenshot({ path: '/tmp/gf-trener-' + тема + '.png' });
       await page.click('#trenm [data-tr="next"]'); await page.waitForTimeout(300);
       const me = await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
+      дано(me.coach_av === 'f3', тема + ': в профиле coach_av=f3');
       дано(me.coach_name === 'Лола' && me.coach_sex === 'f' && me.addr === 'vy' && me.voice === 'hard' && !!me.coach_at,
         тема + ': в профиле ' + JSON.stringify({ n: me.coach_name, s: me.coach_sex, a: me.addr, v: me.voice }));
       дано(!(await лист.isVisible()) && !(await к.isVisible()), тема + ': лист закрыт, карточки нет');
       await page.click('#coachnav'); await page.waitForTimeout(500);
       дано(/Лола/.test(await page.locator('.turn .who').first().innerText().catch(() => '')), тема + ': в чате подпись — имя тренера');
+      дано(/img\/av\/f3\.jpg/.test(await page.locator('.turn .who img').first().getAttribute('src').catch(() => '')), тема + ': в чате аватар f3');
+      дано(await page.evaluate(() => { const i = document.querySelector('.turn .who img'); return !!i && i.complete && i.naturalWidth > 0; }), тема + ': аватар загрузился');
       await page.evaluate(() => { const b = document.getElementById('coachclose') || document.querySelector('#coachm .xbtn'); if (b) b.click(); });
       await page.click('#profbtn'); await page.waitForTimeout(400);
       дано(/Лола · на «вы»/.test(await page.locator('#pv-tren').innerText()), тема + ': строка в профиле');

@@ -4065,6 +4065,16 @@ html.i18nwait body{opacity:0}
 .langseg button[aria-pressed="true"]{background:var(--card);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.18)}
 html[lang=en] .catitem.nope .cattx b::after{content:" · replaced"}
 html[lang=uz] .catitem.nope .cattx b::after{content:" · almashtirilgan"}
+/* 24.10: аватары тренера */
+img.avface{border-radius:50%;object-fit:cover}
+.trava img.avface,.trava2 img.avface,.trava3 img.avface{width:100%;height:100%}
+.turn .who img.avface{width:24px;height:24px}
+.pqic img.pqav{width:100%;height:100%}
+.travlab{display:block;margin:16px 0 8px}
+.travgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.travbtn{aspect-ratio:1;min-height:44px;padding:4px;border:2px solid transparent;border-radius:50%;background:var(--field)}
+.travbtn img{display:block;width:100%;height:100%}
+.travbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,179,166,.25)}
 </style>
 </head>
 <body>
@@ -4579,7 +4589,7 @@ html[lang=uz] .catitem.nope .cattx b::after{content:" · almashtirilgan"}
       <div class="pqgroup">
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" id="pq-tren"><span class="pqic"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="pq-tren"><span class="pqic" id="pqi-tren"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
         <div class="pqrow pqlang" id="pq-lang"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></span><span class="pqt"><b>Язык</b><small>приложения, бота и тренера</small></span><span class="langseg" role="group" aria-label="Язык" data-noi18n><button type="button" data-lang="ru">RU</button><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="en">EN</button></span></div>
         <button type="button" class="pqrow" id="pq-fem" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></span><span class="pqt"><b>Женское здоровье</b><small>цикл, беременность, кормление</small></span><span class="pqv" id="pv-fem"></span><i class="pqch">›</i></button>
       </div>
@@ -7857,6 +7867,7 @@ function pqVals(){
   set('pv-only', lbl(ONLYKEYS, only));
   set('pq-onlysub', 'экраны приложения');   /* ревью Codex: подпись не повторяет значение справа */
   set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
+  try{ var пи=document.getElementById('pqi-tren'), ас=аватарТренера(me); if(пи && пи.getAttribute('data-av')!==ас){ пи.setAttribute('data-av', ас); пи.innerHTML=/\/av\//.test(ас)?аватарHTML(ас,'pqav'):'<img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px">'; } }catch(e){}
   set('pv-tren', (me.coach_name ? me.coach_name+' · ' : '')+(me.addr==='vy' ? 'на «вы»' : 'на «ты»'));
   { var pf=document.getElementById('pq-fem'); if(pf) pf.hidden=me.sex!=='f'; set('pv-fem', женСводка(me)); }
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
@@ -8036,8 +8047,14 @@ document.getElementById('nudge').addEventListener('click', function(){ openProf(
    до выбора всё как было (его характер и «ты»). Образ тренера — только как он
    говорит о себе; нормы — по анкете человека. */
 var ТРЕНЕР_ИМЕНА=['Зиё','Лола','Камол','Тана','Кай'];
-var ТР={step:1,name:'',sex:'m',voice:'standard',addr:'vy',изКарточки:false};
+var ТР={step:1,name:'',sex:'m',av:'m1',voice:'standard',addr:'vy',изКарточки:false};
 function имяТренера(){ var me=myData()||{}; return String(me.coach_name||'').trim(); }
+/* 24.10: аватары тренера — его выбор «B — с лицом», 6 на образ; нарисованы Gemini
+   (его правило: визуальные элементы — всегда через Gemini). img/av/m1…m6, f1…f6.
+   Образ выбран, аватар нет — первый своего образа; образ не выбран — знак ö. */
+function аватарКод(me){ me=me||{}; if(/^[mf][1-6]$/.test(me.coach_av||'') && me.coach_av.charAt(0)===(me.coach_sex||me.coach_av.charAt(0))) return me.coach_av; return me.coach_sex==='f'?'f1':(me.coach_sex==='m'?'m1':''); }
+function аватарТренера(me){ var k=аватарКод(me||myData()||{}); return k ? 'img/av/'+k+'.jpg' : 'img/wb-mark-128.png'; }
+function аватарHTML(src, cls){ var лицо=/\/av\//.test(src); return '<img src="'+src+'" alt=""'+(лицо?' class="avface'+(cls?' '+cls:'')+'"':(cls?' class="'+cls+'"':''))+'>'; }
 function тренерКарточкаНадо(){
   var me=myData()||{};
   return !!(meFull() && hasGoal(me) && !me.coach_at && !gget('trcard_off',0) && !gget('startcard',0));
@@ -8058,7 +8075,7 @@ function тренерПример(){
 }
 function openTren(изКарточки){
   var me=myData()||{};
-  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
+  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',av:аватарКод(me)||(me.coach_sex==='f'?'f1':'m1'),voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
       addr:me.addr==='vy'?'vy':(me.addr==='ty'?'ty':(me.voice||me.coach_at?'ty':'vy')),изКарточки:!!изКарточки};
   renderTren();
   var m=document.getElementById('trenm'); if(m) m.classList.add('show');
@@ -8070,15 +8087,18 @@ function renderTren(){
   var n=ТР.step, имя=ТР.name.trim()||'Тренер', h='';
   h+='<div class="trhd">'+(n>1?'<button type="button" class="trback" data-tr="back">← Назад</button>':'<button type="button" class="trback" data-tr="skip" aria-label="Закрыть">✕</button>')+
     '<span class="trbars" aria-hidden="true">'+[1,2,3,4].map(function(i){ return '<i'+(i<=n?' class="on"':'')+'></i>'; }).join('')+'</span><span class="trn">'+n+' из 4</span></div>';
-  var пример='<div class="trsay"><span class="trava3"><img src="img/wb-mark-128.png" alt=""></span><div><small>'+esc(имя)+' · '+esc(lbl(VOICEKEYS,ТР.voice))+(n===4?' · '+(ТР.addr==='vy'?'на «вы»':'на «ты»'):'')+'</small>'+esc(тренерПример())+'</div></div>';
+  var тав='img/av/'+ТР.av+'.jpg';
+  var пример='<div class="trsay"><span class="trava3">'+аватарHTML(тав)+'</span><div><small>'+esc(имя)+' · '+esc(lbl(VOICEKEYS,ТР.voice))+(n===4?' · '+(ТР.addr==='vy'?'на «вы»':'на «ты»'):'')+'</small>'+esc(тренерПример())+'</div></div>';
   if(n===1){
-    h+='<div class="trbig"><span class="trava2"><img src="img/wb-mark-128.png" alt=""></span></div>'+
+    h+='<div class="trbig"><span class="trava2">'+аватарHTML(тав)+'</span></div>'+
       '<h3 class="trh" id="trh">Дайте имя своему тренеру</h3><p class="trp">Это имя тренер будет использовать в чате и в боте. Впишите своё или выберите из подсказок.</p>'+
       '<input id="trname" type="text" maxlength="24" autocomplete="off" placeholder="Например, Кай" value="'+esc(ТР.name)+'" aria-label="Имя тренера">'+
       '<div class="trchips">'+ТРЕНЕР_ИМЕНА.map(function(x){ return '<button type="button" data-trname="'+x+'" aria-pressed="'+(ТР.name===x)+'">'+x+'</button>'; }).join('')+'</div>';
   } else if(n===2){
     h+='<h3 class="trh" id="trh">Выберите образ тренера</h3><p class="trp">Мужчина или женщина — влияет только на то, как тренер говорит о себе: «записал» или «записала». Нормы считаются по вашей анкете.</p>'+
-      '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px"><img src="img/wb-mark-128.png" alt="" style="width:30px"></span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>';
+      '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px">'+аватарHTML('img/av/'+(ТР.sex===x[0]?ТР.av:x[0]+'1')+'.jpg')+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>'+
+      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+[1,2,3,4,5,6].map(function(i){ var k=ТР.sex+i;
+        return '<button type="button" class="travbtn" data-trav="'+k+'" aria-pressed="'+(ТР.av===k)+'" aria-label="Аватар '+i+'">'+аватарHTML('img/av/'+k+'.jpg')+'</button>'; }).join('')+'</div>';
   } else if(n===3){
     h+='<h3 class="trh" id="trh">Выберите характер тренера</h3><p class="trp">Ниже — как '+esc(имя)+' ответит, если вы напишете «плов 350 г».</p>'+
       '<div class="trlist">'+VOICEKEYS.map(function(x){ return '<button type="button" class="tropt" data-trvoice="'+x[0]+'" aria-pressed="'+(ТР.voice===x[0])+'"><b>'+x[1][0].toUpperCase()+x[1].slice(1)+'</b><span>'+esc(VOICEHINT[x[0]])+'</span></button>'; }).join('')+'</div>'+пример;
@@ -8092,7 +8112,7 @@ function renderTren(){
 }
 function тренерСохранить(){
   var me=myData()||{}, сейчас=new Date().toISOString();
-  me.coach_name=ТР.name.trim().slice(0,24); me.coach_sex=ТР.sex; me.addr=ТР.addr; me.coach_at=сейчас;
+  me.coach_name=ТР.name.trim().slice(0,24); me.coach_sex=ТР.sex; me.coach_av=(ТР.av.charAt(0)===ТР.sex?ТР.av:ТР.sex+'1'); me.addr=ТР.addr; me.coach_at=сейчас;
   if(ТР.voice && ТР.voice!==me.voice){ me.voice=ТР.voice; me.voice_at=сейчас; }
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:сейчас}).catch(function(){});
@@ -8103,9 +8123,10 @@ function тренерСохранить(){
 document.getElementById('trenm').addEventListener('click', function(e){
   if(e.target.id==='trenm'){ closeTren(); return; }
   var nm=document.getElementById('trname'); if(nm) ТР.name=nm.value;
-  var b=e.target.closest('[data-tr],[data-trname],[data-trsex],[data-trvoice],[data-traddr]'); if(!b) return;
+  var b=e.target.closest('[data-tr],[data-trname],[data-trsex],[data-trvoice],[data-traddr],[data-trav]'); if(!b) return;
+  if(b.dataset.trav){ ТР.av=b.dataset.trav; renderTren(); haptic('light'); return; }
   if(b.dataset.trname){ ТР.name=b.dataset.trname; renderTren(); haptic('light'); return; }
-  if(b.dataset.trsex){ ТР.sex=b.dataset.trsex; renderTren(); haptic('light'); return; }
+  if(b.dataset.trsex){ ТР.sex=b.dataset.trsex; if(ТР.av.charAt(0)!==ТР.sex) ТР.av=ТР.sex+'1'; renderTren(); haptic('light'); return; }
   if(b.dataset.trvoice){ ТР.voice=b.dataset.trvoice; renderTren(); haptic('light'); return; }
   if(b.dataset.traddr){ ТР.addr=b.dataset.traddr; renderTren(); haptic('light'); return; }
   var a=b.dataset.tr;
@@ -18689,7 +18710,7 @@ function deliveryBind(box){
 }
 
 function ответТренера(текст, время, cls, src, menu, кнопки){
-  return '<div class="turn"><div class="who"><img src="img/wb-mark-128.png" alt="">'+esc(имяТренера()||'тренер')+
+  return '<div class="turn"><div class="who">'+аватарHTML(аватарТренера())+esc(имяТренера()||'тренер')+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
     (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+(кнопки||'')+'</div>';
 }

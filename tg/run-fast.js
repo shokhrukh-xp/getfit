@@ -57,7 +57,8 @@ const из = (папка, rx, куда) => { try { fs.readdirSync(папка).fi
 из(path.join(ROOT, 'fonts'), /\.woff2$/, '/fonts/');
 из(path.join(TG, 'fixtures'), /\.jpg$/, '/p/');
 из(path.join(ROOT, 'img'), /\.(png|jpg)$/, '/img/');   /* jpg — кадры упражнений: шторка «Как делать» (24.09) */
-из(path.join(ROOT, 'i18n'), /\.json$/, '/i18n/');   /* 24.10, этап 7: словари языков */
+из(path.join(ROOT, 'i18n'), /\.json$/, '/i18n/');
+из(path.join(ROOT, 'img', 'av'), /\.jpg$/, '/img/av/');   /* 24.10: аватары тренера */   /* 24.10, этап 7: словари языков */
 из(path.join(ROOT, 'img', 't'), /\.jpg$/, '/img/t/');   /* 22.10: миниатюры кадров для списков */
 из(path.join(ROOT, 'img', 't', 'o'), /\.jpg$/, '/img/t/o/');
 const ТИПЫ = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.woff2': 'font/woff2', '.jpg': 'image/jpeg', '.png': 'image/png' };
