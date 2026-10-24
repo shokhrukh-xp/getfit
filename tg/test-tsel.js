@@ -22,7 +22,7 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await M.шаги(page, { до: 'goal', age: 34, ht: 176, bw: 88 });
   дано(await page.isVisible('#wzgoal'), 'цель — отдельный шаг после параметров');
   дано(/шаг 3 из 5/.test(await page.textContent('#wzstep')), 'счётчик: ' + await page.textContent('#wzstep'));
-  дано(/Твоя цель/.test(await page.textContent('#picktitle')), 'заголовок шага: ' + await page.textContent('#picktitle'));
+  дано(/Ваша цель/.test(await page.textContent('#picktitle')), 'заголовок шага: ' + await page.textContent('#picktitle'));
   await page.waitForTimeout(400);
   дано(await page.isVisible('#g-rng'), 'шкала на месте');
   дано(await page.isVisible('#g-gymrow'), 'у того, кто ходит в зал, спрашивают, что важнее');
@@ -131,7 +131,7 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
     return b ? b.textContent.replace(/\s+/g, ' ').trim() : 'плитки нет';
   });
   дано(/79/.test(тело), 'вес с первого шага виден в блоке тела: ' + тело);
-  дано(!/впиши вес/.test(тело), 'и его больше не просят вписать заново');
+  дано(!/впишите вес/.test(тело), 'и его больше не просят вписать заново');
   дано(/весы/.test(тело), 'зовём на весы за трендом, а не за весом: ' + тело);
   await page.close();
 

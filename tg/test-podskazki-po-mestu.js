@@ -49,7 +49,7 @@ async function новичок(b,theme,width){
   ok(!(await пузырь(p)),где+'в чате сразу следующей нет — пауза');
   await состарить(p);
   const п2=await ждатьПузырь(p);
-  ok(п2&&/Яндекс Еде/.test(п2.t)&&/с Тренером/.test(п2.t),где+'в чате — про кафе и доставку (без Pro — «с Тренером»): '+(п2&&п2.t));
+  ok(п2&&/Яндекс Еде/.test(п2.t)&&/в Wellböl Pro/.test(п2.t),где+'в чате — про кафе и доставку (без Pro — «в Wellböl Pro»): '+(п2&&п2.t));
   await p.waitForTimeout(400);await p.screenshot({path:'/tmp/gf-cm-chat-'+theme+'-'+width+'.png'});
   await p.fill('#ctext','что взять');await p.waitForTimeout(300);
   ok(!(await пузырь(p))&&await сделано(p,'chat'),где+'начал писать — подсказка ушла');
@@ -58,7 +58,7 @@ async function новичок(b,theme,width){
   await состарить(p);
   await p.click('.l1 [data-page="gym"]');await p.waitForTimeout(400);
   const п3а=await ждатьПузырь(p);
-  ok(п3а&&/Нажми на упражнение/.test(п3а.t),где+'в зале — сначала открыть упражнение: '+(п3а&&п3а.t));
+  ok(п3а&&/Нажмите на упражнение/.test(п3а.t),где+'в зале — сначала открыть упражнение: '+(п3а&&п3а.t));
   await p.click('#list .exrow');await p.waitForTimeout(300);
   await p.evaluate(()=>{const c=document.querySelector('#list .setrow .cell');if(c)c.scrollIntoView({block:'center'});});await p.waitForTimeout(200);
   const п3=await ждатьПузырь(p);

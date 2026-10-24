@@ -35,7 +35,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
       о.просили = б; return б.span === 'week' ? Object.assign({}, МЕНЮ, { span: 'week' }) : МЕНЮ; },
     onRecipe: () => ({ ok: true, id: 'b4', семья: 2, мин: 30, шаги: ['Натри грудку специями.', 'Запеки 25 минут при 200°.', 'Отвари гречку.'], совет: 'Масло не нужно.',
       состав: [{ name: 'Куриная грудка запечённая', g: 220, наСемью: 440 }] }),
-    onCoach: () => ({ ok: true, reply: 'Соберу меню на неделю из твоих блюд.', menu: 'week' }) };
+    onCoach: () => ({ ok: true, reply: 'Соберу меню на неделю из ваших блюд.', menu: 'week' }) };
   const ош = await M.поднять(page, о);
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
   await page.waitForTimeout(500);
@@ -47,7 +47,7 @@ const МЕНЮ = { ok: true, span: 'day', from: ЗАВТРА, at: Date.now(), no
   дано(!!(await page.$('#eatbody #fpod')) && !!(await page.$('#eatbody .eatrow')), 'по кнопке — прежний подбор и каталог');
 
   await page.click('#eatbody [data-eseg="day"]'); await page.waitForTimeout(300);
-  дано(/Под норму завтра — из твоих блюд/.test(await page.textContent('#eatbody')), 'меню ещё нет — объяснено, что это будет');
+  дано(/Под норму завтра — из ваших блюд/.test(await page.textContent('#eatbody')), 'меню ещё нет — объяснено, что это будет');
   await page.click('#eatbody [data-mgen="day"]'); await page.waitForTimeout(150);
   дано(/Собираю меню на завтра/.test(await page.textContent('#eatbody')), 'пока собирается — это видно');
   await page.waitForTimeout(1000);

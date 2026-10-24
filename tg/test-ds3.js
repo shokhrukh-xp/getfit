@@ -19,7 +19,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  const hero=p.locator('.food-hero');
  дано(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'нет прокрутки вбок '+label);
  if(state==='без профиля'){
-  дано(await hero.count()===0&&/Заполни профиль/.test(await p.locator('#fday').innerText()),'без нормы остаётся подсказка '+label);
+  дано(await hero.count()===0&&/Заполните профиль/.test(await p.locator('#fday').innerText()),'без нормы остаётся подсказка '+label);
  }else if(state==='свободный'){
   дано(await p.locator('.food-free .svcard').count()===1&&await p.locator('#fday .fbar,#fday .fclose').count()===0,'свободный без нормы и оценки '+label);
   дано(await p.locator('#fweek .fd-today .fb-free').count()===1&&await p.locator('#fweek .fd-today .nb').count()===0,'свободный день недели без коридора '+label);

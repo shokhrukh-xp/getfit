@@ -14,7 +14,7 @@ const т=async(p,s)=>((await p.textContent(s).catch(()=>''))||'').replace(/\s+/g
   await p.waitForTimeout(400);
   await M.шаги(p,{});   /* 14.10: по шагам — до «где и когда» */
   ok(/Подобрать программу/.test(await т(p,'#wz-go')),где+'кнопка без обещания сборки: '+await т(p,'#wz-go'));
-  ok(/готовая программа под твои дни, бесплатно/.test(await т(p,'#pickhi')),где+'подсказка честная: '+await т(p,'#pickhi'));
+  ok(/готовая программа под ваши дни, бесплатно/.test(await т(p,'#pickhi')),где+'подсказка честная: '+await т(p,'#pickhi'));
   await p.click('#wz-go');await p.waitForTimeout(1500);
   ok(онб.length===0,где+'тренера не зовём — сборка по подписке');
   const сп=await p.evaluate(()=>({n:document.querySelectorAll('#picklist button[data-prof]').length,

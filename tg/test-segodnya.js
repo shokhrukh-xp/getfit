@@ -48,7 +48,7 @@ const текст = async page => (await page.textContent('#eatbody')).replace(/\
   const впереди = await page.$$eval('#eatbody .mnrow:not(.mdone) .mhd span:first-child', s => s.map(x => x.textContent));
   дано(впереди.join(',') === 'перекус,ужин', 'впереди — перекус и ужин');
   дано(/творог 5% 200 гягоды свежие 80 г/.test(т) && /Ужин — грудка/.test(т), 'состав с граммами и слово тренера');
-  дано(/Пересоберу сам, когда запишешь еду или изменится норма/.test(т), 'сказано, что пересоберётся само');
+  дано(/Пересоберу сам, когда запишете еду или изменится норма/.test(т), 'сказано, что пересоберётся само');
   await page.click('#eatbody [data-mrec="today:t2"]'); await page.waitForTimeout(400);
   дано(await page.$$eval('#eatbody .mrec li', l => l.length) === 3, 'рецепт по меню сегодняшнего дня');
   await page.click('#eatbody [data-msend="today:menu"]'); await page.waitForTimeout(300);

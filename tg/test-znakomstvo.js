@@ -37,7 +37,7 @@ const текст = async (page, sel) => (await page.textContent(sel).catch(() =>
   await page.click('#wz-only-go'); await page.waitForTimeout(200);
   /* ── 2. без веса дальше не пускаем ── */
   await page.click('#wz-me-go'); await page.waitForTimeout(200);
-  дано(/Заполни возраст/.test(await текст(page, '#wz-me-err')), 'без параметров — понятная ошибка: ' + await текст(page, '#wz-me-err'));
+  дано(/Заполните возраст/.test(await текст(page, '#wz-me-err')), 'без параметров — понятная ошибка: ' + await текст(page, '#wz-me-err'));
   await page.fill('#wz-age', '34'); await page.fill('#wz-ht', '176'); await page.fill('#wz-bw', '88');
   await page.click('#wz-me-go');
   await page.waitForSelector('#g-rng', { timeout: 8000 }).catch(() => {});
@@ -88,7 +88,7 @@ const текст = async (page, sel) => (await page.textContent(sel).catch(() =>
   const пол = await текст(page, '#onbbar');
   дано(!(await page.$eval('#onbbar', e => e.hidden)) && /Программа собрана/.test(пол),
     'вернулся — на главной полоска с тем местом, где он ушёл: ' + пол);
-  дано(!/Заполни профиль/.test(пол), 'и это не общее «заполни профиль», а именно его шаг');
+  дано(!/Заполните профиль/.test(пол), 'и это не общее «заполните профиль», а именно его шаг');
   await page.click('#onbbar');
   await page.waitForTimeout(1600);
   дано(await page.isVisible('.aiprev'), 'нажал — знакомство открылось на собранной программе, а не с нуля');

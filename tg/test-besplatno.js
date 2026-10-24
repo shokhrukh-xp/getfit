@@ -29,7 +29,7 @@ const подпись=p=>p.$eval('#food-add small',e=>e.textContent.trim());
   const {p,err}=await стенд(b,width,theme,o);
   const к=await p.evaluate(()=>{const e=document.getElementById('fgaps');if(!e||e.hidden)return null;
    return {т:e.textContent,кн:[...e.querySelectorAll('button[data-gap]')].map(x=>{const r=x.getBoundingClientRect();return {v:x.dataset.gap,h:r.height,r:r.right}}),вбок:document.documentElement.scrollWidth>innerWidth}});
-  ok(к&&/Завтрак и обед не записаны/.test(к.т)&&/Ты их ел\?/.test(к.т),где+'вопрос виден: '+(к&&к.т));
+  ok(к&&/Завтрак и обед не записаны/.test(к.т)&&/Вы их ели\?/.test(к.т),где+'вопрос виден: '+(к&&к.т));
   ok(к&&к.кн.map(x=>x.v).join()==='не записал,пропустил'&&к.кн.every(x=>x.h>=44&&x.r<=width),где+'две кнопки, не меньше 44 px, в экране');
   ok(к&&!к.вбок,где+'страница не ездит вбок');
   await p.locator('#fgaps').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-gaps-'+theme+'-'+width+'.png'});
@@ -46,6 +46,6 @@ const подпись=p=>p.$eval('#food-add small',e=>e.textContent.trim());
  {const {p}=await стенд(b,390,'dark',{day:{пробелы:{kinds:[],ответ:null}}});
   ok(await p.$eval('#fgaps',e=>e.hidden),'пробелов нет — вопроса нет');await p.close();}
  {const {p}=await стенд(b,390,'dark',{time:'21:00',day:{meals:[{id:5,t:'20:40',kind:'ужин',kcal:500,prot:30,text:'плов'}],пробелы:{kinds:['обед'],ответ:null}}});
-  ok(/Обед не записан\. Ты обедал\?/.test(await p.$eval('#fgaps',e=>e.textContent)),'один приём — «Обед не записан. Ты обедал?»');await p.close();}
+  ok(/Обед не записан\. Вы обедали\?/.test(await p.$eval('#fgaps',e=>e.textContent)),'один приём — «Обед не записан. Вы обедали?»');await p.close();}
 }finally{await b.close();}
 console.log(bad?'ПРОВАЛОВ: '+bad:'всё ок');process.exit(bad?1:0);})();

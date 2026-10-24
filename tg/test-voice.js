@@ -19,7 +19,7 @@ async function поднять(b,width,theme,o){
   let {p,err,ушло}=await поднять(b,width,theme,{me:ME});
   const к=await p.evaluate(()=>{const e=document.getElementById('voicenudge');if(!e||e.hidden)return null;
    return {т:e.textContent,кн:[...e.querySelectorAll('button[data-voice]')].map(x=>({v:x.dataset.voice,h:x.getBoundingClientRect().height})),вбок:document.documentElement.scrollWidth>innerWidth}});
-  ok(к&&/Какой тренер тебе нужен/.test(к.т)&&к.кн.map(x=>x.v).join()==='standard,fun,hard',где+'карточка с тремя характерами: '+(к&&к.кн.map(x=>x.v)));
+  ok(к&&/Какой тренер вам нужен/.test(к.т)&&к.кн.map(x=>x.v).join()==='standard,fun,hard',где+'карточка с тремя характерами: '+(к&&к.кн.map(x=>x.v)));
   ok(к&&к.кн.every(x=>x.h>=44)&&!к.вбок,где+'кнопки не меньше 44 px, страница не ездит вбок');
   await p.locator('#voicenudge').scrollIntoViewIfNeeded();await p.screenshot({path:'/tmp/gf-voice-card-'+theme+'-'+width+'.png'});
   await p.click('#voicenudge button[data-voice="hard"]');await p.waitForTimeout(300);
