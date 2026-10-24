@@ -37,10 +37,10 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       дано(/Выберите образ тренера/.test(await лист.innerText()), тема + ': шаг 2 — образ');
       await page.click('#trenm [data-trsex="f"]');
       /* 24.10: аватар — шесть на образ, выбранный уходит в профиль и в чат */
-      дано((await page.locator('#trenm [data-trav]').count()) === 11 && (await page.getAttribute('#trenm [data-trav="fn"]', 'aria-pressed')) === 'true', тема + ': 10 женских и персонаж из знака — он по умолчанию');
+      дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="fn"]', 'aria-pressed')) === 'true', тема + ': 11 женских и персонаж из знака — он по умолчанию');
       дано((await page.getAttribute('#trenm [data-trav]:last-child', 'data-trav')) === 'fn', тема + ': персонаж из знака — последним');
       await page.click('#trenm [data-trsex="m"]');
-      дано((await page.locator('#trenm [data-trav]').count()) === 11 && (await page.getAttribute('#trenm [data-trav="mn"]', 'aria-pressed')) === 'true', тема + ': у мужского столько же и свой персонаж из знака');
+      дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="mn"]', 'aria-pressed')) === 'true', тема + ': у мужского столько же и свой персонаж из знака');
       await page.click('#trenm [data-trsex="f"]');
       await page.click('#trenm [data-trav="f3"]');
       дано((await page.getAttribute('#trenm [data-trav="f3"]', 'aria-pressed')) === 'true', тема + ': выбран аватар f3');
