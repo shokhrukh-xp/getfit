@@ -3329,6 +3329,29 @@ body.ordmode #list .sstag{color:var(--text)}
 #subm .subin li::before{content:'✓';position:absolute;left:2px;top:10px;width:auto;height:auto;margin:0;border-radius:0;background:none;
   color:var(--accent-txt);font-weight:800;line-height:1.45}
 #subm .subfree{padding:10px 12px;border-radius:12px;background:var(--tint);font-size:13px;color:var(--muted)}
+/* ══ 24.10 этап 5: женское здоровье — карточка и лист ══ */
+.femcard{background:linear-gradient(160deg,#3A2F5C 0%,#1C1830 100%);color:#FFFFFF;border:0;padding:16px}
+.femcard b{display:block;font-size:17px;font-weight:800;color:#FFFFFF}
+.femcard .trsub{display:block;margin-top:4px;font-size:13px;line-height:1.45;color:#ECE7FF}
+.femcard .trbtns{display:flex;gap:8px;margin-top:12px}
+.femcard .trbtns button{min-height:46px;border-radius:14px;border:0;font:600 15px inherit;font-family:inherit;padding:0 16px}
+.femcard .trbtns .trgo{flex:1 1 auto;background:#F4B860;color:#4A3000;font-weight:700}
+.femcard .trbtns .trno{background:rgba(255,255,255,.14);color:#FFFFFF}
+#femm{z-index:130}
+#femm .modalbox{display:flex;flex-direction:column;gap:12px}
+#femm .fmlab{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+#femm .fmrow{display:flex;gap:10px;align-items:center}
+#femm .fmrow label{flex:1 1 0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+#femm input,#femm textarea{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:500 16px inherit;font-family:inherit;padding:0 12px;box-sizing:border-box;width:100%}
+#femm textarea{padding:10px 12px;min-height:72px;resize:vertical;line-height:1.4}
+#femm .fmcyc{border-radius:16px;background:var(--field);padding:14px;display:flex;flex-direction:column;gap:4px}
+#femm .fmcyc b{font-size:20px;font-weight:800}
+#femm .fmcyc span{font-size:13px;color:var(--muted);line-height:1.45}
+#femm .fmbar{height:8px;border-radius:4px;background:var(--line);margin-top:6px;position:relative;overflow:hidden}
+#femm .fmbar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:#B39CFF}
+#femm .fmgo{min-height:50px;border-radius:16px;border:0;background:#F4B860;color:#4A3000;font:700 16px inherit;font-family:inherit}
+#femm .fmsave{min-height:50px;border-radius:16px;border:0;background:var(--action,#13707A);color:#FFFFFF;font:700 16px inherit;font-family:inherit}
+#femm .fmnote{font-size:12px;color:var(--muted);line-height:1.4;margin:0}
 /* ══ 24.10 этап 4: тренер под себя — карточка на главной и лист знакомства ══ */
 .trcard{background:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%);color:#FFFFFF;border:0;padding:16px}
 .trcard .trtop{display:flex;gap:12px;align-items:center}
@@ -4065,6 +4088,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
         <!-- 14.10, его выбор: после знакомства — «С чего начнём?», один раз -->
         <div class="nudge onb startcard" id="startcard" role="group" aria-labelledby="sctitle" hidden></div>
         <div class="nudge onb trcard" id="trcard" role="group" aria-labelledby="trtitle" hidden></div>
+        <div class="nudge onb femcard" id="femcard" role="group" aria-labelledby="femtitle" hidden></div>
         <div class="nudge onb vnudge" id="voicenudge" role="group" aria-labelledby="vntitle" hidden></div>
         <div class="hwrap" id="homebody"></div>
         <!-- 30.09, его просьба: ввод замера — с «Еды» на главную, под карточку
@@ -4425,6 +4449,8 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 </div>
 <!-- 24.10 этап 4: знакомство с тренером — имя, образ, характер, обращение -->
 <div class="modal" id="trenm" role="dialog" aria-modal="true" aria-labelledby="trh"><div class="modalbox" id="trbox"></div></div>
+<!-- 24.10 этап 5: женское здоровье — сейчас, цикл, «что ещё учесть» -->
+<div class="modal" id="femm" role="dialog" aria-modal="true" aria-labelledby="fmh"><div class="modalbox" id="fmbox"></div></div>
 <div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="subtitle">Wellböl Pro</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
@@ -4543,6 +4569,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" id="pq-tren"><span class="pqic"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="pq-fem" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></span><span class="pqt"><b>Женское здоровье</b><small>цикл, беременность, кормление</small></span><span class="pqv" id="pv-fem"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab gymonly">Зал</h4>
@@ -5972,6 +5999,7 @@ function takeVoice(v){
 }
 function renderVoiceNudge(){
   try{ renderCoachCard(); }catch(e){}
+  try{ renderFemCard(); }catch(e){}
   var el=document.getElementById('voicenudge'); if(!el) return;
   var me=myData()||{};
   var надо=meFull() && hasGoal(me) && !me.voice && !gget('startcard',0) && !тренерКарточкаНадо() && !me.coach_at;
@@ -7816,6 +7844,7 @@ function pqVals(){
   set('pq-onlysub', 'экраны приложения');   /* ревью Codex: подпись не повторяет значение справа */
   set('pv-voice', lbl(VOICEKEYS, me.voice||'') || 'не выбран');
   set('pv-tren', (me.coach_name ? me.coach_name+' · ' : '')+(me.addr==='vy' ? 'на «вы»' : 'на «ты»'));
+  { var pf=document.getElementById('pq-fem'); if(pf) pf.hidden=me.sex!=='f'; set('pv-fem', женСводка(me)); }
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
   var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? имяПрог() : '';
   set('pq-gymsub', имяП ? имяП+(дни && !/\d\s*(день|дня|дней)/.test(имяП) ? ' · '+дни+' '+plural(дни,['день','дня','дней'])+' в неделю' : '') : 'по ней собирается день в «Тренировке»');
@@ -8077,6 +8106,113 @@ document.getElementById('trcard').addEventListener('click', function(e){
   else { gset('trcard_off',1); renderCoachCard(); renderVoiceNudge(); haptic('light'); }
 });
 document.getElementById('pq-tren').addEventListener('click', function(){ openTren(false); });
+/* ══ ЖЕНСКОЕ ЗДОРОВЬЕ (24.10, этап 5) ══
+   Его решения: цикл, беременность, кормление, менопауза и своё поле «Что ещё
+   учесть» («не хочу жёстко ограничиться этими четырьмя… тренер должен это
+   учитывать»); цикл — одна кнопка «Начались» (и словом в чате), длина по
+   отметкам; профиль + одна карточка. Только у женщин по анкете. Профиль:
+   me.fem = {st, preg_w, preg_at, lact_m, lact_at, note, cyc:{starts, len}}, me.fem_at.
+   Нормы под беременность и кормление считает сервер (targets). */
+var ЖЕН_СОСТ=[['cycle','Обычный цикл','тренер учитывает фазы и объясняет скачки веса'],['preg','Беременность','без дефицита, по триместру (+0 / +340 / +450 ккал), зал бережно'],
+  ['lact','Кормлю грудью','+330–400 ккал к норме, без жёсткого дефицита'],['meno','Менопауза','больше белка и силовых, без диагнозов'],['','Не указывать','тренер не учитывает']];
+var ФМ={st:'',preg_w:'',lact_m:'',note:'',start:'',len:28,изКарточки:false};
+function днейМежду(a,b){ return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/864e5); }
+function циклСейчас(fem){
+  var c=(fem&&fem.cyc)||{}, st=(c.starts||[]).filter(function(x){return /^\d{4}-\d\d-\d\d$/.test(x);}).sort();
+  if(!st.length) return null;
+  var r=[]; for(var i=1;i<st.length;i++){ var d=днейМежду(st[i-1],st[i]); if(d>=21&&d<=45) r.push(d); }
+  r=r.slice(-6);
+  var len=r.length?Math.round(r.reduce(function(a,x){return a+x;},0)/r.length):((+c.len>=21&&+c.len<=45)?Math.round(+c.len):28);
+  var last=st[st.length-1], день=днейМежду(last,TODAY)+1; if(день<1) return null;
+  return {день:день,len:len,last:last,считана:r.length>0};
+}
+function женСводка(me){
+  var f=(me&&me.fem)||{};
+  if(f.st==='preg') return 'беременность';
+  if(f.st==='lact') return 'кормление';
+  if(f.st==='meno') return 'менопауза';
+  if(f.st==='cycle'){ var ц=циклСейчас(f); return ц?'день '+ц.день+' из ~'+ц.len:'цикл'; }
+  return 'не указано';
+}
+function женКарточкаНадо(){
+  var me=myData()||{};
+  return !!(me.sex==='f' && meFull() && hasGoal(me) && !me.fem_at && !gget('femcard_off',0) && !gget('startcard',0) && !тренерКарточкаНадо());
+}
+function renderFemCard(){
+  var el=document.getElementById('femcard'); if(!el) return;
+  var on=женКарточкаНадо(); el.hidden=!on; if(!on) return;
+  if(el.firstChild) return;
+  el.innerHTML='<b id="femtitle">Учитывать женское здоровье?</b><span class="trsub">Цикл, беременность, кормление или менопауза — тренер подстроит норму и зал и объяснит скачки веса. Видите только вы и тренер.</span>'+
+    '<div class="trbtns"><button type="button" class="trgo" data-fm="open">Настроить</button><button type="button" class="trno" data-fm="later">Не сейчас</button></div>';
+}
+function openFem(изКарточки){
+  var me=myData()||{}, f=me.fem||{}, ц=циклСейчас(f);
+  var нед=(+f.preg_w>0)?(+f.preg_w+(f.preg_at?Math.floor(днейМежду(String(f.preg_at).slice(0,10),TODAY)/7):0)):'';
+  var мес=(f.lact_m!=null&&f.lact_m!=='')?(+f.lact_m+(f.lact_at?Math.floor(днейМежду(String(f.lact_at).slice(0,10),TODAY)/30.4):0)):'';
+  ФМ={st:f.st||(me.med&&me.med.preg===1?'preg':''),preg_w:нед,lact_m:мес,note:f.note||'',start:ц?ц.last:'',len:ц?ц.len:((f.cyc&&f.cyc.len)||28),изКарточки:!!изКарточки};
+  renderFem();
+  var m=document.getElementById('femm'); if(m) m.classList.add('show'); haptic('light');
+}
+function closeFem(){ var m=document.getElementById('femm'); if(m) m.classList.remove('show'); }
+function renderFem(){
+  var box=document.getElementById('fmbox'); if(!box) return;
+  var me=myData()||{}, f=me.fem||{}, ц=циклСейчас(f), h='';
+  h+='<div class="cathead"><h3 id="fmh">Женское здоровье</h3><button class="xbtn" data-fm="close" aria-label="Закрыть">✕</button></div>';
+  h+='<span class="fmlab">СЕЙЧАС</span><div class="trlist">'+ЖЕН_СОСТ.map(function(x){
+    return '<button type="button" class="tropt" data-fmst="'+x[0]+'" aria-pressed="'+(ФМ.st===x[0])+'"><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>';
+  if(ФМ.st==='preg') h+='<div class="fmrow"><label>Срок, недель<input id="fm-pw" type="number" inputmode="numeric" min="1" max="42" placeholder="например, 14" value="'+esc(String(ФМ.preg_w))+'"></label></div>';
+  if(ФМ.st==='lact') h+='<div class="fmrow"><label>Ребёнку, месяцев<input id="fm-lm" type="number" inputmode="numeric" min="0" max="36" placeholder="например, 3" value="'+esc(String(ФМ.lact_m))+'"></label></div>';
+  if(ФМ.st==='cycle'){
+    h+='<span class="fmlab">ЦИКЛ</span>';
+    if(ц) h+='<div class="fmcyc"><span>Сейчас</span><b>День '+ц.день+' из ~'+ц.len+'</b><span>'+
+      (ц.день>ц.len+7?'Дольше обычного цикла. Выводов не делаем; если беспокоит — к врачу.':ц.день>ц.len-5?'Скоро месячные. В эти дни вес может прибавить 0,5–2 кг воды: это не жир.':ц.день<=5?'Месячные. Если тяжело — зал можно облегчить.':'Тренер учитывает фазу цикла.')+
+      '</span><div class="fmbar"><i style="width:'+Math.min(100,Math.round(ц.день/ц.len*100))+'%"></i></div></div>';
+    h+='<button type="button" class="fmgo" data-fm="start">Начались сегодня</button><p class="fmnote">Или напишите тренеру «начались». Длину цикла приложение считает по отметкам.</p>';
+    if(!ц) h+='<div class="fmrow"><label>Последнее начало<input id="fm-start" type="date" max="'+TODAY+'" value="'+esc(ФМ.start)+'"></label><label>Обычная длина, дней<input id="fm-len" type="number" inputmode="numeric" min="21" max="45" value="'+esc(String(ФМ.len))+'"></label></div>';
+  }
+  h+='<span class="fmlab">ЧТО ЕЩЁ УЧЕСТЬ</span><textarea id="fm-note" maxlength="300" placeholder="Например: анемия, в первые дни цикла сильная слабость">'+esc(ФМ.note)+'</textarea>'+
+    '<p class="fmnote">Своими словами — тренер учтёт в советах и в зале. Видите только вы и тренер; хранится на сервере в Узбекистане.</p>'+
+    '<button type="button" class="fmsave" data-fm="save">Сохранить</button>';
+  box.innerHTML=h;
+}
+function femЧитать(){
+  var g=function(id){ var e=document.getElementById(id); return e?e.value:null; };
+  if(g('fm-pw')!=null) ФМ.preg_w=g('fm-pw'); if(g('fm-lm')!=null) ФМ.lact_m=g('fm-lm');
+  if(g('fm-start')!=null) ФМ.start=g('fm-start'); if(g('fm-len')!=null) ФМ.len=g('fm-len');
+  if(g('fm-note')!=null) ФМ.note=g('fm-note');
+}
+function femСохранить(доп){
+  var me=myData()||{}, f=Object.assign({}, me.fem||{}), сейчас=new Date().toISOString();
+  f.st=ФМ.st; f.note=String(ФМ.note||'').slice(0,300);
+  if(ФМ.st==='preg' && +ФМ.preg_w>0){ f.preg_w=Math.min(42,Math.round(+ФМ.preg_w)); f.preg_at=TODAY; }
+  if(ФМ.st==='lact' && ФМ.lact_m!==''){ f.lact_m=Math.max(0,Math.min(36,Math.round(+ФМ.lact_m||0))); f.lact_at=TODAY; }
+  var cyc=Object.assign({}, f.cyc||{}); cyc.starts=(cyc.starts||[]).slice();
+  if(ФМ.st==='cycle' && /^\d{4}-\d\d-\d\d$/.test(ФМ.start||'') && ФМ.start<=TODAY && cyc.starts.indexOf(ФМ.start)<0) cyc.starts.push(ФМ.start);
+  if(+ФМ.len>=21 && +ФМ.len<=45) cyc.len=Math.round(+ФМ.len);
+  if(доп==='start'){ var близко=cyc.starts.some(function(x){ return Math.abs(днейМежду(x,TODAY))<10; }); if(!близко) cyc.starts.push(TODAY); }
+  cyc.starts=cyc.starts.sort().slice(-12); f.cyc=cyc;
+  me.fem=f; me.fem_at=сейчас;
+  me.med=Object.assign({}, me.med||{}); me.med.preg=ФМ.st==='preg'?1:0;
+  gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:сейчас}).catch(function(){});
+  try{ fillMe(); }catch(e){} renderFemCard(); haptic('ok');
+}
+document.getElementById('femm').addEventListener('click', function(e){
+  if(e.target.id==='femm'){ closeFem(); return; }
+  femЧитать();
+  var b=e.target.closest('[data-fm],[data-fmst]'); if(!b) return;
+  if(b.dataset.fmst!=null){ ФМ.st=b.dataset.fmst; renderFem(); haptic('light'); return; }
+  var a=b.dataset.fm;
+  if(a==='close'){ if(ФМ.изКарточки) gset('femcard_off',1); closeFem(); renderFemCard(); return; }
+  if(a==='start'){ femСохранить('start'); renderFem(); return; }
+  if(a==='save'){ femСохранить(); closeFem(); return; }
+});
+document.getElementById('femcard').addEventListener('click', function(e){
+  var b=e.target.closest('[data-fm]'); if(!b) return;
+  if(b.dataset.fm==='open') openFem(true);
+  else { gset('femcard_off',1); renderFemCard(); haptic('light'); }
+});
+document.getElementById('pq-fem').addEventListener('click', function(){ openFem(false); });
 document.getElementById('voicenudge').addEventListener('click', function(e){
   var b=e.target.closest('button[data-voice]'); if(!b) return;
   голосЗадать(b.dataset.voice); try{ fillMe(); }catch(_){} renderVoiceNudge(); haptic('medium');
@@ -8354,7 +8490,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.10 19:42';
+var BUILD = '24.10 20:12';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
