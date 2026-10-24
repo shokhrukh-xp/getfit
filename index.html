@@ -8061,7 +8061,13 @@ function имяТренера(){ var me=myData()||{}; return String(me.coach_nam
 /* 25.10, его правка: «чистый азиат не нужен? И стилизуй лого персонаж под мужской и женский. Из мужских убери лошадь» —
    мужских 11, женских 12, последний — персонаж из знака своего образа (mn / fn), он по умолчанию;
    «n» — общий нейтральный, только у тех, кто образ не выбирал */
-var АВ_НА_ОБРАЗ={m:11, f:12};
+/* 25.10, ещё правка: «Количество персонажей должно быть одинаково… убрать третьего человеческого
+   персонажа у мужчин и третью у женщин. Порядок персонажей сделай рандомным чтоб белые не всегда
+   стояли первыми»; у персонажа из знака — без туловища. По 10 на образ + свой из знака; порядок
+   перемешивается при каждом открытии листа, персонаж из знака — последним. */
+var АВ_НА_ОБРАЗ={m:10, f:10};
+function аватарПорядок(пол){ var a=[]; for(var i=1;i<=АВ_НА_ОБРАЗ[пол];i++) a.push(пол+i);
+  for(var j=a.length-1;j>0;j--){ var r=Math.floor(Math.random()*(j+1)), t=a[j]; a[j]=a[r]; a[r]=t; } return a; }
 function аватарСвой(k, пол){ var м=/^([mf])(\d{1,2}|n)$/.exec(k||''); return !!м && м[1]===пол && (м[2]==='n' || (+м[2]>=1 && +м[2]<=АВ_НА_ОБРАЗ[пол])); }
 function аватарКод(me){ me=me||{}; var пол=me.coach_sex==='f'?'f':(me.coach_sex==='m'?'m':''), k=me.coach_av||'';
   if(!пол) return 'n'; return аватарСвой(k, пол) ? k : пол+'n'; }
@@ -8087,7 +8093,7 @@ function тренерПример(){
 }
 function openTren(изКарточки){
   var me=myData()||{};
-  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',av:(аватарКод(me)==='n' ? (me.coach_sex==='f'?'fn':'mn') : аватарКод(me)),voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
+  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',av:(аватарКод(me)==='n' ? (me.coach_sex==='f'?'fn':'mn') : аватарКод(me)),порядок:{m:аватарПорядок('m'),f:аватарПорядок('f')},voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
       addr:me.addr==='vy'?'vy':(me.addr==='ty'?'ty':(me.voice||me.coach_at?'ty':'vy')),изКарточки:!!изКарточки};
   renderTren();
   var m=document.getElementById('trenm'); if(m) m.classList.add('show');
@@ -8109,7 +8115,7 @@ function renderTren(){
   } else if(n===2){
     h+='<h3 class="trh" id="trh">Выберите образ тренера</h3><p class="trp">Мужчина или женщина — влияет только на то, как тренер говорит о себе: «записал» или «записала». Нормы считаются по вашей анкете.</p>'+
       '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px">'+аватарHTML('img/av/'+(ТР.sex===x[0]&&/^[mf]/.test(ТР.av)?ТР.av:x[0]+'n')+'.jpg')+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>'+
-      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+Array.apply(null,{length:АВ_НА_ОБРАЗ[ТР.sex]}).map(function(_, i){ return ТР.sex+(i+1); }).concat([ТР.sex+'n']).map(function(k, i){
+      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+((ТР.порядок&&ТР.порядок[ТР.sex])||аватарПорядок(ТР.sex)).concat([ТР.sex+'n']).map(function(k, i){
         return '<button type="button" class="travbtn" data-trav="'+k+'" aria-pressed="'+(ТР.av===k)+'" aria-label="Аватар '+(i+1)+'">'+аватарHTML('img/av/'+k+'.jpg')+'</button>'; }).join('')+'</div>';
   } else if(n===3){
     h+='<h3 class="trh" id="trh">Выберите характер тренера</h3><p class="trp">Ниже — как '+esc(имя)+' ответит, если вы напишете «плов 350 г».</p>'+
