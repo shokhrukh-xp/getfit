@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="icon" href="img/logo-192.png">
-<link rel="apple-touch-icon" href="img/logo-180.png">
+<link rel="icon" href="img/wb-icon-192.png">
+<link rel="apple-touch-icon" href="img/wb-icon-180.png">
 <title>Wellböl</title>
 <style>
 /* Свой шрифт лежит в репозитории: Google Fonts из Узбекистана грузится
@@ -845,6 +845,9 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .gatebox{width:100%;max-width:340px;text-align:center}
 .gatebox .glogo{font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
 .gatebox .glogo b{color:var(--accent-txt)}
+/* 24.10 Wellböl: знак рядом с именем */
+.gatebox .glogo{display:inline-flex;align-items:center;gap:10px}
+.gatebox .glogo img{width:44px;height:44px;display:block}
 .gatebox h2{margin:0 0 8px;font-size:17px;font-weight:700}
 .gatebox p{margin:0 0 18px;color:var(--muted);font-size:15px;line-height:1.5}
 .gatebox input{display:block;width:100%;padding:13px 12px;border-radius:12px;border:.5px solid var(--line);background:var(--card-solid);
@@ -3326,6 +3329,19 @@ body.ordmode #list .sstag{color:var(--text)}
 #subm .subin li::before{content:'✓';position:absolute;left:2px;top:10px;width:auto;height:auto;margin:0;border-radius:0;background:none;
   color:var(--accent-txt);font-weight:800;line-height:1.45}
 #subm .subfree{padding:10px 12px;border-radius:12px;background:var(--tint);font-size:13px;color:var(--muted)}
+/* 24.10 Wellböl: моменты бренда (макеты «бренд в приложении») */
+#subm .subico{display:block;width:56px;height:auto;margin:2px 0 8px}
+#subm #sub-buy{background:#F4B860;border-color:#F4B860;color:#4A3000}
+.wbhero{margin:0 0 16px;padding:22px 18px 18px;border-radius:22px;color:#FFFFFF;
+  background:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%)}
+.wbhero img{display:block;width:200px;height:auto;margin-left:-4px}
+.wbhero .wbslog{margin:10px 0 0;font-size:17px;font-weight:700;letter-spacing:-.01em;line-height:1.3;color:#FFFFFF}
+.wbhero .wbsub{margin:4px 0 0;font-size:13px;line-height:1.4;color:#FFD69E}
+.empt .wbm.emk{zoom:.36;opacity:.28;margin:0 0 4px}
+.wbfoot{display:flex;flex-direction:column;align-items:center;gap:3px;margin:4px 0 12px}
+.wbfoot img{width:30px;height:30px;display:block;margin-bottom:4px}
+.wbfoot b{font-size:15px;font-weight:800;color:var(--text)}
+.wbfoot span{font-size:12px;color:var(--muted)}
 /* K · админка: итог крупно, расчёт по нажатию, плитки 3×2 */
 .adhero .adlbl{display:block;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .adhero .adcalc{margin:10px 0 0;border-top:1px solid var(--line);padding-top:8px}
@@ -4172,7 +4188,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 
 <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gatetitle">
   <div class="gatebox">
-    <div class="glogo">GET<b>FIT</b></div>
+    <div class="glogo"><img src="img/wb-mark-128.png" alt="">Wellböl</div>
     <h2 id="gatetitle">По приглашению</h2>
     <p id="gatetext">Введите код, который вам дали.</p>
     <div id="gatecode">
@@ -4185,6 +4201,8 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 </div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
+    <!-- 24.10 Wellböl: шапка бренда — только при самом первом входе, на шаге «что будем вести» -->
+    <div class="wbhero" id="wbhero" hidden><img src="img/wb-wordmark-dark.png" alt="Wellböl"><p class="wbslog">Eat smart. Train smart. Feel well.</p><p class="wbsub">ИИ-тренер по еде и залу прямо в Telegram</p></div>
     <div class="wztop"><button type="button" class="wzprev" id="wz-prev" hidden>← Назад</button><div class="wzprogress"><p class="wzstep" id="wzstep" hidden></p><div class="wzpath" id="wzpath" aria-hidden="true" hidden></div></div></div>
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажите о себе — тренер задаст пару вопросов и соберёт программу.</p>
@@ -4364,6 +4382,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 <div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="subtitle">Wellböl Pro</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
+    <img class="subico" src="img/wb-mark-glossy-176.png" alt="">
     <p class="mtext" id="sub-what"></p>
     <ul class="subin" id="sub-list"></ul>
     <p class="subfree">Дневник еды (3 записи в день), нормы, зал, журнал, карта тела и рейтинг — бесплатно.</p>
@@ -4495,6 +4514,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
       </div>
 
       <div class="pqfoot">
+        <div class="wbfoot"><img src="img/wb-mark-128.png" alt=""><b>Wellböl</b><span>Eat smart. Train smart. Feel well.</span></div>
         <p class="mtext bline" id="buildline"></p>
         <!-- 22.10: «Как пользоваться» убрана (его выбор) — строка лицензии анатомии живёт здесь -->
         <p class="foot howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
@@ -6611,6 +6631,7 @@ function renderPicker(){
       : (цель && WIZ.stage==='form') ? 'Ваша цель'
       : анкета0 ? 'Где и когда тренируетесь?'
       : 'Собираем программу';
+  var wbh=document.getElementById('wbhero'); if(wbh) wbh.hidden=!(шагЕда && firstRun);
   var hi=document.getElementById('pickhi');
   if(hi){
     hi.hidden = WIZ.stage!=='form';
@@ -11916,7 +11937,7 @@ function видПоИмени(n){
 }
 function renderProgress(){
   var box=document.getElementById('logprog'); if(!box) return;
-  if(!HIST.length){ box.innerHTML='<p class="empt">Пока пусто.<br>Отметьте подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
+  if(!HIST.length){ box.innerHTML='<p class="empt">'+wbm('still','emk')+'<br>Пока пусто.<br>Отметьте подходы галочкой на вкладке «Тренировка» — они появятся здесь.</p>'; return; }
   var by={}, order=[];
   HIST.slice().reverse().forEach(function(w){            /* от старых к новым */
     (w.ex||[]).forEach(function(x){
@@ -18119,7 +18140,7 @@ function deliveryBind(box){
 }
 
 function ответТренера(текст, время, cls, src, menu, кнопки){
-  return '<div class="turn"><div class="who"><img src="img/logo-64.png" alt="">тренер'+
+  return '<div class="turn"><div class="who"><img src="img/wb-mark-128.png" alt="">тренер'+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
     (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+(кнопки||'')+'</div>';
 }
