@@ -399,6 +399,9 @@ body.nogym .gymonly{display:none!important}
 .dayhd{margin:14px 0 2px}
 .dayhd u{text-decoration:none;display:block;font-family:inherit;font-size:12px;font-weight:600;color:var(--accent-txt)}
 .dayhd u.rest{color:var(--dim)} .dayhd u.done{color:var(--done-txt)}
+/* 24.10, его выбор «Подложка под строкой»: на витрине зала в тёмной теме «день N · следующий по очереди»
+   читался 3,6–4,3 из 4,5 — тёмная пилюля под строкой, витрина та же */
+:root[data-theme="dark"] .gym-day .dayhd u.rest{display:inline-block;padding:3px 9px;margin-left:-9px;border-radius:9px;background:rgba(2,16,19,.62);color:#B9CCCB}
 .dayhd b{display:block;font-size:17px;font-weight:800;letter-spacing:-.025em;margin:3px 0 11px;line-height:1.15}
 .dhtr{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px}
 .dhtr>span{height:6px;border-radius:999px;background:var(--track);position:relative;overflow:hidden}
@@ -8511,7 +8514,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.10 21:13';
+var BUILD = '24.10 23:03';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
