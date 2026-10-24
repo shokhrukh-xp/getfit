@@ -4195,7 +4195,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
       <input id="gcode" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="код" maxlength="24">
       <button class="btn prim wide" id="gjoin">Войти</button>
     </div>
-    <a class="btn wide" id="gtg" href="https://t.me/GetFit_MyBot" hidden>Открыть в Telegram</a>
+    <a class="btn wide" id="gtg" href="https://t.me/WellbolBot" hidden>Открыть в Telegram</a>
     <p class="gerr" id="gerr"></p>
   </div>
 </div>
@@ -7784,7 +7784,7 @@ function pqVals(){
    не даёт боту написать первым. Человек об этом не узнает: и экран, и бот
    молчат. Сервер проверяет незаметно (sendChatAction), приложение говорит.
    Одна полоска, две причины; бот важнее — без него молчит половина приложения. */
-var BOTOK = null, BOTLINK = 'https://t.me/GetFit_MyBot';
+var BOTOK = null, BOTLINK = 'https://t.me/WellbolBot';
 /* Полоска живёт на ГЛАВНОЙ, а не в подсказке на «Тренировке»: у человека в
    режиме «только питание» вкладки зала нет вовсе, а без бота он теряет ровно
    столько же. */
@@ -8210,7 +8210,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '24.10 18:22';
+var BUILD = '24.10 18:53';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -10002,7 +10002,10 @@ function mkCollection(name){
    Даёт две вещи: тренер читает журнал напрямую, и появляется настоящий
    бэкап — слетит Telegram, история восстановится отсюда.
    В облако уходит ПОЛНОЕ тело записи, без обрезки под лимит 4096. */
-var SYNCURL='https://getfit-sync.sh-pulatov.workers.dev';
+/* 24.10: прямой адрес нового сервера (Uztelecom). Старый адрес воркера
+   Cloudflare — прокси на него; ссылки на фото со старым адресом приложение
+   по-прежнему считает своими (SYNCURL_OLD в photoAttr). */
+var SYNCURL='https://api.wellbol.com', SYNCURL_OLD='https://getfit-sync.sh-pulatov.workers.dev';
 var SYNCOK=null;
 function syncUid(){
   var b=(TGUSER && TGUSER.id) ? String(TGUSER.id) : (mGet('anon_uid') || (function(){
@@ -10125,7 +10128,7 @@ var ФКИД=0;
 function photoAttr(url,svg,big,shared){
   try{
     var u=new URL(url,location.href),api=new URL(SYNCURL);
-    if(u.origin===api.origin && (u.pathname==='/photo'||u.pathname.indexOf('/p/')===0)){
+    if((u.origin===api.origin || u.origin===SYNCURL_OLD) && (u.pathname==='/photo'||u.pathname.indexOf('/p/')===0)){
       var key=u.pathname==='/photo'?u.searchParams.get('key'):u.pathname.slice(3).replace(/\.jpe?g$/,'');
       return 'data-private-photo="'+esc(key)+'"'+(big?' data-photo-big="1"':'')+(shared?' data-photo-shared="1"':'');
     }
@@ -15693,7 +15696,7 @@ document.addEventListener('click', function(e){
 function shareCircle(c){
   if(!c) return;
   var text='Приглашаю в Wellböl — тренер в Telegram, круг «'+c.name+'». Код: '+c.code;
-  var u='https://t.me/share/url?url='+encodeURIComponent(c.link||'https://t.me/GetFit_MyBot')+'&text='+encodeURIComponent(text);
+  var u='https://t.me/share/url?url='+encodeURIComponent(c.link||'https://t.me/WellbolBot')+'&text='+encodeURIComponent(text);
   if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
   haptic('light');
 }

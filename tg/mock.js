@@ -246,7 +246,8 @@ async function поднять(page, o) {
      блокируем его всегда, а подставка и так полнее. */
   await page.route('**://telegram.org/**', r => r.abort().catch(() => {}));
 
-  await page.route('**/getfit-sync.sh-pulatov.workers.dev/**', async route => {
+  /* 24.10: приложение ходит на api.wellbol.com; старый адрес воркера — для старых ссылок на фото */
+  await page.route(/^https:\/\/(getfit-sync\.sh-pulatov\.workers\.dev|api\.wellbol\.com)\//, async route => {
     if(o.handleRoute && await o.handleRoute(route))return;
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
