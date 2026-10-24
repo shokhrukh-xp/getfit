@@ -154,6 +154,14 @@ async function поднять(page, o) {
   /* 22.10: выезд листов и сжатие кнопок — без анимации, если проверка не просит (o.motion) */
   if (!o.motion) await page.addInitScript(() => { try { localStorage.setItem('gf_nomo', '1'); } catch (e) {} });
   if (!o.bytAsk) await page.addInitScript(() => { try { if (!localStorage.getItem('shp_v1_byt_ask')) localStorage.setItem('shp_v1_byt_ask', '1'); } catch (e) {} });
+  /* 24.10, этап 7: язык Telegram на стенде (o.tgLang) и сбор непереведённых строк
+     (GF_HARVEST=файл: всё, что приложение показало по-русски, дописывается туда) */
+  if (o.tgLang) await page.addInitScript(l => { try { localStorage.setItem('gf_lang_tg', l); } catch (e) {} }, o.tgLang);
+  if (process.env.GF_I18N_AUDIT) await page.addInitScript(l => { try { localStorage.setItem('gf_i18n_audit', l); } catch (e) {} }, process.env.GF_I18N_AUDIT);
+  if (process.env.GF_HARVEST) {
+    if (!process.env.GF_I18N_AUDIT) await page.addInitScript(() => { try { localStorage.setItem('gf_i18n_harvest', '1'); } catch (e) {} });
+    try { await page.exposeFunction('__i18nMiss', arr => { try { require('fs').appendFileSync(process.env.GF_HARVEST, arr.join('\n\u241E\n') + '\n\u241E\n'); } catch (e) {} }); } catch (e) {}
+  }
   await page.addInitScript(([час, тема, сеанс, новичок, журнал, видел, замены, профиль, прог, профильПрог, слой, одинРаз, цвета, tgId]) => {
     /* время фиксируем: иначе «сейчас» ездит по циферблату между прогонами */
     /* Часы приложения стоят («сейчас» не должно ездить между прогонами), но
@@ -252,6 +260,7 @@ async function поднять(page, o) {
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
+    if (p === '/i18n') return дать({ ok: true, t: o.i18n || {} });   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
     if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
     if (p === '/s')          return дать({ ok: true });
     /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
