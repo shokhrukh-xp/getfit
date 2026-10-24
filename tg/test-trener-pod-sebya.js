@@ -37,7 +37,7 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       дано(/Выберите образ тренера/.test(await лист.innerText()), тема + ': шаг 2 — образ');
       await page.click('#trenm [data-trsex="f"]');
       /* 24.10: аватар — шесть на образ, выбранный уходит в профиль и в чат */
-      дано((await page.locator('#trenm [data-trav]').count()) === 6 && (await page.getAttribute('#trenm [data-trav="n"]', 'aria-pressed')) === 'true', тема + ': пять аватаров образа и общий нейтральный — он по умолчанию');
+      дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="n"]', 'aria-pressed')) === 'true', тема + ': 11 аватаров образа и общий нейтральный — он по умолчанию');
       await page.click('#trenm [data-trsex="m"]');
       дано((await page.getAttribute('#trenm [data-trav="n"]', 'aria-pressed')) === 'true', тема + ': нейтральный остаётся при смене образа');
       await page.click('#trenm [data-trsex="f"]');

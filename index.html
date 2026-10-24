@@ -4071,7 +4071,7 @@ img.avface{border-radius:50%;object-fit:cover}
 .turn .who img.avface{width:24px;height:24px}
 .pqic img.pqav{width:100%;height:100%}
 .travlab{display:block;margin:16px 0 8px}
-.travgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.travgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .travbtn{aspect-ratio:1;min-height:44px;padding:4px;border:2px solid transparent;border-radius:50%;background:var(--field)}
 .travbtn img{display:block;width:100%;height:100%}
 .travbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,179,166,.25)}
@@ -8056,8 +8056,11 @@ function имяТренера(){ var me=myData()||{}; return String(me.coach_nam
    одинаковыми нейтральными персонажами и их сделай дефолтными». Пять своих на
    образ (m1…m5, f1…f5) и последний — общий нейтральный «n» (кольцо знака с
    лицом, Gemini). Не выбрано — «n» у всех, с образом и без. */
-function аватарСвой(k, пол){ return k==='n' || (/^[mf][1-5]$/.test(k||'') && k.charAt(0)===пол); }
-function аватарКод(me){ me=me||{}; var k=me.coach_av||''; if(k==='n' || (/^[mf][1-5]$/.test(k) && k.charAt(0)===(me.coach_sex||k.charAt(0)))) return k; return 'n'; }
+/* 25.10, его итог: «верни то что сделал в самом начале и добавь разнообразие рас и животных еще» —
+   11 на образ (четыре 3D-персонажа разной внешности, шесть животных, робот) и общий «n» по умолчанию */
+var АВ_НА_ОБРАЗ=11, АВ_КОД=/^[mf](?:[1-9]|1[01])$/;
+function аватарСвой(k, пол){ return k==='n' || (АВ_КОД.test(k||'') && k.charAt(0)===пол); }
+function аватарКод(me){ me=me||{}; var k=me.coach_av||''; if(k==='n' || (АВ_КОД.test(k) && k.charAt(0)===(me.coach_sex||k.charAt(0)))) return k; return 'n'; }
 function аватарТренера(me){ var k=аватарКод(me||myData()||{}); return k ? 'img/av/'+k+'.jpg' : 'img/wb-mark-128.png'; }
 function аватарHTML(src, cls){ var лицо=/\/av\//.test(src); return '<img src="'+src+'" alt=""'+(лицо?' class="avface'+(cls?' '+cls:'')+'"':(cls?' class="'+cls+'"':''))+'>'; }
 function тренерКарточкаНадо(){
@@ -8102,7 +8105,7 @@ function renderTren(){
   } else if(n===2){
     h+='<h3 class="trh" id="trh">Выберите образ тренера</h3><p class="trp">Мужчина или женщина — влияет только на то, как тренер говорит о себе: «записал» или «записала». Нормы считаются по вашей анкете.</p>'+
       '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px">'+аватарHTML('img/av/'+(ТР.sex===x[0]&&/^[mf]/.test(ТР.av)?ТР.av:x[0]+'1')+'.jpg')+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>'+
-      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+[1,2,3,4,5].map(function(i){ return ТР.sex+i; }).concat(['n']).map(function(k, i){
+      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+Array.apply(null,{length:АВ_НА_ОБРАЗ}).map(function(_, i){ return ТР.sex+(i+1); }).concat(['n']).map(function(k, i){
         return '<button type="button" class="travbtn" data-trav="'+k+'" aria-pressed="'+(ТР.av===k)+'" aria-label="Аватар '+(i+1)+'">'+аватарHTML('img/av/'+k+'.jpg')+'</button>'; }).join('')+'</div>';
   } else if(n===3){
     h+='<h3 class="trh" id="trh">Выберите характер тренера</h3><p class="trp">Ниже — как '+esc(имя)+' ответит, если вы напишете «плов 350 г».</p>'+
