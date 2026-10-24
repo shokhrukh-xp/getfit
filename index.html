@@ -8066,8 +8066,13 @@ function имяТренера(){ var me=myData()||{}; return String(me.coach_nam
    стояли первыми»; у персонажа из знака — без туловища. По 10 на образ + свой из знака; порядок
    перемешивается при каждом открытии листа, персонаж из знака — последним. */
 var АВ_НА_ОБРАЗ={m:11, f:11};   /* 25.10, «еще по одному животному к каждому полу»: лев, енот */
+/* его вопрос «почему белые мужчины все еще идут первыми?»: случайность — от crypto, а светлокожий
+   персонаж (m1 / f1) первым не встаёт никогда */
+function аватарСлуч(n){ try{ var u=new Uint32Array(1); crypto.getRandomValues(u); return u[0]%n; }catch(e){ return Math.floor(Math.random()*n); } }
 function аватарПорядок(пол){ var a=[]; for(var i=1;i<=АВ_НА_ОБРАЗ[пол];i++) a.push(пол+i);
-  for(var j=a.length-1;j>0;j--){ var r=Math.floor(Math.random()*(j+1)), t=a[j]; a[j]=a[r]; a[r]=t; } return a; }
+  for(var j=a.length-1;j>0;j--){ var r=аватарСлуч(j+1), t=a[j]; a[j]=a[r]; a[r]=t; }
+  if(a[0]===пол+'1'){ var k=1+аватарСлуч(a.length-1), t2=a[0]; a[0]=a[k]; a[k]=t2; }
+  return a; }
 function аватарСвой(k, пол){ var м=/^([mf])(\d{1,2}|n)$/.exec(k||''); return !!м && м[1]===пол && (м[2]==='n' || (+м[2]>=1 && +м[2]<=АВ_НА_ОБРАЗ[пол])); }
 function аватарКод(me){ me=me||{}; var пол=me.coach_sex==='f'?'f':(me.coach_sex==='m'?'m':''), k=me.coach_av||'';
   if(!пол) return 'n'; return аватарСвой(k, пол) ? k : пол+'n'; }

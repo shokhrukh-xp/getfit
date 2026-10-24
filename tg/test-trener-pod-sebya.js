@@ -39,6 +39,7 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       /* 24.10: аватар — шесть на образ, выбранный уходит в профиль и в чат */
       дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="fn"]', 'aria-pressed')) === 'true', тема + ': 11 женских и персонаж из знака — он по умолчанию');
       дано((await page.getAttribute('#trenm [data-trav]:last-child', 'data-trav')) === 'fn', тема + ': персонаж из знака — последним');
+      дано((await page.getAttribute('#trenm [data-trav]:first-child', 'data-trav')) !== 'f1', тема + ': светлокожая — не первой');
       await page.click('#trenm [data-trsex="m"]');
       дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="mn"]', 'aria-pressed')) === 'true', тема + ': у мужского столько же и свой персонаж из знака');
       await page.click('#trenm [data-trsex="f"]');
