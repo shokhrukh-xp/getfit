@@ -4071,7 +4071,7 @@ img.avface{border-radius:50%;object-fit:cover}
 .turn .who img.avface{width:24px;height:24px}
 .pqic img.pqav{width:100%;height:100%}
 .travlab{display:block;margin:16px 0 8px}
-.travgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.travgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .travbtn{aspect-ratio:1;min-height:44px;padding:4px;border:2px solid transparent;border-radius:50%;background:var(--field)}
 .travbtn img{display:block;width:100%;height:100%}
 .travbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,179,166,.25)}
@@ -8052,9 +8052,12 @@ function имяТренера(){ var me=myData()||{}; return String(me.coach_nam
 /* 24.10: аватары тренера — его выбор «B — с лицом», 6 на образ; нарисованы Gemini
    (его правило: визуальные элементы — всегда через Gemini). img/av/m1…m6, f1…f6.
    Образ выбран, аватар нет — первый своего образа; образ не выбран — знак ö. */
-/* 25.10, его «можно добавить еще пару нейтральных образов не связанных с персонажами»: n1, n2 — знаки без персонажа, для любого образа */
-function аватарСвой(k, пол){ return /^n[12]$/.test(k||'') || (/^[mf][1-6]$/.test(k||'') && k.charAt(0)===пол); }
-function аватарКод(me){ me=me||{}; if(/^n[12]$/.test(me.coach_av||'') || (/^[mf][1-6]$/.test(me.coach_av||'') && me.coach_av.charAt(0)===(me.coach_sex||me.coach_av.charAt(0)))) return me.coach_av; return me.coach_sex==='f'?'f1':(me.coach_sex==='m'?'m1':''); }
+/* 25.10, его правка: «последний персонаж на базе лого переделай чтобы они были
+   одинаковыми нейтральными персонажами и их сделай дефолтными». Пять своих на
+   образ (m1…m5, f1…f5) и последний — общий нейтральный «n» (кольцо знака с
+   лицом, Gemini). Не выбрано — «n» у всех, с образом и без. */
+function аватарСвой(k, пол){ return k==='n' || (/^[mf][1-5]$/.test(k||'') && k.charAt(0)===пол); }
+function аватарКод(me){ me=me||{}; var k=me.coach_av||''; if(k==='n' || (/^[mf][1-5]$/.test(k) && k.charAt(0)===(me.coach_sex||k.charAt(0)))) return k; return 'n'; }
 function аватарТренера(me){ var k=аватарКод(me||myData()||{}); return k ? 'img/av/'+k+'.jpg' : 'img/wb-mark-128.png'; }
 function аватарHTML(src, cls){ var лицо=/\/av\//.test(src); return '<img src="'+src+'" alt=""'+(лицо?' class="avface'+(cls?' '+cls:'')+'"':(cls?' class="'+cls+'"':''))+'>'; }
 function тренерКарточкаНадо(){
@@ -8077,7 +8080,7 @@ function тренерПример(){
 }
 function openTren(изКарточки){
   var me=myData()||{};
-  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',av:аватарКод(me)||(me.coach_sex==='f'?'f1':'m1'),voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
+  ТР={step:1,name:String(me.coach_name||''),sex:me.coach_sex==='f'?'f':'m',av:аватарКод(me),voice:VOICEHINT[me.voice]&&me.voice?me.voice:'standard',
       addr:me.addr==='vy'?'vy':(me.addr==='ty'?'ty':(me.voice||me.coach_at?'ty':'vy')),изКарточки:!!изКарточки};
   renderTren();
   var m=document.getElementById('trenm'); if(m) m.classList.add('show');
@@ -8099,7 +8102,7 @@ function renderTren(){
   } else if(n===2){
     h+='<h3 class="trh" id="trh">Выберите образ тренера</h3><p class="trp">Мужчина или женщина — влияет только на то, как тренер говорит о себе: «записал» или «записала». Нормы считаются по вашей анкете.</p>'+
       '<div class="trgrid">'+[['m','Мужчина','«Записал»'],['f','Женщина','«Записала»']].map(function(x){ return '<button type="button" class="tropt" data-trsex="'+x[0]+'" aria-pressed="'+(ТР.sex===x[0])+'"><span class="trava3" style="width:56px;height:56px">'+аватарHTML('img/av/'+(ТР.sex===x[0]&&/^[mf]/.test(ТР.av)?ТР.av:x[0]+'1')+'.jpg')+'</span><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>'+
-      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+[1,2,3,4,5,6].map(function(i){ return ТР.sex+i; }).concat(['n1','n2']).map(function(k, i){
+      '<span class="fmlab travlab">ВЫБЕРИТЕ АВАТАР</span><div class="travgrid">'+[1,2,3,4,5].map(function(i){ return ТР.sex+i; }).concat(['n']).map(function(k, i){
         return '<button type="button" class="travbtn" data-trav="'+k+'" aria-pressed="'+(ТР.av===k)+'" aria-label="Аватар '+(i+1)+'">'+аватарHTML('img/av/'+k+'.jpg')+'</button>'; }).join('')+'</div>';
   } else if(n===3){
     h+='<h3 class="trh" id="trh">Выберите характер тренера</h3><p class="trp">Ниже — как '+esc(имя)+' ответит, если вы напишете «плов 350 г».</p>'+
@@ -8114,7 +8117,7 @@ function renderTren(){
 }
 function тренерСохранить(){
   var me=myData()||{}, сейчас=new Date().toISOString();
-  me.coach_name=ТР.name.trim().slice(0,24); me.coach_sex=ТР.sex; me.coach_av=(аватарСвой(ТР.av, ТР.sex)?ТР.av:ТР.sex+'1'); me.addr=ТР.addr; me.coach_at=сейчас;
+  me.coach_name=ТР.name.trim().slice(0,24); me.coach_sex=ТР.sex; me.coach_av=(аватарСвой(ТР.av, ТР.sex)?ТР.av:'n'); me.addr=ТР.addr; me.coach_at=сейчас;
   if(ТР.voice && ТР.voice!==me.voice){ me.voice=ТР.voice; me.voice_at=сейчас; }
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:сейчас}).catch(function(){});
@@ -8128,7 +8131,7 @@ document.getElementById('trenm').addEventListener('click', function(e){
   var b=e.target.closest('[data-tr],[data-trname],[data-trsex],[data-trvoice],[data-traddr],[data-trav]'); if(!b) return;
   if(b.dataset.trav){ ТР.av=b.dataset.trav; renderTren(); haptic('light'); return; }
   if(b.dataset.trname){ ТР.name=b.dataset.trname; renderTren(); haptic('light'); return; }
-  if(b.dataset.trsex){ ТР.sex=b.dataset.trsex; if(!аватарСвой(ТР.av, ТР.sex)) ТР.av=ТР.sex+'1'; renderTren(); haptic('light'); return; }
+  if(b.dataset.trsex){ ТР.sex=b.dataset.trsex; if(!аватарСвой(ТР.av, ТР.sex)) ТР.av='n'; renderTren(); haptic('light'); return; }
   if(b.dataset.trvoice){ ТР.voice=b.dataset.trvoice; renderTren(); haptic('light'); return; }
   if(b.dataset.traddr){ ТР.addr=b.dataset.traddr; renderTren(); haptic('light'); return; }
   var a=b.dataset.tr;
