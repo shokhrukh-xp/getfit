@@ -20,7 +20,9 @@ const week={ok:true,span:'week',from:T,дни:Array.from({length:7},(_,i)=>recor
   assert.deepEqual(await p.locator('.zkrow s').allTextContents(),bars,'план подходов не уменьшается');
   assert.match(await p.locator('.hweek-block').innerText(),/1 пропущено/);
   assert(!/по расписанию — сегодня/.test(await stats()));
-  await p.locator('.zk').scrollIntoViewIfNeeded();assert.deepEqual(await bounds(p),[]);assert.deepEqual((await contrast(p,'.zk')).failures,[]);
+  /* 25.10: под нагрузкой хука .zk перерисовывается посреди прокрутки (Element is not attached) — повторяем */
+  for(let i=0;;i++){try{await p.locator('.zk').scrollIntoViewIfNeeded();break}catch(e){if(i>=4||!/not attached/.test(e.message))throw e;await p.waitForTimeout(150)}}
+  assert.deepEqual(await bounds(p),[]);assert.deepEqual((await contrast(p,'.zk')).failures,[]);
   if(process.env.GF_SHOTS){fs.mkdirSync(process.env.GF_SHOTS,{recursive:true});await p.locator('.zk').screenshot({path:path.join(process.env.GF_SHOTS,'counter-'+theme+'-'+width+'.png')});}
   await p.click('.l1 [data-page="food"]');await p.locator('[data-zseg="eat"]:visible').click();await p.click('[data-eseg="week"]');await p.locator('[data-menu-day="'+T+'"]').click();
   assert.match(await p.locator('#eatbody').innerText(),/зал пропущен · день отдыха/);assert.equal(await p.locator('#eatbody .mzal').count(),0);assert.match(await p.locator('#eatbody').innerText(),/Рис с курицей/);
