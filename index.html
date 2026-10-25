@@ -1525,7 +1525,19 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .scanname{font-size:17px;font-weight:700;margin:4px 0 2px;color:var(--ink,inherit)}
 /* 25.10: визуализация цели */
 #vizm{z-index:130}
-#vizm .btn:disabled{opacity:.45;cursor:default}   /* «Дальше» без галочки и «Показать», пока рисует — видно, что неактивны */
+#vizm .btn:disabled{opacity:.45;cursor:default}
+/* 25.10: камера с контуром */
+.vizcam{margin:0 0 6px}
+#vizphotobtns[hidden],#vizptips[hidden],.vizcount[hidden],.vizcam[hidden],#vizforce[hidden]{display:none}
+.vizcamwin{position:relative;aspect-ratio:3/4;max-height:62vh;margin:0 auto;border-radius:16px;overflow:hidden;background:#000}
+.vizcamwin video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.vizcamwin video.mirror{transform:scaleX(-1)}
+.vizghost{position:absolute;inset:0;width:100%;height:100%;fill:none;stroke:rgba(255,255,255,.85);stroke-width:2.2;stroke-dasharray:7 6;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(0,0,0,.6));transition:stroke .2s}
+.vizcam.good .vizghost{stroke:#4ade80;stroke-dasharray:none}
+.vizflip{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:20px;line-height:1}
+.vizcount{position:absolute;inset:0;display:grid;place-items:center;font-size:96px;font-weight:800;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none}
+.vizcamhint{min-height:2.9em;margin:8px 2px 0;font-size:14px;line-height:1.45;text-align:center;color:var(--text)}
+.vizcam.good .vizcamhint{color:#4ade80;font-weight:700}   /* «Дальше» без галочки и «Показать», пока рисует — видно, что неактивны */
 .vizlist,.viztips ul{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.55;color:var(--muted)}
 .viztips{background:var(--card-2);border-radius:14px;padding:10px 12px 2px;margin-bottom:12px;font-size:13px}
 .viztips ul{margin-top:4px}
@@ -4485,11 +4497,25 @@ img.avface{border-radius:50%;object-fit:cover}
       <div class="btnrow"><button type="button" class="btn prim" id="vizok" disabled>Дальше</button></div>
     </div>
     <div id="viz-photo" hidden>
-      <div class="viztips"><b>Как снять</b>
+      <div class="viztips" id="vizptips"><b>Как снять</b>
         <ul><li>во весь рост, лицом к камере, камера на уровне груди</li><li>облегающая одежда, руки чуть в стороны от тела</li><li>ровный свет, простой фон</li></ul></div>
       <p class="mtext" id="vizpmsg" role="status" aria-live="polite"></p>
-      <div class="btnrow"><button type="button" class="btn prim" id="vizpick">Выбрать фото</button><button type="button" class="btn" id="vizforce" hidden>Всё равно это фото</button></div>
+      <div class="btnrow vizpbtns" id="vizphotobtns"><button type="button" class="btn prim" id="vizcamgo">Снять с контуром</button><button type="button" class="btn" id="vizpick">Из галереи</button></div>
+      <div class="btnrow" id="vizforcerow"><button type="button" class="btn" id="vizforce" hidden>Всё равно это фото</button></div>
       <input id="vizfile" type="file" accept="image/*" hidden>
+      <div class="vizcam" id="vizcam" hidden>
+        <div class="vizcamwin">
+          <video id="vizvideo" playsinline muted autoplay></video>
+          <svg class="vizghost" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">
+            <circle cx="150" cy="38" r="21"/>
+            <path d="M140 62 L110 82 L96 92 L90 150 L80 214 L78 226 L90 228 L97 214 L104 152 L112 118 L116 168 L112 206 L113 280 L117 302 L115 334 L121 358 L104 372 L140 374 L141 358 L142 302 L146 236 L150 226 L154 236 L158 302 L159 358 L160 374 L196 372 L179 358 L185 334 L183 302 L187 280 L188 206 L184 168 L188 118 L196 152 L203 214 L210 228 L222 226 L220 214 L210 150 L204 92 L190 82 L160 62"/>
+          </svg>
+          <button type="button" class="vizflip" id="vizflip" aria-label="Другая камера">⟲</button>
+          <div class="vizcount" id="vizcount" aria-live="assertive" hidden>3</div>
+        </div>
+        <p class="vizcamhint" id="vizcamhint" role="status" aria-live="polite"></p>
+        <div class="btnrow"><button type="button" class="btn prim" id="vizshot">Снять сейчас</button><button type="button" class="btn" id="vizcamx">Отмена</button></div>
+      </div>
     </div>
     <div id="viz-main" hidden>
       <div class="vizpair">
@@ -8742,7 +8768,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 20:40';
+var BUILD = '25.10 21:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19825,11 +19851,11 @@ function vizOpen(){
   });
   vizMpLoad().catch(function(){});   /* мерка грузится заранее, пока человек читает */
 }
-function vizClose(){ document.getElementById('vizm').classList.remove('show'); }
-function vizPhotoView(t){ VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t); vizView('photo'); }
+function vizClose(){ try{ vcamClose(); }catch(e){} document.getElementById('vizm').classList.remove('show'); }
+function vizPhotoView(t){ try{ vcamClose(); }catch(e){} VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t); vizView('photo'); }
 
 /* мерка силуэта: MediaPipe Pose — маска человека и точки плеч/бёдер */
-var VIZMP={p:null, lm:null};
+var VIZMP={p:null, lm:null, cv:null, map:null};
 function vizMpLoad(){
   if(VIZMP.p) return VIZMP.p;
   var база=new URL('vendor/mp-1.0.1/', location.href).href;
@@ -19846,45 +19872,49 @@ function vizMpLoad(){
   }).then(function(lm){ VIZMP.lm=lm; return lm; }).catch(function(e){ VIZMP.p=null; throw e; });
   return VIZMP.p;
 }
-/* ширина силуэта в полосе 55–95 % от плеч к бёдрам, делённая на длину корпуса — так мерка
-   не зависит от того, крупнее человек в кадре или мельче. Руки, прижатые к телу, сливаются
-   с талией — тогда (шире 2,6 расстояния между тазобедренными точками) мерки нет. */
 /* MediaPipe 1.0.1 падает (Check failed: ChannelSize), если размер кадра меняется между
-   вызовами, — каждый кадр вписываем в один и тот же квадрат 640×640 с чёрными полями */
+   вызовами, — каждый кадр (фото, картинка, кадр камеры) вписываем в один и тот же квадрат
+   640×640 с чёрными полями; VIZMP.map — как пересчитать точки обратно в кадр */
 function vizКвадрат(img){
   var С=640, c=VIZMP.cv || (VIZMP.cv=document.createElement('canvas')); c.width=С; c.height=С;
-  var x=c.getContext('2d'), w=img.naturalWidth||img.width, h=img.naturalHeight||img.height, k=Math.min(С/w, С/h);
+  var x=c.getContext('2d'), w=img.naturalWidth||img.videoWidth||img.width, h=img.naturalHeight||img.videoHeight||img.height, k=Math.min(С/w, С/h);
   x.fillStyle='#000'; x.fillRect(0,0,С,С); x.drawImage(img, (С-w*k)/2, (С-h*k)/2, w*k, h*k);
+  VIZMP.map={ w:w, h:h, k:k, ox:(С-w*k)/2, oy:(С-h*k)/2 };
   return c;
 }
-function vizМерить(img){
+/* поза и мерка за один проход. Мерка — ширина силуэта в полосе 55–95 % от плеч к бёдрам,
+   делённая на длину корпуса: так она не зависит от того, крупнее человек в кадре или мельче.
+   Руки, прижатые к телу, сливаются с талией — тогда (шире 2,6 расстояния между
+   тазобедренными точками) мерки нет: { нет:'руки' }. */
+function vizАнализ(img){
   return vizMpLoad().then(function(lm){
     var r=lm.detect(vizКвадрат(img)), p=r.landmarks && r.landmarks[0], mask=r.segmentationMasks && r.segmentationMasks[0];
-    var закрыть=function(){ try{ mask && mask.close && mask.close(); }catch(e){} };
-    if(!p || !mask){ закрыть(); return null; }
+    var закрыть=function(){ try{ (r.segmentationMasks||[]).forEach(function(m){ m.close && m.close(); }); }catch(e){} };
+    if(!p || !mask){ закрыть(); return { p:null, м:null }; }
     var W=mask.width, H=mask.height, d=mask.getAsFloat32Array();
     var ok=function(i){ return p[i] && (p[i].visibility==null || p[i].visibility>0.5); };
-    if(![11,12,23,24].every(ok)){ закрыть(); return { нет:'тело' }; }
+    var с=function(м){ закрыть(); return { p:p, м:м }; };
+    if(![11,12,23,24].every(ok)) return с({ нет:'тело' });
     var плечи=(p[11].y+p[12].y)/2*H, бёдра=(p[23].y+p[24].y)/2*H, корпус=бёдра-плечи;
     var cx=Math.round((p[11].x+p[12].x+p[23].x+p[24].x)/4*W), таз=Math.abs(p[23].x-p[24].x)*W;
-    if(корпус<20){ закрыть(); return { нет:'тело' }; }
+    if(корпус<20) return с({ нет:'тело' });
     var ширины=[];
     for(var y=Math.round(плечи+корпус*0.55); y<=Math.round(плечи+корпус*0.95); y++){
       if(y<0 || y>=H) continue;
-      var ряд=y*W; if(d[ряд+cx]<0.5) continue;
+      var ряд=y*W; if(cx<0 || cx>=W || d[ряд+cx]<0.5) continue;
       var л=cx, п=cx;
       while(л>0 && d[ряд+л-1]>=0.5) л--;
       while(п<W-1 && d[ряд+п+1]>=0.5) п++;
       ширины.push(п-л+1);
     }
-    закрыть();
-    if(ширины.length<5) return { нет:'тело' };
+    if(ширины.length<5) return с({ нет:'тело' });
     ширины.sort(function(a,b){ return a-b; });
     var мед=ширины[Math.floor(ширины.length/2)];
-    if(таз>0 && мед>таз*2.6) return { нет:'руки', талия:мед/корпус, таз:мед/таз };
-    return { талия:мед/корпус, корпус:корпус, ширина:мед, таз:таз>0 ? мед/таз : null };
+    if(таз>0 && мед>таз*2.6) return с({ нет:'руки', талия:мед/корпус, таз:мед/таз });
+    return с({ талия:мед/корпус, корпус:корпус, ширина:мед, таз:таз>0 ? мед/таз : null });
   });
 }
+function vizМерить(img){ return vizАнализ(img).then(function(r){ return r.м; }); }
 function vizКартинка(src){ return new Promise(function(ok, bad){ var i=new Image(); i.onload=function(){ ok(i); }; i.onerror=function(){ bad(new Error('картинка не открылась')); }; i.src=src; }); }
 function vizURL(k){
   if(VIZ.urls[k]) return Promise.resolve(VIZ.urls[k]);
@@ -20044,6 +20074,116 @@ document.getElementById('vizsteps').addEventListener('click', function(e){
   var b=e.target.closest('button[data-w]'); if(!b) return;
   document.getElementById('vizw').value=b.dataset.w; vizCalc(); haptic('light');
 });
+/* ── КАМЕРА С КОНТУРОМ (25.10) ──
+   Его вопрос: «при открытии камеры показать силуэт, в который тело пользователя должно
+   попасть для правильной фотки». Его выбор: автоснимок, фронтальная камера с переключателем,
+   галерея — второй кнопкой. Своя камера (как сканер штрихкода): поверх видео — контур
+   фигуры, MediaPipe ~7 раз в секунду смотрит позу и подсказывает одной строкой. Поза верна
+   несколько кадров подряд — отсчёт 3-2-1 и снимок сам; поза сломалась — отсчёт сбрасывается.
+   Снимок — та часть кадра, что видна в окне (3:4), без зеркала; дальше обычный путь фото. */
+var VCAM={stream:null, face:'user', timer:0, busy:false, ok:0, bad:0, cd:0, cdT:0, shot:false};
+var VCAM_ПОДРЯД=4, VCAM_СБОЙ=3;
+function vcamEl(id){ return document.getElementById(id); }
+function vcamHint(t, хорошо){ var h=vcamEl('vizcamhint'); if(h.textContent!==t) h.textContent=t; vcamEl('vizcam').classList.toggle('good', !!хорошо); }
+function vcamOpen(){
+  vcamEl('vizcam').hidden=false; vcamEl('vizphotobtns').hidden=true; vcamEl('vizptips').hidden=true; vcamEl('vizforce').hidden=true; vizSay('vizpmsg','');
+  VCAM.ok=0; VCAM.bad=0; VCAM.shot=false; vcamCdStop();
+  vcamHint('Включаю камеру…');
+  vizMpLoad().catch(function(){});
+  vcamStart();
+}
+function vcamStart(){
+  vcamStopStream();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ vcamFail('Камера здесь недоступна — выберите фото из галереи.'); return; }
+  navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:VCAM.face }, width:{ ideal:1080 }, height:{ ideal:1440 } }, audio:false }).then(function(st){
+    if(vcamEl('vizcam').hidden){ st.getTracks().forEach(function(t){ t.stop(); }); return; }
+    VCAM.stream=st; var v=vcamEl('vizvideo'); v.srcObject=st; v.classList.toggle('mirror', VCAM.face==='user');
+    var p=v.play(); if(p && p.catch) p.catch(function(){});
+    vcamHint('Поставьте телефон на уровне груди и отойдите — встаньте в контур целиком');
+    clearInterval(VCAM.timer); VCAM.timer=setInterval(vcamTick, 140);
+  }).catch(function(e){
+    vcamFail(e && e.name==='NotAllowedError' ? 'Нет доступа к камере — разрешите его или выберите фото из галереи.' : 'Камера не включилась — выберите фото из галереи.');
+  });
+}
+function vcamFail(t){ vcamClose(); vizSay('vizpmsg', t); }
+function vcamStopStream(){
+  clearInterval(VCAM.timer); VCAM.timer=0;
+  if(VCAM.stream){ try{ VCAM.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} VCAM.stream=null; }
+  var v=vcamEl('vizvideo'); if(v){ try{ v.srcObject=null; }catch(e){} }
+}
+function vcamClose(){ vcamCdStop(); vcamStopStream(); vcamEl('vizcam').hidden=true; vcamEl('vizphotobtns').hidden=false; vcamEl('vizptips').hidden=false; }
+function vcamCdStop(){ clearTimeout(VCAM.cdT); VCAM.cd=0; var c=vcamEl('vizcount'); if(c) c.hidden=true; }
+/* видимая часть кадра (видео растянуто «cover» в окно 3:4) */
+function vcamОкно(){
+  var v=vcamEl('vizvideo'), r=v.getBoundingClientRect(), W=v.videoWidth, H=v.videoHeight;
+  if(!W || !H || !r.width) return null;
+  var s=Math.max(r.width/W, r.height/H);
+  return { W:W, H:H, s:s, ox:(W*s-r.width)/2, oy:(H*s-r.height)/2, cw:r.width, ch:r.height };
+}
+/* точка позы (доли квадрата 640) → доли окна, как человек видит себя на экране */
+function vcamТочка(q, о, м){
+  var X=(q.x*640-м.ox)/м.k, Y=(q.y*640-м.oy)/м.k;
+  var x=(X*о.s-о.ox)/о.cw, y=(Y*о.s-о.oy)/о.ch;
+  return { x: VCAM.face==='user' ? 1-x : x, y:y, v: q.visibility==null ? 1 : q.visibility };
+}
+/* подсказка по позе: одна, самая важная; '' — всё верно */
+function vcamОценка(p, о, мерка){
+  if(!p) return 'Встаньте в контур — целиком, лицом к камере';
+  var т=function(i){ return vcamТочка(p[i], о, VIZMP.map); };
+  var нос=т(0), пл=[т(11),т(12)], бд=[т(23),т(24)], ст=[т(27),т(28)];
+  var видно=function(a){ return a.v>0.5 && a.x>-0.02 && a.x<1.02 && a.y>-0.02 && a.y<1.02; };
+  if(!пл.every(видно) || !бд.every(видно)) return 'Встаньте в контур — целиком, лицом к камере';
+  if(!ст.every(видно) || !видно(нос)) return 'Отойдите на шаг назад — нужен рост целиком, от головы до ступней';
+  var низ=Math.max(ст[0].y, ст[1].y);
+  if(низ>0.97 || нос.y<0.05) return 'Отойдите на шаг назад';
+  if(низ-нос.y<0.62) return 'Подойдите на шаг ближе';
+  var cx=(пл[0].x+пл[1].x+бд[0].x+бд[1].x)/4;
+  if(cx<0.38 || cx>0.62) return 'Встаньте по центру контура';
+  var плШ=Math.abs(пл[0].x-пл[1].x)*о.cw, корп=Math.abs((бд[0].y+бд[1].y)/2-(пл[0].y+пл[1].y)/2)*о.ch;
+  if(корп<10 || плШ/корп<0.42) return 'Повернитесь лицом к камере';
+  if(Math.abs(пл[0].y-пл[1].y)*о.ch/плШ>0.14) return 'Встаньте ровно — плечи на одном уровне';
+  if(мерка && мерка.нет==='руки') return 'Руки чуть в стороны от тела';
+  if(!мерка || мерка.нет) return 'Встаньте ровно, лицом к камере';
+  return '';
+}
+function vcamTick(){
+  var v=vcamEl('vizvideo');
+  if(VCAM.busy || VCAM.shot || !VCAM.stream || v.readyState<2) return;
+  var о=vcamОкно(); if(!о) return;
+  VCAM.busy=true;
+  vizАнализ(v).then(function(r){
+    VCAM.busy=false; if(VCAM.shot || vcamEl('vizcam').hidden) return;
+    var t=vcamОценка(r && r.p, о, r && r.м);
+    if(!t){ VCAM.ok++; VCAM.bad=0; } else { VCAM.bad++; VCAM.ok=0; }
+    if(VCAM.cd){
+      if(VCAM.bad>=VCAM_СБОЙ){ vcamCdStop(); vcamHint(t); }
+      return;
+    }
+    if(t){ vcamHint(t); return; }
+    vcamHint('Отлично, замрите', true);
+    if(VCAM.ok>=VCAM_ПОДРЯД) vcamCountdown(3);
+  }, function(){ VCAM.busy=false; });
+}
+function vcamCountdown(n){
+  var c=vcamEl('vizcount'); VCAM.cd=n; c.textContent=String(n); c.hidden=false; haptic('light');
+  VCAM.cdT=setTimeout(function(){ if(!VCAM.cd) return; if(n>1) vcamCountdown(n-1); else { vcamCdStop(); vcamShot(); } }, 1000);
+}
+function vcamShot(){
+  var v=vcamEl('vizvideo'), о=vcamОкно(); if(!о || VCAM.shot) return;
+  VCAM.shot=true; haptic('success');
+  var sx=о.ox/о.s, sy=о.oy/о.s, sw=о.cw/о.s, sh=о.ch/о.s;
+  var c=document.createElement('canvas'); c.width=Math.round(sw); c.height=Math.round(sh);
+  c.getContext('2d').drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  c.toBlob(function(b){
+    vcamClose();
+    if(!b){ vizSay('vizpmsg','Снимок не получился — попробуйте ещё раз.'); return; }
+    vizФото(b);
+  }, 'image/jpeg', 0.92);
+}
+vcamEl('vizcamgo').addEventListener('click', function(){ vcamOpen(); haptic('light'); });
+vcamEl('vizcamx').addEventListener('click', function(){ vcamClose(); });
+vcamEl('vizflip').addEventListener('click', function(){ VCAM.face = VCAM.face==='user' ? 'environment' : 'user'; VCAM.ok=0; vcamCdStop(); vcamStart(); haptic('light'); });
+vcamEl('vizshot').addEventListener('click', function(){ vcamCdStop(); vcamShot(); });
 /* ── ШТРИХКОД (25.10) ──
    Камера ищет EAN/UPC (на iPhone встроенного распознавания нет — библиотека zxing,
    своя копия в vendor/, грузится только при первом сканировании). Нашли продукт в своей
