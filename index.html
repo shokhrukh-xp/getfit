@@ -260,6 +260,26 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .aiprev ul{margin:3px 0 0;padding:0;list-style:none;font-size:13px;line-height:1.55;color:var(--muted)}
 .aiprev li b{color:var(--text);font-weight:500}
 .aiprev .rbtns{display:flex;gap:8px;margin-top:12px}
+.aitabs{display:flex;gap:6px;margin:10px 0 4px}
+.aitabs button{flex:1 1 0;min-height:48px;border:1px solid var(--line-soft);border-radius:14px;background:var(--field);color:var(--text);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 4px;font:inherit}
+.aitabs button b{font-size:14px;font-weight:600}
+.aitabs button i{font-style:normal;font-size:12px;color:var(--muted)}
+.aitabs button[aria-selected="true"]{background:var(--action,var(--accent));border-color:var(--action,var(--accent));color:var(--on-action,var(--on-accent,#fff))}
+.aitabs button[aria-selected="true"] i{color:inherit;opacity:.85}
+.aidh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:12px 0 2px}
+.aidh b{font-size:15px;font-weight:600;color:var(--text)}
+.aidh i{font-style:normal;font-size:12px;color:var(--muted);white-space:nowrap}
+.aiexs{display:flex;flex-direction:column}
+.aiex{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.aiex:last-child{border-bottom:none}
+.aiex .exph{width:56px;height:56px;border-radius:16px;overflow:hidden;display:block;background:var(--field)}
+.aiex .exph .fig2,.aiex .exph .fig{width:56px;border-radius:16px}
+.aiex .exph .fig2{aspect-ratio:1}
+.aiex .exph .fig{height:56px}
+.aien{display:flex;flex-direction:column;min-width:0}
+.aien b{font-size:14px;font-weight:600;color:var(--text);line-height:1.3}
+.aien i{font-style:normal;font-size:12px;color:var(--muted);margin-top:2px}
 .aiprev .rbtns .btn{flex:1 1 0;padding:9px;font-size:13px}
 .aiprev .rbtns .btn.go{border-color:var(--accent-txt);color:var(--accent-txt)}
 .phasebox{display:flex;align-items:center;gap:6px}
@@ -5174,8 +5194,10 @@ function byWeek(list){ return list.slice(); }
 function пнНедели(){ var d=dLocal(TODAY); d.setDate(d.getDate()-(d.getDay()+6)%7); return isoOf(d); }
 function записьНедели(k){
   if(!HIST || !k) return null;
-  var пн=пнНедели(), r=null;
-  HIST.forEach(function(w){ if(!r && w.date>=пн && w.date<=TODAY && dayHere(w.day)===k) r=w; });
+  /* 25.10, его выбор «новая — с Дня 1»: занятия по прошлой программе (до дня смены) галочку
+     на дни новой не ставят — как и очередь (lastWorkout) */
+  var пн=пнНедели(), см=сменаПрогДата(), с=(см && см>пн) ? см : пн, r=null;
+  HIST.forEach(function(w){ if(!r && w.date>=с && w.date<=TODAY && dayHere(w.day)===k) r=w; });
   return r;
 }
 function когдаСделан(iso){
@@ -5184,9 +5206,9 @@ function когдаСделан(iso){
 }
 /* когда этот день программы делали в последний раз: ГГГГ-ММ-ДД или null */
 function lastDateOf(k){
-  var best=null;
-  if(lastDone && lastDone.day===k) best=lastDone.date;
-  if(HIST) for(var i=0;i<HIST.length;i++){ if(HIST[i].day===k){ if(!best || HIST[i].date>best) best=HIST[i].date; break; } }
+  var best=null, см=сменаПрогДата();
+  if(lastDone && lastDone.day===k && !(см && lastDone.date<см)) best=lastDone.date;
+  if(HIST) for(var i=0;i<HIST.length;i++){ if(HIST[i].day===k){ if(!(см && HIST[i].date<см) && (!best || HIST[i].date>best)) best=HIST[i].date; break; } }
   return best;
 }
 /* Когда каждый день программы случится в следующий раз: очередь идёт по
@@ -6233,12 +6255,20 @@ var MINS=[['30','30'],['45','45'],['60','60'],['90','90+']];
 var WEEK=[1,2,3,4,5,6,0];                    /* неделя начинается с понедельника */
 function wizPattern(n){ return {1:[3],2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5],
   6:[1,2,3,4,5,6],7:[0,1,2,3,4,5,6]}[n]||[1,3,5]; }
+/* 25.10, его скриншот: при сборке программы сверху «пн ср пт», а его дни — вт, чт, сб (его
+   ответ «вт, чт, сб»). Дни анкеты брались один раз и могли взяться, пока расписание ещё не
+   пришло. Теперь при каждой отрисовке анкеты (wizInit), пока человек сам не трогал дни,
+   они берутся из расписания. В самой wizDays — нельзя: при «Начать по ней» новичка
+   applyProfile уже поставил дни готовой программы, и анкета бы их подхватила. */
 function wizDays(){ var o=WIZ.wd||{}; return WEEK.filter(function(d){ return o[d]; }); }
 function wizInit(){
   var me=myData()||{};
   if(me.place && !WIZ.touched) WIZ.place=me.place;
   if(me.min && !WIZ.touched) WIZ.min=me.min;
   if(me.about && !WIZ.text) WIZ.text=me.about;
+  if(!WIZ.wdTouched && !firstRun && GYM_DAYS && Object.keys(GYM_DAYS).length){
+    WIZ.wd={}; Object.keys(GYM_DAYS).forEach(function(d){ if(GYM_DAYS[d]) WIZ.wd[+d]=1; });
+  }
   if(!WIZ.wd){
     WIZ.wd={};
     /* свои дни подставляем только тому, кто их уже задавал; новому человеку —
@@ -6248,6 +6278,30 @@ function wizInit(){
     (свои ? Object.keys(GYM_DAYS).map(Number) : wizPattern(3)).forEach(function(d){ WIZ.wd[d]=1; });
   }
 }
+/* 25.10, его слова: «мне совсем непонятно какие упражнения в какой день. Нужно показать
+   их удобнее уже по дням и с фото». День программы — с днём недели из расписания (День 1 —
+   первый день зала и т. д.), упражнения — строками с кадром, мышцей и подходами, как на
+   экране «Тренировка». Его выбор из двух макетов — «вкладки по дням» (A). */
+function aiДеньНедели(i){ var d=wizDays(); return d.length ? WD[d[i % d.length]] : ''; }
+function aiСтрока(x){
+  var e={n:x.n, cat:x.id||x.cat||null, fig:x.fig, ph:x.ph}, м=x.p ? String(x.p).toLowerCase() : '';
+  return '<div class="aiex"><span class="exph">'+mediaFor(e)+'</span><span class="aien"><b>'+
+    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span></div>';
+}
+function aiЗаголовок(d){ var t=String(d.sub||'').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : ''; }
+function aiДниHtml(p){
+  if(WIZ._вкладкаПрог!==p){ WIZ._вкладкаПрог=p; WIZ.dayTab=0; }
+  var t=Math.max(0, Math.min(WIZ.dayTab||0, p.days.length-1)), d=p.days[t];
+  return '<div class="aitabs" role="tablist" aria-label="Дни программы">'+p.days.map(function(x,i){
+      var дн=aiДеньНедели(i);
+      return '<button type="button" role="tab" data-aitab="'+i+'" aria-selected="'+(i===t)+'"><b>День '+(i+1)+'</b>'+(дн?'<i>'+дн+'</i>':'')+'</button>'; }).join('')+'</div>'+
+    '<div class="aidh"><b>'+esc(aiЗаголовок(d))+'</b><i>'+d.ex.length+' '+plural(d.ex.length,['упражнение','упражнения','упражнений'])+'</i></div>'+
+    '<div class="aiexs">'+d.ex.map(aiСтрока).join('')+'</div>';
+}
+document.addEventListener('click', function(e){
+  var b=e.target.closest && e.target.closest('[data-aitab]'); if(!b) return;
+  WIZ.dayTab=+b.getAttribute('data-aitab')||0; haptic('light'); renderWzChat();
+});
 function wizSummary(){
   var d=wizDays();
   return (WIZ.place==='home'?'дома':'зал')+' · '+
@@ -6455,13 +6509,7 @@ function renderWzChat(){
     }
     h+='</div>'; box.innerHTML=h; wzScroll('end'); return;
   }
-  h+='</div><div class="aiprev"><h4>'+esc(p.name)+'</h4><p class="aisub">'+esc(p.note)+'</p>';
-  p.days.forEach(function(d,i){
-    var lbl=(d.s && !/^день/i.test(d.s.trim())) ? ' · '+d.s : '';
-    h+='<div class="aiday">День '+(i+1)+lbl+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
-       d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+
-         '<b>'+esc(x.n)+'</b> · '+x.sets+' × '+esc(x.reps)+'</li>'; }).join('')+'</ul>';
-  });
+  h+='</div><div class="aiprev"><h4>'+esc(p.name)+'</h4><p class="aisub">'+esc(p.note)+'</p>'+aiДниHtml(p);
   h+='<div class="rbtns"><button type="button" class="btn go" id="wzapply">Начать по ней</button>'+
      '<button type="button" class="btn" id="wzagain">Переделать</button></div></div>';
   if(WIZ.hint) h+='<p class="wzdone">'+esc(WIZ.hint)+'</p>';
@@ -8622,7 +8670,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 16:45';
+var BUILD = '25.10 18:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13544,7 +13592,7 @@ document.getElementById('picker').addEventListener('click', function(e){
   if(e.target.closest('#g-go')){ wzGoalNext(); haptic('medium'); return; }
   var wd=e.target.closest('#wz-wd button[data-wd]');
   if(wd){
-    var d=+wd.dataset.wd; WIZ.touched=true;
+    var d=+wd.dataset.wd; WIZ.touched=true; WIZ.wdTouched=true;
     if(WIZ.wd[d]) delete WIZ.wd[d]; else WIZ.wd[d]=1;
     renderPicker(); haptic('light'); return;
   }
