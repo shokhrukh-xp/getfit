@@ -3916,6 +3916,10 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 #profm .goalcard .gl{color:#E6F5F4}
 #profm .goalcard .gt{color:#fff}
 #profm .goalcard .gp{color:#E6F5F4}
+#profm .goalcard .goal-eta{margin-top:12px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.12);font-size:13px;line-height:1.45;color:#E6F5F4}
+#profm .goalcard .goal-eta .ge-l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85;margin-bottom:2px}
+#profm .goalcard .goal-eta .ge-d{font-size:16px;color:#fff;margin:2px 0}
+#profm .goalcard .goal-eta b{font-weight:700;color:#fff}
 #profm .goalcard .pqgbar{background:rgba(255,255,255,.2)}
 #profm .goalcard .pqgbar b{background:var(--sand)}
 #profm .goalcard .pqgbar u{background:#fff}
@@ -7041,6 +7045,28 @@ function goalPull(strict, accept, signal){
       var жр=document.getElementById('p-log'); if(жр && !жр.classList.contains('hide')) renderLogSila();
     }).catch(function(e){if(strict)throw e;});
 }
+/* 25.10, его слова: «с учетом текущего темпа ты должен показывать когда реально
+   будет достичь цель и постоянно ее обновлять». Темп — последние 4 недели
+   (его выбор), считает сервер (progress.trend4 / eta / need); пересчёт — при
+   каждой загрузке цели, то есть после каждого взвешивания. Цель и её срок
+   не трогаем — рядом пишем, когда она будет при нынешнем темпе. */
+function goalEtaHtml(pr, цельКг){
+  if(!pr || !(pr.eta || pr.trend4)) return '';
+  var к=function(x){ return String(Math.round(Math.abs(x)*100)/100).replace('.',','); };
+  var дата=function(x){ var a=String(x||'').split('-'); return a.length===3 ? (+a[2])+' '+ЯЗ_МЕС[+a[1]-1]+' '+a[0] : ''; };
+  var вниз=pr.rate<0, h='<div class="goal-eta"><div class="ge-l">Прогноз · темп последних 4 недель</div>';
+  if(pr.eta){
+    h+='<div class="ge-t">'+(вниз ? 'Сейчас худеете на ' : 'Сейчас набираете ')+к(pr.eta.pace)+' кг в неделю</div>'+
+       '<div class="ge-d"><b>До '+к(цельКг)+' кг — около '+дата(pr.eta.date)+'</b></div>';
+    if(pr.by) h+= pr.eta.date>pr.by
+      ? (pr.need!=null ? '<div class="ge-t">Чтобы успеть к '+дата(pr.by)+', нужно '+к(pr.need)+' кг в неделю</div>' : '')
+      : '<div class="ge-t">Успеваете к сроку — '+дата(pr.by)+'</div>';
+  } else {
+    h+='<div class="ge-t">'+(вниз ? 'За 4 недели вес не снижается — к цели по такому темпу не прийти' : 'За 4 недели вес не растёт — к цели по такому темпу не прийти')+'</div>';
+    if(pr.by && pr.need!=null) h+='<div class="ge-t">Чтобы успеть к '+дата(pr.by)+', нужно '+к(pr.need)+' кг в неделю</div>';
+  }
+  return h+'</div>';
+}
 function renderGoalCard(){
   var el=document.getElementById('goalcard'); if(!el) return;
   var g=gget('goal',null), gobj=goalObj(), me=myData()||{}, pr=g&&g.progress;
@@ -7056,6 +7082,7 @@ function renderGoalCard(){
       var пр=Math.max(0, Math.min(100, Math.round(путь*100)));
       h+='<div class="pqgbar" role="img" aria-label="пройдено '+пр+'% пути"><b style="width:'+пр+'%"></b><u style="left:calc('+пр+'% - 2px)"></u></div>'+
          '<div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>пройдено '+пр+'%</span><span>цель <b>'+к(цельКг)+'</b></span></div>';
+      h+=goalEtaHtml(pr, цельКг);
     }
     if(pr && pr.w0 && pr.now && pr.rate){
       var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',',').replace('-','−'); };
@@ -8736,14 +8763,20 @@ function языкУзел(n, глянуть){
   var p=n.parentNode; if(!p || !ЯЗ_СЛ) return;
   var pn=p.nodeName; if(pn==='SCRIPT' || pn==='STYLE' || pn==='TEXTAREA') return;
   if(глянуть && p.closest && p.closest('[data-noi18n]')) return;
-  var s=n.nodeValue; if(!s || !ЯЗ_КИР.test(s)) return;
-  var t=тр(s); if(t!==s){ n.__ru=s; ЯЗ_NV.call(n, t); }
+  /* 25.10: «… · мышцы и силу сохраняем» оставалось по-русски: первый проход
+     переводил строку по кускам, а когда перевод целиком приходил с сервера,
+     второй проход искал уже наполовину английскую строку. Берём исходник. */
+  var s=n.nodeValue, ru=(n.__ru!=null && n.__tr===s) ? n.__ru : s;
+  if(!ru || !ЯЗ_КИР.test(ru)) return;
+  var t=тр(ru); if(t!==s){ n.__ru=ru; n.__tr=t; ЯЗ_NV.call(n, t); }
 }
 function языкЭл(el){
   if(!ЯЗ_СЛ || !el.getAttribute) return;
   for(var i=0;i<ЯЗ_АТР.length;i++){
-    var a=ЯЗ_АТР[i], s=el.getAttribute(a); if(!s || !ЯЗ_КИР.test(s)) continue;
-    var t=тр(s); if(t!==s){ (el.__ruA||(el.__ruA={}))[a]=s; ЯЗ_SA.call(el, a, t); }
+    var a=ЯЗ_АТР[i], s=el.getAttribute(a);
+    if(s && el.__ruA && el.__ruA[a]!=null && el.__trA && el.__trA[a]===s) s=el.__ruA[a];
+    if(!s || !ЯЗ_КИР.test(s)) continue;
+    var t=тр(s); if(t!==el.getAttribute(a)){ (el.__ruA||(el.__ruA={}))[a]=s; (el.__trA||(el.__trA={}))[a]=t; ЯЗ_SA.call(el, a, t); }
   }
 }
 function языкДерево(root){
@@ -8780,7 +8813,7 @@ function языкПерехват(){
   var iah=EP.insertAdjacentHTML;
   EP.insertAdjacentHTML=function(pos, html){ iah.call(this, pos, html); if(ЯЗ_СЛ) языкДерево(/^(beforebegin|afterend)$/i.test(pos) ? this.parentNode : this); };
   EP.setAttribute=function(a, v){
-    if(ЯЗ_СЛ && ЯЗ_АТР.indexOf(String(a).toLowerCase())>=0 && typeof v==='string' && ЯЗ_КИР.test(v)){ var t=тр(v); if(t!==v){ (this.__ruA||(this.__ruA={}))[a]=v; v=t; } }
+    if(ЯЗ_СЛ && ЯЗ_АТР.indexOf(String(a).toLowerCase())>=0 && typeof v==='string' && ЯЗ_КИР.test(v)){ var t=тр(v); if(t!==v){ (this.__ruA||(this.__ruA={}))[a]=v; (this.__trA||(this.__trA={}))[a]=t; v=t; } }
     return ЯЗ_SA.call(this, a, v);
   };
   ['placeholder','title','alt'].forEach(function(a){
