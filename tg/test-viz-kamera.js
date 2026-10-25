@@ -7,7 +7,8 @@
    2) камера открылась: видео, контур, переключатель камеры, подсказки вместо кнопок фото;
    3) человек целиком в контуре — «Отлично, замрите», зелёный контур, отсчёт 3-2-1, снимок сам:
       ушёл JPEG 3:4, камера выключена, открылся главный вид;
-   4) ступни не в кадре — «Отойдите на шаг назад…», отсчёта и снимка нет;
+   3б) его выбор «хватит до колен»: кадр от головы до колен, ступней нет — тоже снимок сам;
+   4) колени не в кадре — «Отойдите на шаг назад…», отсчёта и снимка нет;
       «Снять сейчас» — снимок без ожидания (дальше обычная проверка фото);
    5) «Отмена» выключает камеру и возвращает кнопки. */
 const { chromium } = require('playwright');
@@ -56,12 +57,23 @@ async function открыть(видео){
       дано(await page.evaluate(() => { const v = document.getElementById('vizvideo'); return !v.srcObject; }), 'поток камеры остановлен');
     } finally { await br.close(); }
   }
-  /* 4–5: ступни не в кадре */
+  /* 3б: до колен — достаточно */
+  { const { br, page, o, ош } = await открыть('viz-kamera-koleni.mjpeg');
+    try {
+      дано(ош.length === 0, 'страница без ошибок ' + (ош[0] || ''));
+      await page.click('#vizcamgo');
+      await page.waitForSelector('#vizcount:not([hidden])', { timeout: 15000 }).catch(() => {});
+      await page.screenshot({ path: '/tmp/viz-kamera-koleni.png' });
+      await page.waitForSelector('#viz-main:not([hidden])', { timeout: 15000 }).catch(() => {});
+      дано((o.vizAsked || { photo: [] }).photo.length === 1, 'от головы до колен, без ступней — снимок сделан сам');
+    } finally { await br.close(); }
+  }
+  /* 4–5: колени не в кадре */
   { const { br, page, o, ош } = await открыть('viz-kamera-close.mjpeg');
     try {
       дано(ош.length === 0, 'страница без ошибок ' + (ош[0] || ''));
       await page.click('#vizcamgo'); await page.waitForTimeout(5000);
-      дано(/Отойдите на шаг назад/.test(await page.textContent('#vizcamhint')), 'ступни не в кадре — «Отойдите на шаг назад»: ' + await page.textContent('#vizcamhint'));
+      дано(/Отойдите на шаг назад — в кадре нужны голова и колени/.test(await page.textContent('#vizcamhint')), 'колени не в кадре — «Отойдите на шаг назад»: ' + await page.textContent('#vizcamhint'));
       дано(await page.isHidden('#vizcount') && !(o.vizAsked && o.vizAsked.photo.length), 'отсчёта и снимка нет');
       await page.screenshot({ path: '/tmp/viz-kamera-otoydite.png' });
       await page.click('#vizflip'); await page.waitForTimeout(1500);
