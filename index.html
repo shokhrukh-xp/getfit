@@ -8592,7 +8592,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 15:00';
+var BUILD = '25.10 16:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -18825,7 +18825,7 @@ function renderChat(scroll){
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
       h+='<div class="msg me sent">'+(CHAT.pendingDate && CHAT.pendingDate!==TODAY?'<small>Запись за '+ruDate(CHAT.pendingDate)+'</small><br>':'')+(CHAT.pendingImg?'<img class="fthumb" src="data:image/jpeg;base64,'+CHAT.pendingImg+'" alt="">':'')+esc(CHAT.pending)+'</div>'+
-      ответТренера((CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю')+'<span class="dots"><i></i><i></i><i></i></span>','','wait');
+      ответТренера('<span id="cwait">'+esc(CHAT.stage||(CHAT.pendingImg?'Фото ушло, смотрю — секунд 20':'Думаю'))+'</span><span class="dots"><i></i><i></i><i></i></span>','','wait');
     if(CHAT.err) h+=ответТренера(esc(CHAT.err),'','bad')+(CHAT.retry?'<button type="button" class="btn" id="chatretry">Повторить</button>':'');
     /* 17.10, его выбор I: пустой разговор — не чёрный экран, а «чем помочь»
        и четыре частых начала; нажатие отправляет как обычное сообщение */
@@ -19534,7 +19534,18 @@ function coachSend(text, image){
   renderChat(); haptic('medium');
   var sb=document.getElementById('csend'); if(sb) sb.disabled=true;
   var сверить=false, отправлено=Date.now();
-  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1})
+  /* 25.10: этап разбора — как черновик в Telegram: «Записываю обед · 540 ккал… пишу ответ»
+     вместо «Думаю», пока ждём ответ (сервер держит его по stage-id) */
+  var этапId=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  CHAT.stage=''; var этапТаймер=setInterval(function(){
+    if(!CHAT.busy){ clearInterval(этапТаймер); return; }
+    fGet('/coach/stage?uid='+encodeURIComponent(syncUid())+'&id='+этапId).then(function(d){
+      var t=d&&d.stage?String(d.stage).replace(/…\s*$/,''):'';
+      if(!t || !CHAT.busy || t===CHAT.stage) return;
+      CHAT.stage=t; var el=document.getElementById('cwait'); if(el) el.textContent=t;
+    }).catch(function(){});
+  }, 1500);
+  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1, stage:этапId})
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -19582,7 +19593,7 @@ function coachSend(text, image){
       haptic('err');
       if(отправкаПовторима(e)) сверить=true;
     })
-    .then(function(){ CHAT.busy=false; renderChat(); if(сверить) чатСверить(text||'', !!image, отправлено, date); });
+    .then(function(){ clearInterval(этапТаймер); CHAT.stage=''; CHAT.busy=false; renderChat(); if(сверить) чатСверить(text||'', !!image, отправлено, date); });
 }
 /* 22.10: ответ потерялся по дороге (связь, 5xx), а сервер сообщение принял и
    записал еду. Без сверки на экране «ошибка» и черновик, а «Повторить»

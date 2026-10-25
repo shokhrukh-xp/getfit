@@ -118,10 +118,12 @@ try{
   await p.waitForFunction(()=>!document.querySelector('#csend').disabled);
   assert.equal(await p.locator('#ctext').inputValue(),'Ужин с фото','Обрыв сети тоже сохраняет текст');
   assert.equal(await p.locator('#cattach img').getAttribute('src'),image,'Обрыв сети тоже сохраняет фото');
-  assert.deepEqual(sent[1],sent[0]);
+  /* 25.10: stage — свой у каждой отправки (этап разбора в чате), остальное — то же */
+  const безЭтапа=x=>{const y=Object.assign({},x);delete y.stage;return y;};
+  assert.deepEqual(безЭтапа(sent[1]),безЭтапа(sent[0]));
   broken=false;await p.click('#chatretry');await until(()=>sent.length===3);
   await p.waitForFunction(()=>!document.querySelector('#csend').disabled);
-  assert.deepEqual(sent[2],sent[0],'Ручной повтор сохраняет текст, фото, дату и MIME');
+  assert.deepEqual(безЭтапа(sent[2]),безЭтапа(sent[0]),'Ручной повтор сохраняет текст, фото, дату и MIME');
   assert.equal(await p.locator('#ctext').inputValue(),'');assert(await p.locator('#cattach').isHidden());
   assert.equal(await p.locator('#chatretry').count(),0,'После успеха повтор исчез');
   await p.click('#coachclose');await p.click('#coachnav');assert.equal(await p.locator('#ctext').inputValue(),'Отдельный сегодняшний черновик');

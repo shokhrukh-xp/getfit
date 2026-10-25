@@ -495,7 +495,15 @@ async function поднять(page, o) {
       if (o.aiDelay) return new Promise(r => setTimeout(() => r(отдать()), o.aiDelay));
       return отдать();
     }
-    if (p === '/coach')      return дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
+    if (p === '/coach') {
+      (o.coachBodies = o.coachBodies || []).push(JSON.parse(route.request().postData() || '{}'));
+      const отдать = () => дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
+      if (o.coachDelay) return new Promise(r => setTimeout(() => r(отдать()), o.coachDelay));   /* 25.10: этап ожидания */
+      return отдать();
+    }
+    /* 25.10: этап разбора, пока тренер думает (o.coachStage — строка или функция) */
+    if (p === '/coach/stage') { (o.stageAsked = o.stageAsked || []).push(u.searchParams.get('id'));
+      return дать({ ok: true, stage: typeof o.coachStage === 'function' ? o.coachStage() : (o.coachStage || null) }); }
     /* 25.09, этап 3: самочувствие и боль в разговоре. o.спрошено — вопросы
        в день зала, o.нажато — нажатые кнопки; o.onAsk / o.onAct — ответы. */
     if (p === '/coach/ask') { (o.спрошено = o.спрошено || []).push(JSON.parse(route.request().postData() || '{}'));
