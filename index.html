@@ -8592,7 +8592,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 11:39';
+var BUILD = '25.10 15:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -10687,7 +10687,7 @@ function ensureDataSession(force){
   if(DATASESSION.blocked)return Promise.reject(new Error('Дневник обновляется после сброса.'));
   if(force || DATASESSION.uid!==uid){DATASESSION.promise=null;DATASESSION.uid=uid;}
   if(!DATASESSION.promise){
-    var headers={};if(TG && TG.initData)headers['x-tg-init']=TG.initData;
+    var headers={};if(TG && TG.initData)headers['x-tg-init']=TG.initData;var tz0=поясТелефона();if(tz0)headers['x-tz']=tz0;
     DATASESSION.promise=fetch(SYNCURL+'/session?uid='+encodeURIComponent(uid),{headers:headers,cache:'no-store'})
       .then(function(r){return r.json().then(function(d){
         if(!r.ok){if(d.code==='auth'||d.code==='stale'||d.code==='invite')gateShow(d.code,d.error);throw new Error(d.error||'Не удалось проверить дневник.');}
@@ -10696,11 +10696,15 @@ function ensureDataSession(force){
   }
   return DATASESSION.promise;
 }
+/* 25.10: часовой пояс телефона — сервер считает «сегодня», напоминания и разбор по нему
+   (его слова: «по времени пользователя с телефона… я могу путешествовать») */
+function поясТелефона(){ try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } }
 function tgFetch(url, opts){
   opts = opts || {};
   var h = Object.assign({}, opts.headers || {});
   var init = (TG && TG.initData) ? TG.initData : '';
   if (init) h['x-tg-init'] = init;
+  var tz = поясТелефона(); if (tz) h['x-tz'] = tz;
   opts.headers = h;
   var entering=new URL(url,location.href).pathname==='/join';
   return (entering?Promise.resolve():ensureDataSession()).then(function(){
