@@ -95,7 +95,9 @@ async function открыть(br, viz){
     await page.click('#vizgo');
     await page.waitForFunction(() => !document.getElementById('viznew').hidden, null, { timeout: 30000 }).catch(() => {});
     const зак = o.vizAsked.render;
-    дано(зак.length === 2 && зак[0].w === 75 && !зак[0].fix && зак[1].n === 1 && /^too narrow by \d{1,2}%$/.test(зак[1].fix), 'узкая талия — одна перерисовка с поправкой: ' + JSON.stringify(зак.map(x => x.fix)));
+    дано(зак[0] && зак[0].w === 75 && зак[0].target.length > 10000 && !зак[0].prev, 'с заказом уходит образец-«пластика» (JPEG)');
+    дано(зак.length === 2 && зак[1].n === 1 && зак[1].prev === 'r1' && зак[1].got > 0.7 && зак[1].got < 0.85 && зак[1].target === зак[0].target,
+      'узкая талия — перерисовка с опорой на прошлую попытку и её замер: ' + JSON.stringify(зак.map(x => [x.prev, x.got, x.n])));
     дано(/\/viz\/img.*k=r2|blob:/.test(await page.getAttribute('#viznew', 'src')) && await page.evaluate(() => document.getElementById('viznew').naturalWidth > 0), 'показана картинка');
     const сообщ = await page.textContent('#vizmsg');
     дано(/Силуэт проверен: талия на картинке уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
@@ -104,6 +106,18 @@ async function открыть(br, viz){
     дано(await page.isVisible('#vizcare'), 'первый раз — поддержка');
     дано(/жир у каждого уходит по-своему/.test(await page.textContent('#viz-main')), 'честная подпись');
     await page.screenshot({ path: '/tmp/viz-kartinka.png', fullPage: false });
+    /* 25.10, его слова: «вертикальная линия слайдер… слева До и справа После» и «не могу открыть фото полностью» */
+    await page.$eval('#vizcmp', e => e.scrollIntoView({ block: 'center' })); await page.waitForTimeout(200);
+    дано(await page.evaluate(() => document.getElementById('vizcmp').classList.contains('has') && getComputedStyle(document.querySelector('#vizcmp .vizline')).display === 'block'), 'до/после — шторка с вертикальной линией');
+    const бок = await page.$eval('#vizcmp', e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+    await page.mouse.move(бок.x + бок.w * 0.5, бок.y + бок.h * 0.5); await page.mouse.down(); await page.mouse.move(бок.x + бок.w * 0.2, бок.y + бок.h * 0.5, { steps: 5 }); await page.mouse.up();
+    const икс = await page.$eval('#vizcmp', e => e.style.getPropertyValue('--x'));
+    дано(Math.abs(parseFloat(икс) - 20) < 3, 'линию можно тянуть: ' + икс);
+    await page.click('#vizfull'); await page.waitForTimeout(200);
+    дано(await page.isVisible('#vizfs') && await page.evaluate(() => document.getElementById('vizfscmp').classList.contains('has') && document.getElementById('vizfsnew').naturalWidth > 0), '⤢ — до/после на весь экран');
+    await page.screenshot({ path: '/tmp/viz-fs.png' });
+    await page.click('#vizfsx'); await page.waitForTimeout(150);
+    дано(await page.isHidden('#vizfs'), '✕ закрывает весь экран');
     await page.evaluate(() => document.querySelector('#vizm .modalbox').scrollTop = 1e4); await page.waitForTimeout(200);
     await page.screenshot({ path: '/tmp/viz-niz.png', fullPage: false });
     /* 6) удалить */
