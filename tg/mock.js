@@ -501,6 +501,11 @@ async function поднять(page, o) {
       if (o.coachDelay) return new Promise(r => setTimeout(() => r(отдать()), o.coachDelay));   /* 25.10: этап ожидания */
       return отдать();
     }
+    /* 25.10: штрихкод — поиск и запись (o.onBarcode, o.onBarcodeAdd; запросы в o.barcodeAsked / o.barcodeAdded) */
+    if (p === '/barcode') { (o.barcodeAsked = o.barcodeAsked || []).push(u.searchParams.get('ean'));
+      return дать(o.onBarcode ? o.onBarcode(u.searchParams.get('ean')) : { ok: true, found: false, product: null }); }
+    if (p === '/barcode/add') { const b = JSON.parse(route.request().postData() || '{}'); (o.barcodeAdded = o.barcodeAdded || []).push(b);
+      return дать(o.onBarcodeAdd ? o.onBarcodeAdd(b) : { ok: true, user: 'Штрихкод', reply: 'Записал.' }); }
     /* 25.10: этап разбора, пока тренер думает (o.coachStage — строка или функция) */
     if (p === '/coach/stage') { (o.stageAsked = o.stageAsked || []).push(u.searchParams.get('id'));
       return дать({ ok: true, stage: typeof o.coachStage === 'function' ? o.coachStage() : (o.coachStage || null) }); }

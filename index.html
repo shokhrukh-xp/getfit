@@ -1498,6 +1498,11 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 #copyrep{margin-top:14px}
 /* ── каталог ── */
 .modal.wide .modalbox{max-height:92vh}
+#scanm{z-index:130}
+.scanvid{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:4/3;margin:4px 0 8px}
+.scanvid video{width:100%;height:100%;object-fit:cover;display:block}
+.scanline{position:absolute;left:12%;right:12%;top:50%;height:2px;background:var(--accent,#e0533d);box-shadow:0 0 8px rgba(255,255,255,.6);border-radius:2px}
+.scanname{font-size:17px;font-weight:700;margin:4px 0 2px;color:var(--ink,inherit)}
 .catitem.nope{opacity:.62}
 .catitem.nope .cattx b::after{content:" · заменяли";font-size:12px;font-weight:400;opacity:.7}
 .catpick.undo{color:var(--accent-txt)}
@@ -4382,10 +4387,35 @@ img.avface{border-radius:50%;object-fit:cover}
     <div class="chatask">
       <div class="cpill">
         <textarea id="ctext" rows="1" placeholder="Еда или вопрос"></textarea>
+        <button type="button" class="cic" id="cscan" aria-label="Штрихкод"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M10 8v8M13 8v8M16.5 8v8"/></svg></button>
         <button type="button" class="cic" id="cphoto" aria-label="Фото"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="cic-l">Фото</span></button>
       </div>
       <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
+    </div>
+  </div>
+</div>
+<!-- 25.10: штрихкод — продукт из своей базы или Open Food Facts, запись без модели (его выбор «своя база + OFF») -->
+<div class="modal" id="scanm" role="dialog" aria-modal="true" aria-labelledby="scantitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="scantitle">Штрихкод</h3><button class="xbtn" id="scanclose" aria-label="Закрыть">✕</button></div>
+    <div id="scan-cam">
+      <div class="scanvid"><video id="scanvideo" playsinline muted autoplay></video><i class="scanline" aria-hidden="true"></i></div>
+      <p class="mtext" id="scanhint" role="status" aria-live="polite">Наведите камеру на штрихкод упаковки</p>
+      <div class="btnrow"><button type="button" class="btn" id="scanphoto">Сфотографировать штрихкод</button></div>
+      <input id="scanfile" type="file" accept="image/*" capture="environment" hidden>
+    </div>
+    <div id="scan-prod" hidden>
+      <p class="scanname" id="scanname"></p>
+      <p class="mtext" id="scanper"></p>
+      <div class="pf"><span class="pfl">когда</span><div class="seg" id="scankind"></div></div>
+      <div class="mnums"><label>сколько, г<input id="scang" type="number" inputmode="numeric" min="1" max="3000" step="5"></label></div>
+      <p class="mtext" id="scansum"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="scanadd">Записать</button><button type="button" class="btn" id="scanagain">Другой код</button></div>
+    </div>
+    <div id="scan-none" hidden>
+      <p class="mtext" id="scannonetext"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="scanlabel">Сфотографировать этикетку</button><button type="button" class="btn" id="scanagain2">Другой код</button></div>
     </div>
   </div>
 </div>
@@ -8592,7 +8622,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 16:30';
+var BUILD = '25.10 16:45';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19537,6 +19567,7 @@ function coachSend(text, image){
   /* 25.10: этап разбора — как черновик в Telegram: «Записываю обед · 540 ккал… пишу ответ»
      вместо «Думаю», пока ждём ответ (сервер держит его по stage-id) */
   var этапId=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  var штрихДляЭтикетки=CHAT.ean; setTimeout(function(){ if(CHAT.ean===штрихДляЭтикетки) CHAT.ean=null; },0);
   CHAT.stage=''; var этапТаймер=setInterval(function(){
     if(!CHAT.busy){ clearInterval(этапТаймер); return; }
     fGet('/coach/stage?uid='+encodeURIComponent(syncUid())+'&id='+этапId).then(function(d){
@@ -19545,7 +19576,7 @@ function coachSend(text, image){
       CHAT.stage=t; var el=document.getElementById('cwait'); if(el) el.textContent=t;
     }).catch(function(){});
   }, 1500);
-  fPost('/coach', {uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1, stage:этапId})
+  fPost('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -19637,6 +19668,102 @@ document.getElementById('ctext').addEventListener('keydown', function(e){
 });
 document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); чатНачалаСверить(); });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
+/* ── ШТРИХКОД (25.10) ──
+   Камера ищет EAN/UPC (на iPhone встроенного распознавания нет — библиотека zxing,
+   своя копия в vendor/, грузится только при первом сканировании). Нашли продукт в своей
+   базе или Open Food Facts — граммы и приём, запись без модели. Не нашли — фото этикетки
+   тренеру с этим штрихкодом: он прочитает её, и дальше продукт находится сразу. */
+var SCAN={stream:null, det:null, timer:0, ean:null, prod:null, busy:false};
+function scanLib(){
+  if(window.BarcodeDetectionAPI) return Promise.resolve(window.BarcodeDetectionAPI);
+  return new Promise(function(ok, bad){ var s=document.createElement('script'); s.src='vendor/barcode-detector-3.2.2.js';
+    s.onload=function(){ window.BarcodeDetectionAPI ? ok(window.BarcodeDetectionAPI) : bad(new Error('Сканер не загрузился.')); };
+    s.onerror=function(){ bad(new Error('Сканер не загрузился — проверьте интернет.')); }; document.head.appendChild(s); });
+}
+function scanDetector(){
+  if(SCAN.det) return Promise.resolve(SCAN.det);
+  var форматы=['ean_13','ean_8','upc_a'];
+  var родной=function(){ try{ return window.BarcodeDetector && BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : Promise.resolve([]); }catch(e){ return Promise.resolve([]); } };
+  return родной().then(function(есть){
+    if(есть && есть.indexOf('ean_13')>=0){ SCAN.det=new window.BarcodeDetector({formats:форматы}); return SCAN.det; }
+    return scanLib().then(function(api){
+      api.setZXingModuleOverrides({ locateFile:function(путь, пре){ return /\.wasm$/.test(путь) ? new URL('vendor/zxing-reader-3.1.3.wasm', location.href).href : пре+путь; } });
+      SCAN.det=new api.BarcodeDetector({formats:форматы}); return SCAN.det; });
+  });
+}
+function scanView(вид){ ['cam','prod','none'].forEach(function(k){ document.getElementById('scan-'+k).hidden=(k!==вид); }); }
+function scanHint(t){ document.getElementById('scanhint').textContent=t; }
+function scanStop(){ clearInterval(SCAN.timer); SCAN.timer=0;
+  if(SCAN.stream){ try{ SCAN.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} SCAN.stream=null; }
+  var v=document.getElementById('scanvideo'); if(v){ try{ v.srcObject=null; }catch(e){} } }
+function scanOpen(){
+  if(CHAT.busy || CHAT.prep) return;
+  SCAN.ean=null; SCAN.prod=null; SCAN.busy=false; scanView('cam'); scanHint('Наведите камеру на штрихкод упаковки');
+  document.getElementById('scanm').classList.add('show'); haptic('light');
+  scanDetector().then(function(det){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('нет камеры');
+    return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false}).then(function(st){
+      if(!document.getElementById('scanm').classList.contains('show')){ st.getTracks().forEach(function(t){ t.stop(); }); return; }
+      SCAN.stream=st; var v=document.getElementById('scanvideo'); v.srcObject=st; var p=v.play(); if(p&&p.catch) p.catch(function(){});
+      SCAN.timer=setInterval(function(){
+        if(SCAN.busy || !SCAN.stream || v.readyState<2) return; SCAN.busy=true;
+        det.detect(v).then(function(коды){ SCAN.busy=false; var к=(коды||[]).find(function(x){ return /^\d{8,14}$/.test(x.rawValue||''); }); if(к) scanFound(к.rawValue); })
+          .catch(function(){ SCAN.busy=false; });
+      }, 300);
+    });
+  }).catch(function(e){
+    /* поздний отказ камеры не перетирает то, что уже сказано про снимок */
+    if(document.getElementById('scanhint').textContent!=='Наведите камеру на штрихкод упаковки') return;
+    scanHint(/загруз/.test(String(e&&e.message)) ? e.message : 'Камера недоступна — сфотографируйте штрихкод кнопкой ниже.'); });
+}
+function scanClose(){ scanStop(); document.getElementById('scanm').classList.remove('show'); }
+function scanFound(ean){
+  scanStop(); haptic('medium'); SCAN.ean=ean; scanHint('Ищу продукт…');
+  fGet('/barcode?uid='+encodeURIComponent(syncUid())+'&ean='+encodeURIComponent(ean)).then(function(d){
+    if(!d || !d.ok) throw new Error((d&&d.error)||'Не получилось найти.');
+    if(!d.found){ SCAN.prod=null;
+      document.getElementById('scannonetext').textContent='Продукта с кодом '+ean+' пока нет в базе. Сфотографируйте этикетку с составом — тренер прочитает её, а в следующий раз этот продукт найдётся по штрихкоду сразу.';
+      scanView('none'); return; }
+    SCAN.prod=d.product; var п=d.product, per=п.per||{};
+    document.getElementById('scanname').textContent=п.name+(п.brand && п.name.toLowerCase().indexOf(п.brand.toLowerCase())<0 ? ' · '+п.brand : '');
+    var зп=function(x){ return String(Math.round((+x||0)*10)/10).replace('.',','); };
+    document.getElementById('scanper').textContent='На 100 г: '+Math.round(per.kcal||0)+' ккал · белок '+зп(per.prot)+' г · жир '+зп(per.fat)+' г · углеводы '+зп(per.carb)+' г';
+    document.getElementById('scankind').innerHTML=segHtml('scankind', KINDS, kindNow());
+    var g=document.getElementById('scang'); g.value=п.serving||100; scanSum(); scanView('prod');
+  }).catch(function(e){ scanView('cam'); scanHint(humanErr(e)+' Попробуйте ещё раз.'); });
+}
+function scanSum(){ var п=SCAN.prod; if(!п) return; var g=+document.getElementById('scang').value||0, per=п.per||{};
+  document.getElementById('scansum').textContent= g>0 ? (g+' г — '+Math.round((per.kcal||0)*g/100)+' ккал, белок '+String(Math.round((per.prot||0)*g/10)/10).replace('.',',')+' г') : 'Сколько граммов?';
+  document.getElementById('scanadd').disabled=!(g>0 && g<=3000); }
+function scanKind(){ var a=document.querySelector('#scankind [aria-pressed="true"], #scankind .on'); return (a&&a.getAttribute('data-v'))||kindNow(); }
+document.getElementById('cscan').addEventListener('click', scanOpen);
+document.getElementById('scanclose').addEventListener('click', scanClose);
+document.getElementById('scanm').addEventListener('click', function(e){ if(e.target.id==='scanm') scanClose(); });
+document.getElementById('scanphoto').addEventListener('click', function(){ document.getElementById('scanfile').click(); });
+document.getElementById('scanfile').addEventListener('change', function(e){
+  var f=e.target.files&&e.target.files[0]; e.target.value=''; if(!f) return;
+  scanHint('Ищу штрихкод на фото…');
+  scanDetector().then(function(det){ return (window.createImageBitmap ? createImageBitmap(f) : Promise.resolve(f)).then(function(img){ return det.detect(img); }); })
+    .then(function(коды){ var к=(коды||[]).find(function(x){ return /^\d{8,14}$/.test(x.rawValue||''); });
+      if(к) scanFound(к.rawValue); else scanHint('Не вижу штрихкод на фото — снимите ближе и ровнее.'); })
+    .catch(function(e2){ scanHint(humanErr(e2)); });
+});
+document.getElementById('scang').addEventListener('input', scanSum);
+document.getElementById('scankind').addEventListener('click', function(e){ var b=e.target.closest('button'); if(!b) return;
+  this.querySelectorAll('button').forEach(function(x){ var on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-pressed', on?'true':'false'); }); });
+['scanagain','scanagain2'].forEach(function(id){ document.getElementById(id).addEventListener('click', function(){ scanStop(); scanOpen(); }); });
+document.getElementById('scanlabel').addEventListener('click', function(){ CHAT.ean=SCAN.ean; scanClose(); document.getElementById('cfile').click(); });
+document.getElementById('scanadd').addEventListener('click', function(){
+  var п=SCAN.prod, g=Math.round(+document.getElementById('scang').value||0); if(!п || !(g>0)) return;
+  var кн=this; кн.disabled=true; var date=CHAT.date||TODAY;
+  fPost('/barcode/add', {uid:syncUid(), ean:SCAN.ean, g:g, kind:scanKind(), date:date}).then(function(d){
+    if(!d || !d.ok) throw new Error((d&&d.error)||'Не записалось.');
+    var сейчас=Date.now();
+    CHAT.items=(CHAT.items||[]).concat([{role:'user', text:d.user, ts:сейчас}, {role:'assistant', text:d.reply, ts:d.ts||сейчас, src:[]}]);
+    if(d.day){ if(d.day.date===TODAY) HOME.day=d.day; if(d.day.date===fDate()){ FOOD.day=d.day; FOOD.err=false; renderFoodDay(); } }
+    scanClose(); renderChat(); renderHome(); haptic('ok'); освежить(d.day);
+  }).catch(function(e){ кн.disabled=false; document.getElementById('scansum').textContent=humanErr(e); haptic('err'); });
+});
 document.getElementById('cfile').addEventListener('change', function(e){
   var f=e.target.files && e.target.files[0]; e.target.value='';
   if(!f || CHAT.busy || CHAT.prep) return;
