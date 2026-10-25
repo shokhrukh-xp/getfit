@@ -83,10 +83,13 @@ async function открыть(br, viz){
     дано(mp.length > 0 && mp.every(u => /\/vendor\/mp-1\.0\.1\//.test(u)), 'мерка — своя копия MediaPipe из vendor/');
     /* 4) шаги и расчёт */
     дано((await page.$$eval('#vizsteps button', b => b.map(x => x.textContent))).join('|') === '−5 %|−10 %|цель 75', 'шаги −5 % / −10 % / цель');
-    await page.click('#vizsteps button[data-w="81.8"]'); await page.waitForTimeout(500);
+    await page.click('#vizsteps button[data-w="81.8"]');
+    /* под нагрузкой хука расчёт (пауза 250 мс + запрос) приходит позже — ждём его, а не фиксированные 0,5 с */
+    await page.waitForFunction(() => /81,8 кг/.test(document.getElementById('vizwv').textContent) && /81,8 кг/.test(document.getElementById('viznums').textContent), null, { timeout: 8000 }).catch(() => {});
     дано(o.vizAsked.calc.some(c => c.w === 81.8), 'шаг −5 % — расчёт по 81,8 кг');
     дано(/81,8 кг/.test(await page.textContent('#vizwv')), 'ползунок веса — 81,8 кг');
-    await page.click('#vizsteps button[data-w="75"]'); await page.waitForTimeout(500);
+    await page.click('#vizsteps button[data-w="75"]');
+    await page.waitForFunction(() => /→ 75 кг/.test(document.getElementById('viznums').textContent), null, { timeout: 8000 }).catch(() => {});
     const ч = await page.textContent('#viznums');
     дано(/86,1 → 75 кг/.test(ч) && /жир ≈24 → 12,8 %/.test(ч) && /талия −13 см \(9–17\)/.test(ч), 'расчёт: ' + ч);
     дано(/Жир оценён/.test(await page.textContent('#viznote')), 'сказано, что жир оценён');
