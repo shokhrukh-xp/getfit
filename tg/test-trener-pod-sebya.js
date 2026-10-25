@@ -43,6 +43,9 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       await page.click('#trenm [data-trsex="m"]');
       дано((await page.locator('#trenm [data-trav]').count()) === 12 && (await page.getAttribute('#trenm [data-trav="mn"]', 'aria-pressed')) === 'true', тема + ': у мужского столько же и свой персонаж из знака');
       await page.click('#trenm [data-trsex="f"]');
+      /* 25.10, его снимок с iPhone: «картинки персонажей там овальные» — каждая кнопка и картинка квадратны */
+      const кв = await page.$$eval('#trenm .travbtn', bs => bs.map(b => { const r = b.getBoundingClientRect(), i = b.querySelector('img').getBoundingClientRect(); return [Math.round(r.width - r.height), Math.round(i.width - i.height)]; }));
+      дано(кв.every(([a, b]) => Math.abs(a) <= 1 && Math.abs(b) <= 1), тема + ': аватары круглые, не овальные ' + JSON.stringify(кв.slice(0, 3)));
       await page.click('#trenm [data-trav="f3"]');
       дано((await page.getAttribute('#trenm [data-trav="f3"]', 'aria-pressed')) === 'true', тема + ': выбран аватар f3');
       await page.click('#trenm [data-tr="next"]');
