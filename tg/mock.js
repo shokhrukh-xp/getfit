@@ -506,6 +506,26 @@ async function поднять(page, o) {
       return дать(o.onBarcode ? o.onBarcode(u.searchParams.get('ean')) : { ok: true, found: false, product: null }); }
     if (p === '/barcode/add') { const b = JSON.parse(route.request().postData() || '{}'); (o.barcodeAdded = o.barcodeAdded || []).push(b);
       return дать(o.onBarcodeAdd ? o.onBarcodeAdd(b) : { ok: true, user: 'Штрихкод', reply: 'Записал.' }); }
+    /* 25.10: визуализация цели. o.viz — состояние /viz; o.onVizCalc(w,dl), o.onVizRender(b);
+       o.vizImg(k) — путь к файлу картинки; запросы — в o.vizAsked { calc, consent, photo, render, del } */
+    if (p.startsWith('/viz')) {
+      const з = o.vizAsked = o.vizAsked || { calc: [], consent: 0, photo: [], render: [], del: 0 };
+      const тело = () => JSON.parse(route.request().postData() || '{}');
+      if (p === '/viz') return дать(o.viz || { ok: true, allowed: false });
+      if (p === '/viz/calc') { const w = +u.searchParams.get('w'), dl = +u.searchParams.get('dl'); з.calc.push({ w, dl });
+        return дать(o.onVizCalc ? o.onVizCalc(w, dl) : { ok: false, error: 'нет' }); }
+      if (p === '/viz/consent') { з.consent++; if (o.viz) o.viz.consent = true; return дать({ ok: true }); }
+      if (p === '/viz/photo') { const b = тело(); з.photo.push({ len: String(b.image || '').length, mime: b.mime }); if (o.viz) o.viz.photo = Date.now(); return дать({ ok: true, photo: Date.now() }); }
+      if (p === '/viz/delete') { з.del++; if (o.viz) o.viz.photo = null; return дать({ ok: true }); }
+      if (p === '/viz/img') { const f = o.vizImg && o.vizImg(u.searchParams.get('k'));
+        if (!f) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"нет картинки"}' });
+        return route.fulfill({ status: 200, contentType: /\.png$/.test(f) ? 'image/png' : 'image/jpeg', body: require('fs').readFileSync(f) }); }
+      if (p === '/viz/render') { const b = тело(); з.render.push(b);
+        const r = o.onVizRender ? o.onVizRender(b) : { ok: false, error: 'нет' };
+        if (r && r.status) return route.fulfill({ status: r.status, contentType: 'application/json', body: JSON.stringify(r.body || {}) });
+        if (o.vizDelay) return new Promise(res => setTimeout(() => res(дать(r)), o.vizDelay));
+        return дать(r); }
+    }
     /* 25.10: этап разбора, пока тренер думает (o.coachStage — строка или функция) */
     if (p === '/coach/stage') { (o.stageAsked = o.stageAsked || []).push(u.searchParams.get('id'));
       return дать({ ok: true, stage: typeof o.coachStage === 'function' ? o.coachStage() : (o.coachStage || null) }); }

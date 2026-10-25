@@ -1523,6 +1523,33 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .scanvid video{width:100%;height:100%;object-fit:cover;display:block}
 .scanline{position:absolute;left:12%;right:12%;top:50%;height:2px;background:var(--accent,#e0533d);box-shadow:0 0 8px rgba(255,255,255,.6);border-radius:2px}
 .scanname{font-size:17px;font-weight:700;margin:4px 0 2px;color:var(--ink,inherit)}
+/* 25.10: визуализация цели */
+#vizm{z-index:130}
+#vizm .btn:disabled{opacity:.45;cursor:default}   /* «Дальше» без галочки и «Показать», пока рисует — видно, что неактивны */
+.vizlist,.viztips ul{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.55;color:var(--muted)}
+.viztips{background:var(--card-2);border-radius:14px;padding:10px 12px 2px;margin-bottom:12px;font-size:13px}
+.viztips ul{margin-top:4px}
+.vizagree{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.4;margin:4px 0 6px;min-height:44px}
+.vizagree input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--action)}
+.vizpair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+.vizpair figure{margin:0;min-width:0}
+.vizpair img,.vizph{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border-radius:14px;background:var(--card-2)}
+.vizph{display:grid;place-items:center;padding:12px;text-align:center;font-size:12px;line-height:1.4;color:var(--muted)}
+.vizph.busy{background:linear-gradient(100deg,var(--card-2) 30%,var(--field,rgba(127,127,127,.18)) 50%,var(--card-2) 70%);background-size:300% 100%;animation:vizsh 1.4s linear infinite}
+@keyframes vizsh{from{background-position:100% 0}to{background-position:-100% 0}}
+.vizpair figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+.vizsteps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.vizsteps button{flex:1 1 0;min-height:40px;padding:8px 6px;border-radius:12px;border:.5px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;white-space:nowrap}
+.vizsteps button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--action)}
+.vizsl{display:block;margin:6px 0 4px;font-size:13px;color:var(--muted)}
+.vizsl b{color:var(--text);font-weight:700}
+.vizsl input{display:block;width:100%;margin:6px 0 0;accent-color:var(--action);min-height:32px}
+.viznums{font-size:14px;line-height:1.5;margin:8px 0 2px}
+.vizsmall{font-size:12px!important;margin-bottom:8px!important}
+.vizben{font-size:13px;line-height:1.5;background:var(--tint);color:var(--text);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+.vizcare{font-size:13px;line-height:1.5;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px}
+#profm .goalcard #vizopen{display:flex;width:100%;justify-content:center;align-items:center;margin-top:8px;min-height:44px;
+  border:1px solid rgba(255,255,255,.6);border-radius:12px;padding:0 12px;background:none;color:#fff;font-weight:700;font-size:14px;text-align:center}
 .catitem.nope{opacity:.62}
 .catitem.nope .cattx b::after{content:" · заменяли";font-size:12px;font-weight:400;opacity:.7}
 .catpick.undo{color:var(--accent-txt)}
@@ -4439,6 +4466,50 @@ img.avface{border-radius:50%;object-fit:cover}
     </div>
   </div>
 </div>
+<!-- 25.10: визуализация цели — фото во весь рост, ИИ показывает вид при другом весе и составе тела
+     (его выбор «поэтапно» и «явное согласие»; пока видит только владелец) -->
+<div class="modal wide" id="vizm" role="dialog" aria-modal="true" aria-labelledby="viztitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="viztitle">Как я буду выглядеть</h3><button class="xbtn" id="vizclose" aria-label="Закрыть">✕</button></div>
+    <p class="mtext" id="vizload" role="status">Загружаю…</p>
+    <div id="viz-consent" hidden>
+      <p class="mtext">Загрузите фото во весь рост — ИИ покажет, как вы примерно будете выглядеть при другом весе и составе тела.</p>
+      <ul class="vizlist">
+        <li>Фото хранится на нашем сервере и видно только вам. Удалить — одной кнопкой.</li>
+        <li>Для рисунка фото уходит в Google Gemini; по условиям платного доступа на нём не обучают модели.</li>
+        <li>Картинка примерная — по расчёту состава тела, а не обещание результата.</li>
+        <li>Только для взрослых, 18+.</li>
+      </ul>
+      <label class="vizagree"><input type="checkbox" id="vizagree"> <span>Согласен на такую обработку моего фото</span></label>
+      <p class="mtext" id="vizcmsg" role="status" aria-live="polite"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="vizok" disabled>Дальше</button></div>
+    </div>
+    <div id="viz-photo" hidden>
+      <div class="viztips"><b>Как снять</b>
+        <ul><li>во весь рост, лицом к камере, камера на уровне груди</li><li>облегающая одежда, руки чуть в стороны от тела</li><li>ровный свет, простой фон</li></ul></div>
+      <p class="mtext" id="vizpmsg" role="status" aria-live="polite"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="vizpick">Выбрать фото</button><button type="button" class="btn" id="vizforce" hidden>Всё равно это фото</button></div>
+      <input id="vizfile" type="file" accept="image/*" hidden>
+    </div>
+    <div id="viz-main" hidden>
+      <div class="vizpair">
+        <figure><img id="vizorig" alt="Ваше фото сейчас"><figcaption>сейчас</figcaption></figure>
+        <figure><div class="vizph" id="vizph">Выберите вес и нажмите «Показать»</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">у цели</figcaption></figure>
+      </div>
+      <div class="vizsteps" id="vizsteps"></div>
+      <label class="vizsl"><span>вес <b id="vizwv"></b></span><input type="range" id="vizw" step="0.1"></label>
+      <label class="vizsl"><span>мышцы <b id="vizdlv"></b></span><input type="range" id="vizdl" step="0.5"></label>
+      <p class="viznums" id="viznums"></p>
+      <p class="mtext vizsmall" id="viznote"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="vizgo">Показать</button></div>
+      <p class="mtext" id="vizmsg" role="status" aria-live="polite"></p>
+      <p class="vizben" id="vizben" hidden></p>
+      <div class="vizcare" id="vizcare" hidden>Если картинка расстроила или цель кажется далёкой — это нормально. Ориентир лучше брать ближний: уже −5 % веса заметны в анализах и самочувствии. Фото можно удалить в любой момент.</div>
+      <p class="mtext vizsmall">Картинка примерная: жир у каждого уходит по-своему. Талия считается по данным 2 635 взрослых, разброс ±30 %. Ниже безопасного веса и жира не рисуем.</p>
+      <div class="btnrow"><button type="button" class="btn" id="viznewphoto">Другое фото</button><button type="button" class="btn" id="vizdel">Удалить фото</button></div>
+    </div>
+  </div>
+</div>
 <div class="modal" id="mealm" role="dialog" aria-modal="true" aria-labelledby="mealtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="mealtitle">Приём</h3><button class="xbtn" id="mealclose" aria-label="Закрыть">✕</button></div>
@@ -7183,6 +7254,7 @@ function renderGoalCard(){
        '<p class="gp">Без цели норма — на поддержание.</p>'+
        '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
   }
+  h+=vizBtn();   /* 25.10: визуализация цели — когда сервер её открыл этому человеку */
   el.innerHTML=h;
 }
 function legacyOf(wt,gym){
@@ -7876,7 +7948,7 @@ function saveMe(event){
   var near=edited.closest('#profm .mlab, #profm .pf, #profm #mefields, #profm details, #profm .profblock')||document.querySelector('#profm .modalbox');
   savedNear(near,pending,function(){return сохранитьСостояние('state/me',{me:myData()||{},at:new Date().toISOString()});});
 }
-function openProf(pp){ profileLoad();settingsPaint();fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull();
+function openProf(pp){ profileLoad();settingsPaint();fillMe(); renderProfProg(); renderReco(); renderBuild(); renderInvite(); refPull(); vizPull();
   здРендер('zd', 'zdbody', 'zdsum', (myData()||{}).med); бтРендер();
   try{ renderProgCard(); }catch(e){}
   profGo(pp||'');
@@ -8670,7 +8742,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 18:30';
+var BUILD = '25.10 20:40';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13477,6 +13549,7 @@ document.getElementById('profm').addEventListener('click', function(e){
     return;
   }
   if(e.target.closest('#pfswitch')){ возвратЗапомнить('picker'); closeProf(); showPicker(); return; }
+  if(e.target.closest('#vizopen')){ vizOpen(); return; }
   if(e.target.closest('#goaltalk')){
     возвратЗапомнить('coachm'); closeProf(); openCoach();
     var ct=document.getElementById('ctext');
@@ -19716,6 +19789,261 @@ document.getElementById('ctext').addEventListener('keydown', function(e){
 });
 document.getElementById('ctext').addEventListener('input', function(e){ e.target.style.height='auto'; e.target.style.height=Math.min(120, e.target.scrollHeight)+'px'; chatSendState(); чатНачалаСверить(); });
 document.getElementById('cphoto').addEventListener('click', function(){ document.getElementById('cfile').click(); });
+/* ── ВИЗУАЛИЗАЦИЯ ЦЕЛИ (25.10) ──
+   Его идея: «пользователь может загрузить своё фото… покажем его внешний вид при
+   достигнутой цели… менять параметры как вес, жир, мышцы». Его выбор после разбора
+   исследований — «поэтапно» и «явное согласие». Форма тела считается на сервере из
+   СОСТАВА тела (жир уходит, сухая масса — в реальных пределах), Gemini правит фото по
+   этим числам. Здесь — проверка силуэта: MediaPipe (своя копия в vendor/, грузится только
+   в этом окне) меряет ширину талии до и после; промах больше 5 % — одна перерисовка
+   с поправкой, показываем ту, что ближе к расчёту. Жир — не ползунок: он выходит из
+   веса и мышц (иначе можно «нарисовать» невозможное сочетание). */
+var VIZ={st:null, calc:null, w:null, dl:0, busy:false, urls:{}, origM:null, k:null, del:0, t:0, pend:null};
+var VIZ_ДОПУСК=0.05;
+function vizBtn(){ return VIZ.st && VIZ.st.allowed ? '<button type="button" id="vizopen">Как я буду выглядеть</button>' : ''; }
+function vizPull(){
+  var u=syncUid(); if(!u) return Promise.resolve(null);
+  return fGet('/viz?uid='+encodeURIComponent(u)).then(function(d){
+    if(!d || !d.ok) return null;
+    var было=!!(VIZ.st && VIZ.st.allowed); VIZ.st=d;
+    if(было!==!!d.allowed) renderGoalCard();
+    return d;
+  }).catch(function(){ return null; });
+}
+function vizК(x){ return String(Math.round(x*10)/10).replace('.',',').replace('-','−'); }
+function vizView(в){ document.getElementById('vizload').hidden=!!в; ['consent','photo','main'].forEach(function(k){ document.getElementById('viz-'+k).hidden=(k!==в); }); }
+function vizSay(id,t){ var e=document.getElementById(id); if(e) e.textContent=t||''; }
+function vizOpen(){
+  document.getElementById('vizm').classList.add('show'); haptic('light');
+  vizView(''); vizSay('vizload','Загружаю…');
+  vizPull().then(function(d){
+    if(!d){ vizSay('vizload','Не получилось загрузить — проверьте интернет.'); return; }
+    if(!d.allowed){ vizSay('vizload', d.adult===false ? 'Эта функция — только для взрослых.' : 'Пока недоступно.'); return; }
+    if(!d.consent){ document.getElementById('vizagree').checked=false; document.getElementById('vizok').disabled=true; vizSay('vizcmsg',''); vizView('consent'); return; }
+    if(!d.photo){ vizPhotoView(''); return; }
+    vizMain();
+  });
+  vizMpLoad().catch(function(){});   /* мерка грузится заранее, пока человек читает */
+}
+function vizClose(){ document.getElementById('vizm').classList.remove('show'); }
+function vizPhotoView(t){ VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t); vizView('photo'); }
+
+/* мерка силуэта: MediaPipe Pose — маска человека и точки плеч/бёдер */
+var VIZMP={p:null, lm:null};
+function vizMpLoad(){
+  if(VIZMP.p) return VIZMP.p;
+  var база=new URL('vendor/mp-1.0.1/', location.href).href;
+  VIZMP.p=new Promise(function(ok, bad){
+    if(window.Vision) return ok(window.Vision);
+    var s=document.createElement('script'); s.src=база+'vision_bundle.js';
+    s.onload=function(){ window.Vision ? ok(window.Vision) : bad(new Error('мерка не загрузилась')); };
+    s.onerror=function(){ bad(new Error('мерка не загрузилась')); }; document.head.appendChild(s);
+  }).then(function(V){
+    return V.FilesetResolver.forVisionTasks(база.replace(/\/$/, '')).then(function(fs){   /* сама добавляет «/» */
+      return V.PoseLandmarker.createFromOptions(fs, { baseOptions:{ modelAssetPath: база+'pose_landmarker_lite.task', delegate:'CPU' },
+        runningMode:'IMAGE', numPoses:1, outputSegmentationMasks:true });
+    });
+  }).then(function(lm){ VIZMP.lm=lm; return lm; }).catch(function(e){ VIZMP.p=null; throw e; });
+  return VIZMP.p;
+}
+/* ширина силуэта в полосе 55–95 % от плеч к бёдрам, делённая на длину корпуса — так мерка
+   не зависит от того, крупнее человек в кадре или мельче. Руки, прижатые к телу, сливаются
+   с талией — тогда (шире 2,6 расстояния между тазобедренными точками) мерки нет. */
+/* MediaPipe 1.0.1 падает (Check failed: ChannelSize), если размер кадра меняется между
+   вызовами, — каждый кадр вписываем в один и тот же квадрат 640×640 с чёрными полями */
+function vizКвадрат(img){
+  var С=640, c=VIZMP.cv || (VIZMP.cv=document.createElement('canvas')); c.width=С; c.height=С;
+  var x=c.getContext('2d'), w=img.naturalWidth||img.width, h=img.naturalHeight||img.height, k=Math.min(С/w, С/h);
+  x.fillStyle='#000'; x.fillRect(0,0,С,С); x.drawImage(img, (С-w*k)/2, (С-h*k)/2, w*k, h*k);
+  return c;
+}
+function vizМерить(img){
+  return vizMpLoad().then(function(lm){
+    var r=lm.detect(vizКвадрат(img)), p=r.landmarks && r.landmarks[0], mask=r.segmentationMasks && r.segmentationMasks[0];
+    var закрыть=function(){ try{ mask && mask.close && mask.close(); }catch(e){} };
+    if(!p || !mask){ закрыть(); return null; }
+    var W=mask.width, H=mask.height, d=mask.getAsFloat32Array();
+    var ok=function(i){ return p[i] && (p[i].visibility==null || p[i].visibility>0.5); };
+    if(![11,12,23,24].every(ok)){ закрыть(); return { нет:'тело' }; }
+    var плечи=(p[11].y+p[12].y)/2*H, бёдра=(p[23].y+p[24].y)/2*H, корпус=бёдра-плечи;
+    var cx=Math.round((p[11].x+p[12].x+p[23].x+p[24].x)/4*W), таз=Math.abs(p[23].x-p[24].x)*W;
+    if(корпус<20){ закрыть(); return { нет:'тело' }; }
+    var ширины=[];
+    for(var y=Math.round(плечи+корпус*0.55); y<=Math.round(плечи+корпус*0.95); y++){
+      if(y<0 || y>=H) continue;
+      var ряд=y*W; if(d[ряд+cx]<0.5) continue;
+      var л=cx, п=cx;
+      while(л>0 && d[ряд+л-1]>=0.5) л--;
+      while(п<W-1 && d[ряд+п+1]>=0.5) п++;
+      ширины.push(п-л+1);
+    }
+    закрыть();
+    if(ширины.length<5) return { нет:'тело' };
+    ширины.sort(function(a,b){ return a-b; });
+    var мед=ширины[Math.floor(ширины.length/2)];
+    if(таз>0 && мед>таз*2.6) return { нет:'руки', талия:мед/корпус, таз:мед/таз };
+    return { талия:мед/корпус, корпус:корпус, ширина:мед, таз:таз>0 ? мед/таз : null };
+  });
+}
+function vizКартинка(src){ return new Promise(function(ok, bad){ var i=new Image(); i.onload=function(){ ok(i); }; i.onerror=function(){ bad(new Error('картинка не открылась')); }; i.src=src; }); }
+function vizURL(k){
+  if(VIZ.urls[k]) return Promise.resolve(VIZ.urls[k]);
+  return tgFetch(SYNCURL+'/viz/img?uid='+encodeURIComponent(syncUid())+'&k='+encodeURIComponent(k)).then(function(r){
+    if(!r.ok) throw new Error('картинка не загрузилась');
+    return r.blob();
+  }).then(function(b){ VIZ.urls[k]=URL.createObjectURL(b); return VIZ.urls[k]; });
+}
+function vizСброс(){ Object.keys(VIZ.urls).forEach(function(k){ try{ URL.revokeObjectURL(VIZ.urls[k]); }catch(e){} }); VIZ.urls={}; VIZ.origM=null; VIZ.k=null; }
+
+/* фото: уменьшаем до 1600 px по длинной стороне (JPEG), проверяем, что видно плечи и бёдра */
+function vizФото(file){
+  vizSay('vizpmsg','Смотрю фото…'); document.getElementById('vizforce').hidden=true;
+  var url=URL.createObjectURL(file);
+  vizКартинка(url).then(function(img){
+    var k=Math.min(1, 1600/Math.max(img.naturalWidth, img.naturalHeight));
+    var c=document.createElement('canvas'); c.width=Math.round(img.naturalWidth*k); c.height=Math.round(img.naturalHeight*k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    var b64=c.toDataURL('image/jpeg', 0.9).split(',')[1];
+    return vizМерить(c).then(function(м){ return { b64:b64, м:м }; }, function(e){ try{ console.warn('[viz] мерка не сработала:', (e && e.message) || e); }catch(_){} return { b64:b64, м:undefined }; });
+  }).then(function(x){
+    if(x.м===undefined || (x.м && !x.м.нет)) return vizЗагрузить(x.b64);
+    VIZ.pend=x.b64;
+    vizSay('vizpmsg', x.м && x.м.нет==='руки'
+      ? 'Руки прижаты к телу — талию не отделить. Лучше снять с руками чуть в стороны.'
+      : 'Не видно плеч и бёдер целиком. Нужно фото во весь рост, лицом к камере — так картинка выйдет точнее.');
+    document.getElementById('vizforce').hidden=false;
+  }).catch(function(e){ try{ URL.revokeObjectURL(url); }catch(_){} vizSay('vizpmsg','Не получилось открыть фото — попробуйте другое.'); });
+}
+function vizЗагрузить(b64){
+  vizSay('vizpmsg','Загружаю фото…'); document.getElementById('vizforce').hidden=true;
+  return fPost('/viz/photo', { uid:syncUid(), image:b64, mime:'image/jpeg' }).then(function(d){
+    VIZ.pend=null; vizСброс(); if(VIZ.st) VIZ.st.photo=d.photo; vizMain();
+  }).catch(function(e){ vizSay('vizpmsg', e.message || 'Фото не загрузилось.'); });
+}
+
+/* главный вид: фото сейчас, шаги, ползунки, расчёт */
+function vizMain(){
+  vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить фото';
+  var st=VIZ.st||{}, c=st.calc||{};
+  document.getElementById('vizorig').removeAttribute('src');
+  vizURL('orig').then(function(u){ document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
+  if(!c.ok){ vizSay('viznums', c.error || 'Нужны рост, вес и возраст в профиле.'); document.getElementById('vizgo').disabled=true; return; }
+  var w=document.getElementById('vizw');
+  w.min=String(Math.ceil((c.пол || c.w0*0.75)*2)/2); w.max=String(Math.round((c.w0+10)*2)/2);
+  if(VIZ.w==null){ VIZ.w=c.w1; VIZ.dl=0; }
+  w.value=String(VIZ.w);
+  document.getElementById('vizsteps').innerHTML=(st.steps||[]).map(function(s){
+    return '<button type="button" data-w="'+s.w+'" aria-pressed="'+(Math.abs(s.w-VIZ.w)<0.05)+'">'+esc(s.t)+'</button>'; }).join('');
+  vizЖдать(''); vizPaint(c); vizCalc();
+}
+function vizPaint(c){
+  VIZ.calc=c;
+  var w=document.getElementById('vizw'), dl=document.getElementById('vizdl');
+  dl.min=String(c.dlMin); dl.max=String(c.dlMax); dl.value=String(c.dl);
+  if(Math.abs(+w.value-c.w1)>0.01) w.value=String(c.w1);
+  document.getElementById('vizwv').textContent=vizК(c.w1)+' кг';
+  document.getElementById('vizdlv').textContent=(c.dl>0?'+':'')+vizК(c.dl)+' кг'+(c.dl===0?' (как сейчас)':'');
+  Array.prototype.forEach.call(document.querySelectorAll('#vizsteps button'), function(b){ b.setAttribute('aria-pressed', String(Math.abs(+b.dataset.w-c.w1)<0.05)); });
+  var т=c.талияД>=0 ? 'талия −'+Math.round(c.талияД)+' см ('+Math.round(c.талияОт)+'–'+Math.round(c.талияДо)+')' : 'талия +'+Math.round(-c.талияД)+' см';
+  document.getElementById('viznums').innerHTML='Вес <b>'+vizК(c.w0)+' → '+vizК(c.w1)+' кг</b> · жир '+(c.жирОценка?'≈':'')+vizК(c.fat0)+' → <b>'+vizК(c.fat1)+' %</b> · '+т;
+  var н=[];
+  if(c.жирОценка) н.push('Жир оценён по росту, весу и возрасту — с замером на весах будет точнее.');
+  if(!c.талияИзмерена) н.push('Талия оценена — замер сантиметром в профиле сделает расчёт точнее.');
+  (c.срез||[]).forEach(function(s){ н.push('Ограничили: '+s+'.'); });
+  н.push('Мышц за этот срок реально от '+vizК(c.dlMin)+' до +'+vizК(c.dlMax)+' кг.');
+  vizSay('viznote', н.join(' '));
+}
+function vizCalc(){
+  clearTimeout(VIZ.t);
+  VIZ.t=setTimeout(function(){
+    var w=+document.getElementById('vizw').value, dl=+document.getElementById('vizdl').value, н=VIZ.n=(VIZ.n||0)+1;
+    VIZ.w=w; VIZ.dl=dl;
+    fGet('/viz/calc?uid='+encodeURIComponent(syncUid())+'&w='+w+'&dl='+dl).then(function(c){
+      if(н!==VIZ.n || !c || !c.ok) return;   /* пришёл ответ на старое положение ползунка */
+      VIZ.w=c.w1; VIZ.dl=c.dl; vizPaint(c);
+    }).catch(function(){});
+  }, 250);
+}
+function vizЖдать(t){ var ph=document.getElementById('vizph'); ph.classList.toggle('busy', !!t);
+  if(t){ ph.textContent=t; ph.hidden=false; document.getElementById('viznew').hidden=true; }
+  else if(!VIZ.k){ ph.textContent='Выберите вес и нажмите «Показать»'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
+  else { ph.hidden=true; document.getElementById('viznew').hidden=false; } }
+
+/* картинка: заказ → мерка силуэта → при промахе одна перерисовка с поправкой */
+function vizЗаказ(w, dl, fix, n){ return fPost('/viz/render', { uid:syncUid(), w:w, dl:dl, fix:fix||'', n:n||0 }); }
+function vizПроверка(r){
+  var t=r.calc && r.calc.отношение; if(!t) return Promise.resolve(null);
+  if(!VIZ.origM) VIZ.origM=vizURL('orig').then(vizКартинка).then(vizМерить).catch(function(){ VIZ.origM=null; return null; });
+  return Promise.all([VIZ.origM, vizURL(r.k).then(vizКартинка).then(vizМерить)]).then(function(м){
+    var о=м[0], н=м[1];
+    if(!о || !н || о.нет || н.нет || !о.талия || !н.талия) return null;
+    var отн=н.талия/о.талия, d=отн-t, п=Math.min(30, Math.max(1, Math.round(Math.abs(d)/t*100)));
+    return { отн:отн, цель:t, d:d, ok:Math.abs(d)<=VIZ_ДОПУСК, fix:(d<0 ? 'too narrow' : 'too wide')+' by '+п+'%' };
+  }).catch(function(){ return null; });
+}
+function vizGo(){
+  if(VIZ.busy || !VIZ.calc) return;
+  VIZ.busy=true; var кн=document.getElementById('vizgo'); кн.disabled=true;
+  var w=VIZ.calc.w1, dl=VIZ.calc.dl;
+  vizSay('vizmsg',''); vizЖдать('Рисую — обычно 20–40 секунд…'); haptic('light');
+  vizЗаказ(w, dl, '', 0).then(function(r1){
+    vizЖдать('Проверяю силуэт…');
+    return vizПроверка(r1).then(function(ч1){
+      if(!ч1 || ч1.ok || (r1.left!=null && r1.left<=0)) return { r:r1, ч:ч1 };
+      vizЖдать('Талия вышла '+(ч1.d<0 ? 'уже' : 'шире')+' расчёта — перерисовываю…');
+      return vizЗаказ(w, dl, ч1.fix, 1).then(function(r2){
+        return vizПроверка(r2).then(function(ч2){ return (ч2 && Math.abs(ч2.d)<Math.abs(ч1.d)) ? { r:r2, ч:ч2 } : { r:r1, ч:ч1 }; });
+      }, function(){ return { r:r1, ч:ч1 }; });
+    });
+  }).then(function(x){
+    var r=x.r, ч=x.ч, c=r.calc;
+    return vizURL(r.k).then(function(u){
+      VIZ.k=r.k; var im=document.getElementById('viznew'); im.src=u; im.hidden=false;
+      im.alt='Примерный вид при '+vizК(c.w1)+' кг';
+      document.getElementById('vizph').hidden=true; document.getElementById('vizph').classList.remove('busy');
+      document.getElementById('viznewcap').textContent='при '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
+      var про=Math.round((1-c.отношение)*100);
+      vizSay('vizmsg', !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
+        : ч.ok ? 'Силуэт проверен: талия на картинке '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
+        : 'Талия на картинке '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — точнее цифры выше.');
+      if(r.left!=null && VIZ.st) VIZ.st.left=r.left;
+      var б=document.getElementById('vizben'); б.textContent=r.польза||''; б.hidden=!r.польза;
+      if(!gget('viz_seen', null)){ document.getElementById('vizcare').hidden=false; gset('viz_seen', 1); }
+      haptic('success');
+    });
+  }).catch(function(e){
+    vizЖдать(''); vizSay('vizmsg', e.message || 'Не получилось нарисовать — попробуйте ещё раз.');
+  }).then(function(){ VIZ.busy=false; кн.disabled=false; });
+}
+function vizУдалить(){
+  if(!VIZ.del){ VIZ.del=1; document.getElementById('vizdel').textContent='Точно удалить? Нажмите ещё раз'; return; }
+  fPost('/viz/delete', { uid:syncUid() }).then(function(){
+    vizСброс(); if(VIZ.st) VIZ.st.photo=null; VIZ.w=null;
+    document.getElementById('vizcare').hidden=true; document.getElementById('vizben').hidden=true;
+    vizPhotoView('Фото и все картинки удалены.'); haptic('light');
+  }).catch(function(e){ vizSay('vizmsg', e.message || 'Не удалилось — попробуйте ещё раз.'); });
+}
+document.getElementById('vizclose').addEventListener('click', vizClose);
+document.getElementById('vizm').addEventListener('click', function(e){ if(e.target.id==='vizm') vizClose(); });
+document.getElementById('vizagree').addEventListener('change', function(e){ document.getElementById('vizok').disabled=!e.target.checked; });
+document.getElementById('vizok').addEventListener('click', function(){
+  var кн=this; кн.disabled=true;
+  fPost('/viz/consent', { uid:syncUid() }).then(function(){ if(VIZ.st) VIZ.st.consent=true; vizPhotoView(''); })
+    .catch(function(e){ кн.disabled=false; vizSay('vizcmsg', e.message || 'Не сохранилось — попробуйте ещё раз.'); });
+});
+document.getElementById('vizpick').addEventListener('click', function(){ document.getElementById('vizfile').click(); });
+document.getElementById('vizfile').addEventListener('change', function(e){ var f=e.target.files && e.target.files[0]; e.target.value=''; if(f) vizФото(f); });
+document.getElementById('vizforce').addEventListener('click', function(){ if(VIZ.pend) vizЗагрузить(VIZ.pend); });
+document.getElementById('viznewphoto').addEventListener('click', function(){ vizPhotoView(''); });
+document.getElementById('vizdel').addEventListener('click', vizУдалить);
+document.getElementById('vizgo').addEventListener('click', vizGo);
+document.getElementById('vizw').addEventListener('input', function(){ document.getElementById('vizwv').textContent=vizК(+this.value)+' кг'; vizCalc(); });
+document.getElementById('vizdl').addEventListener('input', function(){ document.getElementById('vizdlv').textContent=(+this.value>0?'+':'')+vizК(+this.value)+' кг'; vizCalc(); });
+document.getElementById('vizsteps').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-w]'); if(!b) return;
+  document.getElementById('vizw').value=b.dataset.w; vizCalc(); haptic('light');
+});
 /* ── ШТРИХКОД (25.10) ──
    Камера ищет EAN/UPC (на iPhone встроенного распознавания нет — библиотека zxing,
    своя копия в vendor/, грузится только при первом сканировании). Нашли продукт в своей
