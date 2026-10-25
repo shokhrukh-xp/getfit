@@ -104,20 +104,20 @@ async function открыть(br, viz){
     дано(/\/viz\/img.*k=r2|blob:/.test(await page.getAttribute('#viznew', 'src')) && await page.evaluate(() => document.getElementById('viznew').naturalWidth > 0), 'показана картинка');
     const сообщ = await page.textContent('#vizmsg');
     дано(/Силуэт проверен: талия на картинке уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
-    дано(/при 75 кг/.test(await page.textContent('#viznewcap')), 'подпись «при 75 кг»');
+    дано(/После — 75 кг/.test(await page.textContent('#viznewcap')), 'подпись «После — 75 кг»');
     дано(await page.isVisible('#vizben') && /давление/.test(await page.textContent('#vizben')), 'польза для здоровья рядом');
     дано(await page.isVisible('#vizcare'), 'первый раз — поддержка');
     дано(/жир у каждого уходит по-своему/.test(await page.textContent('#viz-main')), 'честная подпись');
     await page.screenshot({ path: '/tmp/viz-kartinka.png', fullPage: false });
-    /* 25.10, его слова: «вертикальная линия слайдер… слева До и справа После» и «не могу открыть фото полностью» */
-    await page.$eval('#vizcmp', e => e.scrollIntoView({ block: 'center' })); await page.waitForTimeout(200);
-    дано(await page.evaluate(() => document.getElementById('vizcmp').classList.contains('has') && getComputedStyle(document.querySelector('#vizcmp .vizline')).display === 'block'), 'до/после — шторка с вертикальной линией');
-    const бок = await page.$eval('#vizcmp', e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+    /* 25.10, его слова: «в начале показываем обе фото до и после, а при открытии фото, открывается с слайдером» */
+    дано(await page.isVisible('#vizorig') && await page.isVisible('#viznew') && !(await page.$('#vizpair .vizline')), 'сначала рядом обе картинки, без шторки');
+    await page.$eval('#viznew', e => e.scrollIntoView({ block: 'center' })); await page.waitForTimeout(150);
+    await page.click('#viznew'); await page.waitForTimeout(200);
+    дано(await page.isVisible('#vizfs') && await page.evaluate(() => document.getElementById('vizfscmp').classList.contains('has') && document.getElementById('vizfsnew').naturalWidth > 0), 'нажатие на фото — весь экран со шторкой до/после');
+    const бок = await page.$eval('#vizfscmp', e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
     await page.mouse.move(бок.x + бок.w * 0.5, бок.y + бок.h * 0.5); await page.mouse.down(); await page.mouse.move(бок.x + бок.w * 0.2, бок.y + бок.h * 0.5, { steps: 5 }); await page.mouse.up();
-    const икс = await page.$eval('#vizcmp', e => e.style.getPropertyValue('--x'));
+    const икс = await page.$eval('#vizfscmp', e => e.style.getPropertyValue('--x'));
     дано(Math.abs(parseFloat(икс) - 20) < 3, 'линию можно тянуть: ' + икс);
-    await page.click('#vizfull'); await page.waitForTimeout(200);
-    дано(await page.isVisible('#vizfs') && await page.evaluate(() => document.getElementById('vizfscmp').classList.contains('has') && document.getElementById('vizfsnew').naturalWidth > 0), '⤢ — до/после на весь экран');
     await page.screenshot({ path: '/tmp/viz-fs.png' });
     await page.click('#vizfsx'); await page.waitForTimeout(150);
     дано(await page.isHidden('#vizfs'), '✕ закрывает весь экран');

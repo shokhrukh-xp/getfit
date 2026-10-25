@@ -1576,6 +1576,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .vizph.busy{background:linear-gradient(100deg,var(--card-2) 30%,var(--field,rgba(127,127,127,.18)) 50%,var(--card-2) 70%);background-size:300% 100%;animation:vizsh 1.4s linear infinite}
 @keyframes vizsh{from{background-position:100% 0}to{background-position:-100% 0}}
 .vizpair figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+.vizpair img{cursor:zoom-in}
+.vizpair .vizph[hidden]{display:none}
 .vizsteps{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 .vizsteps button{flex:1 1 0;min-height:40px;padding:8px 6px;border-radius:12px;border:.5px solid var(--line);background:var(--card-2);color:var(--muted);font:inherit;font-size:13px;white-space:nowrap}
 .vizsteps button[aria-pressed="true"]{border-color:transparent;color:var(--on-accent);background:var(--action)}
@@ -4544,17 +4546,13 @@ img.avface{border-radius:50%;object-fit:cover}
       </div>
     </div>
     <div id="viz-main" hidden>
-      <!-- 25.10, его слова: «не могу открыть фото полностью… вертикальная линия слайдер, которая
-           двигается горизонтально и слева показывает До и справа После» -->
-      <div class="vizcmp" id="vizcmp">
-        <img id="viznew" alt="" hidden>
-        <div class="vizcmpb"><img id="vizorig" alt="Ваше фото сейчас"></div>
-        <div class="vizline" aria-hidden="true"><i></i></div>
-        <span class="vizlab l">До</span><span class="vizlab r">После</span>
-        <div class="vizph" id="vizph">Выберите вес и нажмите «Показать»</div>
-        <button type="button" class="vizfullb" id="vizfull" aria-label="На весь экран">⤢</button>
+      <!-- 25.10, его слова: «в начале показываем обе фото до и после, а при открытии фото,
+           открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
+      <div class="vizpair" id="vizpair">
+        <figure><img id="vizorig" alt="Ваше фото сейчас — открыть"><figcaption>До — сейчас</figcaption></figure>
+        <figure><div class="vizph" id="vizph">Выберите вес и нажмите «Показать»</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
       </div>
-      <p class="vizcap" id="viznewcap">Тяните линию влево-вправо, ⤢ — на весь экран</p>
+      <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
       <div class="vizsteps" id="vizsteps"></div>
       <label class="vizsl"><span>вес <b id="vizwv"></b></span><input type="range" id="vizw" step="0.1"></label>
       <label class="vizsl"><span>мышцы <b id="vizdlv"></b></span><input type="range" id="vizdl" step="0.5"></label>
@@ -8810,7 +8808,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 22:20';
+var BUILD = '25.10 23:05';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20038,7 +20036,7 @@ function vizCalc(){
   }, 250);
 }
 /* режим шторки: есть картинка «после» — линия и подписи, нет — одно фото «сейчас» */
-function vizCmpSync(){ var n=document.getElementById('viznew'); document.getElementById('vizcmp').classList.toggle('has', !n.hidden && !!n.getAttribute('src')); }
+function vizCmpSync(){ var n=document.getElementById('viznew'); document.getElementById('vizhint').hidden=n.hidden || !n.getAttribute('src'); }
 function vizCmpDrag(box){
   var down=false;
   function put(e){ var r=box.getBoundingClientRect(); if(!r.width) return; var x=Math.max(0, Math.min(1, (e.clientX-r.left)/r.width)); box.style.setProperty('--x', (x*100).toFixed(1)+'%'); }
@@ -20052,7 +20050,7 @@ function vizFull(){
   document.getElementById('vizfsorig').src=o.src;
   var есть=!n.hidden && !!n.getAttribute('src'), fn=document.getElementById('vizfsnew');
   if(есть) fn.src=n.src; fn.hidden=!есть; b.classList.toggle('has', есть);
-  b.style.setProperty('--x', document.getElementById('vizcmp').style.getPropertyValue('--x') || '50%');
+  b.style.setProperty('--x', '50%');
   fs.hidden=false; haptic('light');
 }
 function vizFullClose(){ document.getElementById('vizfs').hidden=true; }
@@ -20148,7 +20146,7 @@ function vizGo(){
       VIZ.k=r.k; var im=document.getElementById('viznew'); im.src=u; im.hidden=false;
       im.alt='Примерный вид при '+vizК(c.w1)+' кг';
       document.getElementById('vizph').hidden=true; document.getElementById('vizph').classList.remove('busy');
-      document.getElementById('viznewcap').textContent='После — при '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '')+'. Тяните линию, ⤢ — на весь экран';
+      document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
       vizCmpSync();
       var про=Math.round((1-c.отношение)*100);
       vizSay('vizmsg', !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
@@ -20185,9 +20183,8 @@ document.getElementById('vizforce').addEventListener('click', function(){ if(VIZ
 document.getElementById('viznewphoto').addEventListener('click', function(){ vizPhotoView(''); });
 document.getElementById('vizdel').addEventListener('click', vizУдалить);
 document.getElementById('vizgo').addEventListener('click', vizGo);
-vizCmpDrag(document.getElementById('vizcmp')); vizCmpDrag(document.getElementById('vizfscmp'));
-document.getElementById('vizfull').addEventListener('click', vizFull);
-document.getElementById('vizcmp').addEventListener('click', function(e){ if(!this.classList.contains('has') && !e.target.closest('button')) vizFull(); });
+vizCmpDrag(document.getElementById('vizfscmp'));
+document.getElementById('vizpair').addEventListener('click', function(e){ if(e.target.closest('img')) vizFull(); });
 document.getElementById('vizfsx').addEventListener('click', vizFullClose);
 document.getElementById('vizw').addEventListener('input', function(){ document.getElementById('vizwv').textContent=vizК(+this.value)+' кг'; vizCalc(); });
 document.getElementById('vizdl').addEventListener('input', function(){ document.getElementById('vizdlv').textContent=(+this.value>0?'+':'')+vizК(+this.value)+' кг'; vizCalc(); });
