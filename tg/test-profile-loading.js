@@ -27,13 +27,16 @@ const goal={wt:'keep',gym:'health',text:'Сохранять вес 53,3 кг'};
   await p.click('#zdtoggle');assert.equal(await p.locator('#zd-more [data-v="bp"]').getAttribute('aria-pressed'),'true');await p.click('#pqback');
   assert.deepEqual(errors,[]);
   if(theme==='light'&&width===390){
-   // При каждом новом открытии сверяем данные; 5xx не показывает старую анкету.
-   await p.click('#profclose');mode='fail';delay=10;await p.click('#profbtn');await p.locator('#profileretry').waitFor();assert.equal(await p.locator('#profilecontent').isVisible(),false);
-   assert.match(await p.locator('#profileloadtext').innerText(),/Не удалось загрузить профиль/);
-   mode='invalid';await p.click('#profileretry');await p.locator('#profileretry').waitFor();assert.equal(await p.locator('#profilecontent').isVisible(),false);
-   mode='ok';await p.click('#profileretry');await p.locator('#profilecontent').waitFor();assert.match(await p.locator('#mesumt').innerText(),/жен/);
-   // Исправление реально пришло с сервера без перезапуска окна.
-   await p.click('#profclose');actual.age=33;await p.click('#profbtn');await p.locator('#profilecontent').waitFor();assert.match(await p.locator('#mesumt').innerText(),/33/);
+   // 25.10, его «открытия страницы профиля грузится очень долго каждый раз»: после первой
+   // подтверждённой загрузки в этом сеансе профиль открывается сразу, сверка — фоном;
+   // сбой фоновой сверки не прячет уже подтверждённую анкету.
+   await p.click('#profclose');mode='fail';delay=10;await p.click('#profbtn');await p.waitForTimeout(300);
+   assert.equal(await p.locator('#profilecontent').isVisible(),true);assert.equal(await p.locator('#profileretry').isVisible(),false);
+   mode='invalid';await p.click('#profclose');await p.click('#profbtn');await p.waitForTimeout(300);assert.equal(await p.locator('#profilecontent').isVisible(),true);
+   mode='ok';assert.match(await p.locator('#mesumt').innerText(),/жен/);
+   // Исправление реально пришло с сервера без перезапуска окна — фоном, сразу после открытия.
+   await p.click('#profclose');actual.age=33;delay=300;await p.click('#profbtn');assert.equal(await p.locator('#profilecontent').isVisible(),true);
+   await p.waitForFunction(()=>/33/.test(document.getElementById('mesumt').innerText),null,{timeout:8000});
    if(process.env.GF_PROFILE_SHOTS)await p.screenshot({path:path.join(process.env.GF_PROFILE_SHOTS,'ready.png')});
    console.log('PASS ошибка, повреждённый ответ, повтор и новые данные при следующем открытии');
   }

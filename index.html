@@ -4072,9 +4072,11 @@ img.avface{border-radius:50%;object-fit:cover}
 .pqic img.pqav{width:100%;height:100%}
 .travlab{display:block;margin:16px 0 8px}
 .travgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.travbtn{aspect-ratio:1;min-height:44px;padding:4px;border:2px solid transparent;border-radius:50%;background:var(--field)}
-.travbtn img{display:block;width:100%;height:100%}
-.travbtn[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(47,179,166,.25)}
+.travbtn{position:relative;display:block;width:100%;height:0;padding:0 0 100%;min-height:0;border:0;border-radius:50%;background:var(--field);box-sizing:border-box;overflow:hidden}
+/* 25.10, его снимок с iPhone: «картинки персонажей там овальные» — в WebView кнопка
+   растягивалась по высоте строки сетки; квадрат держим через padding-bottom */
+.travbtn img{position:absolute;top:3px;left:3px;width:calc(100% - 6px);height:calc(100% - 6px);display:block;border-radius:50%;object-fit:cover}
+.travbtn[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent),0 0 0 3px rgba(47,179,166,.25)}
 </style>
 </head>
 <body>
@@ -7777,9 +7779,14 @@ function openProf(pp){ profileLoad();settingsPaint();fillMe(); renderProfProg();
 /* 19.10: на новом компьютере Карина увидела «муж» и пустую цель до
    загрузки анкеты. До подтверждения сервера не выдаём копию за верные данные;
    ошибка и настоящее отсутствие анкеты — разные состояния. */
-var PROFILELOAD={state:'idle',promise:null,authoritative:false};
+var PROFILELOAD={state:'idle',promise:null,authoritative:false,okAt:0};
+/* 25.10, его слова: «открытия страницы профиля грузится очень долго каждый раз». Сервер
+   подтвердил анкету в этом сеансе — дальше профиль открывается сразу, а сверка идёт
+   фоном (правило 19.10 «не выдавать копию за верные данные» держится: до первой
+   подтверждённой загрузки — по-прежнему ждём). */
 function profileLoadPaint(){
-  var ready=PROFILELOAD.state==='ready',bad=PROFILELOAD.state==='error';
+  var фон=!!PROFILELOAD.okAt && PROFILELOAD.state!=='idle';
+  var ready=PROFILELOAD.state==='ready'||фон,bad=PROFILELOAD.state==='error'&&!фон;
   var content=document.getElementById('profilecontent'),note=document.getElementById('profileload');
   if(content){content.hidden=!ready;content.inert=!ready;}
   if(note)note.hidden=ready;
@@ -7826,7 +7833,7 @@ function profileLoad(){
   }).then(function(){
     if(PROFILELOAD.token!==token || uid!==syncUid() || DATASESSION.blocked)throw new Error('Дневник изменился.');
     fillMe();здРендер('zd','zdbody','zdsum',(myData()||{}).med);бтРендер();renderProfProg();pqVals();
-    PROFILELOAD.state='ready';
+    PROFILELOAD.state='ready';PROFILELOAD.okAt=Date.now();
   }).catch(function(){if(PROFILELOAD.token===token)PROFILELOAD.state='error';})
     .then(function(){clearTimeout(timer);if(PROFILELOAD.token===token){PROFILELOAD.promise=null;profileLoadPaint();}});
   PROFILELOAD.promise=p;return p;
