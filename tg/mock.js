@@ -260,7 +260,7 @@ async function поднять(page, o) {
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
-    if (p === '/i18n') { if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
+    if (p === '/i18n') { if(o.i18nGate) await o.i18nGate; if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
     if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
     if (p === '/s')          return дать({ ok: true });
     /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
@@ -499,6 +499,7 @@ async function поднять(page, o) {
     if (p === '/coach') {
       (o.coachBodies = o.coachBodies || []).push(JSON.parse(route.request().postData() || '{}'));
       const отдать = () => дать(o.onCoach ? o.onCoach(route) : { ok: true, reply: 'Понял.' });
+      if(o.coachGate) await o.coachGate; /* управляем ответом, а не скоростью машины */
       if (o.coachDelay) return new Promise(r => setTimeout(() => r(отдать()), o.coachDelay));   /* 25.10: этап ожидания */
       return отдать();
     }

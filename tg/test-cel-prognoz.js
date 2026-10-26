@@ -64,11 +64,15 @@ async function открыть(br, o){
       await page.close(); }
     /* перевод целиком приходит с сервера позже, чем нарисована карточка: тот же узел
        переводится заново из русского, а не из полуанглийской строки */
-    { const { page } = await открыть(br, { tgLang: 'en', me: Object.assign({ lang: 'en' }, МЕ), progress: ПР, i18nDelay: 2500,
+    { let отдать; const i18nGate=new Promise(r=>{отдать=r;});
+      const { page } = await открыть(br, { tgLang: 'en', me: Object.assign({ lang: 'en' }, МЕ), progress: ПР, i18nGate,
         goal: Object.assign({}, ЦЕЛЬ, { text: '75 кг к концу января · старт 1 сентября · держим силу в зале' }),
         i18n: { '{0} кг к концу января · старт {1} · держим силу в зале': '{0} kg by the end of January · start {1} · keeping gym strength' } });
       const до = await page.evaluate(() => document.querySelector('#profm .goalcard .gt').innerText);
-      await page.waitForTimeout(3500);
+      const узел=await page.$('#profm .goalcard .gt');
+      отдать();
+      await page.waitForFunction(()=>document.querySelector('#profm .goalcard .gt').innerText==='75 kg by the end of January · start September 1 · keeping gym strength');
+      дано(await узел.evaluate(e=>e.isConnected),'перевод обновил существующий узел');
       const после = await page.evaluate(() => document.querySelector('#profm .goalcard .gt').innerText);
       дано(/[А-Яа-яЁё]/.test(до) && после === '75 kg by the end of January · start September 1 · keeping gym strength', 'поздний перевод ложится на тот же узел: ' + JSON.stringify([до, после]));
       await page.close(); }
