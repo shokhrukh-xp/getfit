@@ -4188,7 +4188,7 @@ img.avface{border-radius:50%;object-fit:cover}
 #bodygoalm .goal-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #bodygoalform .mlab{margin:10px 0;font-size:12px}
 #bodygoalform #bodygoalerror:empty{display:none}
-#goalphotos .vizpair{margin-bottom:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
+#goalphotos .vizpair{margin-bottom:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
 #vizreference{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.28;pointer-events:none}
 #vizreference.mirror{transform:scaleX(-1)}
 #vizrefcontrol{font-size:13px}
@@ -4590,7 +4590,7 @@ img.avface{border-radius:50%;object-fit:cover}
       <!-- 25.10, его слова: «в начале показываем обе фото до и после, а при открытии фото,
            открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
       <div class="vizpair" id="vizpair">
-        <figure><img id="vizstart" role="button" tabindex="0" alt="Первое сохранённое фото"><figcaption id="vizstartcap">Старт</figcaption></figure>
+        <figure hidden><img id="vizstart" role="button" tabindex="0" alt="Первое сохранённое фото"><figcaption id="vizstartcap">Первое фото</figcaption></figure>
         <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото сейчас — открыть"><figcaption id="viznowcap">Сейчас</figcaption></figure>
         <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" role="button" tabindex="0" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
       </div>
@@ -7399,6 +7399,7 @@ function renderGoalCard(){
       (pr.onTrack?' · <b>идём по графику</b>':(pr.gap!=null&&pr.plan!=null?((Math.abs(pr.fact)>Math.abs(pr.plan)?' · опережаем на ':' · отстаём на ')+к(Math.abs(pr.gap))+' кг'):''))+
       (pr.by?' · срок '+esc(ruDate(pr.by)):'')+'</p>';
   }
+  if(g&&g.from)detail+='<p class="gp">Начало пути · '+esc(ruDate(g.from))+'</p>';
   if(!g)detail+='<p class="gp">Без цели норма — на поддержание.</p>';
   if(pr&&pr.forecast)detail+='<p class="gp">Ориентир по весу уточняется по замерам.'+(pr.forecast.compositionNote?' '+esc(pr.forecast.compositionNote):'')+'</p>';
   else if(g){detail+=goalEtaHtml(pr,pr&&pr.w0&&pr.kg?pr.w0+Math.sign(pr.rate)*pr.kg:null);if(g.note)detail+='<p class="gp">'+esc(g.note)+'</p>';}
@@ -8893,7 +8894,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 18:56';
+var BUILD = '26.10 21:01';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20130,10 +20131,10 @@ function vizMain(){
   document.getElementById('vizorig').removeAttribute('src');
   var photo=st.photo;
   function дата(t){return t?new Date(t).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'}):'';}
-  document.getElementById('vizstartcap').textContent='Старт · '+дата(st.start||st.photo);
+  /* 26.10: первое загруженное фото не является началом пути — сентябрьского снимка нет. */
   document.getElementById('viznowcap').textContent='Сейчас · '+дата(st.photo);
   document.getElementById('vizstart').removeAttribute('src');
-  vizURL('start').then(function(u){if(VIZ.st&&VIZ.st.photo===photo)document.getElementById('vizstart').src=u;}).catch(function(){vizSay('vizmsg','Первое фото не загрузилось. Переоткройте цель.');});
+
   vizURL('orig').then(function(u){ if(VIZ.st&&VIZ.st.photo===photo)document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
   VIZ.calc=c;clearTimeout(VIZ.t);
   /* Сохранённое фото не зависит от возможности построить НОВУЮ цель. */
@@ -20168,6 +20169,15 @@ function vizПоказатьСохранённое(r){
 function vizФотоПодпись(c){
   var target=VIZ.calc, linked=VIZ.st&&VIZ.st.goalLinked;
   var stale=(linked&&(!target||!target.ok))||(target&&target.ok&&(Math.abs(c.w1-target.w1)>.05||Math.abs(c.fat1-target.fat1)>.15||Math.abs(c.dl-target.dl)>.15));
+  /* Прежний образ храним, но не показываем как результат текущей цели. */
+  if(stale){
+    document.getElementById('viznew').hidden=true;
+    document.getElementById('vizph').hidden=false;
+    document.getElementById('vizph').textContent='Образ текущей цели ещё не создан';
+    document.getElementById('viznewcap').textContent='Образ цели · ИИ';
+    vizSay('vizmsg','');vizCmpSync();return;
+  }
+  if(document.getElementById('viznew').getAttribute('src')){document.getElementById('viznew').hidden=false;document.getElementById('vizph').hidden=true;}
   var legacy=!(c.visualVersion>=5);var older=!!(c.photoAt&&VIZ.st&&c.photoAt!==VIZ.st.photo);
   document.getElementById('viznewcap').textContent=(stale?'Прежняя цель':legacy?'Прежний вариант':'Образ цели · ИИ')+' — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира';
   document.getElementById('viznew').alt=(stale?'Фото прежней цели':legacy?'Прежний вариант':'Примерный вид')+' при '+vizК(c.w1)+' кг и '+vizК(c.fat1)+' % жира';
@@ -20232,6 +20242,7 @@ function vizЖдать(t){ var ph=document.getElementById('vizph'); ph.classList
   if(t){ ph.textContent=t; ph.hidden=false; document.getElementById('viznew').hidden=true; }
   else if(!VIZ.k){ ph.textContent='Покажите результат — фото по вашей цели'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
   else { ph.hidden=true; document.getElementById('viznew').hidden=false; }
+  if(!t&&VIZ.st&&VIZ.st.result)vizФотоПодпись(VIZ.st.result.calc);
   vizCmpSync(); }
 
 /* «пластика» (25.10, подбор на его фото): одними словами Gemini сужает талию на 4–8 % вместо

@@ -138,8 +138,8 @@ async function открыть(br, viz){
     await restored.page.waitForSelector('#viznew:not([hidden])');
     дано(restored.o.vizAsked.render.length===0, 'повторное открытие тоже без генерации');
     await restored.page.locator('#vizsteps button[data-w="81.8"]').evaluate(e=>e.click());
-    await restored.page.waitForFunction(()=>/Фото для прежней цели/.test(document.getElementById('vizmsg').textContent));
-    дано(/Прежняя цель — 75 кг/.test(await restored.page.textContent('#viznewcap')),'новый вес не переименовывает старую картинку');
+    await restored.page.waitForFunction(()=>document.getElementById('viznew').hidden&&/Образ текущей цели ещё не создан/.test(document.getElementById('vizph').textContent));
+    дано(!/75 кг/.test(await restored.page.textContent('#viznewcap')),'прежняя цель не показывается рядом с новой');
     await restored.page.close();
     /* 6) удалить */
     await page.locator('#vizfat').evaluate(e=>{e.value='15';e.dispatchEvent(new Event('input',{bubbles:true}));});
