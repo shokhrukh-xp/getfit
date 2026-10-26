@@ -21,11 +21,18 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   assert.equal(await page.inputValue('#bodygoalweight'),'75');assert.equal(await page.locator('#vizm #bodygoalform').count(),1);
   assert.equal(await page.locator('#vizcontrols').isVisible(),false);assert.equal(await page.locator('#vizgoaledit').isVisible(),false);
   assert.equal(await page.locator('#vizorig').isVisible(),true);assert.equal(await page.locator('#viznew').isVisible(),true);
+  assert.match(await page.innerText('#viznewcap'),/Прежняя цель/);
+  assert.match(await page.innerText('#vizmsg'),/Для текущей цели результат ещё не создан/);
+  assert.equal(await page.locator('#goalphotos #vizmsg').count(),1);
+  const status=await page.locator('#vizmsg').boundingBox(), fields=await page.locator('#bodygoalform').boundingBox();
+  assert.ok(status.y+status.height<=fields.y,'Статус фото перед полями, без раскрытия');
   await page.screenshot({path:path.join(OUT,'unified-'+width+'.png')});
   await page.fill('#bodygoalweight','76');await page.fill('#bodygoalfat','');await page.selectOption('#bodygoalmuscle','develop');
   assert.match(await page.textContent('#viznewcap'),/78/); // черновик не переименовывает сохранённое фото
   error=true;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Нет связи/.test(document.getElementById('bodygoalerror').textContent));assert.equal(goal.body.target,75);assert.equal(o.vizAsked.render.length,0);
   error=false;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Пробный отказ/.test(document.getElementById('vizmsg').textContent),null,{timeout:30000}).catch(async e=>{console.log(await page.textContent('#vizmsg'),await page.textContent('#bodygoalerror'),JSON.stringify(o.vizAsked.render));throw e;});
+  assert.equal(await page.locator('#goalphotos #vizmsg').isVisible(),true);
+  assert.match(await page.innerText('#goalphotos #vizmsg'),/Пробный отказ/);
   assert.equal(last.bodyGoal,true);assert.equal(last.fat,null);assert.equal(goal.body.muscle,'develop');assert.equal(o.vizAsked.render.at(-1).w,76);
   assert.equal(await page.locator('#vizm').isVisible(),true);assert.match(await page.textContent('#viznewcap'),/78/);
   await page.waitForFunction(()=>!document.getElementById('bodygoalsave').disabled);await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>document.activeElement.matches('#goalcard [data-bodygoal]')),true);
