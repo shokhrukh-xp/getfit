@@ -22,6 +22,8 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   await page.waitForFunction(()=>document.getElementById('vizorig').naturalWidth>0);
   assert.equal(await page.locator('#vizstart').isVisible(),false,'Октябрьское фото не выдаём за сентябрьский старт');
   assert.equal(await page.locator('#vizpair figure:visible').count(),2);
+  assert.match(await page.textContent('#viznowmetrics'),/86,1 кг.*24% жира.*65,4 кг без жира/);
+  assert.match(await page.textContent('#vizgoalmetrics'),/75 кг.*15% жира.*63,8 кг без жира/);
   const boxes=await Promise.all(['vizorig','vizph'].map(id=>page.locator('#'+id).boundingBox()));
   assert.ok(boxes.every(b=>b.width>0&&b.x>=0&&b.x+b.width<=width));
   assert.ok(Math.abs(boxes[0].height-boxes[1].height)<2);

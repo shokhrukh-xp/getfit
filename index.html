@@ -4188,6 +4188,8 @@ img.avface{border-radius:50%;object-fit:cover}
 #bodygoalm .goal-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #bodygoalform .mlab{margin:10px 0;font-size:12px}
 #bodygoalform #bodygoalerror:empty{display:none}
+.vizmetrics{margin-top:8px;text-align:center;font-size:12px;line-height:1.6;color:var(--text)}
+.vizmetrics span{display:block}
 #goalphotos .vizpair{margin-bottom:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
 #vizreference{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.28;pointer-events:none}
 #vizreference.mirror{transform:scaleX(-1)}
@@ -4591,8 +4593,8 @@ img.avface{border-radius:50%;object-fit:cover}
            открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
       <div class="vizpair" id="vizpair">
         <figure hidden><img id="vizstart" role="button" tabindex="0" alt="Первое сохранённое фото"><figcaption id="vizstartcap">Первое фото</figcaption></figure>
-        <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото сейчас — открыть"><figcaption id="viznowcap">Сейчас</figcaption></figure>
-        <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" role="button" tabindex="0" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
+        <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото сейчас — открыть"><figcaption id="viznowcap">Сейчас</figcaption><div class="vizmetrics" id="viznowmetrics"></div></figure>
+        <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" role="button" tabindex="0" alt="" hidden><figcaption id="viznewcap">После</figcaption><div class="vizmetrics" id="vizgoalmetrics"></div></figure>
       </div>
       <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
       <p id="vizsharedgoal" class="mtext" hidden></p><button type="button" class="btn wide" data-bodygoal hidden id="vizgoaledit">Изменить цель</button><div id="vizcontrols"><div class="vizsteps" id="vizsteps"></div>
@@ -8894,7 +8896,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 21:01';
+var BUILD = '26.10 21:44';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20115,6 +20117,7 @@ function vizЗагрузить(b64){
 
 /* главный вид: фото сейчас, шаги, ползунки, расчёт */
 function vizMain(){
+  ['viznowmetrics','vizgoalmetrics'].forEach(function(id){document.getElementById(id).textContent='';});
   document.getElementById('goalphotos').appendChild(document.getElementById('vizpair'));
   document.getElementById('goalphotos').appendChild(document.getElementById('vizmsg'));
   vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить все фото';
@@ -20185,6 +20188,14 @@ function vizФотоПодпись(c){
 }
 function vizPaint(c){
   VIZ.calc=c;
+  /* Показатели из расчёта и замеров, а не оценка по изображению. */
+  function metrics(w,f,l,estimated){
+    if(!Number.isFinite(w)||!Number.isFinite(f))return '';
+    if(!Number.isFinite(l))l=w*(1-f/100);
+    return '<b>'+vizК(w)+' кг</b><span>'+(estimated?'≈':'')+vizК(f)+'% жира</span><span>'+(estimated?'≈':'')+vizК(l)+' кг без жира</span>';
+  }
+  document.getElementById('viznowmetrics').innerHTML=metrics(c.w0,c.fat0,c.lean0,c.жирОценка);
+  document.getElementById('vizgoalmetrics').innerHTML=metrics(c.w1,c.fat1,c.lean1,false);
   var fat=document.getElementById('vizfat'); fat.min=c.sex==='f'?'18':'10'; fat.value=String(c.fat1);
   document.getElementById('vizfatv').textContent=vizК(c.fat1)+' %';
   var w=document.getElementById('vizw'), dl=document.getElementById('vizdl');
