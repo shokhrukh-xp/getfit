@@ -53,6 +53,7 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   assert.equal(await page.locator('#bodygoalsave').isDisabled(),true);
   await page.fill('#bodygoalfat','15');assert.match(await page.innerText('#bodygoalsave'),/Сохранить цель без фото/);
   const noRender=o.vizAsked.render.length;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Цель сохранена/.test(document.getElementById('bodygoalerror').textContent));
+  await page.waitForFunction(()=>document.getElementById('bodygoalsave').textContent==='Лимит исчерпан — до завтра');
   assert.equal(o.vizAsked.render.length,noRender,'лимит не мешает сохранить цель и не запускает генерацию');
   await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
   o.viz.unlimited=true;o.viz.left=null;
