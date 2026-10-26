@@ -47,7 +47,7 @@ const лист=p=>p.evaluate(()=>{const m=document.getElementById('profm');retur
   ok(await открыт(p,'resetm'),где+'«Начать заново» открыл выбор');
   await p.click('#resetclose');await p.waitForTimeout(300);
   ok(await лист(p)==='список',где+'«Отмена» — снова список профиля');
-  await p.click('#goaltalk');await p.waitForTimeout(400);
+  await p.locator('#goalcard .goal-more summary').click();await p.click('#goaltalk');await p.waitForTimeout(400);
   ok(await открыт(p,'coachm'),где+'«Обсудить цель» открыл тренера');
   await p.click('#coachclose');await p.waitForTimeout(400);
   ok(await лист(p)==='список',где+'закрыл тренера — снова профиль');

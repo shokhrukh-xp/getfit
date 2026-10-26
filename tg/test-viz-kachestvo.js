@@ -8,13 +8,14 @@ const part=(a,b)=>src.slice(src.indexOf(a),src.indexOf(b,src.indexOf(a)));
 const limits=part('function vizДопуск(', 'function vizBtn(');
 (async()=>{
  const nodes={};const node=id=>nodes[id]||(nodes[id]={disabled:false,textContent:'',hidden:false,src:'saved',classList:{remove(){}}});
- const calls=[],ctx=vm.createContext({console,Date,Math,Promise,Array,Object,Error,isFinite,VIZ:{calc:{w1:75,dl:0,отношение:.87},st:{},busy:false},
+ const calls=[],ctx=vm.createContext({console,Date,Math,Promise,Array,Object,Error,isFinite,BODYGOAL:{busy:false,edited:false},VIZ:{calc:{w1:75,dl:0,отношение:.87},st:{},busy:false},
    document:{getElementById:node,querySelectorAll:()=>[]},vizSay:(id,t)=>{node(id).textContent=t;},vizЖдать(){},haptic(){},
    vizОбразец:async()=> 'template',vizЗаказ:async(...a)=>{calls.push(a);return {k:'bad'+calls.length,calc:{w1:75,dl:0,отношение:.87},left:5};},
    vizДовести:async()=>null,vizПроверка:async()=>({ok:false,отн:.999,d:.129}),fPost:()=>{throw Error('плохой результат нельзя сохранять');}});
+ vm.runInContext(part('function bodyGoalAction(', "document.addEventListener('keydown'"),ctx);
  vm.runInContext(part('function vizБлокировать(', 'function vizУдалить('),ctx);
  ctx.vizGo();while(ctx.VIZ.busy) await new Promise(r=>setTimeout(r,1));
- assert.equal(calls.length,3);assert.equal(node('viznew').src,'saved');assert.match(node('vizmsg').textContent,/не сохранён как цель/);
+ assert.equal(node('bodygoalsave').disabled,false);assert.equal(calls.length,3);assert.equal(node('viznew').src,'saved');assert.match(node('vizmsg').textContent,/не сохранён как цель/);
  assert.ok(calls.every(c=>c[6]===calls[0][6]));
  const old=calls[0][6];ctx.vizGo();while(ctx.VIZ.busy) await new Promise(r=>setTimeout(r,1));assert.notEqual(calls[3][6],old);
  console.log('PASS слабый результат: 3 попытки, прежнее фото остаётся, следующий запуск новый');

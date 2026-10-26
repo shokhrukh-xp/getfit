@@ -4178,6 +4178,25 @@ img.avface{border-radius:50%;object-fit:cover}
 #bodygoalform .mlab{display:block;margin:16px 0}
 #bodygoalm .sheeth{display:flex;align-items:center;justify-content:space-between}
 #bodygoalm .modalbox{overflow:auto}
+/* 26.10: параметры и фото — один лист, одна основная кнопка. */
+#goalcard .gt{font-size:24px;line-height:1.2}
+#goalcard .goal-muscle{margin:6px 0 12px;font-size:14px;color:#E6F5F4}
+#goalcard .goal-forecast{margin:12px 0;font-size:14px;color:#fff}
+#goalcard .goal-more{margin:12px 0;color:#E6F5F4;font-size:13px}
+#goalcard .goal-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+#profm #goalcard [data-bodygoal]{display:flex;justify-content:center;align-items:center;min-height:48px;background:#fff;color:#0B4F5A;border:0;border-radius:16px;width:100%;font-weight:700}
+#bodygoalm .goal-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#bodygoalform .mlab{margin:10px 0;font-size:12px}
+#bodygoalform #bodygoalerror:empty{display:none}
+#goalphotos .vizpair{margin-bottom:8px}
+#goalphotos .vizpair img,#goalphotos .vizph{max-height:230px;object-fit:contain}
+#vizm #vizhint{display:none}
+#vizdetails{margin:14px 0;font-size:13px;color:var(--muted)}
+#vizdetails summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+#vizm #vizgo{display:none}
+#goalcard details:not([open])>:not(summary),#vizdetails:not([open])>:not(summary){display:none!important}
+#goalcard .goal-more summary::after,#vizdetails summary::after{content:"⌄";margin-left:8px}
+#goalcard .goal-more[open] summary::after,#vizdetails[open] summary::after{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -4445,19 +4464,6 @@ img.avface{border-radius:50%;object-fit:cover}
     <div id="picklist"></div>
   </div>
 </div>
-<div class="modal" id="bodygoalm" role="dialog" aria-modal="true" aria-labelledby="bodygoaltitle" style="z-index:220">
- <div class="modalbox">
-  <div class="sheeth"><h3 id="bodygoaltitle">Моя цель</h3><button type="button" class="xbtn" id="bodygoalclose" aria-label="Закрыть">✕</button></div>
-  <form id="bodygoalform">
-   <label class="mlab">Целевой вес, кг<input id="bodygoalweight" type="number" inputmode="decimal" min="1" max="350" step="0.1" required></label>
-   <label class="mlab">Жир, % · необязательно<input id="bodygoalfat" type="number" inputmode="decimal" min="10" max="55" step="0.1" placeholder="Не задавать"></label>
-   <label class="mlab">Мышцы<select id="bodygoalmuscle"><option value="preserve">Сохранить</option><option value="develop">Развивать</option></select></label>
-   <p class="mtext">Тренер рассчитает срок и уточнит его по замерам. Фото будет строиться по этой же цели.</p>
-   <p class="mtext" id="bodygoalerror" role="alert"></p>
-   <button class="btn prim wide" id="bodygoalsave" type="submit">Сохранить цель</button>
-  </form>
- </div>
-</div>
 <div class="modal wide" id="catalog" role="dialog" aria-modal="true" aria-labelledby="cattitle">
   <div class="modalbox">
     <div class="cathead">
@@ -4531,7 +4537,16 @@ img.avface{border-radius:50%;object-fit:cover}
 <div class="modal wide" id="vizm" role="dialog" aria-modal="true" aria-labelledby="viztitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="viztitle">Как я буду выглядеть</h3><button class="xbtn" id="vizclose" aria-label="Закрыть">✕</button></div>
-    <p class="mtext" id="vizload" role="status">Загружаю…</p>
+    <div id="goalphotos" hidden></div><div id="bodygoalm" hidden>
+ <form id="bodygoalform">
+  <div class="goal-fields"><label class="mlab">Вес, кг<input id="bodygoalweight" type="number" inputmode="decimal" min="1" max="350" step="0.1" required></label>
+  <label class="mlab">Жир, % · по желанию<input id="bodygoalfat" type="number" inputmode="decimal" min="10" max="55" step="0.1" placeholder="Не задавать"></label></div>
+  <label class="mlab">Мышцы<select id="bodygoalmuscle"><option value="preserve">Сохранить</option><option value="develop">Развивать</option></select></label>
+  <p class="mtext" id="bodygoalerror" role="status" aria-live="polite"></p>
+  <button class="btn prim wide" id="bodygoalsave" type="submit">Сохранить цель</button>
+ </form>
+</div>
+<p class="mtext" id="vizload" role="status">Загружаю…</p>
     <div id="viz-consent" hidden>
       <p class="mtext">Загрузите фото во весь рост — ИИ покажет, как вы примерно будете выглядеть при другом весе и составе тела.</p>
       <ul class="vizlist">
@@ -4542,7 +4557,7 @@ img.avface{border-radius:50%;object-fit:cover}
       </ul>
       <label class="vizagree"><input type="checkbox" id="vizagree"> <span>Согласен на такую обработку моего фото</span></label>
       <p class="mtext" id="vizcmsg" role="status" aria-live="polite"></p>
-      <div class="btnrow"><button type="button" class="btn prim" id="vizok" disabled>Дальше</button></div>
+      <div class="btnrow"><button type="button" class="btn prim" id="vizok" disabled>Добавить фото</button></div>
     </div>
     <div id="viz-photo" hidden>
       <div class="viztips" id="vizptips"><b>Как снять</b>
@@ -4570,21 +4585,19 @@ img.avface{border-radius:50%;object-fit:cover}
            открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
       <div class="vizpair" id="vizpair">
         <figure><img id="vizorig" alt="Ваше фото сейчас — открыть"><figcaption>До — сейчас</figcaption></figure>
-        <figure><div class="vizph" id="vizph">Выберите вес и нажмите «Показать»</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
+        <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
       </div>
       <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
       <p id="vizsharedgoal" class="mtext" hidden></p><button type="button" class="btn wide" data-bodygoal hidden id="vizgoaledit">Изменить цель</button><div id="vizcontrols"><div class="vizsteps" id="vizsteps"></div>
       <label class="vizsl"><span>вес <b id="vizwv"></b></span><input type="range" id="vizw" step="0.1"></label>
       <label class="vizsl"><span>жир в цели <b id="vizfatv"></b></span><input type="range" id="vizfat" min="10" max="45" step="0.1"></label>
       <label class="vizsl"><span>безжировая масса <b id="vizdlv"></b></span><input type="range" id="vizdl" step="0.5"></label></div>
-      <p class="viznums" id="viznums"></p>
+      <details id="vizdetails"><summary>О фото и расчёте</summary><p class="viznums" id="viznums"></p>
       <p class="mtext vizsmall" id="viznote"></p>
-      <div class="btnrow"><button type="button" class="btn prim" id="vizgo">Показать</button></div>
-      <p class="mtext" id="vizmsg" role="status" aria-live="polite"></p>
       <p class="vizben" id="vizben" hidden></p>
       <div class="vizcare" id="vizcare" hidden>Если картинка расстроила или цель кажется далёкой — это нормально. Ориентир лучше брать ближний: уже −5 % веса заметны в анализах и самочувствии. Фото можно удалить в любой момент.</div>
       <p class="mtext vizsmall">Картинка примерная: жир у каждого уходит по-своему. Талия считается по данным 2 635 взрослых, разброс ±30 %. Ниже безопасного веса и жира не рисуем.</p>
-      <div class="btnrow"><button type="button" class="btn" id="viznewphoto">Другое фото</button><button type="button" class="btn" id="vizdel">Удалить фото</button></div>
+      </details><button type="button" id="vizgo" hidden>Показать</button><p class="mtext" id="vizmsg" role="status" aria-live="polite"></p><div class="btnrow"><button type="button" class="btn" id="viznewphoto">Другое фото</button><button type="button" class="btn" id="vizdel">Удалить фото</button></div>
     </div>
   </div>
 </div>
@@ -7303,86 +7316,86 @@ function goalEtaHtml(pr, цельКг){
   return h+'</div>';
 }
 /* 26.10: одна цель — в профиле, у тренера и на фото. Не храним вторую в ползунках. */
-var BODYGOAL={back:null,busy:false};
-function bodyGoalOpen(){
-  var g=goalObj()||{}, b=g.body||{}, me=myData()||{};
-  BODYGOAL.back=document.activeElement;
+var BODYGOAL={back:null,busy:false,edited:false,openN:0};
+function bodyGoalFill(g){
+  g=g||goalObj()||{};var b=g.body||{},me=myData()||{};
   document.getElementById('bodygoalweight').value=b.target||(g.w0&&g.kg?g.w0+(g.wt==='up'?1:-1)*g.kg:me.bw)||'';
   document.getElementById('bodygoalfat').value=b.fat==null?'':b.fat;
   document.getElementById('bodygoalfat').min=me.sex==='f'?'18':'10';
   document.getElementById('bodygoalmuscle').value=b.muscle||'preserve';
-  document.getElementById('bodygoalerror').textContent='';
-  document.getElementById('bodygoalm').classList.add('show');
-  document.getElementById('bodygoalclose').focus({preventScroll:true});
+  BODYGOAL.edited=false;vizSay('bodygoalerror','');bodyGoalAction();
 }
-function bodyGoalClose(){
-  if(BODYGOAL.busy)return;
-  document.getElementById('bodygoalm').classList.remove('show');
-  if(BODYGOAL.back&&BODYGOAL.back.isConnected)BODYGOAL.back.focus({preventScroll:true});
+function bodyGoalOpen(){vizOpen();}
+function bodyGoalAction(){
+  var st=VIZ.st||{},button=document.getElementById('bodygoalsave');
+  var photo=st.allowed&&st.consent&&st.photo;
+  button.disabled=BODYGOAL.busy||VIZ.busy;
+  ['bodygoalweight','bodygoalfat','bodygoalmuscle'].forEach(function(id){document.getElementById(id).disabled=BODYGOAL.busy||VIZ.busy;});
+  button.textContent=BODYGOAL.busy?'Сохраняю…':VIZ.busy?'Создаю фото…':photo?(BODYGOAL.edited?'Сохранить и показать':st.result?'Обновить фото':'Показать результат'):'Сохранить цель';
 }
-document.getElementById('bodygoalclose').onclick=bodyGoalClose;
-document.getElementById('bodygoalm').addEventListener('keydown',function(e){
-  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();bodyGoalClose();}
+document.addEventListener('keydown',function(e){
+  var root=document.getElementById('vizm');if(!root.classList.contains('show')||!document.getElementById('vizfs').hidden)return;
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();vizClose();}
   if(e.key==='Tab'){
-    var a=Array.prototype.filter.call(this.querySelectorAll('button,input,select'),function(x){return !x.disabled;}), first=a[0],last=a[a.length-1];
-    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    var a=Array.prototype.filter.call(root.querySelectorAll('button,input,select,summary'),function(x){return !x.disabled&&x.getClientRects().length;}),first=a[0],last=a[a.length-1];
+    if(!root.contains(document.activeElement)){e.preventDefault();(e.shiftKey?last:first).focus();}
+    else if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   }
 });
+document.getElementById('bodygoalform').addEventListener('input',function(){
+  BODYGOAL.edited=true;vizSay('bodygoalerror','Изменения ещё не сохранены');bodyGoalAction();
+});
 document.getElementById('bodygoalform').addEventListener('submit',function(e){
-  e.preventDefault();if(BODYGOAL.busy)return;
-  var button=document.getElementById('bodygoalsave'),fat=document.getElementById('bodygoalfat').value;
-  BODYGOAL.busy=true;button.disabled=true;button.textContent='Сохраняю…';
+  e.preventDefault();if(BODYGOAL.busy||VIZ.busy)return;
+  var fat=document.getElementById('bodygoalfat').value;
+  BODYGOAL.openN++;BODYGOAL.busy=true;bodyGoalAction();vizSay('bodygoalerror','');
   fPost('/goal',{uid:syncUid(),bodyGoal:true,target:+document.getElementById('bodygoalweight').value,fat:fat===''?null:+fat,muscle:document.getElementById('bodygoalmuscle').value}).then(function(d){
     if(!d.ok||!d.goal)throw new Error(d.error||'Цель не сохранилась. Повторите.');
-    takeGoal(d.goal,d.progress);renderGoalCard();renderHome();
-    BODYGOAL.busy=false;bodyGoalClose();
-    if(document.getElementById('vizm').classList.contains('show'))vizOpen();
-  }).catch(function(e){document.getElementById('bodygoalerror').textContent=e.message||'Не удалось сохранить. Повторите.';}).finally(function(){BODYGOAL.busy=false;button.disabled=false;button.textContent='Сохранить цель';});
+    takeGoal(d.goal,d.progress);renderHome();BODYGOAL.edited=false;vizSay('bodygoalerror','Цель сохранена');
+    return vizPull().then(function(st){
+      if(!st)throw new Error('Цель сохранена. Фото пока не загрузилось — откройте цель ещё раз.');
+      vizShowState(st);BODYGOAL.busy=false;bodyGoalAction();
+      if(st.allowed&&st.consent&&st.photo&&st.calc&&st.calc.ok){
+        clearTimeout(VIZ.t);return vizGo();
+      }
+    });
+  }).catch(function(e){vizSay('bodygoalerror',e.message||'Не удалось сохранить. Повторите.');}).finally(function(){BODYGOAL.busy=false;bodyGoalAction();});
 });
 document.getElementById('g-muscle').addEventListener('change',renderWzGoal);
 
+/* 26.10: одна задача — цель и её фото. На карточке только ориентиры, подробности по нажатию. */
+function goalForecastShort(f){
+  if(!f)return '';
+  if(f.from&&f.to){var a=String(f.from).split('-'),b=String(f.to).split('-');
+    if(a.length===3&&b.length===3)return 'По весу · '+a[2]+'.'+a[1]+(a[0]!==b[0]?'.'+a[0]:'')+'–'+b[2]+'.'+b[1]+'.'+b[0];}
+  return {weight_reached:'Целевой вес достигнут',paused:'Срок уточним по прогрессу',insufficient:'Нужны свежие замеры',review:'Уточним ближайший этап'}[f.state]||'Срок уточняется';
+}
 function renderGoalCard(){
-  var el=document.getElementById('goalcard'); if(!el) return;
-  var g=gget('goal',null), gobj=goalObj(), me=myData()||{}, pr=g&&g.progress;
+  var el=document.getElementById('goalcard');if(!el)return;
+  var stored=gget('goal',null)||{},g=goalObj(),pr=stored.progress,b=g&&g.body,к=function(x){return String(Math.round(x*10)/10).replace('.',',');};
   var h='<div class="gl">цель</div>';
-  if(gobj){
-    h+='<div class="gt">'+esc(gobj.text)+'</div>';
-    /* 17.10: путь цели полосой — старт, цель и где сейчас (макет профиля).
-       Доля — от того, сколько всего надо пройти (pr.kg); шаг назад — ноль. */
-    if(pr && pr.w0 && pr.now && pr.rate && pr.kg>0 && pr.fact!=null){
-      var к=function(x){ return String(Math.round(x*10)/10).replace('.',','); };
-      var цельКг=pr.w0+Math.sign(pr.rate)*pr.kg;
-      var путь=Math.sign(pr.fact)===Math.sign(pr.rate) ? Math.abs(pr.fact)/pr.kg : 0;
-      var пр=Math.max(0, Math.min(100, Math.round(путь*100)));
-      h+='<div class="pqgbar" role="img" aria-label="пройдено '+пр+'% пути"><b style="width:'+пр+'%"></b><u style="left:calc('+пр+'% - 2px)"></u></div>'+
-         '<div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>пройдено '+пр+'%</span><span>цель <b>'+к(цельКг)+'</b></span></div>';
-      if(!gobj.body) h+=goalEtaHtml(pr, цельКг);
-    }
-    if(!gobj.body && pr && pr.w0 && pr.now && pr.rate){
-      var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',',').replace('-','−'); };
-      h+='<details class="goal-progress"><summary>Ход цели <b>'+esc(String(pr.now).replace('.',','))+' кг</b><span>'+f(pr.fact)+' кг от старта</span></summary><p class="gp">Старт '+esc(String(pr.w0).replace('.',','))+' кг → сейчас <b>'+esc(String(pr.now).replace('.',','))+' кг</b> ('+f(pr.fact)+')'+
-         (pr.plan!=null ? ' · по плану '+f(pr.plan) : '')+
-         /* Отставание показывалось числом, опережение — одним словом. Человек
-            видел «опережаем» и шёл спрашивать, на сколько; в срезе число уже
-            стоит, и два экрана про один факт говорили по-разному. */
-         (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? ((Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем на ' : ' · отстаём на ')+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
-         (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p></details>';
-    } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
-    if(gobj.body && pr && pr.forecast) h+='<p class="gp">'+esc(pr.forecast.text)+'</p>'+(pr.forecast.compositionNote?'<p class="gp">'+esc(pr.forecast.compositionNote)+'</p>':'');
-    if(rbCard()) h+='<p class="gp">Программа собрана под старую цель — предложение пересобрать в строке «Программа» ниже.</p>';
-    h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
-  } else if(hasGoal(me)){
-    h+='<div class="gt">'+esc(goalText(me))+'</div>'+
-       '<p class="gp">Уточните вес и срок с тренером.</p>'+
-       '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
-  } else {
-    h+='<div class="gt">Цель не задана</div>'+
-       '<p class="gp">Без цели норма — на поддержание.</p>'+
-       '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
+  h+='<div class="gt">'+(b?esc(к(b.target)+' кг'+(b.fat!=null?' · '+к(b.fat)+'% жира':'')):esc(g?g.text:'Цель не задана'))+'</div>';
+  if(b)h+='<p class="goal-muscle">Мышцы — '+(b.muscle==='develop'?'развивать':'сохранить')+'</p>';
+  if(pr&&pr.w0&&pr.now&&pr.rate&&pr.kg>0&&pr.fact!=null){
+    var target=b?b.target:pr.w0+Math.sign(pr.rate)*pr.kg,part=Math.sign(pr.fact)===Math.sign(pr.rate)?Math.abs(pr.fact)/pr.kg:0,percent=Math.max(0,Math.min(100,Math.round(part*100)));
+    h+='<div class="pqgbar" role="img" aria-label="пройдено '+percent+'% пути"><b style="width:'+percent+'%"></b><u style="left:calc('+percent+'% - 2px)"></u></div><div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>'+percent+'%</span><span>цель <b>'+к(target)+'</b></span></div>';
   }
-  h+='<button type="button" class="btn wide" data-bodygoal>'+(gobj?'Изменить цель':'Задать цель')+'</button>';
-  h+=vizBtn();   /* 25.10: визуализация цели — когда сервер её открыл этому человеку */
+  if(pr&&pr.forecast)h+='<p class="goal-forecast">'+esc(goalForecastShort(pr.forecast))+'</p>';
+  var detail='',delta=function(x){return (x>0?'+':'')+к(x).replace('-','−');};
+  if(pr&&pr.w0&&pr.now&&pr.fact!=null){
+    detail+='<p class="gp goal-progress">Старт '+esc(к(pr.w0))+' кг → сейчас <b>'+esc(к(pr.now))+' кг</b> ('+delta(pr.fact)+')'+
+      (pr.plan!=null?' · по плану '+delta(pr.plan):'')+
+      (pr.onTrack?' · <b>идём по графику</b>':(pr.gap!=null&&pr.plan!=null?((Math.abs(pr.fact)>Math.abs(pr.plan)?' · опережаем на ':' · отстаём на ')+к(Math.abs(pr.gap))+' кг'):''))+
+      (pr.by?' · срок '+esc(ruDate(pr.by)):'')+'</p>';
+  }
+  if(!g)detail+='<p class="gp">Без цели норма — на поддержание.</p>';
+  if(pr&&pr.forecast)detail+='<p class="gp">Ориентир по весу уточняется по замерам.'+(pr.forecast.compositionNote?' '+esc(pr.forecast.compositionNote):'')+'</p>';
+  else if(g){detail+=goalEtaHtml(pr,pr&&pr.w0&&pr.kg?pr.w0+Math.sign(pr.rate)*pr.kg:null);if(g.note)detail+='<p class="gp">'+esc(g.note)+'</p>';}
+  if(rbCard())detail+='<p class="gp">Программу можно обновить под новую цель в разделе «Программа».</p>';
+  detail+='<button type="button" id="goaltalk">Обсудить с тренером</button>';
+  h+='<details class="goal-more"><summary>Подробнее'+(pr&&pr.fact!=null?' · '+delta(pr.fact)+' кг':'')+'</summary>'+detail+'</details>';
+  h+=VIZ.st&&VIZ.st.allowed?'<button type="button" id="vizopen" class="btn wide" data-bodygoal>Цель и фото</button>':'<button type="button" class="btn wide" data-bodygoal>Настроить цель</button>';
   el.innerHTML=h;
 }
 function legacyOf(wt,gym){
@@ -8870,7 +8883,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 12:28';
+var BUILD = '26.10 14:06';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19933,7 +19946,7 @@ document.getElementById('cphoto').addEventListener('click', function(){ document
    в этом окне) меряет ширину талии до и после; проверка изменения относительно цели, до двух перерисовок.
    Неудачная попытка не становится сохранённой целью. 26.10: жир можно выбрать явно;
    сервер проверяет, допустима ли требуемая безжировая масса при выбранном весе. */
-var VIZ={st:null, calc:null, w:null, dl:0, busy:false, urls:{}, origM:null, k:null, del:0, t:0, pend:null};
+var VIZ={st:null, calc:null, w:null, dl:0, busy:false, urls:{}, origM:null, k:null, del:0, t:0, pend:null,pullN:0};
 /* 26.10: допуск — доля изменения, а не 5 п.п. всего тела: иначе −0,1 % проходило вместо −5 %. */
 /* 26.10: обхват не равен ширине. После ИИ не зажимаем тело в точный пиксельный
    коэффициент; отсеиваем грубый промах, а объём живота/всё тело проверяет сервер. */
@@ -19947,30 +19960,44 @@ function vizДопуск(t){ return Math.min(0.02, Math.max(0.008, Math.abs(1-t)
 function vizСовпало(t, got){ return isFinite(got) && got>0 && Math.abs(got-t)<=vizДопуск(t) && (Math.abs(1-t)<0.015 || (1-got)*(1-t)>0); }
 function vizBtn(){ return VIZ.st && VIZ.st.allowed ? '<button type="button" id="vizopen">Как я буду выглядеть</button>' : ''; }
 function vizPull(){
-  var u=syncUid(); if(!u) return Promise.resolve(null);
+  var u=syncUid(); if(!u) return Promise.resolve(null);var request=++VIZ.pullN;
   return fGet('/viz?uid='+encodeURIComponent(u)).then(function(d){
-    if(!d || !d.ok) return null;
+    if(request!==VIZ.pullN || !d || !d.ok) return null;
     var было=!!(VIZ.st && VIZ.st.allowed); VIZ.st=d;
     if(было!==!!d.allowed) renderGoalCard();
     return d;
   }).catch(function(){ return null; });
 }
 function vizК(x){ return String(Math.round(x*10)/10).replace('.',',').replace('-','−'); }
-function vizView(в){ document.getElementById('vizload').hidden=!!в; ['consent','photo','main'].forEach(function(k){ document.getElementById('viz-'+k).hidden=(k!==в); }); }
+function vizView(в){ document.getElementById('goalphotos').hidden=в!=='main';bodyGoalAction();document.getElementById('vizload').hidden=!!в; ['consent','photo','main'].forEach(function(k){ document.getElementById('viz-'+k).hidden=(k!==в); }); }
 function vizSay(id,t){ var e=document.getElementById(id); if(e) e.textContent=t||''; }
-function vizOpen(){
-  document.getElementById('vizm').classList.add('show'); haptic('light');
-  vizView(''); vizSay('vizload','Загружаю…');
-  vizPull().then(function(d){
-    if(!d){ vizSay('vizload','Не получилось загрузить — проверьте интернет.'); return; }
-    if(!d.allowed){ vizSay('vizload', d.adult===false ? 'Эта функция — только для взрослых.' : 'Пока недоступно.'); return; }
-    if(!d.consent){ document.getElementById('vizagree').checked=false; document.getElementById('vizok').disabled=true; vizSay('vizcmsg',''); vizView('consent'); return; }
-    if(!d.photo){ vizPhotoView(''); return; }
-    vizMain();
-  });
-  vizMpLoad().catch(function(){});   /* мерка грузится заранее, пока человек читает */
+function vizShowState(d){
+  if(!d.allowed){vizView('');vizSay('vizload',d.adult===false?'Фото доступно с 18 лет. Цель можно сохранить без фото.':'Цель можно сохранить без фото.');return;}
+  if(!d.consent){document.getElementById('vizagree').checked=false;document.getElementById('vizok').disabled=true;vizSay('vizcmsg','');vizView('consent');return;}
+  if(!d.photo){vizPhotoView('');return;}
+  vizMain();
 }
-function vizClose(){ try{ vcamClose(); }catch(e){} try{ vizFullClose(); }catch(e){} document.getElementById('vizm').classList.remove('show'); }
+function vizOpen(){
+  BODYGOAL.back=document.activeElement;var n=++BODYGOAL.openN;
+  document.getElementById('vizm').classList.add('show');document.getElementById('bodygoalm').hidden=false;
+  document.getElementById('viztitle').textContent='Цель и фото';bodyGoalFill();haptic('light');
+  document.getElementById('vizclose').focus({preventScroll:true});
+  vizView('');vizSay('vizload','Загружаю фото…');
+  vizPull().then(function(d){
+    if(n!==BODYGOAL.openN)return;
+    if(!d){vizSay('vizload','Фото не загрузилось. Цель можно сохранить; попробуйте открыть её ещё раз.');return;}
+    if(!BODYGOAL.edited&&d.goal)bodyGoalFill(d.goal);
+    vizShowState(d);
+  });
+  vizMpLoad().catch(function(){});
+}
+function vizClose(){
+  if(BODYGOAL.busy)return;
+  BODYGOAL.openN++;try{vcamClose();}catch(e){}try{vizFullClose();}catch(e){}
+  document.getElementById('vizm').classList.remove('show');
+  var back=BODYGOAL.back&&BODYGOAL.back.isConnected?BODYGOAL.back:document.querySelector('#goalcard [data-bodygoal]');
+  if(back)back.focus({preventScroll:true});
+}
 function vizPhotoView(t){ try{ vcamClose(); }catch(e){} VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t); vizView('photo'); }
 
 /* мерка силуэта: MediaPipe Pose — маска человека и точки плеч/бёдер */
@@ -20073,11 +20100,12 @@ function vizЗагрузить(b64){
 
 /* главный вид: фото сейчас, шаги, ползунки, расчёт */
 function vizMain(){
+  document.getElementById('goalphotos').appendChild(document.getElementById('vizpair'));
   vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить фото';
   var st=VIZ.st||{}, saved=st.result, c=st.goalLinked?(st.calc||{}):((saved && saved.calc)||st.calc||{});
-  document.getElementById('vizcontrols').hidden=!!st.goalLinked;
-  document.getElementById('vizgoaledit').hidden=!st.goalLinked;
-  var shared=document.getElementById('vizsharedgoal'); shared.hidden=!st.goalLinked;
+  document.getElementById('vizcontrols').hidden=true;
+  document.getElementById('vizgoaledit').hidden=true;
+  var shared=document.getElementById('vizsharedgoal'); shared.hidden=true;
   shared.textContent=st.goalLinked?((st.goal&&st.goal.text)||'Задайте общую цель для тренера и фото'):'';
   document.getElementById('viznew').hidden=true;
   document.getElementById('viznew').removeAttribute('src');
@@ -20106,8 +20134,8 @@ function vizПоказатьСохранённое(r){
     im.alt='Примерный вид при '+vizК(c.w1)+' кг';
     document.getElementById('vizph').hidden=true;
     document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг безжировой массы' : '');
-    vizCmpSync(); vizSay('vizmsg',c.visualVersion>=5 ? 'Сохранённый вариант · примерный вид тела' : 'Прежний вариант. Нажмите «Показать», чтобы пересоздать с проверкой всего тела.');
-    if(VIZ.st.goalLinked && VIZ.calc && VIZ.calc.ok && (Math.abs(c.w1-VIZ.calc.w1)>.05 || Math.abs(c.fat1-VIZ.calc.fat1)>.15)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(c.w1)+' кг · '+vizК(c.fat1)+'% жира. Нажмите «Показать» для новой цели.');
+    vizCmpSync(); vizSay('vizmsg',c.visualVersion>=5 ? 'Сохранённый вариант · примерный вид тела' : 'Прежний вариант. Обновите фото с проверкой всего тела.');
+    if(VIZ.st.goalLinked && VIZ.calc && VIZ.calc.ok && (Math.abs(c.w1-VIZ.calc.w1)>.05 || Math.abs(c.fat1-VIZ.calc.fat1)>.15)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(c.w1)+' кг · '+vizК(c.fat1)+'% жира. Обновите фото для новой цели.');
     var b=document.getElementById('vizben'); b.textContent=r.польза||''; b.hidden=!r.польза;
   });
 }
@@ -20141,7 +20169,7 @@ function vizCalc(){
       if(н!==VIZ.n || !c || !c.ok) return;   /* пришёл ответ на старое положение ползунка */
       VIZ.w=c.w1; VIZ.dl=c.dl; vizPaint(c); document.getElementById('vizgo').disabled=false;
       var old=VIZ.st && VIZ.st.result;
-      if(old && (Math.abs(old.calc.w1-c.w1)>0.01 || Math.abs(old.calc.dl-c.dl)>0.01)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(old.calc.w1)+' кг · '+vizК(old.calc.fat1)+'% жира. Нажмите «Показать» для новой цели.');
+      if(old && (Math.abs(old.calc.w1-c.w1)>0.01 || Math.abs(old.calc.dl-c.dl)>0.01)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(old.calc.w1)+' кг · '+vizК(old.calc.fat1)+'% жира. Обновите фото для новой цели.');
     }).catch(function(){});
   }, 250);
 }
@@ -20166,7 +20194,7 @@ function vizFull(){
 function vizFullClose(){ document.getElementById('vizfs').hidden=true; }
 function vizЖдать(t){ var ph=document.getElementById('vizph'); ph.classList.toggle('busy', !!t);
   if(t){ ph.textContent=t; ph.hidden=false; document.getElementById('viznew').hidden=true; }
-  else if(!VIZ.k){ ph.textContent='Нажмите «Показать» — фото по вашей цели'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
+  else if(!VIZ.k){ ph.textContent='Покажите результат — фото по вашей цели'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
   else { ph.hidden=true; document.getElementById('viznew').hidden=false; }
   vizCmpSync(); }
 
@@ -20292,7 +20320,7 @@ function vizПроверка(r){
   }).catch(function(){ return null; });
 }
 function vizБлокировать(on){
-  Array.prototype.forEach.call(document.querySelectorAll('#vizw,#vizdl,#vizfat,#vizsteps button,#viznewphoto,#vizdel,#vizgoaledit'),function(e){e.disabled=on;});
+  Array.prototype.forEach.call(document.querySelectorAll('#vizw,#vizdl,#vizfat,#vizsteps button,#viznewphoto,#vizdel,#vizgoaledit,#bodygoalweight,#bodygoalfat,#bodygoalmuscle,#bodygoalsave'),function(e){e.disabled=on;});bodyGoalAction();
 }
 function vizGo(){
   if(VIZ.busy || !VIZ.calc) return;
@@ -20300,7 +20328,7 @@ function vizGo(){
   var w=VIZ.calc.w1, dl=VIZ.calc.dl, лучш=null, n=0, left=null, run=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   vizБлокировать(true);
   vizSay('vizmsg',''); vizЖдать('Готовлю образец силуэта…'); haptic('light');
-  vizОбразец(VIZ.calc).then(function(обр){
+  return vizОбразец(VIZ.calc).then(function(обр){
     if(!обр) throw new Error('Не удалось точно измерить силуэт. Загрузите фото прямо, с руками чуть в стороны и без свободной одежды.');
     var targetRatio=VIZ.calc.отношение;
     vizЖдать('Рисую — обычно 20–40 секунд…');
@@ -20329,7 +20357,7 @@ function vizGo(){
   }).then(function(x){
     var r=x.r, ч=x.ч, c=r.calc;
     if(left!=null && VIZ.st) VIZ.st.left=left;
-    if(!ч || !ч.ok) throw new Error(!ч ? 'Не удалось проверить результат. Фото цели не заменено — попробуйте другой снимок.' : 'Модель не передала выбранное изменение тела. Этот вариант не сохранён как цель. Нажмите «Показать», чтобы попробовать новый.');
+    if(!ч || !ч.ok) throw new Error(!ч ? 'Не удалось проверить результат. Фото цели не заменено — попробуйте другой снимок.' : 'Модель не передала выбранное изменение тела. Этот вариант не сохранён как цель. Попробуйте обновить фото.');
     vizЖдать('Проверяю вид тела и сохранение позы…');
     return fPost('/viz/select', {uid:syncUid(), k:r.k, ratio:ч.отн, image:x.image||''}).then(function(){
       if(x.image && VIZ.urls[r.k]){URL.revokeObjectURL(VIZ.urls[r.k]);delete VIZ.urls[r.k];}
@@ -20340,7 +20368,7 @@ function vizGo(){
       document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг безжировой массы' : '');
       vizCmpSync();
       var про=Math.round((1-c.отношение)*100);
-      vizSay('vizmsg', c.visualVersion>=5 ? 'Примерный вид при выбранном составе тела. Проверены заметность изменений и сохранение позы; процент жира по картинке не измеряется.' : !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
+      vizSay('vizmsg', c.visualVersion>=5 ? 'Фото сохранено · примерный вид по вашей цели.' : !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
         : ч.ok ? 'Проверена ширина силуэта: талия '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
         : 'Талия на картинке '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — точнее цифры выше.');
       if(left!=null && VIZ.st) VIZ.st.left=left;

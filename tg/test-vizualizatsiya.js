@@ -83,21 +83,21 @@ async function открыть(br, viz){
     await page.waitForFunction(() => { const i = document.getElementById('vizorig'); return i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
     дано(await page.evaluate(() => document.getElementById('vizorig').naturalWidth > 0), 'фото «сейчас» на экране');
     дано(mp.length > 0 && mp.every(u => /\/vendor\/mp-1\.0\.1\//.test(u)), 'мерка — своя копия MediaPipe из vendor/');
-    /* 4) шаги и расчёт */
+    /* 4) Регрессия внутреннего расчёта старых фото. Ползунки скрыты: новый путь через общую цель проверяет test-goal-body. */
     дано((await page.$$eval('#vizsteps button', b => b.map(x => x.textContent))).join('|') === '−5 %|−10 %|цель 75', 'шаги −5 % / −10 % / цель');
-    await page.click('#vizsteps button[data-w="81.8"]');
+    await page.locator('#vizsteps button[data-w="81.8"]').evaluate(e=>e.click());
     /* под нагрузкой хука расчёт (пауза 250 мс + запрос) приходит позже — ждём его, а не фиксированные 0,5 с */
     await page.waitForFunction(() => /81,8 кг/.test(document.getElementById('vizwv').textContent) && /81,8 кг/.test(document.getElementById('viznums').textContent), null, { timeout: 8000 }).catch(() => {});
     дано(o.vizAsked.calc.some(c => c.w === 81.8), 'шаг −5 % — расчёт по 81,8 кг');
     дано(/81,8 кг/.test(await page.textContent('#vizwv')), 'ползунок веса — 81,8 кг');
-    await page.click('#vizsteps button[data-w="75"]');
+    await page.locator('#vizsteps button[data-w="75"]').evaluate(e=>e.click());
     await page.waitForFunction(() => /→ 75 кг/.test(document.getElementById('viznums').textContent), null, { timeout: 8000 }).catch(() => {});
     const ч = await page.textContent('#viznums');
     дано(/86,1 → 75 кг/.test(ч) && /жир ≈24 → 12,8 %/.test(ч) && /талия −13 см \(9–17\)/.test(ч), 'расчёт: ' + ч);
     дано(/Жир оценён/.test(await page.textContent('#viznote')), 'сказано, что жир оценён');
     await page.screenshot({ path: '/tmp/viz-raschet.png', fullPage: false });
     /* 5) картинка с проверкой силуэта */
-    await page.click('#vizgo');
+    await page.locator('#vizgo').evaluate(e=>e.click());
     await page.waitForFunction(() => !document.getElementById('viznew').hidden, null, { timeout: 30000 }).catch(() => {});
     const зак = o.vizAsked.render;
     дано(зак[0] && зак[0].w === 75 && зак[0].target.length > 10000 && !зак[0].prev, 'с заказом уходит образец-«пластика» (JPEG)');
@@ -106,6 +106,7 @@ async function открыть(br, viz){
     const сообщ = await page.textContent('#vizmsg');
     дано(/Проверена ширина силуэта: талия уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
     дано(/После — 75 кг/.test(await page.textContent('#viznewcap')), 'подпись «После — 75 кг»');
+    await page.locator('#vizdetails summary').click();
     дано(await page.isVisible('#vizben') && /давление/.test(await page.textContent('#vizben')), 'польза для здоровья рядом');
     дано(await page.isVisible('#vizcare'), 'первый раз — поддержка');
     дано(/жир у каждого уходит по-своему/.test(await page.textContent('#viz-main')), 'честная подпись');
@@ -136,7 +137,7 @@ async function открыть(br, viz){
     await restored.page.click('#vizclose'); await restored.page.click('#vizopen');
     await restored.page.waitForSelector('#viznew:not([hidden])');
     дано(restored.o.vizAsked.render.length===0, 'повторное открытие тоже без генерации');
-    await restored.page.click('#vizsteps button[data-w="81.8"]');
+    await restored.page.locator('#vizsteps button[data-w="81.8"]').evaluate(e=>e.click());
     await restored.page.waitForFunction(()=>/Сохранено для прежней цели/.test(document.getElementById('vizmsg').textContent));
     дано(/После — 75 кг/.test(await restored.page.textContent('#viznewcap')),'новый вес не переименовывает старую картинку');
     await restored.page.close();
@@ -145,7 +146,7 @@ async function открыть(br, viz){
     await page.waitForFunction(()=>document.getElementById('vizfatv').textContent==='15 %'&&!document.getElementById('vizgo').disabled);
     дано(o.vizAsked.calc.at(-1).fat===15,'явный процент уходит на расчёт');
     дано(/15 %/.test(await page.textContent('#viznums')),'цель показывает выбранный жир');
-    await page.click('#vizgo');
+    await page.locator('#vizgo').evaluate(e=>e.click());
     await page.waitForFunction(()=>!document.getElementById('vizgo').disabled && /15 % жира/.test(document.getElementById('viznewcap').textContent),null,{timeout:60000});
     дано(o.vizAsked.render.at(-1).fat===15,'15 % переданы генератору, а не только нарисованы в подписи');
     const fatRestored=await открыть(br,JSON.parse(JSON.stringify(o.viz)));fatRestored.o.vizImg=k=>o.vizImg(k);

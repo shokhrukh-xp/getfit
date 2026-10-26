@@ -38,8 +38,8 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  ok(await p.locator('.ingredient-chips>span').count()===9,'ингредиенты с граммами отдельными элементами');
  await p.locator('.menu-note summary').first().click();ok((await p.locator('.menu-note').first().innerText()).includes('привычные блюда'),'пояснение меню раскрывается');await check('меню');
  await p.locator('#profbtn').click();await check('профиль','#profm');
- ok((await p.locator('.goal-progress summary').innerText()).includes('−4,8 кг'),'минус в кратком ходе цели');
- await p.locator('.goal-progress summary').click();ok((await p.locator('.goal-progress .gp').innerText()).includes('(−4,8)'),'минус в раскрытом ходе цели');ok((await p.locator('.goal-progress .gp').innerText()).includes('92,3'),'стартовый вес в деталях цели');
+ ok((await p.locator('.goal-more summary').innerText()).includes('−4,8 кг'),'минус в кратком ходе цели');
+ await p.locator('.goal-more summary').click();ok((await p.locator('.goal-progress').innerText()).includes('(−4,8)'),'минус в раскрытом ходе цели');ok((await p.locator('.goal-progress').innerText()).includes('92,3'),'стартовый вес в деталях цели');
  await p.locator('#zdtoggle').click();await check('здоровье','#profm');await p.locator('#pqback').click();await p.locator('#bttoggle').click();await check('быт','#profm');
  await p.locator('#pqback').click();await p.locator('#meedit').click();ok(await p.locator('#me-age').isVisible(),'личные данные редактируются');
  ok(!errs.length,'без ошибок приложения: '+errs.join('|'));await p.close();

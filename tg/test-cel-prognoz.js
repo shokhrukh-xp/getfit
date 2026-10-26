@@ -17,7 +17,7 @@ const МЕ = { sex: 'm', age: 34, ht: 178, bw: 86.1, wt: 'down', goal: 'fat', vo
 const ЦЕЛЬ = { text: '75 кг к концу января · старт 1 сентября · мышцы и силу сохраняем', wt: 'down', rate: -0.83, from: '2026-09-01', w0: 92.3, by: '2027-01-31', kg: 17.3 };
 const ПР = { w0: 92.3, now: 85.9, fact: -6.4, rate: -0.83, kg: 17.3, left: 10.9, by: '2027-01-31', plan: -6.5, gap: 0.1, onTrack: true,
   trend4: { kgWeek: -0.6, from: '2026-09-28', n: 20 }, eta: { pace: -0.6, weeks: 18.2, date: '2027-03-20', basis: '4w' }, need: -1.1 };
-const карточка = p => p.evaluate(() => (document.querySelector('#profm .goal-eta') || {}).innerText || '');
+const карточка = p => p.evaluate(() => {const d=document.querySelector('#goalcard details');if(d)d.open=true;return (document.querySelector('#profm .goal-eta') || {}).innerText || '';});
 async function открыть(br, o){
   const page = await br.newPage({ viewport: { width: 390, height: 844 } });
   await page.addInitScript(() => { try { localStorage.setItem('shp_v1_trcard_off', '1'); } catch (e) {} });

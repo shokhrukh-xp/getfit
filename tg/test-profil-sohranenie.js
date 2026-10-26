@@ -45,7 +45,7 @@ const shot=async(p,name)=>{if(process.env.GF_PROFILE_SHOTS){fs.mkdirSync(process
   await p.click('#pq-gym');await p.click('#progedit');assert(await p.locator('#sborm').isVisible());await p.click('#sborclose');await p.waitForTimeout(100);assert(await p.locator('#profm').isVisible());await p.click('#pqback');
   await p.click('#pq-ref');assert((await p.locator('#reflink').inputValue()).includes('t.me'));await p.click('#refshare');assert((await p.evaluate(()=>window.__ссылки||[])).length>0);await check('друзья');await p.click('#pqback');
   assert.equal(await p.locator('#profhow').count(),0);  /* 22.10: справку убрали — подсказки по месту */
-  await p.click('#goaltalk');assert(await p.locator('#coachm').isVisible());assert.match(await p.locator('#ctext').inputValue(),/цель/i);await p.click('#coachclose');await p.locator('#profm').waitFor({state:'visible'});
+  await p.locator('#goalcard .goal-more summary').click();await p.click('#goaltalk');assert(await p.locator('#coachm').isVisible());assert.match(await p.locator('#ctext').inputValue(),/цель/i);await p.click('#coachclose');await p.locator('#profm').waitFor({state:'visible'});
   await p.click('#profreset');assert(await p.locator('#resetm').isVisible());await p.click('#resetclose');await p.locator('#profm').waitFor({state:'visible'});
   // Базовые параметры: ошибочное значение не сохраняется даже при правке другого раздела.
   await p.click('#meedit');const age=s.me.age;await p.fill('#me-age','');await p.locator('#me-age').blur();assert(await p.locator('#me-error').isVisible());assert.equal(s.me.age,age);
