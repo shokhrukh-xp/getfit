@@ -7329,9 +7329,10 @@ function bodyGoalOpen(){vizOpen();}
 function bodyGoalAction(){
   var st=VIZ.st||{},button=document.getElementById('bodygoalsave');
   var photo=st.allowed&&st.consent&&st.photo;
-  button.disabled=BODYGOAL.busy||VIZ.busy;
+  var invalid=!!(photo&&st.calc&&!st.calc.ok&&!BODYGOAL.edited);
+  button.disabled=BODYGOAL.busy||VIZ.busy||invalid;
   ['bodygoalweight','bodygoalfat','bodygoalmuscle'].forEach(function(id){document.getElementById(id).disabled=BODYGOAL.busy||VIZ.busy;});
-  button.textContent=BODYGOAL.busy?'Сохраняю…':VIZ.busy?'Создаю фото…':photo?(BODYGOAL.edited?'Сохранить и показать':st.result?'Обновить фото':'Показать результат'):'Сохранить цель';
+  button.textContent=BODYGOAL.busy?'Сохраняю…':VIZ.busy?'Создаю фото…':invalid?'Уточните параметры цели':photo?(BODYGOAL.edited?'Сохранить и показать':st.result?'Обновить фото':'Показать результат'):'Сохранить цель';
 }
 document.addEventListener('keydown',function(e){
   var root=document.getElementById('vizm');if(!root.classList.contains('show')||!document.getElementById('vizfs').hidden)return;
@@ -8883,7 +8884,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 14:06';
+var BUILD = '26.10 14:38';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20114,7 +20115,13 @@ function vizMain(){
   if(saved || st.goalLinked){ VIZ.w=c.w1; VIZ.dl=c.dl; }
   document.getElementById('vizorig').removeAttribute('src');
   vizURL('orig').then(function(u){ document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
-  if(!c.ok){ vizSay('viznums', c.error || 'Нужны рост, вес и возраст в профиле.'); document.getElementById('vizgo').disabled=true; return; }
+  VIZ.calc=c;clearTimeout(VIZ.t);
+  /* Сохранённое фото не зависит от возможности построить НОВУЮ цель. */
+  if(saved) vizПоказатьСохранённое(saved).catch(function(){ vizSay('vizmsg','Не удалось загрузить сохранённое фото. Закройте и откройте окно — создавать заново не нужно.'); });
+  if(!c.ok){
+    vizSay('bodygoalerror',c.error||'Нужны рост, вес и возраст в профиле.');
+    vizSay('viznums','');document.getElementById('vizgo').disabled=true;bodyGoalAction();return;
+  }
   var w=document.getElementById('vizw');
   w.min=String(Math.ceil((c.пол || c.w0*0.75)*2)/2); w.max=String(Math.round((c.w0+10)*2)/2);
   if(VIZ.w==null){ VIZ.w=c.w1; VIZ.dl=0; }
@@ -20122,7 +20129,6 @@ function vizMain(){
   document.getElementById('vizsteps').innerHTML=(st.steps||[]).map(function(s){
     return '<button type="button" data-w="'+s.w+'" aria-pressed="'+(Math.abs(s.w-VIZ.w)<0.05)+'">'+esc(s.t)+'</button>'; }).join('');
   VIZ.fat=c.fatTarget!=null?c.fatTarget:null; vizЖдать(''); vizPaint(c); vizCalc();
-  if(saved) vizПоказатьСохранённое(saved).catch(function(){ vizSay('vizmsg','Не удалось загрузить сохранённое фото. Закройте и откройте окно — создавать заново не нужно.'); });
 }
 /* 26.10: восстанавливаем картинку и её параметры без обращения к генератору. */
 function vizПоказатьСохранённое(r){
@@ -20135,6 +20141,7 @@ function vizПоказатьСохранённое(r){
     document.getElementById('vizph').hidden=true;
     document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг безжировой массы' : '');
     vizCmpSync(); vizSay('vizmsg',c.visualVersion>=5 ? 'Сохранённый вариант · примерный вид тела' : 'Прежний вариант. Обновите фото с проверкой всего тела.');
+    if(VIZ.st.goalLinked && VIZ.calc && !VIZ.calc.ok)vizSay('vizmsg','Сохранённое фото прежней цели — параметры в подписи.');
     if(VIZ.st.goalLinked && VIZ.calc && VIZ.calc.ok && (Math.abs(c.w1-VIZ.calc.w1)>.05 || Math.abs(c.fat1-VIZ.calc.fat1)>.15)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(c.w1)+' кг · '+vizК(c.fat1)+'% жира. Обновите фото для новой цели.');
     var b=document.getElementById('vizben'); b.textContent=r.польза||''; b.hidden=!r.польза;
   });
@@ -20156,6 +20163,7 @@ function vizPaint(c){
   if(!c.талияИзмерена) н.push('Талия оценена — замер сантиметром в профиле сделает расчёт точнее.');
   (c.срез||[]).forEach(function(s){ н.push('Ограничили: '+s+'.'); });
   if(!(VIZ.st&&VIZ.st.goalLinked)) н.push('Изменение безжировой массы (включая воду): от '+vizК(c.dlMin)+' до +'+vizК(c.dlMax)+' кг.');
+  if(c.compositionStages)н.push('Для состава тела может понадобиться несколько этапов. Срок по весу не равен сроку этой формы.');
   vizSay('viznote', н.join(' '));
 }
 function vizCalc(){

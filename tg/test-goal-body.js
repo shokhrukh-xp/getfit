@@ -31,6 +31,12 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   await page.waitForFunction(()=>!document.getElementById('bodygoalsave').disabled);await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>document.activeElement.matches('#goalcard [data-bodygoal]')),true);
   await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#viznew:not([hidden])');assert.equal(await page.inputValue('#bodygoalweight'),'76');assert.equal(await page.inputValue('#bodygoalfat'),'');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
+  o.viz.calc={ok:false,goalLinked:true,error:'Эта цель требует другого изменения безжировой массы.'};
+  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#viznew:not([hidden])');
+  assert.match(await page.innerText('#bodygoalerror'),/Эта цель/);assert.equal(await page.locator('#bodygoalerror').isVisible(),true);
+  assert.equal(await page.locator('#bodygoalsave').isDisabled(),true);assert.match(await page.textContent('#viznewcap'),/78/);
+  await page.fill('#bodygoalweight','77');assert.equal(await page.locator('#bodygoalsave').isEnabled(),true);
   const renders=o.vizAsked.render.length;await page.waitForTimeout(300);assert.equal(o.vizAsked.render.length,renders);
   await page.setViewportSize({width,height:420});await page.locator('#bodygoalsave').scrollIntoViewIfNeeded();assert.equal(await page.locator('#bodygoalsave').isVisible(),true);
   assert.deepEqual(errors,[]);await page.close();
