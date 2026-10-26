@@ -8808,7 +8808,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 09:31';
+var BUILD = '26.10 10:43';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19861,11 +19861,13 @@ document.getElementById('cphoto').addEventListener('click', function(){ document
    исследований — «поэтапно» и «явное согласие». Форма тела считается на сервере из
    СОСТАВА тела (жир уходит, сухая масса — в реальных пределах), Gemini правит фото по
    этим числам. Здесь — проверка силуэта: MediaPipe (своя копия в vendor/, грузится только
-   в этом окне) меряет ширину талии до и после; промах больше 5 % — одна перерисовка
-   с поправкой, показываем ту, что ближе к расчёту. Жир — не ползунок: он выходит из
+   в этом окне) меряет ширину талии до и после; проверка изменения относительно цели, до двух перерисовок.
+   Неудачная попытка не становится сохранённой целью. Жир — не ползунок: он выходит из
    веса и мышц (иначе можно «нарисовать» невозможное сочетание). */
 var VIZ={st:null, calc:null, w:null, dl:0, busy:false, urls:{}, origM:null, k:null, del:0, t:0, pend:null};
-var VIZ_ДОПУСК=0.05;
+/* 26.10: допуск — доля изменения, а не 5 п.п. всего тела: иначе −0,1 % проходило вместо −5 %. */
+function vizДопуск(t){ return Math.min(0.02, Math.max(0.008, Math.abs(1-t)*0.25)); }
+function vizСовпало(t, got){ return isFinite(got) && got>0 && Math.abs(got-t)<=vizДопуск(t) && (Math.abs(1-t)<0.015 || (1-got)*(1-t)>0); }
 function vizBtn(){ return VIZ.st && VIZ.st.allowed ? '<button type="button" id="vizopen">Как я буду выглядеть</button>' : ''; }
 function vizPull(){
   var u=syncUid(); if(!u) return Promise.resolve(null);
@@ -20023,7 +20025,7 @@ function vizПоказатьСохранённое(r){
     im.alt='Примерный вид при '+vizК(c.w1)+' кг';
     document.getElementById('vizph').hidden=true;
     document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
-    vizCmpSync(); vizSay('vizmsg','Сохранённый вариант');
+    vizCmpSync(); vizSay('vizmsg',c.visualVersion>=4 ? 'Сохранённый вариант · изменение силуэта проверено' : 'Прежний вариант. Нажмите «Показать», чтобы пересоздать с точной проверкой силуэта.');
     var b=document.getElementById('vizben'); b.textContent=r.польза||''; b.hidden=!r.польза;
   });
 }
@@ -20045,13 +20047,17 @@ function vizPaint(c){
   vizSay('viznote', н.join(' '));
 }
 function vizCalc(){
+  if(VIZ.busy) return;
+  document.getElementById('vizgo').disabled=true;
   clearTimeout(VIZ.t);
   VIZ.t=setTimeout(function(){
     var w=+document.getElementById('vizw').value, dl=+document.getElementById('vizdl').value, н=VIZ.n=(VIZ.n||0)+1;
     VIZ.w=w; VIZ.dl=dl;
     fGet('/viz/calc?uid='+encodeURIComponent(syncUid())+'&w='+w+'&dl='+dl).then(function(c){
       if(н!==VIZ.n || !c || !c.ok) return;   /* пришёл ответ на старое положение ползунка */
-      VIZ.w=c.w1; VIZ.dl=c.dl; vizPaint(c);
+      VIZ.w=c.w1; VIZ.dl=c.dl; vizPaint(c); document.getElementById('vizgo').disabled=false;
+      var old=VIZ.st && VIZ.st.result;
+      if(old && (Math.abs(old.calc.w1-c.w1)>0.01 || Math.abs(old.calc.dl-c.dl)>0.01)) vizSay('vizmsg','На фото прежняя цель '+vizК(old.calc.w1)+' кг. Нажмите «Показать» для новых параметров.');
     }).catch(function(){});
   }, 250);
 }
@@ -20091,24 +20097,46 @@ function vizПластика(img, s){
     var закрыть=function(){ try{ (res.segmentationMasks||[]).forEach(function(m){ m.close && m.close(); }); }catch(e){} };
     if(!P || !mask){ закрыть(); return null; }
     var M=VIZMP.map, d=mask.getAsFloat32Array(), S=640, W=img.naturalWidth||img.width, H=img.naturalHeight||img.height;
-    var на=function(X, Y){ var x=Math.round(X*M.k+M.ox), y=Math.round(Y*M.k+M.oy); return x>=0 && x<S && y>=0 && y<S && d[y*S+x]>=0.5; };
+    var MW=mask.width, MH=mask.height;
+    var на=function(X, Y){ var x=Math.round((X*M.k+M.ox)*MW/S), y=Math.round((Y*M.k+M.oy)*MH/S); return x>=0 && x<MW && y>=0 && y<MH && d[y*MW+x]>=0.5; };
     var пт=function(i){ return { X:(P[i].x*S-M.ox)/M.k, Y:(P[i].y*S-M.oy)/M.k }; };
     var пл=(пт(11).Y+пт(12).Y)/2, бд=(пт(23).Y+пт(24).Y)/2, корп=бд-пл, cx=(пт(11).X+пт(12).X+пт(23).X+пт(24).X)/4;
     if(корп<20){ закрыть(); return null; }
     var c=document.createElement('canvas'); c.width=W; c.height=H; var x2=c.getContext('2d'); x2.drawImage(img, 0, 0);
     var sd=x2.getImageData(0, 0, W, H), out=x2.getImageData(0, 0, W, H);
     var yA=пл+корп*0.30, yB=Math.min(H-1, бд+корп*0.30), yT=пл+корп*0.80, строк=0;
+    /* Контур и границы поля сглаживаем по строкам: скачок маски у локтя не
+       должен давать горизонтальную полосу на итоговом фото. */
+    var rows=[], widths=[];
+    for(var y=Math.max(0,Math.round(yA));y<=Math.round(yB);y++){
+      var l=Math.round(cx),r=l;if(!на(l,y))continue;
+      while(l>0&&на(l-1,y))l--;while(r<W-1&&на(r+1,y))r++;
+      var half=(r-l)/2,lo=l-1,hi=r+1;
+      while(lo>0&&!на(lo,y)&&l-lo<half*.6)lo--;
+      while(hi<W-1&&!на(hi,y)&&hi-r<half*.6)hi++;
+      if(l-lo>=4&&hi-r>=4){rows.push({y:y,l:l,r:r,lo:lo,hi:hi});widths.push(r-l);}
+    }
+    widths.sort(function(a,b){return a-b;});var med=widths[Math.floor(widths.length/2)];
+    rows=rows.filter(function(r){return r.r-r.l<=med*1.25;});
+    if(rows.length<10){закрыть();return null;}
+    /* Заполняем разрывы маски интерполяцией, затем сглаживаем: выбор ближайшей
+       строки скачком посередине разрыва оставлял полосу у локтя. */
+    var dense=[],ri=0;
+    for(var yy=Math.max(0,Math.round(yA));yy<=Math.round(yB);yy++){
+      while(ri+1<rows.length&&rows[ri+1].y<yy)ri++;
+      var aa=rows[ri],bb=rows[Math.min(ri+1,rows.length-1)],f=aa.y===bb.y?0:Math.max(0,Math.min(1,(yy-aa.y)/(bb.y-aa.y))),rr={y:yy};
+      ['l','r','lo','hi'].forEach(function(key){rr[key]=aa[key]+f*(bb[key]-aa[key]);});dense.push(rr);
+    }
+    var radius=Math.max(4,Math.round(корп*.04));
     for(var Y=Math.max(0, Math.round(yA)); Y<=Math.round(yB); Y++){
       var t=Y<yT ? (Y-yA)/(yT-yA) : 1-(Y-yT)/(yB-yT), w=Math.pow(Math.sin(Math.max(0, Math.min(1, t))*Math.PI/2), 2);
       var k=1-(1-s)*w; if(Math.abs(1-k)<0.001) continue;
-      var л=Math.round(cx), п=л; if(!на(л, Y)) continue;
-      while(л>0 && на(л-1, Y)) л--; while(п<W-1 && на(п+1, Y)) п++;
-      var пол=(п-л)/2, ц=(л+п)/2, лп=л-1, пп=п+1;
-      while(лп>0 && !на(лп, Y) && л-лп<пол*0.6) лп--;
-      while(пп<W-1 && !на(пп, Y) && пп-п<пол*0.6) пп++;
-      if(л-лп<4 || пп-п<4) continue;
+      var near=dense.filter(function(r){return Math.abs(r.y-Y)<=radius;});
+      if(!near.length) near=[rows.reduce(function(a,b){return Math.abs(a.y-Y)<Math.abs(b.y-Y)?a:b;})];
+      var avg=function(key){return near.reduce(function(a,r){return a+r[key];},0)/near.length;};
+      var л=avg('l'),п=avg('r'),ц=(л+п)/2,лп=avg('lo'),пп=avg('hi');
       var нл=ц-(ц-л)*k, нп=ц+(п-ц)*k; if(нл<=лп+2 || нп>=пп-2) continue;
-      for(var X=лп; X<=пп; X++){
+      for(var X=Math.max(0,Math.ceil(лп)); X<=Math.min(W-1,Math.floor(пп)); X++){
         var sx = X<нл ? лп+(X-лп)*(л-лп)/(нл-лп) : X<=нп ? л+(X-нл)*(п-л)/(нп-нл) : п+(X-нп)*(пп-п)/(пп-нп);
         var x0=Math.max(0, Math.min(W-2, Math.floor(sx))), f=sx-x0, ii=(Y*W+X)*4, a=(Y*W+x0)*4, b=a+4;
         for(var q=0; q<3; q++) out.data[ii+q]=sd.data[a+q]*(1-f)+sd.data[b+q]*f;
@@ -20121,16 +20149,54 @@ function vizПластика(img, s){
     return c.toDataURL('image/jpeg', 0.9).split(',')[1];
   });
 }
-/* образец на текущий расчёт: сжатие чуть мягче цели — мерка по полосе выходит на ~2 % уже */
+/* 26.10: измеряем образец тем же способом, что итог. Коэффициент больше не
+   ослаблен вслепую на 15 %: до четырёх локальных поправок, без платной генерации. */
 function vizОбразец(c){
   var key=(VIZ.st && VIZ.st.photo)+'|'+c.отношение;
   if(VIZ.обр && VIZ.обр.key===key) return Promise.resolve(VIZ.обр.b64);
-  return vizURL('orig').then(vizКартинка).then(function(im){ return vizПластика(im, 1-(1-c.отношение)*0.85); })
-    .then(function(b){ VIZ.обр={ key:key, b64:b }; return b; }, function(){ return null; });
+  return vizURL('orig').then(vizКартинка).then(function(im){return vizКалибровать(im,c.отношение);})
+    .then(function(b){if(b)VIZ.обр={key:key,b64:b};return b;},function(){return null;});
 }
-/* картинка: образец → заказ → мерка силуэта → при промахе больше 5 % до двух перерисовок
-   с опорой на прошлую попытку (её ключ и замер); показываем ближнюю к расчёту */
-function vizЗаказ(w, dl, обр, prev, got, n){ return fPost('/viz/render', { uid:syncUid(), w:w, dl:dl, target:обр||'', prev:prev||'', got:got||0, n:n||0 }); }
+function vizКалибровать(im,ratio){
+    return vizМерить(im).then(function(m){
+      if(!m || m.нет || !m.талия) return null;
+      var s=ratio, best=null, n=0;
+      function step(){
+        return vizПластика(im,s).then(function(b){
+          if(!b) return best;
+          return vizКартинка('data:image/jpeg;base64,'+b).then(vizМерить).then(function(x){
+            if(!x || x.нет || !x.талия) return best;
+            var got=x.талия/m.талия, d=Math.abs(got-ratio);
+            if(!best || d<best.d) best={b64:b,got:got,d:d};
+            if(d<=Math.min(0.008,vizДопуск(ratio)) || ++n>=4) return best;
+            var change=1-got;
+            if(Math.abs(change)<0.003 || change*(1-ratio)<=0) return best;
+            s=Math.max(0.60,Math.min(1.25,1-(1-s)*(1-ratio)/change));
+            return step();
+          });
+        });
+      }
+      return step().then(function(x){ return x && vizСовпало(ratio,x.got) ? x.b64 : null; });
+    });
+ }
+/* После ИИ — локальная коррекция по той же мерке. Её нельзя снова отдавать
+   модели: та способна вернуть исходный объём. Сохраняем исправленные байты. */
+function vizДовести(r,ч){
+  if(!ч || ч.ok) return Promise.resolve(null);
+  var ratio=ч.цель/ч.отн;
+  if(ratio<0.75 || ratio>1.25) return Promise.resolve(null);
+  return vizURL(r.k).then(vizКартинка).then(function(im){return vizКалибровать(im,ratio);}).then(function(image){
+    if(!image)return null;
+    return Promise.all([VIZ.origM,vizКартинка('data:image/jpeg;base64,'+image).then(vizМерить)]).then(function(m){
+      if(!m[0]||!m[1]||m[0].нет||m[1].нет)return null;
+      var got=m[1].талия/m[0].талия;
+      return vizСовпало(ч.цель,got)?{r:r,image:image,ч:{отн:got,цель:ч.цель,d:got-ч.цель,ok:true}}:null;
+    });
+  }).catch(function(){return null;});
+}
+/* картинка: проверенный образец → заказ → мерка силуэта → до двух поправок.
+   Сохраняем только прошедшую проверку попытку; прежнее фото при неудаче остаётся. */
+function vizЗаказ(w, dl, обр, prev, got, n, run){ return fPost('/viz/render', { uid:syncUid(), w:w, dl:dl, target:обр||'', prev:prev||'', got:got||0, n:n||0, run:run }); }
 function vizПроверка(r){
   var t=r.calc && r.calc.отношение; if(!t) return Promise.resolve(null);
   if(!VIZ.origM) VIZ.origM=vizURL('orig').then(vizКартинка).then(vizМерить).catch(function(){ VIZ.origM=null; return null; });
@@ -20138,31 +20204,51 @@ function vizПроверка(r){
     var о=м[0], н=м[1];
     if(!о || !н || о.нет || н.нет || !о.талия || !н.талия) return null;
     var отн=н.талия/о.талия, d=отн-t;
-    return { отн:отн, цель:t, d:d, ok:Math.abs(d)<=VIZ_ДОПУСК };
+    return { отн:отн, цель:t, d:d, ok:vizСовпало(t,отн) };
   }).catch(function(){ return null; });
+}
+function vizБлокировать(on){
+  Array.prototype.forEach.call(document.querySelectorAll('#vizw,#vizdl,#vizsteps button,#viznewphoto,#vizdel'),function(e){e.disabled=on;});
 }
 function vizGo(){
   if(VIZ.busy || !VIZ.calc) return;
   VIZ.busy=true; var кн=document.getElementById('vizgo'); кн.disabled=true;
-  var w=VIZ.calc.w1, dl=VIZ.calc.dl, лучш=null, n=0;
+  var w=VIZ.calc.w1, dl=VIZ.calc.dl, лучш=null, n=0, left=null, run=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+  vizБлокировать(true);
   vizSay('vizmsg',''); vizЖдать('Готовлю образец силуэта…'); haptic('light');
   vizОбразец(VIZ.calc).then(function(обр){
+    if(!обр) throw new Error('Не удалось точно измерить силуэт. Загрузите фото прямо, с руками чуть в стороны и без свободной одежды.');
+    var targetRatio=VIZ.calc.отношение;
     vizЖдать('Рисую — обычно 20–40 секунд…');
     function шаг(prev, got){
-      return vizЗаказ(w, dl, обр, prev, got, n).then(function(r){
+      return vizЗаказ(w, dl, обр, prev, got, n, run).then(function(r){
+        if(r.left!=null) left=r.left;
         vizЖдать('Проверяю силуэт…');
         return vizПроверка(r).then(function(ч){
+          return vizДовести(r,ч).then(function(fixed){
+          if(fixed){лучш=fixed;return лучш;}
           if(!лучш || (ч && (!лучш.ч || Math.abs(ч.d)<Math.abs(лучш.ч.d)))) лучш={ r:r, ч:ч };
           if(!ч || ч.ok || n>=2 || (r.left!=null && r.left<=0)) return лучш;
           n++; vizЖдать('Талия вышла '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — перерисовываю ('+n+' из 2)…');
-          return шаг(r.k, Math.round(ч.отн*1000)/1000).catch(function(){ return лучш; });
+          /* Модель может вернуть часть объёма даже при верных словах. Корректируем
+             сам образец на измеренный промах, итог всё равно сверяется с исходной целью. */
+          targetRatio=Math.max(0.60,Math.min(1.25,targetRatio-ч.d));
+          return vizОбразец(Object.assign({},r.calc,{отношение:targetRatio})).then(function(next){
+            if(!next) return лучш; обр=next;
+            return шаг(r.k, Math.round(ч.отн*1000)/1000);
+          }).catch(function(){ return лучш; });
+          });
         });
       });
     }
     return шаг('', 0);
   }).then(function(x){
     var r=x.r, ч=x.ч, c=r.calc;
-    return vizURL(r.k).then(function(u){
+    if(left!=null && VIZ.st) VIZ.st.left=left;
+    if(!ч || !ч.ok) throw new Error(!ч ? 'Не удалось проверить результат. Фото цели не заменено — попробуйте другой снимок.' : 'Модель не передала выбранное изменение тела. Этот вариант не сохранён как цель. Нажмите «Показать», чтобы попробовать новый.');
+    return fPost('/viz/select', {uid:syncUid(), k:r.k, ratio:ч.отн, image:x.image||''}).then(function(){
+      if(x.image && VIZ.urls[r.k]){URL.revokeObjectURL(VIZ.urls[r.k]);delete VIZ.urls[r.k];}
+      return vizURL(r.k);}).then(function(u){
       VIZ.k=r.k; var im=document.getElementById('viznew'); im.src=u; im.hidden=false;
       im.alt='Примерный вид при '+vizК(c.w1)+' кг';
       document.getElementById('vizph').hidden=true; document.getElementById('vizph').classList.remove('busy');
@@ -20170,20 +20256,18 @@ function vizGo(){
       vizCmpSync();
       var про=Math.round((1-c.отношение)*100);
       vizSay('vizmsg', !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
-        : ч.ok ? 'Силуэт проверен: талия на картинке '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
+        : ч.ok ? 'Изменение силуэта проверено: ширина талии '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
         : 'Талия на картинке '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — точнее цифры выше.');
-      if(r.left!=null && VIZ.st) VIZ.st.left=r.left;
+      if(left!=null && VIZ.st) VIZ.st.left=left;
       var б=document.getElementById('vizben'); б.textContent=r.польза||''; б.hidden=!r.польза;
       if(!gget('viz_seen', null)){ document.getElementById('vizcare').hidden=false; gset('viz_seen', 1); }
       haptic('success');
       if(VIZ.st) VIZ.st.result={k:r.k, calc:c, польза:r.польза||''};
-      return fPost('/viz/select', {uid:syncUid(), k:r.k}).catch(function(){
-        vizSay('vizmsg','Фото создано, но выбор варианта не сохранился. При следующем входе откроется последняя сохранённая попытка.');
-      });
+
     });
   }).catch(function(e){
     vizЖдать(''); vizSay('vizmsg', e.message || 'Не получилось нарисовать — попробуйте ещё раз.');
-  }).then(function(){ VIZ.busy=false; кн.disabled=false; });
+  }).then(function(){ VIZ.busy=false; кн.disabled=false; vizБлокировать(false); });
 }
 function vizУдалить(){
   if(!VIZ.del){ VIZ.del=1; document.getElementById('vizdel').textContent='Точно удалить? Нажмите ещё раз'; return; }

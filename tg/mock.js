@@ -520,7 +520,7 @@ async function поднять(page, o) {
       if (p === '/viz/img') { const f = o.vizImg && o.vizImg(u.searchParams.get('k'));
         if (!f) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"нет картинки"}' });
         return route.fulfill({ status: 200, contentType: /\.png$/.test(f) ? 'image/png' : 'image/jpeg', body: require('fs').readFileSync(f) }); }
-      if (p === '/viz/select') { const b = тело(); з.selected=b.k;
+      if (p === '/viz/select') { const b = тело(); з.selected=b.k; if(o.onVizSelect)o.onVizSelect(b);
         if(o.viz && з.results && з.results[b.k]) o.viz.result=з.results[b.k];
         return дать({ok:true}); }
       if (p === '/viz/render') { const b = тело(); з.render.push(b);
