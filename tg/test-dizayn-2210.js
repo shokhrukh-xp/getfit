@@ -11,10 +11,10 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   {const p=await b.newPage({viewport:{width,height:844}});
    const err=await M.поднять(p,{theme,page:'home',time:'19:40',meas:M.замеры(),hist:M.журнал(),wait:2500});
    const h=await p.evaluate(()=>({легенда:!!document.querySelector('.hweek-legend'),еда:document.querySelectorAll('.hwd b svg').length,
-     зал:document.querySelectorAll('.hwd-gym svg').length,подписи:[...document.querySelectorAll('svg .vzlab')].map(x=>x.textContent),vzlg:!!document.querySelector('.vzlg'),
+     дней:document.querySelectorAll('.hwd:not([disabled])').length,зал:document.querySelectorAll('.hwd-gym svg').length,подписи:[...document.querySelectorAll('svg .vzlab')].map(x=>x.textContent),vzlg:!!document.querySelector('.vzlg'),
      тнум:getComputedStyle(document.body).fontVariantNumeric,
      onb:(()=>{const e=document.getElementById('onbbar');if(!e||e.hidden)return null;const r=e.getBoundingClientRect();return {h:r.height,t:e.innerText.replace(/\s+/g,' ')};})()}));
-   ok(!h.легенда&&h.еда>=3,где+'«Неделя»: значок еды под днём, строки «● еда в норме…» нет');
+   ok(!h.легенда&&h.дней>0&&h.еда===h.дней,где+'«Неделя»: значок еды под днём, строки «● еда в норме…» нет');
    ok(!h.vzlg&&h.подписи.some(x=>/среднее за 7 дней/.test(x)),где+'«Тело»: подписи на графике вместо легенды: '+h.подписи.join(' · '));
    ok(/tabular-nums/.test(h.тнум),где+'цифры одной ширины');
    ok(!h.onb||(h.onb.h>=44&&h.onb.t.split('\n').length===1&&/Продолжить|Собрать|Ответить/.test(h.onb.t)),где+'плашка знакомства — строкой с действием: '+JSON.stringify(h.onb));
@@ -56,9 +56,15 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   const пк=await p.evaluate(()=>{const g=document.getElementById('g-go').getBoundingClientRect();return [...document.querySelectorAll('#g-gym button, #g-wt button')].some(e=>{const r=e.getBoundingClientRect();return r.left<g.right&&g.left<r.right&&r.top<g.bottom&&g.top<r.bottom;});});
   ok(!пк,width+'×420: кнопка цели не закрывает варианты');await p.close();}
  /* ревью Codex R2: статус дня недели — и формой (✓ / !), не только цветом */
- {const p=await b.newPage({viewport:{width:390,height:844}});await M.поднять(p,{theme:'light',page:'home',time:'19:40',meas:M.замеры(),hist:M.журнал(),wait:2500});
-  const ф=await p.evaluate(()=>[...document.querySelectorAll('.hwd b.good,.hwd b.bad,.hwd-gym.done')].map(e=>getComputedStyle(e,'::after').content));
-  ok(ф.length>0&&ф.every(c=>/✓|!/.test(c)),'неделя: у «в норме», «мимо» и «зал записан» есть знак формы');await p.close();}
+ /* 26.10: в понедельник прошлых дней этой недели нет. Задаём статусы явно,
+    чтобы каждый из трёх знаков проверялся независимо от дня запуска. */
+ for(const kcal of [2110,2700]){const p=await b.newPage({viewport:{width:390,height:844}});
+  const hist=M.журнал();hist.push({...hist[0],id:M.TODAY+'_done',date:M.TODAY});
+  await M.поднять(p,{theme:'light',page:'home',time:'19:40',meas:M.замеры(),hist,week:{days:[{date:M.TODAY,kcal,n:3}]},wait:2500});
+  const cls=kcal===2110?'good':'bad';
+  const ф=await p.evaluate(cls=>{const food=document.querySelector('.hwd.on b.'+cls),gym=document.querySelector('.hwd.on .hwd-gym.done');
+    return {food:food&&getComputedStyle(food,'::after').content,gym:gym&&getComputedStyle(gym,'::after').content};},cls);
+  ok(!!ф.food&&ф.food.includes(cls==='good'?'✓':'!')&&!!ф.gym&&ф.gym.includes('✓'),'неделя: '+cls+' и зал записан — правильные знаки формы');await p.close();}
  /* рейтинг: без строки легенды, у точек подсказка; шестерёнка значком */
  {const p=await b.newPage({viewport:{width:390,height:844}});
   await M.поднять(p,{theme:'light',page:'circle',time:'19:40',wait:2500});
