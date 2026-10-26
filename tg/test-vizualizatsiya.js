@@ -104,8 +104,8 @@ async function открыть(br, viz){
     дано(зак.length>=1 && зак.length<=3,'до трёх попыток, локальная коррекция не вызывает генератор повторно');
     дано(/\/viz\/img.*k=r2|blob:/.test(await page.getAttribute('#viznew', 'src')) && await page.evaluate(() => document.getElementById('viznew').naturalWidth > 0), 'показана картинка');
     const сообщ = await page.textContent('#vizmsg');
-    дано(/Проверена ширина силуэта: талия уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
-    дано(/После — 75 кг/.test(await page.textContent('#viznewcap')), 'подпись «После — 75 кг»');
+    дано(/Прежний вариант без проверки всего тела/.test(сообщ), 'старый алгоритм не выдаётся за проверку всего тела: ' + сообщ);
+    дано(/Прежний вариант — 75 кг/.test(await page.textContent('#viznewcap')), 'подпись прежнего алгоритма с сохранённым весом');
     await page.locator('#vizdetails summary').click();
     дано(await page.isVisible('#vizben') && /давление/.test(await page.textContent('#vizben')), 'польза для здоровья рядом');
     дано(await page.isVisible('#vizcare'), 'первый раз — поддержка');
@@ -133,13 +133,13 @@ async function открыть(br, viz){
     await restored.page.click('#vizopen');
     await restored.page.waitForFunction(() => { const i=document.getElementById('viznew'); return !i.hidden && i.complete && i.naturalWidth>0; });
     дано(restored.o.vizAsked.render.length===0, 'после нового входа нет запроса генерации');
-    дано(await restored.page.inputValue('#vizw')==='75' && /После — 75 кг/.test(await restored.page.textContent('#viznewcap')), 'с фото восстановлен его целевой вес');
+    дано(await restored.page.inputValue('#vizw')==='75' && /Прежний вариант — 75 кг/.test(await restored.page.textContent('#viznewcap')), 'с фото восстановлен его целевой вес');
     await restored.page.click('#vizclose'); await restored.page.click('#vizopen');
     await restored.page.waitForSelector('#viznew:not([hidden])');
     дано(restored.o.vizAsked.render.length===0, 'повторное открытие тоже без генерации');
     await restored.page.locator('#vizsteps button[data-w="81.8"]').evaluate(e=>e.click());
-    await restored.page.waitForFunction(()=>/Сохранено для прежней цели/.test(document.getElementById('vizmsg').textContent));
-    дано(/После — 75 кг/.test(await restored.page.textContent('#viznewcap')),'новый вес не переименовывает старую картинку');
+    await restored.page.waitForFunction(()=>/Фото для прежней цели/.test(document.getElementById('vizmsg').textContent));
+    дано(/Прежняя цель — 75 кг/.test(await restored.page.textContent('#viznewcap')),'новый вес не переименовывает старую картинку');
     await restored.page.close();
     /* 6) удалить */
     await page.locator('#vizfat').evaluate(e=>{e.value='15';e.dispatchEvent(new Event('input',{bubbles:true}));});

@@ -20150,7 +20150,7 @@ function vizПоказатьСохранённое(r){
 /* 26.10: старое фото не выдаём за новую цель; статус прямо под парой, а не ниже формы. */
 function vizФотоПодпись(c){
   var target=VIZ.calc, linked=VIZ.st&&VIZ.st.goalLinked;
-  var stale=linked&&(!target||!target.ok||Math.abs(c.w1-target.w1)>.05||Math.abs(c.fat1-target.fat1)>.15||Math.abs(c.dl-target.dl)>.15);
+  var stale=(linked&&(!target||!target.ok))||(target&&target.ok&&(Math.abs(c.w1-target.w1)>.05||Math.abs(c.fat1-target.fat1)>.15||Math.abs(c.dl-target.dl)>.15));
   var legacy=!(c.visualVersion>=5);
   document.getElementById('viznewcap').textContent=(stale?'Прежняя цель':legacy?'Прежний вариант':'После')+' — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира';
   document.getElementById('viznew').alt=(stale?'Фото прежней цели':legacy?'Прежний вариант':'Примерный вид')+' при '+vizК(c.w1)+' кг и '+vizК(c.fat1)+' % жира';
