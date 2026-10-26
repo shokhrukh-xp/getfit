@@ -12,12 +12,15 @@ const limits=part('function vizДопуск(', 'function vizBtn(');
    document:{getElementById:node,querySelectorAll:()=>[]},vizSay:(id,t)=>{node(id).textContent=t;},vizЖдать(){},haptic(){},
    vizОбразец:async()=> 'template',vizЗаказ:async(...a)=>{calls.push(a);return {k:'bad'+calls.length,calc:{w1:75,dl:0,отношение:.87},left:5};},
    vizДовести:async()=>null,vizПроверка:async()=>({ok:false,отн:.999,d:.129}),fPost:()=>{throw Error('плохой результат нельзя сохранять');}});
- vm.runInContext(part('function bodyGoalAction(', "document.addEventListener('keydown'"),ctx);
+ vm.runInContext(part('function vizЛимит(', "document.addEventListener('keydown'"),ctx);
  vm.runInContext(part('function vizБлокировать(', 'function vizУдалить('),ctx);
  ctx.vizGo();while(ctx.VIZ.busy) await new Promise(r=>setTimeout(r,1));
  assert.equal(node('bodygoalsave').disabled,false);assert.equal(calls.length,3);assert.equal(node('viznew').src,'saved');assert.match(node('vizmsg').textContent,/не сохранён как цель/);
  assert.ok(calls.every(c=>c[6]===calls[0][6]));
  const old=calls[0][6];ctx.vizGo();while(ctx.VIZ.busy) await new Promise(r=>setTimeout(r,1));assert.notEqual(calls[3][6],old);
+ ctx.vizЗаказ=async(...a)=>{calls.push(a);return {k:'new',calc:{visualVersion:5,w1:75,отношение:.87},left:5};};
+ const n0=calls.length;ctx.vizGo();while(ctx.VIZ.busy)await new Promise(r=>setTimeout(r,1));assert.equal(calls.length,n0+1,'новый генератор не повторяет платные попытки скрыто');
+ const noWarp=vm.createContext({Promise});vm.runInContext(part('function vizДовести(', '/* картинка: проверенный образец'),noWarp);assert.equal(await noWarp.vizДовести({calc:{visualVersion:5}},{ok:false}),null,'новый алгоритм не сжимает готовое тело');
  console.log('PASS слабый результат: 3 попытки, прежнее фото остаётся, следующий запуск новый');
  const br=await chromium.launch();
  try{

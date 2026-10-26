@@ -46,6 +46,18 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   await page.fill('#bodygoalweight','77');assert.equal(await page.locator('#bodygoalsave').isEnabled(),true);
   const renders=o.vizAsked.render.length;await page.waitForTimeout(300);assert.equal(o.vizAsked.render.length,renders);
   await page.setViewportSize({width,height:420});await page.locator('#bodygoalsave').scrollIntoViewIfNeeded();assert.equal(await page.locator('#bodygoalsave').isVisible(),true);
+  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
+  o.viz.calc={...calc,w1:76,fat1:15};o.viz.left=0;o.viz.unlimited=false;
+  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizquota:not([hidden])');
+  assert.match(await page.innerText('#vizquota'),/Дневной лимит фото исчерпан/);
+  assert.equal(await page.locator('#bodygoalsave').isDisabled(),true);
+  await page.fill('#bodygoalfat','15');assert.match(await page.innerText('#bodygoalsave'),/Сохранить цель без фото/);
+  const noRender=o.vizAsked.render.length;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Цель сохранена/.test(document.getElementById('bodygoalerror').textContent));
+  assert.equal(o.vizAsked.render.length,noRender,'лимит не мешает сохранить цель и не запускает генерацию');
+  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
+  o.viz.unlimited=true;o.viz.left=null;
+  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#viznew:not([hidden])');
+  assert.equal(await page.locator('#vizquota').isVisible(),false);assert.equal(await page.locator('#bodygoalsave').isEnabled(),true);
   assert.deepEqual(errors,[]);await page.close();
  }
  const noPhoto=await br.newPage({viewport:{width:320,height:844}});

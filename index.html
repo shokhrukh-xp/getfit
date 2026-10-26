@@ -4545,6 +4545,7 @@ img.avface{border-radius:50%;object-fit:cover}
   <label class="mlab">Жир, % · по желанию<input id="bodygoalfat" type="number" inputmode="decimal" min="10" max="55" step="0.1" placeholder="Не задавать"></label></div>
   <label class="mlab">Мышцы<select id="bodygoalmuscle"><option value="preserve">Сохранить</option><option value="develop">Развивать</option></select></label>
   <p class="mtext" id="bodygoalerror" role="status" aria-live="polite"></p>
+  <p id="vizquota" class="mtext" role="status" hidden></p>
   <button class="btn prim wide" id="bodygoalsave" type="submit">Сохранить цель</button>
  </form>
 </div>
@@ -4553,7 +4554,7 @@ img.avface{border-radius:50%;object-fit:cover}
       <p class="mtext">Загрузите фото во весь рост — ИИ покажет, как вы примерно будете выглядеть при другом весе и составе тела.</p>
       <ul class="vizlist">
         <li>Фото хранится на нашем сервере и видно только вам. Удалить — одной кнопкой.</li>
-        <li>Для рисунка фото уходит в Google Gemini; по условиям платного доступа на нём не обучают модели.</li>
+        <li>Для рисунка фото и параметры цели передаются OpenAI, для проверки результата — Google Gemini.</li>
         <li>Картинка примерная — по расчёту состава тела, а не обещание результата.</li>
         <li>Только для взрослых, 18+.</li>
       </ul>
@@ -7328,13 +7329,15 @@ function bodyGoalFill(g){
   BODYGOAL.edited=false;vizSay('bodygoalerror','');bodyGoalAction();
 }
 function bodyGoalOpen(){vizOpen();}
+function vizЛимит(st){return !!st&&!st.unlimited&&st.left===0;}
 function bodyGoalAction(){
   var st=VIZ.st||{},button=document.getElementById('bodygoalsave');
   var photo=st.allowed&&st.consent&&st.photo;
   var invalid=!!(photo&&st.calc&&!st.calc.ok&&!BODYGOAL.edited);
-  button.disabled=BODYGOAL.busy||VIZ.busy||invalid;
+  var limit=!!photo&&vizЛимит(st),q=document.getElementById('vizquota');q.hidden=!limit;q.textContent=limit?'Дневной лимит фото исчерпан. Новое фото — завтра. Цель можно сохранить без фото.':'';
+  button.disabled=BODYGOAL.busy||VIZ.busy||invalid||(limit&&!BODYGOAL.edited);
   ['bodygoalweight','bodygoalfat','bodygoalmuscle'].forEach(function(id){document.getElementById(id).disabled=BODYGOAL.busy||VIZ.busy;});
-  button.textContent=BODYGOAL.busy?'Сохраняю…':VIZ.busy?'Создаю фото…':invalid?'Уточните параметры цели':photo?(BODYGOAL.edited?'Сохранить и показать':st.result?'Обновить фото':'Показать результат'):'Сохранить цель';
+  button.textContent=BODYGOAL.busy?'Сохраняю…':VIZ.busy?'Создаю фото…':invalid?'Уточните параметры цели':limit?(BODYGOAL.edited?'Сохранить цель без фото':'Лимит исчерпан — до завтра'):photo?(BODYGOAL.edited?'Сохранить и показать':st.result?'Обновить фото':'Показать результат'):'Сохранить цель';
 }
 document.addEventListener('keydown',function(e){
   var root=document.getElementById('vizm');if(!root.classList.contains('show')||!document.getElementById('vizfs').hidden)return;
@@ -7359,7 +7362,7 @@ document.getElementById('bodygoalform').addEventListener('submit',function(e){
     return vizPull().then(function(st){
       if(!st)throw new Error('Цель сохранена. Фото пока не загрузилось — откройте цель ещё раз.');
       vizShowState(st);BODYGOAL.busy=false;bodyGoalAction();
-      if(st.allowed&&st.consent&&st.photo&&st.calc&&st.calc.ok){
+      if(st.allowed&&st.consent&&st.photo&&st.calc&&st.calc.ok&&!vizЛимит(st)){
         clearTimeout(VIZ.t);return vizGo();
       }
     });
@@ -8886,7 +8889,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 15:24';
+var BUILD = '26.10 17:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20313,6 +20316,8 @@ function vizКалибровать(im,ratio){
 /* После ИИ — локальная коррекция по той же мерке. Её нельзя снова отдавать
    модели: та способна вернуть исходный объём. Сохраняем исправленные байты. */
 function vizДовести(r,ч){
+  /* Проверка 26.10: сжатие талии после генератора портило анатомию всего тела. */
+  if(r.calc&&r.calc.visualVersion>=5)return Promise.resolve(null);
   if(!ч || ч.ok) return Promise.resolve(null);
   var ratio=ч.цель/ч.отн;
   if(ratio<0.75 || ratio>1.25) return Promise.resolve(null);
@@ -20343,6 +20348,7 @@ function vizБлокировать(on){
 }
 function vizGo(){
   if(VIZ.busy || !VIZ.calc) return;
+  if(vizЛимит(VIZ.st)){bodyGoalAction();return;}
   VIZ.busy=true; var кн=document.getElementById('vizgo'); кн.disabled=true;
   var w=VIZ.calc.w1, dl=VIZ.calc.dl, лучш=null, n=0, left=null, run=Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   vizБлокировать(true);
@@ -20350,7 +20356,7 @@ function vizGo(){
   return vizОбразец(VIZ.calc).then(function(обр){
     if(!обр) throw new Error('Не удалось точно измерить силуэт. Загрузите фото прямо, с руками чуть в стороны и без свободной одежды.');
     var targetRatio=VIZ.calc.отношение;
-    vizЖдать('Рисую — обычно 20–40 секунд…');
+    vizЖдать('Рисую — это может занять до трёх минут…');
     function шаг(prev, got){
       return vizЗаказ(w, dl, обр, prev, got, n, run).then(function(r){
         if(r.left!=null) left=r.left;
@@ -20359,7 +20365,7 @@ function vizGo(){
           return vizДовести(r,ч).then(function(fixed){
           if(fixed){лучш=fixed;return лучш;}
           if(!лучш || (ч && (!лучш.ч || Math.abs(ч.d)<Math.abs(лучш.ч.d)))) лучш={ r:r, ч:ч };
-          if(!ч || ч.ok || n>=2 || (r.left!=null && r.left<=0)) return лучш;
+          if(r.calc.visualVersion>=5 || !ч || ч.ok || n>=2 || (r.left!=null && r.left<=0)) return лучш;
           n++; vizЖдать('Талия вышла '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — перерисовываю ('+n+' из 2)…');
           /* Модель может вернуть часть объёма даже при верных словах. Корректируем
              сам образец на измеренный промах, итог всё равно сверяется с исходной целью. */
@@ -20393,6 +20399,7 @@ function vizGo(){
 
     });
   }).catch(function(e){
+    if(e.code==='viz_limit'&&VIZ.st){VIZ.st.left=0;VIZ.st.unlimited=false;}
     vizЖдать(''); vizSay('vizmsg', e.message || 'Не получилось нарисовать — попробуйте ещё раз.');
   }).then(function(){ VIZ.busy=false; кн.disabled=false; vizБлокировать(false); });
 }
@@ -20409,7 +20416,7 @@ document.getElementById('vizm').addEventListener('click', function(e){ if(e.targ
 document.getElementById('vizagree').addEventListener('change', function(e){ document.getElementById('vizok').disabled=!e.target.checked; });
 document.getElementById('vizok').addEventListener('click', function(){
   var кн=this; кн.disabled=true;
-  fPost('/viz/consent', { uid:syncUid() }).then(function(){ if(VIZ.st) VIZ.st.consent=true; vizPhotoView(''); })
+  fPost('/viz/consent', { uid:syncUid(), v:2 }).then(function(){ if(VIZ.st) VIZ.st.consent=true; if(VIZ.st&&VIZ.st.photo)vizMain();else vizPhotoView(''); })
     .catch(function(e){ кн.disabled=false; vizSay('vizcmsg', e.message || 'Не сохранилось — попробуйте ещё раз.'); });
 });
 document.getElementById('vizpick').addEventListener('click', function(){ document.getElementById('vizfile').click(); });
