@@ -123,6 +123,18 @@ async function открыть(br, viz){
     дано(await page.isHidden('#vizfs'), '✕ закрывает весь экран');
     await page.evaluate(() => document.querySelector('#vizm .modalbox').scrollTop = 1e4); await page.waitForTimeout(200);
     await page.screenshot({ path: '/tmp/viz-niz.png', fullPage: false });
+    /* 26.10: новая страница — память VIZ пуста, сервер возвращает выбранное «после». */
+    await page.waitForFunction(() => !document.getElementById('vizgo').disabled);
+    дано(o.vizAsked.selected==='r2', 'сервер запомнил выбранную лучшую попытку');
+    const restored=await открыть(br, JSON.parse(JSON.stringify(o.viz)));
+    await restored.page.click('#vizopen');
+    await restored.page.waitForFunction(() => { const i=document.getElementById('viznew'); return !i.hidden && i.complete && i.naturalWidth>0; });
+    дано(restored.o.vizAsked.render.length===0, 'после нового входа нет запроса генерации');
+    дано(await restored.page.inputValue('#vizw')==='75' && /После — 75 кг/.test(await restored.page.textContent('#viznewcap')), 'с фото восстановлен его целевой вес');
+    await restored.page.click('#vizclose'); await restored.page.click('#vizopen');
+    await restored.page.waitForSelector('#viznew:not([hidden])');
+    дано(restored.o.vizAsked.render.length===0, 'повторное открытие тоже без генерации');
+    await restored.page.close();
     /* 6) удалить */
     await page.click('#vizdel'); await page.waitForTimeout(200);
     дано(o.vizAsked.del === 0 && /Точно удалить/.test(await page.textContent('#vizdel')), 'первое нажатие — переспрашивает');

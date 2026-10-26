@@ -8808,7 +8808,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '25.10 23:05';
+var BUILD = '26.10 09:31';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19963,7 +19963,7 @@ function vizURL(k){
     return r.blob();
   }).then(function(b){ VIZ.urls[k]=URL.createObjectURL(b); return VIZ.urls[k]; });
 }
-function vizСброс(){ VIZ.обр=null; Object.keys(VIZ.urls).forEach(function(k){ try{ URL.revokeObjectURL(VIZ.urls[k]); }catch(e){} }); VIZ.urls={}; VIZ.origM=null; VIZ.k=null; }
+function vizСброс(){ if(VIZ.st) VIZ.st.result=null; VIZ.обр=null; Object.keys(VIZ.urls).forEach(function(k){ try{ URL.revokeObjectURL(VIZ.urls[k]); }catch(e){} }); VIZ.urls={}; VIZ.origM=null; VIZ.k=null; }
 
 /* фото: уменьшаем до 1600 px по длинной стороне (JPEG), проверяем, что видно плечи и бёдра */
 function vizФото(file){
@@ -19995,7 +19995,12 @@ function vizЗагрузить(b64){
 /* главный вид: фото сейчас, шаги, ползунки, расчёт */
 function vizMain(){
   vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить фото';
-  var st=VIZ.st||{}, c=st.calc||{};
+  var st=VIZ.st||{}, saved=st.result, c=(saved && saved.calc)||st.calc||{};
+  document.getElementById('viznew').hidden=true;
+  document.getElementById('viznew').removeAttribute('src');
+  document.getElementById('vizph').hidden=false;
+  vizCmpSync();
+  if(saved){ VIZ.w=c.w1; VIZ.dl=c.dl; }
   document.getElementById('vizorig').removeAttribute('src');
   vizURL('orig').then(function(u){ document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
   if(!c.ok){ vizSay('viznums', c.error || 'Нужны рост, вес и возраст в профиле.'); document.getElementById('vizgo').disabled=true; return; }
@@ -20006,6 +20011,21 @@ function vizMain(){
   document.getElementById('vizsteps').innerHTML=(st.steps||[]).map(function(s){
     return '<button type="button" data-w="'+s.w+'" aria-pressed="'+(Math.abs(s.w-VIZ.w)<0.05)+'">'+esc(s.t)+'</button>'; }).join('');
   vizЖдать(''); vizPaint(c); vizCalc();
+  if(saved) vizПоказатьСохранённое(saved).catch(function(){ vizSay('vizmsg','Не удалось загрузить сохранённое фото. Закройте и откройте окно — создавать заново не нужно.'); });
+}
+/* 26.10: восстанавливаем картинку и её параметры без обращения к генератору. */
+function vizПоказатьСохранённое(r){
+  var photo=VIZ.st && VIZ.st.photo;
+  return vizURL(r.k).then(function(u){
+    if(!VIZ.st || VIZ.st.photo!==photo) return;
+    VIZ.k=r.k;
+    var c=r.calc, im=document.getElementById('viznew'); im.src=u; im.hidden=false;
+    im.alt='Примерный вид при '+vizК(c.w1)+' кг';
+    document.getElementById('vizph').hidden=true;
+    document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
+    vizCmpSync(); vizSay('vizmsg','Сохранённый вариант');
+    var b=document.getElementById('vizben'); b.textContent=r.польза||''; b.hidden=!r.польза;
+  });
 }
 function vizPaint(c){
   VIZ.calc=c;
@@ -20156,6 +20176,10 @@ function vizGo(){
       var б=document.getElementById('vizben'); б.textContent=r.польза||''; б.hidden=!r.польза;
       if(!gget('viz_seen', null)){ document.getElementById('vizcare').hidden=false; gset('viz_seen', 1); }
       haptic('success');
+      if(VIZ.st) VIZ.st.result={k:r.k, calc:c, польза:r.польза||''};
+      return fPost('/viz/select', {uid:syncUid(), k:r.k}).catch(function(){
+        vizSay('vizmsg','Фото создано, но выбор варианта не сохранился. При следующем входе откроется последняя сохранённая попытка.');
+      });
     });
   }).catch(function(e){
     vizЖдать(''); vizSay('vizmsg', e.message || 'Не получилось нарисовать — попробуйте ещё раз.');

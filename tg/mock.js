@@ -516,13 +516,17 @@ async function поднять(page, o) {
         return дать(o.onVizCalc ? o.onVizCalc(w, dl) : { ok: false, error: 'нет' }); }
       if (p === '/viz/consent') { з.consent++; if (o.viz) o.viz.consent = true; return дать({ ok: true }); }
       if (p === '/viz/photo') { const b = тело(); з.photo.push({ len: String(b.image || '').length, mime: b.mime }); if (o.viz) o.viz.photo = Date.now(); return дать({ ok: true, photo: Date.now() }); }
-      if (p === '/viz/delete') { з.del++; if (o.viz) o.viz.photo = null; return дать({ ok: true }); }
+      if (p === '/viz/delete') { з.del++; if (o.viz) { o.viz.photo = null; o.viz.result=null; } return дать({ ok: true }); }
       if (p === '/viz/img') { const f = o.vizImg && o.vizImg(u.searchParams.get('k'));
         if (!f) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"нет картинки"}' });
         return route.fulfill({ status: 200, contentType: /\.png$/.test(f) ? 'image/png' : 'image/jpeg', body: require('fs').readFileSync(f) }); }
+      if (p === '/viz/select') { const b = тело(); з.selected=b.k;
+        if(o.viz && з.results && з.results[b.k]) o.viz.result=з.results[b.k];
+        return дать({ok:true}); }
       if (p === '/viz/render') { const b = тело(); з.render.push(b);
         const r = o.onVizRender ? o.onVizRender(b) : { ok: false, error: 'нет' };
         if (r && r.status) return route.fulfill({ status: r.status, contentType: 'application/json', body: JSON.stringify(r.body || {}) });
+        if(r && r.ok){ (з.results || (з.results={}))[r.k]=r; }
         if (o.vizDelay) return new Promise(res => setTimeout(() => res(дать(r)), o.vizDelay));
         return дать(r); }
     }
