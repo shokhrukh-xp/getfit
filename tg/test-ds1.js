@@ -129,7 +129,9 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
 
 // Этап 5: все листы и состояния знакомства — те же контраст и границы.
 const sheets=require('./ds5-scenes');
-await Promise.all(['light','dark'].flatMap(theme=>[320,390,430].map(async width=>{
+// 26.10: шесть внутренних браузеров плюс внешний прогон перегружали WebView.
+// Те же сцены/темы/ширины, по три страницы одновременно.
+for(const theme of ['light','dark']) await Promise.all([320,390,430].map(async width=>{
 for(const name of sheets.scenes){
  const q=await b.newPage({viewport:{width,height:844}});
  try{
@@ -138,5 +140,5 @@ for(const name of sheets.scenes){
   дано(c.checked>0&&!c.failures.length,'контраст листа '+name+'/'+theme+'/'+width+' '+JSON.stringify(c.failures));
  }finally{await q.close()}
 }
-})));
+}));
 }finally{await b.close()}if(плохо)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});
