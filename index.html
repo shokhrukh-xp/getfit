@@ -1571,7 +1571,7 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .vizagree input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--action)}
 .vizpair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
 .vizpair figure{margin:0;min-width:0}
-.vizpair img,.vizph{display:block;width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border-radius:14px;background:var(--card-2)}
+.vizpair img,.vizph{display:block;width:100%;aspect-ratio:3/4;object-fit:contain;object-position:center;border-radius:14px;background:var(--card-2)}
 .vizph{display:grid;place-items:center;padding:12px;text-align:center;font-size:12px;line-height:1.4;color:var(--muted)}
 .vizph.busy{background:linear-gradient(100deg,var(--card-2) 30%,var(--field,rgba(127,127,127,.18)) 50%,var(--card-2) 70%);background-size:300% 100%;animation:vizsh 1.4s linear infinite}
 @keyframes vizsh{from{background-position:100% 0}to{background-position:-100% 0}}
@@ -4173,6 +4173,11 @@ img.avface{border-radius:50%;object-fit:cover}
    растягивалась по высоте строки сетки; квадрат держим через padding-bottom */
 .travbtn img{position:absolute;top:3px;left:3px;width:calc(100% - 6px);height:calc(100% - 6px);display:block;border-radius:50%;object-fit:cover}
 .travbtn[aria-pressed="true"]{box-shadow:inset 0 0 0 2px var(--accent),0 0 0 3px rgba(47,179,166,.25)}
+/* Общая цель: поля остаются удобными с клавиатурой и на 320 px. */
+#bodygoalform input,#bodygoalform select,#g-fat,#g-muscle{box-sizing:border-box;width:100%;min-height:44px;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+#bodygoalform .mlab{display:block;margin:16px 0}
+#bodygoalm .sheeth{display:flex;align-items:center;justify-content:space-between}
+#bodygoalm .modalbox{overflow:auto}
 </style>
 </head>
 <body>
@@ -4420,6 +4425,8 @@ img.avface{border-radius:50%;object-fit:cover}
       <div class="pf"><span class="pfl">вес</span><div class="seg" id="g-wt"></div></div>
       <div id="g-body"></div>
       <div class="pf gymonly" id="g-gymrow"><span class="pfl">в зале</span><div class="seg multi" id="g-gym"></div></div>
+      <label class="mlab">Жир, % · необязательно<input id="g-fat" type="number" inputmode="decimal" min="10" max="55" step="0.1" placeholder="Не задавать"></label>
+      <label class="mlab">Мышцы<select id="g-muscle"><option value="preserve">Сохранить</option><option value="develop">Развивать</option></select></label>
       <p class="gwhy" id="g-why"></p>
       <button class="btn prim wide" id="g-go">Далее</button>
     </div>
@@ -4437,6 +4444,19 @@ img.avface{border-radius:50%;object-fit:cover}
     <div id="wzchat" hidden></div>
     <div id="picklist"></div>
   </div>
+</div>
+<div class="modal" id="bodygoalm" role="dialog" aria-modal="true" aria-labelledby="bodygoaltitle" style="z-index:220">
+ <div class="modalbox">
+  <div class="sheeth"><h3 id="bodygoaltitle">Моя цель</h3><button type="button" class="xbtn" id="bodygoalclose" aria-label="Закрыть">✕</button></div>
+  <form id="bodygoalform">
+   <label class="mlab">Целевой вес, кг<input id="bodygoalweight" type="number" inputmode="decimal" min="1" max="350" step="0.1" required></label>
+   <label class="mlab">Жир, % · необязательно<input id="bodygoalfat" type="number" inputmode="decimal" min="10" max="55" step="0.1" placeholder="Не задавать"></label>
+   <label class="mlab">Мышцы<select id="bodygoalmuscle"><option value="preserve">Сохранить</option><option value="develop">Развивать</option></select></label>
+   <p class="mtext">Тренер рассчитает срок и уточнит его по замерам. Фото будет строиться по этой же цели.</p>
+   <p class="mtext" id="bodygoalerror" role="alert"></p>
+   <button class="btn prim wide" id="bodygoalsave" type="submit">Сохранить цель</button>
+  </form>
+ </div>
 </div>
 <div class="modal wide" id="catalog" role="dialog" aria-modal="true" aria-labelledby="cattitle">
   <div class="modalbox">
@@ -4553,9 +4573,10 @@ img.avface{border-radius:50%;object-fit:cover}
         <figure><div class="vizph" id="vizph">Выберите вес и нажмите «Показать»</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
       </div>
       <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
-      <div class="vizsteps" id="vizsteps"></div>
+      <p id="vizsharedgoal" class="mtext" hidden></p><button type="button" class="btn wide" data-bodygoal hidden id="vizgoaledit">Изменить цель</button><div id="vizcontrols"><div class="vizsteps" id="vizsteps"></div>
       <label class="vizsl"><span>вес <b id="vizwv"></b></span><input type="range" id="vizw" step="0.1"></label>
-      <label class="vizsl"><span>мышцы <b id="vizdlv"></b></span><input type="range" id="vizdl" step="0.5"></label>
+      <label class="vizsl"><span>жир в цели <b id="vizfatv"></b></span><input type="range" id="vizfat" min="10" max="45" step="0.1"></label>
+      <label class="vizsl"><span>безжировая масса <b id="vizdlv"></b></span><input type="range" id="vizdl" step="0.5"></label></div>
       <p class="viznums" id="viznums"></p>
       <p class="mtext vizsmall" id="viznote"></p>
       <div class="btnrow"><button type="button" class="btn prim" id="vizgo">Показать</button></div>
@@ -6796,11 +6817,14 @@ function gRange(){
 function gPlan(){
   var s=WIZ.safe, w=s.w, t=WIZ.target;
   if(WIZ.gwt==='keep') return {kg:0, weeks:null, rate:0};
-  var rate = WIZ.gwt==='down' ? s.max : (s.upMax||0.35);
+  var muscle=document.getElementById('g-muscle').value;
+  var rate = WIZ.gwt==='down' ? Math.min(s.max,w*(muscle==='develop'?.004:.005)) : Math.min(.25,w*.0025);
   var kg = Math.round(Math.abs(w-t)*10)/10;
+  rate=Math.round(rate*100)/100;
   return {kg:kg, rate:rate, weeks: (kg&&rate) ? Math.max(1,Math.round(kg/rate)) : null};
 }
 function renderWzGoal(){
+  document.getElementById('g-fat').min=(myData()||{}).sex==='f'?'18':'10';
   var wtBox=document.getElementById('g-wt'); if(!wtBox) return;
   if(!WIZ.gwt) WIZ.gwt='down';
   /* На одной странице цель стоит под ростом и весом, и пока их не ввели,
@@ -6810,7 +6834,7 @@ function renderWzGoal(){
     segSet('g-wt', segHtml('gwt',GOALWT,WIZ.gwt));
     var gr0=document.getElementById('g-gymrow'), gg0=document.getElementById('g-gym');
     var еда0=(WIZ.only||(myData()||{}).only)==='food';
-    if(gr0) gr0.hidden=еда0;
+    if(gr0) gr0.hidden=true;
     if(gg0 && !еда0) segSet('g-gym', segHtml('ggym',GOALGYM,WIZ.ggym||'muscle'));
     var b0=document.getElementById('g-body'), w0=document.getElementById('g-why'), o0=document.getElementById('g-go');
     if(b0) segSet('g-body', '<p class="gwait">Заполните возраст, рост и вес — посчитаю безопасный темп.</p>');
@@ -6821,7 +6845,7 @@ function renderWzGoal(){
   segSet('g-wt', segHtml('gwt',GOALWT,WIZ.gwt));
   var gr=document.getElementById('g-gymrow'), gg=document.getElementById('g-gym');
   var еда=(WIZ.only||(myData()||{}).only)==='food';
-  if(gr) gr.hidden=еда;
+  if(gr) gr.hidden=true;
   if(gg && !еда) segSet('g-gym', segHtml('ggym',GOALGYM,WIZ.ggym||'muscle'));
   var body=document.getElementById('g-body'), why=document.getElementById('g-why'), go=document.getElementById('g-go');
   if(!WIZ.safe){
@@ -6859,15 +6883,9 @@ function renderWzGoal(){
       'style="--gtrack:'+грунт+'" aria-label="целевой вес"></div>'+
     '<div class="gends"><span>'+gвес(r.lo)+'</span><span>'+gвес(r.hi)+' · сейчас</span></div>'+
     '<div class="gbig"><b>'+gвес(WIZ.target)+'</b><small>кг</small></div>'+
-    '<div class="gsub"><b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks)+'</div>');
-  var почему = s.limit==='жир' ? ' (быстрее дефицит закрывается уже не жиром)'
-    : s.limit==='обмен' ? ' (это весь доступный дефицит: ниже основного обмена норму не опускаем)'
-    : ' (1 % веса в неделю)';
-  why.textContent = WIZ.gwt==='down'
-    ? 'Зелёный отрезок — то, что тело отдаёт жиром при '+gзпт(s.max)+' кг в неделю'+почему+
-      (r.stop?'. Ниже '+gвес(r.stop)+' кг жир уже не запасной, а необходимый — туда ручка не идёт.':'.')
-    : 'Набор быстрее 0,35 кг в неделю идёт в основном жиром, поэтому срок считаю по нему.';
-  go.disabled=false; go.textContent='Так и делаем · до '+gдата(p.weeks);
+    '<div class="gsub"><b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · предварительно'+'</div>');
+  why.textContent='Срок рассчитаю после сохранения и уточню по замерам. Для жира и развития мышц дата может отличаться.'+(WIZ.gwt==='down'&&s.limit==='обмен'?' Темп до '+gзпт(p.rate)+' кг в неделю: ниже основного обмена норму не опускаем.':'');
+  go.disabled=false; go.textContent='Сохранить цель';
 }
 function wzGoalSend(){
   var еда=(WIZ.only||(myData()||{}).only)==='food';
@@ -6875,19 +6893,20 @@ function wzGoalSend(){
   /* снижать нечем — записываем то, что есть на самом деле: поддержание */
   var нап = (WIZ.gwt==='down' && !(s.max>=0.1)) ? 'keep' : (WIZ.gwt||'down');
   var me0=myData()||{};
-  var тело={ uid:syncUid(), wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target,
+  var тело={ uid:syncUid(), bodyGoal:true, fat:document.getElementById('g-fat').value===''?null:+document.getElementById('g-fat').value, muscle:document.getElementById('g-muscle').value, wt:нап, gym: еда ? 'health' : (WIZ.ggym||'muscle'), target: нап==='keep' ? s.w : WIZ.target,
              bw:+me0.bw||0, ht:+me0.ht||0, age:+me0.age||0, sex:me0.sex||'' };
   return tgFetch(SYNCURL+'/goal',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(тело)})
     .then(function(r){ return r.json(); })
     .then(function(d){
-      if(!d || !d.ok || !d.goal) throw new Error('нет цели');
-      takeGoal(d.goal, null);
+      if(!d || !d.ok || !d.goal) throw new Error(d&&d.error||'Цель не сохранилась. Повторите.');
+      takeGoal(d.goal, d.progress||null);
       return d.goal;
     });
 }
 function wzGoalNext(){
   var go=document.getElementById('g-go'); if(go) { go.disabled=true; go.textContent='Записываю…'; }
-  wzGoalSend().then(wzGoalDone).catch(function(){
+  wzGoalSend().then(wzGoalDone).catch(function(e){
+    document.getElementById('g-why').textContent=e.message||'Цель не сохранилась. Повторите.';
     if(go){ go.disabled=false; go.textContent='Не записалось — повторить'; }
   });
 }
@@ -7266,6 +7285,7 @@ function goalPull(strict, accept, signal){
    каждой загрузке цели, то есть после каждого взвешивания. Цель и её срок
    не трогаем — рядом пишем, когда она будет при нынешнем темпе. */
 function goalEtaHtml(pr, цельКг){
+  if(pr&&pr.forecast)return '<div class="goal-eta">'+esc(pr.forecast.text)+'</div>';
   if(!pr || !(pr.eta || pr.trend4)) return '';
   var к=function(x){ return String(Math.round(Math.abs(x)*100)/100).replace('.',','); };
   var дата=function(x){ var a=String(x||'').split('-'); return a.length===3 ? (+a[2])+' '+ЯЗ_МЕС[+a[1]-1]+' '+a[0] : ''; };
@@ -7282,6 +7302,46 @@ function goalEtaHtml(pr, цельКг){
   }
   return h+'</div>';
 }
+/* 26.10: одна цель — в профиле, у тренера и на фото. Не храним вторую в ползунках. */
+var BODYGOAL={back:null,busy:false};
+function bodyGoalOpen(){
+  var g=goalObj()||{}, b=g.body||{}, me=myData()||{};
+  BODYGOAL.back=document.activeElement;
+  document.getElementById('bodygoalweight').value=b.target||(g.w0&&g.kg?g.w0+(g.wt==='up'?1:-1)*g.kg:me.bw)||'';
+  document.getElementById('bodygoalfat').value=b.fat==null?'':b.fat;
+  document.getElementById('bodygoalfat').min=me.sex==='f'?'18':'10';
+  document.getElementById('bodygoalmuscle').value=b.muscle||'preserve';
+  document.getElementById('bodygoalerror').textContent='';
+  document.getElementById('bodygoalm').classList.add('show');
+  document.getElementById('bodygoalclose').focus({preventScroll:true});
+}
+function bodyGoalClose(){
+  if(BODYGOAL.busy)return;
+  document.getElementById('bodygoalm').classList.remove('show');
+  if(BODYGOAL.back&&BODYGOAL.back.isConnected)BODYGOAL.back.focus({preventScroll:true});
+}
+document.getElementById('bodygoalclose').onclick=bodyGoalClose;
+document.getElementById('bodygoalm').addEventListener('keydown',function(e){
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();bodyGoalClose();}
+  if(e.key==='Tab'){
+    var a=Array.prototype.filter.call(this.querySelectorAll('button,input,select'),function(x){return !x.disabled;}), first=a[0],last=a[a.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
+document.getElementById('bodygoalform').addEventListener('submit',function(e){
+  e.preventDefault();if(BODYGOAL.busy)return;
+  var button=document.getElementById('bodygoalsave'),fat=document.getElementById('bodygoalfat').value;
+  BODYGOAL.busy=true;button.disabled=true;button.textContent='Сохраняю…';
+  fPost('/goal',{uid:syncUid(),bodyGoal:true,target:+document.getElementById('bodygoalweight').value,fat:fat===''?null:+fat,muscle:document.getElementById('bodygoalmuscle').value}).then(function(d){
+    if(!d.ok||!d.goal)throw new Error(d.error||'Цель не сохранилась. Повторите.');
+    takeGoal(d.goal,d.progress);renderGoalCard();renderHome();
+    BODYGOAL.busy=false;bodyGoalClose();
+    if(document.getElementById('vizm').classList.contains('show'))vizOpen();
+  }).catch(function(e){document.getElementById('bodygoalerror').textContent=e.message||'Не удалось сохранить. Повторите.';}).finally(function(){BODYGOAL.busy=false;button.disabled=false;button.textContent='Сохранить цель';});
+});
+document.getElementById('g-muscle').addEventListener('change',renderWzGoal);
+
 function renderGoalCard(){
   var el=document.getElementById('goalcard'); if(!el) return;
   var g=gget('goal',null), gobj=goalObj(), me=myData()||{}, pr=g&&g.progress;
@@ -7297,9 +7357,9 @@ function renderGoalCard(){
       var пр=Math.max(0, Math.min(100, Math.round(путь*100)));
       h+='<div class="pqgbar" role="img" aria-label="пройдено '+пр+'% пути"><b style="width:'+пр+'%"></b><u style="left:calc('+пр+'% - 2px)"></u></div>'+
          '<div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>пройдено '+пр+'%</span><span>цель <b>'+к(цельКг)+'</b></span></div>';
-      h+=goalEtaHtml(pr, цельКг);
+      if(!gobj.body) h+=goalEtaHtml(pr, цельКг);
     }
-    if(pr && pr.w0 && pr.now && pr.rate){
+    if(!gobj.body && pr && pr.w0 && pr.now && pr.rate){
       var f=function(x){ return (x>0?'+':'')+String(Math.round(x*10)/10).replace('.',',').replace('-','−'); };
       h+='<details class="goal-progress"><summary>Ход цели <b>'+esc(String(pr.now).replace('.',','))+' кг</b><span>'+f(pr.fact)+' кг от старта</span></summary><p class="gp">Старт '+esc(String(pr.w0).replace('.',','))+' кг → сейчас <b>'+esc(String(pr.now).replace('.',','))+' кг</b> ('+f(pr.fact)+')'+
          (pr.plan!=null ? ' · по плану '+f(pr.plan) : '')+
@@ -7309,6 +7369,7 @@ function renderGoalCard(){
          (pr.onTrack ? ' · <b>идём по графику</b>' : (pr.gap!=null ? ((Math.abs(pr.fact)>Math.abs(pr.plan) ? ' · опережаем на ' : ' · отстаём на ')+String(Math.abs(pr.gap)).replace('.',',')+' кг') : ''))+
          (pr.by ? ' · срок '+esc(ruDate(pr.by)) : '')+'</p></details>';
     } else if(gobj.note){ h+='<p class="gp">'+esc(gobj.note)+'</p>'; }
+    if(gobj.body && pr && pr.forecast) h+='<p class="gp">'+esc(pr.forecast.text)+'</p>'+(pr.forecast.compositionNote?'<p class="gp">'+esc(pr.forecast.compositionNote)+'</p>':'');
     if(rbCard()) h+='<p class="gp">Программа собрана под старую цель — предложение пересобрать в строке «Программа» ниже.</p>';
     h+='<button type="button" id="goaltalk">Обсудить цель с тренером</button>';
   } else if(hasGoal(me)){
@@ -7320,6 +7381,7 @@ function renderGoalCard(){
        '<p class="gp">Без цели норма — на поддержание.</p>'+
        '<button type="button" id="goaltalk">Поставить цель с тренером</button>';
   }
+  h+='<button type="button" class="btn wide" data-bodygoal>'+(gobj?'Изменить цель':'Задать цель')+'</button>';
   h+=vizBtn();   /* 25.10: визуализация цели — когда сервер её открыл этому человеку */
   el.innerHTML=h;
 }
@@ -8808,7 +8870,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 10:43';
+var BUILD = '26.10 12:28';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13616,6 +13678,7 @@ document.getElementById('profm').addEventListener('click', function(e){
   }
   if(e.target.closest('#pfswitch')){ возвратЗапомнить('picker'); closeProf(); showPicker(); return; }
   if(e.target.closest('#vizopen')){ vizOpen(); return; }
+  if(e.target.closest('[data-bodygoal]')){ bodyGoalOpen(); return; }
   if(e.target.closest('#goaltalk')){
     возвратЗапомнить('coachm'); closeProf(); openCoach();
     var ct=document.getElementById('ctext');
@@ -13682,8 +13745,8 @@ document.getElementById('picker').addEventListener('input', function(e){
   var p=gPlan(), big=document.querySelector('#g-body .gbig b'), sub=document.querySelector('#g-body .gsub'),
       go=document.getElementById('g-go');
   if(big) big.textContent=gвес(WIZ.target);
-  if(sub) sub.innerHTML='<b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · к '+gдата(p.weeks);
-  if(go) go.textContent='Так и делаем · до '+gдата(p.weeks);
+  if(sub) sub.innerHTML='<b>'+(WIZ.gwt==='down'?'−':'+')+gвес(p.kg)+' кг</b> · '+gзпт(p.rate)+' кг в неделю · предварительно';
+  if(go) go.textContent='Сохранить цель';
 });
 document.getElementById('srclose').addEventListener('click', closeSrez);
 document.getElementById('srezm').addEventListener('click', function(e){
@@ -15360,13 +15423,16 @@ function vzГладко(P){
    от старта цели: первая неделя — вода); вес — цель из «Цели». */
 function vzЦель(ms, sr){
   var g=gget('goal',null)||{}, p=g.progress, gl=g.goal||{}, me=myData()||{};
-  var цельВес = vzЦельКг(p), ср=function(k){ var s=vzСерия(k); var a=s && vzСреднее(ms, s, TODAY); return a ? a.v : null; };
+  var цельВес = gl.body ? gl.body.target : vzЦельКг(p), ср=function(k){ var s=vzСерия(k); var a=s && vzСреднее(ms, s, TODAY); return a ? a.v : null; };
   var старт=function(){ var s0=(FOOD.first && sr.f(FOOD.first)!=null) ? FOOD.first : null;
     ms.forEach(function(m){ if(!s0 && sr.f(m)!=null) s0=m; }); return s0 ? sr.f(s0) : null; };
   var сейчас = sr.k==='waist' ? (vzПоследний(ms, sr) ? sr.f(vzПоследний(ms, sr)) : null) : ср(sr.k);
   if(сейчас==null) return null;
   var r=null;
   if(sr.k==='w' && цельВес) r={v:цельВес, ед:'кг', от:(p && p.w0>0) ? +p.w0 : старт()};
+  else if(sr.k==='fat' && цельВес && gl.body && gl.body.fat!=null){
+    r={v:цельВес*gl.body.fat/100,ед:'кг',от:старт(),доп:vzF1(gl.body.fat)+'\u00a0%'};
+  }
   else if(sr.k==='fat' && цельВес){
     /* масса без жира — из парных замеров (вес и жир одного утра), ревью Codex */
     var фж=vzСерия('fat'), безЖ=vzСреднее(ms, {f:function(m){ var f=фж.f(m); return (m.w!=null && f!=null) ? +m.w-f : null; }}, TODAY);
@@ -15375,6 +15441,7 @@ function vzЦель(ms, sr){
   }
   else if(sr.k==='waist' && +me.ht>120) r={v:Math.round(+me.ht/2), ед:'см', от:старт()};
   else if(sr.k==='mus'){
+    if(gl.body && gl.body.muscle==='develop') return null; /* развитие без выдуманного числа кг */
     /* ревью Codex R1: старт — дата ЭТОЙ цели (goal.goal.from); база — дни 8–35
        от старта (первая неделя — вода), считается один раз и запоминается:
        /measures отдаёт только последние 60 замеров, и окно потом уходит.
@@ -15409,10 +15476,11 @@ function vzЦель(ms, sr){
 /* 21.10, его выбор «Мышцы + строка силы»: весы плохо ловят изменения мышц,
    надёжнее — рабочие веса. Его слово 17.10 — «Рабочие веса», не «сила». */
 function vzРабочиеВеса(){
+  var цель=(goalObj()||{}).body, ввод=цель&&цель.muscle==='develop'?'<p class="mtext">Цель — развивать мышцы</p>':'';
   var s=((gget('goal',null)||{}).progress||{}).sila, ix=s && typeof s.index==='object' ? s.index : null;
-  if(!ix || !ix.enough || typeof ix.ch!=='number' || !ix.base) return '';
+  if(!ix || !ix.enough || typeof ix.ch!=='number' || !ix.base) return ввод;
   var ch=ix.ch, cls=ch>=1 ? 'sila-up' : ch<=-1 ? 'sila-down' : 'sila-flat';
-  return '<button type="button" class="vzsil" data-zkgo="log" aria-label="Рабочие веса — в Журнале"><span class="'+cls+'">рабочие веса '+
+  return ввод+'<button type="button" class="vzsil" data-zkgo="log" aria-label="Рабочие веса — в Журнале"><span class="'+cls+'">рабочие веса '+
     (ch>0?'+':ch<0?'−':'±')+vzF1(Math.abs(ch))+'\u00a0%</span> с '+ruDate(ix.base)+'</button>';
 }
 /* 21.10, его снимки и слова: «слишком много текста. Справа — то, что есть
@@ -15801,6 +15869,7 @@ function vzПланСтрока(){
         (typeof eta.pace==='number' ? ' при '+зн(eta.pace).replace(/,0$/,'')+'\u00a0кг в\u00a0неделю' : '');
     }
   }
+  if(progress && progress.forecast) срок=esc(progress.forecast.text);
   var html='';
   if(т || срок) html='<div class="vzplan vztemp">'+(т?'<p class="'+т[1]+'">'+т[0]+(т[1]==='ok'?' <span aria-hidden="true">✓</span>':'')+'</p>':'')+
     (срок?'<p class="vzeta">'+срок+'</p>':'')+'</div>';
@@ -19862,10 +19931,18 @@ document.getElementById('cphoto').addEventListener('click', function(){ document
    СОСТАВА тела (жир уходит, сухая масса — в реальных пределах), Gemini правит фото по
    этим числам. Здесь — проверка силуэта: MediaPipe (своя копия в vendor/, грузится только
    в этом окне) меряет ширину талии до и после; проверка изменения относительно цели, до двух перерисовок.
-   Неудачная попытка не становится сохранённой целью. Жир — не ползунок: он выходит из
-   веса и мышц (иначе можно «нарисовать» невозможное сочетание). */
+   Неудачная попытка не становится сохранённой целью. 26.10: жир можно выбрать явно;
+   сервер проверяет, допустима ли требуемая безжировая масса при выбранном весе. */
 var VIZ={st:null, calc:null, w:null, dl:0, busy:false, urls:{}, origM:null, k:null, del:0, t:0, pend:null};
 /* 26.10: допуск — доля изменения, а не 5 п.п. всего тела: иначе −0,1 % проходило вместо −5 %. */
+/* 26.10: обхват не равен ширине. После ИИ не зажимаем тело в точный пиксельный
+   коэффициент; отсеиваем грубый промах, а объём живота/всё тело проверяет сервер. */
+function vizПриемлемо(c, got){
+  if(!(c.visualVersion>=5))return vizСовпало(c.отношение,got);
+  if(!isFinite(got)||got<=0)return false;
+  var d=1-c.отношение,a=1-got;
+  return Math.abs(d)<0.015?Math.abs(a)<=0.06:d*a>0&&Math.abs(a)>=Math.min(0.03,Math.abs(d)*0.25)&&Math.abs(a)<=Math.max(0.10,Math.abs(d)*1.8);
+}
 function vizДопуск(t){ return Math.min(0.02, Math.max(0.008, Math.abs(1-t)*0.25)); }
 function vizСовпало(t, got){ return isFinite(got) && got>0 && Math.abs(got-t)<=vizДопуск(t) && (Math.abs(1-t)<0.015 || (1-got)*(1-t)>0); }
 function vizBtn(){ return VIZ.st && VIZ.st.allowed ? '<button type="button" id="vizopen">Как я буду выглядеть</button>' : ''; }
@@ -19997,12 +20074,16 @@ function vizЗагрузить(b64){
 /* главный вид: фото сейчас, шаги, ползунки, расчёт */
 function vizMain(){
   vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить фото';
-  var st=VIZ.st||{}, saved=st.result, c=(saved && saved.calc)||st.calc||{};
+  var st=VIZ.st||{}, saved=st.result, c=st.goalLinked?(st.calc||{}):((saved && saved.calc)||st.calc||{});
+  document.getElementById('vizcontrols').hidden=!!st.goalLinked;
+  document.getElementById('vizgoaledit').hidden=!st.goalLinked;
+  var shared=document.getElementById('vizsharedgoal'); shared.hidden=!st.goalLinked;
+  shared.textContent=st.goalLinked?((st.goal&&st.goal.text)||'Задайте общую цель для тренера и фото'):'';
   document.getElementById('viznew').hidden=true;
   document.getElementById('viznew').removeAttribute('src');
   document.getElementById('vizph').hidden=false;
   vizCmpSync();
-  if(saved){ VIZ.w=c.w1; VIZ.dl=c.dl; }
+  if(saved || st.goalLinked){ VIZ.w=c.w1; VIZ.dl=c.dl; }
   document.getElementById('vizorig').removeAttribute('src');
   vizURL('orig').then(function(u){ document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
   if(!c.ok){ vizSay('viznums', c.error || 'Нужны рост, вес и возраст в профиле.'); document.getElementById('vizgo').disabled=true; return; }
@@ -20012,7 +20093,7 @@ function vizMain(){
   w.value=String(VIZ.w);
   document.getElementById('vizsteps').innerHTML=(st.steps||[]).map(function(s){
     return '<button type="button" data-w="'+s.w+'" aria-pressed="'+(Math.abs(s.w-VIZ.w)<0.05)+'">'+esc(s.t)+'</button>'; }).join('');
-  vizЖдать(''); vizPaint(c); vizCalc();
+  VIZ.fat=c.fatTarget!=null?c.fatTarget:null; vizЖдать(''); vizPaint(c); vizCalc();
   if(saved) vizПоказатьСохранённое(saved).catch(function(){ vizSay('vizmsg','Не удалось загрузить сохранённое фото. Закройте и откройте окно — создавать заново не нужно.'); });
 }
 /* 26.10: восстанавливаем картинку и её параметры без обращения к генератору. */
@@ -20024,13 +20105,16 @@ function vizПоказатьСохранённое(r){
     var c=r.calc, im=document.getElementById('viznew'); im.src=u; im.hidden=false;
     im.alt='Примерный вид при '+vizК(c.w1)+' кг';
     document.getElementById('vizph').hidden=true;
-    document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
-    vizCmpSync(); vizSay('vizmsg',c.visualVersion>=4 ? 'Сохранённый вариант · изменение силуэта проверено' : 'Прежний вариант. Нажмите «Показать», чтобы пересоздать с точной проверкой силуэта.');
+    document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг безжировой массы' : '');
+    vizCmpSync(); vizSay('vizmsg',c.visualVersion>=5 ? 'Сохранённый вариант · примерный вид тела' : 'Прежний вариант. Нажмите «Показать», чтобы пересоздать с проверкой всего тела.');
+    if(VIZ.st.goalLinked && VIZ.calc && VIZ.calc.ok && (Math.abs(c.w1-VIZ.calc.w1)>.05 || Math.abs(c.fat1-VIZ.calc.fat1)>.15)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(c.w1)+' кг · '+vizК(c.fat1)+'% жира. Нажмите «Показать» для новой цели.');
     var b=document.getElementById('vizben'); b.textContent=r.польза||''; b.hidden=!r.польза;
   });
 }
 function vizPaint(c){
   VIZ.calc=c;
+  var fat=document.getElementById('vizfat'); fat.min=c.sex==='f'?'18':'10'; fat.value=String(c.fat1);
+  document.getElementById('vizfatv').textContent=vizК(c.fat1)+' %';
   var w=document.getElementById('vizw'), dl=document.getElementById('vizdl');
   dl.min=String(c.dlMin); dl.max=String(c.dlMax); dl.value=String(c.dl);
   if(Math.abs(+w.value-c.w1)>0.01) w.value=String(c.w1);
@@ -20043,7 +20127,7 @@ function vizPaint(c){
   if(c.жирОценка) н.push('Жир оценён по росту, весу и возрасту — с замером на весах будет точнее.');
   if(!c.талияИзмерена) н.push('Талия оценена — замер сантиметром в профиле сделает расчёт точнее.');
   (c.срез||[]).forEach(function(s){ н.push('Ограничили: '+s+'.'); });
-  н.push('Мышц за этот срок реально от '+vizК(c.dlMin)+' до +'+vizК(c.dlMax)+' кг.');
+  if(!(VIZ.st&&VIZ.st.goalLinked)) н.push('Изменение безжировой массы (включая воду): от '+vizК(c.dlMin)+' до +'+vizК(c.dlMax)+' кг.');
   vizSay('viznote', н.join(' '));
 }
 function vizCalc(){
@@ -20053,11 +20137,11 @@ function vizCalc(){
   VIZ.t=setTimeout(function(){
     var w=+document.getElementById('vizw').value, dl=+document.getElementById('vizdl').value, н=VIZ.n=(VIZ.n||0)+1;
     VIZ.w=w; VIZ.dl=dl;
-    fGet('/viz/calc?uid='+encodeURIComponent(syncUid())+'&w='+w+'&dl='+dl).then(function(c){
+    fGet('/viz/calc?uid='+encodeURIComponent(syncUid())+'&w='+w+'&dl='+dl+(VIZ.fat!=null?'&fat='+VIZ.fat:'')).then(function(c){
       if(н!==VIZ.n || !c || !c.ok) return;   /* пришёл ответ на старое положение ползунка */
       VIZ.w=c.w1; VIZ.dl=c.dl; vizPaint(c); document.getElementById('vizgo').disabled=false;
       var old=VIZ.st && VIZ.st.result;
-      if(old && (Math.abs(old.calc.w1-c.w1)>0.01 || Math.abs(old.calc.dl-c.dl)>0.01)) vizSay('vizmsg','На фото прежняя цель '+vizК(old.calc.w1)+' кг. Нажмите «Показать» для новых параметров.');
+      if(old && (Math.abs(old.calc.w1-c.w1)>0.01 || Math.abs(old.calc.dl-c.dl)>0.01)) vizSay('vizmsg','Сохранено для прежней цели: '+vizК(old.calc.w1)+' кг · '+vizК(old.calc.fat1)+'% жира. Нажмите «Показать» для новой цели.');
     }).catch(function(){});
   }, 250);
 }
@@ -20082,7 +20166,7 @@ function vizFull(){
 function vizFullClose(){ document.getElementById('vizfs').hidden=true; }
 function vizЖдать(t){ var ph=document.getElementById('vizph'); ph.classList.toggle('busy', !!t);
   if(t){ ph.textContent=t; ph.hidden=false; document.getElementById('viznew').hidden=true; }
-  else if(!VIZ.k){ ph.textContent='Выберите вес и нажмите «Показать»'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
+  else if(!VIZ.k){ ph.textContent='Нажмите «Показать» — фото по вашей цели'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
   else { ph.hidden=true; document.getElementById('viznew').hidden=false; }
   vizCmpSync(); }
 
@@ -20196,7 +20280,7 @@ function vizДовести(r,ч){
 }
 /* картинка: проверенный образец → заказ → мерка силуэта → до двух поправок.
    Сохраняем только прошедшую проверку попытку; прежнее фото при неудаче остаётся. */
-function vizЗаказ(w, dl, обр, prev, got, n, run){ return fPost('/viz/render', { uid:syncUid(), w:w, dl:dl, target:обр||'', prev:prev||'', got:got||0, n:n||0, run:run }); }
+function vizЗаказ(w, dl, обр, prev, got, n, run){ return fPost('/viz/render', { uid:syncUid(), w:w, dl:dl, fat:VIZ.calc.fatTarget, target:обр||'', prev:prev||'', got:got||0, n:n||0, run:run }); }
 function vizПроверка(r){
   var t=r.calc && r.calc.отношение; if(!t) return Promise.resolve(null);
   if(!VIZ.origM) VIZ.origM=vizURL('orig').then(vizКартинка).then(vizМерить).catch(function(){ VIZ.origM=null; return null; });
@@ -20204,11 +20288,11 @@ function vizПроверка(r){
     var о=м[0], н=м[1];
     if(!о || !н || о.нет || н.нет || !о.талия || !н.талия) return null;
     var отн=н.талия/о.талия, d=отн-t;
-    return { отн:отн, цель:t, d:d, ok:vizСовпало(t,отн) };
+    return { отн:отн, цель:t, d:d, ok:vizПриемлемо(r.calc,отн) };
   }).catch(function(){ return null; });
 }
 function vizБлокировать(on){
-  Array.prototype.forEach.call(document.querySelectorAll('#vizw,#vizdl,#vizsteps button,#viznewphoto,#vizdel'),function(e){e.disabled=on;});
+  Array.prototype.forEach.call(document.querySelectorAll('#vizw,#vizdl,#vizfat,#vizsteps button,#viznewphoto,#vizdel,#vizgoaledit'),function(e){e.disabled=on;});
 }
 function vizGo(){
   if(VIZ.busy || !VIZ.calc) return;
@@ -20246,17 +20330,18 @@ function vizGo(){
     var r=x.r, ч=x.ч, c=r.calc;
     if(left!=null && VIZ.st) VIZ.st.left=left;
     if(!ч || !ч.ok) throw new Error(!ч ? 'Не удалось проверить результат. Фото цели не заменено — попробуйте другой снимок.' : 'Модель не передала выбранное изменение тела. Этот вариант не сохранён как цель. Нажмите «Показать», чтобы попробовать новый.');
+    vizЖдать('Проверяю вид тела и сохранение позы…');
     return fPost('/viz/select', {uid:syncUid(), k:r.k, ratio:ч.отн, image:x.image||''}).then(function(){
       if(x.image && VIZ.urls[r.k]){URL.revokeObjectURL(VIZ.urls[r.k]);delete VIZ.urls[r.k];}
       return vizURL(r.k);}).then(function(u){
       VIZ.k=r.k; var im=document.getElementById('viznew'); im.src=u; im.hidden=false;
       im.alt='Примерный вид при '+vizК(c.w1)+' кг';
       document.getElementById('vizph').hidden=true; document.getElementById('vizph').classList.remove('busy');
-      document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг мышц' : '');
+      document.getElementById('viznewcap').textContent='После — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира'+(c.dl>=0.5 ? ' · +'+vizК(c.dl)+' кг безжировой массы' : '');
       vizCmpSync();
       var про=Math.round((1-c.отношение)*100);
-      vizSay('vizmsg', !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
-        : ч.ok ? 'Изменение силуэта проверено: ширина талии '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
+      vizSay('vizmsg', c.visualVersion>=5 ? 'Примерный вид при выбранном составе тела. Проверены заметность изменений и сохранение позы; процент жира по картинке не измеряется.' : !ч ? 'Силуэт не проверить на этом фото — ориентируйтесь на цифры.'
+        : ч.ok ? 'Проверена ширина силуэта: талия '+(ч.отн<1?'уже':'шире')+' на '+Math.abs(Math.round((1-ч.отн)*100))+' %, по расчёту обхват '+(про>=0?'меньше':'больше')+' на '+Math.abs(про)+' %.'
         : 'Талия на картинке '+(ч.d<0 ? 'уже' : 'шире')+' расчёта — точнее цифры выше.');
       if(left!=null && VIZ.st) VIZ.st.left=left;
       var б=document.getElementById('vizben'); б.textContent=r.польза||''; б.hidden=!r.польза;
@@ -20295,7 +20380,8 @@ vizCmpDrag(document.getElementById('vizfscmp'));
 document.getElementById('vizpair').addEventListener('click', function(e){ if(e.target.closest('img')) vizFull(); });
 document.getElementById('vizfsx').addEventListener('click', vizFullClose);
 document.getElementById('vizw').addEventListener('input', function(){ document.getElementById('vizwv').textContent=vizК(+this.value)+' кг'; vizCalc(); });
-document.getElementById('vizdl').addEventListener('input', function(){ document.getElementById('vizdlv').textContent=(+this.value>0?'+':'')+vizК(+this.value)+' кг'; vizCalc(); });
+document.getElementById('vizfat').addEventListener('input', function(){ VIZ.fat=+this.value; document.getElementById('vizfatv').textContent=vizК(VIZ.fat)+' %'; vizCalc(); });
+document.getElementById('vizdl').addEventListener('input', function(){ VIZ.fat=null; document.getElementById('vizdlv').textContent=(+this.value>0?'+':'')+vizК(+this.value)+' кг'; vizCalc(); });
 document.getElementById('vizsteps').addEventListener('click', function(e){
   var b=e.target.closest('button[data-w]'); if(!b) return;
   document.getElementById('vizw').value=b.dataset.w; vizCalc(); haptic('light');

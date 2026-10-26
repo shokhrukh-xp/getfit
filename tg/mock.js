@@ -324,6 +324,7 @@ async function поднять(page, o) {
          Мужчина 88,1 кг, сухая 63,8 → пол 70,9; предел темпа 0,88 кг/нед. */
       if (route.request().method() === 'POST') {
         const b = JSON.parse(route.request().postData() || '{}');
+        if(o.onGoalSave)return дать(await o.onGoalSave(b));
         const w = 88.1, пол = 70.9, темп = b.wt === 'down' ? 0.88 : b.wt === 'up' ? 0.35 : 0;
         let t = b.target != null ? +b.target : w;
         if (b.wt === 'down' && t < пол) t = пол;
@@ -512,8 +513,8 @@ async function поднять(page, o) {
       const з = o.vizAsked = o.vizAsked || { calc: [], consent: 0, photo: [], render: [], del: 0 };
       const тело = () => JSON.parse(route.request().postData() || '{}');
       if (p === '/viz') return дать(o.viz || { ok: true, allowed: false });
-      if (p === '/viz/calc') { const w = +u.searchParams.get('w'), dl = +u.searchParams.get('dl'); з.calc.push({ w, dl });
-        return дать(o.onVizCalc ? o.onVizCalc(w, dl) : { ok: false, error: 'нет' }); }
+      if (p === '/viz/calc') { const w = +u.searchParams.get('w'), dl = +u.searchParams.get('dl'); const fat=u.searchParams.has('fat')?+u.searchParams.get('fat'):null; з.calc.push({ w, dl, fat });
+        return дать(o.onVizCalc ? o.onVizCalc(w, dl, fat) : { ok: false, error: 'нет' }); }
       if (p === '/viz/consent') { з.consent++; if (o.viz) o.viz.consent = true; return дать({ ok: true }); }
       if (p === '/viz/photo') { const b = тело(); з.photo.push({ len: String(b.image || '').length, mime: b.mime }); if (o.viz) o.viz.photo = Date.now(); return дать({ ok: true, photo: Date.now() }); }
       if (p === '/viz/delete') { з.del++; if (o.viz) { o.viz.photo = null; o.viz.result=null; } return дать({ ok: true }); }

@@ -24,10 +24,10 @@ const ФИКС = n => path.join(__dirname, 'fixtures', n);
 const МЕ = { sex: 'm', age: 34, ht: 178, bw: 86.1, wt: 'down', goal: 'fat', voice: 'hard', coach_at: 'x' };
 const ЦЕЛЬ = { text: '75 кг к 07.03 · 0,6 кг в неделю', wt: 'down', rate: -0.6, from: '2026-10-01', w0: 86.1, by: '2027-03-07', kg: 11.1 };
 const r1 = x => Math.round(x * 10) / 10;
-function расчёт(w, dl){
-  const W = r1(Math.max(64, Math.min(96, w || 75))), DL = r1(Math.max(-2, Math.min(2.5, dl || 0)));
+function расчёт(w, dl, fat){
+  const W = r1(Math.max(64, Math.min(96, w || 75))), DL = fat ? W*(1-fat/100)-86.1*.76 : r1(Math.max(-2, Math.min(2.5, dl || 0)));
   const lean0 = 86.1 * 0.76, fat1 = W - lean0 - DL, dFat = 86.1 - lean0 - fat1, тД = r1(dFat * 1.15);
-  return { ok: true, sex: 'm', w0: 86.1, w1: W, dl: DL, dlMin: -2, dlMax: 2.5, пол: 64, fat0: 24, fat1: r1(fat1 / W * 100), жирОценка: true,
+  return { ok: true, sex: 'm', w0: 86.1, w1: W, dl: DL, fatTarget:fat||null, dlMin: -2, dlMax: 2.5, пол: 64, fat0: 24, fat1: r1(fat1 / W * 100), жирОценка: true,
     fatKg: r1(dFat), талия0: 100, талияИзмерена: false, талияД: тД, талияОт: r1(тД * 0.7), талияДо: r1(тД * 1.3), талия1: r1(100 - тД),
     отношение: Math.round((100 - тД) / 100 * 1000) / 1000, срез: [] };
 }
@@ -39,8 +39,8 @@ async function открыть(br, viz){
   const corrected={};
   const o = { onVizSelect:b=>{if(b.image){const f=path.join(TMP,b.k+'.jpg');fs.writeFileSync(f,Buffer.from(b.image,'base64'));corrected[b.k]=f;}}, page: 'home', time: '10:00', goal: ЦЕЛЬ, me: МЕ, viz,
     onVizCalc: расчёт,
-    vizImg: k => corrected[k] || ({ orig: ФИКС('viz-0-ishod.jpg'), r1: ФИКС('viz-3-cel75-myshtsy.jpg'), r2: TARGET })[k],
-    onVizRender: b => { if(b.target && !b.n)fs.writeFileSync(TARGET,Buffer.from(b.target,'base64'));return ({ ok: true, k: b.n ? 'r2' : 'r1', calc: расчёт(b.w, b.dl), польза: 'Минус 10 % веса — по исследованиям заметно снижает давление, сахар и нагрузку на суставы.', left: b.n ? 6 : 7, model: 'gemini-3-pro-image' });} };
+    vizImg: k => corrected[k] || ({ orig: ФИКС('viz-0-ishod.jpg'), r1: ФИКС('viz-3-cel75-myshtsy.jpg'), r2: TARGET, 'fat-r1': TARGET, 'fat-r2': TARGET })[k],
+    onVizRender: b => { if(b.target && !b.n)fs.writeFileSync(TARGET,Buffer.from(b.target,'base64'));return ({ ok: true, k: (b.fat?'fat-':'')+(b.n ? 'r2' : 'r1'), calc: Object.assign(расчёт(b.w, b.dl, b.fat),b.fat?{visualVersion:5}:{}), польза: 'Минус 10 % веса — по исследованиям заметно снижает давление, сахар и нагрузку на суставы.', left: b.n ? 6 : 7, model: 'gemini-3-pro-image' });} };
   const ош = await M.поднять(page, o);
   await page.waitForTimeout(700);
   await page.click('#profbtn'); await page.waitForTimeout(900);
@@ -104,7 +104,7 @@ async function открыть(br, viz){
     дано(зак.length>=1 && зак.length<=3,'до трёх попыток, локальная коррекция не вызывает генератор повторно');
     дано(/\/viz\/img.*k=r2|blob:/.test(await page.getAttribute('#viznew', 'src')) && await page.evaluate(() => document.getElementById('viznew').naturalWidth > 0), 'показана картинка');
     const сообщ = await page.textContent('#vizmsg');
-    дано(/Изменение силуэта проверено: ширина талии уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
+    дано(/Проверена ширина силуэта: талия уже на \d+ %, по расчёту обхват меньше на 13 %/.test(сообщ), 'выбрана ближняя к расчёту, сказано как проверено: ' + сообщ);
     дано(/После — 75 кг/.test(await page.textContent('#viznewcap')), 'подпись «После — 75 кг»');
     дано(await page.isVisible('#vizben') && /давление/.test(await page.textContent('#vizben')), 'польза для здоровья рядом');
     дано(await page.isVisible('#vizcare'), 'первый раз — поддержка');
@@ -137,10 +137,21 @@ async function открыть(br, viz){
     await restored.page.waitForSelector('#viznew:not([hidden])');
     дано(restored.o.vizAsked.render.length===0, 'повторное открытие тоже без генерации');
     await restored.page.click('#vizsteps button[data-w="81.8"]');
-    await restored.page.waitForFunction(()=>/На фото прежняя цель/.test(document.getElementById('vizmsg').textContent));
+    await restored.page.waitForFunction(()=>/Сохранено для прежней цели/.test(document.getElementById('vizmsg').textContent));
     дано(/После — 75 кг/.test(await restored.page.textContent('#viznewcap')),'новый вес не переименовывает старую картинку');
     await restored.page.close();
     /* 6) удалить */
+    await page.locator('#vizfat').evaluate(e=>{e.value='15';e.dispatchEvent(new Event('input',{bubbles:true}));});
+    await page.waitForFunction(()=>document.getElementById('vizfatv').textContent==='15 %'&&!document.getElementById('vizgo').disabled);
+    дано(o.vizAsked.calc.at(-1).fat===15,'явный процент уходит на расчёт');
+    дано(/15 %/.test(await page.textContent('#viznums')),'цель показывает выбранный жир');
+    await page.click('#vizgo');
+    await page.waitForFunction(()=>!document.getElementById('vizgo').disabled && /15 % жира/.test(document.getElementById('viznewcap').textContent),null,{timeout:60000});
+    дано(o.vizAsked.render.at(-1).fat===15,'15 % переданы генератору, а не только нарисованы в подписи');
+    const fatRestored=await открыть(br,JSON.parse(JSON.stringify(o.viz)));fatRestored.o.vizImg=k=>o.vizImg(k);
+    await fatRestored.page.click('#vizopen');await fatRestored.page.waitForFunction(()=>document.getElementById('vizfatv').textContent==='15 %');
+    дано(fatRestored.o.vizAsked.render.length===0,'цель 15 % восстановлена без новой генерации');
+    await fatRestored.page.close();
     await page.click('#vizdel'); await page.waitForTimeout(200);
     дано(o.vizAsked.del === 0 && /Точно удалить/.test(await page.textContent('#vizdel')), 'первое нажатие — переспрашивает');
     await page.click('#vizdel'); await page.waitForTimeout(400);

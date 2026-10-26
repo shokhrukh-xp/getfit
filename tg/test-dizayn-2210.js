@@ -41,7 +41,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
    const z=await p.evaluate(()=>{const g=document.getElementById('g-go').getBoundingClientRect(),кн=[...document.querySelectorAll('#g-gym button')].map(x=>x.getBoundingClientRect());
      return {низ:innerHeight-g.bottom,колонки:new Set(кн.map(r=>Math.round(r.left))).size,ряды:new Set(кн.map(r=>Math.round(r.top))).size};});
    ok(z.низ>=0&&z.низ<=40,где+'«Так и делаем» прижата к низу экрана и видна (до края '+Math.round(z.низ)+' px)');
-   ok(z.колонки===2&&z.ряды===2,где+'«в зале» — сетка 2×2');
+   ok(await p.locator('#g-muscle').isVisible() && await p.locator('#g-fat').isVisible(),где+'общая цель: жир необязателен, мышцы сохранить/развивать');
    await p.close();}
  }
  /* ревью Codex R1: свободный день в начале ряда — подписи графика не ложатся на 🍕 */

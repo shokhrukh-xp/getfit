@@ -25,12 +25,12 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   дано(/Ваша цель/.test(await page.textContent('#picktitle')), 'заголовок шага: ' + await page.textContent('#picktitle'));
   await page.waitForTimeout(400);
   дано(await page.isVisible('#g-rng'), 'шкала на месте');
-  дано(await page.isVisible('#g-gymrow'), 'у того, кто ходит в зал, спрашивают, что важнее');
+  дано(await page.isVisible('#g-muscle'), 'приоритет мышц — сохранить или развивать');
 
   /* по умолчанию — четыре недели безопасного темпа: 88,1 − 0,88×4 = 84,58 → 84,5 */
   дано((await page.textContent('#g-body .gbig b')) === '84,5',
     'цель по умолчанию — месяц безопасного темпа: ' + await page.textContent('#g-body .gbig b'));
-  дано(/0,88 кг в неделю/.test(await page.textContent('#g-body .gsub')),
+  дано(/0,44 кг в неделю/.test(await page.textContent('#g-body .gsub')),
     'темп показан: ' + await page.textContent('#g-body .gsub'));
 
   /* красная зона нарисована и ручка в неё не идёт */
@@ -48,8 +48,8 @@ const тянуть = (page, v) => page.$eval('#g-rng', (el, x) => {
   await page.waitForTimeout(150);
   const подпись = await page.textContent('#g-body .gsub');
   дано(/−13,1 кг/.test(подпись), 'разница считается от текущего веса: ' + подпись);
-  дано(/Так и делаем · до /.test(await page.textContent('#g-go')),
-    'на кнопке — срок: ' + await page.textContent('#g-go'));
+  дано(/Сохранить цель/.test(await page.textContent('#g-go')),
+    'на кнопке — сохранение, срок рассчитает тренер: ' + await page.textContent('#g-go'));
 
   /* «держать» — шкала не нужна */
   await page.click('#g-wt button[data-v="keep"]');
