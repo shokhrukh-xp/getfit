@@ -4188,7 +4188,10 @@ img.avface{border-radius:50%;object-fit:cover}
 #bodygoalm .goal-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 #bodygoalform .mlab{margin:10px 0;font-size:12px}
 #bodygoalform #bodygoalerror:empty{display:none}
-#goalphotos .vizpair{margin-bottom:8px}
+#goalphotos .vizpair{margin-bottom:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
+#vizreference{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.28;pointer-events:none}
+#vizreference.mirror{transform:scaleX(-1)}
+#vizrefcontrol{font-size:13px}
 #goalphotos #vizmsg{font-size:13px;line-height:1.4;margin:8px 0 16px;color:var(--text)}
 #goalphotos #vizmsg:empty{display:none}
 #goalphotos .vizpair img,#goalphotos .vizph{max-height:230px;object-fit:contain}
@@ -4538,7 +4541,7 @@ img.avface{border-radius:50%;object-fit:cover}
      (его выбор «поэтапно» и «явное согласие»; пока видит только владелец) -->
 <div class="modal wide" id="vizm" role="dialog" aria-modal="true" aria-labelledby="viztitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="viztitle">Как я буду выглядеть</h3><button class="xbtn" id="vizclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><h3 id="viztitle">Постановка цели</h3><button class="xbtn" id="vizclose" aria-label="Закрыть">✕</button></div>
     <div id="goalphotos" hidden></div><div id="bodygoalm" hidden>
  <form id="bodygoalform">
   <div class="goal-fields"><label class="mlab">Вес, кг<input id="bodygoalweight" type="number" inputmode="decimal" min="1" max="350" step="0.1" required></label>
@@ -4571,7 +4574,7 @@ img.avface{border-radius:50%;object-fit:cover}
       <input id="vizfile" type="file" accept="image/*" hidden>
       <div class="vizcam" id="vizcam" hidden>
         <div class="vizcamwin">
-          <video id="vizvideo" playsinline muted autoplay></video>
+          <video id="vizvideo" playsinline muted autoplay></video><img id="vizreference" alt="Предыдущий снимок для повторения позы" hidden>
           <svg class="vizghost" viewBox="0 0 300 400" preserveAspectRatio="none" aria-hidden="true">
             <circle cx="150" cy="38" r="23.5"/>
             <path d="M138.8 64.6 L105.2 87 L89.5 98.2 L82.8 163.2 L71.6 234.9 L69.4 248.3 L82.8 250.6 L90.6 234.9 L98.5 165.4 L107.4 127.4 L111.9 183.4 L107.4 225.9 L108.6 308.8 L113 333.4 L110.8 369.3 L117.5 396.2 L118 400 M182 400 L182.5 396.2 L189.2 369.3 L187 333.4 L191.4 308.8 L192.6 225.9 L188.1 183.4 L192.6 127.4 L201.5 165.4 L209.4 234.9 L217.2 250.6 L230.6 248.3 L228.4 234.9 L217.2 163.2 L210.5 98.2 L194.8 87 L161.2 64.6 M139.9 400 L139.9 396.2 L141 333.4 L145.5 259.5 L150 248.3 L154.5 259.5 L159 333.4 L160.1 396.2 L160.1 400"/>
@@ -4579,7 +4582,7 @@ img.avface{border-radius:50%;object-fit:cover}
           <button type="button" class="vizflip" id="vizflip" aria-label="Другая камера">⟲</button>
           <div class="vizcount" id="vizcount" aria-live="assertive" hidden>3</div>
         </div>
-        <p class="vizcamhint" id="vizcamhint" role="status" aria-live="polite"></p>
+        <label id="vizrefcontrol" class="vizagree" hidden><input type="checkbox" id="vizrefshow" checked> Предыдущий снимок поверх камеры</label><p class="vizcamhint" id="vizcamhint" role="status" aria-live="polite"></p>
         <div class="btnrow"><button type="button" class="btn prim" id="vizshot">Снять сейчас</button><button type="button" class="btn" id="vizcamx">Отмена</button></div>
       </div>
     </div>
@@ -4587,8 +4590,9 @@ img.avface{border-radius:50%;object-fit:cover}
       <!-- 25.10, его слова: «в начале показываем обе фото до и после, а при открытии фото,
            открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
       <div class="vizpair" id="vizpair">
-        <figure><img id="vizorig" alt="Ваше фото сейчас — открыть"><figcaption>До — сейчас</figcaption></figure>
-        <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
+        <figure><img id="vizstart" role="button" tabindex="0" alt="Первое сохранённое фото"><figcaption id="vizstartcap">Старт</figcaption></figure>
+        <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото сейчас — открыть"><figcaption id="viznowcap">Сейчас</figcaption></figure>
+        <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" role="button" tabindex="0" alt="" hidden><figcaption id="viznewcap">После</figcaption></figure>
       </div>
       <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
       <p id="vizsharedgoal" class="mtext" hidden></p><button type="button" class="btn wide" data-bodygoal hidden id="vizgoaledit">Изменить цель</button><div id="vizcontrols"><div class="vizsteps" id="vizsteps"></div>
@@ -4600,7 +4604,7 @@ img.avface{border-radius:50%;object-fit:cover}
       <p class="vizben" id="vizben" hidden></p>
       <div class="vizcare" id="vizcare" hidden>Если картинка расстроила или цель кажется далёкой — это нормально. Ориентир лучше брать ближний: уже −5 % веса заметны в анализах и самочувствии. Фото можно удалить в любой момент.</div>
       <p class="mtext vizsmall">Картинка примерная: жир у каждого уходит по-своему. Талия считается по данным 2 635 взрослых, разброс ±30 %. Ниже безопасного веса и жира не рисуем.</p>
-      </details><button type="button" id="vizgo" hidden>Показать</button><p class="mtext" id="vizmsg" role="status" aria-live="polite"></p><div class="btnrow"><button type="button" class="btn" id="viznewphoto">Другое фото</button><button type="button" class="btn" id="vizdel">Удалить фото</button></div>
+      </details><button type="button" id="vizgo" hidden>Показать</button><p class="mtext" id="vizmsg" role="status" aria-live="polite"></p><div class="btnrow"><button type="button" class="btn" id="viznewphoto">Добавить фото «Сейчас»</button><button type="button" class="btn" id="vizdel">Удалить все фото</button></div>
     </div>
   </div>
 </div>
@@ -7401,7 +7405,7 @@ function renderGoalCard(){
   if(rbCard())detail+='<p class="gp">Программу можно обновить под новую цель в разделе «Программа».</p>';
   detail+='<button type="button" id="goaltalk">Обсудить с тренером</button>';
   h+='<details class="goal-more"><summary>Подробнее'+(pr&&pr.fact!=null?' · '+delta(pr.fact)+' кг':'')+'</summary>'+detail+'</details>';
-  h+=VIZ.st&&VIZ.st.allowed?'<button type="button" id="vizopen" class="btn wide" data-bodygoal>Цель и фото</button>':'<button type="button" class="btn wide" data-bodygoal>Настроить цель</button>';
+  h+=VIZ.st&&VIZ.st.allowed?'<button type="button" id="vizopen" class="btn wide" data-bodygoal>Постановка цели</button>':'<button type="button" class="btn wide" data-bodygoal>Постановка цели</button>';
   el.innerHTML=h;
 }
 function legacyOf(wt,gym){
@@ -8889,7 +8893,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '26.10 17:15';
+var BUILD = '26.10 18:56';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19969,7 +19973,7 @@ function vizPull(){
   var u=syncUid(); if(!u) return Promise.resolve(null);var request=++VIZ.pullN;
   return fGet('/viz?uid='+encodeURIComponent(u)).then(function(d){
     if(request!==VIZ.pullN || !d || !d.ok) return null;
-    var было=!!(VIZ.st && VIZ.st.allowed); VIZ.st=d;
+    var было=!!(VIZ.st && VIZ.st.allowed);if(VIZ.st&&VIZ.st.photo!==d.photo)vizСброс(); VIZ.st=d;
     if(было!==!!d.allowed) renderGoalCard();
     return d;
   }).catch(function(){ return null; });
@@ -19986,7 +19990,7 @@ function vizShowState(d){
 function vizOpen(){
   BODYGOAL.back=document.activeElement;var n=++BODYGOAL.openN;
   document.getElementById('vizm').classList.add('show');document.getElementById('bodygoalm').hidden=false;
-  document.getElementById('viztitle').textContent='Цель и фото';bodyGoalFill();haptic('light');
+  document.getElementById('viztitle').textContent='Постановка цели';bodyGoalFill();haptic('light');
   document.getElementById('vizclose').focus({preventScroll:true});
   vizView('');vizSay('vizload','Загружаю фото…');
   vizPull().then(function(d){
@@ -20004,7 +20008,7 @@ function vizClose(){
   var back=BODYGOAL.back&&BODYGOAL.back.isConnected?BODYGOAL.back:document.querySelector('#goalcard [data-bodygoal]');
   if(back)back.focus({preventScroll:true});
 }
-function vizPhotoView(t){ try{ vcamClose(); }catch(e){} VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t); vizView('photo'); }
+function vizPhotoView(t){ try{ vcamClose(); }catch(e){} VIZ.pend=null; document.getElementById('vizforce').hidden=true; vizSay('vizpmsg',t||(VIZ.st&&VIZ.st.photo?'Повторите одежду, свет и расстояние. Первый снимок останется.':'')); vizView('photo'); }
 
 /* мерка силуэта: MediaPipe Pose — маска человека и точки плеч/бёдер */
 var VIZMP={p:null, lm:null, cv:null, map:null};
@@ -20069,11 +20073,12 @@ function vizАнализ(img){
 function vizМерить(img){ return vizАнализ(img).then(function(r){ return r.м; }); }
 function vizКартинка(src){ return new Promise(function(ok, bad){ var i=new Image(); i.onload=function(){ ok(i); }; i.onerror=function(){ bad(new Error('картинка не открылась')); }; i.src=src; }); }
 function vizURL(k){
+  var stamp=VIZ.st&&VIZ.st.photo,uid=syncUid();
   if(VIZ.urls[k]) return Promise.resolve(VIZ.urls[k]);
   return tgFetch(SYNCURL+'/viz/img?uid='+encodeURIComponent(syncUid())+'&k='+encodeURIComponent(k)).then(function(r){
     if(!r.ok) throw new Error('картинка не загрузилась');
     return r.blob();
-  }).then(function(b){ VIZ.urls[k]=URL.createObjectURL(b); return VIZ.urls[k]; });
+  }).then(function(b){ if(uid!==syncUid()||stamp!==(VIZ.st&&VIZ.st.photo))throw new Error('Фото изменилось');VIZ.urls[k]=URL.createObjectURL(b); return VIZ.urls[k]; });
 }
 function vizСброс(){ if(VIZ.st) VIZ.st.result=null; VIZ.обр=null; Object.keys(VIZ.urls).forEach(function(k){ try{ URL.revokeObjectURL(VIZ.urls[k]); }catch(e){} }); VIZ.urls={}; VIZ.origM=null; VIZ.k=null; }
 
@@ -20098,17 +20103,20 @@ function vizФото(file){
   }).catch(function(e){ try{ URL.revokeObjectURL(url); }catch(_){} vizSay('vizpmsg','Не получилось открыть фото — попробуйте другое.'); });
 }
 function vizЗагрузить(b64){
+  if(VIZ.busy||BODYGOAL.busy)return Promise.resolve();BODYGOAL.busy=true;bodyGoalAction();
+  ['vizpick','vizcamgo','vizforce'].forEach(function(id){document.getElementById(id).disabled=true;});
   vizSay('vizpmsg','Загружаю фото…'); document.getElementById('vizforce').hidden=true;
   return fPost('/viz/photo', { uid:syncUid(), image:b64, mime:'image/jpeg' }).then(function(d){
-    VIZ.pend=null; vizСброс(); if(VIZ.st) VIZ.st.photo=d.photo; vizMain();
-  }).catch(function(e){ vizSay('vizpmsg', e.message || 'Фото не загрузилось.'); });
+    if(!d.ok)throw new Error(d.error||'Фото не сохранилось');
+    VIZ.pend=null; vizСброс();return vizPull().then(function(st){if(!st)throw new Error('Фото сохранено. Откройте цель ещё раз, чтобы загрузить его.');vizMain();});
+  }).catch(function(e){ vizSay('vizpmsg', e.message || 'Фото не загрузилось.'); }).finally(function(){BODYGOAL.busy=false;bodyGoalAction();['vizpick','vizcamgo','vizforce'].forEach(function(id){document.getElementById(id).disabled=false;});});
 }
 
 /* главный вид: фото сейчас, шаги, ползунки, расчёт */
 function vizMain(){
   document.getElementById('goalphotos').appendChild(document.getElementById('vizpair'));
   document.getElementById('goalphotos').appendChild(document.getElementById('vizmsg'));
-  vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить фото';
+  vizView('main'); VIZ.del=0; document.getElementById('vizdel').textContent='Удалить все фото';
   var st=VIZ.st||{}, saved=st.result, c=st.goalLinked?(st.calc||{}):((saved && saved.calc)||st.calc||{});
   document.getElementById('vizcontrols').hidden=true;
   document.getElementById('vizgoaledit').hidden=true;
@@ -20120,7 +20128,13 @@ function vizMain(){
   vizCmpSync();
   if(saved || st.goalLinked){ VIZ.w=c.w1; VIZ.dl=c.dl; }
   document.getElementById('vizorig').removeAttribute('src');
-  vizURL('orig').then(function(u){ document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
+  var photo=st.photo;
+  function дата(t){return t?new Date(t).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'}):'';}
+  document.getElementById('vizstartcap').textContent='Старт · '+дата(st.start||st.photo);
+  document.getElementById('viznowcap').textContent='Сейчас · '+дата(st.photo);
+  document.getElementById('vizstart').removeAttribute('src');
+  vizURL('start').then(function(u){if(VIZ.st&&VIZ.st.photo===photo)document.getElementById('vizstart').src=u;}).catch(function(){vizSay('vizmsg','Первое фото не загрузилось. Переоткройте цель.');});
+  vizURL('orig').then(function(u){ if(VIZ.st&&VIZ.st.photo===photo)document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
   VIZ.calc=c;clearTimeout(VIZ.t);
   /* Сохранённое фото не зависит от возможности построить НОВУЮ цель. */
   if(saved) vizПоказатьСохранённое(saved).catch(function(){ vizSay('vizmsg','Не удалось загрузить сохранённое фото. Закройте и откройте окно — создавать заново не нужно.'); });
@@ -20154,10 +20168,10 @@ function vizПоказатьСохранённое(r){
 function vizФотоПодпись(c){
   var target=VIZ.calc, linked=VIZ.st&&VIZ.st.goalLinked;
   var stale=(linked&&(!target||!target.ok))||(target&&target.ok&&(Math.abs(c.w1-target.w1)>.05||Math.abs(c.fat1-target.fat1)>.15||Math.abs(c.dl-target.dl)>.15));
-  var legacy=!(c.visualVersion>=5);
-  document.getElementById('viznewcap').textContent=(stale?'Прежняя цель':legacy?'Прежний вариант':'После')+' — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира';
+  var legacy=!(c.visualVersion>=5);var older=!!(c.photoAt&&VIZ.st&&c.photoAt!==VIZ.st.photo);
+  document.getElementById('viznewcap').textContent=(stale?'Прежняя цель':legacy?'Прежний вариант':'Образ цели · ИИ')+' — '+vizК(c.w1)+' кг · '+vizК(c.fat1)+' % жира';
   document.getElementById('viznew').alt=(stale?'Фото прежней цели':legacy?'Прежний вариант':'Примерный вид')+' при '+vizК(c.w1)+' кг и '+vizК(c.fat1)+' % жира';
-  vizSay('vizmsg',stale?'Фото для прежней цели. Для текущей цели результат ещё не создан.':legacy?'Прежний вариант без проверки всего тела.':'Фото сохранено · примерный вид по вашей цели.');
+  vizSay('vizmsg',stale?'Фото для прежней цели. Для текущей цели результат ещё не создан.':legacy?'Прежний вариант без проверки всего тела.':older?'Образ цели сохранён по предыдущему снимку. Можно обновить.':'Фото сохранено · примерный вид по вашей цели.');
 }
 function vizPaint(c){
   VIZ.calc=c;
@@ -20203,17 +20217,17 @@ function vizCmpDrag(box){
   box.addEventListener('pointermove', function(e){ if(down) put(e); });
   ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){ box.addEventListener(t, function(){ down=false; }); });
 }
-function vizFull(){
-  var o=document.getElementById('vizorig'), n=document.getElementById('viznew'), fs=document.getElementById('vizfs'), b=document.getElementById('vizfscmp');
+function vizFull(start){
+  var o=document.getElementById(start?'vizstart':'vizorig'), n=document.getElementById(start?'vizorig':'viznew'), fs=document.getElementById('vizfs'), b=document.getElementById('vizfscmp');
   if(!o.getAttribute('src')) return;
   document.getElementById('vizfsorig').src=o.src;
   var есть=!n.hidden && !!n.getAttribute('src'), fn=document.getElementById('vizfsnew');
   if(есть){fn.src=n.src;fn.alt=n.alt;} fn.hidden=!есть;
-  b.querySelector('.vizlab.r').textContent=document.getElementById('viznewcap').textContent.split(' — ')[0]; b.classList.toggle('has', есть);
+  b.querySelector('.vizlab.l').textContent=start?'Старт':'Сейчас';b.querySelector('.vizlab.r').textContent=start?'Сейчас':document.getElementById('viznewcap').textContent.split(' — ')[0]; b.classList.toggle('has', есть);
   b.style.setProperty('--x', '50%');
-  fs.hidden=false; haptic('light');
+  fs.hidden=false;document.getElementById('vizfsx').focus({preventScroll:true}); haptic('light');
 }
-function vizFullClose(){ document.getElementById('vizfs').hidden=true; }
+function vizFullClose(){ var fs=document.getElementById('vizfs'),was=!fs.hidden;fs.hidden=true;if(was)document.getElementById('vizorig').focus({preventScroll:true}); }
 function vizЖдать(t){ var ph=document.getElementById('vizph'); ph.classList.toggle('busy', !!t);
   if(t){ ph.textContent=t; ph.hidden=false; document.getElementById('viznew').hidden=true; }
   else if(!VIZ.k){ ph.textContent='Покажите результат — фото по вашей цели'; ph.hidden=false; document.getElementById('viznew').hidden=true; }
@@ -20406,7 +20420,7 @@ function vizGo(){
 function vizУдалить(){
   if(!VIZ.del){ VIZ.del=1; document.getElementById('vizdel').textContent='Точно удалить? Нажмите ещё раз'; return; }
   fPost('/viz/delete', { uid:syncUid() }).then(function(){
-    vizСброс(); if(VIZ.st) VIZ.st.photo=null; VIZ.w=null;
+    vizСброс(); if(VIZ.st){VIZ.st.photo=null;VIZ.st.start=null;} VIZ.w=null;
     document.getElementById('vizcare').hidden=true; document.getElementById('vizben').hidden=true;
     vizPhotoView('Фото и все картинки удалены.'); haptic('light');
   }).catch(function(e){ vizSay('vizmsg', e.message || 'Не удалилось — попробуйте ещё раз.'); });
@@ -20426,8 +20440,10 @@ document.getElementById('viznewphoto').addEventListener('click', function(){ viz
 document.getElementById('vizdel').addEventListener('click', vizУдалить);
 document.getElementById('vizgo').addEventListener('click', vizGo);
 vizCmpDrag(document.getElementById('vizfscmp'));
-document.getElementById('vizpair').addEventListener('click', function(e){ if(e.target.closest('img')) vizFull(); });
+document.getElementById('vizpair').addEventListener('click', function(e){ if(e.target.closest('img')) vizFull(e.target.id==='vizstart'); });
 document.getElementById('vizfsx').addEventListener('click', vizFullClose);
+document.getElementById('vizpair').addEventListener('keydown',function(e){if(e.target.matches('img')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();vizFull(e.target.id==='vizstart');}});
+document.getElementById('vizfs').addEventListener('keydown',function(e){if(e.key==='Escape'){e.preventDefault();e.stopPropagation();vizFullClose();}if(e.key==='Tab'){e.preventDefault();document.getElementById('vizfsx').focus();}});
 document.getElementById('vizw').addEventListener('input', function(){ document.getElementById('vizwv').textContent=vizК(+this.value)+' кг'; vizCalc(); });
 document.getElementById('vizfat').addEventListener('input', function(){ VIZ.fat=+this.value; document.getElementById('vizfatv').textContent=vizК(VIZ.fat)+' %'; vizCalc(); });
 document.getElementById('vizdl').addEventListener('input', function(){ VIZ.fat=null; document.getElementById('vizdlv').textContent=(+this.value>0?'+':'')+vizК(+this.value)+' кг'; vizCalc(); });
@@ -20451,6 +20467,8 @@ function vcamEl(id){ return document.getElementById(id); }
 function vcamHint(t, хорошо){ var h=vcamEl('vizcamhint'); if(h.textContent!==t) h.textContent=t; vcamEl('vizcam').classList.toggle('good', !!хорошо); }
 function vcamOpen(){
   vcamEl('vizcam').hidden=false; vcamEl('vizphotobtns').hidden=true; vcamEl('vizptips').hidden=true; vcamEl('vizforce').hidden=true; vizSay('vizpmsg','');
+  vcamEl('vizrefcontrol').hidden=!(VIZ.st&&VIZ.st.photo);vcamEl('vizreference').hidden=true;
+  if(VIZ.st&&VIZ.st.photo)vizURL('orig').then(function(u){if(!vcamEl('vizcam').hidden){vcamEl('vizreference').src=u;vcamEl('vizreference').hidden=!vcamEl('vizrefshow').checked;}}).catch(function(){vizSay('vizpmsg','Предыдущий кадр не загрузился; можно снимать по контуру.');});
   VCAM.ok=0; VCAM.bad=0; VCAM.shot=false; vcamCdStop();
   vcamHint('Включаю камеру…');
   vizMpLoad().catch(function(){});
@@ -20461,7 +20479,7 @@ function vcamStart(){
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ vcamFail('Камера здесь недоступна — выберите фото из галереи.'); return; }
   navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:VCAM.face }, width:{ ideal:1080 }, height:{ ideal:1440 } }, audio:false }).then(function(st){
     if(vcamEl('vizcam').hidden){ st.getTracks().forEach(function(t){ t.stop(); }); return; }
-    VCAM.stream=st; var v=vcamEl('vizvideo'); v.srcObject=st; v.classList.toggle('mirror', VCAM.face==='user');
+    VCAM.stream=st; var v=vcamEl('vizvideo'); v.srcObject=st; v.classList.toggle('mirror', VCAM.face==='user');vcamEl('vizreference').classList.toggle('mirror',VCAM.face==='user');
     var p=v.play(); if(p && p.catch) p.catch(function(){});
     vcamHint('Поставьте телефон и отойдите — встаньте в контур, хватит до колен');
     clearInterval(VCAM.timer); VCAM.timer=setInterval(vcamTick, 140);
@@ -20475,7 +20493,8 @@ function vcamStopStream(){
   if(VCAM.stream){ try{ VCAM.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} VCAM.stream=null; }
   var v=vcamEl('vizvideo'); if(v){ try{ v.srcObject=null; }catch(e){} }
 }
-function vcamClose(){ vcamCdStop(); vcamStopStream(); vcamEl('vizcam').hidden=true; vcamEl('vizphotobtns').hidden=false; vcamEl('vizptips').hidden=false; }
+document.getElementById('vizrefshow').addEventListener('change',function(){vcamEl('vizreference').hidden=!this.checked;});
+function vcamClose(){ vcamEl('vizreference').hidden=true;vcamEl('vizreference').removeAttribute('src');vcamCdStop(); vcamStopStream(); vcamEl('vizcam').hidden=true; vcamEl('vizphotobtns').hidden=false; vcamEl('vizptips').hidden=false; }
 function vcamCdStop(){ clearTimeout(VCAM.cdT); VCAM.cd=0; var c=vcamEl('vizcount'); if(c) c.hidden=true; }
 /* видимая часть кадра (видео растянуто «cover» в окно 3:4) */
 function vcamОкно(){

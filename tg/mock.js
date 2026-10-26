@@ -517,7 +517,7 @@ async function поднять(page, o) {
       if (p === '/viz/calc') { const w = +u.searchParams.get('w'), dl = +u.searchParams.get('dl'); const fat=u.searchParams.has('fat')?+u.searchParams.get('fat'):null; з.calc.push({ w, dl, fat });
         return дать(o.onVizCalc ? o.onVizCalc(w, dl, fat) : { ok: false, error: 'нет' }); }
       if (p === '/viz/consent') { з.consent++; if (o.viz) o.viz.consent = true; return дать({ ok: true }); }
-      if (p === '/viz/photo') { const b = тело(); з.photo.push({ len: String(b.image || '').length, mime: b.mime }); if (o.viz) o.viz.photo = Date.now(); return дать({ ok: true, photo: Date.now() }); }
+      if (p === '/viz/photo') { const b = тело(); з.photo.push({ len: String(b.image || '').length, mime: b.mime }); if (o.viz) {o.viz.start=o.viz.start||o.viz.photo||Date.now();o.viz.photo = Date.now();} return дать({ ok: true, photo: Date.now() }); }
       if (p === '/viz/delete') { з.del++; if (o.viz) { o.viz.photo = null; o.viz.result=null; } return дать({ ok: true }); }
       if (p === '/viz/img') { const f = o.vizImg && o.vizImg(u.searchParams.get('k'));
         if (!f) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"нет картинки"}' });

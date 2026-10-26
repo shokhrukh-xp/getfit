@@ -18,6 +18,13 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   assert.ok((await page.locator('#goalcard').boundingBox()).height<390);
   await page.locator('#goalcard').screenshot({path:path.join(OUT,'card-'+width+'.png')});
   await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#viznew:not([hidden])');
+  assert.equal(await page.textContent('#viztitle'),'Постановка цели');
+  await page.waitForFunction(()=>document.getElementById('vizstart').naturalWidth>0);
+  assert.equal(await page.locator('#vizpair figure').count(),3);
+  const boxes=await Promise.all(['vizstart','vizorig','viznew'].map(id=>page.locator('#'+id).boundingBox()));
+  assert.ok(boxes.every(b=>b.width>0&&b.x>=0&&b.x+b.width<=width));
+  assert.ok(boxes.every(b=>Math.abs(b.height-boxes[0].height)<2),'Три снимка одного размера');
+  await page.locator('#vizstart').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#vizfs').isVisible(),true);assert.equal(await page.textContent('#vizfscmp .vizlab.l'),'Старт');assert.equal(await page.textContent('#vizfscmp .vizlab.r'),'Сейчас');await page.keyboard.press('Escape');assert.equal(await page.locator('#vizfs').isVisible(),false);
   assert.equal(await page.inputValue('#bodygoalweight'),'75');assert.equal(await page.locator('#vizm #bodygoalform').count(),1);
   assert.equal(await page.locator('#vizcontrols').isVisible(),false);assert.equal(await page.locator('#vizgoaledit').isVisible(),false);
   assert.equal(await page.locator('#vizorig').isVisible(),true);assert.equal(await page.locator('#viznew').isVisible(),true);

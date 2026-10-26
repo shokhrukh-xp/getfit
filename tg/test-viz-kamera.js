@@ -36,6 +36,16 @@ async function открыть(видео){
   return { br, page, o, ош };
 }
 (async () => {
+  // Повторная съёмка: прошлое фото помогает совместить позу, но не попадает в JPEG.
+  {const {br,page,o}=await открыть('viz-kamera-close.mjpeg');try{
+    o.viz.photo=123;o.viz.start=100;
+    await page.click('#vizclose');await page.click('#vizopen');await page.waitForSelector('#viz-main:not([hidden])');await page.click('#viznewphoto');await page.click('#vizcamgo');
+    await page.waitForFunction(()=>document.getElementById('vizreference').naturalWidth>0);
+    дано(await page.isVisible('#vizreference'),'предыдущий снимок поверх камеры');
+    await page.uncheck('#vizrefshow');дано(!await page.isVisible('#vizreference'),'подсказку можно отключить');
+    await page.check('#vizrefshow');
+    await page.click('#vizcamx');дано(!await page.isVisible('#vizreference'),'отмена снимает фото-подсказку');
+  }finally{await br.close();}}
   /* 1–3: человек в контуре */
   { const { br, page, o, ош } = await открыть('viz-kamera-good.mjpeg');
     try {
