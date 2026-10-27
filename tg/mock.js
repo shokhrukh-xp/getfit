@@ -261,8 +261,8 @@ async function поднять(page, o) {
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/i18n') { if(o.i18nGate) await o.i18nGate; if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
-    if (p === '/all')        return дать({ state: [], workouts: [], meals: [], measures: [] });
-    if (p === '/s')          return дать({ ok: true });
+    if (p === '/all')        return дать({ state: o._programDraft ? [{key:'program_draft',data:o._programDraft,updated:o._programDraftAt}] : [], workouts: [], meals: [], measures: [] });
+    if (p === '/s') {const b=JSON.parse(route.request().postData()||'{}');if(b.key==='program_draft'){o._programDraft=b.data;o._programDraftAt=Math.max(Date.now(),(o._programDraftAt||0)+1);return дать({ok:true,data:b.data,updated:o._programDraftAt});}return дать({ok:true});}
     /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
     if (p === '/gym/when')   return дать(o.gymWhen || { ok: true, when: 'auto', auto: { src: 'auto', вид: 'мало', label: '', спросить: 1260 } });
     /* 02.10: свободный день. o.free — список дат, o.окно — окно и цена, как

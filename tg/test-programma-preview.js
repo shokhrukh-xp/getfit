@@ -81,7 +81,7 @@ const PROG=require('./fixtures/prog-3dnya.json');
   await p.click('#catalog [data-aiall]');assert.equal(await p.locator('#catalog [data-aioption]').count(),0);assert.ok(await p.locator('#catalog .catpick').count()>3);
   await p.click('#catclose');
   await p.screenshot({path:'/tmp/program-edit-'+theme+'-'+width+'.png'});
-  await p.click('#aiapply');const installed=JSON.parse(await saved());assert.equal(installed.name,PROG.name);
+  await p.click('#aiapply');await p.waitForFunction(()=>JSON.parse(localStorage.getItem('shp_v1_ai_prog')||'{}').name!=='Прежняя программа');const installed=JSON.parse(await saved());assert.equal(installed.name,PROG.name);
   assert.equal(installed.days[0].ex.length,7);assert.ok(!installed.days[0].ex.some(x=>x.id===PROG.days[0].ex[1].id));assert.equal(installed.days[0].ex[1].n,swapped);assert.equal(installed.days[0].ex[1].sets,4);assert.equal(installed.days[0].ex[1].reps,'6–8');assert.equal(installed.days[0].ex.at(-1).n,added);
 
   assert.deepEqual(errors,[]);console.log('PASS повторная сборка: фото, дни, переключение, отказ, применение — '+theme+' '+width);await p.close();

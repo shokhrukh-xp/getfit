@@ -86,8 +86,9 @@ const текст = async (page, sel) => (await page.textContent(sel).catch(() =>
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2600);
   const пол = await текст(page, '#onbbar');
-  дано(!(await page.$eval('#onbbar', e => e.hidden)) && /Программа собрана/.test(пол),
+  дано(!(await page.$eval('#onbbar', e => e.hidden)) && /Черновик программы.*Продолжить/.test(пол),
     'вернулся — на главной полоска с тем местом, где он ушёл: ' + пол);
+  дано(!(await page.isVisible('#picker')), 'повторный вход показывает главную, мастер открывается по Продолжить');
   дано(!/Заполните профиль/.test(пол), 'и это не общее «заполните профиль», а именно его шаг');
   await page.click('#onbbar');
   await page.waitForTimeout(1600);
