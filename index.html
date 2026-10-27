@@ -6957,7 +6957,7 @@ function renderWzChat(){
   h+='<p data-aidraft-status role="status" class="catcount"></p><div class="rbtns"><button type="button" class="btn go" id="wzapply">Начать по ней</button>'+
      '<button type="button" class="btn" id="wzagain">Переделать</button></div></div>';
   if(WIZ.hint) h+='<p class="wzdone">'+esc(WIZ.hint)+'</p>';
-  if(WIZ.err) h+='<p class="wzbad">'+esc(WIZ.err)+'</p>';
+  if(WIZ.err) h+='<p class="wzbad">'+esc(WIZ.err)+'</p><button type="button" class="mchip" id="wzretry">Повторить уточнение</button>';
   if(WIZ.busy){
     h+='<div class="wzq wait">'+(WIZ.qa.length?'Правлю программу':'Тренер смотрит, что уточнить')+
        '<span class="dots long"><i></i><i></i><i></i></span></div>';
@@ -7339,7 +7339,8 @@ function wzSend(){
          likes:me.likes||[], dislikes:me.dislikes||[], sports:me.sports||'' } };
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
-  var tm=setTimeout(function(){ if(wzCtl) wzCtl.abort(); }, 150000);
+  var requestCtl=wzCtl;
+  var tm=setTimeout(function(){ if(requestCtl) requestCtl.abort(); }, 150000);
   tgFetch(SYNCURL+'/onboard', { method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body), signal: wzCtl?wzCtl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){
@@ -7381,6 +7382,7 @@ function wzSend(){
 function wzAnswer(a){
   a=String(a||'').trim(); if(!a || !WIZ.ask || WIZ.busy) return;
   WIZ.qa.push({q:WIZ.ask, a:a}); WIZ.ask=null; WIZ.opts=[]; WIZ.hint='';
+  чернСохр(); // 27.10: сбой ИИ или перезапуск не теряет уже данный ответ.
   wzSend();
 }
 function wzSaveMe(){
@@ -9164,7 +9166,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 16:20';
+var BUILD = '27.10 23:40';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
