@@ -6469,18 +6469,26 @@ function aiСтрока(x){
     (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span></div>';
 }
 function aiЗаголовок(d){ var t=String(d.sub||'').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : ''; }
-function aiДниHtml(p){
-  if(WIZ._вкладкаПрог!==p){ WIZ._вкладкаПрог=p; WIZ.dayTab=0; }
-  var t=Math.max(0, Math.min(WIZ.dayTab||0, p.days.length-1)), d=p.days[t];
+function aiДниHtml(p, view, weekdays){
+  view=view||WIZ;
+  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; }
+  var t=Math.max(0, Math.min(view.dayTab||0, p.days.length-1)), d=p.days[t];
   return '<div class="aitabs" role="tablist" aria-label="Дни программы">'+p.days.map(function(x,i){
-      var дн=aiДеньНедели(i);
+      var дн=weekdays ? (weekdays.length ? WD[weekdays[i % weekdays.length]] : '') : aiДеньНедели(i);
       return '<button type="button" role="tab" data-aitab="'+i+'" aria-selected="'+(i===t)+'"><b>День '+(i+1)+'</b>'+(дн?'<i>'+дн+'</i>':'')+'</button>'; }).join('')+'</div>'+
     '<div class="aidh"><b>'+esc(aiЗаголовок(d))+'</b><i>'+d.ex.length+' '+plural(d.ex.length,['упражнение','упражнения','упражнений'])+'</i></div>'+
     '<div class="aiexs">'+d.ex.map(aiСтрока).join('')+'</div>';
 }
 document.addEventListener('click', function(e){
   var b=e.target.closest && e.target.closest('[data-aitab]'); if(!b) return;
-  WIZ.dayTab=+b.getAttribute('data-aitab')||0; haptic('light'); renderWzChat();
+  var preview=!!b.closest('#aibox');
+  haptic('light');
+  if(preview){
+    AI_PREVIEW.dayTab=+b.getAttribute('data-aitab')||0;
+    if(AI_PREVIEW._вкладкаПрог)renderAiPreview(AI_PREVIEW._вкладкаПрог);
+  }else{ WIZ.dayTab=+b.getAttribute('data-aitab')||0; renderWzChat(); }
+  var tab=document.querySelector((preview?'#aibox':'#wzchat')+' [data-aitab="'+b.getAttribute('data-aitab')+'"]');
+  if(tab)tab.focus({preventScroll:true});
 });
 function wizSummary(){
   var d=wizDays();
@@ -8896,7 +8904,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 09:10';
+var BUILD = '27.10 10:45';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -14361,14 +14369,13 @@ function aiBuild(снова){
 }
 /* закрыли профиль — отменяем отложенную попытку, иначе она заговорит в пустоту */
 function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); } AIBUSY=false; }
+/* 27.10: вкладки Claude были только в знакомстве. Пересборка из профиля
+   и «Собрать и показать» используют тот же вид, но независимый выбранный день. */
+var AI_PREVIEW={dayTab:0};
 function renderAiPreview(prog){
   var box=document.getElementById('aibox'); if(!box) return;
-  var h='<div class="aiprev"><h4>'+prog.name+'</h4><p class="aisub">'+prog.note+'</p>';
-  prog.days.forEach(function(d,i){
-    var lbl=(d.s && !/^день/i.test(d.s.trim())) ? ' · '+d.s : '';
-    h+='<div class="aiday">День '+(i+1)+lbl+(d.sub?' · '+d.sub.toLowerCase():'')+'</div><ul>'+
-       d.ex.map(function(x){ return '<li>'+(x.ss?'<span class="sstag" style="margin-right:6px">'+x.ss+'</span>':'')+'<b>'+x.n+'</b> · '+x.sets+' × '+x.reps+'</li>'; }).join('')+'</ul>';
-  });
+  var days=WEEK.filter(function(d){return GYM_DAYS[d];});
+  var h='<div class="aiprev"><h4>'+esc(prog.name)+'</h4><p class="aisub">'+esc(prog.note)+'</p>'+aiДниHtml(prog,AI_PREVIEW,days);
   h+='<div class="rbtns"><button type="button" class="btn go" id="aiapply">Перейти на эту программу</button>'+
      '<button type="button" class="btn" id="aidrop">Не надо</button></div></div>';
   box.innerHTML=h;
