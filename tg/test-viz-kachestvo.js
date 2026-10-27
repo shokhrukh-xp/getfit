@@ -9,7 +9,7 @@ const limits=part('function vizДопуск(', 'function vizBtn(');
 (async()=>{
  const nodes={};const node=id=>nodes[id]||(nodes[id]={disabled:false,textContent:'',hidden:false,src:'saved',classList:{remove(){}}});
  const calls=[],ctx=vm.createContext({console,Date,Math,Promise,Array,Object,Error,isFinite,BODYGOAL:{busy:false,edited:false},VIZ:{calc:{w1:75,dl:0,отношение:.87},st:{},busy:false},
-   document:{getElementById:node,querySelectorAll:()=>[]},vizSay:(id,t)=>{node(id).textContent=t;},vizЖдать(){},haptic(){},
+   document:{getElementById:node,querySelectorAll:()=>[]},vizSay:(id,t)=>{node(id).textContent=t;},vizЖдать(){},haptic(){},vizК:String,syncUid:()=> 'svc_viz_retry',
    vizОбразец:async()=> 'template',vizЗаказ:async(...a)=>{calls.push(a);return {k:'bad'+calls.length,calc:{w1:75,dl:0,отношение:.87},left:5};},
    vizДовести:async()=>null,vizПроверка:async()=>({ok:false,отн:.999,d:.129}),fPost:()=>{throw Error('плохой результат нельзя сохранять');}});
  vm.runInContext(part('function vizЛимит(', "document.addEventListener('keydown'"),ctx);
@@ -19,7 +19,27 @@ const limits=part('function vizДопуск(', 'function vizBtn(');
  assert.ok(calls.every(c=>c[6]===calls[0][6]));
  const old=calls[0][6];ctx.vizGo();while(ctx.VIZ.busy) await new Promise(r=>setTimeout(r,1));assert.notEqual(calls[3][6],old);
  ctx.vizЗаказ=async(...a)=>{calls.push(a);return {k:'new',calc:{visualVersion:5,w1:75,отношение:.87},left:5};};
- const n0=calls.length;ctx.vizGo();while(ctx.VIZ.busy)await new Promise(r=>setTimeout(r,1));assert.equal(calls.length,n0+1,'новый генератор не повторяет платные попытки скрыто');
+ const n0=calls.length;await ctx.vizGo();assert.equal(calls.length,n0+3,'промах силуэта исправляется не более двух раз');
+ ctx.VIZ.calc={w1:75,fat1:12,fatTarget:12,dl:2.77,отношение:.842};
+ let renders=[],selections=[],messages=[],failures=1,remaining=8,ratioOK=true,providerFail=false,missing=false,selectCode='viz_appearance';
+ ctx.vizЗаказ=async(...a)=>{renders.push(a);if(providerFail)throw Object.assign(Error('Нет связи'),{code:'network'});return {k:'retry'+renders.length,calc:{...ctx.VIZ.calc,visualVersion:5},left:--remaining};};
+ ctx.vizПроверка=async()=>missing?null:{ok:ratioOK,отн:ratioOK?.91:.999,d:0};
+ ctx.vizЖдать=t=>messages.push(t);
+ ctx.fPost=async(p,b)=>{assert.equal(p,'/viz/select');selections.push(b);if(failures-->0)throw Object.assign(Error('Вариант не принят'),{code:selectCode});return {ok:true};};
+ ctx.vizURL=async k=>'photo:'+k;ctx.vizФотоПодпись=()=>{};ctx.vizCmpSync=()=>{};ctx.gget=()=>true;
+ const reset=()=>{renders=[];selections=[];messages=[];remaining=8;ratioOK=true;providerFail=false;missing=false;selectCode='viz_appearance';node('viznew').src='saved';ctx.VIZ.st={};};
+ await ctx.vizGo();
+ assert.equal(renders.length,2);assert.equal(selections.length,2);assert.equal(node('viznew').src,'photo:retry2');
+ assert.equal(ctx.VIZ.st.result.calc.fat1,12);assert.equal(ctx.VIZ.st.result.calc.w1,75);
+ assert.ok(renders.every(a=>a[0]===75&&a[1]===2.77&&a[6]===renders[0][6]));assert.equal(renders[1][3],'retry1');assert.equal(renders[1][5],1);
+ assert.ok(messages.some(t=>/75 кг \/ 12%.*2 из 3/.test(t)),'человек видит исправление именно выбранной цели');
+ reset();failures=9;await ctx.vizGo();assert.equal(renders.length,3);assert.equal(selections.length,3);assert.equal(node('viznew').src,'saved');assert.match(node('vizmsg').textContent,/за 3 попытки/);assert.equal(ctx.VIZ.st.left,5);assert.equal(ctx.VIZ.busy,false);
+ reset();failures=9;remaining=1;await ctx.vizGo();assert.equal(renders.length,1);assert.match(node('vizmsg').textContent,/лимит исчерпан/);assert.equal(ctx.VIZ.st.left,0);
+ reset();failures=0;await ctx.vizGo();assert.equal(renders.length,1);assert.equal(selections.length,1,'успешный результат не проверяется и не выбирается дважды');
+ reset();providerFail=true;await ctx.vizGo();assert.equal(renders.length,1);assert.equal(selections.length,0);assert.match(node('vizmsg').textContent,/Нет связи/);
+ reset();missing=true;await ctx.vizGo();assert.equal(renders.length,1);assert.equal(selections.length,0);
+ reset();failures=1;selectCode='auth';await ctx.vizGo();assert.equal(renders.length,1,'ошибка доступа не запускает платный повтор');
+ console.log('PASS 75 кг / 12%: исправление отказа, неизменная цель, максимум 3 варианта, лимит, без повторов при сетевой ошибке');
  const noWarp=vm.createContext({Promise});vm.runInContext(part('function vizДовести(', '/* картинка: проверенный образец'),noWarp);assert.equal(await noWarp.vizДовести({calc:{visualVersion:5}},{ok:false}),null,'новый алгоритм не сжимает готовое тело');
  console.log('PASS слабый результат: 3 попытки, прежнее фото остаётся, следующий запуск новый');
  const br=await chromium.launch();

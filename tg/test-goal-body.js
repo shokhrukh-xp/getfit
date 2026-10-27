@@ -75,6 +75,23 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
   assert.equal(await page.locator('#vizstart').isVisible(),false);
   assert.deepEqual(errors,[]);await page.close();
  }
+ /* 27.10: полный путь кнопки при отказе проверки вида; ответы моделей подставные,
+    сохранение/запросы/показ результата выполняет настоящий код страницы. */
+ const retryPage=await br.newPage({viewport:{width:390,height:844}});
+ const retryCalc={ok:true,w0:85.8,w1:75,fat0:26.3,fat1:12,fatTarget:12,lean0:63.23,lean1:66,dl:2.77,отношение:.842,срез:[],visualVersion:5};
+ const retryGoal={text:'75 кг · 12% жира · мышцы развивать',body:{v:1,target:75,fat:12,muscle:'develop'}};
+ let retryRenders=0,retrySelects=0;
+ const retryOptions={page:'home',goal:retryGoal,me:{sex:'m',age:34,ht:178,bw:85.8,coach_at:'x'},viz:{ok:true,allowed:true,consent:true,adult:true,photo:1,goalLinked:true,goal:retryGoal,calc:retryCalc,left:8},onVizCalc:()=>retryCalc,vizImg:k=>k==='orig'?path.join(__dirname,'fixtures/viz-0-ishod.jpg'):path.join(OUT,'retry-image.jpg'),onVizRender:b=>{fs.writeFileSync(path.join(OUT,'retry-image.jpg'),Buffer.from(b.target,'base64'));return {ok:true,k:'retry'+(++retryRenders),calc:retryCalc,left:8-retryRenders};}};
+ const retryErrors=await M.поднять(retryPage,retryOptions);
+ await retryPage.route('**/viz/select',async route=>{retrySelects++;await route.fulfill({status:retrySelects===1?422:200,contentType:'application/json',body:JSON.stringify(retrySelects===1?{error:'Новый вариант не прошёл проверку тела и позы.',code:'viz_appearance'}:{ok:true})});});
+ await retryPage.click('#profbtn');await retryPage.click('#goalcard [data-bodygoal]');await retryPage.waitForSelector('#vizph');
+ await retryPage.click('#bodygoalsave');
+ await retryPage.waitForFunction(()=>!document.getElementById('bodygoalsave').disabled&&!document.getElementById('viznew').hidden);
+ assert.equal(retryRenders,2);assert.equal(retrySelects,2);assert.equal(await retryPage.inputValue('#bodygoalfat'),'12');
+ assert.match(await retryPage.textContent('#vizgoalmetrics'),/75 кг.*12% жира.*66 кг без жира/);
+ assert.equal(await retryPage.locator('#viznew').isVisible(),true);assert.equal(await retryPage.locator('#vizph').isVisible(),false);
+ assert.ok(retryOptions.vizAsked.render.every(b=>b.w===75&&b.fat===12));assert.equal(retryOptions.vizAsked.render[1].prev,'retry1');
+ assert.deepEqual(retryErrors,[]);await retryPage.close();
  const noPhoto=await br.newPage({viewport:{width:320,height:844}});
  let saved=0;await M.поднять(noPhoto,{page:'home',viz:{ok:true,allowed:false},onGoalSave:b=>{saved++;return {ok:true,goal:{text:b.target+' кг',body:{v:1,target:b.target,fat:null,muscle:'preserve'}}};}});
  await noPhoto.click('#profbtn');await noPhoto.click('#goalcard [data-bodygoal]');await noPhoto.fill('#bodygoalweight','75');await noPhoto.click('#bodygoalsave');await noPhoto.waitForFunction(()=>/Цель сохранена/.test(document.getElementById('bodygoalerror').textContent));assert.equal(saved,1);assert.equal(await noPhoto.locator('#viz-consent').isVisible(),false);await noPhoto.close();

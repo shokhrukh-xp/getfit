@@ -9164,7 +9164,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 16:20';
+var BUILD = '27.10 17:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20670,12 +20670,30 @@ function vizGo(){
   return vizОбразец(VIZ.calc).then(function(обр){
     if(!обр) throw new Error('Не удалось точно измерить силуэт. Загрузите фото прямо, с руками чуть в стороны и без свободной одежды.');
     var targetRatio=VIZ.calc.отношение;
-    vizЖдать('Рисую — это может занять до трёх минут…');
+    vizЖдать('Создаю фото: до 3 вариантов с проверкой, каждый — до трёх минут…');
     function шаг(prev, got){
       return vizЗаказ(w, dl, обр, prev, got, n, run).then(function(r){
-        if(r.left!=null) left=r.left;
+        if(r.left!=null){left=r.left;if(VIZ.st)VIZ.st.left=left;}
         vizЖдать('Проверяю силуэт…');
         return vizПроверка(r).then(function(ч){
+          /* 27.10: отказ проверки — замечание генератору, не просьба человеку
+             менять выбранные 12%. Каждый новый вариант проверяется заново. */
+          if(r.calc.visualVersion>=5){
+            function повтор(e){
+              if(n>=2 || (r.left!=null && r.left<=0)){
+                throw new Error('Не удалось получить качественное фото для выбранной цели за '+(n+1)+' '+(n===0?'попытку':'попытки')+'. Цель сохранена. '+(r.left!=null&&r.left<=0?'Дневной лимит исчерпан — повторить можно завтра.':'Можно повторить генерацию с теми же параметрами.'));
+              }
+              n++;
+              vizЖдать('Исправляю фото под '+vizК(r.calc.w1)+' кг'+(r.calc.fat1!=null?' / '+vizК(r.calc.fat1)+'%':'')+' — вариант '+(n+1)+' из 3…');
+              return шаг(r.k, Math.round(ч.отн*1000)/1000);
+            }
+            if(!ч)throw new Error('Не удалось проверить силуэт на фото. Цель сохранена; фото цели не обновлено.');
+            if(!ч.ok)return повтор();
+            vizЖдать('Проверяю вид тела и сохранение позы…');
+            return fPost('/viz/select',{uid:syncUid(),k:r.k,ratio:ч.отн}).then(function(){
+              return {r:r,ч:ч,selected:true};
+            },function(e){if(e.code==='viz_appearance')return повтор(e);throw e;});
+          }
           return vizДовести(r,ч).then(function(fixed){
           if(fixed){лучш=fixed;return лучш;}
           if(!лучш || (ч && (!лучш.ч || Math.abs(ч.d)<Math.abs(лучш.ч.d)))) лучш={ r:r, ч:ч };
@@ -20698,7 +20716,7 @@ function vizGo(){
     if(left!=null && VIZ.st) VIZ.st.left=left;
     if(!ч || !ч.ok) throw new Error(!ч ? 'Не удалось проверить результат. Фото цели не заменено — попробуйте другой снимок.' : 'Модель не передала выбранное изменение тела. Этот вариант не сохранён как цель. Попробуйте обновить фото.');
     vizЖдать('Проверяю вид тела и сохранение позы…');
-    return fPost('/viz/select', {uid:syncUid(), k:r.k, ratio:ч.отн, image:x.image||''}).then(function(){
+    return (x.selected?Promise.resolve():fPost('/viz/select', {uid:syncUid(), k:r.k, ratio:ч.отн, image:x.image||''})).then(function(){
       if(x.image && VIZ.urls[r.k]){URL.revokeObjectURL(VIZ.urls[r.k]);delete VIZ.urls[r.k];}
       return vizURL(r.k);}).then(function(u){
       VIZ.k=r.k; var im=document.getElementById('viznew'); im.src=u; im.hidden=false;
