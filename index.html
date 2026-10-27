@@ -273,6 +273,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .aiexs{display:flex;flex-direction:column}
 .aiex{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
 .aiex:last-child{border-bottom:none}
+#catalog.aidraft{z-index:135}
+.aiedit{grid-column:2;display:flex;gap:8px}.aiedit .btn{min-height:44px;flex:1;padding:8px;font-size:13px}.aiedit .btn:disabled{opacity:.45}
 .aiex .exph{width:56px;height:56px;border-radius:16px;overflow:hidden;display:block;background:var(--field)}
 .aiex .exph .fig2,.aiex .exph .fig{width:56px;border-radius:16px}
 .aiex .exph .fig2{aspect-ratio:1}
@@ -5966,7 +5968,7 @@ function openCatalog(ctx){
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
   catMuscle = (ctx && ctx.muscle) || '';
-  var m=document.getElementById('catalog'); if(m) m.classList.add('show');
+  var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
   if(t) t.textContent = (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
   var s=document.getElementById('catsearch'); if(s) s.value='';
@@ -5983,7 +5985,9 @@ function openCatalog(ctx){
       '<p class="mtext">Не удалось загрузить каталог — похоже, пропала сеть.</p>'+повтор; });
 }
 function closeCatalog(){
-  var m=document.getElementById('catalog'); if(m) m.classList.remove('show');
+  var draftCtx=catCtx;
+  var m=document.getElementById('catalog'); if(m){m.classList.remove('show');m.classList.remove('aidraft');}
+  if(draftCtx&&draftCtx.draft){var root=draftCtx.view===WIZ?'#wzchat':'#aibox';var back=document.querySelector(root+' [data-aiedit="'+(draftCtx.add?'add':'swap')+'"]');if(back)back.focus({preventScroll:true});}
   catCtx=null; catQuery=''; catMuscle='';catGroup=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
 }
@@ -6164,7 +6168,7 @@ function renderCatalog(){
   }
   var list=catFiltered(), lim=catShown, shown=list.slice(0,lim);
   var h = onPage ? '' : pickGroupChips();
-  if(catCtx && !catCtx.add){
+  if(catCtx && !catCtx.add && !catCtx.draft){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
   }
@@ -6463,21 +6467,64 @@ function wizInit(){
    первый день зала и т. д.), упражнения — строками с кадром, мышцей и подходами, как на
    экране «Тренировка». Его выбор из двух макетов — «вкладки по дням» (A). */
 function aiДеньНедели(i){ var d=wizDays(); return d.length ? WD[d[i % d.length]] : ''; }
-function aiСтрока(x){
+function aiСтрока(x, index, editable){
   var e={n:x.n, cat:x.id||x.cat||null, fig:x.fig, ph:x.ph}, м=x.p ? String(x.p).toLowerCase() : '';
   return '<div class="aiex"><span class="exph">'+mediaFor(e)+'</span><span class="aien"><b>'+
-    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span></div>';
+    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button></div>' : '')+'</div>';
 }
+/* 27.10: предложение можно править до принятия. Каталог меняет только
+   захваченный черновик: ни SUBS/EXTRA, ни установленная программа не пишутся. */
+function aiЧерновикЖив(ctx){
+  return ctx.draft && (ctx.view===WIZ ? WIZ.prog===ctx.draft && !WIZ.busy : AI_PREVIEW._вкладкаПрог===ctx.draft);
+}
+function aiЧерновикПоказать(view, prog){
+  if(view===WIZ){ чернСохр(); renderWzChat(); }else renderAiPreview(prog);
+}
+function aiЧерновикЗапомнить(ctx){
+  ctx.view.undo={prog:ctx.draft, day:ctx.day, ex:JSON.parse(JSON.stringify(ctx.draft.days[ctx.day].ex))};
+}
+function aiЧерновикВыбрать(ctx,item){
+  if(!item || !aiЧерновикЖив(ctx))return;
+  var d=ctx.draft.days[ctx.day]; if(!d || (!ctx.add && !d.ex[ctx.index]))return;
+  aiЧерновикЗапомнить(ctx);
+  var old=ctx.add?null:d.ex[ctx.index], timed=item.m==='abdominals'&&item.q==='body only', cardio=catKind(item)==='cardio';
+  var x={id:item.i,n:item.n,en:item.e||'',m:item.m||'',sm:item.m2||'',q:item.q||'',p:(CAT.muscles||{})[item.m]||'',
+    sets:old?old.sets:(cardio?1:3),reps:old?old.reps:(cardio?'10 мин':timed?'30–45 с':'8–12'),rest:old?old.rest||90:90};
+  if(old&&old.ss)x.ss=old.ss;
+  if(ctx.add)d.ex.push(x);else d.ex[ctx.index]=x;
+  aiЧерновикПоказать(ctx.view,ctx.draft);haptic('ok');
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-aiedit]');if(!b||b.disabled)return;
+  var view=b.closest('#aibox')?AI_PREVIEW:WIZ, prog=view===WIZ?WIZ.prog:AI_PREVIEW._вкладкаПрог;
+  var ctx={draft:prog,view:view,day:view.dayTab||0,index:+b.dataset.aiindex}, action=b.dataset.aiedit;
+  if(!aiЧерновикЖив(ctx))return;
+  var d=prog.days[ctx.day];if(!d)return;
+  if(action==='undo'){
+    if(view.undo&&view.undo.prog===prog){prog.days[view.undo.day].ex=view.undo.ex;view.dayTab=view.undo.day;view.undo=null;aiЧерновикПоказать(view,prog);}return;
+  }
+  if(action==='remove'){
+    if(d.ex.length<2||!d.ex[ctx.index])return;
+    aiЧерновикЗапомнить(ctx);d.ex.splice(ctx.index,1);
+    d.ex.forEach(function(x){if(x.ss&&d.ex.filter(function(y){return y.ss===x.ss;}).length<2)delete x.ss;});
+    aiЧерновикПоказать(view,prog);haptic('light');return;
+  }
+  ctx.add=action==='add';var old=d.ex[ctx.index];
+  if(!ctx.add&&!old)return;
+  ctx.muscle=ctx.add?'':old.m||'';ctx.c='strength';openCatalog(ctx);
+});
 function aiЗаголовок(d){ var t=String(d.sub||'').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : ''; }
 function aiДниHtml(p, view, weekdays){
   view=view||WIZ;
-  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; }
+  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; view.undo=null; }
   var t=Math.max(0, Math.min(view.dayTab||0, p.days.length-1)), d=p.days[t];
   return '<div class="aitabs" role="tablist" aria-label="Дни программы">'+p.days.map(function(x,i){
       var дн=weekdays ? (weekdays.length ? WD[weekdays[i % weekdays.length]] : '') : aiДеньНедели(i);
       return '<button type="button" role="tab" data-aitab="'+i+'" aria-selected="'+(i===t)+'"><b>День '+(i+1)+'</b>'+(дн?'<i>'+дн+'</i>':'')+'</button>'; }).join('')+'</div>'+
     '<div class="aidh"><b>'+esc(aiЗаголовок(d))+'</b><i>'+d.ex.length+' '+plural(d.ex.length,['упражнение','упражнения','упражнений'])+'</i></div>'+
-    '<div class="aiexs">'+d.ex.map(aiСтрока).join('')+'</div>';
+    '<div class="aiexs">'+d.ex.map(function(x,i){return aiСтрока(x,i,view===WIZ&&WIZ.busy ? 0 : d.ex.length);}).join('')+'</div>'+
+    '<button type="button" class="btn wide" data-aiedit="add"'+(view===WIZ&&WIZ.busy?' disabled':'')+'>+ Добавить упражнение</button>'+
+    (view.undo ? '<button type="button" class="btn wide" data-aiedit="undo">Отменить последнюю правку</button>' : '');
 }
 document.addEventListener('click', function(e){
   var b=e.target.closest && e.target.closest('[data-aitab]'); if(!b) return;
@@ -8904,7 +8951,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 10:45';
+var BUILD = '27.10 11:20';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13894,6 +13941,7 @@ document.getElementById('catalog').addEventListener('click', function(e){
   if(m){ catMuscle=m.dataset.m; renderCatalog(); haptic('light'); return; }
   var p=e.target.closest('button[data-pick]');
   if(p && catCtx && CAT){
+    if(catCtx.draft){ aiЧерновикВыбрать(catCtx, CAT.ex[+p.dataset.pick]); closeCatalog(); return; }
     if(catCtx.add){ addEx(CAT.ex[+p.dataset.pick]); closeCatalog(); return; }
     var вещь = CAT.ex[+p.dataset.pick];
     /* выбрал руками — значит, это уже не «не моё»: снимаем отказ, иначе в
@@ -14403,7 +14451,7 @@ function снятьПравкиПрошлой(keys){
   return n;
 }
 function aiApply(целиком){
-  if(!AIPROG) return;
+  if(!AIPROG || !AIPROG.days || AIPROG.days.some(function(d){return !d.ex||!d.ex.length;})) return;
   /* Имена НЕ подменяем именами из истории. Раньше здесь имя из старой записи
      вписывалось в саму программу и сохранялось навсегда: после переименования
      каталога 11.09 «Сгибание ног (тренажёр, лёжа)» осталось «…сидя», и в дне 4
@@ -14433,7 +14481,7 @@ function aiApply(целиком){
   closeProf(); haptic('ok');
 }
 document.getElementById('aibox').addEventListener('click', function(e){
-  if(e.target.closest('#aiapply')) aiApply(true);
+  if(e.target.closest('#aiapply')){if(AI_PREVIEW._вкладкаПрог)AIPROG=AI_PREVIEW._вкладкаПрог;aiApply(true);}
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
 });
 

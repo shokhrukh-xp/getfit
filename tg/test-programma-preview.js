@@ -26,10 +26,36 @@ const PROG=require('./fixtures/prog-3dnya.json');
   assert.ok(await p.locator('#aiapply').isVisible());assert.ok(await p.locator('#aidrop').isVisible());
   assert.equal(await p.evaluate(()=>document.activeElement?.dataset.aitab),'1');
   await p.locator('#aibox').screenshot({path:'/tmp/program-preview-'+theme+'-'+width+'.png'});
+  while(await p.locator('#aibox .aiex').count()>1)await p.locator('#aibox [data-aiedit="remove"]').first().click();
+  assert.ok(await p.locator('#aibox [data-aiedit="remove"]').isDisabled());
+  assert.equal(await saved(),oldProfile);
   await p.click('#aidrop');assert.equal(await p.locator('#aibox').innerText(),'');assert.equal(await saved(),oldProfile);
   await p.reload();await build();await p.waitForSelector('#aibox .aiex');
   assert.equal(await p.locator('#aibox [data-aitab="0"]').getAttribute('aria-selected'),'true');
-  await p.click('#aiapply');assert.equal(JSON.parse(await saved()).name,PROG.name);
+  const beforeEdit=await saved();
+  const storage=()=>p.evaluate(()=>Object.fromEntries(Object.entries(localStorage).filter(([k])=>/_(subs|extra|skip|adj)$/.test(k))));
+  const oldSlots=await storage();
+  // Выбор в каталоге правит только черновик, не SUBS/EXTRA установленной программы.
+  await p.click('#aibox [data-aiedit="swap"][data-aiindex="0"]');
+  await p.waitForSelector('#catalog .catpick');
+  await p.locator('#catalog .catpick').first().click();
+  const swapped=await p.locator('#aibox .aiex .aien b').first().innerText();
+  assert.ok(swapped);assert.equal(await saved(),beforeEdit);assert.deepEqual(await storage(),oldSlots);
+  await p.click('#aibox [data-aiedit="remove"][data-aiindex="1"]');
+  assert.equal(await p.locator('#aibox .aiex').count(),6);
+  await p.click('#aibox [data-aiedit="undo"]');assert.equal(await p.locator('#aibox .aiex').count(),7);
+  await p.click('#aibox [data-aiedit="remove"][data-aiindex="1"]');
+  await p.click('#aibox [data-aiedit="add"]');await p.waitForSelector('#catalog .catpick');
+  await p.locator('#catalog .catpick').first().click();assert.equal(await p.locator('#aibox .aiex').count(),7);
+  const added=await p.locator('#aibox .aiex .aien b').last().innerText();
+  await p.click('#aibox [data-aitab="1"]');assert.equal(await p.locator('#aibox .aiex').count(),PROG.days[1].ex.length);
+  await p.click('#aibox [data-aitab="0"]');assert.equal(await p.locator('#aibox .aiex .aien b').first().innerText(),swapped);
+  assert.equal(await saved(),beforeEdit);assert.deepEqual(await storage(),oldSlots);
+  assert.ok(await p.locator('#aibox .aiedit button').evaluateAll(bs=>bs.every(b=>{let r=b.getBoundingClientRect();return r.height>=44&&r.right<=innerWidth})));
+  await p.screenshot({path:'/tmp/program-edit-'+theme+'-'+width+'.png'});
+  await p.click('#aiapply');const installed=JSON.parse(await saved());assert.equal(installed.name,PROG.name);
+  assert.equal(installed.days[0].ex.length,7);assert.ok(!installed.days[0].ex.some(x=>x.id===PROG.days[0].ex[1].id));assert.equal(installed.days[0].ex[0].n,swapped);assert.equal(installed.days[0].ex.at(-1).n,added);
+
   assert.deepEqual(errors,[]);console.log('PASS повторная сборка: фото, дни, переключение, отказ, применение — '+theme+' '+width);await p.close();
  }
 }finally{await br.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

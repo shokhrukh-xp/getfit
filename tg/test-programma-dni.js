@@ -29,7 +29,7 @@ const контраст = (a, b) => { const x = яркость(a), y = яркос
     дано(вкл[0].sel === 'true' && вкл[1].sel === 'false', т + 'выбрана первая');
     дано(вкл.every(x => x.h >= 44 && x.right <= width), т + 'вкладки не мельче 44 px и в экране');
     дано(контраст(вкл[0].fg, вкл[0].bg) >= 4.5, т + 'выбранная читается: контраст ' + контраст(вкл[0].fg, вкл[0].bg).toFixed(2));
-    const список = () => p.$$eval('.aiprev .aiex', rs => rs.map(r => ({ t: r.innerText.replace(/\s+/g, ' ').trim(), img: (r.querySelector('img') || {}).getAttribute ? r.querySelector('img').getAttribute('src') : '' })));
+    const список = () => p.$$eval('.aiprev .aiex', rs => rs.map(r => ({ t: r.querySelector('.aien').innerText.replace(/\s+/g, ' ').trim(), img: (r.querySelector('img') || {}).getAttribute ? r.querySelector('img').getAttribute('src') : '' })));
     let с = await список();
     дано(с.length === 7 && /^Жим ногами \(тренажёр, обычный\) квадрицепс · 3 × 10–12$/.test(с[0].t), т + 'день 1: 7 строк, мышца и подходы: ' + (с[0] || {}).t);
     дано(с.every(x => /img\/t\//.test(x.img || '')), т + 'у каждой строки кадр из своих миниатюр');
@@ -38,6 +38,11 @@ const контраст = (a, b) => { const x = яркость(a), y = яркос
     с = await список();
     дано(/^Присед \(гиря, кубковый\)/.test((с[0] || {}).t) && await p.getAttribute('.aitabs button[data-aitab="1"]', 'aria-selected') === 'true', т + 'нажал «День 2» — его упражнения');
     дано(!!(await p.$('#wzapply')) && !!(await p.$('#wzagain')), т + 'кнопки «Начать по ней» и «Переделать» на месте');
+    await p.click('#wzchat [data-aiedit="remove"][data-aiindex="0"]');
+    дано((await список()).length === PROG.days[1].ex.length-1, т+'правка до принятия в знакомстве');
+    await p.click('#wzchat [data-aiedit="add"]'); await p.waitForSelector('#catalog .catpick');
+    await p.locator('#catalog .catpick').first().click();
+    дано((await список()).length === PROG.days[1].ex.length, т+'каталог поверх знакомства, добавление в черновик');
     if (width === 390) await p.screenshot({ path: '/tmp/programma-dni-' + theme + '.png' });
     дано(!ош.length, т + 'без ошибок ' + (ош[0] || ''));
     await p.close();
