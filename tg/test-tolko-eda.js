@@ -73,10 +73,9 @@ const режим = (page, v) => page.addInitScript(([v]) => {
   /* 14.10: по шагам — что ведём → параметры → цель → ограничения, без «где и когда» */
   await M.шаги(page, { only: 'food', до: 'goal', age: 33, ht: 168, bw: 61 });
   дано(!(await page.isVisible('#wzhave').catch(() => false)), 'готовые программы не предлагаются');
-  дано(await page.isVisible('#wzgoal'), 'цель — своим шагом');
-  дано(!(await page.isVisible('#g-gymrow').catch(() => false)), 'вопроса «что важнее в зале» у них нет');
-  await page.click('#g-go'); await page.waitForTimeout(900);
-  await page.click('#wz-health-go');
+  дано(await page.isVisible('#goalconversation'), 'цель обсуждается у тренера');
+  дано(!(await page.isVisible('#g-gymrow').catch(() => false)), 'старого вопроса про зал нет');
+  await M.цельШаги(page,{only:'food'});
   await page.waitForTimeout(1700);
   дано(!(await page.isVisible('#picker .modalbox').catch(() => false)) || !(await page.$eval('#picker', e => e.classList.contains('show'))),
     'знакомство закончилось на цели, без вопросов про зал');

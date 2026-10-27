@@ -41,10 +41,11 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   // Новичок: полоски следуют реальному счётчику, назад сохраняет ввод.
   const n=await b.newPage({viewport:{width,height:844}});const ne=await M.поднять(n,{theme,newbie:true});
   const step=async(i,total)=>{await n.waitForFunction(t=>document.getElementById('wzstep').textContent===t,'шаг '+i+' из '+total);const count=await n.textContent('#wzstep'),bars=await n.locator('#wzpath span').count(),done=await n.locator('#wzpath .reached').count();ok(await n.isVisible('#wzpath')&&count==='шаг '+i+' из '+total&&bars===total&&done===i,tag+'знакомство '+i+'/'+total+': текст и индикатор согласованы');const v=await bounds(n),c=await contrast(n,'#picker');ok(!v.length&&!c.failures.length,tag+'шаг '+i+': контраст и границы '+JSON.stringify({v,c:c.failures}))};
-  await step(1,5);await M.шаги(n,{до:'me'});await step(2,5);await n.fill('#wz-age','41');await n.click('#wz-prev');await step(1,5);await n.click('#wz-only-go');ok(await n.inputValue('#wz-age')==='41',tag+'возврат не стирает возраст');
-  await n.fill('#wz-ht','178');await n.fill('#wz-bw','88');await n.click('#wz-me-go');await n.waitForFunction(()=>!document.getElementById('g-go').disabled);await step(3,5);await n.click('#g-go');await step(4,5);await n.click('#wz-health-go');await step(5,5);
+  await step(1,3);await M.шаги(n,{до:'health'});
+  ok(await n.isVisible('#goalconversation')&&!await n.isVisible('#picker'),tag+'адаптивный разговор без ложного счётчика вопросов');
+  await M.цельШаги(n,{});ok(await n.isVisible('#wzform'),tag+'после подтверждения цели — программа');
   await n.click('#wz-go');await n.waitForSelector('.aiprev');ok(!await n.isVisible('#wzpath'),tag+'индикатор скрыт после анкеты');ok(!ne.length,tag+'знакомство без ошибок');await n.close();
-  const f=await b.newPage({viewport:{width,height:844}});await M.поднять(f,{theme,newbie:true});await f.click('#wz-only [data-only="food"]');await f.click('#wz-only-go');ok(await f.textContent('#wzstep')==='шаг 2 из 4'&&await f.locator('#wzpath span').count()===4,tag+'«только еда» — честные четыре части, без лишнего шага зала');await f.close();
+  const f=await b.newPage({viewport:{width,height:844}});await M.поднять(f,{theme,newbie:true});await f.click('#wz-only [data-only="food"]');ok(await f.textContent('#wzstep')==='шаг 1 из 2'&&await f.locator('#wzpath span').count()===2,tag+'только питание: режим и цель, без этапа зала');await f.close();
   /* 22.10: строка про бесплатный лимит жила в справке; справки нет — лимит виден на «Еде» у «Добавить приём» */
  }
 }finally{await b.close()}

@@ -91,14 +91,11 @@ async function новичок(b,theme,width){
  /* анкета: ошибка гаснет по мере ввода */
  {const p=await b.newPage({viewport:{width:390,height:844}});
   await M.поднять(p,{theme:'light',newbie:true,wait:2500});
-  await M.шаги(p,{до:'me'});for(const id of ['#wz-age','#wz-ht','#wz-bw'])await p.fill(id,'');await p.click('#wz-me-go');await p.waitForTimeout(300);
-  const t0=await p.textContent('#wz-me-err');ok(/возраст, рост, вес/.test(t0),'пусто — просит всё: '+t0);
-  await p.fill('#wz-age','30');await p.waitForTimeout(100);
-  const t1=await p.textContent('#wz-me-err');ok(/рост/.test(t1)&&!/возраст/.test(t1),'вписал возраст — в ошибке его уже нет: '+t1);
-  await p.fill('#wz-ht','180');await p.fill('#wz-bw','95');await p.waitForTimeout(100);
-  ok(!(await вид(p,'#wz-me-err')),'заполнил всё — ошибки нет ещё до «Далее»');
-  const пл=await p.$eval('#wz-age',e=>getComputedStyle(e,'::placeholder').fontStyle);
-  ok(пл==='italic','образец в поле — курсивом, не путается с числом');
+  await M.шаги(p,{до:'me'});await p.fill('#gtalk-form [name="age"]','');await p.click('#gtalk-form [type="submit"]');
+  ok(await p.locator('#gtalk-form [name="age"]').evaluate(e=>!e.validity.valid),'пустой возраст не отправляется');
+  await p.fill('#gtalk-form [name="age"]','30');ok(await p.locator('#gtalk-form [name="age"]').evaluate(e=>e.validity.valid),'ввели возраст — ошибка поля снята');
+  await p.click('#gtalk-form [type="submit"]');await p.waitForFunction(()=>document.getElementById('goalconversation').dataset.question==='health');
+  ok(await p.locator('#goalconversation').isVisible(),'следующий вопрос зависит от принятого ответа');
   await p.close();}
 }finally{await b.close();}
 console.log(bad?'ПРОВАЛОВ: '+bad:'всё ок');process.exit(bad?1:0);})();

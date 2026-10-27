@@ -128,18 +128,26 @@ function журнал() {
 /* ── подстановки ── */
 /* 14.10: знакомство по шагам — что ведём → параметры → цель → ограничения
    (→ где и когда). до: 'me' | 'goal' | 'health' | 'form' (по умолчанию). */
+async function цельШаги(page,o){
+  o=o||{};
+  for(let n=0;n<30;n++){
+    await page.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e&&e.getAttribute('aria-busy')==='false'&&e.dataset.state!=='loading';});
+    const state=await page.locator('#goalconversation').getAttribute('data-state'),key=await page.locator('#goalconversation').getAttribute('data-question');
+    if((o.до==='goal'&&state==='options')||(o.до==='health'&&key==='health')||(o.до==='me'&&key==='age'))return;
+    if(state==='options'){await page.locator('#goalconversation [data-gta="select"]').first().click();continue;}
+    if(state==='confirm'){await page.locator('#goalconversation [data-gta="confirm"]').click();continue;}
+    if(state==='done'){await page.locator('#goalconversation [data-gta="finish"]').click();return;}
+    const answers={intent:o.intent||'loss',health:'clear',priority:'shape',capacity:o.only==='food'?'food':'regular',effort:'steady',deadline:'flexible',fatSource:'scales',weightFresh:'same'};
+    if(answers[key]){await page.locator('#goalconversation [data-value="'+answers[key]+'"]').click();continue;}
+    const fields=await page.locator('#gtalk-form input,#gtalk-form select').evaluateAll(es=>es.map(e=>({name:e.name,tag:e.tagName})));
+    const vals={age:o.age||34,ht:o.ht||176,bw:o.bw||88,sex:o.sex||'m',target:o.target||80,fat:'',muscle:'preserve'};
+    for(const f of fields){const el=page.locator('#gtalk-form [name="'+f.name+'"]');if(f.tag==='SELECT')await el.selectOption(String(vals[f.name]));else await el.fill(String(vals[f.name]));}
+    await page.locator('#gtalk-form [type="submit"]').click();
+  }
+  throw new Error('Консультация не дошла до ожидаемого шага');
+}
 async function шаги(page, o) {
-  o = o || {};
-  await page.click('#wz-only button[data-only="' + (o.only || 'all') + '"]');
-  await page.click('#wz-only-go'); await page.waitForTimeout(200);
-  if (o.до === 'me') return;
-  await page.fill('#wz-age', String(o.age || 34)); await page.fill('#wz-ht', String(o.ht || 176)); await page.fill('#wz-bw', String(o.bw || 88));
-  await page.click('#wz-me-go'); await page.waitForTimeout(300);
-  if (o.до === 'goal') { await page.waitForFunction(() => { const g = document.getElementById('g-go'); return g && !g.disabled; }, null, { timeout: 8000 }).catch(() => {}); return; }
-  await page.waitForFunction(() => { const g = document.getElementById('g-go'); return g && !g.disabled; }, null, { timeout: 8000 }).catch(() => {});
-  await page.click('#g-go'); await page.waitForTimeout(900);
-  if (o.до === 'health') return;
-  await page.click('#wz-health-go'); await page.waitForTimeout(600);
+  o=o||{};await page.click('#wz-only button[data-only="'+(o.only||'all')+'"]');await page.click('#wz-only-go');await цельШаги(page,o);
 }
 async function поднять(page, o) {
   o = o || {};
@@ -259,10 +267,25 @@ async function поднять(page, o) {
     if(o.handleRoute && await o.handleRoute(route))return;
     const u = new URL(route.request().url()), p = u.pathname;
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
+    /* 27.10: консультацию проверяем настоящим серверным деревом и SQLite,
+       остальные функции стенда по-прежнему отвечают синтетическими данными. */
+    if(p==='/goal/dialog'){
+      if(o.onGoalDialog)return дать(await o.onGoalDialog(JSON.parse(route.request().postData()||'{}')));
+      if(!o._goalFixture){
+        const {fixture}=require('../../getfit-sync/tests/lib/goal-dialog.cjs');
+        o._goalFixture=await fixture({...((o.me)||(o.newbie?{}:{sex:'m',age:34,ht:178,bw:88.1})),...(o._goalOnly?{only:o._goalOnly}:{})},o.newbie?null:(o.meas||замеры())[0]||null);
+        if(o.goal)await o._goalFixture.c.stateSet(o._goalFixture.env,o._goalFixture.uid,'goal',o.goal);
+      }
+      const b=JSON.parse(route.request().postData()||'{}');delete b.uid;
+      const result=await o._goalFixture.call(route.request().method()==='GET'?{action:'get'}:b);
+      if(result.goal){o.goal=result.goal;o.me=result.me;if(o.viz)o.viz.goal=result.goal;}
+      (o.goalDialogCalls||(o.goalDialogCalls=[])).push(b);
+      return дать(result);
+    }
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/i18n') { if(o.i18nGate) await o.i18nGate; if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
     if (p === '/all')        return дать({ state: o._programDraft ? [{key:'program_draft',data:o._programDraft,updated:o._programDraftAt}] : [], workouts: [], meals: [], measures: [] });
-    if (p === '/s') {const b=JSON.parse(route.request().postData()||'{}');if(b.key==='program_draft'){o._programDraft=b.data;o._programDraftAt=Math.max(Date.now(),(o._programDraftAt||0)+1);return дать({ok:true,data:b.data,updated:o._programDraftAt});}return дать({ok:true});}
+    if (p === '/s') {const b=JSON.parse(route.request().postData()||'{}');if(b.key==='me'&&b.data?.me?.only)o._goalOnly=b.data.me.only;if(b.key==='program_draft'){o._programDraft=b.data;o._programDraftAt=Math.max(Date.now(),(o._programDraftAt||0)+1);return дать({ok:true,data:b.data,updated:o._programDraftAt});}return дать({ok:true});}
     /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
     if (p === '/gym/when')   return дать(o.gymWhen || { ok: true, when: 'auto', auto: { src: 'auto', вид: 'мало', label: '', спросить: 1260 } });
     /* 02.10: свободный день. o.free — список дат, o.окно — окно и цена, как
@@ -760,4 +783,4 @@ async function ответитьДлительность(page, мин) {
   return true;
 }
 
-module.exports = { шаги, ответитьДлительность, Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };
+module.exports = { шаги, цельШаги, ответитьДлительность, Д, TODAY, БАЗА, поднять, день, неделя, замеры, стартовый, круг, журнал };

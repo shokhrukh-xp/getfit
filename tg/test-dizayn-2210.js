@@ -38,10 +38,9 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   /* знакомство: «Далее» внизу, «в зале» 2×2 */
   {const p=await b.newPage({viewport:{width,height:844}});
    await M.поднять(p,{theme,newbie:true,wait:2500});await M.шаги(p,{до:'goal'});
-   const z=await p.evaluate(()=>{const g=document.getElementById('g-go').getBoundingClientRect(),кн=[...document.querySelectorAll('#g-gym button')].map(x=>x.getBoundingClientRect());
-     return {низ:innerHeight-g.bottom,колонки:new Set(кн.map(r=>Math.round(r.left))).size,ряды:new Set(кн.map(r=>Math.round(r.top))).size};});
-   ok(z.низ>=0&&z.низ<=40,где+'«Так и делаем» прижата к низу экрана и видна (до края '+Math.round(z.низ)+' px)');
-   ok(await p.locator('#g-muscle').isVisible() && await p.locator('#g-fat').isVisible(),где+'общая цель: жир необязателен, мышцы сохранить/развивать');
+   const z=await p.locator('#goalconversation [data-gta="select"]').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {height:r.height,left:r.left,right:r.right};}));
+   ok(z.length>0&&z.every(r=>r.height>=44&&r.left>=0&&r.right<=width),где+'варианты цели имеют крупные кнопки и помещаются по ширине');
+   ok(!await p.locator('#bodygoalform').isVisible(),где+'параметры образа не опережают разговор');
    await p.close();}
  }
  /* ревью Codex R1: свободный день в начале ряда — подписи графика не ложатся на 🍕 */
@@ -53,8 +52,9 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   await p.close();}
  /* ревью Codex R3: короткое окно — кнопка цели не закрывает варианты «в зале» */
  for(const width of [320,390]){const p=await b.newPage({viewport:{width,height:420}});await M.поднять(p,{theme:'light',newbie:true,wait:2500});await M.шаги(p,{до:'goal'});
-  const пк=await p.evaluate(()=>{const g=document.getElementById('g-go').getBoundingClientRect();return [...document.querySelectorAll('#g-gym button, #g-wt button')].some(e=>{const r=e.getBoundingClientRect();return r.left<g.right&&g.left<r.right&&r.top<g.bottom&&g.top<r.bottom;});});
-  ok(!пк,width+'×420: кнопка цели не закрывает варианты');await p.close();}
+  const cards=p.locator('#goalconversation .gtalk-option');
+  for(let i=0;i<await cards.count();i++){const button=cards.nth(i).locator('[data-gta="select"]');await button.scrollIntoViewIfNeeded();const r=await button.boundingBox();ok(r.y>=0&&r.y+r.height<=420,width+'×420: выбор доступен прокруткой');}
+  await p.close();}
  /* ревью Codex R2: статус дня недели — и формой (✓ / !), не только цветом */
  /* 26.10: в понедельник прошлых дней этой недели нет. Задаём статусы явно,
     чтобы каждый из трёх знаков проверялся независимо от дня запуска. */

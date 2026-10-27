@@ -17,7 +17,9 @@ const ME={sex:'f',age:35,ht:170,bw:75,wt:'down',gym:'muscle',goal:'fat',only:'al
  await p.reload();await p.waitForTimeout(900);await p.click('#profbtn');await p.click('#zdtoggle');ok(await p.locator('#zd-met [data-v="1"]').getAttribute('aria-pressed')==='true',theme+' метформин сохранён после перезагрузки');for(const [group,key]of [['more','bp'],['more','preg'],['osl','kid']])ok(await p.locator('#zd-'+group+' [data-v="'+key+'"]').getAttribute('aria-pressed')==='true',theme+' '+key+' сохранён после перезагрузки');await p.close();
  }
  const p=await br.newPage({viewport:{width:390,height:844}});await M.поднять(p,{theme:'dark',newbie:true});await M.шаги(p,{до:'health'});
- // click() DOM не фокусирует кнопку: ловим лишнюю перерисовку WebView.
- await p.locator('#wz-dia [data-v="t2"]').click();const met=p.locator('#wz-met [data-v="1"]');await met.evaluate(e=>e.click());ok(await met.getAttribute('aria-pressed')==='true','анкета: метформин отмечается без фокуса');
- const bp=p.locator('#wz-more [data-v="bp"]');await bp.evaluate(e=>e.click());ok(await bp.getAttribute('aria-pressed')==='true','анкета: tap без фокуса сохраняет отметку');await bp.evaluate(e=>e.click());ok(await bp.getAttribute('aria-pressed')==='false','анкета: второй tap снимает отметку');await bp.click();await p.click('#wz-health-go');await p.click('#wz-prev');ok(await p.locator('#wz-more [data-v="bp"]').getAttribute('aria-pressed')==='true','анкета: выбор сохранён при переходе вперёд-назад');await p.close();
+ await p.locator('#goalconversation [data-value="limited"]').evaluate(e=>e.click());
+ await p.waitForSelector('#gtalk-form textarea');ok(await p.locator('#goalconversation').getAttribute('data-question')==='healthNote','один tap без фокуса открывает одно уточнение');
+ await p.fill('#gtalk-form textarea','Болит колено');await p.click('#gtalk-form [type="submit"]');await p.waitForFunction(()=>document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
+ await p.click('#goalconversation [data-gta="back"]');await p.waitForSelector('#gtalk-form textarea');ok(await p.locator('#goalconversation').getAttribute('data-question')==='healthNote','назад возвращает к ответу об ограничениях');
+ await p.close();
 }finally{await br.close()}if(bad)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});

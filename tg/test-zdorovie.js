@@ -120,18 +120,15 @@ async function жми(page, sel, текст) {
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
   await M.поднять(page, { theme: 'dark', wait: 2800, newbie: true });
   await page.waitForTimeout(900);
-  /* 14.10, его выбор: знакомство по шагам — здоровье отдельным шагом 4 */
-  await M.шаги(page, { до: 'health' });
-  дано(await page.isVisible('#wzhealth') && /Есть ограничения/.test(await page.textContent('#picktitle')), 'шаг «Есть ограничения?»');
-  дано(/шаг 4 из 5/.test(await page.textContent('#wzstep')), 'четвёртым шагом: ' + await page.textContent('#wzstep'));
-  дано(await page.isVisible('#wz-dia'), 'вопросы сразу на виду, без раскрытия');
-  дано(!!(await page.$('#wz-dia')), 'внутри тот же набор вопросов, что и в профиле');
-  дано(await жми(page, '#wz-dia button', '1 тип'), 'диабет выбирается и тут');
-  await page.waitForTimeout(300);
-  дано(!(await page.$eval('#wz-diamore', e => e.hidden)), 'и подвопросы раскрываются так же');
-  await page.click('#wz-health-go'); await page.waitForTimeout(500);
-  const мед = await page.evaluate(() => { try { return (JSON.parse(localStorage.getItem('shp_v1_me')) || {}).med || null; } catch (e) { return null; } });
-  дано(мед && мед.dia === 't1', 'ответ записан в профиль: ' + JSON.stringify(мед && мед.dia));
+  await M.шаги(page,{до:'health'});
+  дано(await page.isVisible('#goalconversation'),'вопрос про ограничения до параметров цели');
+  await page.click('#goalconversation [data-value="limited"]');
+  await page.waitForSelector('#gtalk-form textarea');await page.fill('#gtalk-form textarea','Диабет 1 типа, следую рекомендациям врача');await page.click('#gtalk-form [type="submit"]');
+  await M.цельШаги(page,{до:'goal'});
+  дано(await page.locator('#goalconversation [data-gta="select"]').count()===1,'при ограничениях только цель без автоматического снижения веса');
+  await M.цельШаги(page,{});
+  const med=await page.evaluate(()=>JSON.parse(localStorage.getItem('shp_v1_me')).goalContext);
+  дано(med.health==='limited'&&/Диабет/.test(med.note),'после подтверждения тренер сохраняет сообщённые ограничения');
   await page.close();
 
   await br.close();

@@ -22,32 +22,16 @@ const текст = async (page, sel) => (await page.textContent(sel).catch(() =>
   const ош = await M.поднять(page, { theme: 'dark', newbie: true, wait: 2500 });
   дано(ош.length === 0, 'страница поднялась без ошибок ' + (ош[0] || ''));
 
-  /* ── 1. 14.10, его выбор: знакомство по шагам — что ведём → параметры →
-     цель → ограничения → где и когда; «Назад» и счётчик ── */
-  дано(await page.isVisible('#wzonly'), 'шаг 1 — что будем вести');
-  дано(/шаг 1 из 5/.test(await текст(page, '#wzstep')), 'счётчик: ' + await текст(page, '#wzstep'));
-  дано(/что будем вести/i.test(await текст(page, '#picktitle')), 'заголовок: ' + await текст(page, '#picktitle'));
-  дано(!(await page.isVisible('#wz-prev').catch(() => false)), 'на первом шаге назад некуда');
-  дано(!(await page.isVisible('#wzme').catch(() => false)) && !(await page.isVisible('#wzgoal').catch(() => false)), 'остальное — на своих шагах');
-  await page.click('#wz-only-go'); await page.waitForTimeout(200);
-  дано(await page.isVisible('#wzme') && /шаг 2 из 5/.test(await текст(page, '#wzstep')), 'шаг 2 — параметры');
-  дано(await page.isVisible('#wz-prev'), 'есть «Назад»');
-  await page.click('#wz-prev'); await page.waitForTimeout(200);
-  дано(await page.isVisible('#wzonly'), '«Назад» вернул на шаг 1');
-  await page.click('#wz-only-go'); await page.waitForTimeout(200);
-  /* ── 2. без веса дальше не пускаем ── */
-  await page.click('#wz-me-go'); await page.waitForTimeout(200);
-  дано(/Заполните возраст/.test(await текст(page, '#wz-me-err')), 'без параметров — понятная ошибка: ' + await текст(page, '#wz-me-err'));
-  await page.fill('#wz-age', '34'); await page.fill('#wz-ht', '176'); await page.fill('#wz-bw', '88');
-  await page.click('#wz-me-go');
-  await page.waitForSelector('#g-rng', { timeout: 8000 }).catch(() => {});
-  await page.waitForTimeout(500);
-  дано(await page.isVisible('#g-rng') && /шаг 3 из 5/.test(await текст(page, '#wzstep')), 'шаг 3 — цель, шкала посчиталась');
-  await page.click('#g-go'); await page.waitForTimeout(900);
-  дано(await page.isVisible('#wzhealth') && /шаг 4 из 5/.test(await текст(page, '#wzstep')), 'шаг 4 — ограничения');
-  дано(/Есть ограничения/.test(await текст(page, '#picktitle')), 'заголовок: ' + await текст(page, '#picktitle'));
-  await page.click('#wz-health-go'); await page.waitForTimeout(400);
-  дано(await page.isVisible('#wzform') && /шаг 5 из 5/.test(await текст(page, '#wzstep')), 'шаг 5 — где и когда');
+  /* Адаптивное знакомство: режим → разговор → подтверждение → программа. */
+  дано(await page.isVisible('#wzonly'), 'сначала выбираем режим приложения');
+  дано(/шаг 1 из 3/.test(await текст(page,'#wzstep')), 'три этапа, вопросы не считаем заранее');
+  await M.шаги(page,{до:'health'});
+  дано(await page.isVisible('#goalconversation'), 'разговор открыт у тренера');
+  await page.click('#goalconversation [data-gta="back"]');
+  await page.waitForFunction(()=>document.getElementById('goalconversation').dataset.question==='age'&&document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
+  дано(await page.isVisible('#gtalk-form [name="age"]'), 'назад возвращает к предыдущему ответу');
+  await M.цельШаги(page,{});
+  дано(await page.isVisible('#wzform'),'после выбора и подтверждения цели — расписание');
 
   /* ── 3. «Далее» доводит до программы ── */
   await page.click('#wz-go');

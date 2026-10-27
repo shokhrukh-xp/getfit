@@ -15,11 +15,10 @@ const вид=(p,s)=>p.evaluate(s=>{const e=document.querySelector(s);return !!e&
   const карт=await p.evaluate(()=>[...document.querySelectorAll('#wz-only button')].map(x=>{const r=x.getBoundingClientRect();return {h:r.height,r:r.right,t:x.textContent}}));
   ok(карт.length===2&&карт.every(x=>x.h>=44&&x.r<=width),где+'шаг 1: две карточки, крупные, в экране');
   await p.screenshot({path:'/tmp/gf-onb-1-'+theme+'-'+width+'.png'});
-  await M.шаги(p,{до:'me'});await p.screenshot({path:'/tmp/gf-onb-2-'+theme+'-'+width+'.png'});
-  await p.fill('#wz-age','34');await p.fill('#wz-ht','176');await p.fill('#wz-bw','88');await p.click('#wz-me-go');
-  await p.waitForFunction(()=>{const g=document.getElementById('g-go');return g&&!g.disabled;},null,{timeout:8000}).catch(()=>{});
-  await p.screenshot({path:'/tmp/gf-onb-3-'+theme+'-'+width+'.png'});
-  await p.click('#g-go');await p.waitForTimeout(900);await p.screenshot({path:'/tmp/gf-onb-4-'+theme+'-'+width+'.png'});
+  await M.шаги(p,{до:'health'});await p.screenshot({path:'/tmp/gf-onb-health-'+theme+'-'+width+'.png'});
+  ok(await p.locator('#goalconversation').isVisible(),где+'здоровье уточняется до вариантов цели');
+  await M.цельШаги(p,{до:'goal'});await p.screenshot({path:'/tmp/gf-onb-options-'+theme+'-'+width+'.png'});
+  ok(await p.locator('#goalconversation [data-gta="select"]').count()>=1,где+'варианты после ответов, без автоматического сохранения');
   const вбок=await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   ok(!вбок,где+'страница не ездит вбок');
   ok(!err.length,где+'без ошибок'+(err.length?': '+err.join(' | '):''));

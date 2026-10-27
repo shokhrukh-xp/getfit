@@ -1,79 +1,23 @@
 'use strict';
-/* 26.10: одна задача — сохранить цель и показать фото. Ошибка сохранения не запускает генерацию. */
+/* Образ выбранной цели: параметры только для чтения; генерация явным действием.
+   Несовпадающее старое фото не становится образом новой цели. */
 const {chromium}=require('playwright'),assert=require('assert/strict'),M=require('./mock'),path=require('path'),fs=require('fs');
 const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,{recursive:true});
-(async()=>{
- const br=await chromium.launch();
- try{for(const [width,theme] of [[320,'light'],[390,'dark']]){
-  let goal={text:'75 кг · 15% жира · мышцы сохранить',wt:'down',gym:'strength',w0:86.1,kg:11.1,rate:-.43,from:'2026-09-01',body:{v:1,target:75,fat:15,muscle:'preserve'}},last,error=false;
-  const progress={w0:86.1,now:82,rate:-.43,kg:11.1,fact:-4.1,forecast:{state:'forecast',from:'2027-01-31',to:'2027-04-06',text:'По прогрессу: 31.01 — 06.04.',compositionNote:'Срок для процента жира уточним по серии замеров; это не дата достижения веса.'}};
-  const page=await br.newPage({viewport:{width,height:844}});
+(async()=>{const br=await chromium.launch();try{
+ for(const [width,theme] of [[320,'light'],[390,'dark']]){
+  const goal={text:'75 кг · 15% жира · мышцы сохранить',wt:'down',gym:'strength',w0:86.1,kg:11.1,rate:-.43,from:'2026-09-01',body:{v:1,target:75,fat:15,muscle:'preserve'}};
   const calc={ok:true,w0:86.1,w1:75,fat0:24,fat1:15,dl:-1.7,dlMin:-3,dlMax:3,пол:64,sex:'m',талия0:100,талия1:90,отношение:.9,талияД:10,талияОт:7,талияДо:13,срез:[]};
-  const o={page:'home',theme,goal,progress,viz:{ok:true,allowed:true,consent:true,adult:true,photo:1793001600000,goalLinked:true,goal,calc,result:{k:'saved',calc:{...calc,w1:78,fat1:18,visualVersion:5}}},onVizCalc:()=>o.viz.calc,vizImg:()=>path.join(__dirname,'fixtures/viz-0-ishod.jpg'),onVizRender:()=>({ok:false,error:'Пробный отказ генератора'}),me:{sex:'m',age:34,ht:178,bw:86.1,wt:'down',gym:'strength',coach_at:'x'},onGoalSave:b=>{last=b;if(error)return {ok:false,error:'Нет связи — повторите'};goal={...goal,text:b.target+' кг · мышцы '+(b.muscle==='develop'?'развивать':'сохранить'),body:{v:1,target:b.target,fat:b.fat,muscle:b.muscle}};o.goal=goal;o.viz.goal=goal;o.viz.calc={...calc,w1:b.target,fat1:b.fat||15};return {ok:true,goal,progress};}};
-  const errors=await M.поднять(page,o);await page.waitForTimeout(900);await page.click('[data-vzv="fat"]');await page.waitForTimeout(200);assert.match(await page.textContent('#homebody .vzg-goal'),/11,3/);await page.click('#profbtn');await page.waitForTimeout(600);
-  assert.equal(await page.locator('#goalcard button:visible').count(),1);
-  assert.equal(await page.locator('#goalcard details').getAttribute('open'),null);
-  assert.match(await page.innerText('#goalcard'),/31.01–06.04.2027/);
-  assert.doesNotMatch(await page.innerText('#goalcard'),/не гарантирует|Срок для процента/);
-  assert.ok((await page.locator('#goalcard').boundingBox()).height<390);
-  await page.locator('#goalcard').screenshot({path:path.join(OUT,'card-'+width+'.png')});
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizph');
-  assert.equal(await page.textContent('#viztitle'),'Постановка цели');
-  await page.waitForFunction(()=>document.getElementById('vizorig').naturalWidth>0);
-  assert.equal(await page.locator('#vizstart').isVisible(),false,'Октябрьское фото не выдаём за сентябрьский старт');
-  assert.equal(await page.locator('#vizpair figure:visible').count(),2);
-  assert.match(await page.textContent('#viznowmetrics'),/86,1 кг.*24% жира.*65,4 кг без жира/);
-  assert.match(await page.textContent('#vizgoalmetrics'),/75 кг.*15% жира.*63,8 кг без жира/);
-  const boxes=await Promise.all(['vizorig','vizph'].map(id=>page.locator('#'+id).boundingBox()));
-  assert.ok(boxes.every(b=>b.width>0&&b.x>=0&&b.x+b.width<=width));
-  assert.ok(Math.abs(boxes[0].height-boxes[1].height)<2);
-  assert.equal(await page.inputValue('#bodygoalweight'),'75');assert.equal(await page.locator('#vizm #bodygoalform').count(),1);
-  assert.equal(await page.locator('#vizcontrols').isVisible(),false);assert.equal(await page.locator('#vizgoaledit').isVisible(),false);
-  assert.equal(await page.locator('#vizorig').isVisible(),true);assert.equal(await page.locator('#viznew').isVisible(),false);
-  assert.match(await page.innerText('#viznewcap'),/Образ цели/);
-  assert.match(await page.innerText('#vizph'),/Образ текущей цели ещё не создан/);
-  assert.equal(await page.locator('#goalphotos #vizmsg').count(),1);
-  const status=await page.locator('#vizph').boundingBox(), fields=await page.locator('#bodygoalform').boundingBox();
-  assert.ok(status.y+status.height<=fields.y,'Статус фото перед полями, без раскрытия');
-  await page.screenshot({path:path.join(OUT,'unified-'+width+'.png')});
-  await page.fill('#bodygoalweight','76');await page.fill('#bodygoalfat','');await page.selectOption('#bodygoalmuscle','develop');
-  assert.doesNotMatch(await page.textContent('#viznewcap'),/78/); // черновик не переименовывает сохранённое фото
-  error=true;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Нет связи/.test(document.getElementById('bodygoalerror').textContent));assert.equal(goal.body.target,75);assert.equal(o.vizAsked.render.length,0);
-  error=false;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Пробный отказ/.test(document.getElementById('vizmsg').textContent),null,{timeout:30000}).catch(async e=>{console.log(await page.textContent('#vizmsg'),await page.textContent('#bodygoalerror'),JSON.stringify(o.vizAsked.render));throw e;});
-  assert.equal(await page.locator('#goalphotos #vizmsg').isVisible(),true);
-  assert.match(await page.innerText('#goalphotos #vizmsg'),/Пробный отказ/);
-  assert.equal(last.bodyGoal,true);assert.equal(last.fat,null);assert.equal(goal.body.muscle,'develop');assert.equal(o.vizAsked.render.at(-1).w,76);
-  assert.equal(await page.locator('#vizm').isVisible(),true);assert.doesNotMatch(await page.textContent('#viznewcap'),/78/);
-  await page.waitForFunction(()=>!document.getElementById('bodygoalsave').disabled);await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>document.activeElement.matches('#goalcard [data-bodygoal]')),true);
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizph');assert.equal(await page.inputValue('#bodygoalweight'),'76');assert.equal(await page.inputValue('#bodygoalfat'),'');
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
-  o.viz.calc={ok:false,goalLinked:true,error:'Эта цель требует другого изменения безжировой массы.'};
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizph');
-  assert.match(await page.innerText('#bodygoalerror'),/Эта цель/);assert.equal(await page.locator('#bodygoalerror').isVisible(),true);
-  assert.equal(await page.locator('#bodygoalsave').isDisabled(),true);assert.doesNotMatch(await page.textContent('#viznewcap'),/78/);
-  await page.fill('#bodygoalweight','77');assert.equal(await page.locator('#bodygoalsave').isEnabled(),true);
-  const renders=o.vizAsked.render.length;await page.waitForTimeout(300);assert.equal(o.vizAsked.render.length,renders);
-  await page.setViewportSize({width,height:420});await page.locator('#bodygoalsave').scrollIntoViewIfNeeded();assert.equal(await page.locator('#bodygoalsave').isVisible(),true);
-  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
-  o.viz.calc={...calc,w1:76,fat1:15};o.viz.left=0;o.viz.unlimited=false;
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizquota:not([hidden])');
-  assert.match(await page.innerText('#vizquota'),/Дневной лимит фото исчерпан/);
-  assert.equal(await page.locator('#bodygoalsave').isDisabled(),true);
-  await page.fill('#bodygoalfat','15');assert.match(await page.innerText('#bodygoalsave'),/Сохранить цель без фото/);
-  const noRender=o.vizAsked.render.length;await page.click('#bodygoalsave');await page.waitForFunction(()=>/Цель сохранена/.test(document.getElementById('bodygoalerror').textContent));
-  await page.waitForFunction(()=>document.getElementById('bodygoalsave').textContent==='Лимит исчерпан — до завтра');
-  assert.equal(o.vizAsked.render.length,noRender,'лимит не мешает сохранить цель и не запускает генерацию');
-  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
-  o.viz.unlimited=true;o.viz.left=null;
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#vizph');
-  assert.equal(await page.locator('#vizquota').isVisible(),false);assert.equal(await page.locator('#bodygoalsave').isEnabled(),true);
-  await page.keyboard.press('Escape');await page.locator('#vizm').waitFor({state:'hidden'});
-  o.viz.result={k:'current',calc:{...o.viz.calc,visualVersion:5}};
-  await page.click('#goalcard [data-bodygoal]');await page.waitForSelector('#viznew:not([hidden])');
-  assert.match(await page.textContent('#viznewcap'),/Образ цели · ИИ/,'Образ совпадающей цели остаётся видимым');
-  assert.equal(await page.locator('#vizstart').isVisible(),false);
-  assert.deepEqual(errors,[]);await page.close();
+  const o={page:'home',theme,goal,me:{sex:'m',age:34,ht:178,bw:86.1,coach_at:'x'},viz:{ok:true,allowed:true,consent:true,adult:true,photo:1793001600000,goalLinked:true,goal,calc,result:{k:'saved',calc:{...calc,w1:78,fat1:18,visualVersion:5}}},onVizCalc:()=>o.viz.calc,vizImg:()=>path.join(__dirname,'fixtures/viz-0-ishod.jpg'),onVizRender:()=>({ok:false,error:'Пробный отказ генератора'})};
+  const p=await br.newPage({viewport:{width,height:844}}),errors=await M.поднять(p,o);
+  await p.click('#profbtn');assert.equal(await p.locator('#goalcard [data-bodygoal]').count(),1);await p.click('#vizopen');await p.waitForSelector('#vizph');
+  assert.equal(await p.textContent('#viztitle'),'Образ выбранной цели');assert.equal(await p.locator('#bodygoalm').isVisible(),false);assert.equal(await p.locator('#vizcontrols').isVisible(),false);assert.equal(await p.locator('#vizgoaledit').isVisible(),true);
+  assert.match(await p.textContent('#viznowmetrics'),/86,1 кг.*24% жира.*65,4 кг без жира/);assert.match(await p.textContent('#vizgoalmetrics'),/75 кг.*15% жира.*63,8 кг без жира/);
+  assert.equal(await p.locator('#viznew').isVisible(),false);assert.match(await p.textContent('#vizph'),/Образ текущей цели ещё не создан/);assert.equal((o.vizAsked?.render||[]).length,0);
+  await p.locator('#vizm .modalbox').screenshot({path:path.join(OUT,'image-'+width+'.png')});await p.click('#vizgo');await p.waitForFunction(()=>/Пробный отказ/.test(document.getElementById('vizmsg').textContent));assert.equal(o.goal.body.target,75);assert.equal(o.vizAsked.render.length,1);
+  await p.click('#vizgoaledit');await p.waitForSelector('#goalconversation');assert.equal(await p.locator('#vizm').isVisible(),false);assert.equal(o.goal.body.target,75,'обсуждение изменения не сохраняет новую цель');await p.click('#coachclose');
+  await p.locator('#profm').waitFor({state:'visible'});o.viz.left=0;o.viz.unlimited=false;await p.click('#vizopen');await p.waitForSelector('#vizquota:not([hidden])');assert.equal(await p.locator('#vizgo').isDisabled(),true);assert.equal(await p.locator('#vizgoaledit').isEnabled(),true,'лимит образов не мешает обсудить цель');
+  await p.click('#vizclose');o.viz.left=5;o.viz.calc={ok:false,error:'Для образа нужно уточнить состав тела.'};await p.click('#vizopen');await p.waitForSelector('#bodygoalerror:visible');assert.match(await p.textContent('#bodygoalerror'),/уточнить состав/);assert.equal(await p.locator('#vizgo').isDisabled(),true);assert.equal(await p.locator('#vizgoaledit').isEnabled(),true);
+  assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);await p.close();
  }
  /* 27.10: полный путь кнопки при отказе проверки вида; ответы моделей подставные,
     сохранение/запросы/показ результата выполняет настоящий код страницы. */
@@ -84,21 +28,14 @@ const OUT=process.env.GOAL_SCREENSHOTS||'/tmp/gf-goal-unified';fs.mkdirSync(OUT,
  const retryOptions={page:'home',goal:retryGoal,me:{sex:'m',age:34,ht:178,bw:85.8,coach_at:'x'},viz:{ok:true,allowed:true,consent:true,adult:true,photo:1,goalLinked:true,goal:retryGoal,calc:retryCalc,left:8},onVizCalc:()=>retryCalc,vizImg:k=>k==='orig'?path.join(__dirname,'fixtures/viz-0-ishod.jpg'):path.join(OUT,'retry-image.jpg'),onVizRender:b=>{fs.writeFileSync(path.join(OUT,'retry-image.jpg'),Buffer.from(b.target,'base64'));return {ok:true,k:'retry'+(++retryRenders),calc:retryCalc,left:8-retryRenders};}};
  const retryErrors=await M.поднять(retryPage,retryOptions);
  await retryPage.route('**/viz/select',async route=>{retrySelects++;await route.fulfill({status:retrySelects===1?422:200,contentType:'application/json',body:JSON.stringify(retrySelects===1?{error:'Новый вариант не прошёл проверку тела и позы.',code:'viz_appearance'}:{ok:true})});});
- await retryPage.click('#profbtn');await retryPage.click('#goalcard [data-bodygoal]');await retryPage.waitForSelector('#vizph');
- await retryPage.click('#bodygoalsave');
- await retryPage.waitForFunction(()=>!document.getElementById('bodygoalsave').disabled&&!document.getElementById('viznew').hidden);
- assert.equal(retryRenders,2);assert.equal(retrySelects,2);assert.equal(await retryPage.inputValue('#bodygoalfat'),'12');
+ await retryPage.click('#profbtn');await retryPage.click('#vizopen');await retryPage.waitForSelector('#vizph');
+ await retryPage.click('#vizgo');
+ await retryPage.waitForFunction(()=>!document.getElementById('vizgo').disabled&&!document.getElementById('viznew').hidden);
+ assert.equal(retryRenders,2);assert.equal(retrySelects,2);
  assert.match(await retryPage.textContent('#vizgoalmetrics'),/75 кг.*12% жира.*66 кг без жира/);
  assert.equal(await retryPage.locator('#viznew').isVisible(),true);assert.equal(await retryPage.locator('#vizph').isVisible(),false);
  assert.ok(retryOptions.vizAsked.render.every(b=>b.w===75&&b.fat===12));assert.equal(retryOptions.vizAsked.render[1].prev,'retry1');
  assert.deepEqual(retryErrors,[]);await retryPage.close();
- const noPhoto=await br.newPage({viewport:{width:320,height:844}});
- let saved=0;await M.поднять(noPhoto,{page:'home',viz:{ok:true,allowed:false},onGoalSave:b=>{saved++;return {ok:true,goal:{text:b.target+' кг',body:{v:1,target:b.target,fat:null,muscle:'preserve'}}};}});
- await noPhoto.click('#profbtn');await noPhoto.click('#goalcard [data-bodygoal]');await noPhoto.fill('#bodygoalweight','75');await noPhoto.click('#bodygoalsave');await noPhoto.waitForFunction(()=>/Цель сохранена/.test(document.getElementById('bodygoalerror').textContent));assert.equal(saved,1);assert.equal(await noPhoto.locator('#viz-consent').isVisible(),false);await noPhoto.close();
- const newbie=await br.newPage({viewport:{width:390,height:844}});
- await M.поднять(newbie,{newbie:true,onGoalSave:()=>({ok:false,error:'Выберите поддержание без цели по жиру'})});
- await M.шаги(newbie,{до:'goal',age:34,ht:178,bw:86});await newbie.click('#g-go');await newbie.waitForTimeout(400);
- assert.match(await newbie.textContent('#g-why'),/поддержание без цели/);await newbie.close();
- console.log('PASS единый экран: компактная карточка, сохранение до генерации, отказ, старое фото, обе темы 320/390, повторное открытие');
+ console.log('PASS образ после выбора: метрики, старое фото, явная генерация, повтор проверки, ошибка, лимит и изменение цели');
  }finally{await br.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
