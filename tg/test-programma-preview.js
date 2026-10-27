@@ -38,6 +38,15 @@ const PROG=require('./fixtures/prog-3dnya.json');
   // Выбор в каталоге правит только черновик, не SUBS/EXTRA установленной программы.
   await p.click('#aibox [data-aiedit="swap"][data-aiindex="0"]');
   await p.waitForSelector('#catalog .catpick');
+  assert.equal(await p.locator('#catalog [data-aioption]').count(),3);
+  const top=()=>p.locator('#catalog [data-aioption] .rtx b').allTextContents();
+  const choices=await top();
+  await p.waitForFunction(()=>[...document.querySelectorAll('#catalog [data-aioption]')].every(r=>[...r.querySelectorAll('img')].some(im=>im.complete&&im.naturalWidth>0)));
+  await p.screenshot({path:'/tmp/program-options-'+theme+'-'+width+'.png'});
+  await p.click('#catalog [data-aireject="0"]');const changed=await top();
+  assert.notEqual(changed[0],choices[0]);assert.deepEqual(changed.slice(1),choices.slice(1));
+  await p.click('#catalog [data-aireject="0"]');const changedAgain=await top();
+  assert.ok(![choices[0],changed[0]].includes(changedAgain[0]));assert.deepEqual(changedAgain.slice(1),choices.slice(1));
   await p.locator('#catalog .catpick').first().click();
   const swapped=await p.locator('#aibox .aiex .aien b').first().innerText();
   assert.ok(swapped);assert.equal(await saved(),beforeEdit);assert.deepEqual(await storage(),oldSlots);
@@ -52,9 +61,28 @@ const PROG=require('./fixtures/prog-3dnya.json');
   await p.click('#aibox [data-aitab="0"]');assert.equal(await p.locator('#aibox .aiex .aien b').first().innerText(),swapped);
   assert.equal(await saved(),beforeEdit);assert.deepEqual(await storage(),oldSlots);
   assert.ok(await p.locator('#aibox .aiedit button').evaluateAll(bs=>bs.every(b=>{let r=b.getBoundingClientRect();return r.height>=44&&r.right<=innerWidth})));
+  await p.click('#aibox [data-aiedit="params"][data-aiindex="0"]');
+  await p.locator('#aibox .aiparams [name="sets"]').fill('0');
+  await p.locator('#aibox .aiparams button[type="submit"]').click();
+  assert.equal(await p.locator('#aibox .aiparams').count(),1);assert.equal(await saved(),beforeEdit);
+  await p.locator('#aibox .aiparams [name="sets"]').fill('4');
+  await p.locator('#aibox .aiparams [name="reps"]').fill('ошибка');
+  await p.locator('#aibox .aiparams button[type="submit"]').click();
+  assert.equal(await p.locator('#aibox .aiparams').count(),1);
+  await p.locator('#aibox .aiparams [name="reps"]').fill('6–8');
+  // Переход на другой день сохраняет ввод без отдельного нажатия «Готово».
+  await p.click('#aibox [data-aitab="1"]');await p.click('#aibox [data-aitab="0"]');
+  assert.match(await p.locator('#aibox .aien').first().innerText(),/4 × 6–8/);
+  const order=await p.locator('#aibox .aien b').allTextContents();
+  await p.click('#aibox [data-aiedit="down"][data-aiindex="0"]');
+  const moved=await p.locator('#aibox .aien b').allTextContents();assert.equal(moved[1],order[0]);assert.equal(moved[0],order[1]);
+  assert.equal(await saved(),beforeEdit);assert.deepEqual(await storage(),oldSlots);
+  await p.click('#aibox [data-aiedit="swap"][data-aiindex="0"]');await p.waitForSelector('#catalog [data-aiall]');
+  await p.click('#catalog [data-aiall]');assert.equal(await p.locator('#catalog [data-aioption]').count(),0);assert.ok(await p.locator('#catalog .catpick').count()>3);
+  await p.click('#catclose');
   await p.screenshot({path:'/tmp/program-edit-'+theme+'-'+width+'.png'});
   await p.click('#aiapply');const installed=JSON.parse(await saved());assert.equal(installed.name,PROG.name);
-  assert.equal(installed.days[0].ex.length,7);assert.ok(!installed.days[0].ex.some(x=>x.id===PROG.days[0].ex[1].id));assert.equal(installed.days[0].ex[0].n,swapped);assert.equal(installed.days[0].ex.at(-1).n,added);
+  assert.equal(installed.days[0].ex.length,7);assert.ok(!installed.days[0].ex.some(x=>x.id===PROG.days[0].ex[1].id));assert.equal(installed.days[0].ex[1].n,swapped);assert.equal(installed.days[0].ex[1].sets,4);assert.equal(installed.days[0].ex[1].reps,'6–8');assert.equal(installed.days[0].ex.at(-1).n,added);
 
   assert.deepEqual(errors,[]);console.log('PASS повторная сборка: фото, дни, переключение, отказ, применение — '+theme+' '+width);await p.close();
  }

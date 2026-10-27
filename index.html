@@ -274,7 +274,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .aiex{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
 .aiex:last-child{border-bottom:none}
 #catalog.aidraft{z-index:135}
-.aiedit{grid-column:2;display:flex;gap:8px}.aiedit .btn{min-height:44px;flex:1;padding:8px;font-size:13px}.aiedit .btn:disabled{opacity:.45}
+.aiedit{grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:8px}.aimoves{display:flex;gap:8px}.aiparams{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.aiparams label{min-width:0;font-size:12px;color:var(--muted)}.aiparams input{display:block;width:100%;min-width:0;min-height:44px;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px;font:inherit;font-size:16px}.aiparams>.btn{grid-column:1/-1;min-height:44px}.aiqopt{border-bottom:1px solid var(--line-soft);padding:12px 0}.aiqopt .ropt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px}.aiqopt .ropt .fig2,.aiqopt .ropt .fig{flex:0 0 64px;width:64px;max-width:64px;border-radius:12px}.aiqopt .rtx{display:flex;flex-direction:column;gap:4px;min-width:0;line-height:1.35}.aiqopt .rtx b{font-size:14px}.aiqopt .rtx i{font-size:12px;font-style:normal;color:var(--muted)}.aiqactions{display:flex;gap:8px}.aiqactions button{flex:1;min-height:44px}.aiqactions .catpick{position:static}.aiqstatus{font-size:13px;color:var(--muted)}.aiedit .btn{min-height:44px;flex:1;padding:8px;font-size:13px}.aiedit .btn:disabled{opacity:.45}
 .aiex .exph{width:56px;height:56px;border-radius:16px;overflow:hidden;display:block;background:var(--field)}
 .aiex .exph .fig2,.aiex .exph .fig{width:56px;border-radius:16px}
 .aiex .exph .fig2{aspect-ratio:1}
@@ -5970,7 +5970,7 @@ function openCatalog(ctx){
   catMuscle = (ctx && ctx.muscle) || '';
   var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
-  if(t) t.textContent = (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
+  if(t) t.textContent = (ctx&&ctx.quick) ? 'Варианты замены' : (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
   var s=document.getElementById('catsearch'); if(s) s.value='';
   document.getElementById('catbody').innerHTML='<p class="mtext">Загружаю каталог…</p>';
   var повтор='<button type="button" class="btn wide" data-catretry="1">Повторить</button>';
@@ -6141,7 +6141,27 @@ function catRow(x, выбор){
             encodeURIComponent(x.e+' exercise technique')+'">видео</a>'))+
     '</div>';
 }
+/* 27.10: три лучших совпадения каталога, без ещё одного запроса ИИ.
+   «Не то» меняет только выбранную карточку, остальные две остаются на месте. */
+function aiТриКандидата(ctx){
+  var old=ctx.draft.days[ctx.day].ex[ctx.index], own=catById(old.id)||old;
+  var used={},names={};ctx.draft.days.forEach(function(d){d.ex.forEach(function(x){if(x.id)used[x.id]=1;[x.n,x.en].forEach(function(n){if(n)names[noYo(n).trim()]=1;});});});
+  var muscle=old.m||мышцаЕго({cat:old.id,p:old.p}),sub=own.m2||old.sm||'',kind=catKind(own);
+  var move=function(x){return noYo(x.n||'').split('(')[0].trim();};
+  var score=function(x){return (x.m===muscle?0:20)+((x.m2||'')===sub?0:12)+(x.mc&&own.mc&&x.mc===own.mc?0:4)+(move(x)===move(own)?0:3)+(x.q===own.q?0:1);};
+  return CAT.ex.filter(function(x){return (x.m===muscle||x.m2===muscle)&&catKind(x)===kind&&!NOPE[x.i]&&!used[x.i]&&!names[noYo(x.n).trim()]&&!names[noYo(x.e).trim()];}).sort(function(a,b){return score(a)-score(b)||String(a.n).localeCompare(String(b.n));});
+}
+function aiТриHtml(ctx){
+  var pool=aiТриКандидата(ctx);
+  if(!ctx.options)ctx.options=pool.slice(0,3).map(function(x){return x.i;});
+  var h='<p class="aiqstatus" role="status">'+(ctx.options.length?'Похожие варианты · выберите один':'Похожих вариантов больше нет — откройте весь каталог')+'</p>';
+  ctx.options.forEach(function(id,slot){var x=catById(id);if(!x)return;
+    h+='<div class="aiqopt" data-aioption="'+slot+'"><div class="ropt">'+mediaFor({cat:x.i,n:x.n})+'<span class="rtx"><b>'+esc(x.n)+'</b><i>'+esc((CAT.equip||{})[x.q]||x.q||'')+'</i></span></div><div class="aiqactions"><button type="button" class="btn catpick" data-pick="'+CAT.ex.indexOf(x)+'">Выбрать</button><button type="button" class="btn" data-aireject="'+slot+'" aria-label="'+escAttr('Не то: '+x.n)+'">Не то</button></div></div>';
+  });
+  return h+'<button type="button" class="btn wide" data-aiall="1">Весь каталог</button>';
+}
 function renderCatalog(){
+  if(catCtx&&catCtx.draft&&catCtx.quick&&!catQuery.trim()){document.getElementById('catbody').innerHTML=aiТриHtml(catCtx);return;}
   var onPage = !catCtx;
   var box=document.getElementById(onPage?'pcatbody':'catbody'); if(!box||!CAT) return;
   var fbox=document.getElementById('pcatfilters');
@@ -6467,10 +6487,12 @@ function wizInit(){
    первый день зала и т. д.), упражнения — строками с кадром, мышцей и подходами, как на
    экране «Тренировка». Его выбор из двух макетов — «вкладки по дням» (A). */
 function aiДеньНедели(i){ var d=wizDays(); return d.length ? WD[d[i % d.length]] : ''; }
-function aiСтрока(x, index, editable){
+function aiСтрока(x, index, editable, view){
   var e={n:x.n, cat:x.id||x.cat||null, fig:x.fig, ph:x.ph}, м=x.p ? String(x.p).toLowerCase() : '';
+  var first=index,last=index,rows=view&&view._вкладкаПрог&&view._вкладкаПрог.days[view.dayTab||0].ex;
+  if(rows&&x.ss){while(first>0&&rows[first-1].ss===x.ss)first--;while(last<rows.length-1&&rows[last+1].ss===x.ss)last++;}
   return '<div class="aiex"><span class="exph">'+mediaFor(e)+'</span><span class="aien"><b>'+
-    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button></div>' : '')+'</div>';
+    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button><button type="button" class="btn" data-aiedit="params" data-aiindex="'+index+'" aria-label="'+escAttr('Подходы и повторения: '+x.n)+'">Подходы · повторы</button><span class="aimoves"><button type="button" class="btn" data-aiedit="up" data-aiindex="'+index+'" aria-label="'+escAttr('Поднять: '+x.n)+'"'+(first===0?' disabled':'')+'>↑</button><button type="button" class="btn" data-aiedit="down" data-aiindex="'+index+'" aria-label="'+escAttr('Опустить: '+x.n)+'"'+(last===editable-1?' disabled':'')+'>↓</button></span></div>'+ (view.params===index ? '<form class="aiparams" data-aiindex="'+index+'"><label>Подходы<input name="sets" type="number" min="1" max="20" step="1" required value="'+x.sets+'"></label><label>Повторы / время<input name="reps" type="text" maxlength="40" required value="'+escAttr(x.reps)+'"></label><button type="submit" class="btn">Готово</button></form>' : '') : '')+'</div>';
 }
 /* 27.10: предложение можно править до принятия. Каталог меняет только
    захваченный черновик: ни SUBS/EXTRA, ни установленная программа не пишутся. */
@@ -6483,6 +6505,31 @@ function aiЧерновикПоказать(view, prog){
 function aiЧерновикЗапомнить(ctx){
   ctx.view.undo={prog:ctx.draft, day:ctx.day, ex:JSON.parse(JSON.stringify(ctx.draft.days[ctx.day].ex))};
 }
+/* Поля сохраняются перед переключением дня, каталогом и принятием:
+   набранные числа не теряются, даже если не нажал отдельное «Готово». */
+function aiПараметрыЗаписать(view,prog){
+  var root=view===WIZ?'#wzchat':'#aibox', f=document.querySelector(root+' .aiparams');if(!f)return true;
+  var sets=f.elements.sets,reps=f.elements.reps,v=String(reps.value).trim(),i=+f.dataset.aiindex;
+  var d=prog&&prog.days[view.dayTab||0],x=d&&d.ex[i];if(!x)return false;
+  reps.setCustomValidity('');
+  if(v!==String(x.reps)&&!/^\d{1,3}(?:\s*[–—-]\s*\d{1,3})?(?:\s*(?:с|сек|мин|на сторону|на стор))?$/.test(v))reps.setCustomValidity('Например: 8–12, 10 или 30–45 с');
+  var nums=v.match(/\d+/g)||[];if(nums.some(function(n){return +n<1;})||(nums.length===2&&+nums[1]<+nums[0]))reps.setCustomValidity('Укажите положительное число или диапазон по возрастанию');
+  if(!f.reportValidity())return false;
+  if(x.sets!==+sets.value||x.reps!==v){aiЧерновикЗапомнить({view:view,draft:prog,day:view.dayTab||0});x.sets=+sets.value;x.reps=v;}
+  view.params=null;if(view===WIZ)чернСохр();return true;
+}
+document.addEventListener('input',function(e){if(e.target.closest&&e.target.closest('.aiparams')&&e.target.setCustomValidity)e.target.setCustomValidity('');});
+document.addEventListener('submit',function(e){
+  if(!e.target.matches('.aiparams'))return;e.preventDefault();
+  var view=e.target.closest('#aibox')?AI_PREVIEW:WIZ,prog=view===WIZ?WIZ.prog:AI_PREVIEW._вкладкаПрог;
+  if(aiПараметрыЗаписать(view,prog))aiЧерновикПоказать(view,prog);
+});
+function aiСдвинуть(d,index,step){
+  // Суперсет перемещается целиком, чтобы сохранить соседство его упражнений.
+  var blocks=[];d.ex.forEach(function(x,i){var last=blocks[blocks.length-1];if(x.ss&&last&&last[0].ss===x.ss)last.push(x);else blocks.push([x]);});
+  var x=d.ex[index],b=blocks.findIndex(function(a){return a.indexOf(x)>=0;}),to=b+step;if(b<0||to<0||to>=blocks.length)return false;
+  var tmp=blocks[b];blocks[b]=blocks[to];blocks[to]=tmp;d.ex=[].concat.apply([],blocks);return true;
+}
 function aiЧерновикВыбрать(ctx,item){
   if(!item || !aiЧерновикЖив(ctx))return;
   var d=ctx.draft.days[ctx.day]; if(!d || (!ctx.add && !d.ex[ctx.index]))return;
@@ -6492,7 +6539,7 @@ function aiЧерновикВыбрать(ctx,item){
     sets:old?old.sets:(cardio?1:3),reps:old?old.reps:(cardio?'10 мин':timed?'30–45 с':'8–12'),rest:old?old.rest||90:90};
   if(old&&old.ss)x.ss=old.ss;
   if(ctx.add)d.ex.push(x);else d.ex[ctx.index]=x;
-  aiЧерновикПоказать(ctx.view,ctx.draft);haptic('ok');
+  ctx.view.params=null;aiЧерновикПоказать(ctx.view,ctx.draft);haptic('ok');
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest&&e.target.closest('[data-aiedit]');if(!b||b.disabled)return;
@@ -6500,6 +6547,9 @@ document.addEventListener('click',function(e){
   var ctx={draft:prog,view:view,day:view.dayTab||0,index:+b.dataset.aiindex}, action=b.dataset.aiedit;
   if(!aiЧерновикЖив(ctx))return;
   var d=prog.days[ctx.day];if(!d)return;
+  if(!aiПараметрыЗаписать(view,prog))return;
+  if(action==='params'){view.params=ctx.index;aiЧерновикПоказать(view,prog);var f=document.querySelector((view===WIZ?'#wzchat':'#aibox')+' .aiparams input');if(f)f.focus();return;}
+  if(action==='up'||action==='down'){aiЧерновикЗапомнить(ctx);aiСдвинуть(d,ctx.index,action==='up'?-1:1);aiЧерновикПоказать(view,prog);return;}
   if(action==='undo'){
     if(view.undo&&view.undo.prog===prog){prog.days[view.undo.day].ex=view.undo.ex;view.dayTab=view.undo.day;view.undo=null;aiЧерновикПоказать(view,prog);}return;
   }
@@ -6511,24 +6561,25 @@ document.addEventListener('click',function(e){
   }
   ctx.add=action==='add';var old=d.ex[ctx.index];
   if(!ctx.add&&!old)return;
-  ctx.muscle=ctx.add?'':old.m||'';ctx.c='strength';openCatalog(ctx);
+  ctx.muscle=ctx.add?'':old.m||'';ctx.c='strength';ctx.quick=!ctx.add;openCatalog(ctx);
 });
 function aiЗаголовок(d){ var t=String(d.sub||'').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : ''; }
 function aiДниHtml(p, view, weekdays){
   view=view||WIZ;
-  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; view.undo=null; }
+  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; view.undo=null; view.params=null; }
   var t=Math.max(0, Math.min(view.dayTab||0, p.days.length-1)), d=p.days[t];
   return '<div class="aitabs" role="tablist" aria-label="Дни программы">'+p.days.map(function(x,i){
       var дн=weekdays ? (weekdays.length ? WD[weekdays[i % weekdays.length]] : '') : aiДеньНедели(i);
       return '<button type="button" role="tab" data-aitab="'+i+'" aria-selected="'+(i===t)+'"><b>День '+(i+1)+'</b>'+(дн?'<i>'+дн+'</i>':'')+'</button>'; }).join('')+'</div>'+
     '<div class="aidh"><b>'+esc(aiЗаголовок(d))+'</b><i>'+d.ex.length+' '+plural(d.ex.length,['упражнение','упражнения','упражнений'])+'</i></div>'+
-    '<div class="aiexs">'+d.ex.map(function(x,i){return aiСтрока(x,i,view===WIZ&&WIZ.busy ? 0 : d.ex.length);}).join('')+'</div>'+
+    '<div class="aiexs">'+d.ex.map(function(x,i){return aiСтрока(x,i,view===WIZ&&WIZ.busy ? 0 : d.ex.length,view);}).join('')+'</div>'+
     '<button type="button" class="btn wide" data-aiedit="add"'+(view===WIZ&&WIZ.busy?' disabled':'')+'>+ Добавить упражнение</button>'+
     (view.undo ? '<button type="button" class="btn wide" data-aiedit="undo">Отменить последнюю правку</button>' : '');
 }
 document.addEventListener('click', function(e){
   var b=e.target.closest && e.target.closest('[data-aitab]'); if(!b) return;
   var preview=!!b.closest('#aibox');
+  var view=preview?AI_PREVIEW:WIZ;if(!aiПараметрыЗаписать(view,view._вкладкаПрог))return;
   haptic('light');
   if(preview){
     AI_PREVIEW.dayTab=+b.getAttribute('data-aitab')||0;
@@ -7199,7 +7250,7 @@ function wzСтоп(){
   if(wzCtl){ try{ wzCtl.abort(); }catch(e){} wzCtl=null; }
 }
 function wzApply(){
-  if(!WIZ.prog) return;
+  if(!WIZ.prog || !aiПараметрыЗаписать(WIZ,WIZ.prog)) return;
   wzСтоп();
   var первый=firstRun;
   if(firstRun){ gset('startcard',1); gset('cm_on',1); }
@@ -8951,7 +9002,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 11:20';
+var BUILD = '27.10 11:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13932,6 +13983,8 @@ document.getElementById('wzchat').addEventListener('keydown', function(e){
 document.getElementById('catclose').addEventListener('click', closeCatalog);
 document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.id==='catalog'){ closeCatalog(); return; }
+  var reject=e.target.closest('[data-aireject]');if(reject&&catCtx&&catCtx.draft&&catCtx.quick){var slot=+reject.dataset.aireject,ctx=catCtx;if(!aiЧерновикЖив(ctx))return;var id=ctx.options[slot];ctx.rejected=ctx.rejected||[];ctx.rejected.push(id);var next=aiТриКандидата(ctx).find(function(x){return ctx.options.indexOf(x.i)<0&&ctx.rejected.indexOf(x.i)<0;});if(next)ctx.options[slot]=next.i;else ctx.options.splice(slot,1);renderCatalog();haptic('light');return;}
+  if(e.target.closest('[data-aiall]')&&catCtx){catCtx.quick=false;renderCatalog();return;}
   if(e.target.closest('[data-catretry]')){ openCatalog(catCtx); haptic('light'); return; }
   if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}
   if(e.target.closest('#catwide')){catMuscle='';catGroup='';catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
@@ -14481,7 +14534,7 @@ function aiApply(целиком){
   closeProf(); haptic('ok');
 }
 document.getElementById('aibox').addEventListener('click', function(e){
-  if(e.target.closest('#aiapply')){if(AI_PREVIEW._вкладкаПрог)AIPROG=AI_PREVIEW._вкладкаПрог;aiApply(true);}
+  if(e.target.closest('#aiapply')){if(!aiПараметрыЗаписать(AI_PREVIEW,AI_PREVIEW._вкладкаПрог))return;if(AI_PREVIEW._вкладкаПрог)AIPROG=AI_PREVIEW._вкладкаПрог;aiApply(true);}
   else if(e.target.closest('#aidrop')){ AIPROG=null; document.getElementById('aibox').innerHTML=''; }
 });
 
