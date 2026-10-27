@@ -4206,6 +4206,16 @@ img.avface{border-radius:50%;object-fit:cover}
 #goalcard details:not([open])>:not(summary),#vizdetails:not([open])>:not(summary){display:none!important}
 #goalcard .goal-more summary::after,#vizdetails summary::after{content:"⌄";margin-left:8px}
 #goalcard .goal-more[open] summary::after,#vizdetails[open] summary::after{transform:rotate(180deg)}
+
+.catgear{margin:10px 0 14px;border:1px solid var(--line-soft);border-radius:16px;padding:0 10px;background:var(--field)}
+.catgear:not([open])>:not(summary){display:none}.catcount [data-catall]{min-height:44px;padding:8px 10px}
+.catgear summary{min-height:48px;display:list-item;align-content:center;font-size:14px;cursor:pointer;color:var(--text)}
+.catgeartabs{display:flex;gap:8px;margin:0 0 10px}.catgeartabs .btn{flex:1;min-height:44px}.catgear .catgeartabs .btn[aria-pressed="true"]{background:var(--action,var(--accent));color:var(--on-action,#fff)}
+.catgeargrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px 0}
+.catgeartile{min-width:0;min-height:130px;border:1px solid var(--line-soft);border-radius:14px;padding:8px;background:var(--surface);color:var(--text);display:flex;flex-direction:column;align-items:center;gap:6px;font:inherit}
+.catgeartile>.fig2,.catgeartile>.fig{width:100%;max-width:160px;flex:none;height:90px;aspect-ratio:auto;border-radius:10px}
+.catgeartile img{object-fit:contain;background:var(--surface)}.catgeartile b{font-size:13px;line-height:1.3}.catgeartile>span{font-size:11px;color:var(--muted)}
+.catgeartile[aria-pressed="true"]{border:2px solid var(--accent)}.catgeartile:disabled{opacity:.4}
 </style>
 </head>
 <body>
@@ -5963,7 +5973,7 @@ function resetDay(){
 /* ── окно каталога ── */
 function openCatalog(ctx){
   catCtx = ctx || null;                    /* {dk, di, muscle} — режим замены */
-  catQuery=''; catEquip=''; catLevel=''; catNope='';catGroup='';catShown=40;
+  catQuery=''; catEquip=''; catLevel=''; catNope='';catGroup='';catMachine='';catGearOpen=false;catShown=40;
   /* заменяем силовое — предлагаем силовое: велотренажёр вместо приседа
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
@@ -5988,11 +5998,11 @@ function closeCatalog(){
   var draftCtx=catCtx;
   var m=document.getElementById('catalog'); if(m){m.classList.remove('show');m.classList.remove('aidraft');}
   if(draftCtx&&draftCtx.draft){var root=draftCtx.view===WIZ?'#wzchat':'#aibox';var back=document.querySelector(root+' [data-aiedit="'+(draftCtx.add?'add':'swap')+'"]');if(back)back.focus({preventScroll:true});}
-  catCtx=null; catQuery=''; catMuscle='';catGroup=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
+  catCtx=null; catQuery=''; catMuscle='';catGroup='';catMachine='';catGearOpen=false; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
 }
 
-var catEquip='', catLevel='', catType='', catShown=40, catNope='', catGroup='';
+var catEquip='', catLevel='', catType='', catShown=40, catNope='', catGroup='', catMachine='', catGearOpen=false, catGearTab='basic';
 /* 07.10 B3: короткие группы для выбора, без ранжирования «полезностью».
    Точные мышцы и остальные фильтры остаются на странице каталога. */
 var PICKGROUPS=[
@@ -6005,8 +6015,69 @@ function pickGroupMatch(x){
   if(!catGroup)return true;
   if(catGroup==='cardio')return catKind(x)==='cardio';
   var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});
-  return !!g && (g[2].indexOf(x.m)>=0 || g[2].indexOf(x.m2)>=0);
+  return !!g && [x.m,x.m2].concat(Array.isArray(x.sm)?x.sm:[]).some(function(m){return g[2].indexOf(m)>=0;});
 }
+/* 27.10: «Ноги» — вся группа, включая дополнительные мышцы из каталога.
+   Сначала основные упражнения, затем те, где группа помогает движению. */
+function catPrimaryGroup(x){var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});return !g||g[0]==='cardio'||g[2].indexOf(x.m)>=0||g[2].indexOf(x.m2)>=0;}
+var CAT_MACHINES=[
+ ['smith','Смит','Smith_Machine_Squat'],['legpress','Жим ногами','Leg_Press'],['hack','Гакк-присед','Hack_Squat'],
+ ['legext','Разгибание ног','Leg_Extensions'],['legcurl','Сгибание ног','Seated_Leg_Curl'],
+ ['abductor','Отведение бедра','Thigh_Abductor'],['adductor','Сведение бедра','Thigh_Adductor'],
+ ['pulldown','Тяга сверху','Wide-Grip_Lat_Pulldown'],['row','Тяга сидя','Seated_Cable_Rows'],
+ ['chestpress','Жим от груди','Machine_Bench_Press'],['fly','Бабочка','Butterfly'],
+ ['shoulderpress','Жим плечами','Leverage_Shoulder_Press'],['calf','Икры','Seated_Calf_Raise'],
+ ['bike','Велотренажёр','Bicycling_Stationary'],['treadmill','Беговая дорожка','Running_Treadmill'],['elliptical','Эллипс','Elliptical_Trainer'],['rowing','Гребной тренажёр','Rowing_Stationary'],['stairs','Лестница','Stairmaster'],
+ ['abs','Пресс','Ab_Crunch_Machine']
+];
+var CAT_GEAR_PICS={'barbell':'Barbell_Squat','dumbbell':'Dumbbell_Bench_Press','cable':'Seated_Cable_Rows','machine':'Leg_Press',
+ 'body only':'Pushups','e-z curl bar':'EZ-Bar_Curl','kettlebells':'One-Arm_Kettlebell_Swings','bands':'Band_Pull_Apart',
+ 'medicine ball':'Medicine_Ball_Chest_Pass','exercise ball':'Exercise_Ball_Crunch','foam roll':'Iliotibial_Tract-SMR','other':'Suspended_Fallout'};
+function catMachineMatch(x,id){
+  if(!id)return true;
+  var n=String(x.i||'')+' '+String(x.e||''),machine=x.q==='machine',block=x.q==='cable',smith=/smith/i.test(n);
+  if(id==='bike')return machine&&/bicycling.stationary/i.test(n);
+  if(id==='treadmill')return machine&&/treadmill/i.test(n);
+  if(id==='elliptical')return machine&&/elliptical/i.test(n);
+  if(id==='rowing')return machine&&/rowing.stationary/i.test(n);
+  if(id==='stairs')return machine&&/stairmaster/i.test(n);
+  if(id==='smith')return smith;
+  if(id==='pulldown')return (machine||block)&&/pulldown|pull.down/i.test(n);
+  if(id==='row')return (machine||block)&&/(?:^|[ _-])rows?(?:[ _-]|$)/i.test(n);
+  if(!machine||smith)return false;
+  if(id==='legpress')return /leg.press/i.test(n);
+  if(id==='hack')return /hack.squat/i.test(n);
+  if(id==='legext')return /leg.extension/i.test(n);
+  if(id==='legcurl')return /leg.curl/i.test(n);
+  if(id==='abductor')return /abductor/i.test(n);
+  if(id==='adductor')return /adductor/i.test(n);
+  if(id==='chestpress')return x.m==='chest'&&/press|bench/i.test(n);
+  if(id==='fly')return /butterfly|reverse.machine.fly|machine.*fly|rear.delt.*machine/i.test(n);
+  if(id==='shoulderpress')return x.m==='shoulders'&&/press/i.test(n);
+  if(id==='calf')return x.m==='calves'&&!/leg.press/i.test(n);
+  if(id==='abs')return x.m==='abdominals';
+  return false;
+}
+function catGearHtml(){
+  var label=catMachine?(CAT_MACHINES.find(function(g){return g[0]===catMachine;})||[])[1]:(catEquip?(CAT.equip[catEquip]||catEquip):'всё');
+  var base=catFiltered(true,true),tiles=catGearTab==='machines'?CAT_MACHINES.map(function(g){return {v:'m:'+g[0],n:g[1],pic:g[2],count:base.filter(function(x){return catMachineMatch(x,g[0]);}).length};}):Object.keys(CAT.equip).map(function(q){return {v:'q:'+q,n:CAT.equip[q],pic:CAT_GEAR_PICS[q],count:base.filter(function(x){return x.q===q;}).length};});
+  return '<details class="catgear"'+(catGearOpen?' open':'')+'><summary>Оборудование · '+esc(label||'всё')+'</summary><div class="catgeartabs">'+[['basic','Снаряды'],['machines','Тренажёры']].map(function(t){return '<button type="button" class="btn" data-geartab="'+t[0]+'" aria-pressed="'+(catGearTab===t[0])+'">'+t[1]+'</button>';}).join('')+'</div><button type="button" class="btn wide" data-gear="">Любое оборудование</button><div class="catgeargrid">'+tiles.map(function(t){var selected=catMachine?'m:'+catMachine:catEquip?'q:'+catEquip:'';
+    var pic=catById(t.pic)||CAT.ex.find(function(x){return t.v.indexOf('q:')===0?x.q===t.v.slice(2):catMachineMatch(x,t.v.slice(2));});
+    return '<button type="button" class="catgeartile" data-gear="'+escAttr(t.v)+'" aria-pressed="'+(selected===t.v)+'"'+(!t.count?' disabled':'')+'>'+(pic?mediaFor({cat:pic.i,n:pic.n}):'')+'<b>'+esc(t.n)+'</b><span>'+t.count+' '+plural(t.count,['упражнение','упражнения','упражнений'])+'</span></button>';
+  }).join('')+'</div></details>';
+}
+document.addEventListener('toggle',function(e){if(e.target.matches&&e.target.matches('details.catgear')&&e.target.isConnected)catGearOpen=e.target.open;},true);
+document.addEventListener('click',function(e){
+  var group=e.target.closest&&e.target.closest('#pcatfilters [data-pickgroup]');
+  if(group){catGroup=group.dataset.pickgroup;catMuscle='';catType='';catShown=40;renderCatalog();return;}
+  var tab=e.target.closest&&e.target.closest('[data-geartab]');if(tab){catGearTab=tab.dataset.geartab;catGearOpen=true;renderCatalog();var nextTab=document.querySelector((catCtx?'#catalog':'#pcatfilters')+' [data-geartab="'+catGearTab+'"]');if(nextTab)nextTab.focus({preventScroll:true});return;}
+  var gear=e.target.closest&&e.target.closest('[data-gear]');if(gear&&!gear.disabled){
+    var v=gear.dataset.gear;catEquip=v.indexOf('q:')===0?v.slice(2):'';catMachine=v.indexOf('m:')===0?v.slice(2):'';catGearOpen=false;catType='';catShown=40;
+    if(!catCtx){document.getElementById('pcatfilters').hidden=true;document.getElementById('pcatfbtn').setAttribute('aria-expanded','false');}
+    renderCatalog();var back=document.querySelector(catCtx?'#catalog .catgear summary':'#pcatfbtn');if(back)back.focus({preventScroll:true});haptic('light');return;
+  }
+  if(e.target.closest&&e.target.closest('[data-catall]')){catShown=catFiltered().length;renderCatalog();}
+});
 function pickGroupChips(){
   return '<div class="pickgroups" aria-label="Группа упражнений">'+[['','Все',[]]].concat(PICKGROUPS).map(function(g){
     var on=catGroup===g[0]&&!catMuscle;
@@ -6020,15 +6091,15 @@ function pickGroupChips(){
 function нетуСписок(){ return Object.keys(NOPE||{}); }
 /* в базе базовые штанговые движения помечены «powerlifting» — для человека это та же сила, два чипа «сила» читались как ошибка */
 function catKind(x){ var c=x.c||'strength'; return c==='powerlifting' ? 'strength' : c; }
-function catFiltered(){
+function catFiltered(ignoreEquipment,ignoreType){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
   return CAT.ex.filter(function(x){
-    if(catCtx && !pickGroupMatch(x))return false;
+    if(!pickGroupMatch(x))return false;
     if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
-    if(catEquip && x.q!==catEquip) return false;
+    if(!ignoreEquipment && ((catEquip && x.q!==catEquip)||!catMachineMatch(x,catMachine))) return false;
     if(catLevel && x.l!==catLevel) return false;
-    if(catType && catKind(x)!==catType) return false;
+    if(!ignoreType && catType && catKind(x)!==catType) return false;
     if(catNope && !NOPE[x.i]) return false;
     if(!words.length) return true;
     /* ищем по русскому названию, английскому и группе мышц, и по каждому слову
@@ -6045,6 +6116,7 @@ function catFiltered(){
 function chipRow(field, cur, dict, label){
   var counts={};
   CAT.ex.forEach(function(x){
+    if(!pickGroupMatch(x)||(field!=='q'&&!catMachineMatch(x,catMachine)))return;
     if(field!=='m' && catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return;
     if(field!=='q' && catEquip && x.q!==catEquip) return;
     if(field!=='l' && catLevel && x.l!==catLevel) return;
@@ -6099,6 +6171,8 @@ function катВид(x){ return catKind(x); }
 function катСводка(){
   var ч=[];
   if(catNope) ч.push('заменённые');
+  if(catGroup)ч.push((PICKGROUPS.find(function(g){return g[0]===catGroup;})||[])[1]||catGroup);
+  if(catMachine)ч.push((CAT_MACHINES.find(function(g){return g[0]===catMachine;})||[])[1]||catMachine);
   if(catMuscle) ч.push(CAT.muscles[catMuscle]||catMuscle);
   if(catEquip)  ч.push(CAT.equip[catEquip]||catEquip);
   if(catLevel)  ч.push(CAT.level[catLevel]||catLevel);
@@ -6110,7 +6184,7 @@ function катСводка(){
 }
 /* подборки показываем, пока человек ничего не сузил сам; тип «сила» по
    умолчанию сужением не считаем — подборки и так про силовые */
-function катЧисто(){ return !catQuery.trim() && !catMuscle && !catEquip && !catLevel && !catNope && (!catType || catType==='strength'); }
+function катЧисто(){ return !catQuery.trim() && !catGroup && !catMachine && !catMuscle && !catEquip && !catLevel && !catNope && (!catType || catType==='strength'); }
 /* Снаряд в имени уже написан — «Присед (штанга, Зерхера)», — и повторять его
    в подписи значит писать одно и то же дважды в одной строке. Оставляем в
    подписи только то, чего в имени нет. */
@@ -6127,7 +6201,7 @@ function catRow(x, выбор){
     (x.own ? (x.ph && FRAMES[x.ph] ? кадр(x.ph,null,0) : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : кадр(null,x.i,0))+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-    '<span class="cattag">'+catTag(x)+'</span>'+
+    '<span class="cattag">'+catTag(x)+'</span>'+(catGroup&&!catPrimaryGroup(x)?'<span class="cattag">'+esc((PICKGROUPS.find(function(g){return g[0]===catGroup;})||[])[1]||'Группа')+' — дополнительные мышцы</span>':'')+
     /* ТЯЖЁЛЫЙ ВАРИАНТ — не отдельная строка каталога. Присед с паузой и
        присед Андерсона это тот же присед, то же фото и то же место в
        программе; разводить их в разные упражнения значило бы удвоить список
@@ -6173,7 +6247,7 @@ function renderCatalog(){
   }
   if(onPage && fbox && !fbox.hidden){
     var нету=нетуСписок();
-    fbox.innerHTML = (нету.length ? '<div class="mchips" data-f="nope"><span class="chlab">моё</span>'+
+    fbox.innerHTML = pickGroupChips()+catGearHtml()+(нету.length ? '<div class="mchips" data-f="nope"><span class="chlab">моё</span>'+
                        '<button class="mchip'+(catNope?'':' on')+'" data-v="">все</button>'+
                        '<button class="mchip'+(catNope?' on':'')+'" data-v="no">заменённые <s>'+нету.length+'</s></button></div>' : '')+
                      chipRow('m',catMuscle,CAT.muscles,'мышца')+
@@ -6186,8 +6260,9 @@ function renderCatalog(){
       if(on.offsetLeft+on.offsetWidth>r.clientWidth) r.scrollLeft=on.offsetLeft-40;
     });
   }
-  var list=catFiltered(), lim=catShown, shown=list.slice(0,lim);
-  var h = onPage ? '' : pickGroupChips();
+  var list=catFiltered();if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
+  var lim=catShown, shown=list.slice(0,lim);
+  var h = onPage ? '' : pickGroupChips()+catGearHtml();
   if(catCtx && !catCtx.add && !catCtx.draft){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
@@ -6213,7 +6288,7 @@ function renderCatalog(){
     return;
   }
   h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+
-     (list.length>lim?' · показано '+lim:'')+'</p>';
+     (list.length>lim?' · показано '+lim+' <button type="button" class="linkbtn" data-catall>Показать все</button>':'')+'</p>';
   h+='<div class="catlist">';
   shown.forEach(function(x){ h+=catRow(x,!!catCtx); });
   h+='</div>';
@@ -6226,7 +6301,8 @@ function renderCatalog(){
 function openCatPage(){
   catCtx=null;
   /* на странице по умолчанию силовые: растяжка и кардио — по чипу «все» */
-  if(!catType) catType='strength';
+  /* Прежнее «сила по умолчанию» не должно подменять уже выбранный станок/группу при возврате. */
+  if(!catType && катЧисто())catType='strength';
   var b=document.getElementById('pcatbody');
   if(CAT){ renderCatalog(); return; }
   if(b) b.innerHTML='<p class="empt">Загружаю каталог…</p>';
@@ -9088,7 +9164,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '27.10 13:30';
+var BUILD = '27.10 16:20';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -12854,7 +12930,7 @@ var MUS2CAT={neck:'neck',trap:'traps',mid:'middle back',delt:'shoulders',rdelt:'
   glute:'glutes',abd:'abductors',ham:'hamstrings',quad:'quadriceps',add:'adductors',calf:'calves',tib:'tibialis'};
 /* открыть страницу каталога с фильтром по мышце (с карты тела) */
 function openCatFor(m){
-  catCtx=null; catQuery=''; catEquip=''; catLevel=''; catType='strength'; catShown=40; catMuscle=m||'';
+  catCtx=null;catGroup='';catMachine='';catGearOpen=false; catQuery=''; catEquip=''; catLevel=''; catType='strength'; catShown=40; catMuscle=m||'';
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
   goPage('ref');
 }
@@ -14076,7 +14152,7 @@ document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.closest('[data-aiall]')&&catCtx){catCtx.quick=false;renderCatalog();return;}
   if(e.target.closest('[data-catretry]')){ openCatalog(catCtx); haptic('light'); return; }
   if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}
-  if(e.target.closest('#catwide')){catMuscle='';catGroup='';catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
+  if(e.target.closest('#catwide')){catMuscle='';catGroup='';catMachine='';catGearOpen=false;catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
   var group=e.target.closest('[data-pickgroup]');
   if(group){catGroup=group.dataset.pickgroup;catMuscle='';catType='';catShown=40;renderCatalog();haptic('light');return;}
   var m=e.target.closest('button[data-m]');
@@ -14104,8 +14180,8 @@ if(_pcs) _pcs.addEventListener('input', function(){
 var _pcf=document.getElementById('pcatfilters');
 if(_pcf) _pcf.addEventListener('click', function(e){
   var b=e.target.closest('.mchip'); if(!b) return;
-  var f=b.parentNode.dataset.f, v=b.dataset.v||'';
-  if(f==='m') catMuscle=v; else if(f==='q') catEquip=v; else if(f==='l') catLevel=v; else if(f==='c') catType=v;
+  var f=b.parentNode.dataset.f, v=b.dataset.v||'';if(!f)return;
+  if(f==='m'){catMuscle=v;catGroup='';}else if(f==='q'){catEquip=v;catMachine='';} else if(f==='l') catLevel=v; else if(f==='c') catType=v;
   else if(f==='nope'){ catNope=v; if(v) catType=''; }   /* отмеченные ищем среди всех типов, а не только силовых */
   catShown=40; renderCatalog();
 });
@@ -14114,7 +14190,7 @@ if(_pcb) _pcb.addEventListener('click', function(e){
   if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); return; }
   /* «все 84 →» из подборки — это тот же фильтр по мышце, а не отдельный экран */
   if(e.target.closest('#catwide')){
-    catMuscle=''; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
+    catMuscle='';catGroup='';catMachine='';catGearOpen=false; catEquip=''; catLevel=''; catType=''; catNope=''; catShown=40;
     renderCatalog(); haptic('light'); return;
   }
   /* Передумал: отметка снимается там же, где видна. Упражнение сразу
@@ -14127,7 +14203,7 @@ if(_pcb) _pcb.addEventListener('click', function(e){
     renderCatalog(); haptic('ok'); return;
   }
   var g=e.target.closest('[data-grp]');
-  if(g){ catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
+  if(g){catGroup='';catMachine='';catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
     var sc=document.getElementById('p-ref'); if(sc) sc.scrollIntoView({block:'start'}); }
 });
 /* фильтры свёрнуты по умолчанию: до первого упражнения на телефоне было
@@ -14142,7 +14218,7 @@ if(_pfb) _pfb.addEventListener('click', function(){
 });
 var _pfr=document.getElementById('pcatreset');
 if(_pfr) _pfr.addEventListener('click', function(){
-  catMuscle=''; catEquip=''; catLevel=''; catType='strength'; catQuery=''; catShown=40;
+  catMuscle='';catGroup='';catMachine='';catNope='';catGearOpen=false; catEquip=''; catLevel=''; catType='strength'; catQuery=''; catShown=40;
   var ps=document.getElementById('pcatsearch'); if(ps) ps.value='';
   if(CAT) renderCatalog();
   haptic('light');
