@@ -40,6 +40,16 @@ const limits=part('function vizДопуск(', 'function vizBtn(');
  reset();missing=true;await ctx.vizGo();assert.equal(renders.length,1);assert.equal(selections.length,0);
  reset();failures=1;selectCode='auth';await ctx.vizGo();assert.equal(renders.length,1,'ошибка доступа не запускает платный повтор');
  console.log('PASS 75 кг / 12%: исправление отказа, неизменная цель, максимум 3 варианта, лимит, без повторов при сетевой ошибке');
+ /* Реальный промах 27.10: MediaPipe сдвинул суставы, хотя кадр прежний.
+    Нельзя выдавать изменение длины найденного корпуса за изменение талии. */
+ let before={талия:.77,талияВКадре:.30},after={талия:.80,талияВКадре:.285};
+ const geometryCtx=vm.createContext({Promise,VIZ:{origM:Promise.resolve(before)},vizURL:async()=> 'image',vizКартинка:async()=> 'image',vizМерить:async()=>after,vizПриемлемо:(c,r)=>r<.97&&r>.8});
+ vm.runInContext(part('function vizПроверка(', 'function vizБлокировать('),geometryCtx);
+ let checked=await geometryCtx.vizПроверка({k:'result',calc:{visualVersion:5,отношение:.842}});
+ assert.ok(Math.abs(checked.отн-.95)<1e-9&&checked.ok,'новая мерка сохраняет уменьшение ширины при сдвиге найденного таза');
+ after={талия:.70,талияВКадре:.30};checked=await geometryCtx.vizПроверка({k:'result',calc:{visualVersion:5,отношение:.842}});
+ assert.equal(checked.отн,1);assert.equal(checked.ok,false,'неизменная ширина не становится стройнее из-за изменённых точек корпуса');
+ checked=await geometryCtx.vizПроверка({k:'result',calc:{visualVersion:4,отношение:.842}});assert.ok(Math.abs(checked.отн-.70/.77)<1e-9,'старая калибровка не меняется');
  const noWarp=vm.createContext({Promise});vm.runInContext(part('function vizДовести(', '/* картинка: проверенный образец'),noWarp);assert.equal(await noWarp.vizДовести({calc:{visualVersion:5}},{ok:false}),null,'новый алгоритм не сжимает готовое тело');
  console.log('PASS слабый результат: 3 попытки, прежнее фото остаётся, следующий запуск новый');
  const br=await chromium.launch();
