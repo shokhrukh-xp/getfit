@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');const {plan}=require('./check-plan.cjs');
+const html='<style>.foo{color:red}</style><p>Привет</p><script>save(1)</script>';
+const change=(after,file='index.html',before=html)=>({file,before,after});
+assert.equal(plan([change(html.replace('red','blue'))],{}).mode,'targeted');
+assert.equal(plan([change(html.replace('Привет','Здравствуйте'))],{}).mode,'targeted');
+assert.equal(plan([change(html.replace('save(1)','save(2)'))],{}).mode,'full');
+assert.equal(plan([change(html.replace('<p>','<p onclick="reset()">'))],{}).mode,'full');
+assert.equal(plan([change(html.replace('<p>','<h1>'))],{}).mode,'full');
+assert.equal(plan([change('x','catalog.json','y')],{}).mode,'full');
+assert.equal(plan([change(null,'tg/test-foo.js','y')],{}).mode,'full');
+assert.equal(plan([change('x','docs/a.md','y')],{}).mode,'meta');
+assert(plan([change('x','tg/test-food.js','y')],{}).tests.includes('food'));
+assert(plan([change(html.replace('red','blue'))],{food:'selector .foo'}).tests.includes('food'));
+assert.equal(plan([change(html.replace('red','blue')),change('x','tg/mock.js','y')],{}).mode,'full');
+console.log('Выбор проверок: 11 сценариев пройдены');

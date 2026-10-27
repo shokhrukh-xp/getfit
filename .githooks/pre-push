@@ -1,50 +1,47 @@
 #!/bin/sh
-# Перед push приложения: все проверки (tg/run.sh, ~1 минута) и сверка метки
-# сборки с воркером. Красное — push не уходит.
-# Включается один раз на копию:  git config core.hooksPath .githooks
-# Обойти только с его согласия:  git push --no-verify
-#
-# 20.10, его вопрос «Это нормально что хук гоняет все проверки каждый раз и
-# занимает так много времени?» и выбор «первый»: в облаке (4 ядра, 3 потока)
-# все наборы идут ~16 минут, и шли даже на push, где менялся один AGENTS.md.
-# Теперь: в push меняются только тексты (*.md, docs/) и сам хук — наборы
-# приложения не гоняем, метку сборки сверяем всегда. Любой другой файл
-# (index.html, tg/, catalog.json, img/ …), новая ветка без общей истории с
-# origin/main или запуск руками без списка ссылок — все наборы, как раньше.
+# 27.10: автоматический выбор проверок по просьбе Шохруха.
+# Логика/данные/неизвестное -> полный прогон; оформление -> smoke + адресные.
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+node tools/check-plan.test.cjs || exit 1
+REFILE=$(mktemp "${TMPDIR:-/tmp}/getfit-refs.XXXXXX") || exit 1
+PLANFILE=$(mktemp "${TMPDIR:-/tmp}/getfit-plan.XXXXXX") || exit 1
+trap 'rm -f "$REFILE" "$PLANFILE"' EXIT HUP INT TERM
 NULL=0000000000000000000000000000000000000000
 FULL=0; REFS=0
 while read lref lsha rref rsha; do
   [ "$lsha" = "$NULL" ] && continue
   REFS=1
   if [ "$rsha" = "$NULL" ]; then rsha=$(git merge-base "$lsha" origin/main 2>/dev/null) || { FULL=1; continue; }; fi
-  FILES=$(git diff --name-only "$rsha" "$lsha" 2>/dev/null) || { FULL=1; continue; }
-  if [ -n "$FILES" ] && printf '%s\n' "$FILES" | grep -qvE '^(docs/|\.githooks/)|\.md$'; then FULL=1; fi
+  printf '%s\t%s\n' "$rsha" "$lsha" >> "$REFILE"
 done
-# 20.10, его «да»: push, когда всё уже на GitHub, звал хук с пустым списком
-# ссылок — и шли все наборы (~16 минут) ради пуша, который ничего не шлёт.
-# git всегда передаёт имя и адрес remote ($1, $2): так отличаем его вызов от
-# запуска руками, где по-прежнему все наборы.
-if [ $REFS = 0 ] && [ $# -ge 2 ]; then echo "pre-push: отправлять нечего — проверки не нужны."; exit 0; fi
+if [ $REFS = 0 ] && [ $# -ge 2 ]; then echo "pre-push: отправлять нечего."; exit 0; fi
 [ $REFS = 1 ] || FULL=1
-if [ $FULL = 0 ]; then
-  APPB=$(sed -n "s/^var BUILD = '\([^']*\)'.*/\1/p" index.html | head -1)
-  if [ -f ../getfit-sync/src/index.js ]; then
-    SRVB=$(sed -n "s/^const APP_BUILD = '\([^']*\)'.*/\1/p" ../getfit-sync/src/index.js | head -1)
-    if [ "$APPB" != "$SRVB" ]; then
-      echo "  ✗ МЕТКИ СБОРКИ РАЗНЫЕ: приложение «$APPB», воркер «$SRVB». Меняются вместе."
-      echo "pre-push: красное — push остановлен."; exit 1
-    fi
+APPB=$(sed -n "s/^var BUILD = '\([^']*\)'.*/\1/p" index.html | head -1)
+if [ -f ../getfit-sync/src/index.js ]; then
+  SRVB=$(sed -n "s/^const APP_BUILD = '\([^']*\)'.*/\1/p" ../getfit-sync/src/index.js | head -1)
+  if [ -z "$APPB" ] || [ "$APPB" != "$SRVB" ]; then
+    echo "pre-push: МЕТКИ СБОРКИ РАЗНЫЕ: приложение «$APPB», сервер «$SRVB»."; exit 1
   fi
-  echo "pre-push: меняются только тексты (*.md, docs/, .githooks/) — наборы приложения не гоняю. Метка сборки $APPB сверена."
-  exit 0
 fi
-echo "pre-push: проверки приложения…"
-if sh tg/run.sh > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
+node tools/check-plan.cjs "$REFILE" > "$PLANFILE" || exit 1
+MODE=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).mode)' "$PLANFILE") || exit 1
+[ "$FULL" = 0 ] || MODE=full
+[ "${GETFIT_FULL:-0}" != 1 ] || MODE=full
+node -e 'console.log("pre-push: "+JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).reason)' "$PLANFILE"
+case "$MODE" in
+  meta) echo "pre-push: метка $APPB сверена; настройка проверок проверена."; exit 0 ;;
+  targeted)
+    TESTS=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).tests.join(" "))' "$PLANFILE") || exit 1
+    echo "pre-push: адресный прогон — $TESTS"
+    set -- $TESTS ;;
+  full) echo "pre-push: полный прогон приложения"; set -- ;;
+  *) echo "pre-push: неизвестный план — остановка"; exit 1 ;;
+esac
+if sh tg/run.sh "$@" > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
   exit 0
 fi
 grep -E "✗|ПРОВАЛ|УПАЛО|МЕТКИ|^За " "${TMPDIR:-/tmp}/getfit-pre-push.log" | head -40
-echo "pre-push: красное — push остановлен. Весь вывод: ${TMPDIR:-/tmp}/getfit-pre-push.log"
+echo "pre-push: красное — push остановлен. Лог: ${TMPDIR:-/tmp}/getfit-pre-push.log"
 exit 1
