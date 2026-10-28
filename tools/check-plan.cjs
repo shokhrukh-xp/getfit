@@ -26,8 +26,9 @@ function ключиПравки(before, after){
   const a=before.split('\n'), b=after.split('\n');
   const А=new Set(a), Б=new Set(b);
   const ушли=[], пришли=[];
-  a.forEach((l,i)=>{if(!Б.has(l))ушли.push(i);});
-  b.forEach((l,i)=>{if(!А.has(l))пришли.push(i);});
+  const метка=l=>/^var BUILD = /.test(l);
+  a.forEach((l,i)=>{if(!Б.has(l)&&!метка(l))ушли.push(i);});
+  b.forEach((l,i)=>{if(!А.has(l)&&!метка(l))пришли.push(i);});
   const строки=ушли.map(i=>a[i]).concat(пришли.map(i=>b[i])).filter(l=>!/^var BUILD = /.test(l));
   const ключи=new Set([...обёртки(a,ушли),...обёртки(b,пришли)]);
   for(const l of строки){
