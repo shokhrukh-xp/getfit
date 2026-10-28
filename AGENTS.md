@@ -67,6 +67,8 @@
 
 ## В работе (кто, что, какие файлы, с какого времени)
 
+- **Codex, 28.10 · аудит и реакции** — исправления A01–A11 из `docs/reviews/2026-10-28-app-audit`, восстановление GIF/стикеров; `getfit/index.html`, `getfit/tg/`, `getfit-sync/src/index.js`, `getfit-sync/node/`, `getfit-sync/tests/`. По просьбе «Исправляй и проверяй».
+
 
 
 
