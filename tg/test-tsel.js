@@ -7,7 +7,9 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),M=require
  await p.click('#coachnav');await p.click('#goalchatopen');
  const wait=()=>p.waitForFunction(()=>document.getElementById('goalconversation').dataset.state!=='loading'&&document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
  const answer=async value=>{await wait();await p.click('#goalconversation [data-value="'+value+'"]');await wait();};
- await answer('custom');await answer('clear');await p.fill('#gtalk-form [name="target"]','75');await p.fill('#gtalk-form [name="fat"]',String(fat));await p.selectOption('#gtalk-form [name="muscle"]','develop');await p.click('#gtalk-form [type="submit"]');await answer('scales');await answer('new');await answer('regular');await answer('training');await answer('flexible');
+ /* 28.10: «свои цифры» — своими словами под популярными целями, отдельной кнопки нет */
+ const своими=async t=>{await wait();await p.fill('#gtalk-form textarea[name="text"]',t);await p.click('#gtalk-form button[type="submit"]');await wait();};
+ await своими('Свои цифры');await answer('clear');await p.fill('#gtalk-form [name="target"]','75');await p.fill('#gtalk-form [name="fat"]',String(fat));await p.selectOption('#gtalk-form [name="muscle"]','develop');await p.click('#gtalk-form [type="submit"]');await answer('scales');await answer('new');await answer('regular');await answer('training');await answer('flexible');
  assert.equal(o.goal,null);const requested=p.locator('[data-gta="select"][data-option="requested"]');assert.equal(await requested.count(),fat===5?0:1);if(fat===5)assert.match(await p.textContent('#goalconversation'),/Экстремальную/);
  else{await requested.click();await wait();assert.equal(o.goal,null);await p.click('[data-gta="confirm"]');await wait();assert.equal(o.goal.body.target,75);assert.equal(o.goal.body.fat,12);assert.equal(o.goal.body.muscle,'develop');assert.equal((o.vizAsked?.render||[]).length,0);}
  assert.deepEqual(errors,[]);await p.close();

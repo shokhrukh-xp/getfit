@@ -4233,6 +4233,7 @@ img.avface{border-radius:50%;object-fit:cover}
 .gtalk-option{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.gtalk-option p{line-height:1.5}
 /* 28.10: было → станет при выборе цели (его просьба: темп, норма, белок, дата и почему) */
 .gtalk-impact{font-weight:600;margin:8px 0 4px}.gtalk-impact span{font-weight:400;color:var(--muted)}
+#goalconversation .btn.gtalk-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:3px;height:auto;min-height:56px;padding-top:11px;padding-bottom:11px}#goalconversation .gtalk-choice small{display:block;font-size:13px;font-weight:400;line-height:1.3;color:var(--muted);white-space:normal}
 .gtalk-diff{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}.gtalk-diff h4{margin:0 0 8px;font-size:15px}
 .gtalk-row{padding:7px 0;border-bottom:1px solid var(--line)}.gtalk-row:last-of-type{border-bottom:0}
 .gtalk-row small{display:block;color:var(--muted);font-size:13px;margin-bottom:2px}.gtalk-row span{color:var(--muted)}.gtalk-row b{font-weight:700}
@@ -7643,8 +7644,9 @@ function goalTalkRender(){
       h+='</label>';
     });
     if(q.fields.length)h+='<button class="btn prim wide" type="submit" '+(GOALTALK.busy?'disabled':'')+'>Продолжить</button>';
-    q.choices.forEach(function(x){h+=button('answer',x.label,'data-value="'+esc(x.value)+'"');});
-    if(!q.fields.length&&(!q.choices.length||q.key==='intent'))h+='<label class="mlab">'+(q.choices.length?'Или своими словами':'Ваш ответ')+'<textarea name="text" rows="2" maxlength="600" required></textarea></label><button type="submit" class="btn prim wide" '+(GOALTALK.busy?'disabled':'')+'>Ответить</button>';
+    /* 28.10: под кнопкой цели — одна строка, что будет с весом и калориями (hint с сервера) */
+    q.choices.forEach(function(x){h+=x.hint?'<button type="button" class="btn wide gtalk-choice" data-gta="answer" data-value="'+esc(x.value)+'"'+(GOALTALK.busy?' disabled':'')+'>'+esc(x.label)+'<small>'+esc(x.hint)+'</small></button>':button('answer',x.label,'data-value="'+esc(x.value)+'"');});
+    if(!q.fields.length&&(!q.choices.length||q.key==='intent'))h+='<label class="mlab">'+(q.choices.length?(q.key==='intent'?'Или своими словами — например, «стать сильнее» или «75 кг и 12% жира»':'Или своими словами'):'Ваш ответ')+'<textarea name="text" rows="2" maxlength="600" required></textarea></label><button type="submit" class="btn prim wide" '+(GOALTALK.busy?'disabled':'')+'>Ответить</button>';
     h+='</form>';
   }else if(d.status==='options'||d.status==='confirm'){
     h+='<h3>'+esc(d.status==='confirm'?'Подтвердите выбранную цель':'Какой вариант вам ближе?')+'</h3>';
@@ -9277,7 +9279,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 13:00';
+var BUILD = '28.10 13:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
