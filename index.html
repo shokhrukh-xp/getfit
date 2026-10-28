@@ -5104,6 +5104,13 @@ document.addEventListener('error', function(ev){
   /* миниатюры нет — один раз берём полный кадр, а уже его сбой — как раньше */
   var полный=im.getAttribute('data-full');
   if(полный){ im.removeAttribute('data-full'); im.src=полный; return; }
+  /* 28.10: jsDelivr отдаёт 403 на отдельные кадры (Snatch_Balance) — тот же
+     файл берём один раз прямо с GitHub, и только потом сдаёмся */
+  if(im.src.indexOf(CDN)===0 && !im.getAttribute('data-gh')){
+    im.setAttribute('data-gh','1');
+    im.src='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'+im.src.slice(CDN.length);
+    return;
+  }
   var box=im.parentNode;
   if(box && box.className==='fig2'){
     if(box.getAttribute('data-failed')) return;
@@ -9270,7 +9277,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 12:30';
+var BUILD = '28.10 13:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль

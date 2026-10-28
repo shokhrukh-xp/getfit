@@ -10,7 +10,7 @@
    2) в карточке лестницы — «как шло» (средне по умолчанию), один заход «15–20 мин»;
    3) в журнал лестница едет минутами (unit 'min') и с «как шло», жим — reps;
    4) отжимания без веса пишутся без веса;
-   5) каталог: все 899 размечены, лестница и дорожки — минуты. */
+   5) каталог: все 881 размечены, лестница и дорожки — минуты. */
 const { chromium } = require('playwright');
 const M = require('./mock');
 const fs = require('fs'), path = require('path');
@@ -49,7 +49,7 @@ async function свернуть(page){ const sh = await page.$('#list [data-shut
   const cat = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'catalog.json'), 'utf8'));
   const by = {}; cat.ex.forEach(e => by[e.i] = e);
   const cnt = {}; cat.ex.forEach(e => { cnt[e.lg || 'кг×повт'] = (cnt[e.lg || 'кг×повт'] || 0) + 1; });
-  дано(cat.ex.length === 899 && Object.keys(cnt).every(k => ['кг×повт', 'r+', 'r', 's', 'ks', 'min', 'km'].includes(k)), 'каталог: 899, способы только известные ' + JSON.stringify(cnt));
+  дано(cat.ex.length === 881 && Object.keys(cnt).every(k => ['кг×повт', 'r+', 'r', 's', 'ks', 'min', 'km'].includes(k)), 'каталог: 881, способы только известные ' + JSON.stringify(cnt));
   дано(['Step_Mill', 'Stairmaster', 'Walking_Treadmill', 'Jogging_Treadmill', 'Running_Treadmill', 'Elliptical_Trainer', 'Rowing_Stationary', 'Bicycling_Stationary', 'Recumbent_Bike']
     .every(i => by[i] && by[i].lg === 'min'), 'лестница, степпер, дорожки, эллипс, гребля, вело — минуты');
   дано(cat.ex.filter(e => e.tm).every(e => e.lg === 's'), 'все удержания (tm) — секунды');

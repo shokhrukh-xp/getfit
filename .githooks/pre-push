@@ -1,6 +1,8 @@
 #!/bin/sh
 # 27.10: автоматический выбор проверок по просьбе Шохруха.
-# Логика/данные/неизвестное -> полный прогон; оформление -> smoke + адресные.
+# 28.10: правка логики тоже адресно (функции/строки/селекторы правки + ui-clean и
+# тыкалка), полный — после push в фоне. Полный до выпуска: крупное, общий код
+# прогона, неизвестные файлы. GETFIT_FULL=1 — полный руками.
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
 node tools/check-plan.test.cjs || exit 1
@@ -40,6 +42,12 @@ case "$MODE" in
 esac
 if sh tg/run.sh "$@" > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
+  # 28.10: адресно перед выпуском — полный сразу после, в фоне (tools/full-after.sh)
+  if [ "$MODE" = targeted ] && [ "${GETFIT_NO_AFTER:-0}" != 1 ]; then
+    SHA=$(tail -1 "$REFILE" | cut -f2)
+    nohup sh tools/full-after.sh "$SHA" >/dev/null 2>&1 &
+    echo "pre-push: полный прогон запущен в фоне для ${SHA%${SHA#???????}} — итог: sh tools/full-after.sh --status"
+  fi
   exit 0
 fi
 grep -E "✗|ПРОВАЛ|УПАЛО|МЕТКИ|^За " "${TMPDIR:-/tmp}/getfit-pre-push.log" | head -40
