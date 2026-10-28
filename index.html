@@ -9250,7 +9250,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 01:20';
+var BUILD = '28.10 07:13';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19297,7 +19297,9 @@ function chatSendState(){
   if(retry) retry.disabled=blocked || !(document.getElementById('ctext').value.trim() || CHAT.att);
 }
 function chatDraftSave(){
-  CHAT.drafts[CHAT.date]={text:document.getElementById('ctext').value, image:CHAT.att, err:CHAT.err||'', retry:!!CHAT.retry};
+  var text=document.getElementById('ctext').value, old=CHAT.drafts[CHAT.date]||{};
+  CHAT.drafts[CHAT.date]={text:text, image:CHAT.att, err:CHAT.err||'', retry:!!CHAT.retry,
+    operation:old.text===text && old.image===CHAT.att ? old.operation : undefined};
 }
 function chatDraftRestore(){
   var draft=CHAT.drafts[CHAT.date]||{};
@@ -20196,9 +20198,11 @@ function takeChanges(d){
 }
 
 function coachSend(text, image){
-  if(!image&&!CHAT.busy&&/^(?:хочу\s+)?(?:обсудить\s+цель|изменить\s+цель|поставить\s+цель|похудеть|набрать\s+мышцы|стать\s+сильнее|\d+(?:[.,]\d+)?\s*кг)/i.test(String(text||'').trim())){document.getElementById('ctext').value='';goalTalkOpen(false,text);return;}
+  if(!image&&!CHAT.busy&&/^(?:хочу\s+)?(?:обсудить\s+цель|изменить\s+цель|поставить\s+цель|похудеть|набрать\s+мышцы|стать\s+сильнее)/i.test(String(text||'').trim())){document.getElementById('ctext').value='';goalTalkOpen(false,text);return;}
   if(CHAT.busy || CHAT.prep || (!text && !image)) return;
   var date=CHAT.date||TODAY;
+  var прошлый=CHAT.drafts[date]||{};
+  var операция=(прошлый.operation && прошлый.text===(text||'') && прошлый.image===(image||null))?прошлый.operation:('c'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
   CHAT.drafts[date]={}; cAttSet(null);
   /* Пустая подпись при отправленном фото раньше стирала состояние ожидания:
      весь блок «отправлено / смотрю» висел на непустом тексте. */
@@ -20223,7 +20227,7 @@ function coachSend(text, image){
       CHAT.stage=t; var el=document.getElementById('cwait'); if(el) el.textContent=t;
     }).catch(function(){});
   }, 1500);
-  fPost('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
+  fPost('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -20232,7 +20236,7 @@ function coachSend(text, image){
       CHAT.pick=false;
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
       if(d.needsRetry){
-        CHAT.drafts[date]={text:text||'',image:image||null,err:'',retry:true};
+        CHAT.drafts[date]={text:text||'',image:image||null,operation:операция,err:'',retry:true};
         if(CHAT.date===date) chatDraftRestore();
       }
       if(d.бесплатно && SUB){ SUB.бесплатно=d.бесплатно; }
@@ -20266,7 +20270,7 @@ function coachSend(text, image){
     })
     .catch(function(e){
       CHAT.pending=''; CHAT.pendingImg=null; CHAT.prep=false;
-      CHAT.drafts[date]={text:text||'', image:image||null, err:humanErr(e), retry:true};
+      CHAT.drafts[date]={text:text||'', image:image||null, operation:операция, err:humanErr(e), retry:true};
       if(CHAT.date===date) chatDraftRestore();
       haptic('err');
       if(отправкаПовторима(e)) сверить=true;
