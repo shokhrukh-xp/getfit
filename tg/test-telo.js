@@ -77,7 +77,7 @@ const карточка = page => page.evaluate(() => {
   дано(!где.весыНаЕде && !где.старыйГрафик, 'на «Еде» раздела «Весы» больше нет');
 
   /* 3. набранное переживает пересборку главной; переключатель */
-  await page.fill('#fw', '87,4');
+  await M.замерВручную(page);await page.fill('#fw', '87,4');
   await page.click('[data-vzv="fat"]'); await page.waitForTimeout(300);
   к = await карточка(page);
   дано(await page.inputValue('#fw') === '87,4', 'набранный вес не стёрся, когда главная перерисовалась');

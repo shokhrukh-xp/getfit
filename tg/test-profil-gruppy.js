@@ -41,7 +41,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   ok(await p.$eval('#pqname',e=>e.textContent.trim())==='Ш'&&await p.$eval('#pqava',e=>e.textContent.trim())==='Ш',где+'шапка: имя и буква из Telegram');
   /* полоса цели: старт 92,3, путь 17 кг, пройдено 4,8 → 28% */
   const пол=await p.evaluate(()=>{const g=document.querySelector('#goalcard .pqgbar b');return g?{w:g.style.width,t:document.querySelector('#goalcard .pqgends').textContent}:null});
-  ok(пол&&пол.w==='28%'&&/старт 92,3/.test(пол.t)&&/цель 75,3/.test(пол.t),где+'полоса цели верна данным: '+JSON.stringify(пол));
+  ok(пол&&пол.w==='28%'&&/−4,8 кг/.test(пол.t)&&/осталось 12,2/.test(пол.t),где+'полоса цели верна данным: '+JSON.stringify(пол));
   ok(await p.$$eval('#profm .pqpage',ns=>ns.every(n=>n.hidden)),где+'листы закрыты, пока не нажал');
   await check('список профиля');
 

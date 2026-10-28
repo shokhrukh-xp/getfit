@@ -12,21 +12,23 @@ let плохо=0;const дано=(у,т)=>{console.log((у?'  ok  ':'  ПРОВА
   await M.поднять(page,o);
   await page.click('#profbtn');await page.locator('#goalcard [data-bodygoal]').click();
   const ждать=async()=>{await page.waitForFunction(()=>{const g=document.getElementById('goalconversation');return g.dataset.state!=='loading'&&g.getAttribute('aria-busy')==='false';});await page.waitForTimeout(150);};
+  /* 28.10: самый ранний срок — подпись у края штриховки на полосе времени */
+  const ранний=()=>page.evaluate(()=>{const e=document.querySelector('#goalconversation .pth-l.zone');return e?e.textContent.trim():'';});
   const текст=()=>page.evaluate(()=>document.getElementById('goalconversation').innerText.replace(/\s+/g,' '));
   await ждать();let t=await текст();
   дано(await page.evaluate(()=>document.getElementById('coachtitle').textContent)==='Цель','заголовок листа — «Цель»');
   дано(/Похудеть/.test(t)&&/Жир ↓, мышцы ↑/.test(t)&&/Набрать мышцы/.test(t)&&/Питаться правильнее/.test(t),'четыре цели кнопками');
-  дано(/можно 70,5–85,5 кг/.test(t)&&/при 75 кг: 10–15%/.test(t)&&/не раньше/.test(t),'под полями — диапазоны и самый ранний срок');
+  дано(/можно 70,5–85,5 кг/.test(t)&&/при 75 кг: 10–15%/.test(t)&&/^не раньше \d+ [а-я]{3}$/.test(await ранний()),'под полями — диапазоны и самый ранний срок');
   дано(/1 900/.test(t)&&/155/.test(t)&&/к июню 2027/.test(t),'итог сразу: 1 900 ккал, 155 г, к июню 2027');
   дано(!/Пересмотр|не срок достижения|Наш разговор/.test(t),'без анкеты и «пересмотр — не срок»');
-  const срок12=(t.match(/не раньше ([^С]+?) Без/)||[])[1];
+  const срок12=await ранний();
   await page.click('[data-gs="f"][data-v="-1"]');await page.click('[data-gs="f"][data-v="-1"]');await page.waitForTimeout(400);await ждать();t=await текст();
-  дано(/к июлю 2027/.test(t)&&(t.match(/не раньше ([^С]+?) Без/)||[])[1]!==срок12,'жир 10% меняет срок и самый ранний срок');
+  дано(/к июлю 2027/.test(t)&&(await ранний())!==срок12,'жир 10% меняет срок и самый ранний срок');
   await page.fill('#gs-date','2027-01-31');await page.dispatchEvent('#gs-date','change');await ждать();t=await текст();
-  дано(/не успеть/.test(t)&&/Самое раннее/.test(t),'ранняя дата: «не успеть» и самая ранняя');
+  дано(/Не успеть/.test(t)&&/Взять \d+ [а-я]+ \d{4}/.test(t),'ранняя дата: «не успеть» и самая ранняя');
   await page.fill('#gs-date','2028-03-01');await page.dispatchEvent('#gs-date','change');await ждать();t=await текст();
-  if(!(!/не успеть/.test(t)&&/1 марта 2028/.test(t)))console.log('    текст:',t.slice(0,900));
-  дано(!/не успеть/.test(t)&&/1 марта 2028/.test(t),'поздняя дата: приходите к ней, без предупреждения');
+  if(!(!/не успеть/i.test(t)&&/1 марта 2028/.test(t)))console.log('    текст:',t.slice(0,900));
+  дано(!/не успеть/i.test(t)&&/1 марта 2028/.test(t),'поздняя дата: приходите к ней, без предупреждения');
   /* 28.10, его снимок: поле срока «30 Mar 2027» вылезало из рамки — дата чипом по-русски и внутри */
   дано(await page.locator('.gs-date').innerText()==='1 марта 2028','своя дата — чипом, по-русски');
   {const bb=await require('./viewport-check')(page);дано(!bb.length,'ничего не вылезает из рамок и за край: '+JSON.stringify(bb).slice(0,300));}

@@ -15,7 +15,7 @@ const быстро=p=>p.addInitScript(()=>{window.__паузыОтправки=[
   {const p=await b.newPage({viewport:{width:390,height:844}});await быстро(p);
    let n=0;const err=await M.поднять(p,{meas:M.замеры().filter(m=>m.date!==M.TODAY),handleRoute:async r=>{
      const u=new URL(r.request().url());if(u.pathname==='/measure'&&n++===0){await r.abort('failed');return true;}return false;}});
-   await p.locator('#fw').scrollIntoViewIfNeeded();await p.fill('#fw','87,6');await p.click('#fmsave');
+   await M.замерВручную(p);await p.locator('#fw').scrollIntoViewIfNeeded();await p.fill('#fw','87,6');await p.click('#fmsave');
    await p.waitForFunction(()=>/Замер записан|настроении/.test(document.querySelector('#fmreply').textContent),null,{timeout:8000}).catch(()=>{});
    const r=await p.evaluate(()=>{const e=document.getElementById('fmreply');return {т:e.textContent,к:e.className};});
    ok(n===2&&!/bad/.test(r.к)&&/Замер записан|настроении/.test(r.т),'замер: обрыв — повтор сам ('+n+' запроса), без красного: '+r.т.slice(0,40));

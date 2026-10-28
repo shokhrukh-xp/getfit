@@ -37,7 +37,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
  if(state==='обычно'){
   /* 17.10: плашек «растёт / стоит / падает» нет — заголовок силы и строка о снижении целиком, без «фильтров» */
   дано(await p.locator('.sila-up,.sila-flat,.sila-down,.vzsila2').count()===0&&await p.locator('.vzbottom .zk .zkhd').count()===1, '«Зал на неделе» вместо рабочих весов на «Сегодня» '+label);
-  await p.locator('#fw').fill('87.4');
+  await M.замерВручную(p);await p.locator('#fw').fill('87.4');
   for(const metric of ['fat','prot','w']){
    const chip=p.locator('[data-vzv="'+metric+'"]');if(await chip.count()){
     await chip.click();дано(await p.locator('#fw').inputValue()==='87.4','ввод замера не теряется при '+metric+' '+label);

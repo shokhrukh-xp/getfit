@@ -38,18 +38,19 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  ok(await p.locator('.ingredient-chips>span').count()===9,'ингредиенты с граммами отдельными элементами');
  await p.locator('.menu-note summary').first().click();ok((await p.locator('.menu-note').first().innerText()).includes('привычные блюда'),'пояснение меню раскрывается');await check('меню');
  await p.locator('#profbtn').click();await check('профиль','#profm');
- ok((await p.locator('.goal-more summary').innerText()).includes('−4,8 кг'),'минус в кратком ходе цели');
- await p.locator('.goal-more summary').click();ok((await p.locator('.goal-progress').innerText()).includes('(−4,8)'),'минус в раскрытом ходе цели');ok((await p.locator('.goal-progress').innerText()).includes('92,3'),'стартовый вес в деталях цели');
+ /* 28.10: карточка цели — числа и полоса вместо строк: сделано (−4,8 кг) и осталось */
+ ok((await p.locator('#goalcard .gdone').innerText()).includes('−4,8 кг'),'минус в ходе цели');
+ ok(/осталось \d/.test(await p.locator('#goalcard .pqgends').innerText()),'сколько осталось');
  await p.locator('#zdtoggle').click();await check('здоровье','#profm');await p.locator('#pqback').click();await p.locator('#bttoggle').click();await check('быт','#profm');
  await p.locator('#pqback').click();await p.locator('#meedit').click();ok(await p.locator('#me-age').isVisible(),'личные данные редактируются');
  ok(!errs.length,'без ошибок приложения: '+errs.join('|'));await p.close();
  }
  for(const theme of ['light','dark'])for(const width of [320,360,375,390,430]){
   const p=await b.newPage({viewport:{width,height:844}});await M.поднять(p,opts(theme));
-  for(const [id,value] of [['fw','188,75'],['ffat','27,65'],['fwaist','123,4']])await p.locator('#'+id).fill(value);
+  await M.замерВручную(p);for(const [id,value] of [['fw','188,75'],['ffat','27,65'],['fwaist','123,4']])await p.locator('#'+id).fill(value);
   const geometry=await p.locator('#hmeas').evaluate(e=>{
    const ctx=document.createElement('canvas').getContext('2d');
-   return {inputs:[...e.querySelectorAll('input:not([hidden])')].map(n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect();ctx.font=c.font;const available=n.clientWidth-parseFloat(c.paddingLeft)-parseFloat(c.paddingRight);return {id:n.id,value:ctx.measureText(n.value).width,placeholder:ctx.measureText(n.placeholder).width,available,left:r.left,right:r.right};}),buttons:[...e.querySelectorAll('button')].map(n=>{const r=n.getBoundingClientRect();return {w:r.width,h:r.height,left:r.left,right:r.right}})};
+   return {inputs:[...e.querySelectorAll('input:not([hidden])')].map(n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect();ctx.font=c.font;const available=n.clientWidth-parseFloat(c.paddingLeft)-parseFloat(c.paddingRight);return {id:n.id,value:ctx.measureText(n.value).width,placeholder:ctx.measureText(n.placeholder).width,available,left:r.left,right:r.right};}),buttons:[...e.querySelectorAll('button')].filter(n=>n.getClientRects().length).map(n=>{const r=n.getBoundingClientRect();return {w:r.width,h:r.height,left:r.left,right:r.right}})};
   });
   ok(geometry.inputs.every(x=>x.value<=x.available&&x.placeholder<=x.available&&x.left>=0&&x.right<=width),'значения и подсказки полностью видны '+theme+'/'+width+' '+JSON.stringify(geometry.inputs));
   ok(geometry.buttons.every(x=>x.w>=44&&x.h>=44&&x.left>=0&&x.right<=width),'кнопки замера >=44 и внутри '+theme+'/'+width);

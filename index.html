@@ -2674,6 +2674,7 @@ body.onb #picker .modalbox::before{display:none}
 .vzg-c b s{text-decoration:none;font-size:14px;font-weight:500;margin-left:4px;letter-spacing:0;color:var(--dim)}
 .vzg-c em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:4px}
 .vzg-goal b{opacity:.72}
+.vzg-goal b s{color:inherit}  /* 29.10: под opacity .72 серый «кг» давал 3,2:1 — единица цветом числа */
 .vzg-r{text-align:right}
 .vzg-tr{position:relative;height:6px;border-radius:6px;background:var(--field);margin-bottom:13px}
 .vzg-tr i{position:absolute;top:0;bottom:0;left:0;border-radius:6px;background:currentColor;opacity:.85}
@@ -4188,6 +4189,63 @@ img.avface{border-radius:50%;object-fit:cover}
 #bodygoalm .modalbox{overflow:auto}
 /* 26.10: параметры и фото — один лист, одна основная кнопка. */
 #goalcard .gt{font-size:24px;line-height:1.2}
+/* 28.10: «Тело» — неделя плиткой */
+.vzweek{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--field);margin:12px 0 8px}
+.vzweek div{display:flex;flex-direction:column;gap:2px}
+.vzweek span{font-size:12px;color:var(--muted)}
+.vzweek b{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.vzweek em{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:999px;font-style:normal;font-size:13px;font-weight:700;background:rgba(63,191,138,.14);color:var(--done-txt)}
+.vzweek em svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.vzweek em.edge{background:var(--sand-bg);color:var(--sand-txt)}
+.vzweek em.warn{background:var(--sand-bg);color:var(--warn-txt)}
+/* 28.10: карточка цели — числа и полоса времени вместо строк (см. путьHtml) */
+#goalcard .ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+#goalcard .ghead .gl{margin:0}
+#goalcard .gdate{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;background:rgba(244,184,96,.16);color:var(--sand);font-size:13px;font-weight:700;white-space:nowrap}
+#goalcard .gdate svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#goalcard .gt{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-weight:800}
+#goalcard .gt small{font-size:14px;font-weight:500;color:#C9E6E2}
+#goalcard .grow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:16px}
+#goalcard .grow span{font-size:13px;color:#C9E6E2}
+#goalcard .grow b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+#goalcard .grow b i{font-style:normal;font-weight:500;color:#C9E6E2}
+#goalcard .pqgbar{margin:10px 0 8px}
+#goalcard .pqgbar u{top:-3px;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 3px rgba(8,54,62,.6)}
+#goalcard .pqgends{display:flex;justify-content:space-between;font-size:12px;color:#C9E6E2}
+#goalcard .pqgends .gdone{color:var(--sand);font-weight:700}
+#goalcard .gline{height:1px;background:rgba(230,242,241,.16);margin:16px 0 12px}
+#goalcard .btn.wide{margin-top:12px}
+#goalcard .pth-st+.btn.wide,#goalcard .pth+.btn.wide,#goalcard .pth-need+.btn.wide{margin-top:16px}
+.pth{position:relative;height:62px;margin:2px 0 8px;--pth-muted:var(--muted);--pth-line:var(--line);--pth-band:rgba(var(--accent-rgb),.5);--pth-now:var(--text)}
+#goalcard .pth{--pth-muted:#C9E6E2;--pth-line:rgba(230,242,241,.24);--pth-band:rgba(169,214,209,.55);--pth-now:#fff}
+.pth i{position:absolute;display:block}
+.pth-ax{left:0;right:0;top:27px;height:2px;border-radius:1px;background:var(--pth-line)}
+.pth-zone{left:0;top:21px;height:14px;border-radius:7px;background:repeating-linear-gradient(135deg,rgba(138,157,163,.36) 0 4px,rgba(138,157,163,.1) 4px 8px)}
+.pth-band{top:23px;height:10px;border-radius:5px;background:var(--pth-band)}
+.pth-now{left:0;top:22px;width:12px;height:12px;border-radius:50%;background:var(--pth-now)}
+.pth-flag{top:16px;width:3px;height:24px;margin-left:-1.5px;border-radius:2px;background:var(--sand-txt,#7A5212)}
+#goalcard .pth-flag{background:var(--sand)}
+.pth-flag.late{background:var(--warn)}
+.pth-dot{top:22px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--accent)}
+.pth-l{position:absolute;top:0;font-size:11px;line-height:14px;white-space:nowrap;color:var(--pth-muted);transform:translateX(-50%)}
+.pth-l.flag,.pth-l.dot{font-weight:800;color:var(--text)}
+.pth-l.flag{color:var(--sand-txt,#7A5212)}
+#goalcard .pth-l.flag{color:var(--sand)}
+#goalcard .pth-l.dot{color:#fff}
+.pth-l.flag.late{color:var(--warn)}
+.pth-m{position:absolute;top:44px;font-size:11px;line-height:14px;color:var(--pth-muted);transform:translateX(-50%)}
+.pth-m.first{transform:none}
+.pth-st{display:flex;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;padding:8px 12px;border-radius:14px;background:var(--field)}
+#goalcard .pth-st{background:rgba(5,11,12,.28)}
+.pth-st i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;flex:none;background:var(--ok);color:#06231A}
+.pth-st i svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.pth-st.edge i{background:var(--sand);color:#4A3000}
+.pth-st.late i{background:var(--warn);color:#fff}
+.pth-st b{font-size:14px;font-weight:700}
+.pth-need{margin:8px 2px 0;font-size:13px;color:var(--muted)}
+#goalcard .pth-need{color:inherit;opacity:.8}
+.pth-st span{margin-left:auto;font-size:13px;color:var(--pth-muted,var(--muted))}
+#goalcard .pth-st span{color:#C9E6E2}
 #goalcard .goal-muscle{margin:6px 0 12px;font-size:14px;color:#E6F5F4}
 #goalcard .goal-forecast{margin:12px 0;font-size:14px;color:#fff}
 #goalcard .goal-more{margin:12px 0;color:#E6F5F4;font-size:13px}
@@ -4198,6 +4256,71 @@ img.avface{border-radius:50%;object-fit:cover}
 #vizm #bodygoalerror:empty{display:none}
 .vizmetrics{margin-top:8px;text-align:center;font-size:12px;line-height:1.6;color:var(--text)}
 .vizmetrics span{display:block}
+.vizmetrics .vizfrom{color:var(--muted)}
+/* 28.10: карточка замера под весы (весыВид) */
+#hmeas .mq{display:grid;gap:10px}
+#hmeas .mq[hidden],#hmeas [hidden]{display:none!important}
+#hmeas .mq-h{font-size:17px;font-weight:800;margin:2px 2px 4px}
+#hmeas .mq-o{display:flex;align-items:center;gap:14px;min-height:72px;padding:12px 14px;border-radius:18px;border:1px solid var(--line);background:var(--field);color:var(--text);text-align:left;font-family:inherit;cursor:pointer}
+#hmeas .mq-o i{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:14px;flex:none;background:rgba(var(--accent-rgb),.16);color:var(--accent-txt)}
+#hmeas .mq-o.none i{background:var(--sand-bg);color:var(--sand-txt)}
+#hmeas .mq-o svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#hmeas .mq-o span{display:grid;gap:2px}
+#hmeas .mq-o b{font-size:16px}
+#hmeas .mq-o small{font-size:13px;color:var(--muted)}
+#hmeas .mlast{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+#hmeas .mlast div{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:var(--field)}
+#hmeas .mlast span{font-size:12px;color:var(--muted)}
+#hmeas .mlast b{font-size:18px;font-variant-numeric:tabular-nums}
+#hmeas .mlast b.empty{color:var(--muted)}
+#hmeas .mlast-h{grid-column:1/-1;background:none!important;padding:0 2px!important;font-size:13px;color:var(--muted)}
+#hmeas .mshot{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:18px;background:var(--action);color:var(--on-accent);font-size:17px;font-weight:800;line-height:1.2;font-family:inherit;cursor:pointer}
+#hmeas .mshot svg{width:22px;height:22px}
+#hmeas .mshot-n{margin:8px 0 0;text-align:center;font-size:13px;color:var(--muted)}
+#hmeas .mfoot{display:flex;justify-content:center;gap:4px;margin-top:6px}
+#hmeas .mfoot:not(:has(.mlink:not([hidden]))){display:none}
+#hmeas .mlink{min-height:44px;padding:0 12px;border:0;background:none;color:var(--accent-txt);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+#hmeas .mwaist{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+#hmeas .mwaist img{width:104px;height:104px;border-radius:18px;flex:none}
+#hmeas .mw-d{display:none}
+:root[data-theme="dark"] #hmeas .mw-d{display:block}
+:root[data-theme="dark"] #hmeas .mw-l{display:none}
+#hmeas .mwaist div{display:grid;gap:4px;font-size:14px}
+#hmeas .mwaist span{color:var(--muted)}
+#hmeas .mwaist em{justify-self:start;margin-top:4px;padding:3px 10px;border-radius:999px;background:var(--sand-bg);color:var(--sand-txt);font-style:normal;font-size:12px;font-weight:700}
+/* обычные весы и талия — одно крупное число с −/+ */
+#hmeas[data-mode="plain"] .fmeasq,#hmeas[data-mode="none"] .fmeasq{display:grid!important;grid-template-columns:56px minmax(0,1fr) 56px;gap:10px;align-items:center}
+#hmeas[data-mode="plain"] .fstep,#hmeas[data-mode="none"] .fstep{display:inline-flex!important;align-items:center;justify-content:center;width:56px;height:56px;border:0;border-radius:16px;background:var(--field);color:var(--accent-txt);font-size:26px;font-weight:700;line-height:1;font-family:inherit;cursor:pointer}
+#hmeas[data-mode="plain"] .fstep[data-step="-1"],#hmeas[data-mode="none"] .fstep[data-step="-1"]{grid-column:1;grid-row:1}
+#hmeas[data-mode="plain"] .fstep[data-step="1"],#hmeas[data-mode="none"] .fstep[data-step="1"]{grid-column:3;grid-row:1}
+#hmeas[data-mode="plain"] .fld:has(#fw),#hmeas[data-mode="none"] .fld:has(#fwaist){grid-column:2!important;grid-row:1}
+#hmeas[data-mode="plain"] .fld:has(#ffat),#hmeas[data-mode="plain"] .fld:has(#fwaist),#hmeas[data-mode="none"] .fld:has(#fw),#hmeas[data-mode="none"] .fld:has(#ffat){display:none}
+#hmeas[data-mode="plain"] .fld>span,#hmeas[data-mode="none"] .fld>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#hmeas[data-mode="plain"] .fld,#hmeas[data-mode="none"] .fld{position:relative}
+#hmeas[data-mode="plain"] .fld:has(#fw)::after,#hmeas[data-mode="none"] .fld:has(#fwaist)::after{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:15px;font-weight:600;color:var(--muted);pointer-events:none}
+#hmeas[data-mode="plain"] .fld:has(#fw)::after{content:'кг'}
+#hmeas[data-mode="none"] .fld:has(#fwaist)::after{content:'см'}
+#hmeas[data-mode="plain"] .fld input::placeholder,#hmeas[data-mode="none"] .fld input::placeholder{font-style:normal;font-weight:800}
+#hmeas[data-mode="plain"] .fld input,#hmeas[data-mode="none"] .fld input{min-height:64px;padding:6px;border-radius:16px;text-align:center;font-size:36px!important;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#hmeas[data-mode="plain"] #fmphoto{grid-column:1!important;grid-row:2;width:56px;height:56px;min-height:56px;padding:0}
+#hmeas[data-mode="plain"] #fmphoto span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+#hmeas[data-mode="plain"] #fmsave{grid-column:2/-1!important;grid-row:2;min-height:56px;font-size:17px;font-weight:800}
+#hmeas[data-mode="none"] #fmphoto{display:none}
+#hmeas[data-mode="none"] #fmsave{grid-column:1/-1!important;grid-row:2;min-height:56px;font-size:17px;font-weight:800}
+/* умные весы: снимок — главное; поля — по «Ввести вручную» */
+#hmeas[data-mode="smart"]:not(.manual) .fmeasq,#hmeas[data-mode="ask"] .fmeasq{display:none!important}
+#hmeas.manual .mshot,#hmeas.manual .mshot-n{display:none!important}
+/* весы в зале (после тренировки, у кого дома весов нет) */
+.gymw{margin-top:12px;padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.gymw h4{margin:0 0 12px;font-size:16px;font-weight:800}
+.gymw .gw-st{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:10px;align-items:center}
+.gymw .gw-st button{width:56px;height:56px;border:0;border-radius:16px;background:var(--field);color:var(--accent-txt);font-size:26px;font-weight:700;line-height:1;font-family:inherit}
+.gymw input{width:100%;min-height:60px;box-sizing:border-box;border:1px solid var(--line);border-radius:16px;background:var(--field);color:var(--text);text-align:center;font-size:32px;font-weight:800;line-height:1;font-family:inherit;font-variant-numeric:tabular-nums}
+.gymw .gw-b{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.gymw .gw-b button{min-height:52px;border-radius:16px;font-size:15px;font-weight:700;font-family:inherit}
+.gymw .gw-no{border:1px solid var(--line);background:none;color:var(--text)}
+.gymw .gw-go{border:0;background:var(--action);color:var(--on-accent)}
+.gymw .gw-r{margin:10px 0 0;font-size:13px;color:var(--muted)}
 #goalphotos .vizpair{margin-bottom:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
 #vizreference{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.28;pointer-events:none}
 #vizreference.mirror{transform:scaleX(-1)}
@@ -4259,6 +4382,12 @@ img.avface{border-radius:50%;object-fit:cover}
 #goalconversation .gs-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
 /* 28.10: своя дата — кнопкой-чипом «30 марта 2027»; родное поле прозрачное поверх неё. На iPhone
    видимое поле даты имело свою ширину («30 Mar 2027», по-английски) и вылезало из рамки срока. */
+#goalconversation .gs-srok .pth{flex:1 0 100%;margin:4px 0 0}
+#goalconversation .gs-late{flex:1 0 100%;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:14px;background:var(--sand-bg);color:var(--sand-txt)}
+#goalconversation .gs-late b{font-size:14px}
+#goalconversation .gs-late .gs-chip{margin-left:auto;background:var(--accent);border-color:var(--accent);color:#fff}
+#goalconversation .gs-ok{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;border-radius:50%;background:var(--ok);color:#06231A;vertical-align:-3px}
+#goalconversation .gs-ok svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
 #goalconversation .gs-date{position:relative;display:inline-flex;align-items:center;overflow:hidden;max-width:100%;white-space:nowrap}
 #goalconversation .gs-date.on{background:var(--accent);border-color:var(--accent);color:#fff}
 #goalconversation .gs-date:focus-within{outline:2px solid var(--accent);outline-offset:2px}
@@ -4335,14 +4464,29 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
              переносит его в гнездо #hmeasslot после каждой пересборки,
              с набранным числом и обработчиками. -->
         <div id="hmeashold" hidden><div id="hmeas">
+        <!-- 28.10, его «как сделать удобно тем, у кого нет умных весов или вообще нет весов»: один раз —
+             «Чем вы взвешиваетесь?», дальше карточка под ответ (весыВид): умные — снимок весов, обычные —
+             одно число с −/+, весов нет — талия с рисунком, где мерить -->
+        <div class="mq" id="mq" role="group" aria-labelledby="mqh" hidden><b class="mq-h" id="mqh">Чем вы взвешиваетесь?</b>
+          <button type="button" class="mq-o" data-scale="smart"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M9 9h6M7 15l2-2 2 1.5 2-3 2 2 2-1"/></svg></i><span><b>Умные весы</b><small>показывают жир и мышцы</small></span></button>
+          <button type="button" class="mq-o" data-scale="plain"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M8 10a4 4 0 0 1 8 0M12 10l1.5-2"/></svg></i><span><b>Обычные весы</b><small>только вес</small></span></button>
+          <button type="button" class="mq-o none" data-scale="none"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h18v6H3zM7 9v3M11 9v4M15 9v3M19 9v4"/></svg></i><span><b>Весов нет</b><small>будем мерить талию</small></span></button>
+        </div>
+        <div class="mlast" id="mlast" hidden></div>
+        <div class="mwaist" id="mwaist" hidden><img class="mw-d" src="img/waist-dark.png" alt="Сантиметр на талии на уровне пупка" width="104" height="104"><img class="mw-l" src="img/waist-light.png" alt="Сантиметр на талии на уровне пупка" width="104" height="104"><div><b>На уровне пупка</b><span>на выдохе, лента не давит</span><span>утром, до еды</span><em>раз в неделю</em></div></div>
+        <button type="button" class="mshot" id="mshot" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>Сфотографировать весы</button>
+        <p class="mshot-n" id="mshotn" hidden>или скриншот из приложения весов</p>
         <div class="fask fmeasq">
+          <button type="button" class="fstep" data-step="-1" aria-label="Меньше" hidden>−</button>
           <label class="fld"><span>Вес, кг</span><input id="fw" aria-describedby="fw-error" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="88,1" aria-label="Вес, кг"><small class="fmerror" id="fw-error" hidden></small></label>
           <label class="fld"><span>Жир, %</span><input id="ffat" aria-describedby="ffat-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="27,6" aria-label="Жир, процент"><small class="fmerror" id="ffat-error" hidden></small></label>
           <label class="fld"><span>Талия</span><input id="fwaist" aria-describedby="fwaist-error" type="text" inputmode="decimal" autocomplete="off" maxlength="5" placeholder="см" aria-label="Талия, см"><small class="fmerror" id="fwaist-error" hidden></small></label>
           <button type="button" class="fbtn" id="fmphoto" aria-label="Снимок весов"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Снимок весов</span></button>
+          <button type="button" class="fstep" data-step="1" aria-label="Больше" hidden>+</button>
           <button type="button" class="fbtn go" id="fmsave" aria-label="Записать">Записать →</button>
           <input id="fmfile" type="file" accept="image/*" hidden>
         </div>
+        <div class="mfoot"><button type="button" class="mlink" id="mmanual" hidden>Ввести вручную</button><button type="button" class="mlink" id="mscale" hidden>Другие весы</button></div>
         <p class="freply" id="fmreply" role="status" aria-live="polite" hidden></p>
         </div></div></div>
     </section>
@@ -4682,7 +4826,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
            открывается с слайдером» — рядом две картинки, по нажатию — шторка на весь экран -->
       <div class="vizpair" id="vizpair">
         <figure hidden><img id="vizstart" role="button" tabindex="0" alt="Первое сохранённое фото"><figcaption id="vizstartcap">Первое фото</figcaption></figure>
-        <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото сейчас — открыть"><figcaption id="viznowcap">Сейчас</figcaption><div class="vizmetrics" id="viznowmetrics"></div></figure>
+        <figure><img id="vizorig" role="button" tabindex="0" alt="Ваше фото — открыть"><figcaption id="viznowcap">Ваше фото</figcaption><div class="vizmetrics" id="viznowmetrics"></div></figure>
         <figure><div class="vizph" id="vizph">Задайте цель — покажем примерный результат</div><img id="viznew" role="button" tabindex="0" alt="" hidden><figcaption id="viznewcap">После</figcaption><div class="vizmetrics" id="vizgoalmetrics"></div></figure>
       </div>
       <p class="vizcap" id="vizhint" hidden>Нажмите на фото — откроется сравнение со шторкой</p>
@@ -4697,7 +4841,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
       <p class="mtext vizsmall">Картинка примерная: жир у каждого уходит по-своему. Талия считается по данным 2 635 взрослых, разброс ±30 %. Ниже безопасного веса и жира не рисуем.</p>
       </details>  <p class="mtext" id="bodygoalerror" role="status" aria-live="polite"></p>
   <p id="vizquota" class="mtext" role="status" hidden></p>
-<button type="button" id="vizgo" class="btn prim wide">Создать примерный образ</button><p class="mtext" id="vizmsg" role="status" aria-live="polite"></p><div class="btnrow"><button type="button" class="btn" id="viznewphoto">Добавить фото «Сейчас»</button><button type="button" class="btn" id="vizdel">Удалить все фото</button></div>
+<button type="button" id="vizgo" class="btn prim wide">Создать примерный образ</button><p class="mtext" id="vizmsg" role="status" aria-live="polite"></p><div class="btnrow"><button type="button" class="btn" id="viznewphoto">Новое фото</button><button type="button" class="btn" id="vizdel">Удалить все фото</button></div>
     </div>
   </div>
 </div>
@@ -7790,6 +7934,8 @@ function goalScreenStart(text){
   GS.saved=false;GS.error='';GS.data=null;GS.date='';GS.profile=null;GS.health=null;
   GS.g=g.kind==='habit'?'keep':b.target?(b.target>(me.bw||0)&&g.wt==='up'?'gain':b.muscle==='develop'?'recomp':'loss'):(g.wt==='up'?'gain':'recomp');
   GS.w=b.target||null;GS.f=b.fat==null?null:b.fat;
+  /* 28.10, его «я задавал срок 30 марта, а тут снова не было срока»: экран открывается с сохранённым сроком */
+  if(g.date&&g.date>TODAY&&g.kind!=='habit')GS.date=g.date;
   /* «хочу 75 и 12% к лету» из чата — сразу цифры на экране */
   var s=String(text||''),kg=s.match(/(\d{2,3}(?:[.,]\d)?)\s*(?:кг|kg)?(?!\s*%)/),pc=s.match(/(\d{1,2}(?:[.,]\d)?)\s*%/);
   if(pc){GS.f=Math.round(+pc[1].replace(',','.'));GS.g='recomp';}
@@ -7830,12 +7976,15 @@ function goalTalkRender(){
   h+='<p class="gs-lbl">Чего хотите</p><div class="gs-goals" role="group" aria-label="Цель">';
   GS_ВИДЫ.forEach(function(v){h+='<button type="button" class="gs-goal" data-gs="g" data-v="'+v[0]+'" aria-pressed="'+(GS.g===v[0])+'"><b>'+esc(v[1])+'</b><span>'+esc(v[2])+'</span></button>';});
   h+='</div>';
-  var L=d.limits;
+  var L=d.limits, поздно=!!(GS.date&&(d.warns||[]).some(function(x){return /не успеть/.test(x.t);}));
   if(GS.g!=='keep'&&L){
     h+='<p class="gs-lbl">Куда хотите прийти</p><div class="gs-fields">';
     h+='<div class="gs-row"><div class="gs-name"><b>Вес</b><small>можно <b>'+gsЧ(L.wMin)+'–'+gsЧ(L.wMax)+'</b> кг</small></div><div class="gs-step"><button type="button" data-gs="w" data-v="-0.5" aria-label="Вес меньше">−</button><output id="gs-w">'+gsЧ(d.w)+' <small>кг</small></output><button type="button" data-gs="w" data-v="0.5" aria-label="Вес больше">+</button></div></div>';
     if(GS.g!=='loss'&&L.fLo!=null)h+='<div class="gs-row"><div class="gs-name"><b>Жир</b><small>при '+gsЧ(d.w)+' кг: <b>'+L.fLo+'–'+L.fHi+'%</b>'+(GS.f==null?' · необязательно':'')+'</small></div><div class="gs-step"><button type="button" data-gs="f" data-v="-1" aria-label="Жир меньше">−</button><output id="gs-f">'+(GS.f==null?'—':GS.f)+' <small>%</small></output><button type="button" data-gs="f" data-v="1" aria-label="Жир больше">+</button></div></div>';
-    h+='<div class="gs-row"><div class="gs-name"><b>Срок</b><small>не раньше <b>'+esc(gsДата(L.earliest))+'</b></small></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-chip gs-date'+(GS.date?' on':'')+'"><span aria-hidden="true">'+(GS.date?esc(gsДата(GS.date)):'Своя дата')+'</span><input type="date" id="gs-date" aria-label="Своя дата" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div></div>';
+    h+='<div class="gs-row gs-srok"><div class="gs-name"><b>Срок</b></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-chip gs-date'+(GS.date?' on':'')+'"><span aria-hidden="true">'+(GS.date?esc(gsДата(GS.date)):'Своя дата')+'</span><input type="date" id="gs-date" aria-label="Своя дата" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div>'+
+      /* 28.10: «не раньше …» — штриховкой на полосе времени, флажок — выбранный срок */
+      путьHtml({earliest:L.earliest,date:GS.date||null,eta:GS.date?null:(d.result&&d.result.eta),late:поздно,aria:'Раньше '+путьКор(L.earliest)+' нельзя'+(GS.date?'; срок '+путьКор(GS.date):'')})+
+      (поздно?'<div class="gs-late"><b>Не успеть</b><button type="button" class="gs-chip" data-gs="earliest">Взять '+esc(gsДата(L.earliest))+'</button></div>':'')+'</div>';
     h+='</div>';
   }
   var r=d.result;
@@ -7845,11 +7994,12 @@ function goalTalkRender(){
       '<div><div class="gs-k">Темп</div><div class="gs-v">'+(rate?((rate<0?'−':'+')+gsЧ(Math.abs(rate),2)+' <small>кг/нед</small>'):'0 <small>вес держим</small>')+'</div></div>'+
       '<div><div class="gs-k">Калории в день</div><div class="gs-v">'+gtЧс(r.kcal)+'</div>'+(nw.kcal&&nw.kcal!==r.kcal?'<div class="gs-d">сейчас '+gtЧс(nw.kcal)+'</div>':'')+'</div>'+
       '<div><div class="gs-k">Белок</div><div class="gs-v">'+gtЧс(r.prot)+' <small>г</small></div></div>'+
-      '<div><div class="gs-k">Придёте</div><div class="gs-v gs-eta">'+(r.eta?esc(GS.date&&!d.warns.some(function(x){return /не успеть/.test(x.t);})?gsДата(r.eta):gsДата(r.eta,true)):'—')+'</div></div></div>'+
+      '<div><div class="gs-k">Придёте'+(GS.date&&!поздно&&r.eta?'<i class="gs-ok" aria-label="успеваете к сроку"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i>':'')+'</div><div class="gs-v gs-eta">'+(r.eta?esc(GS.date&&!поздно?gsДата(r.eta):gsДата(r.eta,true)):'—')+'</div></div></div>'+
       (d.comp?'<div class="gs-comp"><span>Жир <b>'+(d.comp.dFat<0?'−':'+')+gsЧ(Math.abs(d.comp.dFat))+' кг</b></span><span>Мышцы и вода <b>'+(Math.abs(d.comp.dLean)<0.1?'сохраняются':(d.comp.dLean<0?'−':'+')+gsЧ(Math.abs(d.comp.dLean))+' кг')+'</b></span></div>':'')+
       '<p class="gs-why">'+esc(d.why||'')+'</p></div>';
   }
-  if(d.warns&&d.warns.length)h+='<div class="gs-warn">'+d.warns.map(function(x){return esc(x.t);}).join(' ')+'</div>';
+  var прочие=(d.warns||[]).filter(function(x){return !/не успеть/.test(x.t);});
+  if(прочие.length)h+='<div class="gs-warn">'+прочие.map(function(x){return esc(x.t);}).join(' ')+'</div>';
   if(GS.error)h+='<div class="gs-warn">'+esc(GS.error)+'</div>';
   /* ограничения по здоровью — здесь же, двумя кнопками (раньше — вопрос разговора) */
   var dh=d.health||{},hl=GS.health?GS.health.limited:(dh.asked?!!dh.limited:null),hn=GS.health?GS.health.note:(dh.note||'');
@@ -7878,6 +8028,7 @@ document.getElementById('goalconversation').addEventListener('click',function(e)
   if(a==='f'){var nowF=d.now&&d.now.f!=null?Math.round(d.now.f):20;var f=GS.f==null?(+b.dataset.v<0?Math.min(nowF-1,L.fHi||nowF):L.fLo||10):GS.f+(+b.dataset.v);
     if(L.fLo!=null&&f>Math.max(L.fHi,nowF))f=null;else if(L.fLo!=null)f=Math.max(L.fLo-1,f);GS.f=f;var o=document.getElementById('gs-f');if(o)o.innerHTML=(f==null?'—':f)+' <small>%</small>';goalScreenLater();return;}
   if(a==='nodate'){GS.date='';goalScreenFetch();return;}
+  if(a==='earliest'&&L.earliest){GS.date=L.earliest;haptic('light');goalScreenFetch();return;}
 });
 /* прозрачное поле даты: на компьютере календарь открывается только значком — открываем по нажатию на чип */
 document.getElementById('goalconversation').addEventListener('click',function(e){if(e.target&&e.target.id==='gs-date'&&e.target.showPicker){try{e.target.showPicker();}catch(x){}}});
@@ -7922,40 +8073,136 @@ document.getElementById('bodygoalform').addEventListener('submit',function(e){
 });
 document.getElementById('g-muscle').addEventListener('change',renderWzGoal);
 
-/* 26.10: одна задача — цель и её фото. На карточке только ориентиры, подробности по нажатию. */
-function goalForecastShort(f){
-  if(!f)return '';
-  if(f.from&&f.to){var a=String(f.from).split('-'),b=String(f.to).split('-');
-    if(a.length===3&&b.length===3)return 'По весу · '+a[2]+'.'+a[1]+(a[0]!==b[0]?'.'+a[0]:'')+'–'+b[2]+'.'+b[1]+'.'+b[0];}
-  return {weight_reached:'Целевой вес достигнут',paused:'Срок уточним по прогрессу',insufficient:'Нужны свежие замеры',review:'Уточним ближайший этап'}[f.state]||'Срок уточняется';
+/* ══════════ ПУТЬ К ЦЕЛИ (28.10) ══════════
+   Его слова: «слишком много непонятного текста вроде „по весу: 17.01–12.03.2027“ … приложение должно
+   быть понятно каждому, даже с нулевыми знаниями; текста минимум — визуальные элементы». Одна полоса
+   времени на профиле, в «Теле» и на экране цели: сегодня (точка), месяцы, «по вашему темпу» (прогноз по
+   замерам — полоса), срок (флажок), «раньше нельзя» (штриховка), и одна отметка: успеваете / впритык / отстаёте. */
+var МЕС_КОР=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+function путьДн(iso){ return Math.round((dLocal(iso)-dLocal(TODAY))/864e5); }
+function путьКор(iso){ var d=dLocal(iso); return d.getDate()+' '+МЕС_КОР[d.getMonth()]; }
+function путьНед(дн){ var н=Math.max(1,Math.round(дн/7)); return н+' '+plural(н,['неделя','недели','недель']); }
+function путьИсо(x){ return x&&/^\d{4}-\d{2}-\d{2}$/.test(x)?x:null; }
+/* o: {lo, hi — полоса «по вашему темпу»; date — срок; earliest — раньше нельзя; eta — «придёте» без срока; late — срок раньше возможного} */
+function путьHtml(o){
+  var дн=function(x){ x=путьИсо(x); return x?путьДн(x):null; };
+  var lo=дн(o.lo),hi=дн(o.hi),d=дн(o.date),e=дн(o.earliest),eta=дн(o.eta);
+  if(lo!=null&&hi!=null&&hi<lo){ var t=lo;lo=hi;hi=t; }
+  /* одна дата темпа (старые цели — только eta) — не полоска в 1,5%, а точка с датой */
+  if(lo!=null&&lo===hi&&eta==null){ eta=lo; o.eta=путьИсо(o.lo); lo=hi=null; }
+  var все=[lo,hi,d,e,eta].filter(function(x){ return x!=null&&x>0; }); if(!все.length) return '';
+  var конец=Math.max(60,Math.max.apply(null,все)+21), p=function(x){ return Math.max(0,Math.min(100,x/конец*100)); }, f1=function(x){ return x.toFixed(1)+'%'; };
+  var h='<div class="pth" role="img" aria-label="'+esc(o.aria||'Шкала времени до цели')+'"><i class="pth-ax"></i>';
+  if(e!=null&&e>0) h+='<i class="pth-zone" style="width:'+f1(p(e))+'"></i>';
+  if(lo!=null&&hi!=null&&hi>0) h+='<i class="pth-band" style="left:'+f1(p(Math.max(0,lo)))+';width:'+f1(Math.max(1.5,p(hi)-p(Math.max(0,lo))))+'"></i>';
+  h+='<i class="pth-now"></i>';
+  if(eta!=null) h+='<i class="pth-dot" style="left:'+f1(p(eta))+'"></i>';
+  if(o.late&&e!=null) h+='<i class="pth-dot" style="left:'+f1(p(e))+'"></i>';
+  if(d!=null) h+='<i class="pth-flag'+(o.late?' late':'')+'" style="left:'+f1(p(d))+'"></i>';
+  /* подписи сверху — по важности: срок, точка, «по вашему темпу», «не раньше …». Место им ищет
+     путьУложить по настоящим ширинам (в строке 320 px «по вашему темпу» шире, чем казалось долей полосы,
+     а по-английски и по-узбекски — ещё шире); не влезла — прячется, а не наезжает и не режется рамкой */
+  var метки=[], чис=function(x){ return x.toFixed(2); };
+  if(d!=null) метки.push({x:p(d),t:путьКор(o.date),c:'flag'+(o.late?' late':'')});
+  if(eta!=null) метки.push({x:p(eta),t:путьКор(o.eta),c:'dot'});
+  if(o.late&&e!=null) метки.push({x:p(e),t:путьКор(o.earliest),c:'dot'});
+  if(lo!=null&&hi!=null&&hi>0) метки.push({x:(p(Math.max(0,lo))+p(hi))/2,t:'по вашему темпу',c:'band',a:p(Math.max(0,lo)),b:p(hi)});
+  if(e!=null&&e>0&&!o.late) метки.push({x:p(e),t:'не раньше '+путьКор(o.earliest),c:'zone',end:p(e)});  /* у правого края штриховки */
+  метки.forEach(function(м){
+    h+='<span class="pth-l '+м.c+'" data-x="'+чис(м.x)+'"'+(м.a!=null?' data-a="'+чис(м.a)+'" data-b="'+чис(м.b)+'"':'')+(м.end!=null?' data-end="'+чис(м.end)+'"':'')+' style="left:'+f1(м.x)+'">'+esc(м.t)+'</span>';
+  });
+  /* месяцы — по первым числам; больше семи — через один (тесноту добирает путьУложить) */
+  var м=[], t0=dLocal(TODAY), шаг=new Date(t0.getFullYear(),t0.getMonth()+1,1);
+  while(true){ var x=Math.round((шаг-t0)/864e5); if(x>конец-4) break; м.push({x:p(x),t:МЕС_КОР[шаг.getMonth()]}); шаг=new Date(шаг.getFullYear(),шаг.getMonth()+1,1); }
+  if(!м.length||м[0].x>9) м.unshift({x:0,t:МЕС_КОР[t0.getMonth()],first:1});
+  var через=м.length>7?2:1;
+  м.forEach(function(z,i){ if(i%через) return; h+='<span class="pth-m'+(z.first?' first':'')+'" data-x="'+чис(z.x)+'" style="left:'+f1(Math.min(z.x,96))+'">'+z.t+'</span>'; });
+  return h+'</div>';
 }
+/* 28.10: подписи полосы по настоящим ширинам. Ряд сверху и ряд месяцев — каждый сам по себе:
+   слева направо по важности, зазор 6 px, внутри рамки полосы; «по вашему темпу» не уходит
+   от своей полоски, «не раньше …» прижата правым краем к концу штриховки. */
+function путьУложить(pth){
+  var W=pth.clientWidth; if(!W||!pth.isConnected) return;
+  var ряд=function(sel){ var стоят=[];
+    Array.prototype.forEach.call(pth.querySelectorAll(sel),function(el){
+      el.style.transform='none'; el.style.visibility='';
+      var w=el.offsetWidth, ds=el.dataset, x=+ds.x/100*W, к=[x-w/2], a=ds.a!=null?+ds.a/100*W:null, b=ds.b!=null?+ds.b/100*W:null;
+      if(ds.end!=null){ var e=+ds.end/100*W; к=[e-w, e-w/2]; }
+      if(a!=null) к.push(a, b-w);
+      for(var i=0;i<к.length;i++){
+        var l=Math.max(0,Math.min(W-w,к[i])), r=l+w;
+        if(a!=null && !(l<b+2 && r>a-2)) continue;
+        if(стоят.every(function(z){ return r+6<=z[0]||l>=z[1]+6; })){ стоят.push([l,r]); el.style.left=l+'px'; return; }
+      }
+      el.style.visibility='hidden';
+    }); };
+  ряд('.pth-l'); ряд('.pth-m');
+}
+var ПУТЬ_RO=typeof ResizeObserver==='function'?new ResizeObserver(function(es){
+  var уже=[]; es.forEach(function(e){ var p=e.target.closest&&e.target.closest('.pth'); if(!p) return;
+    if(!p.isConnected){ ПУТЬ_RO.unobserve(e.target); return; }
+    if(уже.indexOf(p)<0){ уже.push(p); путьУложить(p); } });
+}):null;
+/* полосу замечаем, как только она попала в документ; подписи тоже наблюдаем — перевод меняет их ширину */
+function путьНаблюдать(root){
+  if(!root||root.nodeType!==1) return;
+  var list=root.classList.contains('pth')?[root]:root.querySelectorAll('.pth');
+  Array.prototype.forEach.call(list,function(p){
+    if(p.getAttribute('data-uloj')) return; p.setAttribute('data-uloj','1');
+    if(!ПУТЬ_RO){ путьУложить(p); return; }
+    ПУТЬ_RO.observe(p); Array.prototype.forEach.call(p.querySelectorAll('.pth-l,.pth-m'),function(l){ ПУТЬ_RO.observe(l); });
+  });
+}
+if(typeof MutationObserver==='function') new MutationObserver(function(ms){
+  for(var i=0;i<ms.length;i++){ var a=ms[i].addedNodes; for(var j=0;j<a.length;j++) путьНаблюдать(a[j]); }
+}).observe(document.documentElement,{childList:true,subtree:true});
+/* одна отметка под полосой: успеваете (с запасом) / впритык / отстаёте */
+function путьСтатусHtml(lo,hi,date){
+  lo=путьИсо(lo);hi=путьИсо(hi);date=путьИсо(date); if(!lo||!hi||!date) return '';
+  var a=Math.min(путьДн(lo),путьДн(hi)), b=Math.max(путьДн(lo),путьДн(hi)), d=путьДн(date), к, т, п='';
+  if(b<=d){ к='ok'; т='Успеваете'; if(d-b>=10) п='запас '+путьНед(d-b); }
+  else if(a>d){ к='late'; т='Отстаёте'; п='на '+путьНед(a-d); }
+  else { к='edge'; т='Впритык'; }
+  var знак=к==='ok'?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':к==='late'?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v8M12 18v.5"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>';
+  return '<div class="pth-st '+к+'"><i>'+знак+'</i><b>'+т+'</b>'+(п?'<span>'+п+'</span>':'')+'</div>';
+}
+function путьСрокЧип(date){
+  date=путьИсо(date); if(!date) return '';
+  var d=dLocal(date), год=(d-dLocal(TODAY))/864e5>300?' '+d.getFullYear():'';
+  return '<span class="gdate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>к '+d.getDate()+' '+MONTHS[d.getMonth()]+год+'</span>';
+}
+/* текущий жир: последний замер с процентом */
+function жирСейчас(){ var a=(FOOD&&FOOD.meas)||[],best=null; a.forEach(function(m){ if(m&&m.fat&&(!best||m.date>best.date)) best=m; }); return best?+best.fat:null; }
 function renderGoalCard(){
   var el=document.getElementById('goalcard');if(!el)return;
   var stored=gget('goal',null)||{},g=goalObj(),pr=stored.progress,b=g&&g.body,к=function(x){return String(Math.round(x*10)/10).replace('.',',');};
-  var h='<div class="gl">цель</div>';
-  h+='<div class="gt">'+(b?esc(к(b.target)+' кг'+(b.fat!=null?' · '+к(b.fat)+'% жира':'')):esc(g?g.text:'Цель не задана'))+'</div>';
-  if(b)h+='<p class="goal-muscle">Мышцы — '+(b.muscle==='develop'?'развивать':'сохранить')+'</p>';
+  var f=pr&&pr.forecast, lo=f&&f.from, hi=f&&f.to, срок=g&&(g.date||g.by)||pr&&pr.by||null;
+  /* 28.10: у старых целей нет коридора — точка «по вашему темпу» из eta; за 4 недели вес не идёт к цели — «Вес стоит» */
+  if(срок&&!(путьИсо(срок)&&isoOf(dLocal(срок))===срок)) срок=null;
+  if(!(lo&&hi)&&pr&&pr.eta&&путьИсо(pr.eta.date)&&isoOf(dLocal(pr.eta.date))===pr.eta.date){ lo=hi=pr.eta.date; }
+  var т4=pr&&pr.trend4, стоит=!(lo&&hi)&&!!(т4&&pr.rate)&&!(Math.sign(т4.kgWeek)===Math.sign(pr.rate)&&Math.abs(т4.kgWeek)>=.1);
+  var отстаём=стоит||!!(lo&&срок&&путьИсо(lo)&&путьИсо(срок)&&путьДн(путьИсо(lo))>путьДн(путьИсо(срок)));
+  var h='<div class="ghead"><div class="gl">цель</div>'+путьСрокЧип(срок)+'</div>';
+  if(b) h+='<div class="gt">'+esc(к(b.target)+' кг'+(b.fat!=null?' · '+к(b.fat)+'%':''))+'<small>'+esc(b.fat!=null?'жира, мышцы '+(b.muscle==='develop'?'растут':'сохраняем'):'мышцы '+(b.muscle==='develop'?'растут':'сохраняем'))+'</small></div>';
+  else h+='<div class="gt">'+esc(g?g.text:'Цель не задана')+'</div>';
+  /* у цели с телом путь знаем и без kg с сервера: от старта до целевого веса */
+  if(pr&&!(pr.kg>0)&&b&&pr.w0&&b.target) pr=Object.assign({},pr,{kg:Math.abs(pr.w0-b.target)});
   if(pr&&pr.w0&&pr.now&&pr.rate&&pr.kg>0&&pr.fact!=null){
     var target=b?b.target:pr.w0+Math.sign(pr.rate)*pr.kg,part=Math.sign(pr.fact)===Math.sign(pr.rate)?Math.abs(pr.fact)/pr.kg:0,percent=Math.max(0,Math.min(100,Math.round(part*100)));
-    h+='<div class="pqgbar" role="img" aria-label="пройдено '+percent+'% пути"><b style="width:'+percent+'%"></b><u style="left:calc('+percent+'% - 2px)"></u></div><div class="pqgends"><span>старт '+к(pr.w0)+'</span><span>'+percent+'%</span><span>цель <b>'+к(target)+'</b></span></div>';
+    var ост=Math.abs(target-pr.now), сделано=Math.sign(pr.fact)===Math.sign(pr.rate)?pr.fact:0;
+    h+='<div class="grow"><span>Вес</span><b>'+к(pr.now)+' <i>→</i> '+к(target)+' кг</b></div>'+
+       '<div class="pqgbar" role="img" aria-label="пройдено '+percent+'% пути"><b style="width:'+percent+'%"></b><u style="left:calc('+percent+'% - 7px)"></u></div>'+
+       '<div class="pqgends"><span class="gdone">'+(сделано?(сделано<0?'−':'+')+к(Math.abs(сделано))+' кг':'')+'</span><span>осталось '+к(ост)+'</span></div>';
   }
-  if(pr&&pr.forecast)h+='<p class="goal-forecast">'+esc(goalForecastShort(pr.forecast))+'</p>';
-  var detail='',delta=function(x){return (x>0?'+':'')+к(x).replace('-','−');};
-  if(pr&&pr.w0&&pr.now&&pr.fact!=null){
-    detail+='<p class="gp goal-progress">Старт '+esc(к(pr.w0))+' кг → сейчас <b>'+esc(к(pr.now))+' кг</b> ('+delta(pr.fact)+')'+
-      (pr.plan!=null?' · по плану '+delta(pr.plan):'')+
-      (pr.onTrack?' · <b>идём по графику</b>':(pr.gap!=null&&pr.plan!=null?((Math.abs(pr.fact)>Math.abs(pr.plan)?' · опережаем на ':' · отстаём на ')+к(Math.abs(pr.gap))+' кг'):''))+
-      (pr.by?' · срок '+esc(ruDate(pr.by)):'')+'</p>';
-  }
-  if(g&&g.from)detail+='<p class="gp">Начало пути · '+esc(ruDate(g.from))+'</p>';
-  if(!g)detail+='<p class="gp">Без цели норма — на поддержание.</p>';
-  if(pr&&pr.forecast)detail+='<p class="gp">Ориентир по весу уточняется по замерам.'+(pr.forecast.compositionNote?' '+esc(pr.forecast.compositionNote):'')+'</p>';
-  else if(g){detail+=goalEtaHtml(pr,pr&&pr.w0&&pr.kg?pr.w0+Math.sign(pr.rate)*pr.kg:null);if(g.note)detail+='<p class="gp">'+esc(g.note)+'</p>';}
-  if(rbCard())detail+='<p class="gp">Программу можно обновить под новую цель в разделе «Программа».</p>';
-  detail+='<button type="button" id="goaltalk">Обсудить с тренером</button>';
-  h+='<details class="goal-more"><summary>Подробнее'+(pr&&pr.fact!=null?' · '+delta(pr.fact)+' кг':'')+'</summary>'+detail+'</details>';
-  h+='<button type="button" class="btn wide" data-bodygoal>'+ (g?'Обсудить или изменить цель':'Обсудить цель')+'</button>';
-  if(g&&g.kind!=='habit'&&VIZ.st&&VIZ.st.allowed)h+='<button type="button" id="vizopen" class="btn wide">Посмотреть примерный образ</button>';
+  var жир=жирСейчас();
+  if(b&&b.fat!=null) h+='<div class="grow"><span>Жир</span><b>'+(жир!=null?к(жир)+' <i>→</i> ':'→ ')+к(b.fat)+' %</b></div>';
+  var путь=(lo&&hi)||стоит?путьHtml({lo:lo,hi:hi,date:срок,late:отстаём,aria:(lo&&hi?'По вашему темпу '+(lo===hi?путьКор(lo):путьКор(lo)+' – '+путьКор(hi)):стоит?'Вес стоит':'')+(срок?'; срок '+путьКор(срок):'')}):'';
+  var нужно=отстаём&&срок&&pr&&pr.need?'<p class="pth-need">Чтобы успеть — '+к(Math.abs(pr.need))+' кг в неделю</p>':'';
+  if(путь) h+='<div class="gline"></div>'+путь+(стоит?'<div class="pth-st late"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v8M12 18v.5"/></svg></i><b>Вес стоит</b><span>4 недели</span></div>':путьСтатусHtml(lo,hi,срок))+нужно;
+  else if(pr&&pr.forecast&&pr.forecast.state&&!(lo&&hi)) h+='<p class="goal-forecast">'+esc({weight_reached:'Целевой вес достигнут',paused:'Срок появится по замерам',insufficient:'Нужны свежие замеры',review:'Уточним ближайший этап'}[pr.forecast.state]||'Срок появится по замерам')+'</p>';
+  h+='<button type="button" class="btn wide" data-bodygoal>'+(g?'Изменить цель':'Задать цель')+'</button>';
+  if(g&&g.kind!=='habit'&&VIZ.st&&VIZ.st.allowed)h+='<button type="button" id="vizopen" class="btn wide">Как я буду выглядеть</button>';
   el.innerHTML=h;
 }
 function legacyOf(wt,gym){
@@ -9444,7 +9691,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 21:30';
+var BUILD = '29.10 00:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -12861,6 +13108,8 @@ function renderFinSum(body){
   el.innerHTML='<div class="fs1"><span><b>'+sets+'</b>'+plural(sets,['подход','подхода','подходов'])+'</span>'+
     (ton?'<span><b>'+Math.round(ton)+'</b>кг</span>':'')+(мин?'<span><b>'+мин+'</b>мин</span>':'')+'</div>'+
     (prs.length ? '<p class="pr">'+wbm('wb-joy','pre')+prs.map(function(r){ return '<b>Рекорд</b> · '+r.n+': '+fmtBest(r.cur,false)+' <i>было '+fmtBest(r.prev,false)+'</i>'; }).join('<br>')+'</p>' : '');
+  var gw=document.getElementById('gymw'); if(gw) gw.remove();
+  var весы=весыЗалHtml(); if(весы) el.insertAdjacentHTML('afterend', весы);
 }
 function finishSave(){
   try{
@@ -16561,9 +16810,19 @@ function vzПланСтрока(){
     }
   }
   if(progress && progress.forecast) срок=esc(progress.forecast.text);
-  var html='';
-  if(т || срок) html='<div class="vzplan vztemp">'+(т?'<p class="'+т[1]+'">'+т[0]+(т[1]==='ok'?' <span aria-hidden="true">✓</span>':'')+'</p>':'')+
-    (срок?'<p class="vzeta">'+срок+'</p>':'')+'</div>';
+  /* 28.10, его «слишком много непонятного текста… используй визуальные элементы»: неделя — плиткой с
+     отметкой, срок — той же полосой времени, что в профиле (путьHtml), вместо строки «По прогрессу: 17.01 — 12.03» */
+  var f=progress&&progress.forecast, цельО=(g&&g.goal)||goalObj()||{}, lo=f&&f.from, hi=f&&f.to, дата=цельО.date||цельО.by||(progress&&progress.by)||null;
+  /* старые цели: коридора нет — точка темпа из eta (только настоящая дата: «2027-02-31» не рисуем) */
+  if(!(lo&&hi)&&eta&&путьИсо(eta.date)&&isoOf(dLocal(eta.date))===eta.date){ lo=hi=eta.date; }
+  if(дата&&!(путьИсо(дата)&&isoOf(dLocal(дата))===дата)) дата=null;
+  var путь=lo&&hi?путьHtml({lo:lo,hi:hi,date:дата,late:!!(дата&&путьДн(lo)>путьДн(дата)),aria:'По вашему темпу '+(lo===hi?путьКор(lo):путьКор(lo)+' – '+путьКор(hi))+(дата?'; срок '+путьКор(дата):'')}):'';
+  var плитка='';
+  if(v && typeof v.d0==='number' && v.by!=='талия'){
+    var чип={'план':['в темпе плана','ok'],'быстрее':['быстрее плана','ok'],'медленнее':['медленнее плана','edge'],'стоит':['без '+куда,'warn'],'плато':['две недели без '+куда,'warn']}[v.state];
+    плитка='<div class="vzweek"><div><span>За неделю</span><b>'+зн(v.d0)+'\u00a0кг</b></div>'+(чип?'<em class="'+чип[1]+'">'+(чип[1]==='ok'?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':'')+чип[0]+'</em>':'')+'</div>';
+  } else if(т) плитка='<div class="vzplan vztemp"><p class="'+т[1]+'">'+т[0]+'</p></div>';
+  var html=плитка+(путь?путь+путьСтатусHtml(lo,hi,дата):(срок&&!f?'<div class="vzplan vztemp"><p class="vzeta">'+срок+'</p></div>':''));
   return html+залНеделиHtml();
 }
 function homeBody(){
@@ -16817,7 +17076,7 @@ function renderHome(){
   HCLKHTML=часы; hcBadgeSize();
   Array.prototype.forEach.call(box.querySelectorAll('details'),function(e){if(opened.indexOf(e.className)>=0)e.open=true;});
   var гнездо=box.querySelector('#hmeasslot');
-  if(гнездо && весы){ гнездо.parentNode.replaceChild(весы, гнездо); if(вФокусе) try{ вФокусе.focus(); }catch(e){} }
+  if(гнездо && весы){ гнездо.parentNode.replaceChild(весы, гнездо); if(вФокусе) try{ вФокусе.focus(); }catch(e){} try{ measMode(); }catch(e){} }
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
   /* дорожки доезжают до своих значений, а при перерисовке стартуют с прежних */
   var fills=box.querySelectorAll('.hfill'), dots=box.querySelectorAll('.hdot');
@@ -19473,8 +19732,91 @@ function measReply(text, kind){
 }
 function measBusy(on){
   MEASBUSY=on;
-  ['fw','ffat','fwaist','fmsave','fmphoto'].forEach(function(id){ document.getElementById(id).disabled=on; });
+  ['fw','ffat','fwaist','fmsave','fmphoto','mshot'].forEach(function(id){ document.getElementById(id).disabled=on; });
 }
+/* ══════════ ЗАМЕР ПОД ВЕСЫ (28.10) ══════════
+   Его вопрос: «как насчёт пользователей, которые не имеют умных весов или вообще не имеют весов — как
+   сделать удобно им?». Один раз — «Чем вы взвешиваетесь?» (me.scale). Кто уже взвешивался — вид по
+   истории: был жир — умные, только вес — обычные, только талия — весов нет. Умные: снимок весов —
+   главная кнопка, поля по «Ввести вручную». Обычные: прошлый вес уже стоит, −/+ 0,1 и «Записать».
+   Весов нет: талия −/+ 0,5 и рисунок, где мерить. Разницу за день не показываем: вес за сутки скачет
+   от воды, судим по средним за неделю. */
+var ВЕСЫ_ВРУЧНУЮ=false, ВЕСЫ_СПРОС=false;
+function весыВид(){
+  var me=myData()||{}; if(me.scale==='smart'||me.scale==='plain'||me.scale==='none') return me.scale;
+  var a=(FOOD&&FOOD.meas)||[];
+  if(a.some(function(m){ return m&&m.fat; })) return 'smart';
+  if(a.some(function(m){ return m&&m.w; })) return 'plain';
+  if(a.some(function(m){ return m&&m.waist; })) return 'none';
+  return '';
+}
+function весыЗадать(v){
+  var me=myData()||{}; me.scale=v; gset('me',me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  ВЕСЫ_СПРОС=false; ВЕСЫ_ВРУЧНУЮ=false; if(v==='none') vzВидЗадать('waist');
+  haptic('light'); measMode();
+}
+function последнийЗамер(k){ var a=(FOOD&&FOOD.meas)||[],best=null; a.forEach(function(m){ if(m&&m[k]&&(!best||m.date>best.date)) best=m; }); return best; }
+function замерЧисло(v){ return String(Math.round(+v*10)/10).replace('.',','); }
+function measMode(){
+  var box=document.getElementById('hmeas'); if(!box) return;
+  var вид=ВЕСЫ_СПРОС?'ask':(весыВид()||'ask'), $=function(id){ return document.getElementById(id); }, руч=вид==='smart'&&ВЕСЫ_ВРУЧНУЮ;
+  box.dataset.mode=вид; box.classList.toggle('manual', руч);
+  $('mq').hidden=вид!=='ask'; $('mwaist').hidden=вид!=='none';
+  $('mlast').hidden=$('mshot').hidden=$('mshotn').hidden=$('mmanual').hidden=вид!=='smart'||руч;
+  $('mscale').hidden=вид==='ask'&&!ВЕСЫ_СПРОС;
+  $('mscale').textContent=ВЕСЫ_СПРОС?'Отмена':'Другие весы';
+  Array.prototype.forEach.call(box.querySelectorAll('.fstep'),function(b){ b.hidden=!(вид==='plain'||вид==='none'); });
+  if(вид==='smart'&&!руч){
+    var w=последнийЗамер('w'), f=последнийЗамер('fat'), t=последнийЗамер('waist'), all=[w,f,t].filter(Boolean).sort(function(a,b){ return a.date<b.date?1:-1; })[0];
+    var когда=all?(all.date===TODAY?'сегодня':all.date===isoOf(new Date(dLocal(TODAY)-864e5))?'вчера':путьКор(all.date)):'';
+    var плитка=function(n,m,k,ед){ return '<div><span>'+n+'</span><b'+(m?'':' class="empty"')+'>'+(m?замерЧисло(m[k])+ед:'—')+'</b></div>'; };
+    $('mlast').innerHTML=(когда?'<div class="mlast-h">последний замер — '+когда+'</div>':'')+плитка('Вес',w,'w','')+плитка('Жир',f,'fat',' %')+плитка('Талия',t,'waist','');
+  }
+  var заполнить=function(id,v){ var el=$(id); if(!el||!(v>0)||el.value||document.activeElement===el) return; el.value=замерЧисло(v); };
+  if(вид==='plain'){ var lw=последнийЗамер('w'); заполнить('fw', lw?lw.w:(myData()||{}).bw); }
+  if(вид==='none'){ var lt=последнийЗамер('waist'); заполнить('fwaist', lt?lt.waist:null); }
+  /* одно число — подсказка «—» вместо «88,1»/«см»; кнопка без стрелки, как на макете */
+  $('fw').placeholder=вид==='plain'?'—':'88,1'; $('fwaist').placeholder=вид==='none'?'—':'см';
+  $('fmsave').textContent=(вид==='plain'||вид==='none')?'Записать':'Записать →';
+}
+document.getElementById('hmeas').addEventListener('click',function(e){
+  var o=e.target.closest('[data-scale]'); if(o){ весыЗадать(o.dataset.scale); return; }
+  if(e.target.closest('#mscale')){ ВЕСЫ_СПРОС=!ВЕСЫ_СПРОС; measMode(); return; }
+  if(e.target.closest('#mmanual')){ ВЕСЫ_ВРУЧНУЮ=true; measMode(); try{ document.getElementById('fw').focus(); }catch(x){} return; }
+  if(e.target.closest('#mshot')){ if(!MEASBUSY) document.getElementById('fmfile').click(); return; }
+  var st=e.target.closest('.fstep'); if(!st||MEASBUSY) return;
+  var вид=document.getElementById('hmeas').dataset.mode, id=вид==='none'?'fwaist':'fw', шаг=вид==='none'?0.5:0.1, el=document.getElementById(id);
+  var было=/^\d+(?:[.,]\d*)?$/.test(el.value.trim())?дробь(el.value.trim()):(id==='fw'?((последнийЗамер('w')||{}).w||(myData()||{}).bw||70):((последнийЗамер('waist')||{}).waist||90));
+  el.value=замерЧисло(Math.max(0,Math.round((было+(+st.dataset.step)*шаг)*10)/10)); measClearError(id); haptic('light');
+});
+/* весы в зале: у кого дома весов нет — раз в неделю после тренировки одно число */
+function весыЗалHtml(){
+  var me=myData()||{};
+  if(весыВид()!=='none'||me.gymScale===false) return '';
+  if(me.gymAsk&&путьДн(me.gymAsk)>-7) return '';
+  var w=последнийЗамер('w'); if(w&&путьДн(w.date)>-7) return '';
+  var v=w?w.w:(me.bw||'');
+  return '<div class="gymw" id="gymw"><h4>В зале есть весы?</h4><div class="gw-st"><button type="button" data-gw="-1" aria-label="Меньше на 0,1">−</button><input id="gymwv" type="text" inputmode="decimal" aria-label="Вес, кг" value="'+(v?замерЧисло(v):'')+'"><button type="button" data-gw="1" aria-label="Больше на 0,1">+</button></div>'+
+    '<div class="gw-b"><button type="button" class="gw-no" data-gw="no">Весов нет</button><button type="button" class="gw-go" data-gw="save">Записать</button></div></div>';
+}
+function весыЗалЗапомнить(поле,знач){ var me=myData()||{}; me[поле]=знач; gset('me',me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){}); }
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-gw]'); if(!b) return; var box=document.getElementById('gymw'); if(!box) return;
+  var a=b.dataset.gw, inp=document.getElementById('gymwv');
+  if(a==='-1'||a==='1'){ var v=/^\d+(?:[.,]\d*)?$/.test(inp.value.trim())?дробь(inp.value.trim()):((myData()||{}).bw||70); inp.value=замерЧисло(Math.round((v+(+a)*0.1)*10)/10); haptic('light'); return; }
+  if(a==='no'){ весыЗалЗапомнить('gymScale',false); box.remove(); haptic('light'); return; }
+  if(a==='save'){
+    var w=/^\d+(?:[.,]\d*)?$/.test(inp.value.trim())?дробь(inp.value.trim()):null;
+    if(!(w>20)){ inp.setAttribute('aria-invalid','true'); inp.focus(); haptic('err'); return; }
+    b.disabled=true; b.textContent='Сохраняю…';
+    fPostНадёжно('/measure',{uid:syncUid(), w:w}).then(function(d){
+      if(d&&Array.isArray(d.measures)){ замерыВзять(d); syncBwFromMeas(); renderMeas(); }
+      весыЗалЗапомнить('gymAsk',TODAY);
+      box.innerHTML='<p class="gw-r">'+wbm('wb-drop','pre')+'Вес записан · '+замерЧисло(w)+' кг</p>'; haptic('ok');
+    }).catch(function(err){ b.disabled=false; b.textContent='Записать'; box.insertAdjacentHTML('beforeend','<p class="gw-r">'+esc(humanErr(err))+'</p>'); haptic('err'); });
+  }
+});
 function measError(id,text){
   var el=document.getElementById(id), hint=document.getElementById(id+'-error');
   el.setAttribute('aria-invalid','true'); hint.textContent=text; hint.hidden=false;
@@ -19497,7 +19839,11 @@ document.addEventListener('click',function(e){
 document.getElementById('logmeas').addEventListener('click',function(e){
   if(!e.target.closest('[data-new-measure]')) return;
   goPage('home');
-  requestAnimationFrame(function(){ var el=document.getElementById('fw'); el.focus({preventScroll:true}); el.scrollIntoView({block:'center',behavior:'auto'}); });
+  /* 28.10: карточка замера разная по весам — фокус на то, с чего начать: вопрос «чем взвешиваетесь»,
+     «Сфотографировать весы», одно число веса или талия */
+  requestAnimationFrame(function(){ var box=document.getElementById('hmeas'), вид=box&&box.dataset.mode, руч=box&&box.classList.contains('manual');
+    var el=вид==='ask'?box.querySelector('[data-scale]'):вид==='smart'&&!руч?document.getElementById('mshot'):вид==='none'?document.getElementById('fwaist'):document.getElementById('fw');
+    if(!el) return; el.focus({preventScroll:true}); el.scrollIntoView({block:'center',behavior:'auto'}); });
 });
 document.getElementById('fmphoto').addEventListener('click', function(){ if(!MEASBUSY) document.getElementById('fmfile').click(); });
 document.getElementById('fmfile').addEventListener('change', function(e){
@@ -20814,7 +21160,8 @@ function vizMain(){
   var photo=st.photo;
   function дата(t){return t?new Date(t).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'}):'';}
   /* 26.10: первое загруженное фото не является началом пути — сентябрьского снимка нет. */
-  document.getElementById('viznowcap').textContent='Сейчас · '+дата(st.photo);
+  /* 28.10, его «под фото с 26.10 написано „сейчас“ — это сбивает: под фото — показатели дня снимка» */
+  document.getElementById('viznowcap').textContent=vizФотоДень();
   document.getElementById('vizstart').removeAttribute('src');
 
   vizURL('orig').then(function(u){ if(VIZ.st&&VIZ.st.photo===photo)document.getElementById('vizorig').src=u; }).catch(function(){ vizSay('vizmsg','Фото не загрузилось — откройте окно ещё раз.'); });
@@ -20865,6 +21212,7 @@ function vizФотоПодпись(c){
   document.getElementById('viznew').alt=(stale?'Фото прежней цели':legacy?'Прежний вариант':'Примерный вид')+' при '+vizК(c.w1)+' кг и '+vizК(c.fat1)+' % жира';
   vizSay('vizmsg',stale?'Фото для прежней цели. Для текущей цели результат ещё не создан.':legacy?'Прежний вариант без проверки всего тела.':older?'Образ цели сохранён по предыдущему снимку. Можно обновить.':'Фото сохранено · примерный вид по вашей цели.');
 }
+function vizФотоДень(){ var pd=VIZ.st&&VIZ.st.photoDay; return pd&&pd.date?'Фото · '+путьКор(pd.date):'Ваше фото'; }
 function vizPaint(c){
   VIZ.calc=c;
   /* Показатели из расчёта и замеров, а не оценка по изображению. */
@@ -20873,7 +21221,8 @@ function vizPaint(c){
     if(!Number.isFinite(l))l=w*(1-f/100);
     return '<b>'+vizК(w)+' кг</b><span>'+(estimated?'≈':'')+vizК(f)+'% жира</span><span>'+(estimated?'≈':'')+vizК(l)+' кг без жира</span>';
   }
-  document.getElementById('viznowmetrics').innerHTML=metrics(c.w0,c.fat0,c.lean0,c.жирОценка);
+  var pd=VIZ.st&&VIZ.st.photoDay;
+  document.getElementById('viznowmetrics').innerHTML=pd&&pd.w?metrics(pd.w,pd.fat,null,pd.fatEstimated)+(pd.measured&&pd.measured!==pd.date?'<span class="vizfrom">вес от '+путьКор(pd.measured)+'</span>':''):pd&&pd.date?'<span class="vizfrom">в тот день без взвешивания</span>':metrics(c.w0,c.fat0,c.lean0,c.жирОценка);
   document.getElementById('vizgoalmetrics').innerHTML=metrics(c.w1,c.fat1,c.lean1,false);
   var fat=document.getElementById('vizfat'); fat.min=c.sex==='f'?'18':'10'; fat.value=String(c.fat1);
   document.getElementById('vizfatv').textContent=vizК(c.fat1)+' %';
@@ -20923,7 +21272,7 @@ function vizFull(start){
   document.getElementById('vizfsorig').src=o.src;
   var есть=!n.hidden && !!n.getAttribute('src'), fn=document.getElementById('vizfsnew');
   if(есть){fn.src=n.src;fn.alt=n.alt;} fn.hidden=!есть;
-  b.querySelector('.vizlab.l').textContent=start?'Старт':'Сейчас';b.querySelector('.vizlab.r').textContent=start?'Сейчас':document.getElementById('viznewcap').textContent.split(' — ')[0]; b.classList.toggle('has', есть);
+  b.querySelector('.vizlab.l').textContent=start?'Старт':vizФотоДень();b.querySelector('.vizlab.r').textContent=start?vizФотоДень():document.getElementById('viznewcap').textContent.split(' — ')[0]; b.classList.toggle('has', есть);
   b.style.setProperty('--x', '50%');
   fs.hidden=false;document.getElementById('vizfsx').focus({preventScroll:true}); haptic('light');
 }

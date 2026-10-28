@@ -18,7 +18,7 @@ async function замер(b,theme,width,o){
    await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,text:o.слово===undefined?СЛОВО:o.слово})});return true;}
   return was?was(r):false;};
  const err=await M.поднять(p,o);
- await p.locator('#fw').scrollIntoViewIfNeeded();
+ await M.замерВручную(p);await p.locator('#fw').scrollIntoViewIfNeeded();
  await p.fill('#fw','87,6');await p.click('#fmsave');
  await p.waitForFunction(()=>document.querySelector('#fmreply').textContent==='Замер записан');
  await p.waitForTimeout(900);

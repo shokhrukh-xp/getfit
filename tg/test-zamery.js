@@ -27,7 +27,7 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
     await give(r,{ok:true,measures:o.meas});return true;
    };
    const errors=await M.поднять(p,o);
-   await p.waitForSelector('#fw');await p.evaluate(()=>document.getElementById('fw').scrollIntoView({block:'nearest'}));
+   await M.замерВручную(p);if(name!=='empty')await p.waitForSelector('#fw');await p.evaluate(()=>document.getElementById('fw').scrollIntoView({block:'nearest'}));
    if(name==='validation'){
     for(const value of ['', 'abc', '20', '-3', '88кг']){
      await p.fill('#fw',value);await p.click('#fmsave');await frame(p);
@@ -67,8 +67,11 @@ const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',bo
      await p.waitForFunction(()=>document.querySelector('#logmeas').textContent.includes('Замеров нет'));
      assert((await p.locator('#logmeas').innerText()).includes('Сегодня → Тело → Новый замер'),'A8: верный путь в пустом журнале');
      await p.click('[data-new-measure]');await frame(p);
-     assert(await p.locator('#p-home').isVisible());assert.equal(await p.evaluate(()=>document.activeElement.id),'fw');
-     const r=await p.locator('#fw').boundingBox();assert(r.y>=0&&r.y+r.height<=844,'Переход прокручивает к полю');
+     /* 28.10: замеров нет — карточка сначала спрашивает, чем взвешиваетесь; фокус на первом ответе */
+     assert(await p.locator('#p-home').isVisible());assert.equal(await p.evaluate(()=>document.activeElement.dataset.scale),'smart');
+     const r=await p.locator('#mq [data-scale="smart"]').boundingBox();assert(r.y>=0&&r.y+r.height<=844,'Переход прокручивает к вопросу');
+     await p.click('#mq [data-scale="none"]');await p.waitForSelector('#fwaist',{state:'visible'});
+     assert.equal(await p.locator('#fw').isVisible(),false,'Весов нет — поля веса нет, только талия');
     }
     const weights=o.meas.map(m=>[m.date,m.w]);
     await p.fill('#fwaist','95,5');await p.click('#fmsave');await p.waitForFunction(()=>document.querySelector('#fmreply').textContent==='Замер записан');await frame(p);

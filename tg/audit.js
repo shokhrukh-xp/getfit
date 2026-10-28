@@ -223,6 +223,8 @@ const ОКНА = [
     await ждать();
     if (await p.$('#gs-date')) { await p.fill('#gs-date', new Date(Date.now() + 200 * 864e5).toISOString().slice(0, 10)); await p.dispatchEvent('#gs-date', 'change'); await ждать(); }
     if (await p.$('[data-gs="health"][data-v="yes"]')) { await p.click('[data-gs="health"][data-v="yes"]'); await ждать(); }
+    /* нажатия прокрутили лист вниз — под шапкой листа кнопки «уезжают» нарочно; смотрим лист сверху */
+    await p.evaluate(() => { for (let a = document.getElementById('goalconversation'); a; a = a.parentElement) a.scrollTop = 0; });
   }, '#coachm'],
   ['приём еды', async p => {
     await p.click('.l1 button[data-page="food"]'); await p.waitForTimeout(900);
