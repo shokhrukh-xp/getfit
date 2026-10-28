@@ -48,7 +48,7 @@ function plan(changes, tests){
   const selected=new Set(smoke); let ui=false; const имена=Object.keys(tests);
   const поКлючам=(ключи)=>{
     // ключ, который есть почти во всех наборах, ничего не выбирает
-    const годные=ключи.filter(k=>имена.filter(n=>tests[n].includes(k)).length<=Math.max(3,имена.length*0.3));
+    const годные=ключи.filter(k=>имена.filter(n=>tests[n].includes(k)).length<=Math.max(3,имена.length*0.08));
     for(const n of имена)if(годные.some(k=>tests[n].includes(k)))selected.add(n);
     return годные;
   };
