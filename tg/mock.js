@@ -282,6 +282,8 @@ async function поднять(page, o) {
       (o.goalDialogCalls||(o.goalDialogCalls=[])).push(b);
       return дать(result);
     }
+    /* 28.10: строка об ошибке экрана (errBeacon) — копится в o.errs */
+    if (p === '/err') { (o.errs || (o.errs = [])).push(route.request().postData() || ''); return route.fulfill({ status: 204, body: '' }); }
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/i18n') { if(o.i18nGate) await o.i18nGate; if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
     if (p === '/all')        return дать({ state: o._programDraft ? [{key:'program_draft',data:o._programDraft,updated:o._programDraftAt}] : [], workouts: [], meals: [], measures: [] });
