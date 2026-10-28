@@ -16,7 +16,16 @@ async function click(page,action,value){const s='#goalconversation [data-gta="'+
   await page.click('#coachclose');await page.locator('#profm').waitFor({state:'visible'});await page.locator('#goalcard [data-bodygoal]').click();await page.waitForFunction(()=>document.getElementById('goalconversation').dataset.state!=='loading'&&document.getElementById('goalconversation').getAttribute('aria-busy')==='false');assert.equal(await page.evaluate(()=>document.getElementById('goalconversation').dataset.question),'capacity','возвращение продолжает разговор');
   await click(page,'answer','regular');await click(page,'answer','steady');await click(page,'answer','flexible');
   assert.equal(o.goal.text,old.text);await page.locator('#goalconversation').screenshot({path:path.join(OUT,'options-'+width+'.png')});
+  /* 28.10: у вариантов — темп, норма, белок и «сейчас …» (его просьба) */
+  const строка=await page.locator('#goalconversation .gtalk-impact').first().textContent();
+  assert.match(строка,/кг\/нед · [\d\u00a0]+ ккал · белок \d+ г \(сейчас /,'строка было → станет у варианта: '+строка);
   await click(page,'select');assert.equal(o.goal.text,old.text,'выбор ещё не сохранение');assert.equal(await page.evaluate(()=>document.getElementById('goalconversation').dataset.state),'confirm');
+  /* 28.10: на шаге подтверждения — таблица было → станет, объяснение и итог на кнопке */
+  const таблица=await page.locator('#goalconversation .gtalk-diff').textContent();
+  for(const t of ['Темп','Норма в обычный день','Белок','→'])assert.ok(таблица.includes(t),'в блоке «Что изменится» есть «'+t+'»');
+  assert.ok(await page.locator('#goalconversation .gtalk-why li').count()>=1,'есть объяснение «почему»');
+  assert.match(await page.locator('[data-gta="confirm"]').textContent(),/^Сохранить: [\d\u00a0]+ ккал, (−|\+)?[\d,]+ кг\/нед|вес держим/,'кнопка называет итог');
+  await page.locator('#goalconversation .gtalk-option').first().screenshot({path:path.join(OUT,'confirm-'+width+'.png')});
   await click(page,'confirm');assert.equal(o.goal.body.target,83.2);assert.equal((o.vizAsked?.render||[]).length,0,'сохранение не запустило генерацию');
   await page.locator('#goalconversation').screenshot({path:path.join(OUT,'saved-'+width+'.png')});
   assert.equal(await page.locator('#goalconversation [data-gta="image"]').count(),1);

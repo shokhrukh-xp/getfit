@@ -4231,6 +4231,12 @@ img.avface{border-radius:50%;object-fit:cover}
 .gtalk-history{font-size:13px;color:var(--muted);margin:6px 0 18px}.gtalk-history summary{min-height:32px}
 .gtalk-answer{color:var(--text);padding-left:12px;border-left:2px solid var(--accent)}
 .gtalk-option{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.gtalk-option p{line-height:1.5}
+/* 28.10: было → станет при выборе цели (его просьба: темп, норма, белок, дата и почему) */
+.gtalk-impact{font-weight:600;margin:8px 0 4px}.gtalk-impact span{font-weight:400;color:var(--muted)}
+.gtalk-diff{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}.gtalk-diff h4{margin:0 0 8px;font-size:15px}
+.gtalk-row{padding:7px 0;border-bottom:1px solid var(--line)}.gtalk-row:last-of-type{border-bottom:0}
+.gtalk-row small{display:block;color:var(--muted);font-size:13px;margin-bottom:2px}.gtalk-row span{color:var(--muted)}.gtalk-row b{font-weight:700}
+.gtalk-why{margin:10px 0 0;padding-left:18px}.gtalk-why li{margin:4px 0;line-height:1.45}
 .gtalk-error{color:var(--text);border-left:3px solid var(--accent);padding-left:12px}
 #goalchatopen{margin:0 16px 8px;min-height:44px;flex:none}
 
@@ -7605,6 +7611,8 @@ function goalEtaHtml(pr, цельКг){
 /* 27.10: вопросы внутри существующего тренера, а не анкета перед фото.
    Сервер хранит черновик; выбор и подтверждение — разные действия. */
 var GOALTALK={active:false,busy:false,dialog:null,error:'',generation:0,onboard:false};
+function gtЧс(n){return String(Math.round(+n||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');}
+function gtТемп(r){r=+r||0;if(!r)return 'вес держим';return (r<0?'−':'+')+String(Math.round(Math.abs(r)*100)/100).replace('.',',')+' кг/нед';}
 function goalTalkLayout(){
   var active=GOALTALK.active,root=document.getElementById('goalconversation');root.hidden=!active;
   ['chatlog','coachdate','goalchatopen'].forEach(function(id){document.getElementById(id).hidden=active;});
@@ -7635,8 +7643,20 @@ function goalTalkRender(){
     h+='<h3>'+esc(d.status==='confirm'?'Подтвердите выбранную цель':'Какой вариант вам ближе?')+'</h3>';
     (d.notes||[]).forEach(function(t){h+='<p class="mtext">'+esc(t)+'</p>';});
     d.options.filter(function(o){return d.status!=='confirm'||o.id===d.selected;}).forEach(function(o){
-      h+='<div class="gtalk-option"><b>'+esc(o.title)+'</b><p>'+esc(o.detail)+'</p><p class="mtext">Пересмотр: '+esc(ruDate(o.reviewAt))+'. Это не срок достижения результата.</p>';
-      if(d.status==='confirm'){h+='<p>'+esc(o.habit?'Вес и процент жира не задаём; в расчёте питания не назначаем дефицит ради этой цели.':'После сохранения обновим цель и расчёт питания. Изменение программы предложим отдельно.')+'</p>'+button('confirm','Сохранить эту цель','data-option="'+esc(o.id)+'"',true);}
+      h+='<div class="gtalk-option"><b>'+esc(o.title)+'</b><p>'+esc(o.detail)+'</p>';
+      var im=o.impact;
+      if(im&&d.status!=='confirm')h+='<p class="gtalk-impact">'+esc(gtТемп(im.after.rate)+' · '+gtЧс(im.after.kcal)+' ккал · белок '+gtЧс(im.after.prot)+' г')+' <span>'+esc('(сейчас '+gtТемп(im.before.rate)+' · '+gtЧс(im.before.kcal)+' ккал)')+'</span></p>';
+      h+='<p class="mtext">Пересмотр: '+esc(ruDate(o.reviewAt))+'. Это не срок достижения результата.</p>';
+      if(d.status==='confirm'){
+        /* 28.10: перед сохранением — что изменится и почему (его просьба), кнопка называет итог */
+        if(im){
+          var ряд=function(a,b,c){return '<div class="gtalk-row"><small>'+esc(a)+'</small><span>'+esc(b)+' →</span> <b>'+esc(c)+'</b></div>';};
+          h+='<div class="gtalk-diff"><h4>Что изменится</h4>'+ряд('Темп',gtТемп(im.before.rate),gtТемп(im.after.rate))+ряд('Норма в обычный день',gtЧс(im.before.kcal)+' ккал',gtЧс(im.after.kcal)+' ккал')+ряд('Белок',gtЧс(im.before.prot)+' г',gtЧс(im.after.prot)+' г');
+          var кг=function(x){return x&&x.target?String(Math.round(x.target*10)/10).replace('.',',')+' кг ':'';};
+          if(im.before.eta||im.after.eta)h+=ряд('Цель — примерно',im.before.eta?кг(im.before)+im.before.eta.к:'срока нет',im.after.eta?кг(im.after)+im.after.eta.к:'срока нет');
+          h+='<ul class="gtalk-why">'+im.why.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul><p class="mtext">В дни тренировок норма выше — приложение добавит расход зала по факту.</p></div>';
+        }
+        h+='<p>'+esc(o.habit?'Вес и процент жира не задаём; в расчёте питания не назначаем дефицит ради этой цели.':'После сохранения обновим цель и расчёт питания. Изменение программы предложим отдельно.')+'</p>'+button('confirm',im?'Сохранить: '+gtЧс(im.after.kcal)+' ккал, '+gtТемп(im.after.rate):'Сохранить эту цель','data-option="'+esc(o.id)+'"',true);}
       else h+=button('select','Выбрать','data-option="'+esc(o.id)+'"',false);h+='</div>';
     });
     if(d.status==='confirm')h+=button('back','Вернуться к вариантам');
@@ -9250,7 +9270,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 11:20';
+var BUILD = '28.10 12:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -14703,20 +14723,28 @@ function aiBuild(снова){
   clearInterval(aiWait); aiWait=null;
   var me=myData()||{};
   if(!hasGoal(me)){ aiState('Сначала выберите цель — вес и зал: от этого зависит вся схема.', true); return; }
-  AIBUSY=true; aiState('Собираю программу под вас… обычно полминуты, иногда до минуты');
+  AIBUSY=true; aiState('Собираю программу под вас… обычно 20–30 секунд');
   document.getElementById('aibox').innerHTML='';
   try{ renderReco(); }catch(e){}                 /* карточка предложения показывает, что сборка идёт */
   var ctl = ('AbortController' in window) ? new AbortController() : null;
   var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
+  /* 28.10, его выбор «Сборка программы быстрее»: этап сборки с сервера вместо одной фразы
+     («Подбираю упражнения…», «Проверяю объём…», «Выравниваю объём…») — тот же /coach/stage */
+  var этапАиГотово=false, этапАи=Math.random().toString(36).slice(2,10)+Date.now().toString(36), этапАиТ=setInterval(function(){
+    if(!AIBUSY||этапАиГотово){ clearInterval(этапАиТ); return; }
+    fGet('/coach/stage?uid='+encodeURIComponent(syncUid())+'&id='+этапАи).then(function(d){ if(AIBUSY && !этапАиГотово && d && d.stage) aiState(d.stage); }).catch(function(){});
+  }, 1500);
+  var тело=aiPayload(); тело.stage=этапАи;
   tgFetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(aiPayload()), signal: ctl?ctl.signal:undefined })
+        body:JSON.stringify(тело), signal: ctl?ctl.signal:undefined })
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
-    .then(function(d){ AIPROG=d.prog; aiState(''); renderAiPreview(d.prog);aiDraftSave(AI_PREVIEW,d.prog); haptic('ok');
+    .then(function(d){ этапАиГотово=true; clearInterval(этапАиТ); AIPROG=d.prog; aiState(''); renderAiPreview(d.prog);aiDraftSave(AI_PREVIEW,d.prog); haptic('ok');
       /* Программа на экране — предложение собрать больше не нужно. */
       try{ renderReco(); }catch(e){}
       var el=document.getElementById('aibox');
       if(el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'}); })
     .catch(function(e){
+      этапАиГотово=true; clearInterval(этапАиТ);
       haptic('err');
       /* «Занят» — не тупик: пробуем сами через минуту, а человеку говорим,
          что готовая программа у него уже подобрана и ждать необязательно. */
@@ -14733,7 +14761,7 @@ function aiBuild(снова){
       }
       aiState(humanErr(e), true);
     })
-    .then(function(){ clearTimeout(tm); if(!aiWait) AIBUSY=false; try{ renderReco(); }catch(e){} });
+    .then(function(){ clearTimeout(tm); clearInterval(этапАиТ); if(!aiWait) AIBUSY=false; try{ renderReco(); }catch(e){} });
 }
 /* закрыли профиль — отменяем отложенную попытку, иначе она заговорит в пустоту */
 function aiStop(){ if(aiWait){ clearInterval(aiWait); aiWait=null; aiState(''); } AIBUSY=false; }
