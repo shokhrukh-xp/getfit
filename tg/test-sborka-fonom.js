@@ -6,10 +6,10 @@ const {chromium}=require('playwright'),M=require('./mock');
 const PROG=require('./fixtures/prog-3dnya.json');
 let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++;};
 (async()=>{const br=await chromium.launch();try{
- for(const [theme,width] of [['light',320],['dark',390]]){
+ for(const [theme,width,voice,addr] of [['light',320,'standard','vy'],['dark',390,'hard','ty']]){
   const p=await br.newPage({viewport:{width,height:844}});let calls=0;
   await p.addInitScript(()=>{const d=JSON.stringify({2:1,4:1,6:1});localStorage.setItem('shp_v1_shp_sched',d);localStorage.setItem('shp_v1_ai_sched',d);localStorage.setItem('shp_v1_sched_any',d);});
-  const o={theme,page:'gym',me:{sex:'m',age:35,ht:178,bw:85,wt:'down',gym:'muscle',level:'mid',place:'gym',only:'all'},profile:'ai',prog:{...PROG,name:'Прежняя программа'},rbo:{stamp:'new-'+theme,why:'Цель изменилась'},aiDelay:4500,onAi:()=>{calls++;return {ok:true,prog:PROG};}};
+  const o={theme,page:'gym',me:{sex:'m',age:35,ht:178,bw:85,wt:'down',gym:'muscle',level:'mid',place:'gym',only:'all',voice,addr},profile:'ai',prog:{...PROG,name:'Прежняя программа'},rbo:{stamp:'new-'+theme,why:'Цель изменилась'},aiDelay:13000,onAi:()=>{calls++;return {ok:true,prog:PROG};}};
   const errors=await M.поднять(p,o);
   const req=[];p.on('request',r=>{const u=new URL(r.url());if(u.pathname==='/ai'||u.pathname==='/job')req.push(u.pathname+(u.searchParams.get('job')?'?job':''));});
   await p.click('#profbtn');await p.click('#pq-gym');await p.click('#recobox [data-rb="go"]');
@@ -19,6 +19,14 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   ok(/wb-crad/.test(ждём.anim),theme+' '+width+': знак двигается: '+ждём.anim);
   ok(/Собираю программу|Подбираю/.test(ждём.t),theme+' '+width+': под знаком — что происходит: '+ждём.t);
   await p.locator('#aistate').screenshot({path:'/tmp/sborka-fonom-'+theme+'-'+width+'.png'}).catch(()=>{});
+  /* 28.10: строка под знаком меняется и шутит в тон тренера */
+  const строки=[];for(let i=0;i<10;i++){const t=await p.evaluate(()=>{const s=document.querySelector('#aistate .aiwait-t');return s?s.textContent:'';});if(t&&строки.at(-1)!==t)строки.push(t);await p.waitForTimeout(1000);}
+  ok(строки.length>=3,theme+' '+width+': строка меняется: '+строки.join(' → '));
+  const ист=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8'),фр=ист.slice(ист.indexOf('var СБОРКА_ФРАЗЫ=')+'var СБОРКА_ФРАЗЫ='.length,ист.indexOf(';\nfunction сборкаЖдём'));
+  const набор=Object.values(eval('('+фр+')')[voice]).flat();
+  const свои=строки.slice(1).every(t=>набор.some(x=>x.replace(/\{[^}]*\}/g,'').split(/\s+/).filter(w=>w.length>3).slice(0,2).every(w=>t.includes(w))));
+  ok(свои,theme+' '+width+': строки из набора характера «'+voice+'»');
+  ok(addr==='ty'?строки.every(t=>!/\b(вас|ваш|вашу|ваши)\b/i.test(t))&&/под тебя/.test(строки[0]):/под вас/.test(строки[0]),theme+' '+width+': обращение на «'+addr+'»');
   {const bb=await require('./viewport-check')(p);ok(!bb.length,theme+' '+width+': ожидание в рамках: '+JSON.stringify(bb).slice(0,200));}
   await p.waitForSelector('#aibox .aiex',{timeout:12000}).catch(()=>{});
   ok(await p.locator('#aibox .aiex').count()>0,theme+' '+width+': программа пришла через /job');
