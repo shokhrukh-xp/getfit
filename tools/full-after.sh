@@ -5,10 +5,13 @@
 # временную папку — правки, начатые после push, на результат не влияют).
 #   sh tools/full-after.sh <sha>     — хук запускает сам
 #   sh tools/full-after.sh --status  — чем кончился последний прогон
-# Итог: $TMPDIR/getfit-full-after/status — «идёт …», «ok …» или «red …»;
+# Итог: ~/Library/Caches/getfit-full-after/status — «идёт …», «ok …» или «red …»;
 # на красный — уведомление на маке. Скрипт выпуска (getfit-sync/deploy.sh)
 # показывает этот статус перед каждым выпуском.
-ST="${TMPDIR:-/tmp}/getfit-full-after"; mkdir -p "$ST"
+# Не в /tmp: там лежит чужой node_modules (Codex) с другой версией playwright,
+# и снимок подхватывал его вместо ~/pw/node_modules — всё падало за 30 с.
+ST="$HOME/Library/Caches/getfit-full-after"; mkdir -p "$ST"
+export NODE_PATH="$HOME/pw/node_modules"
 if [ "$1" = "--status" ]; then cat "$ST/status" 2>/dev/null || echo "полных прогонов после выпуска ещё не было"; exit 0; fi
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
