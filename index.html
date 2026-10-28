@@ -234,6 +234,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    всё равно надо собирать заново». Верно: это не свойства человека, это
    условия сборки. Теперь они живут в листе сборки и в карточке программы. */
 .wdgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+/* 28.10: на 320 семь дней были по 36 px: ряд чуть шире (в отступы листа), промежутки 3 px и поле нажатия до середины промежутка */
+@media (max-width:359px){.wdgrid{gap:3px;margin-inline:-8px}.wdgrid button{position:relative}.wdgrid button::after{content:'';position:absolute;top:0;bottom:0;left:-1.5px;right:-1.5px}}
 .wdgrid button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:12px;
   padding:9px 0;font:inherit;font-size:13px;min-height:44px}
 .wdgrid button[aria-pressed="true"]{background:var(--action);border-color:var(--accent);
@@ -4242,23 +4244,27 @@ img.avface{border-radius:50%;object-fit:cover}
 #goalconversation .gs-goal b{font-size:15px;line-height:1.2}#goalconversation .gs-goal span{font-size:12.5px;color:var(--muted);line-height:1.3}
 #goalconversation .gs-goal[aria-pressed="true"]{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
 #goalconversation .gs-fields{display:grid;gap:10px}
-#goalconversation .gs-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--field);border-radius:16px;padding:10px 12px}
+#goalconversation .gs-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;background:var(--field);border-radius:16px;padding:10px 12px}
 #goalconversation .gs-name{display:grid;gap:1px;min-width:0}#goalconversation .gs-name small{color:var(--muted);font-size:12px}#goalconversation .gs-name small b{color:var(--text)}
-#goalconversation .gs-step{display:flex;align-items:center;gap:6px;flex:none}
-#goalconversation .gs-step button{width:36px;height:36px;border-radius:12px;border:0;background:var(--surface);color:var(--accent);font-weight:700;font-size:18px;font-family:inherit;cursor:pointer}
+#goalconversation .gs-step{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
+#goalconversation .gs-step button{width:44px;height:44px;border-radius:12px;border:0;background:var(--surface);color:var(--accent);font-weight:700;font-size:18px;font-family:inherit;cursor:pointer}
 #goalconversation .gs-step output{min-width:64px;text-align:center;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
 #goalconversation .gs-step output small{font-size:13px;font-weight:600;color:var(--muted)}
-#goalconversation .gs-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#goalconversation .gs-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;min-width:0;max-width:100%}
 #goalconversation .gs-chip{min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:6px 13px;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}
 #goalconversation .gs-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
-#goalconversation .gs-date input{font-weight:600;font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px;min-height:32px}
-#goalconversation .gs-date.on input{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
+/* 28.10: своя дата — кнопкой-чипом «30 марта 2027»; родное поле прозрачное поверх неё. На iPhone
+   видимое поле даты имело свою ширину («30 Mar 2027», по-английски) и вылезало из рамки срока. */
+#goalconversation .gs-date{position:relative;display:inline-flex;align-items:center;overflow:hidden;max-width:100%;white-space:nowrap}
+#goalconversation .gs-date.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#goalconversation .gs-date:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+#goalconversation .gs-date input{position:absolute;inset:0;width:100%;height:100%;min-width:0;margin:0;padding:0;border:0;opacity:0;font-size:16px;cursor:pointer}
 #goalconversation .gs-result{margin-top:14px;background:var(--hero);color:#fff;border-radius:22px;padding:16px;display:grid;gap:12px}
 #goalconversation .gs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
 #goalconversation .gs-k{font-size:12px;color:rgba(255,255,255,.72);font-weight:600}
 #goalconversation .gs-v{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}#goalconversation .gs-v small{font-size:13px;font-weight:600;color:rgba(255,255,255,.72)}
 #goalconversation .gs-eta{font-size:18px}#goalconversation .gs-d{font-size:12.5px;color:rgba(255,255,255,.72)}
-#goalconversation .gs-comp{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.72)}#goalconversation .gs-comp b{color:#fff}
+#goalconversation .gs-comp{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.72)}#goalconversation .gs-comp b{color:#fff}
 #goalconversation .gs-why{margin:0;font-size:13.5px;line-height:1.45}
 #goalconversation .gs-warn{margin-top:10px;background:var(--sand-bg);color:var(--sand-txt);border-radius:14px;padding:10px 12px;font-size:13.5px;line-height:1.4}
 #goalconversation .gs-health{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 10px;font-size:13.5px;color:var(--muted)}
@@ -4277,6 +4283,12 @@ img.avface{border-radius:50%;object-fit:cover}
 .gtalk-error{color:var(--text);border-left:3px solid var(--accent);padding-left:12px}
 #goalchatopen{margin:0 16px 8px;min-height:44px;flex:none}
 
+/* 28.10, его «поле ввода срока выходит за рамки бокса… убедись, что такого больше нет нигде»: на iPhone
+   родные поля даты и времени держат свою минимальную ширину и выходят за рамку. Всем таким полям —
+   без системного вида, не шире родителя и способны сжиматься во flex/grid. */
+:where(input[type="date"],input[type="time"],input[type="month"],input[type="week"],input[type="datetime-local"]){-webkit-appearance:none;appearance:none}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),select,textarea){min-width:0;max-width:100%;box-sizing:border-box}
+input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-width:0}
 </style>
 </head>
 <body>
@@ -7819,7 +7831,7 @@ function goalTalkRender(){
     h+='<p class="gs-lbl">Куда хотите прийти</p><div class="gs-fields">';
     h+='<div class="gs-row"><div class="gs-name"><b>Вес</b><small>можно <b>'+gsЧ(L.wMin)+'–'+gsЧ(L.wMax)+'</b> кг</small></div><div class="gs-step"><button type="button" data-gs="w" data-v="-0.5" aria-label="Вес меньше">−</button><output id="gs-w">'+gsЧ(d.w)+' <small>кг</small></output><button type="button" data-gs="w" data-v="0.5" aria-label="Вес больше">+</button></div></div>';
     if(GS.g!=='loss'&&L.fLo!=null)h+='<div class="gs-row"><div class="gs-name"><b>Жир</b><small>при '+gsЧ(d.w)+' кг: <b>'+L.fLo+'–'+L.fHi+'%</b>'+(GS.f==null?' · необязательно':'')+'</small></div><div class="gs-step"><button type="button" data-gs="f" data-v="-1" aria-label="Жир меньше">−</button><output id="gs-f">'+(GS.f==null?'—':GS.f)+' <small>%</small></output><button type="button" data-gs="f" data-v="1" aria-label="Жир больше">+</button></div></div>';
-    h+='<div class="gs-row"><div class="gs-name"><b>Срок</b><small>не раньше <b>'+esc(gsДата(L.earliest))+'</b></small></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-date'+(GS.date?' on':'')+'"><span class="sr-only">Своя дата</span><input type="date" id="gs-date" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div></div>';
+    h+='<div class="gs-row"><div class="gs-name"><b>Срок</b><small>не раньше <b>'+esc(gsДата(L.earliest))+'</b></small></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-chip gs-date'+(GS.date?' on':'')+'"><span aria-hidden="true">'+(GS.date?esc(gsДата(GS.date)):'Своя дата')+'</span><input type="date" id="gs-date" aria-label="Своя дата" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div></div>';
     h+='</div>';
   }
   var r=d.result;
@@ -7830,7 +7842,7 @@ function goalTalkRender(){
       '<div><div class="gs-k">Калории в день</div><div class="gs-v">'+gtЧс(r.kcal)+'</div>'+(nw.kcal&&nw.kcal!==r.kcal?'<div class="gs-d">сейчас '+gtЧс(nw.kcal)+'</div>':'')+'</div>'+
       '<div><div class="gs-k">Белок</div><div class="gs-v">'+gtЧс(r.prot)+' <small>г</small></div></div>'+
       '<div><div class="gs-k">Придёте</div><div class="gs-v gs-eta">'+(r.eta?esc(GS.date&&!d.warns.some(function(x){return /не успеть/.test(x.t);})?gsДата(r.eta):gsДата(r.eta,true)):'—')+'</div></div></div>'+
-      (d.comp?'<div class="gs-comp">Жир <b>'+(d.comp.dFat<0?'−':'+')+gsЧ(Math.abs(d.comp.dFat))+' кг</b> · Мышцы и вода <b>'+(Math.abs(d.comp.dLean)<0.1?'сохраняются':(d.comp.dLean<0?'−':'+')+gsЧ(Math.abs(d.comp.dLean))+' кг')+'</b></div>':'')+
+      (d.comp?'<div class="gs-comp"><span>Жир <b>'+(d.comp.dFat<0?'−':'+')+gsЧ(Math.abs(d.comp.dFat))+' кг</b></span><span>Мышцы и вода <b>'+(Math.abs(d.comp.dLean)<0.1?'сохраняются':(d.comp.dLean<0?'−':'+')+gsЧ(Math.abs(d.comp.dLean))+' кг')+'</b></span></div>':'')+
       '<p class="gs-why">'+esc(d.why||'')+'</p></div>';
   }
   if(d.warns&&d.warns.length)h+='<div class="gs-warn">'+d.warns.map(function(x){return esc(x.t);}).join(' ')+'</div>';
@@ -7863,6 +7875,8 @@ document.getElementById('goalconversation').addEventListener('click',function(e)
     if(L.fLo!=null&&f>Math.max(L.fHi,nowF))f=null;else if(L.fLo!=null)f=Math.max(L.fLo-1,f);GS.f=f;var o=document.getElementById('gs-f');if(o)o.innerHTML=(f==null?'—':f)+' <small>%</small>';goalScreenLater();return;}
   if(a==='nodate'){GS.date='';goalScreenFetch();return;}
 });
+/* прозрачное поле даты: на компьютере календарь открывается только значком — открываем по нажатию на чип */
+document.getElementById('goalconversation').addEventListener('click',function(e){if(e.target&&e.target.id==='gs-date'&&e.target.showPicker){try{e.target.showPicker();}catch(x){}}});
 document.getElementById('goalconversation').addEventListener('change',function(e){if(e.target&&e.target.id==='gs-date'){GS.date=e.target.value||'';goalScreenFetch();}
   if(e.target&&e.target.id==='gs-health-note'&&GS.health){GS.health.note=e.target.value;goalScreenFetch();}});
 var BODYGOAL={back:null,busy:false,edited:false,openN:0};
@@ -9426,7 +9440,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 17:15';
+var BUILD = '28.10 18:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль

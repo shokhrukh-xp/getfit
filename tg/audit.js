@@ -119,6 +119,56 @@ const ПРОВЕРКА = () => {
       из.push({ вид: 'картинка', т: имя(el) + ' не загрузилась: ' + (el.getAttribute('src') || '').slice(0, 60) });
   });
 
+  /* 6. вылезает из своей рамки. 28.10, его снимок: поле «30 Mar 2027» вышло за бокс «Срок» —
+     край телефона при этом цел, поэтому пункт 1 молчал. Рамка — ближайший предок, которого видно
+     глазом: со скруглением и с фоном или обводкой (карточка, строка, чип, поле, лист). Если раньше
+     рамки встретилась обрезка (overflow), лишнего не видно — это не поломка. */
+  const прозрачно = c => !c || c === 'transparent' || /rgba\(\d+, \d+, \d+, 0\)/.test(c);
+  /* рамка и по каким осям за неё можно выходить: прокрутка или обрезка у самой рамки или между —
+     лишнего не видно, это не поломка */
+  const режет = v => ['hidden', 'clip', 'auto', 'scroll'].indexOf(v) >= 0;
+  const рамкаДля = el => {
+    let x = true, y = true;
+    for (let a = el.parentElement; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.display === 'contents') continue;
+      if (режет(s.overflowX)) x = false;
+      if (режет(s.overflowY)) y = false;
+      if (!x && !y) return null;
+      const фон = !прозрачно(s.backgroundColor) || s.backgroundImage !== 'none';
+      const край = parseFloat(s.borderLeftWidth) > 0 && s.borderLeftStyle !== 'none' && !прозрачно(s.borderLeftColor);
+      if ((фон || край) && parseFloat(s.borderTopLeftRadius) > 0) return { a, x, y };
+    }
+    return null;
+  };
+  document.querySelectorAll('body *').forEach(el => {
+    if (el.ownerSVGElement || !видно(el) || el.closest('[data-audit-free]')) return;
+    /* содержимое закрытого <details> в Chromium имеет размеры, но не видно */
+    const дет = el.closest('details'); if (дет && !дет.open && !el.closest('summary')) return;
+    const s = getComputedStyle(el);
+    if (s.position === 'fixed' || +s.opacity === 0) return;
+    const r = el.getBoundingClientRect();
+    /* значки и риски (серия у аватара, отметка нормы на полосе) нарочно сидят на краю */
+    if (s.position === 'absolute' && r.width <= 44 && r.height <= 24) return;
+    const рамка = рамкаДля(el);
+    if (!рамка || !видно(рамка.a)) return;
+    const b = рамка.a.getBoundingClientRect();
+    const вылет = Math.max(рамка.x ? Math.max(b.left - r.left, r.right - b.right) : 0, рамка.y ? Math.max(b.top - r.top, r.bottom - b.bottom) : 0);
+    if (вылет > 1.5)
+      из.push({ вид: 'из рамки', т: имя(el) + ' выходит из ' + имя(рамка.a) + ' на ' + Math.round(вылет) + 'px' });
+  });
+
+  /* 7. родные поля даты и времени. На iPhone такое поле само решает свою ширину и язык
+     («30 Mar 2027») и вылезает из рамки; в Chromium проверок этого не видно, поэтому правило:
+     видимое родное поле — только без системного вида (appearance: none) или прозрачным поверх своей кнопки. */
+  document.querySelectorAll('input[type="date"],input[type="time"],input[type="month"],input[type="week"],input[type="datetime-local"]').forEach(el => {
+    if (!el.getClientRects().length) return;
+    const s = getComputedStyle(el);
+    if (+s.opacity === 0) return;
+    if (s.appearance !== 'none' && s.webkitAppearance !== 'none')
+      из.push({ вид: 'родное поле', т: имя(el) + ' с системным видом — на iPhone своя ширина и английская дата' });
+  });
+
   function имя(el) {
     if (!el || !el.tagName) return '?';
     return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
@@ -165,6 +215,14 @@ const ОКНА = [
     await p.waitForTimeout(1600);
     const s = await p.$('[data-selfpick]'); if (s) await s.click();
   }, '#catalog'],
+  /* 28.10: экран цели (лист тренера) — со своей датой, как на его снимке */
+  ['экран цели', async p => {
+    await p.click('#coachnav'); await p.waitForTimeout(400); await p.click('#goalchatopen');
+    const ждать = () => p.waitForFunction(() => { const g = document.getElementById('goalconversation'); return g && g.dataset.state !== 'loading' && g.getAttribute('aria-busy') === 'false'; }, null, { timeout: 8000 });
+    await ждать();
+    if (await p.$('#gs-date')) { await p.fill('#gs-date', new Date(Date.now() + 200 * 864e5).toISOString().slice(0, 10)); await p.dispatchEvent('#gs-date', 'change'); await ждать(); }
+    if (await p.$('[data-gs="health"][data-v="yes"]')) { await p.click('[data-gs="health"][data-v="yes"]'); await ждать(); }
+  }, '#coachm'],
   ['приём еды', async p => {
     await p.click('.l1 button[data-page="food"]'); await p.waitForTimeout(900);
     /* приёмы живут в #fmeals, а .fbar в #fday — это пустые слоты, они ведут
@@ -260,12 +318,12 @@ async function состояние(page, имя) {
   const ВСЕ = process.argv.indexOf('--все') >= 0 || process.argv.indexOf('--all') >= 0;
   const РАЗМЕРЫ = ВСЕ
     ? [['dark', 390, 844], ['light', 390, 844], ['dark', 360, 740], ['dark', 430, 932]]
-    : [['dark', 390, 844], ['dark', 430, 932]];
+    : [['dark', 390, 844], ['dark', 430, 932], ['light', 320, 700]];
   /* Обход — это задания, каждое на своей свежей странице: на каждом размере
      «экраны и окна», а на обычном тёмном ещё и «внутри экранов». Шаги и так
      не зависят от порядка (перед каждым всё закрывается), поэтому быстрый
      прогон (tg/run-fast.js) делит задания между потоками: с GF_PART=k/n этот
-     процесс берёт только задания с номером k по модулю n. Заданий 3, с «--все» — 5. */
+     процесс берёт только задания с номером k по модулю n. Заданий 4, с «--все» — 5. */
   const ЧАСТЬ = (process.env.GF_PART || '').match(/^(\d+)\/(\d+)$/);
   const ЗАДАНИЯ = [];
   РАЗМЕРЫ.forEach(р => { ЗАДАНИЯ.push([р, 'экраны']); if (р[0] === 'dark' && р[1] === 390) ЗАДАНИЯ.push([р, 'глубже']); });
@@ -367,6 +425,8 @@ async function состояние(page, имя) {
   дано(ошибки.length === 0, 'ни одной ошибки JS на всех экранах' + (ошибки.length ? ': ' + ошибки.slice(0, 4).join(' | ') : ''));
   дано(!поВиду['вылет'], 'ничего не вылезает за край экрана');
   дано(!поВиду['столбик'], 'нигде текст не зажат в колонку');
+  дано(!поВиду['из рамки'], 'ничто не вылезает из своей рамки (карточки, строки, чипа, поля)');
+  дано(!поВиду['родное поле'], 'поля даты и времени без системного вида');
   дано(!поВиду['мелко'], 'все цели нажатия не меньше 44 пикселей');
   дано(!поВиду['перекрыто'], 'ни одна кнопка не перекрыта');
   дано(!поВиду['картинка'], 'все картинки загрузились');

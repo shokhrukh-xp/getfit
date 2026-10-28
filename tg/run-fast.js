@@ -80,7 +80,7 @@ const наборы = fs.readdirSync(TG).filter(f => /^test-.*\.js$/.test(f)).sor
    по заданиям (3, с «--все» — 5; см. ЗАДАНИЯ в audit.js), тыкалка — по
    шести экранам приложения. */
 const ВСЕ_РАЗМЕРЫ = дальше.includes('--все') || дальше.includes('--all');
-const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 3, 'tyk.js': 6 };
+const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 4, 'tyk.js': 6 };
 const имя = f => f.replace(/^test-/, '').replace(/\.js$/, '');
 let файлы = наборы.concat(Object.keys(ЧАСТЕЙ));
 if (фильтр.length) файлы = файлы.filter(f => фильтр.some(ф => имя(f).includes(ф)));

@@ -27,6 +27,9 @@ let плохо=0;const дано=(у,т)=>{console.log((у?'  ok  ':'  ПРОВА
   await page.fill('#gs-date','2028-03-01');await page.dispatchEvent('#gs-date','change');await ждать();t=await текст();
   if(!(!/не успеть/.test(t)&&/1 марта 2028/.test(t)))console.log('    текст:',t.slice(0,900));
   дано(!/не успеть/.test(t)&&/1 марта 2028/.test(t),'поздняя дата: приходите к ней, без предупреждения');
+  /* 28.10, его снимок: поле срока «30 Mar 2027» вылезало из рамки — дата чипом по-русски и внутри */
+  дано(await page.locator('.gs-date').innerText()==='1 марта 2028','своя дата — чипом, по-русски');
+  {const bb=await require('./viewport-check')(page);дано(!bb.length,'ничего не вылезает из рамок и за край: '+JSON.stringify(bb).slice(0,300));}
   await page.click('[data-gs="nodate"]');await ждать();
   await page.click('[data-gs="g"][data-v="keep"]');await ждать();t=await текст();
   дано(!/Куда хотите прийти/i.test(t)&&/вес держим/.test(t),'«Питаться правильнее» — без полей, вес держим');
