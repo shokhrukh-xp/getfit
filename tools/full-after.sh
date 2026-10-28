@@ -21,7 +21,8 @@ echo "идёт $SHA с $(date +%H:%M)" > "$ST/status"
 git archive "$SHA" | tar -x -C "$DIR" || { echo "red $SHA — не удалось снять снимок" > "$ST/status"; exit 1; }
 # сверка метки и AGENTS.md в прогоне смотрит на ../getfit-sync — кладём рядом ссылку
 [ -d ../getfit-sync ] && ln -sfn "$(cd ../getfit-sync && pwd)" "$ST/getfit-sync"
-mv "$DIR" "$ST/getfit" 2>/dev/null || { rm -rf "$ST/getfit"; mv "$DIR" "$ST/getfit"; }
+# старый снимок убираем ДО mv: иначе mv кладёт новый внутрь старого, и прогон идёт по старому коду
+rm -rf "$ST/getfit"; mv "$DIR" "$ST/getfit" || exit 1
 cd "$ST/getfit" || exit 1
 S=$(date +%s)
 # потоков поменьше: прогон фоновый, и следующая правка не должна с ним толкаться
