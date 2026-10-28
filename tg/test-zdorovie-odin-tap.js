@@ -17,9 +17,13 @@ const ME={sex:'f',age:35,ht:170,bw:75,wt:'down',gym:'muscle',goal:'fat',only:'al
  await p.reload();await p.waitForTimeout(900);await p.click('#profbtn');await p.click('#zdtoggle');ok(await p.locator('#zd-met [data-v="1"]').getAttribute('aria-pressed')==='true',theme+' метформин сохранён после перезагрузки');for(const [group,key]of [['more','bp'],['more','preg'],['osl','kid']])ok(await p.locator('#zd-'+group+' [data-v="'+key+'"]').getAttribute('aria-pressed')==='true',theme+' '+key+' сохранён после перезагрузки');await p.close();
  }
  const p=await br.newPage({viewport:{width:390,height:844}});await M.поднять(p,{theme:'dark',newbie:true});await M.шаги(p,{до:'health'});
- await p.locator('#goalconversation [data-value="limited"]').evaluate(e=>e.click());
- await p.waitForSelector('#gtalk-form textarea');ok(await p.locator('#goalconversation').getAttribute('data-question')==='healthNote','один tap без фокуса открывает одно уточнение');
- await p.fill('#gtalk-form textarea','Болит колено');await p.click('#gtalk-form [type="submit"]');await p.waitForFunction(()=>document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
- await p.click('#goalconversation [data-gta="back"]');await p.waitForSelector('#gtalk-form textarea');ok(await p.locator('#goalconversation').getAttribute('data-question')==='healthNote','назад возвращает к ответу об ограничениях');
+ /* 28.10: экран цели — «Есть» одним нажатием открывает одно поле; запрос один */
+ const n0=await p.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/\/goal\/plan/.test(x.name)).length);
+ await p.locator('#goalconversation [data-gs="health"][data-v="yes"]').evaluate(e=>e.click());
+ await p.waitForFunction(()=>document.getElementById('goalconversation').getAttribute('aria-busy')==='false');await p.waitForTimeout(300);
+ ok(await p.locator('#gs-health-note').count()===1,'один tap без фокуса открывает одно уточнение');
+ ok(await p.evaluate(()=>performance.getEntriesByType('resource').filter(x=>/\/goal\/plan/.test(x.name)).length)-n0===1,'и один пересчёт');
+ await p.fill('#gs-health-note','Болит колено');await p.dispatchEvent('#gs-health-note','change');await p.waitForFunction(()=>document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
+ ok(await p.locator('#gs-health-note').inputValue()==='Болит колено','текст остаётся после пересчёта');
  await p.close();
 }finally{await br.close()}if(bad)process.exitCode=1;else console.log('ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ')})().catch(e=>{console.error(e);process.exitCode=1});

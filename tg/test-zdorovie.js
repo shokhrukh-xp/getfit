@@ -121,11 +121,11 @@ async function жми(page, sel, текст) {
   await M.поднять(page, { theme: 'dark', wait: 2800, newbie: true });
   await page.waitForTimeout(900);
   await M.шаги(page,{до:'health'});
-  дано(await page.isVisible('#goalconversation'),'вопрос про ограничения до параметров цели');
-  await page.click('#goalconversation [data-value="limited"]');
-  await page.waitForSelector('#gtalk-form textarea');await page.fill('#gtalk-form textarea','Диабет 1 типа, следую рекомендациям врача');await page.click('#gtalk-form [type="submit"]');
-  await M.цельШаги(page,{до:'goal'});
-  дано(await page.locator('#goalconversation [data-gta="select"]').count()===1,'при ограничениях только цель без автоматического снижения веса');
+  дано(await page.isVisible('#goalconversation [data-gs="health"][data-v="yes"]'),'ограничения по здоровью — на экране цели, до сохранения');
+  дано(await page.locator('#goalconversation [data-gs="save"]').isDisabled(),'без ответа про здоровье цель не сохранить');
+  await page.click('#goalconversation [data-gs="health"][data-v="yes"]');await page.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e.getAttribute('aria-busy')==='false'&&e.dataset.state!=='loading';});
+  await page.fill('#gs-health-note','Диабет 1 типа, следую рекомендациям врача');await page.dispatchEvent('#gs-health-note','change');await page.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e.getAttribute('aria-busy')==='false'&&e.dataset.state!=='loading';});
+  дано(/обсудите с врачом/.test(await page.locator('#goalconversation').innerText()),'при ограничениях — предупреждение: темп и калории обсудить с врачом');
   await M.цельШаги(page,{});
   const med=await page.evaluate(()=>JSON.parse(localStorage.getItem('shp_v1_me')).goalContext);
   дано(med.health==='limited'&&/Диабет/.test(med.note),'после подтверждения тренер сохраняет сообщённые ограничения');

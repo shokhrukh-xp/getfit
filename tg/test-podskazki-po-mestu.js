@@ -91,11 +91,14 @@ async function новичок(b,theme,width){
  /* анкета: ошибка гаснет по мере ввода */
  {const p=await b.newPage({viewport:{width:390,height:844}});
   await M.поднять(p,{theme:'light',newbie:true,wait:2500});
-  await M.шаги(p,{до:'me'});await p.fill('#gtalk-form [name="age"]','');await p.click('#gtalk-form [type="submit"]');
-  ok(await p.locator('#gtalk-form [name="age"]').evaluate(e=>!e.validity.valid),'пустой возраст не отправляется');
-  await p.fill('#gtalk-form [name="age"]','30');ok(await p.locator('#gtalk-form [name="age"]').evaluate(e=>e.validity.valid),'ввели возраст — ошибка поля снята');
-  await p.click('#gtalk-form [type="submit"]');await p.waitForFunction(()=>document.getElementById('goalconversation').dataset.question==='health');
-  ok(await p.locator('#goalconversation').isVisible(),'следующий вопрос зависит от принятого ответа');
+  /* 28.10: профиль новичка — прямо на экране цели */
+  await M.шаги(p,{до:'me'});await p.click('#goalconversation [data-gs="sex"][data-v="f"]');await p.fill('#gs-p-ht','165');if(await p.locator('#gs-p-bw').count())await p.fill('#gs-p-bw','64');
+  await p.click('#goalconversation [data-gs="calc"]');
+  ok(/Заполните: возраст/.test(await p.locator('#goalconversation').innerText())&&await p.locator('#goalconversation').getAttribute('data-state')==='profile','пустой возраст не отправляется — просим заполнить');
+  ok(await p.locator('#gs-p-ht').inputValue()==='165','введённое не стирается');
+  await p.fill('#gs-p-age','30');await p.click('#goalconversation [data-gs="calc"]');
+  await p.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e.dataset.state==='screen'&&e.getAttribute('aria-busy')==='false';});
+  {const t=await p.locator('#goalconversation').innerText();ok(/Чего хотите/i.test(t),'заполнили — сразу экран цели с цифрами: '+t.slice(0,160).replace(/\s+/g,' '));}
   await p.close();}
 }finally{await b.close();}
 console.log(bad?'ПРОВАЛОВ: '+bad:'всё ок');process.exit(bad?1:0);})();

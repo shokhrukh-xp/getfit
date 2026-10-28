@@ -3473,7 +3473,7 @@ body.ordmode #list .sstag{color:var(--text)}
 .trava2 img{width:46px;height:auto}
 .trh{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
 .trp{margin:0;font-size:14px;line-height:1.45;color:var(--muted)}
-#trname{height:52px;border-radius:14px;border:2px solid var(--accent);background:var(--field);color:var(--text);font:700 18px inherit;font-family:inherit;padding:0 14px;width:100%;box-sizing:border-box}
+#trname{height:52px;border-radius:14px;border:2px solid var(--accent);background:var(--field);color:var(--text);font-weight:700;font-size:18px;font-family:inherit;padding:0 14px;width:100%;box-sizing:border-box}
 .trchips{display:flex;flex-wrap:wrap;gap:8px}
 .trchips button{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 15px inherit;font-family:inherit}
 .trchips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#04201D}
@@ -4233,7 +4233,43 @@ img.avface{border-radius:50%;object-fit:cover}
 .gtalk-option{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.gtalk-option p{line-height:1.5}
 /* 28.10: было → станет при выборе цели (его просьба: темп, норма, белок, дата и почему) */
 .gtalk-impact{font-weight:600;margin:8px 0 4px}.gtalk-impact span{font-weight:400;color:var(--muted)}
-#goalconversation .btn.gtalk-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:3px;height:auto;min-height:56px;padding-top:11px;padding-bottom:11px}#goalconversation .gtalk-choice small{display:block;font-size:13px;font-weight:400;line-height:1.3;color:var(--muted);white-space:normal}
+#goalconversation .btn
+/* 28.10: экран цели одним экраном */
+#goalconversation .gs-now{margin:0;color:var(--muted);font-size:14px}#goalconversation .gs-now b{color:var(--text)}
+#goalconversation .gs-lbl{margin:14px 0 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#goalconversation .gs-goals{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#goalconversation .gs-goal{text-align:left;border:1.5px solid transparent;background:var(--tint);color:var(--text);border-radius:18px;padding:12px 12px 11px;font:inherit;cursor:pointer;display:grid;gap:3px;min-width:0}
+#goalconversation .gs-goal b{font-size:15px;line-height:1.2}#goalconversation .gs-goal span{font-size:12.5px;color:var(--muted);line-height:1.3}
+#goalconversation .gs-goal[aria-pressed="true"]{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
+#goalconversation .gs-fields{display:grid;gap:10px}
+#goalconversation .gs-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--field);border-radius:16px;padding:10px 12px}
+#goalconversation .gs-name{display:grid;gap:1px;min-width:0}#goalconversation .gs-name small{color:var(--muted);font-size:12px}#goalconversation .gs-name small b{color:var(--text)}
+#goalconversation .gs-step{display:flex;align-items:center;gap:6px;flex:none}
+#goalconversation .gs-step button{width:36px;height:36px;border-radius:12px;border:0;background:var(--surface);color:var(--accent);font-weight:700;font-size:18px;font-family:inherit;cursor:pointer}
+#goalconversation .gs-step output{min-width:64px;text-align:center;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+#goalconversation .gs-step output small{font-size:13px;font-weight:600;color:var(--muted)}
+#goalconversation .gs-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#goalconversation .gs-chip{min-height:44px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:999px;padding:6px 13px;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}
+#goalconversation .gs-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+#goalconversation .gs-date input{font-weight:600;font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 10px;min-height:32px}
+#goalconversation .gs-date.on input{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.15)}
+#goalconversation .gs-result{margin-top:14px;background:var(--hero);color:#fff;border-radius:22px;padding:16px;display:grid;gap:12px}
+#goalconversation .gs-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+#goalconversation .gs-k{font-size:12px;color:rgba(255,255,255,.72);font-weight:600}
+#goalconversation .gs-v{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}#goalconversation .gs-v small{font-size:13px;font-weight:600;color:rgba(255,255,255,.72)}
+#goalconversation .gs-eta{font-size:18px}#goalconversation .gs-d{font-size:12.5px;color:rgba(255,255,255,.72)}
+#goalconversation .gs-comp{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.72)}#goalconversation .gs-comp b{color:#fff}
+#goalconversation .gs-why{margin:0;font-size:13.5px;line-height:1.45}
+#goalconversation .gs-warn{margin-top:10px;background:var(--sand-bg);color:var(--sand-txt);border-radius:14px;padding:10px 12px;font-size:13.5px;line-height:1.4}
+#goalconversation .gs-health{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 10px;font-size:13.5px;color:var(--muted)}
+#goalconversation .gs-hz{margin-top:14px}
+#goalconversation .gs-note{display:block;margin-top:8px}
+#goalconversation .gs-note textarea{width:100%;box-sizing:border-box;min-height:64px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--text);padding:10px 12px;font-family:inherit;font-size:16px;line-height:1.35;resize:vertical}
+#goalconversation .gs-link{border:0;background:none;color:var(--accent);font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;padding:6px 0}
+#goalconversation .gs-saved{background:var(--tint);color:var(--accent);border-radius:16px;padding:12px;font-weight:700;text-align:center;margin-bottom:10px}
+#goalconversation .gs-in input{width:110px;text-align:right;font-weight:800;font-size:18px;font-family:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+#goalconversation .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.gtalk-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;gap:3px;height:auto;min-height:56px;padding-top:11px;padding-bottom:11px}#goalconversation .gtalk-choice small{display:block;font-size:13px;font-weight:400;line-height:1.3;color:var(--muted);white-space:normal}
 .gtalk-diff{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}.gtalk-diff h4{margin:0 0 8px;font-size:15px}
 .gtalk-row{padding:7px 0;border-bottom:1px solid var(--line)}.gtalk-row:last-of-type{border-bottom:0}
 .gtalk-row small{display:block;color:var(--muted);font-size:13px;margin-bottom:2px}.gtalk-row span{color:var(--muted)}.gtalk-row b{font-weight:700}
@@ -7623,11 +7659,13 @@ function gtЧс(n){return String(Math.round(+n||0)).replace(/\B(?=(\d{3})+(?!\d)
 function gtТемп(r){r=+r||0;if(!r)return 'вес держим';return (r<0?'−':'+')+String(Math.round(Math.abs(r)*100)/100).replace('.',',')+' кг/нед';}
 function goalTalkLayout(){
   var active=GOALTALK.active,root=document.getElementById('goalconversation');root.hidden=!active;
+  /* 28.10: экран цели меняет заголовок листа на «Цель»; закрыли любым путём — возвращаем */
+  var ttl=document.getElementById('coachtitle');if(!active&&ttl&&ttl.dataset.was){ttl.textContent=ttl.dataset.was;delete ttl.dataset.was;}
   ['chatlog','coachdate','goalchatopen'].forEach(function(id){document.getElementById(id).hidden=active;});
   document.querySelector('#coachm .chatask').hidden=active;
   if(active)document.getElementById('cattach').hidden=true;
 }
-function goalTalkRender(){
+function goalTalkRenderСтарый(){
   goalTalkLayout();if(!GOALTALK.active)return;
   var live=document.getElementById('goalconversation');live.setAttribute('aria-busy',String(GOALTALK.busy));live.dataset.state=GOALTALK.dialog?GOALTALK.dialog.status:'loading';live.dataset.question=GOALTALK.dialog&&GOALTALK.dialog.question?GOALTALK.dialog.question.key:'';
   var root=document.getElementById('goalconversation'),d=GOALTALK.dialog,h='',button=function(action,text,extra,primary){return '<button type="button" class="btn '+(primary?'prim ':'')+'wide" data-gta="'+action+'" '+(extra||'')+(GOALTALK.busy?' disabled':'')+'>'+esc(text)+'</button>';};
@@ -7696,10 +7734,11 @@ function goalTalkOpen(onboard,text){
   GOALTALK.onboard=!!onboard;GOALTALK.active=true;GOALTALK.dialog=null;
   if(document.getElementById('profm').classList.contains('show'))возвратЗапомнить('coachm');
   closeProf();document.getElementById('picker').classList.remove('show');openCoach();goalTalkLayout();
-  return goalTalkRequest('start',text?{text:text}:{});
+  goalScreenStart(text);
 }
 function goalTalkFinish(){
   var onboarding=GOALTALK.onboard;GOALTALK.active=false;GOALTALK.onboard=false;goalTalkLayout();closeCoach();
+  var t=document.getElementById('coachtitle');if(t)t.textContent=t.dataset.was||'Тренер';
   if(onboarding){var me=myData()||{};if(me.only==='food')choose(profile||'shp');else{WIZ.step='form';WIZ.step0='form';renderPicker();document.getElementById('picker').classList.add('show');}}
 }
 document.getElementById('goalchatopen').addEventListener('click',function(){goalTalkOpen(false);});
@@ -7718,6 +7757,114 @@ document.getElementById('goalconversation').addEventListener('submit',function(e
   if(q.fields.length)q.fields.forEach(function(f){value[f.key]=e.target.elements[f.key].value;});else value=e.target.elements.text.value;
   goalTalkRequest('answer',{key:q.key,value:value});
 });
+
+/* ══════════ ЭКРАН ЦЕЛИ (28.10) ══════════
+   Его слова: «непонятно и не интуитивно работает постановка цели» → макет «Цель за один
+   экран» → «все параметры должны быть взаимосвязаны и нужна информация о минимально и
+   максимально достижимом» → «да». Что хотите → вес, жир, своя дата → итог тут же (темп,
+   калории, белок, когда придёте, жир и мышцы) → «Сохранить цель». Считает сервер
+   (/goal/plan, тот же расчёт, что и после сохранения); экран только показывает. */
+var GS={g:'recomp',w:null,f:null,date:'',profile:null,health:null,data:null,busy:false,saving:false,saved:false,error:'',n:0,t:null};
+var GS_ВИДЫ=[['loss','Похудеть','вес вниз, обычный темп'],['recomp','Жир ↓, мышцы ↑','медленнее по весу, нужны силовые'],['gain','Набрать мышцы','чуть больше калорий'],['keep','Питаться правильнее','вес не меняем']];
+function gsЧ(x,d){d=d==null?1:d;var k=Math.pow(10,d);return String(Math.round(x*k)/k).replace('.',',');}
+function gsДата(iso,к){var a=String(iso||'').split('-');if(a.length!==3)return '';return к?('к '+['январю','февралю','марту','апрелю','маю','июню','июлю','августу','сентябрю','октябрю','ноябрю','декабрю'][+a[1]-1]+' '+a[0]):(+a[2])+' '+ЯЗ_МЕС[+a[1]-1]+' '+a[0];}
+function goalScreenStart(text){
+  var t=document.getElementById('coachtitle');if(t){if(!t.dataset.was)t.dataset.was=t.textContent;t.textContent='Цель';}
+  var g=goalObj()||{},b=g.body||{},me=myData()||{};
+  GS.saved=false;GS.error='';GS.data=null;GS.date='';GS.profile=null;GS.health=null;
+  GS.g=g.kind==='habit'?'keep':b.target?(b.target>(me.bw||0)&&g.wt==='up'?'gain':b.muscle==='develop'?'recomp':'loss'):(g.wt==='up'?'gain':'recomp');
+  GS.w=b.target||null;GS.f=b.fat==null?null:b.fat;
+  /* «хочу 75 и 12% к лету» из чата — сразу цифры на экране */
+  var s=String(text||''),kg=s.match(/(\d{2,3}(?:[.,]\d)?)\s*(?:кг|kg)?(?!\s*%)/),pc=s.match(/(\d{1,2}(?:[.,]\d)?)\s*%/);
+  if(pc){GS.f=Math.round(+pc[1].replace(',','.'));GS.g='recomp';}
+  if(kg&&+kg[1].replace(',','.')>=35){GS.w=+kg[1].replace(',','.');if(!pc&&GS.w<(me.bw||999))GS.g='loss';if(GS.w>(me.bw||0))GS.g='gain';}
+  if(/набрат|масс/i.test(s))GS.g='gain';else if(/правильн|питани/i.test(s)&&!kg)GS.g='keep';
+  goalScreenFetch();
+}
+function goalScreenFetch(save){
+  clearTimeout(GS.t);var uid=syncUid(),n=++GS.n;
+  if(save){GS.saving=true;}else GS.busy=true;
+  goalTalkRender();
+  return fPost('/goal/plan',{uid:uid,g:GS.g,w:GS.w,f:GS.f,date:GS.date||null,profile:GS.profile,health:GS.health,save:!!save}).then(function(r){
+    if(n!==GS.n||uid!==syncUid())return;
+    GS.data=r;GS.error='';if(r.w!=null)GS.w=r.w;if(GS.g==='loss'||GS.g==='keep')GS.f=null;
+    if(save&&r.saved){GS.saved=true;if(r.me)gset('me',r.me);takeGoal(r.goal,null);try{renderHome();}catch(e){}haptic('ok');}
+  }).catch(function(e){if(n!==GS.n)return;GS.error=e.message||'Нет связи. Повторите.';}).finally(function(){if(n===GS.n){GS.busy=false;GS.saving=false;goalTalkRender();}});
+}
+function goalScreenLater(){clearTimeout(GS.t);GS.saved=false;goalTalkRender();GS.t=setTimeout(function(){goalScreenFetch();},250);}
+function goalTalkRender(){
+  goalTalkLayout();if(!GOALTALK.active)return;
+  var root=document.getElementById('goalconversation'),d=GS.data,h='';
+  root.setAttribute('aria-busy',String(GS.busy||GS.saving));root.dataset.state=GS.saved?'done':d?'screen':'loading';
+  if(!d){root.innerHTML='<p class="mtext" role="status">'+esc(GS.error||'Считаю цель…')+'</p>'+(GS.error?'<button type="button" class="btn wide" data-gs="retry">Повторить</button>':'');return;}
+  if(d.need==='profile'){
+    /* новичок: недостающее — прямо здесь, без ухода в профиль */
+    var m=d.missing||[],p=GS.profile||{},поле=function(k,label,attrs){return '<label class="gs-row gs-in"><span class="gs-name"><b>'+label+'</b></span><input id="gs-p-'+k+'" type="number" inputmode="decimal" '+attrs+' value="'+(p[k]!=null?esc(p[k]):'')+'"></label>';};
+    h='<p class="gs-now">'+esc(d.message||'')+'</p><div class="gs-fields" style="margin-top:12px">';
+    if(m.indexOf('sex')>=0)h+='<div class="gs-row"><span class="gs-name"><b>Пол</b><small>для расчёта нормы</small></span><div class="gs-chips"><button type="button" class="gs-chip" data-gs="sex" data-v="m" aria-pressed="'+(p.sex==='m')+'">Мужской</button><button type="button" class="gs-chip" data-gs="sex" data-v="f" aria-pressed="'+(p.sex==='f')+'">Женский</button></div></div>';
+    if(m.indexOf('age')>=0)h+=поле('age','Возраст','min="14" max="100" step="1"');
+    if(m.indexOf('ht')>=0)h+=поле('ht','Рост, см','min="120" max="230" step="1"');
+    if(m.indexOf('bw')>=0)h+=поле('bw','Вес, кг','min="35" max="250" step="0.1"');
+    h+='</div>'+(GS.error?'<div class="gs-warn">'+esc(GS.error)+'</div>':'')+'<button type="button" class="btn prim wide gs-save" data-gs="calc">Посчитать цель</button>';
+    root.dataset.state='profile';root.innerHTML=h;return;
+  }
+  if(!d.ok&&d.status===422&&!d.limits){root.innerHTML='<p class="mtext">'+esc(d.error||GS.error)+'</p><button type="button" class="btn prim wide" data-gs="profile">Заполнить профиль</button>';return;}
+  var nw=d.now||{};
+  h+='<p class="gs-now">Сейчас: <b>'+gsЧ(nw.w)+' кг</b>'+(nw.f!=null?' · <b>'+gsЧ(nw.f)+'% жира</b> <span>'+(nw.fEstimated?'· оценка по росту и весу':'· весы')+'</span>':'')+'</p>';
+  h+='<p class="gs-lbl">Чего хотите</p><div class="gs-goals" role="group" aria-label="Цель">';
+  GS_ВИДЫ.forEach(function(v){h+='<button type="button" class="gs-goal" data-gs="g" data-v="'+v[0]+'" aria-pressed="'+(GS.g===v[0])+'"><b>'+esc(v[1])+'</b><span>'+esc(v[2])+'</span></button>';});
+  h+='</div>';
+  var L=d.limits;
+  if(GS.g!=='keep'&&L){
+    h+='<p class="gs-lbl">Куда хотите прийти</p><div class="gs-fields">';
+    h+='<div class="gs-row"><div class="gs-name"><b>Вес</b><small>можно <b>'+gsЧ(L.wMin)+'–'+gsЧ(L.wMax)+'</b> кг</small></div><div class="gs-step"><button type="button" data-gs="w" data-v="-0.5" aria-label="Вес меньше">−</button><output id="gs-w">'+gsЧ(d.w)+' <small>кг</small></output><button type="button" data-gs="w" data-v="0.5" aria-label="Вес больше">+</button></div></div>';
+    if(GS.g!=='loss'&&L.fLo!=null)h+='<div class="gs-row"><div class="gs-name"><b>Жир</b><small>при '+gsЧ(d.w)+' кг: <b>'+L.fLo+'–'+L.fHi+'%</b>'+(GS.f==null?' · необязательно':'')+'</small></div><div class="gs-step"><button type="button" data-gs="f" data-v="-1" aria-label="Жир меньше">−</button><output id="gs-f">'+(GS.f==null?'—':GS.f)+' <small>%</small></output><button type="button" data-gs="f" data-v="1" aria-label="Жир больше">+</button></div></div>';
+    h+='<div class="gs-row"><div class="gs-name"><b>Срок</b><small>не раньше <b>'+esc(gsДата(L.earliest))+'</b></small></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-date'+(GS.date?' on':'')+'"><span class="sr-only">Своя дата</span><input type="date" id="gs-date" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div></div>';
+    h+='</div>';
+  }
+  var r=d.result;
+  if(r){
+    var rate=+r.rate||0;
+    h+='<div class="gs-result" aria-live="polite"><div class="gs-grid">'+
+      '<div><div class="gs-k">Темп</div><div class="gs-v">'+(rate?((rate<0?'−':'+')+gsЧ(Math.abs(rate),2)+' <small>кг/нед</small>'):'0 <small>вес держим</small>')+'</div></div>'+
+      '<div><div class="gs-k">Калории в день</div><div class="gs-v">'+gtЧс(r.kcal)+'</div>'+(nw.kcal&&nw.kcal!==r.kcal?'<div class="gs-d">сейчас '+gtЧс(nw.kcal)+'</div>':'')+'</div>'+
+      '<div><div class="gs-k">Белок</div><div class="gs-v">'+gtЧс(r.prot)+' <small>г</small></div></div>'+
+      '<div><div class="gs-k">Придёте</div><div class="gs-v gs-eta">'+(r.eta?esc(GS.date&&!d.warns.some(function(x){return /не успеть/.test(x.t);})?gsДата(r.eta):gsДата(r.eta,true)):'—')+'</div></div></div>'+
+      (d.comp?'<div class="gs-comp">Жир <b>'+(d.comp.dFat<0?'−':'+')+gsЧ(Math.abs(d.comp.dFat))+' кг</b> · Мышцы и вода <b>'+(Math.abs(d.comp.dLean)<0.1?'сохраняются':(d.comp.dLean<0?'−':'+')+gsЧ(Math.abs(d.comp.dLean))+' кг')+'</b></div>':'')+
+      '<p class="gs-why">'+esc(d.why||'')+'</p></div>';
+  }
+  if(d.warns&&d.warns.length)h+='<div class="gs-warn">'+d.warns.map(function(x){return esc(x.t);}).join(' ')+'</div>';
+  if(GS.error)h+='<div class="gs-warn">'+esc(GS.error)+'</div>';
+  /* ограничения по здоровью — здесь же, двумя кнопками (раньше — вопрос разговора) */
+  var dh=d.health||{},hl=GS.health?GS.health.limited:(dh.asked?!!dh.limited:null),hn=GS.health?GS.health.note:(dh.note||'');
+  h+='<div class="gs-fields gs-hz"><div class="gs-row"><div class="gs-name"><b>Ограничения по здоровью</b><small>диабет, давление, суставы, беременность</small></div><div class="gs-chips" role="group" aria-label="Ограничения по здоровью"><button type="button" class="gs-chip" data-gs="health" data-v="no" aria-pressed="'+(hl===false)+'">Нет</button><button type="button" class="gs-chip" data-gs="health" data-v="yes" aria-pressed="'+(hl===true)+'">Есть</button></div></div>'+
+    (hl===true?'<label class="gs-note"><span class="sr-only">Что учитывать</span><textarea id="gs-health-note" rows="2" maxlength="400" placeholder="Что учитывать? Например: болит колено, врач не советует бег">'+esc(hn||'')+'</textarea></label>':'')+'</div>';
+  var стоп=!r||(d.warns||[]).some(function(x){return x.stop;}),безЗд=hl===null;
+  if(GS.saved){
+    h+='<div class="gs-saved" role="status">Цель сохранена. Норма — '+gtЧс(r&&r.kcal)+' ккал в день.</div><button type="button" class="btn prim wide" data-gta="finish">Готово</button>';
+    if(GS.g!=='keep')h+='<button type="button" class="btn wide" data-gta="image">Показать, как буду выглядеть</button>';
+  }else h+='<button type="button" class="btn prim wide gs-save" data-gs="save"'+(стоп||безЗд||GS.busy||GS.saving?' disabled':'')+'>'+(GS.saving?'Сохраняю…':стоп?'Поправьте параметры':безЗд?'Ответьте про здоровье':'Сохранить цель · '+gtЧс(r.kcal)+' ккал')+'</button>';
+  root.innerHTML=h;
+}
+document.getElementById('goalconversation').addEventListener('click',function(e){
+  var b=e.target.closest('[data-gs]');if(!b||GS.saving)return;var a=b.dataset.gs,d=GS.data||{},L=d.limits||{};
+  if(a==='retry'){goalScreenFetch();return;}
+  if(a==='profile'){goalTalkFinish();openProf();return;}
+  if(a==='save'){var tn=document.getElementById('gs-health-note');if(tn&&GS.health)GS.health.note=tn.value;goalScreenFetch(true);return;}
+  if(a==='health'){var dh=d.health||{},tn2=document.getElementById('gs-health-note');GS.health={limited:b.dataset.v==='yes',note:tn2?tn2.value:(GS.health?GS.health.note:(dh.note||''))};haptic('light');goalScreenFetch();return;}
+  if(a==='sex'){GS.profile=Object.assign({},GS.profile||{},{sex:b.dataset.v});goalTalkRender();return;}
+  if(a==='calc'){var pp=Object.assign({},GS.profile||{});['age','ht','bw'].forEach(function(k){var el=document.getElementById('gs-p-'+k);if(el)pp[k]=el.value===''?null:+String(el.value).replace(',','.');});
+    var miss=(d.missing||[]).filter(function(k){return pp[k]==null||pp[k]==='';});GS.profile=pp;
+    if(miss.length){GS.error='Заполните: '+miss.map(function(k){return {sex:'пол',age:'возраст',ht:'рост',bw:'вес'}[k];}).join(', ')+'.';goalTalkRender();return;}
+    GS.error='';goalScreenFetch();return;}
+  if(a==='g'){GS.g=b.dataset.v;if(GS.g==='loss'||GS.g==='keep')GS.f=null;if(GS.g==='gain'&&GS.w!=null&&d.now&&GS.w<=d.now.w)GS.w=null;if(GS.g!=='gain'&&GS.w!=null&&d.now&&GS.w>=d.now.w)GS.w=null;haptic('light');goalScreenFetch();return;}
+  if(a==='w'){var w=(GS.w!=null?GS.w:d.w)+(+b.dataset.v);if(L.wMin!=null)w=Math.max(L.wMin,Math.min(L.wMax,w));GS.w=Math.round(w*10)/10;document.getElementById('gs-w').innerHTML=gsЧ(GS.w)+' <small>кг</small>';goalScreenLater();return;}
+  if(a==='f'){var nowF=d.now&&d.now.f!=null?Math.round(d.now.f):20;var f=GS.f==null?(+b.dataset.v<0?Math.min(nowF-1,L.fHi||nowF):L.fLo||10):GS.f+(+b.dataset.v);
+    if(L.fLo!=null&&f>Math.max(L.fHi,nowF))f=null;else if(L.fLo!=null)f=Math.max(L.fLo-1,f);GS.f=f;var o=document.getElementById('gs-f');if(o)o.innerHTML=(f==null?'—':f)+' <small>%</small>';goalScreenLater();return;}
+  if(a==='nodate'){GS.date='';goalScreenFetch();return;}
+});
+document.getElementById('goalconversation').addEventListener('change',function(e){if(e.target&&e.target.id==='gs-date'){GS.date=e.target.value||'';goalScreenFetch();}
+  if(e.target&&e.target.id==='gs-health-note'&&GS.health){GS.health.note=e.target.value;goalScreenFetch();}});
 var BODYGOAL={back:null,busy:false,edited:false,openN:0};
 function bodyGoalFill(g){
   g=g||goalObj()||{};var b=g.body||{},me=myData()||{};
@@ -9279,7 +9426,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 16:00';
+var BUILD = '28.10 17:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль

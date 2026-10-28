@@ -129,22 +129,36 @@ function журнал() {
 /* 14.10: знакомство по шагам — что ведём → параметры → цель → ограничения
    (→ где и когда). до: 'me' | 'goal' | 'health' | 'form' (по умолчанию). */
 async function цельШаги(page,o){
+  /* 28.10: экран цели одним экраном (/goal/plan). до: 'me' — остановиться на вводе пола/возраста/роста/веса,
+     'goal' (и старое 'health') — на экране с цифрами до сохранения; иначе — сохранить и «Готово». */
   o=o||{};
-  for(let n=0;n<30;n++){
-    await page.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e&&e.getAttribute('aria-busy')==='false'&&e.dataset.state!=='loading';});
-    const state=await page.locator('#goalconversation').getAttribute('data-state'),key=await page.locator('#goalconversation').getAttribute('data-question');
-    if((o.до==='goal'&&state==='options')||(o.до==='health'&&key==='health')||(o.до==='me'&&key==='age'))return;
-    if(state==='options'){await page.locator('#goalconversation [data-gta="select"]').first().click();continue;}
-    if(state==='confirm'){await page.locator('#goalconversation [data-gta="confirm"]').click();continue;}
+  for(let n=0;n<14;n++){
+    await page.waitForFunction(()=>{const e=document.getElementById('goalconversation');return e&&e.getAttribute('aria-busy')==='false'&&e.dataset.state!=='loading';},null,{timeout:15000}).catch(async e=>{
+      const s=await page.evaluate(()=>{const e=document.getElementById('goalconversation');return e?JSON.stringify({busy:e.getAttribute('aria-busy'),state:e.dataset.state,hidden:e.hidden,text:e.textContent.slice(0,300)}):'нет #goalconversation';});
+      throw new Error('Экран цели не готов: '+s);});
+    const state=await page.locator('#goalconversation').getAttribute('data-state');
+    if(state==='profile'){
+      if(o.до==='me')return;
+      const sx=page.locator('#goalconversation [data-gs="sex"][data-v="'+(o.sex||'m')+'"]');if(await sx.count())await sx.click();
+      for(const [k,v] of [['age',o.age||34],['ht',o.ht||176],['bw',o.bw||88]]){const el=page.locator('#gs-p-'+k);if(await el.count())await el.fill(String(v));}
+      await page.locator('#goalconversation [data-gs="calc"]').click();continue;
+    }
+    if(state==='screen'){
+      const g={loss:'loss',muscle:'gain',strength:'recomp',wellbeing:'keep',custom:'recomp',recomp:'recomp',keep:'keep',gain:'gain'}[o.intent||'loss']||'loss';
+      const cur=await page.locator('#goalconversation [data-gs="g"][aria-pressed="true"]').getAttribute('data-v').catch(()=>null);
+      if(cur!==g){await page.locator('#goalconversation [data-gs="g"][data-v="'+g+'"]').click();continue;}
+      if(o.до==='health')return;
+      /* здоровье: две кнопки на экране; o.health==='limited' → «Есть» и текст o.healthNote */
+      if(!(await page.locator('#goalconversation [data-gs="health"][aria-pressed="true"]').count())){
+        await page.locator('#goalconversation [data-gs="health"][data-v="'+(o.health==='limited'?'yes':'no')+'"]').click();continue;}
+      if(o.healthNote&&await page.locator('#gs-health-note').count()&&(await page.locator('#gs-health-note').inputValue())!==o.healthNote){
+        await page.fill('#gs-health-note',o.healthNote);await page.dispatchEvent('#gs-health-note','change');continue;}
+      if(o.до==='goal')return;
+      await page.locator('#goalconversation [data-gs="save"]').click();continue;
+    }
     if(state==='done'){await page.locator('#goalconversation [data-gta="finish"]').click();return;}
-    const answers={intent:o.intent||'loss',health:'clear',priority:'shape',capacity:o.only==='food'?'food':'regular',effort:'steady',deadline:'flexible',fatSource:'scales',weightFresh:'same'};
-    if(answers[key]){await page.locator('#goalconversation [data-value="'+answers[key]+'"]').click();continue;}
-    const fields=await page.locator('#gtalk-form input,#gtalk-form select').evaluateAll(es=>es.map(e=>({name:e.name,tag:e.tagName})));
-    const vals={age:o.age||34,ht:o.ht||176,bw:o.bw||88,sex:o.sex||'m',target:o.target||80,fat:'',muscle:'preserve'};
-    for(const f of fields){const el=page.locator('#gtalk-form [name="'+f.name+'"]');if(f.tag==='SELECT')await el.selectOption(String(vals[f.name]));else await el.fill(String(vals[f.name]));}
-    await page.locator('#gtalk-form [type="submit"]').click();
   }
-  throw new Error('Консультация не дошла до ожидаемого шага');
+  throw new Error('Экран цели не дошёл до ожидаемого шага');
 }
 async function шаги(page, o) {
   o=o||{};await page.click('#wz-only button[data-only="'+(o.only||'all')+'"]');await page.click('#wz-only-go');await цельШаги(page,o);
@@ -269,6 +283,19 @@ async function поднять(page, o) {
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
     /* 27.10: консультацию проверяем настоящим серверным деревом и SQLite,
        остальные функции стенда по-прежнему отвечают синтетическими данными. */
+    /* 28.10: экран цели — тот же настоящий расчёт сервера (/goal/plan) */
+    if(p==='/goal/plan'){
+      if(!o._goalFixture){
+        const {fixture}=require('../../getfit-sync/tests/lib/goal-dialog.cjs');
+        o._goalFixture=await fixture({...((o.me)||(o.newbie?{}:{sex:'m',age:34,ht:178,bw:88.1})),...(o._goalOnly?{only:o._goalOnly}:{})},o.newbie?null:(o.meas||замеры())[0]||null);
+        if(o.goal)await o._goalFixture.c.stateSet(o._goalFixture.env,o._goalFixture.uid,'goal',o.goal);
+      }
+      const b=JSON.parse(route.request().postData()||'{}');delete b.uid;
+      const result=await o._goalFixture.plan(b);
+      if(result.goal){o.goal=result.goal;o.me=result.me;if(o.viz)o.viz.goal=result.goal;}
+      (o.goalPlanCalls||(o.goalPlanCalls=[])).push(b);
+      return route.fulfill({status:result.status||200,contentType:'application/json',body:JSON.stringify(result)});
+    }
     if(p==='/goal/dialog'){
       if(o.onGoalDialog)return дать(await o.onGoalDialog(JSON.parse(route.request().postData()||'{}')));
       if(!o._goalFixture){
@@ -287,7 +314,10 @@ async function поднять(page, o) {
     if (p === '/session') return дать({ok:true,session:o.session||{epoch:0,full_epoch:0,reset_at:0},cleanupPending:false});
     if (p === '/i18n') { if(o.i18nGate) await o.i18nGate; if (o.i18nDelay) return new Promise(r => setTimeout(() => r(дать({ ok: true, t: o.i18n || {} })), o.i18nDelay)); return дать({ ok: true, t: o.i18n || {} }); }   /* 25.10: i18nDelay — перевод с сервера позже карточки */   /* 24.10, этап 7: строки без словаря — на стенде без перевода */
     if (p === '/all')        return дать({ state: o._programDraft ? [{key:'program_draft',data:o._programDraft,updated:o._programDraftAt}] : [], workouts: [], meals: [], measures: [] });
-    if (p === '/s') {const b=JSON.parse(route.request().postData()||'{}');if(b.key==='me'&&b.data?.me?.only)o._goalOnly=b.data.me.only;if(b.key==='program_draft'){o._programDraft=b.data;o._programDraftAt=Math.max(Date.now(),(o._programDraftAt||0)+1);return дать({ok:true,data:b.data,updated:o._programDraftAt});}return дать({ok:true});}
+    if (p === '/s') {const b=JSON.parse(route.request().postData()||'{}');if(b.key==='me'&&b.data?.me?.only)o._goalOnly=b.data.me.only;
+      /* 28.10: как сервер (настройкиЗаписать): правка ложится поверх того, что уже на сервере.
+         Иначе запоздалый ответ на «что ведём» затирал профиль, сохранённый экраном цели. */
+      if(b.key==='me'&&b.patch&&o._goalFixture&&o.me){const d={me:JSON.parse(JSON.stringify(o.me.me||o.me))};for(const c of b.patch.changes||[]){let x=d;const pp=c.path||[];for(let i=0;i<pp.length-1;i++){if(!x[pp[i]]||typeof x[pp[i]]!=='object')x[pp[i]]={};x=x[pp[i]];}if(c.after&&c.after.set)x[pp[pp.length-1]]=c.after.value;else if(pp.length)delete x[pp[pp.length-1]];}o.me=d.me;return дать({ok:true,data:d,updated:Date.now()});}if(b.key==='program_draft'){o._programDraft=b.data;o._programDraftAt=Math.max(Date.now(),(o._programDraftAt||0)+1);return дать({ok:true,data:b.data,updated:o._programDraftAt});}return дать({ok:true});}
     /* 18.10: «Обычно хожу» в «Мои дни» — что видно по записям (o.gymWhen) */
     if (p === '/gym/when')   return дать(o.gymWhen || { ok: true, when: 'auto', auto: { src: 'auto', вид: 'мало', label: '', спросить: 1260 } });
     /* 02.10: свободный день. o.free — список дат, o.окно — окно и цена, как

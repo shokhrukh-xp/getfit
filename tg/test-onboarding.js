@@ -18,7 +18,7 @@ const вид=(p,s)=>p.evaluate(s=>{const e=document.querySelector(s);return !!e&
   await M.шаги(p,{до:'health'});await p.screenshot({path:'/tmp/gf-onb-health-'+theme+'-'+width+'.png'});
   ok(await p.locator('#goalconversation').isVisible(),где+'здоровье уточняется до вариантов цели');
   await M.цельШаги(p,{до:'goal'});await p.screenshot({path:'/tmp/gf-onb-options-'+theme+'-'+width+'.png'});
-  ok(await p.locator('#goalconversation [data-gta="select"]').count()>=1,где+'варианты после ответов, без автоматического сохранения');
+  ok(await p.locator('#goalconversation [data-gs="save"]').count()===1&&await p.locator('#goalconversation').getAttribute('data-state')==='screen',где+'экран цели с цифрами, без автоматического сохранения');
   const вбок=await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   ok(!вбок,где+'страница не ездит вбок');
   ok(!err.length,где+'без ошибок'+(err.length?': '+err.join(' | '):''));

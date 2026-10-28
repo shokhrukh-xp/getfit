@@ -38,7 +38,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   /* знакомство: «Далее» внизу, «в зале» 2×2 */
   {const p=await b.newPage({viewport:{width,height:844}});
    await M.поднять(p,{theme,newbie:true,wait:2500});await M.шаги(p,{до:'goal'});
-   const z=await p.locator('#goalconversation [data-gta="select"]').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {height:r.height,left:r.left,right:r.right};}));
+   const z=await p.locator('#goalconversation [data-gs="g"], #goalconversation [data-gs="save"]').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {height:r.height,left:r.left,right:r.right};}));
    ok(z.length>0&&z.every(r=>r.height>=44&&r.left>=0&&r.right<=width),где+'варианты цели имеют крупные кнопки и помещаются по ширине');
    ok(!await p.locator('#bodygoalform').isVisible(),где+'параметры образа не опережают разговор');
    await p.close();}
@@ -52,8 +52,9 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   await p.close();}
  /* ревью Codex R3: короткое окно — кнопка цели не закрывает варианты «в зале» */
  for(const width of [320,390]){const p=await b.newPage({viewport:{width,height:420}});await M.поднять(p,{theme:'light',newbie:true,wait:2500});await M.шаги(p,{до:'goal'});
-  const cards=p.locator('#goalconversation .gtalk-option');
-  for(let i=0;i<await cards.count();i++){const button=cards.nth(i).locator('[data-gta="select"]');await button.scrollIntoViewIfNeeded();const r=await button.boundingBox();ok(r.y>=0&&r.y+r.height<=420,width+'×420: выбор доступен прокруткой');}
+  /* 28.10: экран цели — кнопки целей и «Сохранить цель» достаются прокруткой */
+  const cards=p.locator('#goalconversation [data-gs="g"], #goalconversation [data-gs="save"]');ok(await cards.count()===5,width+'×420: четыре цели и сохранение');
+  for(let i=0;i<await cards.count();i++){const button=cards.nth(i);await button.scrollIntoViewIfNeeded();const r=await button.boundingBox();ok(r.y>=0&&r.y+r.height<=420,width+'×420: выбор доступен прокруткой');}
   await p.close();}
  /* ревью Codex R2: статус дня недели — и формой (✓ / !), не только цветом */
  /* 26.10: в понедельник прошлых дней этой недели нет. Задаём статусы явно,

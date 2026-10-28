@@ -26,10 +26,8 @@ const текст = async (page, sel) => (await page.textContent(sel).catch(() =>
   дано(await page.isVisible('#wzonly'), 'сначала выбираем режим приложения');
   дано(/шаг 1 из 3/.test(await текст(page,'#wzstep')), 'три этапа, вопросы не считаем заранее');
   await M.шаги(page,{до:'health'});
-  дано(await page.isVisible('#goalconversation'), 'разговор открыт у тренера');
-  await page.click('#goalconversation [data-gta="back"]');
-  await page.waitForFunction(()=>document.getElementById('goalconversation').dataset.question==='age'&&document.getElementById('goalconversation').getAttribute('aria-busy')==='false');
-  дано(await page.isVisible('#gtalk-form [name="age"]'), 'назад возвращает к предыдущему ответу');
+  дано(await page.isVisible('#goalconversation'), 'экран цели открыт у тренера');
+  дано(await page.locator('#goalconversation [data-gs="g"]').count()===4, 'четыре цели кнопками, цифры сразу');
   await M.цельШаги(page,{});
   дано(await page.isVisible('#wzform'),'после выбора и подтверждения цели — расписание');
 
