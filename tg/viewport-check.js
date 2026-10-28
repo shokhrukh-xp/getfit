@@ -1,6 +1,7 @@
 'use strict';
 // Проверяем геометрию узлов, а не scrollWidth: fixed может не увеличивать его.
-module.exports=async page=>page.evaluate(()=>{
+const обрезано=require('./obrezano-check');
+module.exports=async page=>(await page.evaluate(()=>{
  const bad=[];
  for(const e of document.body.querySelectorAll('*')){
   if(['SCRIPT','STYLE'].includes(e.tagName))continue;
@@ -36,4 +37,4 @@ module.exports=async page=>page.evaluate(()=>{
   if(c.appearance!=='none'&&c.webkitAppearance!=='none')bad.push({el:e.id?'#'+e.id:'input.'+e.className,родное:'системный вид'});
  }
  return bad;
-});
+})).concat((await page.evaluate(обрезано)).map(x=>({обрезано:x.т})));

@@ -16,13 +16,17 @@ function день(theme,вид){
   if(вид==='плотный'){o.time='21:30';o.hist=зал('07:00');o.meas=вес(88.0,'06:40');
     const m=[['08:10','завтрак',420],['10:00','перекус',180],['13:10','обед',610],['14:00','перекус',150],['16:30','перекус',200],['19:00','ужин',540],['20:15','перекус',120]].map(([t,k,c],i)=>еда(t,k,i,c,k+' '+t));
     o.day={...o.day,meals:m,acts:[{id:7,t:'17:30',kind:'теннис',min:120,kcal:1160}],kcal:2220,prot:170,targets:{...o.day.targets,kcal:3010,prot:160}};o.acts=o.day.acts;}
+  /* 28.10, его снимок 21:07: вечером подпись «21» уходила за край карточки (видно «2») */
+  if(вид==='вечер'){o.time='21:07';o.hist=зал('07:30').slice(1);o.meas=вес(86,'07:10');
+    const m=[['09:43','завтрак',480],['11:23','перекус',95],['14:44','обед',700],['21:05','ужин',600]].map(([t,k,c],i)=>еда(t,k,i,c,k+' '+t));
+    o.day={...o.day,meals:m,acts:[{id:8,t:'20:00',kind:'ходьба',min:61,kcal:260}],kcal:2135,prot:140,targets:{...o.day.targets,kcal:2200,prot:145}};o.acts=o.day.acts;}
   if(вид==='кучка'){o.time='16:00';o.hist=зал('08:39');
     o.day={...o.day,meals:['10:26','10:28','10:29','10:31','10:32'].map((t,i)=>еда(t,'перекус',i,200,'Приём '+t)),kcal:1000,prot:70};}
   return o;
 }
 module.exports={день,ts};
 if(require.main===module)(async()=>{const out=process.argv[2];fs.mkdirSync(out,{recursive:true});const b=await chromium.launch();try{
- for(const theme of ['light','dark'])for(const вид of ['06.10','плотный','кучка'])for(const width of [320,390]){
+ for(const theme of ['light','dark'])for(const вид of ['06.10','плотный','кучка','вечер'])for(const width of [320,390]){
   const p=await b.newPage({viewport:{width,height:844},deviceScaleFactor:2});await M.поднять(p,день(theme,вид));
   const clk=p.locator('.hclk');await clk.screenshot({path:path.join(out,`duga-${вид}-${theme}-${width}.png`)});
   if(theme==='light'||width===390){

@@ -10,12 +10,15 @@ const {день}=require('./shot-duga'),{clock,proportional,geometry}=require('.
 let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++}
 const центр=async(p,loc)=>{await p.locator('.hclk').scrollIntoViewIfNeeded();const r=await loc.locator('.hbcut').boundingBox();return [r.x+r.width/2,r.y+r.height/2]};
 (async()=>{const b=await chromium.launch();try{
- for(const theme of ['light','dark'])for(const вид of ['06.10','плотный','кучка'])for(const width of [320,340,360,375,390,430]){
+ for(const theme of ['light','dark'])for(const вид of ['06.10','плотный','кучка','вечер'])for(const width of [320,340,360,375,390,393,430]){
   const tag=theme+'/'+вид+'/'+width,p=await b.newPage({viewport:{width,height:844}}),err=await M.поднять(p,день(theme,вид));
   const cl=await clock(p),pr=proportional(cl),g=await geometry(p);
   ok(!pr.length,'кружки не накладываются и стоят у своего времени '+tag+' '+JSON.stringify(pr));
   ok(!g.issues.length,'плашки не закрывают чужие фото, друг друга и число '+tag+' '+JSON.stringify(g.issues));
   ok(g.x.every((v,i)=>!i||v>g.x[i-1]),'хронологический порядок '+tag);
+  /* 28.10, его снимок: подпись часа «21» вылезала за край карточки — видно было «2» */
+  {const вне=await p.evaluate(()=>{const k=document.querySelector('.hdaycard').getBoundingClientRect();return [...document.querySelectorAll('.hclk-svg text')].filter(t=>t.getClientRects().length).map(t=>{const r=t.getBoundingClientRect();return {t:t.textContent,l:Math.round(r.left-k.left),r:Math.round(k.right-r.right),u:Math.round(r.top-k.top)};}).filter(x=>x.l<2||x.r<2||x.u<2);});
+   ok(!вне.length,'все подписи дуги целиком в карточке '+tag+' '+JSON.stringify(вне));}
   if(вид==='06.10'){
    const зал=cl.bub.find(x=>/зал/.test(x.lab)),зав=cl.bub.find(x=>/^08:19/.test(x.lab));
    ok(зал&&зав&&Math.hypot(зал.x-зав.x,зал.y-зав.y)>=зал.r+зав.r+3.5,'его 06.10: зал и завтрак видны оба '+tag);

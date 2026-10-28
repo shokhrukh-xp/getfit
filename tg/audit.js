@@ -20,6 +20,7 @@
    и обычном телефоне. Запуск: node tg/audit.js  (или в составе tg/run.sh). */
 const { chromium } = require('playwright');
 const M = require('./mock');
+const ОБРЕЗАНО = require('./obrezano-check');
 
 let плохо = 0, всего = 0;
 const находки = [];
@@ -292,7 +293,7 @@ async function состояние(page, имя) {
   const верх = await page.evaluate(ПРОВЕРКА);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)).catch(() => {});
   await page.waitForTimeout(750);
-  const низ = await page.evaluate(ПРОВЕРКА);
+  const низ = (await page.evaluate(ПРОВЕРКА)).concat(await page.evaluate(ОБРЕЗАНО));
   await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
 
   const внизу = {};
@@ -427,6 +428,7 @@ async function состояние(page, имя) {
   дано(!поВиду['столбик'], 'нигде текст не зажат в колонку');
   дано(!поВиду['из рамки'], 'ничто не вылезает из своей рамки (карточки, строки, чипа, поля)');
   дано(!поВиду['родное поле'], 'поля даты и времени без системного вида');
+  дано(!поВиду['обрезано'], 'нигде текст не обрезан рамкой наполовину');
   дано(!поВиду['мелко'], 'все цели нажатия не меньше 44 пикселей');
   дано(!поВиду['перекрыто'], 'ни одна кнопка не перекрыта');
   дано(!поВиду['картинка'], 'все картинки загрузились');
