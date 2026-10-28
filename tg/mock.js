@@ -277,9 +277,31 @@ async function поднять(page, o) {
   await page.route('**://telegram.org/**', r => r.abort().catch(() => {}));
 
   /* 24.10: приложение ходит на api.wellbol.com; старый адрес воркера — для старых ссылок на фото */
-  await page.route(/^https:\/\/(getfit-sync\.sh-pulatov\.workers\.dev|api\.wellbol\.com)\//, async route => {
+  /* 28.10: долгие запросы (/ai, /onboard) приложение шлёт с ?job= и потом спрашивает /job — как
+     настоящий сервер: 202 сразу, ответ обработчика стенда отдаётся через /job (o.jobPolls — сколько
+     раз спросили). o.jobLost — /job отвечает 410, как после перезапуска сервера. */
+  const задачи = {};
+  const обработать = async route => {
     if(o.handleRoute && await o.handleRoute(route))return;
     const u = new URL(route.request().url()), p = u.pathname;
+    const job = u.searchParams.get('job');
+    if ((p === '/ai' || p === '/onboard' || p === '/menu') && job && !route.__внутри && route.request().method() === 'POST') {
+      if (!задачи[job]) {
+        const з = задачи[job] = { res: null };
+        const подмена = { request: () => route.request(), fulfill: x => { з.res = x; return Promise.resolve(); },
+          abort: () => { з.res = { status: 502, contentType: 'application/json', body: '{"error":"сбой"}' }; return Promise.resolve(); },
+          fallback: () => Promise.resolve(), continue: () => Promise.resolve(), __внутри: true };
+        обработать(подмена).catch(() => { з.res = { status: 500, contentType: 'application/json', body: '{"error":"сбой стенда"}' }; });
+      }
+      return route.fulfill({ status: 202, contentType: 'application/json', body: JSON.stringify({ ok: true, pending: true, job }) });
+    }
+    if (p === '/job') {
+      o.jobPolls = (o.jobPolls || 0) + 1;
+      const з = задачи[u.searchParams.get('id')];
+      if (!з || o.jobLost) return route.fulfill({ status: 410, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'job_lost', error: 'Сборка прервалась: сервер обновлялся. Нажмите ещё раз.' }) });
+      if (!з.res) return route.fulfill({ status: 202, contentType: 'application/json', body: '{"ok":true,"pending":true}' });
+      return route.fulfill(з.res);
+    }
     const дать = d => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(d) });
     /* 27.10: консультацию проверяем настоящим серверным деревом и SQLite,
        остальные функции стенда по-прежнему отвечают синтетическими данными. */
@@ -759,7 +781,8 @@ async function поднять(page, o) {
     if (['/w','/w/del','/forget','/join','/reco','/day/close','/recipe','/react','/meal/del','/act/del','/glu/del'].includes(p)) return дать({ ok: true });
     ошибки.push('Неизвестный маршрут mock: ' + p);
     return route.fulfill({status:501,contentType:'application/json',body:JSON.stringify({error:'Unknown mock route: '+p})});
-  });
+  };
+  await page.route(/^https:\/\/(getfit-sync\.sh-pulatov\.workers\.dev|api\.wellbol\.com)\//, обработать);
 
   const ошибки = [];
   page.on('pageerror', e => ошибки.push(String(e)));

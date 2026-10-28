@@ -9,7 +9,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),M=re
   await M.поднять(page,{newbie:true,theme:'dark',wait:2000});
   await M.шаги(page,{});
   let failures=1;
-  await page.route('**/onboard',async route=>{
+  await page.route(/\/onboard(\?|$)/,async route=>{
     if(failures-->0)return route.fulfill({status:504,contentType:'application/json',body:JSON.stringify({error:'ИИ не ответил',code:'slow'})});
     return route.fallback();
   });

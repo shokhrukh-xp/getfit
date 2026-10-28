@@ -255,6 +255,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .progcard .pl b{font-weight:600;text-align:right}
 .aistate{margin:8px 0 0;font-size:12px;color:var(--dim);line-height:1.5}
 .aistate.bad{color:var(--warn-txt)}
+.aistate.aiwait:not([hidden]){display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;margin:20px 0 8px;padding-bottom:2px;line-height:1.5;font-size:13px;color:var(--muted)}
+.aistate.aiwait .wbm{zoom:.4;margin:0}
 .aiprev{border:1px solid var(--line-soft);border-radius:12px;padding:12px 13px;margin-top:10px}
 .aiprev h4{margin:0 0 2px;font-size:15px;font-weight:600}
 .aiprev .aisub{font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.5}
@@ -6805,7 +6807,8 @@ document.addEventListener('click',function(e){
 function aiЗаголовок(d){ var t=String(d.sub||'').trim(); return t ? t.charAt(0).toUpperCase()+t.slice(1) : ''; }
 function aiДниHtml(p, view, weekdays){
   view=view||WIZ;
-  if(view._вкладкаПрог!==p){ view._вкладкаПрог=p; view.dayTab=0; view.undo=null; view.params=null; }
+  /* 28.10: тренер поправил программу (тот же набор дней), пока человек смотрел «День 2», — день остаётся */
+  if(view._вкладкаПрог!==p){ var тотЖе=view._вкладкаПрог&&view._вкладкаПрог.days&&view._вкладкаПрог.days.length===p.days.length; view._вкладкаПрог=p; if(!тотЖе) view.dayTab=0; view.undo=null; view.params=null; }
   var t=Math.max(0, Math.min(view.dayTab||0, p.days.length-1)), d=p.days[t];
   return '<div class="aitabs" role="tablist" aria-label="Дни программы">'+p.days.map(function(x,i){
       var дн=weekdays ? (weekdays.length ? WD[weekdays[i % weekdays.length]] : '') : aiДеньНедели(i);
@@ -7412,9 +7415,8 @@ function wzSend(){
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
   var requestCtl=wzCtl;
-  var tm=setTimeout(function(){ if(requestCtl) requestCtl.abort(); }, 150000);
-  tgFetch(SYNCURL+'/onboard', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(body), signal: wzCtl?wzCtl.signal:undefined })
+  var tm=setTimeout(function(){ if(requestCtl) requestCtl.abort(); }, 240000);
+  fДолгий('/onboard', body, wzCtl?wzCtl.signal:undefined)   /* 28.10: фоном — iPhone рвёт запрос без ответа 60 с */
     .then(function(r){ return r.json().then(function(d){
       if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; }
       return d; }); })
@@ -8168,7 +8170,7 @@ function menuСобрать(span){
   if(MENUBUSY) return;
   if(бытНужен()){ if(MENUBYT!==span){ MENUBYT=span; renderEat(); } return; }
   MENUBUSY=span; MENUERR=''; renderEat();
-  fPost('/menu', {uid:syncUid(), span:span}).then(function(d){
+  fPostДолгий('/menu', {uid:syncUid(), span:span}).then(function(d){   /* 28.10: неделя — до полутора минут, фоном */
     if(!d || !d.ok){ MENUERR=(d&&d.нет)||'Меню не сложилось — попробуйте ещё раз.'; haptic('err'); return; }
     MENU=MENU||{}; MENU[span==='week'?'week':span==='today'?'today':'day']=d; if(span!=='today' && !MENU.завтра) MENU.завтра=d.from; MENUREC={};
     /* 15.10 (GF-09): одно меню на дату — день, собранный заново, сервер кладёт
@@ -9440,7 +9442,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '28.10 18:10';
+var BUILD = '28.10 19:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -14881,7 +14883,31 @@ function aiPayload(){
            focus:focusMus(me.focus), program:program, history:history, eq:me.eq||[] };
 }
 var AIPROG=null;
-function aiState(t, bad){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.textContent=t||''; el.classList.toggle('bad',!!bad); }
+/* 28.10, его «пока программа собирается, отличный момент показать одно из анимированных лого»:
+   ждём — крупная «колыбель» (знак, задуманный для долгих сборок) и этап под ней; этап меняется,
+   знак не перезапускается. */
+function aiState(t, bad, ждём){ var el=document.getElementById('aistate'); if(!el) return; el.hidden=!t; el.classList.toggle('bad',!!bad);
+  ждём=!!(ждём&&t); el.classList.toggle('aiwait',ждём);
+  if(ждём){ var s=el.querySelector('.aiwait-t'); if(!s){ el.innerHTML=wbm('wb-cradle')+'<span class="aiwait-t"></span>'; s=el.querySelector('.aiwait-t'); } s.textContent=t; }
+  else el.textContent=t||''; }
+/* 28.10, его «Ну почему снова ошибка?… в который раз»: пересборка шла 78 с, а iPhone рвёт запрос,
+   на который 60 с не пришло ни байта, — сервер программу собрал, а здесь «Не получилось». Долгие
+   запросы идут фоном: POST с ?job= → 202 сразу, дальше спрашиваем /job, пока не будет ответа.
+   Возвращает обычный ответ (тот же статус и тело), поэтому разбор у вызывающего прежний. */
+function fДолгий(path, body, signal){
+  var id=Math.random().toString(36).slice(2,10)+Date.now().toString(36), uid=(body&&body.uid)||syncUid(), подряд=0, раз=0;
+  var прервано=function(){ var e=new Error('aborted'); e.name='AbortError'; return e; };
+  return tgFetch(SYNCURL+path+'?job='+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:signal}).then(function(r){
+    if(r.status!==202) return r;   /* старый сервер или отказ до сборки — ответ сразу */
+    return new Promise(function(готово, отказ){
+      (function шаг(){ setTimeout(function(){
+        if(signal&&signal.aborted){ отказ(прервано()); return; }
+        tgFetch(SYNCURL+'/job?uid='+encodeURIComponent(uid)+'&id='+id,{signal:signal}).then(function(r2){ подряд=0; if(r2.status===202) шаг(); else готово(r2); })
+          .catch(function(e){ if(e&&e.name==='AbortError'){ отказ(e); return; } if(++подряд>=10) отказ(e); else шаг(); });   /* моргнула сеть — спрашиваем дальше */
+      }, [250,500,800][раз++]||1500); })();   /* быстрое — сразу, долгое — раз в полторы секунды */
+    });
+  });
+}
 var aiWait=null;
 /* Раньше «занят» держался на кнопке: btn.disabled был и флагом, и видом.
    Кнопки в профиле больше нет — сборка живёт в своём листе, — и флаг стал
@@ -14893,20 +14919,19 @@ function aiBuild(снова){
   clearInterval(aiWait); aiWait=null;
   var me=myData()||{};
   if(!hasGoal(me)){ aiState('Сначала выберите цель — вес и зал: от этого зависит вся схема.', true); return; }
-  AIBUSY=true; aiState('Собираю программу под вас… обычно 20–30 секунд');
+  AIBUSY=true; aiState('Собираю программу под вас… обычно до минуты', false, true);
   document.getElementById('aibox').innerHTML='';
   try{ renderReco(); }catch(e){}                 /* карточка предложения показывает, что сборка идёт */
   var ctl = ('AbortController' in window) ? new AbortController() : null;
-  var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 150000);   /* с запасными моделями бывает до минуты */
+  var tm = setTimeout(function(){ if(ctl) ctl.abort(); }, 240000);   /* сборка фоном; с запасными моделями — до двух-трёх минут */
   /* 28.10, его выбор «Сборка программы быстрее»: этап сборки с сервера вместо одной фразы
      («Подбираю упражнения…», «Проверяю объём…», «Выравниваю объём…») — тот же /coach/stage */
   var этапАиГотово=false, этапАи=Math.random().toString(36).slice(2,10)+Date.now().toString(36), этапАиТ=setInterval(function(){
     if(!AIBUSY||этапАиГотово){ clearInterval(этапАиТ); return; }
-    fGet('/coach/stage?uid='+encodeURIComponent(syncUid())+'&id='+этапАи).then(function(d){ if(AIBUSY && !этапАиГотово && d && d.stage) aiState(d.stage); }).catch(function(){});
+    fGet('/coach/stage?uid='+encodeURIComponent(syncUid())+'&id='+этапАи).then(function(d){ if(AIBUSY && !этапАиГотово && d && d.stage) aiState(d.stage, false, true); }).catch(function(){});
   }, 1500);
   var тело=aiPayload(); тело.stage=этапАи;
-  tgFetch(SYNCURL+'/ai', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(тело), signal: ctl?ctl.signal:undefined })
+  fДолгий('/ai', тело, ctl?ctl.signal:undefined)
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
     .then(function(d){ этапАиГотово=true; clearInterval(этапАиТ); AIPROG=d.prog; aiState(''); renderAiPreview(d.prog);aiDraftSave(AI_PREVIEW,d.prog); haptic('ok');
       /* Программа на экране — предложение собрать больше не нужно. */
@@ -17316,6 +17341,10 @@ document.getElementById('fnav').addEventListener('click', function(e){
   fShift(+b.dataset.fnav); haptic('light');
 });
 function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.json(); }); }
+/* 28.10: как fPost, но фоном на сервере (fДолгий) — для запросов дольше минуты */
+function fPostДолгий(path, body){ return fДолгий(path, body).then(function(r){ return r.json().then(function(d){
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; throw e; }
+  return d; }); }); }
 function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
   if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; e.dialog=d.dialog; throw e; }
   return d; }); }); }
@@ -17881,7 +17910,7 @@ function humanErr(e){
   if((e&&e.code)==='ai_down') return 'Тренер сейчас недоступен — уже чиним. Дневник, вес и зал работают как обычно.';
   if((e&&e.code)==='slow') return 'Тренер не успел ответить вовремя. Попробуйте ещё раз.';
   if((e&&e.code)==='busy' || /\b429\b|quota|rate.?limit/i.test(t)) return 'Тренер сейчас занят — слишком много запросов подряд. Подождите минуту.';
-  if(/Failed to fetch|NetworkError|network/i.test(t)) return 'Нет связи с сервером. Проверьте интернет.';
+  if(/Failed to fetch|NetworkError|network|Load failed|timed out/i.test(t)) return 'Нет связи с сервером. Проверьте интернет.';   /* 28.10: «Load failed» — так iPhone называет оборванный запрос */
   if(/API |HTTP \d|Error:|undefined|null|^[\x00-\x7F\s]+$/.test(t)) return 'Не получилось. Попробуйте ещё раз.';
   return t;
 }
