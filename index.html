@@ -4536,6 +4536,21 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 .rolrow span{font-size:14px;color:var(--text)}
 .rolrow small{font-size:12px;color:var(--muted)}
 #rolcm .seg,#rolpro .seg{margin-bottom:10px}
+.rolwarn{color:var(--warn)}
+.rolparq{display:flex;flex-direction:column;gap:10px;margin:6px 0 10px}
+.rolq{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--text)}
+.rolq .seg{margin:0}
+.rolday{padding:12px}
+.rolday .rolhd input{flex:1 1 120px;min-width:0;font:inherit;font-size:16px;font-weight:800;color:var(--text);background:none;border:0;border-bottom:1px solid var(--tab-line);padding:6px 0}
+.rolex{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:8px 0;border-top:1px solid var(--tab-line)}
+.rolexn{flex:1 1 140px;min-width:0;font-size:14px;color:var(--text)}
+.rolsr{display:flex;align-items:center;gap:4px;font-size:14px;color:var(--text)}
+.rolsr .btn{min-width:44px;min-height:44px;padding:0}
+.rolsr b{min-width:20px;text-align:center}
+.rolsr input{width:60px;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:10px;padding:8px 6px;text-align:center}
+#rolp-q{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px;margin:8px 0 4px}
+.rolpick{display:block;width:100%;min-height:44px;text-align:left;font:inherit;font-size:14px;color:var(--text);background:none;border:0;border-top:1px solid var(--tab-line);padding:10px 2px;cursor:pointer}
+.roloffer{margin:8px 0 12px}
 </style>
 </head>
 <body>
@@ -4606,6 +4621,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     </section>
     <section class="page hide" id="p-gym">
       <div class="zseg" id="zseg-gym"></div>
+      <div class="f-roli" id="roloffer"></div>
       <div class="todaybar" id="todaybar"></div>
       <div id="gym-work">
         <div class="gym-day group"><div class="dayhd" id="nexthint"></div>
@@ -18288,7 +18304,8 @@ function ролиРисовать(){
   var ошибка = ROLI.err ? '<p class="rolerr">' + esc(ROLI.err) + ' <button type="button" class="btn small" data-rol="reload">Повторить</button></p>' : '';
   var ждём = ROLI.busy && !ROLI.me ? '<p class="empt">Загружаю…</p>' : '';
   var m = ROLI.me;
-  if (my) my.innerHTML = ошибка || ждём || (!m ? '' : !m.my.length ? '<p class="empt">Пока никого. Специалист пришлёт вам ссылку — по ней вы увидите, что он будет видеть, и подключите.</p>' :
+  /* 29.10, живая проверка: сбой связи при обновлении стирал уже показанный список — ошибка теперь строкой над ним */
+  if (my) my.innerHTML = (m ? ошибка : '') + ((!m && (ошибка || ждём)) || ролиПредложениеHtml(false) + (!m ? '' : !m.my.length ? '<p class="empt">Пока никого. Специалист пришлёт вам ссылку — по ней вы увидите, что он будет видеть, и подключите.</p>' :
     m.my.map(function(l){
       var can = (m.can && m.can[l.kind]) || [];
       return '<div class="rolcard" data-link="' + ролиА(l.id) + '">' +
@@ -18300,14 +18317,19 @@ function ролиРисовать(){
         }).join('') + '</div>' +
         (ROLI.отключить === l.id
           ? '<div class="rolend"><span>Отключить? Он перестанет видеть ваши данные сразу.</span><button type="button" class="btn small danger" data-rol="end">Отключить</button><button type="button" class="btn small" data-rol="endno">Нет</button></div>'
-          : '<button type="button" class="btn small rolendb" data-rol="endask">Отключить</button>') +
+          : '<div class="rolbtns"><button type="button" class="btn small rolendb" data-rol="endask">Отключить</button><button type="button" class="btn small rolendb" data-rol="compask">Пожаловаться</button></div>') +
+        (ROLI.жалоба === l.id ? '<label class="rolfld">Что случилось — увидит только Wellböl<textarea id="rol-comp" maxlength="1000" rows="3"></textarea></label>' +
+          (ROLI.жалобаОш ? '<p class="rolerr">' + esc(ROLI.жалобаОш) + '</p>' : '') +
+          '<div class="rolbtns"><button type="button" class="btn small prim" data-rol="comp">Отправить жалобу</button><button type="button" class="btn small" data-rol="compno">Отмена</button></div>' : '') +
+        (ROLI.жалобаОк === l.id ? '<p class="rolnote">Жалоба отправлена. Разберёмся и ответим в боте.</p>' : '') +
         '</div>';
-    }).join(''));
+    }).join('')));
+  var оф = document.getElementById('roloffer'); if (оф) оф.innerHTML = ролиПредложениеHtml(true);
   if (lg) lg.innerHTML = !m ? '' : !(ROLI.log || []).length ? '<p class="empt">Ещё никто не смотрел.</p>' :
     '<div class="pqgroup rollist">' + ROLI.log.slice(0, 30).map(function(x){
       return '<div class="rolrow"><b>' + esc(x.name || 'Удалённый специалист') + '</b><span>' + esc(ролиИмя(x.cat)) + (x.what && x.what !== 'просмотр' ? ' · ' + esc(x.what) : '') + '</span><small>' + ролиДата(x.at) + '</small></div>';
     }).join('') + '</div>';
-  if (pr) pr.innerHTML = ошибка || ждём || (!m ? '' : ролиПроHtml(m));
+  if (pr) pr.innerHTML = (m ? ошибка : '') + ((!m && (ошибка || ждём)) || (!m ? '' : ролиПроHtml(m)));
   ролиАдмРисовать();
 }
 function ролиПроHtml(m){
@@ -18339,6 +18361,15 @@ function ролиКлик(e){
   var д = b.dataset.rol, карт = b.closest('.rolcard'), link = карт && карт.dataset.link;
   if (д === 'reload') return ролиЗагрузить();
   if (д === 'endask') { ROLI.отключить = link; return ролиРисовать(); }
+  if (д === 'compask') { ROLI.жалоба = link; ROLI.жалобаОш = ''; ROLI.жалобаОк = ''; return ролиРисовать(); }
+  if (д === 'compno') { ROLI.жалоба = ''; return ролиРисовать(); }
+  if (д === 'comp') {
+    var тх = (document.getElementById('rol-comp') || {}).value || ''; b.disabled = true;
+    return fPost('/roli/complain', { uid: syncUid(), link: link, text: тх }).then(function(){ ROLI.жалоба = ''; ROLI.жалобаОк = link; haptic('ok'); ролиРисовать(); })
+      .catch(function(er){ ROLI.жалобаОш = er.message || humanErr(er); ролиРисовать(); var t = document.getElementById('rol-comp'); if (t) t.value = тх; });
+  }
+  if (д === 'take') return ролиПрогВзять(b);
+  if (д === 'later') { var o0 = ROLI.me && ROLI.me.offer; if (o0) gset('roli_offer_skip', o0.at); return ролиРисовать(); }
   if (д === 'endno') { ROLI.отключить = ''; return ролиРисовать(); }
   if (д === 'end') {
     b.disabled = true;
@@ -18381,11 +18412,14 @@ var РОЛИ_КАРТОЧКА = ['body', 'gym', 'food'];
 function ролиКарточка(who, cat){
   var x = ((ROLI.me && ROLI.me.clients) || []).filter(function(c){ return c.client === who; })[0]; if (!x) return;
   var можно = РОЛИ_КАРТОЧКА.filter(function(c){ return x.cats.indexOf(c) >= 0; });
+  /* программу тренер собирает всегда — это не данные клиента, а его работа */
+  if (x.kind === 'trainer') можно.push('prog');
   cat = cat || можно[0] || '';
-  ROLI.card = { who: who, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '' };
+  ROLI.card = { who: who, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
   var m = document.getElementById('rolcm'); if (m) m.classList.add('show');
   ролиКарточкаРисовать();
   if (!cat) return;
+  if (cat === 'prog') return ролиПрогЗагрузить();
   fGet('/roli/client?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(who) + '&cat=' + cat).then(function(r){
     if (!ROLI.card || ROLI.card.who !== who || ROLI.card.cat !== cat) return;
     if (!r || !r.ok) { ROLI.card.err = (r && r.error) || 'Нет ответа.'; } else { ROLI.card.rows = r.rows; ROLI.card.photo = r.photo; }
@@ -18395,7 +18429,9 @@ function ролиКарточка(who, cat){
 function ролиКарточкаРисовать(){
   var k = ROLI.card, t = document.getElementById('rolct'), b = document.getElementById('rolcbody'); if (!k || !b) return;
   if (t) t.textContent = k.name;
-  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, ролиИмя(c)]; }), k.cat) + '</div>' : '';
+  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : ролиИмя(c)]; }), k.cat) + '</div>' : '';
+  var анкета = k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '';
+  if (k.cat === 'prog') { b.innerHTML = вкладки + анкета + ролиПрогHtml(k); return; }
   var тело = !k.cat ? '<p class="empt">Клиент пока не открыл вам ни одного раздела.</p>' :
     k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : !k.rows ? '<p class="empt">Загружаю…</p>' : !k.rows.length ? '<p class="empt">Записей нет.</p>' :
     '<div class="pqgroup rollist">' + k.rows.slice(0, 60).map(function(r){
@@ -18403,12 +18439,108 @@ function ролиКарточкаРисовать(){
       if (k.cat === 'gym') { var n = r.data && r.data.ex ? r.data.ex.length : 0; return '<div class="rolrow"><b>' + ролиДень(r.date) + '</b><span>' + esc(r.name || r.day || 'Тренировка') + (n ? ' · ' + n + ' ' + plural(n, ['упражнение', 'упражнения', 'упражнений']) : '') + '</span></div>'; }
       return '<div class="rolrow"><b>' + ролиДень(r.date) + (r.t ? ' · ' + esc(r.t) : '') + '</b><span>' + esc(r.kind ? r.kind + ': ' : '') + esc(r.text || '') + (r.kcal ? ' · ' + Math.round(r.kcal) + ' ккал' : '') + '</span></div>';
     }).join('') + '</div>';
-  b.innerHTML = вкладки + тело + '<p class="rolnote">Клиент видит в «Кто смотрел», когда вы открывали его данные.</p>';
+  b.innerHTML = вкладки + анкета + тело + '<p class="rolnote">Клиент видит в «Кто смотрел», когда вы открывали его данные.</p>';
 }
 document.addEventListener('click', function(e){
   var s = e.target.closest && e.target.closest('#rol-ccat button[data-v]'); if (s && ROLI.card) return ролиКарточка(ROLI.card.who, s.dataset.v);
   if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show'); ROLI.card = null; }
 });
+
+/* ── программа от тренера (этап 2б; его выбор «Программа от тренера», «Спросить „Перейти?“») ──
+   Тренер собирает из каталога: дни, упражнения, подходы × повторы. Клиенту —
+   предложение «Перейти на неё»; сама программа клиента не меняется, пока он не решит. */
+var РОЛИ_АНКЕТА = ['Врач говорил вам о болезни сердца или высоком давлении?', 'Бывает боль в груди — в покое, в быту или при нагрузке?',
+  'За последний год теряли сознание или равновесие от головокружения?', 'Есть другое хроническое заболевание?',
+  'Принимаете лекарства от хронического заболевания?', 'Есть проблема с костями, суставами или мышцами, которой может навредить нагрузка?',
+  'Врач говорил, что заниматься можно только под присмотром?'];
+function ролиПрогПустая(){ return { name: '', note: '', days: [{ s: 'День 1', sub: '', ex: [] }] }; }
+function ролиПрогЗагрузить(){
+  var k = ROLI.card; if (!k) return;
+  if (k.p) return ролиКарточкаРисовать();
+  fGet('/roli/prog?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(k.who)).then(function(r){
+    if (ROLI.card !== k) return;
+    k.p = (r && r.ok && r.prog) ? JSON.parse(JSON.stringify(r.prog)) : ролиПрогПустая(); k.отпр = r && r.at; ролиКарточкаРисовать();
+  }).catch(function(e){ if (ROLI.card === k) { k.err = humanErr(e); k.p = ролиПрогПустая(); ролиКарточкаРисовать(); } });
+}
+function ролиПрогHtml(k){
+  var п = k.p; if (!п) return '<p class="empt">Загружаю…</p>';
+  return '<label class="rolfld">Название<input id="rolp-name" type="text" maxlength="60" placeholder="Например: Сила · 3 дня" value="' + ролиА(п.name || '') + '"></label>' +
+    п.days.map(function(d, i){
+      return '<div class="rolcard rolday"><div class="rolhd"><input class="rolp-s" data-d="' + i + '" type="text" maxlength="10" aria-label="название дня" value="' + ролиА(d.s || '') + '" placeholder="День ' + (i + 1) + '">' +
+        (п.days.length > 1 ? '<button type="button" class="btn small" data-rp="dayrm" data-d="' + i + '">Убрать день</button>' : '') + '</div>' +
+        d.ex.map(function(x, j){
+          return '<div class="rolex"><span class="rolexn">' + esc(x.n || x.id) + '</span><span class="rolsr">' +
+            '<button type="button" class="btn small" data-rp="sets-" data-d="' + i + '" data-x="' + j + '" aria-label="меньше подходов">−</button><b>' + x.sets + '</b>' +
+            '<button type="button" class="btn small" data-rp="sets+" data-d="' + i + '" data-x="' + j + '" aria-label="больше подходов">+</button>' +
+            '<span>×</span><input class="rolp-reps" data-d="' + i + '" data-x="' + j + '" type="text" maxlength="8" aria-label="повторы" value="' + ролиА(x.reps || '') + '">' +
+            '<button type="button" class="btn small" data-rp="exrm" data-d="' + i + '" data-x="' + j + '" aria-label="убрать упражнение">×</button></span></div>';
+        }).join('') +
+        (k.поиск === i ? '<input id="rolp-q" type="search" placeholder="Найти в каталоге" value="' + ролиА(k.q || '') + '"><div id="rolp-res">' + ролиПоискHtml(k.q) + '</div>'
+          : '<button type="button" class="btn small" data-rp="add" data-d="' + i + '">+ Упражнение</button>') + '</div>';
+    }).join('') +
+    (п.days.length < 7 ? '<button type="button" class="btn small" data-rp="dayadd">+ День</button>' : '') +
+    '<label class="rolfld">Комментарий для клиента<textarea id="rolp-note" maxlength="300" rows="2">' + esc(п.note || '') + '</textarea></label>' +
+    (k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : '') + (k.ок ? '<p class="rolnote">' + esc(k.ок) + '</p>' : '') +
+    '<button type="button" class="btn wide prim" data-rp="send"' + (k.шлём ? ' disabled' : '') + '>' + (k.шлём ? 'Отправляю…' : 'Отправить клиенту') + '</button>';
+}
+function ролиПоискHtml(q){
+  if (!CAT) return '<p class="empt">Загружаю каталог…</p>';
+  var сл = String(q || '').toLowerCase().split(/\s+/).filter(Boolean); if (!сл.length) return '<p class="rolnote">Начните вводить название: «жим», «тяга», «присед»…</p>';
+  var найдено = CAT.ex.filter(function(x){ var t = (x.n + ' ' + (x.e || '')).toLowerCase(); return сл.every(function(w){ return t.indexOf(w) >= 0; }); }).slice(0, 12);
+  if (!найдено.length) return '<p class="empt">Не нашёл.</p>';
+  return найдено.map(function(x){ return '<button type="button" class="rolpick" data-rp="pick" data-i="' + ролиА(x.i) + '">' + esc(x.n) + '</button>'; }).join('');
+}
+function ролиПрогСобрать(){
+  var k = ROLI.card, п = k && k.p; if (!п) return;
+  var nm = document.getElementById('rolp-name'); if (nm) п.name = nm.value;
+  var nt = document.getElementById('rolp-note'); if (nt) п.note = nt.value;
+  Array.prototype.forEach.call(document.querySelectorAll('#rolcbody .rolp-s'), function(i){ п.days[+i.dataset.d].s = i.value; });
+  Array.prototype.forEach.call(document.querySelectorAll('#rolcbody .rolp-reps'), function(i){ var x = п.days[+i.dataset.d].ex[+i.dataset.x]; if (x) x.reps = i.value; });
+}
+document.addEventListener('input', function(e){
+  if (e.target.id !== 'rolp-q' || !ROLI.card) return;
+  ROLI.card.q = e.target.value; var r = document.getElementById('rolp-res'); if (r) r.innerHTML = ролиПоискHtml(ROLI.card.q);
+});
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#rolcbody [data-rp]'); if (!b || !ROLI.card || !ROLI.card.p) return;
+  var k = ROLI.card, п = k.p, д = b.dataset.rp, i = +b.dataset.d, j = +b.dataset.x;
+  ролиПрогСобрать(); k.err = ''; k.ок = '';
+  if (д === 'add') { k.поиск = i; k.q = ''; loadCatalog().then(function(){ if (ROLI.card === k) ролиКарточкаРисовать(); }).catch(function(){}); ролиКарточкаРисовать(); var q = document.getElementById('rolp-q'); if (q) q.focus(); return; }
+  if (д === 'pick') {
+    var x = (CAT && CAT.ex || []).filter(function(c){ return c.i === b.dataset.i; })[0];
+    if (x && k.поиск != null) п.days[k.поиск].ex.push({ id: x.i, n: x.n, en: x.e || x.n, m: x.m || '', q: x.q || '', sets: 3, reps: '8–12', rest: 90 });
+    k.поиск = null; k.q = ''; haptic('light');
+  }
+  if (д === 'exrm') п.days[i].ex.splice(j, 1);
+  if (д === 'sets-' || д === 'sets+') { var y = п.days[i].ex[j]; y.sets = Math.max(1, Math.min(10, y.sets + (д === 'sets+' ? 1 : -1))); }
+  if (д === 'dayadd' && п.days.length < 7) п.days.push({ s: 'День ' + (п.days.length + 1), sub: '', ex: [] });
+  if (д === 'dayrm' && п.days.length > 1) { п.days.splice(i, 1); k.поиск = null; }
+  if (д === 'send') {
+    if (п.days.some(function(d){ return !d.ex.length; })) { k.err = 'В каждом дне — хотя бы одно упражнение.'; return ролиКарточкаРисовать(); }
+    k.шлём = true; ролиКарточкаРисовать();
+    return fPost('/roli/prog', { uid: syncUid(), who: k.who, prog: п }).then(function(){ k.шлём = false; k.ок = 'Отправлено. Клиент решит, переходить ли на неё.'; haptic('ok'); ролиКарточкаРисовать(); })
+      .catch(function(er){ k.шлём = false; k.err = er.message || humanErr(er); ролиКарточкаРисовать(); });
+  }
+  ролиКарточкаРисовать();
+});
+/* клиенту: предложение программы — на «Тренировке» (пока не «Не сейчас») и в «Моих специалистах» (всегда) */
+function ролиПредложениеHtml(наЗале){
+  var o = ROLI.me && ROLI.me.offer; if (!o || !o.prog) return '';
+  if (наЗале && gget('roli_offer_skip', 0) === o.at) return '';
+  var п = o.prog;
+  return '<div class="rolcard roloffer"><div class="rolhd"><b>' + esc(o.name) + ' прислал программу</b><span>' + esc(РОЛИ_ВИД[o.kind] || '') + '</span></div>' +
+    '<p class="rolnote">«' + esc(п.name) + '» · ' + п.days.length + ' ' + plural(п.days.length, ['день', 'дня', 'дней']) + ' в неделю' + (п.note ? '. ' + esc(п.note) : '') + '</p>' +
+    п.days.map(function(d, i){ return '<p class="rolnote"><b>' + esc(d.s || 'День ' + (i + 1)) + ':</b> ' + d.ex.map(function(x){ return esc(x.n) + ' ' + x.sets + '×' + esc(x.reps); }).join(', ') + '</p>'; }).join('') +
+    '<div class="rolbtns"><button type="button" class="btn small prim" data-rol="take">Перейти на неё</button>' + (наЗале ? '<button type="button" class="btn small" data-rol="later">Не сейчас</button>' : '') + '</div></div>';
+}
+function ролиПрогВзять(b){
+  var o = ROLI.me && ROLI.me.offer; if (!o) return; b.disabled = true;
+  fPost('/roli/prog/take', { uid: syncUid(), take: true, at: o.at }).then(function(r){
+    if (!r || !r.prog) throw new Error('Предложения больше нет.');
+    ROLI.me.offer = null; ролиРисовать();
+    AIPROG = r.prog; aiApply(true);
+  }).catch(function(er){ ROLI.err = er.message || humanErr(er); ролиЗагрузить(); });
+}
 
 /* ── подключение по ссылке специалиста: бот открывает приложение с ?pro=КОД ── */
 function ролиПоСсылке(){
@@ -18439,11 +18571,19 @@ function ролиПодключениеРисовать(){
   var r = j.r;
   if (!r && !j.err) { b.innerHTML = '<p class="empt">Загружаю…</p>'; return; }
   if (!r || !r.pro) { b.innerHTML = '<p class="rolerr">' + esc(j.err || 'Ссылка не работает.') + '</p>' + (j.age || (r && r.code === 'need_age') ? '<button type="button" class="btn wide" id="roljage">Указать возраст</button>' : ''); return; }
+  var нужна = +r.parq > 0; if (нужна && (!j.parq || j.parq.length !== +r.parq)) j.parq = РОЛИ_АНКЕТА.slice(0, +r.parq).map(function(){ return null; });
+  var всё = !нужна || j.parq.every(function(x){ return x !== null; }), есть = нужна && j.parq.some(function(x){ return x === true; });
   b.innerHTML = '<div class="rolhd"><b>' + esc(r.pro.name) + '</b><span>' + esc(РОЛИ_ВИД[r.pro.kind] || '') + '</span></div>' +
     (r.pro.about ? '<p class="rolnote">' + esc(r.pro.about) + '</p>' : '') +
     '<p class="mtext">' + esc(r.text) + '</p>' +
+    (нужна ? '<h4 class="pqlab">Готовность к нагрузке</h4><div class="rolparq">' + j.parq.map(function(v, i){
+      return '<div class="rolq"><span>' + esc(РОЛИ_АНКЕТА[i]) + '</span><div class="seg">' +
+        '<button type="button" data-parq="' + i + '" data-v="0" aria-pressed="' + (v === false) + '">Нет</button>' +
+        '<button type="button" data-parq="' + i + '" data-v="1" aria-pressed="' + (v === true) + '">Да</button></div></div>';
+    }).join('') + '</div>' +
+      (есть ? '<p class="rolnote rolwarn">Перед нагрузками покажитесь врачу. Тренер увидит только «нужен допуск врача», без ваших ответов.</p>' : '') : '') +
     (j.err ? '<p class="rolerr">' + esc(j.err) + '</p>' : '') +
-    '<button type="button" class="btn wide prim" id="roljok"' + (j.busy ? ' disabled' : '') + '>' + (j.busy ? 'Подключаю…' : j.replace ? 'Заменить и подключить' : 'Подключить') + '</button>';
+    '<button type="button" class="btn wide prim" id="roljok"' + (j.busy || !всё ? ' disabled' : '') + '>' + (j.busy ? 'Подключаю…' : !всё ? 'Ответьте на вопросы' : j.replace ? 'Заменить и подключить' : 'Подключить') + '</button>';
 }
 document.addEventListener('click', function(e){
   var j = ROLI.join; if (!j) return;
@@ -18455,9 +18595,13 @@ document.addEventListener('click', function(e){
     ROLI.join = null; if (j.done) ролиЗагрузить(); return;
   }
   if (e.target.id === 'roljage') { var m2 = document.getElementById('roljm'); if (m2) m2.classList.remove('show'); ROLI.join = null; openProf(); return; }
-  if (e.target.id !== 'roljok' || j.busy || !j.r) return;
+  var q = e.target.closest && e.target.closest('[data-parq]');
+  if (q) { j.parq[+q.dataset.parq] = q.dataset.v === '1'; ролиПодключениеРисовать(); return; }
+  if (e.target.id !== 'roljok' || j.busy || !j.r || (j.parq && j.parq.some(function(x){ return x === null; }))) return;
   j.busy = true; j.err = ''; ролиПодключениеРисовать();
-  fPost('/roli/join', { uid: syncUid(), code: j.code, consent: j.r.ver, replace: j.replace }).then(function(){ j.busy = false; j.done = true; gset('roli_kod', null); haptic('ok'); ролиПодключениеРисовать(); })
+  var тело = { uid: syncUid(), code: j.code, consent: j.r.ver, replace: j.replace };
+  if (+j.r.parq > 0) тело.parq = j.parq.map(function(x){ return x === true; });
+  fPost('/roli/join', тело).then(function(){ j.busy = false; j.done = true; gset('roli_kod', null); haptic('ok'); ролиПодключениеРисовать(); })
     .catch(function(er){
       j.busy = false; j.err = er.message || humanErr(er);
       if (er.code === 'same_kind') j.replace = true;
@@ -21433,6 +21577,8 @@ function applyAuto(list, opts){
 /* перестроенная тренером программа: ставится сама, история весов переезжает */
 function applyRebuild(rb){
   if(!rb || !rb.prog || !rb.prog.days || gget('rebuilt_at',null)===rb.at) return;
+  /* 29.10, роли: программа от живого тренера — ИИ её не пересобирает (его выбор); сервер тоже не кладёт пересборку */
+  if(AIPROG && AIPROG.author && ЕСТЬ('roli')) return;
   gset('rebuilt_at', rb.at);
   AIPROG=rb.prog; aiApply(!rb.day);   /* весь блок заново — правки прошлой сняты; один день — ниже */
   var счищено = ПРОГ_СЧИЩЕНО;
