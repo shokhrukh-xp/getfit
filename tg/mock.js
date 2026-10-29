@@ -454,14 +454,15 @@ async function поднять(page, o) {
        есть (так живут все, кто был в приложении до появления цены), а
        o.sub:'нет' поднимает стену. */
     if (p === '/sub') {
-      if (o.sub === 'нет') return дать({ ok: true, stars: 500, link: 'https://t.me/$invoice_mock',
+      /* 29.10: o.features — включённые функции (выключатель этапа 0 ролей) */
+      if (o.sub === 'нет') return дать({ features: o.features, ok: true, stars: 500, link: 'https://t.me/$invoice_mock',
         title: 'Wellböl — тренер', about: 'Разбор еды по фото и словам, разговор с тренером, сборка программы и недельный разбор.',
         sub: { ok: false, kind: 'none', until: 0, stars: 500 }, бесплатно: o.бесплатно || { left: 3, of: 3, used: 0, calls: 0 } });
-      if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
+      if (o.sub === 'платит') return дать({ features: o.features, ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
-      if (o.sub === 'подарок') return дать({ ok: true, stars: 500, link: null,
+      if (o.sub === 'подарок') return дать({ features: o.features, ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 29 * 864e5, canceled: true, stars: 500, paid: false } });
-      return дать({ ok: true, stars: 500, link: null, boss: !!o.admin, sub: { ok: true, kind: 'grand', until: 0 } });
+      return дать({ features: o.features, ok: true, stars: 500, link: null, boss: !!o.admin, sub: { ok: true, kind: 'grand', until: 0 } });
     }
     if (p === '/sub/cancel') return дать({ ok: true });
     /* Pro-ссылки владельца (13.10): o.proLinks копит запросы. */

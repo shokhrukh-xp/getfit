@@ -9799,7 +9799,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 16:00';
+var BUILD = '29.10 20:45';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11976,6 +11976,10 @@ function mkCollection(name){
    Cloudflare — прокси на него; ссылки на фото со старым адресом приложение
    по-прежнему считает своими (SYNCURL_OLD в photoAttr). */
 var SYNCURL='https://api.wellbol.com', SYNCURL_OLD='https://getfit-sync.sh-pulatov.workers.dev';
+/* 29.10, этап 0 ролей (его выбор «Да, тестовый бот»): тестовая копия — та же
+   страница на wellbol.app/test/ (ветка test) и свой сервер за api.wellbol.com/test
+   со своей базой. Боевая страница этот адрес не берёт никогда. */
+if (/^\/test(\/|$)/.test(location.pathname)) SYNCURL='https://api.wellbol.com/test';
 var SYNCOK=null;
 function syncUid(){
   var b=(TGUSER && TGUSER.id) ? String(TGUSER.id) : (mGet('anon_uid') || (function(){
@@ -18162,9 +18166,19 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){} } return d; }).catch(function(){ return null; });
+    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){} } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
+/* 29.10, этап 0 ролей (его условие «нужно убедиться, что ничего не сломаем»):
+   новое показывается, только если сервер включил функцию этому человеку
+   (SUB.features из env.FEATURES). Пока не знаем — выключено. Кроме проверки
+   ЕСТЬ() в коде, список лежит в body[data-f] — CSS прячет новое и вторым
+   замком: body:not([data-f~="roli"]) .f-roli{display:none!important}. */
+function ЕСТЬ(имя){ return !!(SUB && SUB.features && SUB.features.indexOf(имя) >= 0); }
+function функцииПрименить(){
+  var f = (SUB && SUB.features && SUB.features.length) ? SUB.features.join(' ') : '';
+  if (f) document.body.setAttribute('data-f', f); else document.body.removeAttribute('data-f');
+}
 /* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
    навигации». Владелец у приложения один, а пятая вкладка стояла у него в
    нижней полосе постоянно и занимала место наравне с едой и залом. */
