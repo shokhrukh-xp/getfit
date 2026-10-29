@@ -785,6 +785,13 @@ async function поднять(page, o) {
       return дать({ ok: true, prog: вторая, wt: 'down', gym: 'muscle', goal: 'lose_muscle', goalObj: null,
         ask: null, options: [], left: 0, hint: 'Всё учёл — программа твоя.', dislikes: ['колени беречь', 'кардио'] });
     }
+    /* 29.10, роли (этап 2а): o.roli — «сервер ролей» набора; без него — 404, как на бою без выключателя */
+    if (/\/(roli\/|admin\/roli$)/.test(p)) {
+      if (!o.roli) return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'не найдено' }) });
+      const м = route.request().method(), тело = м === 'POST' ? JSON.parse(route.request().postData() || '{}') : null;
+      const r = await o.roli(p, u, тело, м);
+      return route.fulfill({ status: r.status || 200, contentType: 'application/json', body: JSON.stringify(r.body || r) });
+    }
     if (['/w','/w/del','/forget','/join','/reco','/day/close','/recipe','/react','/meal/del','/act/del','/glu/del'].includes(p)) return дать({ ok: true });
     ошибки.push('Неизвестный маршрут mock: ' + p);
     return route.fulfill({status:501,contentType:'application/json',body:JSON.stringify({error:'Unknown mock route: '+p})});

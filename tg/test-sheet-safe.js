@@ -30,7 +30,9 @@ async function листы(page) {
   const br = await chromium.launch();
   for (const [w, h] of [[390, 844], [320, 568]]) {
     const page = await br.newPage({ viewport: { width: w, height: h } });
-    const ош = await M.поднять(page, { theme: 'dark', time: '17:30' });
+    /* 29.10: роли включены — их листы (подключение, карточка клиента) проверяются тем же правилом;
+       без функции roli они не показываются вовсе (.f-roli) */
+    const ош = await M.поднять(page, { theme: 'dark', time: '17:30', features: ['roli'] });
     дано(ош.length === 0, w + ': страница поднялась без ошибок ' + (ош[0] || ''));
 
     /* обычный режим (шапка Telegram своя): листы как были — почти во весь экран */
