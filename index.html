@@ -9799,7 +9799,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 15:30';
+var BUILD = '29.10 16:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13305,6 +13305,10 @@ function errBeacon(where, m){
     m=String(m||''); if(!m || /^Script error\.?/.test(m)) return;
     /* стенд (127.0.0.1) не шлёт на боевой сервер; проверка включает отправку сама */
     if(/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname) && !window.__errBeacon) return;
+    /* 29.10: открыто не из Telegram (сканеры нового домена wellbol.app, превью ссылок) —
+       сервер честно отвечает «Откройте приложение через Telegram». Это не сбой у человека,
+       в Wellbol Ops не шлём: 15:16–15:33 так пришли 9 ложных тревог */
+    if(!(typeof TG!=='undefined' && TG && TG.initData) && !window.__errBeacon) return;
     var key=String(where)+'|'+m.slice(0,120); if(ERR_SENT[key] || ERR_N>=10) return;
     ERR_SENT[key]=1; ERR_N++;
     var body=JSON.stringify({m:m.slice(0,300), w:String(where||'').slice(0,40), b:BUILD});
