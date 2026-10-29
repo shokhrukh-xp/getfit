@@ -246,6 +246,49 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .sbrow{margin-bottom:16px}
 .sblab{display:block;font-size:12px;color:var(--dim);letter-spacing:.02em;margin-bottom:7px}
 .sbhint{margin:6px 0 0;font-size:12px;color:var(--dim);line-height:1.45}
+/* 29.10: фазы программы — выбор в листе сборки и карточка в тренировке */
+.cycmath{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px;align-items:center;margin-bottom:10px}
+.cycmath b{font-variant-numeric:tabular-nums;text-align:right}
+.cycmath b.cycneed{color:var(--sand-txt)}
+.cycmeter{grid-column:1/-1;height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:4px}
+.cycmeter i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.cycopts{display:grid;gap:8px}
+.cycopts button{border:1.5px solid var(--line);background:var(--surface);color:var(--text);border-radius:16px;padding:12px;text-align:left;font:inherit;display:grid;gap:3px;min-height:44px;cursor:pointer}
+.cycopts button[aria-checked="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.cycopts b{font-size:15px}
+.cycopts span{font-size:12px;color:var(--muted)}
+.cycopts em{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--sand-txt);background:var(--sand-bg);border-radius:99px;padding:3px 8px;width:max-content}
+#cycbox{margin:0 0 14px;display:grid;gap:10px}
+.cyccard,.cycdone{border-radius:20px;padding:14px;display:grid;gap:12px}
+.cyccard{background:var(--surface)}
+.cycdone{background:var(--sand-bg)}
+.cyclab{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cycdone .cyclab{color:var(--sand-txt)}
+.cycsegs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.cycseg{display:grid;gap:4px;min-width:0}
+.cycseg s{display:block;height:8px;border-radius:99px;background:var(--line);overflow:hidden;text-decoration:none}
+.cycseg s i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.cycseg b{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.cycseg.now b{color:var(--accent)}
+.cycseg small{font-size:11px;color:var(--muted)}
+.cyclegend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.cyclegend span{display:inline-flex;align-items:center;gap:6px}
+.cyclegend i{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.cyclegend i.h{background:var(--muted);opacity:.45}
+.cycrows{display:grid;gap:7px}
+.cycrow{display:grid;grid-template-columns:72px minmax(0,1fr) 28px;align-items:center;gap:8px;font-size:13px}
+.cycrow u{display:block;height:10px;border-radius:99px;background:var(--line);overflow:hidden;text-decoration:none}
+.cycrow u i{display:block;height:100%;border-radius:99px;background:var(--muted);opacity:.45}
+.cycrow.g u i{background:var(--accent);opacity:1}
+.cycrow em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.cycwins{display:grid;gap:6px}
+.cycwin{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.cycwin b{font-variant-numeric:tabular-nums;color:var(--accent);white-space:nowrap}
+.cycswap{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);align-items:center;gap:6px}
+.cycswap div{background:var(--surface);border-radius:14px;padding:10px;display:grid;gap:2px;font-size:12px;color:var(--muted)}
+.cycswap div b{font-size:14px;color:var(--text)}
+.cycswap>span{text-align:center;color:var(--muted)}
+.cycbtns{display:grid;gap:8px}
 .progcard{background:var(--card-2);border:1px solid var(--line-soft);border-radius:12px;padding:14px;margin:12px 0}
 .progcard h4{margin:0 0 2px;font-family:inherit;font-size:15px}
 .progcard i{font-style:normal;font-size:12px;color:var(--dim);display:block;margin-bottom:10px}
@@ -4505,6 +4548,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
         <div id="planbox" hidden></div>
         <div id="coachreco" hidden></div>
         <div id="rbbox" hidden></div>
+        <div id="cycbox" hidden></div>
         <p class="phaseline" id="phaseline"></p>
         <div id="list"></div>
         <p class="dbnote" id="dbnote" role="status"></p>
@@ -5008,6 +5052,10 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
     <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">Что есть дома</span><div class="seg multi" id="sb-eq"></div></div>
     <div class="sbrow"><span class="sblab">Упор</span><div class="seg multi" id="sb-focus"></div>
       <p class="sbhint">Выбранным — 12–16 подходов в неделю, остальным 6–8 на удержание</p></div>
+    <!-- 29.10, фазы программы (его «Да, делай» по макету): только при «всё тело» и нехватке времени -->
+    <div class="sbrow" id="sb-cycrow" hidden><span class="sblab">Как растить</span>
+      <div class="cycmath" id="sb-cycmath"></div>
+      <div class="cycopts" id="sb-cyc" role="radiogroup" aria-label="Как растить"></div></div>
     <div class="sbrow" id="sb-platerow"><span class="sblab">Самый маленький блин</span><div class="seg" id="sb-plate"></div>
       <p class="sbhint">От него зависит, каким шагом растут веса</p></div>
     <div class="sbrow"><span class="sblab">Что беречь</span><div class="seg multi" id="sb-lim"></div></div>
@@ -9694,7 +9742,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 08:10';
+var BUILD = '29.10 08:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -9999,7 +10047,91 @@ function phaseFor(w){
   for(var i=0;i<PHASES.length;i++){ if(w>=PHASES[i].w[0] && w<=PHASES[i].w[1]) return PHASES[i]; }
   return PHASES[0];
 }
+/* ── ФАЗЫ ПРОГРАММЫ (29.10) ──
+   Его вопрос: «Если у человека фокус на всё тело, а время может уделять только 30 минут, может
+   стоит его программу делить на фазы?» → макет «Фазы программы» → «Да, делай»: 6 недель, смена
+   кнопкой. Круг и расчёт — на сервере (ПРИОРИТЕТЫ); здесь карточка над списком дня: полоса
+   фаз и подходы на неделю по группам (растёт / держим), а когда фаза кончилась — итог по весам
+   растущих мышц и кнопки «Начать фазу N» / «Ещё 2 недели этой». */
+var ЦИКЛ_ГРУППЫ={torso:['Спина','Грудь'], legs:['Ноги'], arms:['Плечи','Руки']};
+function циклПрог(){
+  if(profile!=='ai' || foodOnly()) return null;
+  var p=gget('ai_prog',null);   /* AIPROG во время сборки — превью, а не действующая программа */
+  return (p && p.cyc && p.cyc.all && p.cyc.from) ? p : null;
+}
+function циклКонец(c){ return днейПосле(c.from, (c.weeks||6)*7+(+c.ext||0)); }
+function циклДата(iso){ var d=dLocal(iso); return d.getDate()+' '+MONTHS[d.getMonth()].slice(0,3); }
+/* веса растущих мышц: первое занятие фазы против последнего, по лучшему подходу */
+function циклПобеды(p){
+  var c=p.cyc, ids={}, out=[];
+  (p.days||[]).forEach(function(d){ (d.ex||[]).forEach(function(x){ if(x && x.id && (c.grow||[]).indexOf(x.m)>=0) ids[x.id]=x.n||x.id; }); });
+  var по={};
+  (HIST||[]).slice().sort(function(a,b){ return a.date<b.date?-1:1; }).forEach(function(w){
+    if(!w || w.date<c.from) return;
+    (w.ex||[]).forEach(function(x){ if(!x || !ids[x.id]) return;
+      var л=0; (x.sets||[]).forEach(function(v){ if(v && +v.r>0 && +v.w>л) л=+v.w; });
+      if(!л) return; if(!по[x.id]) по[x.id]={a:л,b:л}; else по[x.id].b=л; });
+  });
+  Object.keys(по).forEach(function(id){ var v=по[id]; if(v.b>v.a) out.push({n:ids[id], a:v.a, b:v.b, k:v.b/v.a}); });
+  return out.sort(function(x,y){ return y.k-x.k; }).slice(0,3);
+}
+function renderЦикл(){
+  var el=document.getElementById('cycbox'); if(!el) return;
+  var p=циклПрог(); if(!p){ el.hidden=true; el.innerHTML=''; return; }
+  var c=p.cyc, n=c.all.length, конец=циклКонец(c), недель=c.weeks||6;
+  var кг=function(v){ return String(v).replace('.',','); };
+  if(TODAY<конец){
+    var нед=Math.min(Math.ceil(((+c.ext||0)+недель*7)/7), Math.floor((dLocal(TODAY)-dLocal(c.from))/604800000)+1);
+    var всего=недель*7+(+c.ext||0), доля=Math.max(4, Math.min(100, Math.round((dLocal(TODAY)-dLocal(c.from))/86400000/всего*100)));
+    var h='<div class="cyccard"><div class="cyclab">Фаза '+(c.i+1)+' из '+n+' · неделя '+нед+' из '+Math.ceil(всего/7)+'</div><div class="cycsegs">';
+    c.all.forEach(function(ф,j){
+      var до=j===c.i ? конец : (j>c.i ? днейПосле(конец, (j-c.i)*недель*7) : null);
+      h+='<div class="cycseg'+(j===c.i?' now':'')+'"><s><i style="width:'+(j<c.i?100:j===c.i?доля:0)+'%"></i></s><b>'+esc(ф.t)+'</b><small>'+(до?'до '+циклДата(до):'готово')+'</small></div>';
+    });
+    h+='</div>';
+    /* подходы по группам — из самой программы (как «план» в «Зал на неделе»), журнал не нужен */
+    var растёт=ЦИКЛ_ГРУППЫ[c.k]||[], план={}, вН=Object.keys(GYM_DAYS).length, коэф=(вН && CYCLE.length) ? вН/CYCLE.length : 1;
+    CYCLE.forEach(function(dk){ exList(dk).forEach(function(e,di){
+      if(isTime(e)||isMin(e)||isDist(e)) return;
+      var g=группыПодхода(e); if(!g) return; var k=setsFor(e,di,dk,true);
+      Object.keys(g).forEach(function(x){ план[x]=(план[x]||0)+k*g[x]*коэф; });
+    }); });
+    if(Object.keys(план).length){
+      var гр=ГРУППЫ5.map(function(g){ return [g[0], Math.round(план[g[0]]||0)]; }).filter(function(g){ return g[1]>0; });
+      var мх=Math.max.apply(null, гр.map(function(g){ return g[1]; }).concat([1]));
+      h+='<div class="cyclegend"><span><i></i>растёт</span><span><i class="h"></i>держим</span></div><div class="cycrows" aria-label="Подходов в неделю">'+
+        гр.map(function(g){ return '<div class="cycrow'+(растёт.indexOf(g[0])>=0?' g':'')+'"><span>'+g[0]+'</span><u><i style="width:'+Math.round(g[1]/мх*100)+'%"></i></u><em>'+g[1]+'</em></div>'; }).join('')+'</div>';
+    }
+    el.innerHTML=h+'</div>'; el.hidden=false; return;
+  }
+  var след=c.all[(c.i+1)%n], поб=циклПобеды(p);
+  var d='<div class="cycdone"><div class="cyclab">Фаза '+(c.i+1)+' готова · '+Math.round(((dLocal(TODAY)-dLocal(c.from))/604800000))+' '+plural(Math.round((dLocal(TODAY)-dLocal(c.from))/604800000),['неделя','недели','недель'])+'</div>';
+  if(поб.length) d+='<div class="cycwins">'+поб.map(function(w){ return '<div class="cycwin"><span>'+esc(w.n)+'</span><b>'+кг(w.a)+' → '+кг(w.b)+' кг</b></div>'; }).join('')+'</div>';
+  d+='</div><div class="cyccard"><div class="cyclab">Дальше · фаза '+(((c.i+1)%n)+1)+'</div>'+
+    '<div class="cycswap"><div>растёт<b>'+esc(c.t)+'</b></div><span aria-hidden="true">→</span><div>растёт<b>'+esc(след.t)+'</b></div></div>'+
+    '<p class="sbhint">Упражнения те же, меняются подходы. Веса из истории на месте.</p>'+
+    '<div class="cycbtns"><button type="button" class="btn prim wide" data-cycgo="next">Начать фазу '+(((c.i+1)%n)+1)+'</button>'+
+    '<button type="button" class="btn wide" data-cycgo="ext">Ещё 2 недели этой</button></div></div>';
+  el.innerHTML=d; el.hidden=false;
+}
+document.getElementById('cycbox').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-cycgo]'); if(!b) return;
+  var p=циклПрог(); if(!p) return;
+  if(b.dataset.cycgo==='ext'){
+    p.cyc.ext=(+p.cyc.ext||0)+14; gset('ai_prog', p);
+    try{ csSetBig(AIKEY, JSON.stringify(p)).catch(function(){}); }catch(x){}
+    try{ syncPush('state/aiprog', p); }catch(x){}
+    renderЦикл(); haptic('light'); return;
+  }
+  /* «Начать фазу N»: тот же тренер собирает следующую фазу на тех же упражнениях; человек видит
+     её превью и переходит кнопкой «Перейти на эту программу», как при любой пересборке */
+  AI_ДАЛЬШЕ=1;
+  var m=document.getElementById('profm'); if(!m || !m.classList.contains('show')) openProf('gym'); else profGo('gym');
+  aiBuild(); haptic('medium');
+  setTimeout(function(){ var a=document.getElementById('aistate'); if(a && a.scrollIntoView) a.scrollIntoView({block:'center', behavior:'smooth'}); }, 300);
+});
 function renderPhase(){
+  try{ renderЦикл(); }catch(e){}
   var el=document.getElementById('phaseline'); if(!el) return;
   if(легчеВкл()){
     var ж=(myData()||{}).sex==='f';
@@ -15026,15 +15158,44 @@ function sbMulti(id){ return Array.prototype.map.call(
   document.querySelectorAll('#'+id+' button[aria-pressed="true"]'), function(b){ return b.dataset.v; }); }
 function sbДней(){ return Array.prototype.filter.call(
   document.querySelectorAll('#sb-wd button'), function(b){ return b.getAttribute('aria-pressed')==='true'; }).length; }
+/* 29.10: подходы за занятие — тот же расчёт, что у сборки (/budget: личный темп по записям или
+   формула). Пока сервер не ответил — формула; одно число с сервером, а не два. */
+var SBBUD={}, SBCYC=null;
+function sbБюджет(м){
+  if(SBBUD[м]) return SBBUD[м];
+  if(SBBUD[м]!==false){ SBBUD[м]=false;
+    fGet('/budget?uid='+encodeURIComponent(syncUid())+'&min='+м).then(function(d){ if(d && d.ok){ SBBUD[м]=d; sbСчёт(); } else delete SBBUD[м]; }).catch(function(){ delete SBBUD[м]; }); }
+  return null;
+}
 function sbПодходов(){
-  var м=+sbPick('sb-min')||45;
+  var м=+sbPick('sb-min')||45, б=sbБюджет(м);
+  if(б && б.вДень>0) return б.вДень;
   return (м>=90?30:м>=60?24:м>=45?19:м>=30?14:10);
+}
+/* 29.10, фазы программы (его вопрос про 30 минут и всё тело → макет → «Да, делай»): выбор
+   показывается, только когда упор «всё тело» и подходов в неделю меньше, чем нужно, чтобы
+   росло всё сразу (~80, число с сервера). */
+function sbЦиклUI(){
+  var row=document.getElementById('sb-cycrow'); if(!row) return;
+  var д=sbДней(), п=sbПодходов(), неделя=п*д, м=+sbPick('sb-min')||45, б=SBBUD[м]||{}, нужно=б.нужно||80, недель=б.недель||6;
+  var фок=sbMulti('sb-focus'), ровно=!фок.length || (фок.length===1 && фок[0]==='even');
+  var показать = ровно && д>=2 && неделя<нужно;
+  row.hidden=!показать; if(!показать) return;
+  if(!SBCYC) SBCYC=(myData()||{}).phases||'on';
+  document.getElementById('sb-cycmath').innerHTML='<span>Влезает подходов в неделю</span><b>~'+неделя+'</b>'+
+    '<span>Нужно, чтобы росло всё сразу</span><b class="cycneed">~'+нужно+'</b>'+
+    '<div class="cycmeter" role="img" aria-label="'+неделя+' из '+нужно+'"><i style="width:'+Math.min(100,Math.round(неделя/нужно*100))+'%"></i></div>';
+  var opt=function(v,имя,что,рек){ return '<button type="button" role="radio" data-cyc="'+v+'" aria-checked="'+(SBCYC===v)+'">'+(рек?'<em>РЕКОМЕНДУЕМ</em>':'')+'<b>'+имя+'</b><span>'+что+'</span></button>'; };
+  document.getElementById('sb-cyc').innerHTML=
+    opt('on','По фазам', недель+' недель растёт одна часть тела, остальное держим. Потом меняем.', true)+
+    opt('off','Всё понемногу','Каждой мышце поровну. Растёт медленнее.', false);
 }
 function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
   var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выберите хотя бы два дня';
   var m=document.getElementById('sb-minh'); if(m) m.textContent = п+' '+plural(п,['подход','подхода','подходов'])+' за занятие · ~'+(п*д)+' в неделю';
   var g=document.getElementById('sb-go'); if(g) g.disabled = д<2;
+  sbЦиклUI();
 }
 function openSbor(){
   var me=myData()||{};
@@ -15049,6 +15210,7 @@ function openSbor(){
   set('sb-focus', FOCUSKEYS, (me.focus&&me.focus.length)?me.focus:['even'], true);
   set('sb-plate', SBPLATE, String(me.plate||'2.5'));
   set('sb-lim', LIMKEYS, me.lim||[], true);
+  SBCYC=me.phases||null; AI_ДАЛЬШЕ=0;   /* пересборка из листа — не смена фазы */
   segSet('sb-level', segHtml('level',LEVELS,me.level));
   var d=document.getElementById('sb-dis'); if(d) d.value=(me.dislikes||[]).join(', ');
   var g=document.getElementById('sborgoal');
@@ -15066,6 +15228,8 @@ function closeSbor(){ var m=document.getElementById('sborm'); if(m) m.classList.
 document.getElementById('sborclose').addEventListener('click', closeSbor);
 document.getElementById('sborm').addEventListener('click', function(e){
   if(e.target.id==='sborm'){ closeSbor(); return; }
+  var cb=e.target.closest('#sb-cyc button[data-cyc]');
+  if(cb){ SBCYC=cb.dataset.cyc; sbЦиклUI(); haptic('light'); return; }
   var b=e.target.closest('#sborm .seg button, #sb-wd button'); if(!b) return;
   var box=b.parentNode, multi=box.classList.contains('multi')||box.id==='sb-wd';
   if(multi){
@@ -15099,6 +15263,7 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.lim=sbMulti('sb-lim');
   me.dislikes=csv((document.getElementById('sb-dis')||{}).value);
   me.level=sbPick('sb-level')||me.level||null;
+  var цр=document.getElementById('sb-cycrow'); if(цр && !цр.hidden && SBCYC) me.phases=SBCYC;   /* 29.10: фазы */
   gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
   closeSbor(); openProf('gym'); renderProgCard();
   aiBuild();
@@ -15134,9 +15299,10 @@ function aiPayload(){
     }) };
   });
   return { uid:syncUid(), me:me, days:Object.keys(GYM_DAYS).length||3, min:me.min||null,
-           focus:focusMus(me.focus), program:program, history:history, eq:me.eq||[] };
+           focus:focusMus(me.focus), program:program, history:history, eq:me.eq||[],
+           phases:me.phases||null, cycNext:AI_ДАЛЬШЕ?1:0 };   /* 29.10: фазы; cycNext — «Начать фазу N» */
 }
-var AIPROG=null;
+var AIPROG=null, AI_ДАЛЬШЕ=0;
 /* 28.10, его «пока программа собирается, отличный момент показать одно из анимированных лого»:
    ждём — крупная «колыбель» (знак, задуманный для долгих сборок) и этап под ней; этап меняется,
    знак не перезапускается. */
@@ -15242,7 +15408,7 @@ function aiBuild(снова){
   var ждём=сборкаЖдём(тело);
   fДолгий('/ai', тело, ctl?ctl.signal:undefined)
     .then(function(r){ return r.json().then(function(d){ if(!r.ok || !d.ok){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; throw e; } return d; }); })
-    .then(function(d){ этапАиГотово=true; clearInterval(этапАиТ); ждём.стоп(); AIPROG=d.prog; aiState(''); renderAiPreview(d.prog);aiDraftSave(AI_PREVIEW,d.prog); haptic('ok');
+    .then(function(d){ этапАиГотово=true; clearInterval(этапАиТ); ждём.стоп(); AI_ДАЛЬШЕ=0; AIPROG=d.prog; aiState(''); renderAiPreview(d.prog);aiDraftSave(AI_PREVIEW,d.prog); haptic('ok');
       /* Программа на экране — предложение собрать больше не нужно. */
       try{ renderReco(); }catch(e){}
       var el=document.getElementById('aibox');
@@ -15275,7 +15441,9 @@ var AI_PREVIEW={dayTab:0};
 function renderAiPreview(prog){
   var box=document.getElementById('aibox'); if(!box) return;
   var days=WEEK.filter(function(d){return GYM_DAYS[d];});
-  var h='<div class="aiprev"><h4>'+esc(prog.name)+'</h4><p class="aisub">'+esc(prog.note)+'</p>'+aiДниHtml(prog,AI_PREVIEW,days);
+  var h='<div class="aiprev"><h4>'+esc(prog.name)+'</h4>'+
+    (prog.cyc?'<p class="cyclab">Фаза '+(prog.cyc.i+1)+' из '+prog.cyc.n+' · растёт: '+esc(String(prog.cyc.t||'').toLowerCase())+'</p>':'')+
+    '<p class="aisub">'+esc(prog.note)+'</p>'+aiДниHtml(prog,AI_PREVIEW,days);
   h+='<p data-aidraft-status role="status" class="catcount"></p><div class="rbtns"><button type="button" class="btn go" id="aiapply">Перейти на эту программу</button>'+
      '<button type="button" class="btn" id="aidrop">Не надо</button></div></div>';
   box.innerHTML=h;aiDraftPaint();
