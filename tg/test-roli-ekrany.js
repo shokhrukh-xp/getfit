@@ -23,6 +23,8 @@ function сервер(нач){
     if (p.endsWith('/roli/prog')) { s.отправлено = тело.prog; return { ok: true, at: 5 }; }
     if (p.endsWith('/roli/prog/take')) { const пр = s.offer && s.offer.prog; s.offer = null; return { ok: true, take: тело.take, prog: тело.take ? пр : null }; }
     if (p.endsWith('/roli/complain')) { s.жалоба = тело; return { ok: true }; }
+    if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
+    if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
     if (p.endsWith('/roli/join') && метод === 'GET' && s.безВозраста) return { status: 403, body: { ok: false, code: 'need_age', error: 'Укажите возраст в профиле — подключить специалиста можно с 18 лет.' } };
     if (p.endsWith('/roli/join') && метод === 'GET') return { ok: true, preview: true, parq: s.анкета ? 7 : 0, pro: { name: 'Тимур Ахмедов', kind: 'trainer', about: 'Зал на Чиланзаре, 8 лет' }, cats: ['gym', 'body'], can: МОЖНО.trainer, ver: ВЕР,
@@ -127,7 +129,7 @@ async function проверить(p, где, имя, sel){
     ok(к && к.q.who === '777' && к.q.cat === 'body' && к.q.uid, где + 'клиент — в who, свой uid — в uid, первым — замеры: ' + JSON.stringify(к && к.q));
     const кт = await p2.$eval('#rolcbody', e => e.textContent);
     ok(/79,5 кг · жир 24,1 % · талия 84 см/.test(кт) && /Кто смотрел/.test(кт), где + 'замеры клиента и напоминание про журнал: ' + кт.slice(0, 140));
-    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,gym,prog', где + 'вкладки — открытые разделы и программа');
+    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,gym,prog,chat', где + 'вкладки — открытые разделы, программа и переписка');
     await проверить(p2, где, 'карточка клиента', '#rolcm');
     await p2.click('#rol-ccat button[data-v="gym"]'); await p2.waitForTimeout(300);
     ok(s2.запросы.some(x => x.p.endsWith('/roli/client') && x.q.cat === 'gym'), где + 'вкладка «тренировки» — свой запрос');
@@ -228,6 +230,47 @@ async function проверить(p, где, имя, sel){
     const т = await p.$eval('#rolmy', e => e.textContent);
     ok(/Не удалось загрузить/.test(т) && /Тимур Ахмедов/.test(т), 'сбой: ошибка строкой, список на месте: ' + т.slice(0, 120));
     ok(!err.length, 'клиент 2б: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 9. этап 2в: переписка — у клиента лист «Написать», у тренера вкладка; из бота ?chat= */
+  for (const theme of ['light', 'dark']) {
+    const где = 'переписка ' + theme + ': ';
+    const p = await b.newPage({ viewport: { width: 320, height: 760 } });
+    const s = сервер({ my: [{ id: 'l1', kind: 'trainer', name: 'Тимур Ахмедов', proStatus: 'ok', cats: ['gym'], unread: 2 }],
+      msgs: [{ id: 1, me: false, text: 'Как колено после приседа?', at: Date.parse('2026-10-29T15:00:00Z'), seen: false },
+             { id: 2, me: true, text: 'Ноет немного', at: Date.parse('2026-10-29T15:05:00Z'), seen: true }] });
+    const o = opts(theme); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(400);
+    await p.click('#profbtn'); await p.waitForTimeout(300);
+    ok(/2 новых/.test(await p.$eval('#pv-spec', e => e.textContent)), где + 'в строке профиля — новые сообщения');
+    await p.click('#pq-spec'); await p.waitForSelector('#rolmy [data-rol="chat"]', { timeout: 3000 }).catch(() => {});
+    ok(/Написать · 2/.test(await p.$eval('#rolmy [data-rol="chat"]', e => e.textContent)), где + '«Написать» с числом новых');
+    await p.click('#rolmy [data-rol="chat"]'); await p.waitForSelector('#rolmsgs .rolb', { timeout: 3000 }).catch(() => {});
+    const пуз = await p.$$eval('#rolmsgs .rolb', ns => ns.map(n => n.className.replace('rolb ', '') + ':' + n.querySelector('p').textContent + ':' + n.querySelector('small').textContent));
+    ok(пуз.length === 2 && /^them:Как колено/.test(пуз[0]) && /^me:Ноет немного:.*прочитано$/.test(пуз[1]), где + 'сообщения — его слева, мои справа с «прочитано»: ' + пуз.join(' | '));
+    await проверить(p, где, 'лист переписки', '#rolchatm');
+    await p.fill('#rolmsg', 'Сделаю жим ногами вместо приседа');
+    await p.click('#rolmsgsend'); await p.waitForTimeout(500);
+    ok(s.написано && s.написано.link === 'l1' && s.написано.text === 'Сделаю жим ногами вместо приседа', где + 'сообщение уходит по подключению: ' + JSON.stringify(s.написано));
+    ok(await p.$eval('#rolmsg', e => e.value) === '' && (await p.$$eval('#rolmsgs .rolb', ns => ns.length)) === 3, где + 'поле очищено, сообщение в ленте');
+    await p.click('#rolchatclose'); await p.waitForTimeout(200);
+    ok(!(await виден(p, '#rolchatm')), где + '«Закрыть» закрывает переписку');
+    ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  {
+    /* тренер: вкладка «переписка» и вход из бота ?chat=l1 */
+    const p = await b.newPage({ viewport: { width: 390, height: 800 } });
+    const s = сервер({ pro: [{ kind: 'trainer', name: 'Тимур', status: 'ok', code: 'TSTRNR01', link: 'https://t.me/x?start=s_TSTRNR01' }],
+      clients: [{ id: 'l1', kind: 'trainer', client: '777', name: 'Карина', cats: ['body'], parq: 'ok', unread: 1 }],
+      msgs: [{ id: 1, me: false, text: 'Колено ноет', at: Date.parse('2026-10-29T15:00:00Z'), seen: false }] });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.base = M.БАЗА + '?chat=l1';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#rolcm #rolmsgs .rolb', { timeout: 5000 }).catch(() => {});
+    ok(await виден(p, '#rolcm') && /Колено ноет/.test(await p.$eval('#rolcbody', e => e.textContent)), 'тренер: из бота открылась переписка с клиентом');
+    ok(/переписка/.test(await p.$eval('#rol-ccat button[aria-pressed="true"]', e => e.textContent)), 'тренер: открыта вкладка «переписка»');
+    ok(!/[?&]chat=/.test(await p.evaluate(() => location.search)), 'тренер: ссылка из адреса убрана');
+    ok(!err.length, 'тренер: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 5. владелец: заявки в Админ панели */

@@ -4551,6 +4551,18 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 #rolp-q{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px;margin:8px 0 4px}
 .rolpick{display:block;width:100%;min-height:44px;text-align:left;font:inherit;font-size:14px;color:var(--text);background:none;border:0;border-top:1px solid var(--tab-line);padding:10px 2px;cursor:pointer}
 .roloffer{margin:8px 0 12px}
+.rolchat{display:flex;flex-direction:column;gap:8px}
+.rolmsgs{max-height:50vh;min-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.rolb{max-width:85%;padding:8px 12px;border-radius:14px;font-size:15px;line-height:1.35}
+.rolb p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit}
+.rolb small{display:block;font-size:11px;margin-top:2px}
+.rolb.me{align-self:flex-end;background:var(--action);color:#fff}
+.rolb.me small{color:#fff}
+.rolb.them{align-self:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--tab-line)}
+.rolb.them small{color:var(--muted)}
+.rolsend{display:flex;gap:8px;align-items:flex-end}
+.rolsend textarea{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px;resize:none}
+.rolsend .btn{min-height:44px}
 </style>
 </head>
 <body>
@@ -5292,6 +5304,13 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <h3 id="roljt">Подключить специалиста</h3>
     <div id="roljbody"></div>
     <button type="button" class="btn wide" id="roljclose">Не сейчас</button>
+  </div>
+</div>
+<div class="modal f-roli" id="rolchatm" role="dialog" aria-modal="true" aria-labelledby="rolchatt">
+  <div class="modalbox">
+    <h3 id="rolchatt">Переписка</h3>
+    <div id="rolchatbody"></div>
+    <button type="button" class="btn wide" id="rolchatclose">Закрыть</button>
   </div>
 </div>
 <div class="modal f-roli" id="rolcm" role="dialog" aria-modal="true" aria-labelledby="rolct">
@@ -18289,12 +18308,13 @@ function ролиЗагрузить(){
   return Promise.all([fGet('/roli/me?uid=' + u), fGet('/roli/log?uid=' + u)]).then(function(a){
     ROLI.busy = false;
     if (!a[0] || !a[0].ok) throw new Error((a[0] && a[0].error) || 'нет ответа');
-    ROLI.me = a[0]; ROLI.log = (a[1] && a[1].ok) ? a[1].log : []; ролиРисовать();
+    ROLI.me = a[0]; ROLI.log = (a[1] && a[1].ok) ? a[1].log : []; ролиРисовать(); ролиЧатПоСсылке();
   }).catch(function(e){ ROLI.busy = false; ROLI.err = 'Не удалось загрузить: ' + humanErr(e); ролиРисовать(); });
 }
 function ролиСтрокиПрофиля(){
   var m = ROLI.me, мои = m ? m.my.length : 0;
-  var vs = document.getElementById('pv-spec'); if (vs) vs.textContent = m ? (мои ? мои + ' ' + plural(мои, ['подключён', 'подключено', 'подключено']) : 'нет') : '';
+  var новых = m ? m.my.reduce(function(a, l){ return a + (l.unread || 0); }, 0) : 0;
+  var vs = document.getElementById('pv-spec'); if (vs) vs.textContent = m ? (новых ? новых + ' ' + plural(новых, ['новое', 'новых', 'новых']) : мои ? мои + ' ' + plural(мои, ['подключён', 'подключено', 'подключено']) : 'нет') : '';
   var vp = document.getElementById('pv-pro'); if (vp) {
     var ok = m && m.pro.filter(function(p){ return p.status === 'ok'; }).length;
     vp.textContent = !m || !m.pro.length ? '' : ok ? (m.clients.length + ' ' + plural(m.clients.length, ['клиент', 'клиента', 'клиентов'])) : РОЛИ_ЗНАЧ[m.pro[0].status] || '';
@@ -18320,7 +18340,7 @@ function ролиРисовать(){
         }).join('') + '</div>' +
         (ROLI.отключить === l.id
           ? '<div class="rolend"><span>Отключить? Он перестанет видеть ваши данные сразу.</span><button type="button" class="btn small danger" data-rol="end">Отключить</button><button type="button" class="btn small" data-rol="endno">Нет</button></div>'
-          : '<div class="rolbtns"><button type="button" class="btn small rolendb" data-rol="endask">Отключить</button><button type="button" class="btn small rolendb" data-rol="compask">Пожаловаться</button></div>') +
+          : '<div class="rolbtns">' + (l.proStatus === 'ok' ? '<button type="button" class="btn small prim rolendb" data-rol="chat">Написать' + (l.unread ? ' · ' + l.unread : '') + '</button>' : '') + '<button type="button" class="btn small rolendb" data-rol="endask">Отключить</button><button type="button" class="btn small rolendb" data-rol="compask">Пожаловаться</button></div>') +
         (ROLI.жалоба === l.id ? '<label class="rolfld">Что случилось — увидит только Wellböl<textarea id="rol-comp" maxlength="1000" rows="3"></textarea></label>' +
           (ROLI.жалобаОш ? '<p class="rolerr">' + esc(ROLI.жалобаОш) + '</p>' : '') +
           '<div class="rolbtns"><button type="button" class="btn small prim" data-rol="comp">Отправить жалобу</button><button type="button" class="btn small" data-rol="compno">Отмена</button></div>' : '') +
@@ -18355,7 +18375,7 @@ function ролиПроHtml(m){
       '<div class="invcode"><input type="text" readonly value="' + ролиА(p.link || '') + '" aria-label="ссылка для клиентов"><button type="button" class="btn small prim" data-rol="share" data-url="' + ролиА(p.link || '') + '">Отправить</button></div>' +
       '<h4 class="pqlab">Клиенты</h4>' +
       (!свои.length ? '<p class="empt">Пока никого.</p>' : '<div class="pqgroup">' + свои.map(function(x){
-        return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.cats.map(ролиИмя).map(esc).join(', ') + '</small></span><i class="pqch">›</i></button>';
+        return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.cats.map(ролиИмя).map(esc).join(', ') + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
       }).join('') + '</div>') + '</div>';
   }).join('');
 }
@@ -18372,6 +18392,7 @@ function ролиКлик(e){
       .catch(function(er){ ROLI.жалобаОш = er.message || humanErr(er); ролиРисовать(); var t = document.getElementById('rol-comp'); if (t) t.value = тх; });
   }
   if (д === 'take') return ролиПрогВзять(b);
+  if (д === 'chat') { var лл = ROLI.me.my.filter(function(x){ return x.id === link; })[0]; return ролиЧатОткрыть(link, (лл && лл.name) || 'Специалист', 'modal'); }
   if (д === 'later') { var o0 = ROLI.me && ROLI.me.offer; if (o0) gset('roli_offer_skip', o0.at); return ролиРисовать(); }
   if (д === 'endno') { ROLI.отключить = ''; return ролиРисовать(); }
   if (д === 'end') {
@@ -18417,12 +18438,15 @@ function ролиКарточка(who, cat){
   var можно = РОЛИ_КАРТОЧКА.filter(function(c){ return x.cats.indexOf(c) >= 0; });
   /* программу тренер собирает всегда — это не данные клиента, а его работа */
   if (x.kind === 'trainer') можно.push('prog');
+  можно.push('chat');
   cat = cat || можно[0] || '';
-  ROLI.card = { who: who, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
+  ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
+  ROLI.chat = null;
   var m = document.getElementById('rolcm'); if (m) m.classList.add('show');
   ролиКарточкаРисовать();
   if (!cat) return;
   if (cat === 'prog') return ролиПрогЗагрузить();
+  if (cat === 'chat') { ROLI.card.unread = 0; return ролиЧатОткрыть(x.id, ROLI.card.name, 'card'); }
   fGet('/roli/client?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(who) + '&cat=' + cat).then(function(r){
     if (!ROLI.card || ROLI.card.who !== who || ROLI.card.cat !== cat) return;
     if (!r || !r.ok) { ROLI.card.err = (r && r.error) || 'Нет ответа.'; } else { ROLI.card.rows = r.rows; ROLI.card.photo = r.photo; }
@@ -18432,9 +18456,10 @@ function ролиКарточка(who, cat){
 function ролиКарточкаРисовать(){
   var k = ROLI.card, t = document.getElementById('rolct'), b = document.getElementById('rolcbody'); if (!k || !b) return;
   if (t) t.textContent = k.name;
-  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : ролиИмя(c)]; }), k.cat) + '</div>' : '';
+  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
   var анкета = k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '';
   if (k.cat === 'prog') { b.innerHTML = вкладки + анкета + ролиПрогHtml(k); return; }
+  if (k.cat === 'chat') { b.innerHTML = вкладки + ролиЧатHtml(); ролиЧатРисовать(); return; }
   var тело = !k.cat ? '<p class="empt">Клиент пока не открыл вам ни одного раздела.</p>' :
     k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : !k.rows ? '<p class="empt">Загружаю…</p>' : !k.rows.length ? '<p class="empt">Записей нет.</p>' :
     '<div class="pqgroup rollist">' + k.rows.slice(0, 60).map(function(r){
@@ -18446,7 +18471,7 @@ function ролиКарточкаРисовать(){
 }
 document.addEventListener('click', function(e){
   var s = e.target.closest && e.target.closest('#rol-ccat button[data-v]'); if (s && ROLI.card) return ролиКарточка(ROLI.card.who, s.dataset.v);
-  if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show'); ROLI.card = null; }
+  if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show'); ROLI.card = null; ROLI.chat = null; ролиЗагрузить(); }
 });
 
 /* ── программа от тренера (этап 2б; его выбор «Программа от тренера», «Спросить „Перейти?“») ──
@@ -18545,6 +18570,64 @@ function ролиПрогВзять(b){
   }).catch(function(er){ ROLI.err = er.message || humanErr(er); ролиЗагрузить(); });
 }
 
+/* ── переписка с живым специалистом (этап 2в, его «дальше») ──
+   Отдельно от чата с ИИ-тренером; ИИ её не читает. Пока лист открыт — раз в 5 с
+   подтягиваем новое (и «прочитано»). У клиента — лист «Написать», у специалиста —
+   вкладка «переписка» в карточке клиента. Из бота — ?chat=<подключение>. */
+function ролиЧатHtml(){
+  return '<div class="rolchat"><div class="rolmsgs" id="rolmsgs"><p class="empt">Загружаю…</p></div>' +
+    '<div class="rolsend"><textarea id="rolmsg" rows="2" maxlength="2000" placeholder="Сообщение" aria-label="сообщение"></textarea><button type="button" class="btn small prim" id="rolmsgsend">Отправить</button></div>' +
+    '<p class="rolnote">Переписку видите только вы двое. ИИ-тренер её не читает.</p></div>';
+}
+function ролиЧатОткрыть(link, name, куда){
+  ROLI.chat = { link: link, name: name, msgs: null, sig: '', err: '', куда: куда, вниз: true };
+  if (куда === 'modal') {
+    var m = document.getElementById('rolchatm'); if (m) m.classList.add('show');
+    var t = document.getElementById('rolchatt'); if (t) t.textContent = name;
+    var b = document.getElementById('rolchatbody'); if (b) b.innerHTML = ролиЧатHtml();
+  }
+  ролиЧатТянуть();
+  clearInterval(ROLI.chatT);
+  ROLI.chatT = setInterval(function(){ if (!ROLI.chat || !document.getElementById('rolmsgs')) { clearInterval(ROLI.chatT); return; } ролиЧатТянуть(); }, 5000);
+}
+function ролиЧатТянуть(){
+  var ч = ROLI.chat; if (!ч || ч.тянем) return; ч.тянем = true;
+  fGet('/roli/chat?uid=' + encodeURIComponent(syncUid()) + '&link=' + encodeURIComponent(ч.link)).then(function(r){
+    ч.тянем = false; if (ROLI.chat !== ч) return;
+    if (!r || !r.ok) { ч.err = (r && r.error) || 'Нет ответа.'; return ролиЧатРисовать(); }
+    var sig = JSON.stringify(r.msgs); ч.err = '';
+    if (sig !== ч.sig) { ч.sig = sig; ч.msgs = r.msgs; ролиЧатРисовать(); }
+  }).catch(function(e){ ч.тянем = false; if (ROLI.chat === ч) { ч.err = humanErr(e); ролиЧатРисовать(); } });
+}
+function ролиЧатРисовать(){
+  var ч = ROLI.chat, el = document.getElementById('rolmsgs'); if (!ч || !el) return;
+  var внизу = ч.вниз || el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  el.innerHTML = (ч.err ? '<p class="rolerr">' + esc(ч.err) + '</p>' : '') + (!ч.msgs ? (ч.err ? '' : '<p class="empt">Загружаю…</p>') : !ч.msgs.length ? '<p class="empt">Сообщений пока нет. Напишите первым.</p>' :
+    ч.msgs.map(function(m){ return '<div class="rolb ' + (m.me ? 'me' : 'them') + '"><p>' + esc(m.text) + '</p><small>' + ролиДата(m.at) + (m.me && m.seen ? ' · прочитано' : '') + '</small></div>'; }).join(''));
+  if (внизу) { el.scrollTop = el.scrollHeight; ч.вниз = false; }
+}
+document.addEventListener('click', function(e){
+  if (e.target.id === 'rolchatm' || e.target.id === 'rolchatclose') {
+    var m = document.getElementById('rolchatm'); if (m) m.classList.remove('show'); ROLI.chat = null; clearInterval(ROLI.chatT); ролиЗагрузить(); return;
+  }
+  if (e.target.id !== 'rolmsgsend' || !ROLI.chat) return;
+  var ч = ROLI.chat, поле = document.getElementById('rolmsg'), тх = поле ? поле.value.trim() : ''; if (!тх) return;
+  e.target.disabled = true;
+  fPost('/roli/chat', { uid: syncUid(), link: ч.link, text: тх }).then(function(){
+    e.target.disabled = false; if (поле) поле.value = ''; ч.вниз = true; haptic('light'); ролиЧатТянуть();
+  }).catch(function(er){ e.target.disabled = false; ч.err = er.message || humanErr(er); ролиЧатРисовать(); });
+});
+/* из бота: ?chat=<подключение> — открыть эту переписку, один раз */
+function ролиЧатПоСсылке(){
+  var id = ''; try { id = new URLSearchParams(location.search).get('chat') || ''; } catch (e) {}
+  if (!id || !ROLI.me) return;
+  try { var u = new URL(location.href); u.searchParams.delete('chat'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  var мой = ROLI.me.my.filter(function(x){ return x.id === id; })[0];
+  if (мой) return ролиЧатОткрыть(мой.id, мой.name || 'Специалист', 'modal');
+  var кл = ROLI.me.clients.filter(function(x){ return x.id === id; })[0];
+  if (кл) ролиКарточка(кл.client, 'chat');
+}
+
 /* ── подключение по ссылке специалиста: бот открывает приложение с ?pro=КОД ── */
 function ролиПоСсылке(){
   if (!ЕСТЬ('roli') || ROLI.join) return;
@@ -18597,7 +18680,12 @@ document.addEventListener('click', function(e){
     if (j.done || !возраст) gset('roli_kod', null);
     ROLI.join = null; if (j.done) ролиЗагрузить(); return;
   }
-  if (e.target.id === 'roljage') { var m2 = document.getElementById('roljm'); if (m2) m2.classList.remove('show'); ROLI.join = null; openProf(); return; }
+  if (e.target.id === 'roljage') {
+    var m2 = document.getElementById('roljm'); if (m2) m2.classList.remove('show'); ROLI.join = null; openProf();
+    /* 29.10: сразу поле возраста, а не профиль целиком */
+    setTimeout(function(){ var f = document.getElementById('mefields'), ed = document.getElementById('meedit'); if (f && f.hidden && ed) ed.click(); var a = document.getElementById('me-age'); if (a) a.focus(); }, 250);
+    return;
+  }
   var q = e.target.closest && e.target.closest('[data-parq]');
   if (q) { j.parq[+q.dataset.parq] = q.dataset.v === '1'; ролиПодключениеРисовать(); return; }
   if (e.target.id !== 'roljok' || j.busy || !j.r || (j.parq && j.parq.some(function(x){ return x === null; }))) return;
