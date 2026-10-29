@@ -8,7 +8,7 @@ const {chromium}=require('playwright'),M=require('./mock'),assert=require('node:
 (async()=>{const b=await chromium.launch();try{
  for(const width of [320,390]){
   const p=await b.newPage({viewport:{width,height:900}}),id='55555555-5555-5555-5555-555555555555';
-  const card='Подходит к цели (снижение веса): 9 из 10\nБелок ~42 из 50 г · жиры ~21 из 22 г\nУглеводы ~2 из 70 г · сахар ~2 из 16 г\n~374 из 700 ккал на приём. По справочнику GetFit (200–620 ккал за 220 г), рецепт ресторана может отличаться.';
+  const card='Подходит к цели (снижение веса): 9 из 10\nБелок ~42 из 50 г · жиры ~21 из 22 г\nУглеводы ~2 из 70 г · сахар ~2 из 16 г\n~374 из 700 ккал на приём. По справочнику Wellböl (200–620 ккал за 220 г), рецепт ресторана может отличаться.';
   const result={address:'Тестовая точка',note:'Меню «Подушечная» прочитано целиком.',venue:{name:'Подушечная',found:true},recommendations:[
    {name:'Шашлык из курицы',restaurant:'Podushechnaya',priceUZS:40000,restaurantURL:'https://eats.yandex.com/en-uz/r/pod',imageURL:'https://eda.yandex/images/t1.jpeg',reason:card,fit:{score:9,kcal:[374,700],prot:[42,50],fat:[21,22],carb:[2,70],sug:[2,16]}},
    {name:'Старое блюдо',restaurant:'Podushechnaya',priceUZS:30000,restaurantURL:'https://eats.yandex.com/en-uz/r/pod',imageURL:'https://eda.yandex/images/t2.jpeg',reason:'Оценка 200–450 ккал за 200 г; остаток дня 900 из 2000 ккал. Цель: снижение веса.'}]};

@@ -69,7 +69,7 @@ const быстро=p=>p.evaluate(()=>{window.__паузыОтправки=[30,30
   await p.locator('.plate').first().click();
   ok((await текст())==='Повторить'&&await p.locator('.plate.open .mwarn').count()===1,'рецепт: свернул и раскрыл — ошибка не стёрлась');
 
-  ответы=[{s:403,d:{error:'Бот закрыт — открой @GetFit_MyBot и нажми «Старт».',code:'tg_closed'}}];
+  ответы=[{s:403,d:{error:'Бот закрыт — открой @WellbolBot и нажми «Старт».',code:'tg_closed'}}];
   await btn().click();
   await until(()=>sent.length===4,'четвёртый запрос');await until(async()=>(await текст())==='Повторить','отказ tg_closed');
   ok(sent.length===4,'рецепт: бот закрыт — без автоповтора');

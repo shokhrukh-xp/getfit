@@ -84,8 +84,8 @@ function круг(o) {
   o = o || {};
   return {
     ok: true, today: TODAY, circle: 'family',
-    circles: [{ id: 'family', name: 'семья', n: 2, code: 'семья7', link: 'https://t.me/GetFit_MyBot?start=semya7', owner: true },
-              { id: 'c_zal', name: 'зал', n: 4, code: 'fit7788', link: 'https://t.me/GetFit_MyBot?start=fit7788', owner: false }],
+    circles: [{ id: 'family', name: 'семья', n: 2, code: 'семья7', link: 'https://t.me/WellbolBot?start=semya7', owner: true },
+              { id: 'c_zal', name: 'зал', n: 4, code: 'fit7788', link: 'https://t.me/WellbolBot?start=fit7788', owner: false }],
     board: [
       { uid: '308687648', name: 'Ты', me: true, days: ['ok', 'ok', 'low', 'ok', 'today', '', ''],
         avg: 7.9, ravg: 7.9, pts: 41, closed: false, today: { r: 8.4, closed: false, why: [{ t: 'недобрал белок', v: 1.6 }], n: 3, counts: true, going: true }, streak: 6, level: 2 },
@@ -397,7 +397,7 @@ async function поднять(page, o) {
        (например, вечерний разбор, написанный без человека) */
     if (p === '/chat')       return дать({ ok: true, chat: o.chat || [], intro: o.intro || '' });
     if (p === '/bot')        return дать({ ok: true, bot: o.bot === undefined ? true : o.bot,
-                                           link: 'https://t.me/GetFit_MyBot' });
+                                           link: 'https://t.me/WellbolBot' });
     if (p === '/goal') {
       /* границы безопасного отдаёт сервер — экран их только рисует.
          Мужчина 88,1 кг, сухая 63,8 → пол 70,9; предел темпа 0,88 кг/нед. */
@@ -455,7 +455,7 @@ async function поднять(page, o) {
        o.sub:'нет' поднимает стену. */
     if (p === '/sub') {
       if (o.sub === 'нет') return дать({ ok: true, stars: 500, link: 'https://t.me/$invoice_mock',
-        title: 'GetFit — тренер', about: 'Разбор еды по фото и словам, разговор с тренером, сборка программы и недельный разбор.',
+        title: 'Wellböl — тренер', about: 'Разбор еды по фото и словам, разговор с тренером, сборка программы и недельный разбор.',
         sub: { ok: false, kind: 'none', until: 0, stars: 500 }, бесплатно: o.бесплатно || { left: 3, of: 3, used: 0, calls: 0 } });
       if (o.sub === 'платит') return дать({ ok: true, stars: 500, link: null,
         sub: { ok: true, kind: 'sub', until: Date.now() + 18 * 864e5, canceled: false, stars: 500 } });
@@ -470,7 +470,7 @@ async function поднять(page, o) {
       const d = JSON.parse(route.request().postData() || '{}');
       (o.proLinks = o.proLinks || []).push(d);
       if (d.drop) return дать({ ok: true });
-      return дать({ ok: true, code: 'abc123xyz0', link: 'https://t.me/GetFit_MyBot?start=p_abc123xyz0', uses: d.uses, days: d.days });
+      return дать({ ok: true, code: 'abc123xyz0', link: 'https://t.me/WellbolBot?start=p_abc123xyz0', uses: d.uses, days: d.days });
     }
     /* приглашения и баллы. o.ref — что отдаёт сервер; по умолчанию ссылка
        есть, приглашённых нет, баллов нет. */
@@ -506,7 +506,7 @@ async function поднять(page, o) {
     if (p === '/admin/promo') return дать({ ok: true, code: 'новый', uses: 10 });
     if (p === '/ref') {
       const r = o.ref || {};
-      return дать({ ok: true, link: 'https://t.me/GetFit_MyBot?start=r_308687648',
+      return дать({ ok: true, link: 'https://t.me/WellbolBot?start=r_308687648',
         points: r.points || 0, earned: r.earned || 0, spent: r.spent || 0,
         perRef: 500, month: 500,
         people: r.people || [] });
@@ -526,7 +526,7 @@ async function поднять(page, o) {
     if (p === '/circle/new') {
       const b5 = JSON.parse(route.request().postData() || '{}');
       return дать({ ok: true, circle: { id: 'c_new', name: b5.name, code: 'fit4242',
-        link: 'https://t.me/GetFit_MyBot?start=fit4242', n: 1, owner: true } });
+        link: 'https://t.me/WellbolBot?start=fit4242', n: 1, owner: true } });
     }
     if (p === '/circle/leave' || p === '/circle/drop' || p === '/circle/rename' ||
         p === '/circle/del' || p === '/circle/unban' || p === '/circle/code' ||

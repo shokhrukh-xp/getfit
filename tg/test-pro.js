@@ -5,7 +5,7 @@
 const {chromium}=require('playwright'),M=require('./mock');
 let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)bad++;};
 const ME={sex:'m',age:34,ht:178,bw:88,goal:'fat',wt:'down',gym:'muscle',level:'mid',place:'gym',only:'all',lim:[],eq:[]};
-const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],link:'https://t.me/GetFit_MyBot?start=p_abc123xyz0'},
+const ПРО=[{code:'abc123xyz0',uses:2,used:1,days:30,кто:['Фируз'],link:'https://t.me/WellbolBot?start=p_abc123xyz0'},
            {code:'zzz',uses:1,used:1,days:0,кто:['Инна'],link:'x'},
            {code:'off1',uses:1,used:1,days:90,кто:['Пётр'],link:'x',off:1}];
 (async()=>{const b=await chromium.launch();try{
