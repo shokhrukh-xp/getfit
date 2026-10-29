@@ -741,6 +741,35 @@ td:first-child{color:var(--accent-txt);font-weight:500;white-space:nowrap}
 /* цвет — как был в конце дня (синий, как «+ Добавить упражнение»): просьба была только о месте */
 .sportlow .sportbtn{color:var(--accent-txt);border-color:var(--line)}
 .sptoday{margin:9px 2px 0;font-size:12px;color:var(--dim);line-height:1.5}
+/* 29.10, его снимок «Приёмы»: теннис стоял строкой среди еды, крестик съехал на отдельную
+   строку. По макету «Теннис и суперсеты» (его выбор A): занятие вне зала — одна аккуратная
+   строка: значок, что и сколько, «+542 к норме», крестик. На «Еде» — над приёмами, в
+   «Тренировке» — под упражнениями, у кнопки «+ Занятие вне зала». */
+.actrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto 44px;gap:10px;align-items:center;
+  background:var(--tint);border-radius:16px;padding:8px 6px 8px 10px;margin:0 0 8px}
+.actrow .actic{width:44px;height:44px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:22px;line-height:1}
+.actrow .actt{min-width:0}
+.actrow .actt b{display:block;font-size:15px;font-weight:700;color:var(--text);line-height:1.25}
+.actrow .actt small{display:block;font-size:12px;color:var(--muted);line-height:1.3}
+.actrow .actplus{text-align:right;font-weight:800;font-size:17px;color:var(--accent-txt);font-variant-numeric:tabular-nums;line-height:1.1}
+.actrow .actplus small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+.actrow .actx{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer}
+.factlist:empty{display:none}
+.factlist{margin:4px 0 6px}
+#sporttoday:empty{display:none}
+#sporttoday{margin:0 0 10px}
+/* 29.10, его слова: «суперсэты нужно более понятнее показать — может выделять их отдельной
+   рамкой или цветом». Выбор по макету — A: пара в рамке с подложкой, заголовок «Суперсет N»,
+   метки 1А/1Б; у соседних пар разный цвет. */
+.ssbox{--ssc:var(--accent);--ssbg:var(--tint);border-radius:18px;padding:2px 8.5px 4px;margin:8px -10px;
+  background:var(--ssbg);background:color-mix(in srgb,var(--ssc) 9%,var(--card));border:1.5px solid color-mix(in srgb,var(--ssc) 38%,transparent)}
+.ssbox.ss2{--ssc:var(--sand-txt);--ssbg:var(--sand-bg)}
+.ssboxh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;padding:9px 2px 2px;font-size:12px}
+.ssboxh b{font-weight:800;color:var(--ssc)}
+.ssboxh span{color:var(--muted)}
+.ssbox:has(.sscard) > .ssboxh{display:none}
+#list .ssbox .sstag{background:color-mix(in srgb,var(--ssc) 16%,var(--card));color:var(--ssc);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ssc) 55%,transparent);font-weight:800;width:auto;min-width:22px;padding:0 6px;margin-right:6px;vertical-align:1px}
+.ssbox .card.exact.sscard{margin:6px -6px 4px}
 .actcard{border-color:rgba(var(--done-rgb),.35)}
 .acthead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .actcard .eyebrow{color:var(--done-txt)}
@@ -2007,6 +2036,17 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
   text-align:right;flex:0 1 auto;max-width:58%;line-height:1.5;font-variant-numeric:tabular-nums}
 /* ── суперсет одной карточкой ── */
 .sscard{border-color:rgba(var(--done-rgb),.35)}
+.ssgrp{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+.sslist .ebtn.sspart{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;min-height:64px;padding:6px 10px}
+.mvph{margin:0 0 12px;border-radius:14px;overflow:hidden;background:var(--tint)}
+.mvph img{display:block;width:100%;max-height:240px;object-fit:cover}
+.sslist .sspart .exthumb{pointer-events:none;order:-1;width:52px;height:52px!important;min-height:0!important;align-self:center;overflow:hidden;border-radius:10px;background:var(--field)}
+.sslist .sspart .exthumb .fig2,.sslist .sspart .exthumb .fig{width:52px!important;height:52px!important;max-width:52px;aspect-ratio:auto;border:0;border-radius:10px;flex:none}
+.sslist .sspart .ssnm{font-weight:700;line-height:1.25}
+.sslist .sspart small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+.sslist .sspart em{font-style:normal;font-size:12px;font-weight:800;color:var(--accent-txt);background:var(--tint);border-radius:99px;padding:3px 8px;white-space:nowrap}
+.sslist .sspart.near{border-color:var(--accent-txt)}
+.sscat{width:100%;margin-top:8px;border-style:dashed}
 .sshead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:-2px 0 12px;
   font-size:12px;color:var(--dim);line-height:1.4}
 .sshead b{font-family:inherit;font-size:12px;
@@ -4583,7 +4623,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
         <div class="food-day-shell">
         <div class="fgaps" id="fgaps" hidden></div>
         <div class="fday" id="fday"></div>
-        <div class="group fmealgroup"><h3 id="fmealhead">Приёмы</h3>
+        <div class="group fmealgroup"><div class="factlist" id="facts"></div><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
         <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов тренеру</small></button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
@@ -4907,6 +4947,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
     <!-- 24.09, его просьба: по нажатию на запись — почему такая оценка и что
          было бы лучше, а правка — кнопкой «Изменить». Одна шторка, два вида. -->
     <div id="ml-view" hidden>
+      <div class="mvph" id="mv-ph" hidden></div>
       <p class="mvtext" id="mv-text"></p>
       <div class="pz" id="mv-razbor" hidden></div>
       <div class="btnrow">
@@ -5051,7 +5092,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
     <div class="sbrow"><span class="sblab">Где</span><div class="seg" id="sb-place"></div></div>
     <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">Что есть дома</span><div class="seg multi" id="sb-eq"></div></div>
     <div class="sbrow"><span class="sblab">Упор</span><div class="seg multi" id="sb-focus"></div>
-      <p class="sbhint">Выбранным — 12–16 подходов в неделю, остальным 6–8 на удержание</p></div>
+      <p class="sbhint">Выбранным — от 10 подходов в неделю, остальным 3–5 тяжёлых: держим, не теряем</p></div>
     <!-- 29.10, фазы программы (его «Да, делай» по макету): только при «всё тело» и нехватке времени -->
     <div class="sbrow" id="sb-cycrow" hidden><span class="sblab">Как растить</span>
       <div class="cycmath" id="sb-cycmath"></div>
@@ -6261,7 +6302,7 @@ function openCatalog(ctx){
   catMuscle = (ctx && ctx.muscle) || '';
   var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
-  if(t) t.textContent = (ctx&&ctx.quick) ? 'Варианты замены' : (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
+  if(t) t.textContent = (ctx&&ctx.quick) ? 'Варианты замены' : (ctx && ctx.pairWith) ? 'В пару к «'+ctx.pairName+'»' : (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
   var s=document.getElementById('catsearch'); if(s) s.value='';
   document.getElementById('catbody').innerHTML='<p class="mtext">Загружаю каталог…</p>';
   var повтор='<button type="button" class="btn wide" data-catretry="1">Повторить</button>';
@@ -6541,9 +6582,13 @@ function renderCatalog(){
       if(on.offsetLeft+on.offsetWidth>r.clientWidth) r.scrollLeft=on.offsetLeft-40;
     });
   }
-  var list=catFiltered();if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
+  var list=catFiltered();
+  /* пара к базовому: базовые не показываем вовсе, чтобы не было холостых нажатий */
+  if(catCtx && catCtx.pairBase) list=list.filter(function(x){ return x.mc!=='c'; });
+  if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
   var lim=catShown, shown=list.slice(0,lim);
   var h = onPage ? '' : pickGroupChips()+catGearHtml();
+  if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
   if(catCtx && !catCtx.add && !catCtx.draft){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
@@ -9742,7 +9787,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 09:40';
+var BUILD = '29.10 10:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -10947,24 +10992,22 @@ document.getElementById('dur-save').addEventListener('click', function(){
    столько же. Карточка на том же языке, что и остальной день: надкласс,
    название крупно, под ним чем оно было, и отдельной строкой — что оно дало. */
 var ИНТЕНС={light:'легко', mod:'обычно', hard:'тяжело'};
+var СПОРТ_ЗНАК={'теннис':'🎾','бег':'🏃','ходьба':'🚶','прогулка':'🚶','плавание':'🏊','велосипед':'🚴','футбол':'⚽','бадминтон':'🏸',
+  'сквош':'🎾','падел':'🎾','йога':'🧘','танцы':'💃','гребля':'🚣','лыжи':'⛷️','коньки':'⛸️','бокс':'🥊','баскетбол':'🏀','волейбол':'🏐'};
+/* одна строка занятия для «Еды» и «Тренировки» (29.10, его выбор A по макету) */
+function actRowHtml(a){
+  var имя=String(a.kind||'занятие'), к=имя.toLowerCase();
+  return '<div class="actrow" data-aid="'+esc(a.id)+'"><span class="actic" aria-hidden="true">'+(СПОРТ_ЗНАК[к]||'⚡')+'</span>'+
+    '<span class="actt"><b>'+esc(имя.charAt(0).toUpperCase()+имя.slice(1))+'</b><small>'+a.min+' мин'+(ИНТЕНС[a.intensity]?' · '+ИНТЕНС[a.intensity]:'')+
+      (a.hr?' · пульс '+a.hr:'')+'</small></span>'+
+    '<span class="actplus">+'+Math.round(a.kcal||0)+'<small>к норме</small></span>'+
+    '<button type="button" class="actx" data-actdel="'+esc(a.id)+'" aria-label="Убрать занятие: '+esc(имя)+'">✕</button></div>';
+}
 function spToday(){
   var el=document.getElementById('sporttoday'); if(!el) return;
   var сп=SPTODAY;
   if(!сп || !сп.length){ el.innerHTML=''; return; }
-  el.innerHTML=сп.map(function(a){
-    var имя=String(a.kind||'занятие');
-    return '<article class="card actcard">'+
-      '<div class="acthead">'+
-        '<div class="actt"><span class="eyebrow">вне зала</span>'+
-          '<span class="exname">'+esc(имя.charAt(0).toUpperCase()+имя.slice(1))+'</span>'+
-          '<span class="spec">'+a.min+' мин'+(ИНТЕНС[a.intensity]?' <span>·</span> '+ИНТЕНС[a.intensity]:'')+
-            (a.t?' <span>·</span> '+esc(String(a.t).slice(0,5)):'')+'</span></div>'+
-        '<button type="button" class="xbtn" data-actdel="'+esc(a.id)+'" aria-label="Убрать занятие">✕</button>'+
-      '</div>'+
-      '<div class="actgain"><b>+'+Math.round(a.kcal)+' ккал</b> к норме еды сегодня'+
-        (a.met?' <i>· MET '+String(a.met).replace('.',',')+'</i>':'')+'</div>'+
-    '</article>';
-  }).join('');
+  el.innerHTML=сп.map(actRowHtml).join('');
 }
 /* убрать занятие можно там же, где оно показано: искать его на «Еде» ради
    крестика человек не должен */
@@ -11200,19 +11243,18 @@ function renderList(){
      пара жила в двух отдельных карточках с текстовой пометкой: было непонятно,
      что с чем связано, и приходилось прыгать между карточками, чтобы вписать
      подход. Теперь пара рисуется одной карточкой кругами: А, Б, отдых. */
-  var занято={};
+  var занято={}, ssN=0;
   список.forEach(function(e,di){
     if(занято[di]) return;
     var pdi=-1;
     if(e.ss) for(var i=0;i<список.length;i++) if(i!==di && список[i].ss===e.ss){ pdi=i; break; }
-    if(pdi>=0){ занято[pdi]=1; h+=ssCard(e,di,список[pdi],pdi); return; }
+    if(pdi>=0){ занято[pdi]=1; ssN++; h+=ssBox(e,di,список[pdi],pdi,ssN); return; }
     h += одна(e,di);
   });
   var пр=dayEdits(day);
   /* Занятия вне зала — часть сегодняшнего дня, поэтому карточками ДО кнопок,
      вместе с упражнениями, а не подписью под ними. */
-  h+='<div id="sporttoday"></div>'+
-     '<div class="dayedit">'+
+  h+='<div class="dayedit">'+
      '<div class="dayedit-actions"><button type="button" class="btn" id="addex">+ Добавить упражнение</button><button type="button" class="btn" id="ordopen">Порядок</button></div>'+
      (пр.skip||пр.add||пр.pair ? '<p class="dayeditn">В этом дне '+
         [пр.add?'добавлено '+пр.add:'', пр.skip?'убрано '+пр.skip:'', пр.pair?'своих суперсетов '+пр.pair:'']
@@ -11226,7 +11268,8 @@ function renderList(){
      в конце дня зала. 24.09 он же: рядом с «+ Добавить упражнение» путается,
      поэтому — под «Завершить и сохранить». */
   var sl=document.getElementById('sportlow');
-  if(sl) sl.innerHTML=
+  /* 29.10: записанные занятия — строкой здесь, у кнопки, а не среди упражнений (его выбор по макету) */
+  if(sl) sl.innerHTML='<div id="sporttoday"></div>'+
      '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
      '<p class="sptoday">Теннис, бег, прогулка — поднимает норму еды.</p>';   /* 23.10: короче; подпись — его решение 24.09 «с подписью» (test-sport) */
   /* дорожка в шапке считает закрытые подходы — она меняется вместе со списком */
@@ -11452,10 +11495,10 @@ function одна(e,di){
      adviceLine(e)+ разминкаHTML(e,di)+ setGrid(e,di)+ низКарточки(e,di)+ ssMakeHtml(e,di)+
    '</article>';
 }
-/* «Суперсет с…» — только когда есть с кем: в дне есть упражнение без пары */
+/* «Суперсет с…» — у любого упражнения без пары: партнёр найдётся в дне
+   или в каталоге (29.10 добавлен каталог с картинками) */
 function ssMakeHtml(e,di){
-  var есть=exList(day).some(function(x,i){ return i!==di && !x.ss; });
-  if(!есть) return '';
+  if(e.ss) return '';
   return '<button type="button" class="ebtn ssmk" data-ssmake="'+di+'" aria-expanded="false">Суперсет с…</button>'+
          '<div class="ssmake" id="ssmake'+di+'" hidden></div>';
 }
@@ -11468,19 +11511,53 @@ function ssMakeOpen(btn){
   /* базовое или нет — знает каталог; без него список всё равно покажем */
   loadCatalog().catch(function(){}).then(function(){ ssMakeList(di); });
 }
+/* 29.10, его слова: «когда я хочу добавить суперсет, я обычно хочу его
+   соединить с следующим или предыдущим упражнением, или с каким-то, который
+   уже есть в этом дне. А если из каталога — то с картинками». Поэтому
+   сначала «Рядом» (перед / после), потом остальные в дне, потом каталог.
+   Каждая строка — с той же миниатюрой, что в списке дня. */
 function ssMakeList(di){
   var box=document.getElementById('ssmake'+di); if(!box) return;
   var сп=exList(day), e=сп[di]; if(!e) return;
   var база=базовое(e), нельзя=0;
-  var кн=сп.map(function(x,i){
-    if(i===di || x.ss) return '';
+  function кн(x,i,метка){
     var обе = база && базовое(x); if(обе) нельзя++;
-    return '<button type="button" class="ebtn sspart" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
-           '<span class="ssnm">'+esc(x.n)+'</span>'+(обе?'<i>тоже базовое</i>':'')+'</button>';
-  }).join('');
+    return '<button type="button" class="ebtn sspart'+(метка?' near':'')+'" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
+           '<span class="ssnm">'+esc(x.n)+'<small>'+esc(мышцаГлавная(x)||x.p||'')+'</small></span>'+
+           (обе?'<i>тоже базовое</i>':(метка?'<em>'+метка+'</em>':''))+
+           '<span class="exthumb sm" aria-hidden="true">'+mediaFor(x)+'</span></button>';
+  }
+  var можно=function(i){ return i>=0 && i<сп.length && i!==di && !сп[i].ss; };
+  var рядом=[], ещё=[];
+  if(можно(di-1)) рядом.push(кн(сп[di-1],di-1,'↑ перед'));
+  if(можно(di+1)) рядом.push(кн(сп[di+1],di+1,'↓ после'));
+  сп.forEach(function(x,i){ if(можно(i) && i!==di-1 && i!==di+1) ещё.push(кн(x,i,'')); });
   box.innerHTML='<p class="ssq">С чем делать по кругу — без отдыха между ними?</p>'+
-    '<div class="sslist">'+кн+'</div>'+
-    (нельзя?'<p class="ssnote">Две базовые в пару не ставим — как у тренера: сила на таком суперсете растёт хуже.</p>':'');
+    (рядом.length?'<div class="ssgrp">Рядом</div><div class="sslist">'+рядом.join('')+'</div>':'')+
+    (ещё.length?'<div class="ssgrp">Ещё в этом дне</div><div class="sslist">'+ещё.join('')+'</div>':'')+
+    (нельзя?'<p class="ssnote">Две базовые в пару не ставим — как у тренера: сила на таком суперсете растёт хуже.</p>':'')+
+    '<button type="button" class="ebtn sscat" data-sscat="'+di+'">+ Из каталога — с картинками</button>';
+}
+/* новое упражнение из каталога сразу в пару к открытому */
+function ssFromCatalog(di){
+  var e=exList(day)[di]; if(!e) return;
+  openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e)});
+}
+function ssCatalogPicked(ctx, item){
+  if(ctx.pairBase && item.mc==='c'){
+    paintNote('Две базовые в пару не ставим — выберите что-то полегче'); haptic('medium'); return false;
+  }
+  var было=(EXTRA[day]||[]).length;
+  addEx(item);
+  var x=(EXTRA[day]||[])[было]; if(!x) return true;
+  var сп=exList(day), ia=-1, ib=-1;
+  сп.forEach(function(q,i){ if(q.k===ctx.pairWith) ia=i; if(q.k===day+':x'+(x.id||было)) ib=i; });
+  if(ia<0 || ib<0) return true;
+  sess.cur=ia; EXPICK=true; renderList();
+  var btn=document.querySelector('button[data-ssmake="'+ia+'"]'), box=document.getElementById('ssmake'+ia);
+  if(btn && box){ btn.setAttribute('aria-expanded','true'); box.hidden=false; ssMakeWhen(ia, ib);
+    try{ box.scrollIntoView({block:'center'}); }catch(e){} }
+  return true;
 }
 function ssMakeWhen(di, pi){
   var box=document.getElementById('ssmake'+di); if(!box) return;
@@ -11508,9 +11585,22 @@ function ssBreak(di){
 /* Суперсет по той же модели: раскрыто то упражнение круга, которое делаешь
    сейчас, партнёр — свёрнутой строкой под ним. Пара целиком не в работе —
    обе строки свёрнуты. Круг = номер подхода у обоих. */
-function ssCard(a,dia,b,dib){
+/* 29.10, его выбор A: пара — в цветной рамке с номером. Две пары подряд
+   были неотличимы — у обеих «А» и «Б», и не видно, где кончается одна и
+   начинается другая. Теперь «Суперсет 1» (1А, 1Б), «Суперсет 2» (2А, 2Б),
+   а рамки чередуют цвет. Раскрытая пара показывает свою шапку внутри
+   карточки, поэтому заголовок рамки тогда прячет CSS. */
+function ssBox(a,dia,b,dib,n){
+  var отдых=Math.max(a.rest,b.rest), кругов=Math.max(setsFor(a,dia), setsFor(b,dib));
+  return '<div class="ssbox ss'+(n%2?1:2)+'" data-ssn="'+n+'">'+
+    '<div class="ssboxh"><b>Суперсет '+n+'</b><span>'+кругов+' '+plural(кругов,['круг','круга','кругов'])+
+      ' · отдых '+Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга'+(a.свой==='сегодня'?' · только сегодня':'')+'</span></div>'+
+    ssCard(a,dia,b,dib,n)+'</div>';
+}
+function ssCard(a,dia,b,dib,n){
+  n=n||'';
   var act=раскрытыйEx(), отдых=Math.max(a.rest,b.rest);
-  if(act!==dia && act!==dib) return exRow(a,dia,'А')+exRow(b,dib,'Б');
+  if(act!==dia && act!==dib) return exRow(a,dia,n+'А')+exRow(b,dib,n+'Б');
   var первый = act===dia;
   var e=первый?a:b, di=act, o=первый?b:a, odi=первый?dib:dia;
   var кругов=Math.max(setsFor(a,dia), setsFor(b,dib));
@@ -11521,10 +11611,10 @@ function ssCard(a,dia,b,dib){
     '<button type="button" data-cyc="1" data-a="'+dia+'" data-b="'+dib+'"'+
     (кругов>=8?' disabled':'')+' aria-label="Добавить круг">+</button></div>';
   return '<article class="card exact sscard'+(готово?' full':'')+'">'+
-    '<div class="sshead"><b>суперсет</b>между А и Б не отдыхаете, отдых '+
+    '<div class="sshead"><b>суперсет '+n+'</b>между '+n+'А и '+n+'Б не отдыхаете, отдых '+
       Math.floor(отдых/60)+':'+pad2(отдых%60)+' после круга'+(a.свой==='сегодня'?' · только сегодня':'')+'</div>'+
-    шапка(e,di,первый?'А':'Б')+ lastLine(e)+ adviceLine(e)+ setGrid(e,di,круги)+
-    exRow(o,odi,первый?'Б':'А')+
+    шапка(e,di,n+(первый?'А':'Б'))+ lastLine(e)+ adviceLine(e)+ setGrid(e,di,круги)+
+    exRow(o,odi,n+(первый?'Б':'А'))+
     ssFoot(a,dia,b,dib)+
   '</article>';
 }
@@ -14840,6 +14930,7 @@ document.getElementById('catalog').addEventListener('click', function(e){
   var p=e.target.closest('button[data-pick]');
   if(p && catCtx && CAT){
     if(catCtx.draft){ aiЧерновикВыбрать(catCtx, CAT.ex[+p.dataset.pick]); closeCatalog(); return; }
+    if(catCtx.add && catCtx.pairWith){ var кк=catCtx; if(ssCatalogPicked(кк, CAT.ex[+p.dataset.pick])!==false) closeCatalog(); return; }
     if(catCtx.add){ addEx(CAT.ex[+p.dataset.pick]); closeCatalog(); return; }
     var вещь = CAT.ex[+p.dataset.pick];
     /* выбрал руками — значит, это уже не «не моё»: снимаем отказ, иначе в
@@ -14920,6 +15011,8 @@ document.getElementById('list').addEventListener('click', function(e){
   if(wub){ wuЖми(wub); return; }
   var smk=e.target.closest('button[data-ssmake]');
   if(smk){ ssMakeOpen(smk); haptic('light'); return; }
+  var scat=e.target.closest('button[data-sscat]');
+  if(scat){ ssFromCatalog(+scat.dataset.sscat); haptic('light'); return; }
   var spt=e.target.closest('button[data-sspart]');
   if(spt){ if(!spt.disabled){ ssMakeWhen(+spt.dataset.ssof, +spt.dataset.sspart); haptic('light'); } return; }
   var swn=e.target.closest('button[data-sswhen]');
@@ -19373,12 +19466,9 @@ function renderFoodDay(){
   var оцП={};
   if(DAYSC && DAYSC.date===fDate() && DAYSC.приёмы) DAYSC.приёмы.forEach(function(p){ оцП[p.id]=p; });
   /* 07.10: строк «план · теннис ✓ ×» нет — спорт по расписанию не спрашиваем */
-  ml.innerHTML = (d.acts||[]).map(function(a){
-    return '<div class="fmeal fact" data-aid="'+a.id+'"><span class="fk">спорт</span><span class="ft">'+esc(a.kind)+' · '+a.min+' мин'+
-           (a.intensity==='hard'?' · тяжело':a.intensity==='light'?' · легко':'')+(a.hr?' · пульс '+a.hr:'')+(a.note?'<i class="dim"> — '+esc(String(a.note).slice(0,60))+'</i>':'')+'</span>'+
-           '<span class="fn"><b>+'+Math.round(a.kcal)+'</b> ккал<i>к норме</i></span>'+
-           '<button type="button" class="fx" data-adel="'+a.id+'" aria-label="Убрать">×</button></div>';
-  }).join('') + (d.meals||[]).map(function(m){
+  /* 29.10: спорт — не приём еды: отдельной строкой над «Приёмами» (его выбор A по макету) */
+  var фк=document.getElementById('facts'); if(фк) фк.innerHTML=(d.acts||[]).map(actRowHtml).join('');
+  ml.innerHTML = (d.meals||[]).map(function(m){
     /* фото приёма — первым: на часах день человек узнаёт по снимкам, и список
        за тот же день обязан выглядеть так же. Имя приёма ушло подписью над
        текстом, чтобы строка не росла третьей колонкой */
@@ -19740,6 +19830,10 @@ function openMealView(m){
   var p = (DAYSC && DAYSC.date===fDate() && DAYSC.приёмы || []).filter(function(x){ return String(x.id)===String(m.id); })[0];
   var вид = (m.kind ? m.kind.charAt(0).toUpperCase()+m.kind.slice(1) : 'Приём') + (m.t ? ' · '+m.t : '');
   document.getElementById('mealtitle').textContent = вид;
+  /* 29.10: в шторке приёма не было снимка — а по нему и вспоминаешь, что
+     это была за тарелка. Тот же снимок, что в списке, во всю ширину. */
+  var фото=document.getElementById('mv-ph');
+  if(фото){ фото.innerHTML = m.img ? '<img '+photoAttr(m.img,false,true)+' alt="Фото приёма">' : ''; фото.hidden=!m.img; }
   document.getElementById('mv-text').innerHTML = esc(m.text||'')+'<small>'+Math.round(m.kcal||0)+' ккал · белок '+Math.round(m.prot||0)+' г'+
     (m.fat!=null?' · жир '+Math.round(m.fat)+' г':'')+(m.fib!=null?' · клетчатка '+Math.round(m.fib)+' г':'')+'</small>';
   var box = document.getElementById('mv-razbor'), html = разборHtml(p);

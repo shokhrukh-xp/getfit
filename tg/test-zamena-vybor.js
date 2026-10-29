@@ -200,7 +200,7 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
     await page.waitForSelector('#coachreco .ropt', { timeout: 4000 }).catch(() => {});
     if (раскрыть !== null) { await page.click('#list [data-pickex="' + раскрыть + '"]').catch(() => {}); await page.waitForTimeout(400); }
     const з = await page.evaluate(() => [...document.querySelectorAll('#list .swapping')].map(e => (e.querySelector('.exrn b, .exname') || {}).textContent || ''));
-    дано(з.length === 1 && /^(А|A)?\s*Подъём через сторону \(гантели, сбоку\)$/.test(з[0].trim()), 'суперсет, раскрыто ' + раскрыть + ': зачёркнуты только махи: ' + JSON.stringify(з));
+    дано(з.length === 1 && /^(\d?[АA])?\s*Подъём через сторону \(гантели, сбоку\)$/.test(з[0].trim()), 'суперсет, раскрыто ' + раскрыть + ': зачёркнуты только махи: ' + JSON.stringify(з));
     const подпись = await page.$eval('#coachreco .rinl>u', e => e.textContent).catch(() => '');
     дано(раскрыть === null || /«Подъём через сторону/.test(подпись) || з.length === 1, 'в раскрытой паре карточка называет, что меняем: ' + подпись);
     await page.close();
