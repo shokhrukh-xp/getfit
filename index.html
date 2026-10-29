@@ -3782,6 +3782,9 @@ body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;he
 .l1{left:12px;right:12px;bottom:calc(10px + var(--pad-bottom));padding-bottom:0;border-radius:26px;
   background:var(--navbg);border:0;box-shadow:0 14px 30px rgba(11,79,90,.30);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 :root[data-theme="dark"] .l1{box-shadow:0 0 0 1px #1C3437,0 14px 30px rgba(0,0,0,.6)}
+/* 29.10: пока открыта клавиатура, панель разделов не висит над ней и не закрывает поля (kbВидно) */
+body.kbopen .l1{display:none}
+body.kbopen .page::after{content:"";display:block;height:45vh}
 .l1-in{max-width:616px}
 .l1 button{min-height:64px;color:rgba(255,255,255,.62);font-weight:700;font-size:11.5px}
 .l1 button[aria-selected="true"]{color:#fff}
@@ -9691,7 +9694,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 07:45';
+var BUILD = '29.10 08:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19943,6 +19946,64 @@ function sheetViewport(){
 window.addEventListener('resize',sheetViewport);
 if(window.visualViewport){ window.visualViewport.addEventListener('resize',sheetViewport); window.visualViewport.addEventListener('scroll',sheetViewport); }
 sheetViewport();
+/* 29.10, его снимок 07:54 в тренировке: «Когда я вписываю подходы, часть экрана с полями постоянно
+   уходит за клавиатуру. Её можно всегда держать выше клавиатуры?» iOS докручивает поле ровно до
+   верха клавиатуры, а там висит плавающая панель разделов (64 px) — она и закрывала строки
+   подходов. Теперь, пока открыта клавиатура (фокус в поле ввода), панель разделов убрана
+   (body.kbopen), а поле вместе со своей строкой и следующей докручивается в свободную часть
+   экрана: над клавиатурой и над тем, что ещё висит внизу (таймер отдыха, строка ввода). Внизу
+   страницы на это время — запас высоты, иначе последнему подходу некуда подняться.
+   Поле внутри самой нижней панели (строка «Еда или вопрос», чат) не трогаем: оно и так у клавиатуры. */
+var KB_ТИПЫ=/^(text|number|tel|email|search|url|password|date|time|datetime-local|month|week)$/;
+function kbПоле(el){
+  if(!el||!el.tagName) return false;
+  if(el.isContentEditable||el.tagName==='TEXTAREA') return true;
+  return el.tagName==='INPUT' && KB_ТИПЫ.test(el.type||'text') && !el.readOnly && !el.disabled;
+}
+function kbНизЭкрана(el){
+  var v=window.visualViewport, низ=v?(v.offsetTop+v.height):window.innerHeight;
+  ['.timer','.hbar','#undolist'].forEach(function(sel){
+    Array.prototype.forEach.call(document.querySelectorAll(sel),function(b){
+      if(b.contains(el)) return;
+      var cs=getComputedStyle(b); if(cs.display==='none'||cs.visibility==='hidden') return;
+      var r=b.getBoundingClientRect(); if(r.height<1||r.top>=низ||r.bottom<=0||r.top<низ*0.4) return;
+      if(sel==='#undolist'&&!b.children.length) return;
+      низ=Math.min(низ,r.top);
+    });
+  });
+  return низ;
+}
+function kbПрокрутка(el){
+  for(var a=el.parentElement;a&&a!==document.body&&a!==document.documentElement;a=a.parentElement){
+    var o=getComputedStyle(a).overflowY; if((o==='auto'||o==='scroll')&&a.scrollHeight>a.clientHeight+1) return a;
+  }
+  return null;
+}
+function kbВидно(){
+  var el=document.activeElement; if(!kbПоле(el)) return;
+  if(el.closest('.l1,.hbar,.timer,.chatask')) return;   /* у них свой порядок у клавиатуры (sheetViewport) */
+  var row=el.closest('.setrow')||el, r=row.getBoundingClientRect();
+  var след=row.nextElementSibling, запас=12+((row.classList&&row.classList.contains('setrow')&&след)?Math.min(след.getBoundingClientRect().height,72):0);
+  var v=window.visualViewport, верх=(v?v.offsetTop:0)+8, низ=kbНизЭкрана(el)-запас, сдвиг=0;
+  if(r.bottom>низ) сдвиг=Math.ceil(r.bottom-низ);   /* целые пиксели: прокрутка дробную часть теряет */
+  else if(r.top<верх) сдвиг=r.top-верх;
+  if(Math.abs(сдвиг)<2) return;
+  var box=kbПрокрутка(row);
+  if(box) box.scrollTop+=сдвиг; else window.scrollBy(0,сдвиг);
+}
+var KB_Т=null;
+function kbСостояние(){
+  clearTimeout(KB_Т);
+  /* уход из поля — с паузой: переход из «кг» в «повторы» не должен мигать панелью */
+  KB_Т=setTimeout(function(){
+    var on=kbПоле(document.activeElement);
+    document.body.classList.toggle('kbopen',on);
+    if(on){ kbВидно(); setTimeout(kbВидно,320); }
+  },kbПоле(document.activeElement)?0:120);
+}
+document.addEventListener('focusin',kbСостояние,true);
+document.addEventListener('focusout',kbСостояние,true);
+if(window.visualViewport) window.visualViewport.addEventListener('resize',function(){ if(document.body.classList.contains('kbopen')) requestAnimationFrame(kbВидно); });
 /* 07.10: запись еды наследует день «Еды», обычная вкладка — сегодня.
    Неотправленные текст/фото хранятся отдельно по датам внутри этого захода. */
 function chatSendState(){
