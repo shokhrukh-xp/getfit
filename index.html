@@ -7813,6 +7813,8 @@ function wzApply(){
   /* 15.10: первое знакомство кончается на «Сегодня», где ждёт «С чего начнём?»,
      а не в зале — иначе карточку новичок не видит */
   if(первый){ try{ goPage('home'); renderStartCard(); }catch(e){} }
+  /* 29.10, роли: новичок пришёл по ссылке тренера — после знакомства (возраст есть) лист подключения возвращается */
+  try{ ролиПоказ(); }catch(e){}
 }
 function wzReset(){
   aiDraftClear();
@@ -9584,7 +9586,9 @@ document.getElementById('voicenudge').addEventListener('click', function(e){
   голосЗадать(b.dataset.voice); try{ fillMe(); }catch(_){} renderVoiceNudge(); haptic('medium');
 });
 document.getElementById('onbbar').addEventListener('click', function(){if(aiDraftData().draft.length)aiDraftResume();else showPicker(true);haptic('light');});
-function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show'); }
+function closeProf(){ aiStop(); var m=document.getElementById('profm'); if(m) m.classList.remove('show');
+  /* 29.10, роли: указал возраст по просьбе листа «Подключить специалиста» — лист возвращается */
+  try{ ролиПоказ(); }catch(e){} }
 function renderProfProg(){
   var el=document.getElementById('pfprog'); if(!el||!PROF) return;
   /* имя программы само по себе путало («Набор формы» читалось как набор
@@ -18410,9 +18414,17 @@ document.addEventListener('click', function(e){
 function ролиПоСсылке(){
   if (!ЕСТЬ('roli') || ROLI.join) return;
   var код = ''; try { код = new URLSearchParams(location.search).get('pro') || ''; } catch (e) {}
-  if (!/^[A-Za-z0-9]{6,12}$/.test(код)) return;
-  /* один раз: после перезагрузки лист сам не всплывает */
-  try { var u = new URL(location.href); u.searchParams.delete('pro'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  if (/^[A-Za-z0-9]{6,12}$/.test(код)) {
+    /* код — из адреса один раз (после перезагрузки лист сам не всплывает), но помним его:
+       живая проверка 29.10 — новичок по ссылке тренера упирается в «укажите возраст»
+       и уходит в знакомство; после него лист должен вернуться */
+    gset('roli_kod', код.toUpperCase());
+    try { var u = new URL(location.href); u.searchParams.delete('pro'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  } else {
+    код = gget('roli_kod', '') || '';
+    /* отложенный код возвращаем, только когда возраст уже указан — иначе лист всплывал бы на каждом шаге */
+    if (!/^[A-Za-z0-9]{6,12}$/.test(код) || !(+((myData() || {}).age) >= 18)) return;
+  }
   ROLI.join = { code: код.toUpperCase(), r: null, err: '', busy: false, done: false, replace: false };
   var m = document.getElementById('roljm'); if (m) m.classList.add('show');
   ролиПодключениеРисовать();
@@ -18435,11 +18447,17 @@ function ролиПодключениеРисовать(){
 }
 document.addEventListener('click', function(e){
   var j = ROLI.join; if (!j) return;
-  if (e.target.id === 'roljm' || e.target.id === 'roljclose') { var m = document.getElementById('roljm'); if (m) m.classList.remove('show'); if (j.done) ролиЗагрузить(); return; }
-  if (e.target.id === 'roljage') { var m2 = document.getElementById('roljm'); if (m2) m2.classList.remove('show'); openProf(); return; }
+  var возраст = j.age || (j.r && j.r.code === 'need_age');
+  if (e.target.id === 'roljm' || e.target.id === 'roljclose') {
+    var m = document.getElementById('roljm'); if (m) m.classList.remove('show');
+    /* «Не сейчас» — код забываем; только упёрлись в возраст — помним до знакомства */
+    if (j.done || !возраст) gset('roli_kod', null);
+    ROLI.join = null; if (j.done) ролиЗагрузить(); return;
+  }
+  if (e.target.id === 'roljage') { var m2 = document.getElementById('roljm'); if (m2) m2.classList.remove('show'); ROLI.join = null; openProf(); return; }
   if (e.target.id !== 'roljok' || j.busy || !j.r) return;
   j.busy = true; j.err = ''; ролиПодключениеРисовать();
-  fPost('/roli/join', { uid: syncUid(), code: j.code, consent: j.r.ver, replace: j.replace }).then(function(){ j.busy = false; j.done = true; haptic('ok'); ролиПодключениеРисовать(); })
+  fPost('/roli/join', { uid: syncUid(), code: j.code, consent: j.r.ver, replace: j.replace }).then(function(){ j.busy = false; j.done = true; gset('roli_kod', null); haptic('ok'); ролиПодключениеРисовать(); })
     .catch(function(er){
       j.busy = false; j.err = er.message || humanErr(er);
       if (er.code === 'same_kind') j.replace = true;

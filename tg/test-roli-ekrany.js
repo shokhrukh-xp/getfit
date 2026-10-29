@@ -20,6 +20,7 @@ function сервер(нач){
     запросы.push({ p, метод, тело, q: Object.fromEntries(u.searchParams) });
     if (p.endsWith('/roli/me')) return { ok: true, ver: ВЕР, cats: Object.keys(ИМЕНА), names: ИМЕНА, can: МОЖНО, pro: s.pro, my: s.my, clients: s.clients };
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
+    if (p.endsWith('/roli/join') && метод === 'GET' && s.безВозраста) return { status: 403, body: { ok: false, code: 'need_age', error: 'Укажите возраст в профиле — подключить специалиста можно с 18 лет.' } };
     if (p.endsWith('/roli/join') && метод === 'GET') return { ok: true, preview: true, pro: { name: 'Тимур Ахмедов', kind: 'trainer', about: 'Зал на Чиланзаре, 8 лет' }, cats: ['gym', 'body'], can: МОЖНО.trainer, ver: ВЕР,
       text: 'Тренер увидит: тренировки, вес и замеры. Остальное — только если вы сами откроете. Каждый просмотр видно в «Кто смотрел». Отключить можно в любой момент.' };
     if (p.endsWith('/roli/join')) { if (s.joinОтказ) return { status: 409, body: s.joinОтказ }; s.my = [{ id: 'l1', kind: 'trainer', name: 'Тимур Ахмедов', proStatus: 'ok', cats: ['gym', 'body'] }]; return { ok: true, link: 'l1' }; }
@@ -130,6 +131,24 @@ async function проверить(p, где, имя, sel){
     ok(!(await виден(p2, '#rolcm')), где + '«Закрыть» закрывает карточку');
     ok(!err2.length, где + 'специалист: без ошибок страницы ' + err2.join(' | ').slice(0, 200));
     await p2.close();
+  }
+  /* 6. живая проверка 29.10: новичок по ссылке упирается в возраст — после профиля лист возвращается */
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ безВозраста: true }), o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.base = M.БАЗА + '?pro=TSTRNR01';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#roljage', { timeout: 5000 }).catch(() => {});
+    ok(/Укажите возраст/.test(await p.$eval('#roljbody', e => e.textContent)), 'без возраста: лист говорит, что нужно');
+    await p.click('#roljage'); await p.waitForTimeout(400);
+    ok(!(await виден(p, '#roljm')) && await виден(p, '#profm'), '«Указать возраст» открывает профиль');
+    s.безВозраста = false;
+    await p.click('#profclose'); await p.waitForTimeout(500);
+    ok(await виден(p, '#roljm') && /Подключить/.test(await p.$eval('#roljbody', e => e.textContent)), 'возраст есть — лист подключения вернулся сам');
+    await p.click('#roljclose'); await p.waitForTimeout(200);
+    await p.click('#profbtn'); await p.waitForTimeout(400); await p.click('#profclose'); await p.waitForTimeout(400);
+    ok(!(await виден(p, '#roljm')), '«Не сейчас» — больше не всплывает');
+    ok(!err.length, 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
   }
   /* 5. владелец: заявки в Админ панели */
   {
