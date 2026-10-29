@@ -9870,6 +9870,11 @@ var LSNS = (function(){
   var id='';
   try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user;
        if(u&&u.id) id=String(u.id); }catch(e){}
+  /* 29.10, тестовая копия (wellbol.app/test/): тот же адрес — тот же localStorage,
+     и копия дневника с боя (его эпоха) попадала к тестовому серверу — профиль не
+     загружался: «Сервер вернул устаревшее состояние дневника». У тестовой
+     страницы свои ключи, боевые она не видит и не трогает. */
+  if(/^\/test(\/|$)/.test(location.pathname)) return id ? {ls:'shp_t_@'+id+'_', ms:'tgcs_t_@'+id+'_', id:id} : {ls:'shp_t_', ms:'tgcs_t_', id:''};
   if(!id) return {ls:'shp_v1_', ms:'tgcs_', id:''};
   var своё={ls:'shp_v1_@'+id+'_', ms:'tgcs_@'+id+'_', id:id}, прежнее={ls:'shp_v1_', ms:'tgcs_', id:id};
   try{

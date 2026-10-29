@@ -19,7 +19,7 @@ const M = require('./mock');
     assert.deepEqual(ош1, [], 'без ошибок страницы');
 
     /* 2. Ничего не включено — атрибута нет */
-    const p2 = await br.newPage({ viewport: { width: 390, height: 844 } });
+    const p2 = await (await br.newContext({ viewport: { width: 390, height: 844 } })).newPage();
     const ош2 = await M.поднять(p2, {});
     await p2.waitForTimeout(400);
     assert.equal(await p2.evaluate(() => document.body.hasAttribute('data-f')), false, 'без features атрибута data-f нет');
@@ -31,13 +31,22 @@ const M = require('./mock');
     await p2.reload(); await p2.waitForTimeout(800);
     assert.equal(тестовые.length, 0, 'боевая страница в тестовый сервер не ходит');
 
-    const p3 = await br.newPage({ viewport: { width: 390, height: 844 } });
+    /* p3 — в том же браузерном профиле, что боевая p2: тот же адрес, тот же localStorage */
+    const кон = p2.context(); await p2.waitForTimeout(800);
+    const боевыеКлючи = await p2.evaluate(() => Object.keys(localStorage).filter(k => /^shp_v1_|^tgcs_/.test(k)).sort());
+    await p2.close();   /* боевая больше ничего не пишет — всё новое дальше только от тестовой */
+    const p3 = await кон.newPage();
     p3.on('request', r => { const u = r.url(); if (/api\.wellbol\.com\/test\//.test(u)) тестовые.push(u); else if (/api\.wellbol\.com\//.test(u)) боевые.push(u); });
     await p3.route(M.БАЗА + 'test/', async r => r.fulfill({ response: await r.fetch({ url: M.БАЗА }) }));
     await M.поднять(p3, { base: M.БАЗА + 'test/' });
     await p3.waitForTimeout(800);
     assert.ok(тестовые.length > 0, 'страница на /test/ ходит в api.wellbol.com/test');
     assert.equal(боевые.length, 0, 'страница на /test/ в боевой сервер не ходит: ' + боевые.slice(0, 2).join(' '));
+    /* 29.10, живая проверка в @WellbolTestBot: тестовая страница брала копию дневника с боя
+       (тот же localStorage) — «Сервер вернул устаревшее состояние дневника», профиль не грузился */
+    const ключи = await p3.evaluate(() => Object.keys(localStorage));
+    assert.ok(ключи.some(k => /^shp_t_/.test(k)), 'у тестовой страницы свои ключи shp_t_: ' + ключи.slice(0, 5).join(' '));
+    assert.deepEqual(ключи.filter(k => /^shp_v1_|^tgcs_/.test(k)).sort(), боевыеКлючи, 'боевые ключи тестовая страница не трогает');
     console.log('PASS выключатель: features → body[data-f], без них атрибута нет; /test/ → тестовый сервер, боевая страница — только боевой');
   } finally { await br.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; });
