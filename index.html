@@ -7409,7 +7409,9 @@ function renderWzList(){
   var готовые = WIZ.fallback || WIZ.show || WIZ.free || !firstRun;
   Object.keys(PROFILES).filter(function(k){ return PROFILES[k].custom; }).forEach(function(k){
     var P=PROFILES[k];
-    h+='<button class="pbtn best" data-prof="'+k+'"><em>ваша программа</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
+    /* 30.10, роли: программа от живого тренера подписана им — «ваша программа» читалась как «своя» (его слова) */
+    var автор = (k==='ai' && AIPROG && AIPROG.author && AIPROG.author.name && ЕСТЬ('roli')) ? AIPROG.author.name : '';
+    h+='<button class="pbtn best" data-prof="'+k+'"><em>'+(автор ? 'от тренера '+esc(автор) : 'ваша программа')+'</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
   });
   if(готовые){
     if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно и только про зал: вес ведём по вашей цели. Первая ближе всех к вашим дням и опыту. Свою под вас соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
@@ -7426,7 +7428,8 @@ function renderWzList(){
   } else if(WIZ.stage==='form' && WIZ.step==='form'){
     /* запасной выход должен быть с самого начала: у кого программа уже есть,
        того незачем сначала гонять через анкету о себе */
-    h+='<button type="button" class="wzhave" id="wzhave">у меня уже есть программа</button>';
+    /* 30.10, его слова: «текст „есть своя программа“ воспринимается как у пользователя есть своя программа, но показывал уже заготовленные» */
+    h+='<button type="button" class="wzhave" id="wzhave">выбрать из готовых программ</button>';
   }
   box.innerHTML=h;
 }
