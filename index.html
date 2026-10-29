@@ -2465,8 +2465,7 @@ body.onb #picker .modalbox::before{display:none}
 .hb .hbi{fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hb-gym .hbbg{fill:var(--prime);stroke:none} .hb-gym .hbi{stroke:var(--on-prime)}
 .hb-gymon .hbbg{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3} .hb-gymon .hbi{stroke:var(--accent)}
-.hb-next .hbbg{stroke:var(--accent);stroke-width:2;stroke-dasharray:4 3} .hb-next .hbi{stroke:var(--accent);stroke-width:2.2}
-.hb-todo .hbbg{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 3} .hb-todo .hbi{stroke:var(--dim)} .hb-todo .hbt{fill:var(--muted);font-weight:700}
+.hb-todo .hbbg,.hb-next .hbbg{fill:none;stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 3} .hb-todo .hbt,.hb-next .hbt{fill:var(--muted);font-weight:700}
 .hb-w .hbbg{stroke:var(--done);stroke-width:2}
 .hbt{fill:var(--text);font-size:9px;font-weight:800;text-anchor:middle;font-family:inherit}
 .hctr{position:absolute;left:20%;right:20%;top:65%;transform:translateY(-50%);text-align:center;pointer-events:none}
@@ -3903,9 +3902,12 @@ body.kbopen .page::after{content:"";display:block;height:45vh}
 .hdaycard .hch{fill:rgba(255,255,255,.72)}
 .hdaycard .hcw{fill:rgba(255,255,255,.82)}
 .hdaycard .hb .hbcut{fill:rgba(255,255,255,.96)}
-.hdaycard .hb-next .hbbg,.hdaycard .hb-gymon .hbbg{fill:var(--sand);stroke:rgba(255,255,255,.96);stroke-width:2.5;stroke-dasharray:none}
-.hdaycard .hb-next .hbi,.hdaycard .hb-gymon .hbi{stroke:var(--sand-ink)}
-.hdaycard .hb-todo .hbbg{stroke:rgba(11,79,90,.45)} .hdaycard .hb-todo .hbi{stroke:#0B4F5A} .hdaycard .hb-todo .hbt{fill:#0B4F5A}
+.hdaycard .hb-gymon .hbbg{fill:var(--sand);stroke:rgba(255,255,255,.96);stroke-width:2.5;stroke-dasharray:none}
+.hdaycard .hb-gymon .hbi{stroke:var(--sand-ink)}
+.hdaycard .hcnow line{stroke:var(--sand);stroke-width:3;stroke-linecap:round} .hdaycard .hcnow circle{fill:var(--sand);stroke:rgba(4,38,44,.6);stroke-width:1.5}
+.hdaycard .hcnowt{fill:var(--sand);font-size:10px;font-weight:800;font-family:inherit}
+.hcnow line{stroke:var(--accent);stroke-width:3;stroke-linecap:round} .hcnow circle{fill:var(--accent)} .hcnowt{fill:var(--accent);font-size:10px;font-weight:800;font-family:inherit}
+.hdaycard .hb-todo .hbbg,.hdaycard .hb-next .hbbg{stroke:rgba(11,79,90,.45)} .hdaycard .hb-todo .hbt,.hdaycard .hb-next .hbt{fill:#0B4F5A}
 .hdaycard .hbtime rect{fill:rgba(4,38,44,.72);stroke:none}
 .hdaycard .hbtime text{fill:#fff}
 .hdaycard .hbtime.hbplan text{fill:#FCE3BC;font-weight:700}
@@ -9797,7 +9799,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 11:00';
+var BUILD = '29.10 12:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -16006,8 +16008,12 @@ function hcEvents(){
   var tg=d.targets||{}, закрыта = !!(tg.kcal && (tg.kcal-(+d.kcal||0))<=0);
   var plan=nextMealPlan(d.meals||[], nowH);
   if(закрыта || homeСвоб()) plan={at:null, name:'еда'};
+  /* 29.10, его слова: «непонятно, почему один жёлтый с +, а другой белый
+     с „ужин“». Оба — план, поэтому выглядят одинаково: кружок с названием
+     приёма и рекомендованное время под ним (его вариант E). */
+  HC.nowH=nowH;
   if(plan.at!=null){
-    ev.push({h:plan.at, time:'≈'+hcHM(plan.at), cls:'next', act:'eat',
+    ev.push({h:plan.at, time:'≈'+hcHM(plan.at), cls:'next', act:'eat', name:plan.name,
       lab:'≈'+hcHM(plan.at)+' · '+plan.name});
     if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(plan.after), cls:'todo', act:'eat', name:plan.afterName,
       lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
@@ -16111,7 +16117,7 @@ function hcLayout(ev){
   ev.forEach(function(e){ e.radius=Math.round(e.radius*10)/10; var a=e.angle*Math.PI/180; e.x=HC.cx+R*Math.sin(a); e.y=HC.cy-R*Math.cos(a); });
   /* плашки */
   HC.lw=hcSvgW(); var fu=10.5*HC.W/HC.lw, cw=0.6*fu, BH=17;
-  var B=[]; ev.forEach(function(e,i){ if(e.time) B.push({m:[i], plan:e.time.charAt(0)==='≈', up:false}); });
+  var B=[]; ev.forEach(function(e,i){ if(e.time) B.push({m:[i], plan:(e.cls==='next'||e.cls==='todo'), up:false}); });
   var txt=function(b){ var a=ev[b.m[0]].time, z=ev[b.m[b.m.length-1]].time; return (b.m.length>1 && a!==z) ? a+'–'+z.replace('≈','') : a; };
   var place=function(b){
     var t=txt(b), w=Math.ceil(t.length*cw+12), x=0;
@@ -16204,10 +16210,8 @@ function hcBub(e, i){
     h+='<circle r="'+r+'" class="hbbg"/>'+ico('M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10');
   } else if(e.cls==='act'){
     h+='<circle r="'+r+'" class="hbbg"/>'+ico('M3 12h4l2.5-6 5 12 2.5-6h4');
-  } else if(e.cls==='next'){
-    h+='<circle r="'+(r-1)+'" class="hbbg"/><g class="hbi"><path d="M-6 0h12M0 -6v12"/></g>';
-  } else if(e.cls==='todo'){
-    /* 06.10: вместо «−» (читался как минус) — имя приёма: «обед», «ужин» */
+  } else if(e.cls==='next'||e.cls==='todo'){
+    /* 06.10: вместо «−» — имя приёма; 29.10: и у следующего вместо «+» тоже */
     h+='<circle r="'+(r-1)+'" class="hbbg"/><text class="hbt" dy="3.5"'+(r<19?' transform="scale('+(r/19).toFixed(2)+')"':'')+'>'+esc(e.name||'')+'</text>';
   } else if(e.cls==='w'){
     h+='<circle r="'+r+'" class="hbbg"/><text class="hbt" dy="3.5"'+(r<13?' transform="scale('+(r/13).toFixed(2)+')"':'')+'>'+esc(e.txt)+'</text>';
@@ -16226,6 +16230,8 @@ function homeClock(){
   var E=hcEvents(), d=HOME.day||{}, t=d.targets||{}, kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var н=HCW[0], к=HCW[1];
   var s='<svg class="hclk-svg" viewBox="0 0 '+HC.W+' '+HC.H+'" aria-label="События дня" data-w0="'+н+'" data-w1="'+к+'">';
+  /* отметка «сейчас» — только у сегодняшнего дня */
+  var nH=HC.nowH, сейч=(!d.date || d.date===TODAY) && nH>н && nH<к;
   s+='<path class="hcring" d="'+hcArc(HC.R,н,к)+'"/>';
   /* 04.10, вечер: циферблат — деления каждые 3 часа (06, 09, 12, 15, 18, 21)
      и края окна. Подпись деления уходит дальше от дуги, если рядом фото или
@@ -16233,6 +16239,7 @@ function homeClock(){
   var часы=[н]; for(var hh=Math.ceil((н+0.01)/3)*3; hh<к; hh+=3) if(hh-н>=1 && к-hh>=1) часы.push(hh); часы.push(к);
   var занято=E.ev.map(function(e){ return {x:e.x-e.radius-3, y:e.y-e.radius-3, w:2*e.radius+6, h:2*e.radius+6}; })
     .concat((E.ev.badges||[]).map(function(b){ return {x:b.x-b.w/2, y:b.y, w:b.w, h:b.h}; }));
+  var hcHL=[];
   var свободно=function(x,y){ return !занято.some(function(z){ return x+9>z.x && x-9<z.x+z.w && y+6>z.y && y-6<z.y+z.h; }); };
   часы.forEach(function(h){
     var t1=hcPt(HC.R-4,h), t2=hcPt(HC.R+4,h);
@@ -16244,11 +16251,19 @@ function homeClock(){
     var годно=function(q){ return влезает(q) && свободно(q[0],q[1]); };
     var p=[HC.R+15,HC.R+32,HC.R+46,HC.R-20].map(function(r){ return hcPt(r,h); }).filter(годно)[0];
     if(!p){ if(h!==н && h!==к) return; p=hcPt(HC.R+15,h); }
+    hcHL.push(p);
     s+='<text class="hch" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" dy="3.5" text-anchor="middle">'+pad2(h%24)+'</text>';
   });
   /* два слова держат стороны света; больше подписей на дуге не нужно */
   s+='<text class="hcw" x="'+(HC.cx-HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">утро</text>';
   s+='<text class="hcw" x="'+(HC.cx+HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">вечер</text>';
+  if(сейч){
+    var q1=hcPt(HC.R-7,nH), q2=hcPt(HC.R+8,nH), qc=hcPt(HC.R,nH);
+    s+='<g class="hcnow"><line x1="'+q1[0].toFixed(1)+'" y1="'+q1[1].toFixed(1)+'" x2="'+q2[0].toFixed(1)+'" y2="'+q2[1].toFixed(1)+'"/><circle cx="'+qc[0].toFixed(1)+'" cy="'+qc[1].toFixed(1)+'" r="4"/></g>';
+    var своб2=function(q){ return q[0]-20>=4 && q[0]+20<=HC.W-4 && q[1]-6>=0 && !занято.some(function(z){ return q[0]+20>z.x && q[0]-20<z.x+z.w && q[1]+6>z.y && q[1]-6<z.y+z.h; }) && !hcHL.some(function(t){ return Math.abs(t[0]-q[0])<30 && Math.abs(t[1]-q[1])<12; }); };
+    var lp=[HC.R+17,HC.R+30,HC.R-19].map(function(r){ return hcPt(r,nH); }).filter(своб2)[0];
+    if(lp) s+='<text class="hcnowt" x="'+lp[0].toFixed(1)+'" y="'+lp[1].toFixed(1)+'" dy="3.5" text-anchor="middle">сейчас</text>';
+  }
   E.ev.forEach(function(e,i){ s+=hcBub(e,i); });
   /* плашки времени — поверх фото, по одной на группу (см. hcLayout) */
   (E.ev.badges||[]).forEach(function(b){
