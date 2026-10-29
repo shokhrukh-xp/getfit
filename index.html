@@ -6585,10 +6585,20 @@ function renderCatalog(){
   var list=catFiltered();
   /* пара к базовому: базовые не показываем вовсе, чтобы не было холостых нажатий */
   if(catCtx && catCtx.pairBase) list=list.filter(function(x){ return x.mc!=='c'; });
+  var безМышцы = catCtx && catCtx.pairM && !catCtx.pairAll && !catMuscle && !catQuery.trim();
+  if(безМышцы) list=list.filter(function(x){ return x.m!==catCtx.pairM && x.m2!==catCtx.pairM; });
+  /* в пару чаще берут простое: сначала свои упражнения с фото, потом
+     изолирующие на привычных снарядах, базовые и экзотика — ниже */
+  if(catCtx && catCtx.pairWith && !catQuery.trim()){
+    var пвес=function(x){ return (x.own?-5:0)+(x.mc==='c'?6:0)+(КАТСНАРЯД[x.q]!=null?КАТСНАРЯД[x.q]:9)-(x.l==='beginner'?0.5:0); };
+    list=list.slice().sort(function(a,b){ return пвес(a)-пвес(b); });
+  }
   if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
   var lim=catShown, shown=list.slice(0,lim);
   var h = onPage ? '' : pickGroupChips()+catGearHtml();
   if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
+  if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
+     ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';
   if(catCtx && !catCtx.add && !catCtx.draft){
     var cur=SUBS[catCtx.k];
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
@@ -9787,7 +9797,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 10:30';
+var BUILD = '29.10 11:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11541,7 +11551,11 @@ function ssMakeList(di){
 /* новое упражнение из каталога сразу в пару к открытому */
 function ssFromCatalog(di){
   var e=exList(day)[di]; if(!e) return;
-  openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e)});
+  /* как в макете: сразу силовые и не на ту же мышцу — бицепс сразу после
+     бицепса без отдыха просто доделывает тот же подход */
+  var свой=CAT && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0];
+  var м=(свой && свой.m) || e.m || '';
+  openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e), c:'strength', pairM:м});
 }
 function ssCatalogPicked(ctx, item){
   if(ctx.pairBase && item.mc==='c'){
@@ -14919,6 +14933,7 @@ document.getElementById('catclose').addEventListener('click', closeCatalog);
 document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.id==='catalog'){ closeCatalog(); return; }
   var reject=e.target.closest('[data-aireject]');if(reject&&catCtx&&catCtx.draft&&catCtx.quick){var slot=+reject.dataset.aireject,ctx=catCtx;if(!aiЧерновикЖив(ctx))return;var id=ctx.options[slot];ctx.rejected=ctx.rejected||[];ctx.rejected.push(id);var next=aiТриКандидата(ctx).find(function(x){return ctx.options.indexOf(x.i)<0&&ctx.rejected.indexOf(x.i)<0;});if(next)ctx.options[slot]=next.i;else ctx.options.splice(slot,1);renderCatalog();haptic('light');return;}
+  if(e.target.closest('[data-pairall]')&&catCtx){catCtx.pairAll=true;renderCatalog();return;}
   if(e.target.closest('[data-aiall]')&&catCtx){catCtx.quick=false;renderCatalog();return;}
   if(e.target.closest('[data-catretry]')){ openCatalog(catCtx); haptic('light'); return; }
   if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}

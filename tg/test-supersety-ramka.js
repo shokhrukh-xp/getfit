@@ -76,6 +76,13 @@ const СЛОЙ = { extra: { D1: [
     const b = [...document.querySelectorAll('#catbody button[data-pick]')].find(x => { const it = кат[+x.dataset.pick]; return it && !есть.some(n => n.indexOf(it.n) >= 0); });
     if (!b) return null; b.setAttribute('data-test', '1'); return кат[+b.dataset.pick].n;
   });
+  const кат1 = await page.evaluate(async () => { const кат = (await (await fetch('catalog.json')).json()).ex;
+    const btns = [...document.querySelectorAll('#catbody button[data-pick]')].map(x => кат[+x.dataset.pick] || {});
+    return { бицепс: btns.filter(x => x.m === 'biceps' || x.m2 === 'biceps').length, несил: btns.filter(x => x.c && x.c !== 'strength' && x.c !== 'powerlifting').length,
+      всего: btns.length, нота: (document.querySelector('#catbody .catpairm') || {}).textContent || '' }; });
+  дано(кат1.всего > 0 && кат1.бицепс === 0, 'в пару к сгибаниям — без упражнений на бицепс: ' + JSON.stringify(кат1));
+  дано(кат1.несил === 0, 'только силовые — без кардио и растяжки');
+  дано(/бицепс/i.test(кат1.нота) && /Показать и их/.test(кат1.нота), 'сказано, почему, и можно показать и их: ' + кат1.нота);
   дано(!!имя, 'в каталоге есть что выбрать: ' + имя);
   if (имя) {
     await page.click('#catbody [data-test="1"]'); await page.waitForTimeout(900);
