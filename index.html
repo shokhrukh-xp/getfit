@@ -4556,10 +4556,10 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 .rolb{max-width:85%;padding:8px 12px;border-radius:14px;font-size:15px;line-height:1.35}
 .rolb p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;color:inherit}
 .rolb small{display:block;font-size:11px;margin-top:2px}
-.rolb.me{align-self:flex-end;background:var(--action);color:#fff}
-.rolb.me small{color:#fff}
-.rolb.them{align-self:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--tab-line)}
-.rolb.them small{color:var(--muted)}
+.rolb.rolme{align-self:flex-end;background:var(--action);color:#fff}
+.rolb.rolme small{color:#fff}
+.rolb.rolthem{align-self:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--tab-line)}
+.rolb.rolthem small{color:var(--muted)}
 .rolsend{display:flex;gap:8px;align-items:flex-end}
 .rolsend textarea{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px;resize:none}
 .rolsend .btn{min-height:44px}
@@ -18571,6 +18571,7 @@ function ролиПрогВзять(b){
 }
 
 /* ── переписка с живым специалистом (этап 2в, его «дальше») ──
+   Классы пузырей — rolme/rolthem: «.me» уже занят полями профиля (сетка), живая проверка 29.10.
    Отдельно от чата с ИИ-тренером; ИИ её не читает. Пока лист открыт — раз в 5 с
    подтягиваем новое (и «прочитано»). У клиента — лист «Написать», у специалиста —
    вкладка «переписка» в карточке клиента. Из бота — ?chat=<подключение>. */
@@ -18603,7 +18604,7 @@ function ролиЧатРисовать(){
   var ч = ROLI.chat, el = document.getElementById('rolmsgs'); if (!ч || !el) return;
   var внизу = ч.вниз || el.scrollHeight - el.scrollTop - el.clientHeight < 40;
   el.innerHTML = (ч.err ? '<p class="rolerr">' + esc(ч.err) + '</p>' : '') + (!ч.msgs ? (ч.err ? '' : '<p class="empt">Загружаю…</p>') : !ч.msgs.length ? '<p class="empt">Сообщений пока нет. Напишите первым.</p>' :
-    ч.msgs.map(function(m){ return '<div class="rolb ' + (m.me ? 'me' : 'them') + '"><p>' + esc(m.text) + '</p><small>' + ролиДата(m.at) + (m.me && m.seen ? ' · прочитано' : '') + '</small></div>'; }).join(''));
+    ч.msgs.map(function(m){ return '<div class="rolb ' + (m.me ? 'rolme' : 'rolthem') + '"><p>' + esc(m.text) + '</p><small>' + ролиДата(m.at) + (m.me && m.seen ? ' · прочитано' : '') + '</small></div>'; }).join(''));
   if (внизу) { el.scrollTop = el.scrollHeight; ч.вниз = false; }
 }
 document.addEventListener('click', function(e){

@@ -246,7 +246,9 @@ async function проверить(p, где, имя, sel){
     await p.click('#pq-spec'); await p.waitForSelector('#rolmy [data-rol="chat"]', { timeout: 3000 }).catch(() => {});
     ok(/Написать · 2/.test(await p.$eval('#rolmy [data-rol="chat"]', e => e.textContent)), где + '«Написать» с числом новых');
     await p.click('#rolmy [data-rol="chat"]'); await p.waitForSelector('#rolmsgs .rolb', { timeout: 3000 }).catch(() => {});
-    const пуз = await p.$$eval('#rolmsgs .rolb', ns => ns.map(n => n.className.replace('rolb ', '') + ':' + n.querySelector('p').textContent + ':' + n.querySelector('small').textContent));
+    const пуз = await p.$$eval('#rolmsgs .rolb', ns => ns.map(n => n.className.replace('rolb rol', '') + ':' + n.querySelector('p').textContent + ':' + n.querySelector('small').textContent));
+    const раскладка = await p.$$eval('#rolmsgs .rolb', ns => ns.map(n => { const a = n.querySelector('p').getBoundingClientRect(), b = n.querySelector('small').getBoundingClientRect(); return b.top >= a.bottom - 1; }));
+    ok(раскладка.every(Boolean), где + 'время — под текстом в каждом пузыре: ' + JSON.stringify(раскладка));
     ok(пуз.length === 2 && /^them:Как колено/.test(пуз[0]) && /^me:Ноет немного:.*прочитано$/.test(пуз[1]), где + 'сообщения — его слева, мои справа с «прочитано»: ' + пуз.join(' | '));
     await проверить(p, где, 'лист переписки', '#rolchatm');
     await p.fill('#rolmsg', 'Сделаю жим ногами вместо приседа');
