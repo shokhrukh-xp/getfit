@@ -37,6 +37,15 @@ const meals = [{ id: 1, t: '08:50', kind: 'завтрак', kcal: 422, prot: 38,
     дано(r.ntВнутри, где + 'подпись «сейчас» не выходит за дугу');
     await page.close();
   }
+  /* лёгкий перекус время обеда не двигает, сытный — на 2 часа (его выбор 29.10) */
+  for (const [kcal, ждём, что] of [[86, '≈12:20', 'груша 86 ккал — обед остаётся ≈12:20'], [420, '≈14:09', 'сытный перекус 420 ккал — обед через 2 ч, ≈14:09']]) {
+    const page = await br.newPage({ viewport: { width: 390, height: 900 } });
+    await M.поднять(page, { theme: 'dark', page: 'home', time: '12:15', wait: 2400,
+      day: { meals: meals.concat([{ id: 2, t: '12:09', kind: 'перекус', kcal, prot: 1, img: null, text: 'груша' }]) } });
+    const r = await page.evaluate(() => { const g = document.querySelector('.hclk-svg .hb-next'); return g ? g.getAttribute('aria-label') : ''; });
+    дано(r.indexOf(ждём) === 0 && /обед/.test(r), что + ': ' + r);
+    await page.close();
+  }
   await br.close();
   console.log(плохо ? ('ПРОВАЛОВ: ' + плохо) : 'ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');
   process.exit(плохо ? 1 : 0);
