@@ -18108,7 +18108,8 @@ function номерОтправки(){ return Date.now().toString(36)+Math.rando
 function отправкаПовторима(e){
   if(!e || e.code==='tg_closed' || e.code==='sub') return false;
   if(!e.status) return true;
-  return e.status>=500 || e.status===429;
+  /* 30.10: чат фоном — сервер перезапустился посреди ответа (410 job_lost): сверяем историю */
+  return e.status>=500 || e.status===429 || e.code==='job_lost';
 }
 /* 22.10, его слова «проверь весь код на такие ошибки»: запись, которую сервер
    мог принять, а ответ потерялся (связь в зале, 5xx), повторяем сами тем же
@@ -21371,7 +21372,9 @@ function coachSend(text, image){
       CHAT.stage=t; var el=document.getElementById('cwait'); if(el) el.textContent=t;
     }).catch(function(){});
   }, 1500);
-  fPost('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
+  /* 30.10 (аудит): чат фоном (?job=) — iPhone рвал ответ, на который 60 с не пришло ни байта,
+     и человек видел «Нет связи», хотя сервер отвечал. Номер операции защищает от двойной записи. */
+  fPostДолгий('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([

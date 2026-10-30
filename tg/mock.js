@@ -287,7 +287,7 @@ async function поднять(page, o) {
     if(o.handleRoute && await o.handleRoute(route))return;
     const u = new URL(route.request().url()), p = u.pathname;
     const job = u.searchParams.get('job');
-    if ((p === '/ai' || p === '/onboard' || p === '/menu') && job && !route.__внутри && route.request().method() === 'POST') {
+    if ((p === '/ai' || p === '/onboard' || p === '/menu' || p === '/coach') && job && !route.__внутри && route.request().method() === 'POST') {
       if (!задачи[job]) {
         const з = задачи[job] = { res: null };
         const подмена = { request: () => route.request(), fulfill: x => { з.res = x; return Promise.resolve(); },

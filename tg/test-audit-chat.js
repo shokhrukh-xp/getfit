@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),M=require
 (async()=>{
  const br=await chromium.launch();try{
  const page=await br.newPage({viewport:{width:390,height:844}});const o={page:'home'};const errors=await M.поднять(page,o);const sent=[];let fail=false;
- await page.route('**/coach',async route=>{const b=route.request().postDataJSON();sent.push(b);if(fail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Временный сбой'})});return route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,reply:'Принял: '+b.text,meals:[]})});});
+ await page.route(/\/coach(\?|$)/,async route=>{const b=route.request().postDataJSON();sent.push(b);if(fail)return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Временный сбой'})});return route.fulfill({contentType:'application/json',body:JSON.stringify({ok:true,reply:'Принял: '+b.text,meals:[]})});});
  await page.click('#coachnav');
  for(const text of ['85 кг сегодня утром','80 кг на приседе сделал 8 раз']){
   await page.fill('#ctext',text);await page.click('#csend');await page.waitForFunction(()=>!document.getElementById('csend').disabled);assert.equal(sent.at(-1).text,text);assert.equal(await page.locator('#goalconversation').isVisible(),false);assert(await page.locator('#chatlog').innerText().then(x=>x.includes('Принял: '+text)));

@@ -122,7 +122,7 @@ if(require.main===module)(async()=>{const b=await chromium.launch();try{
   const g=await geometry(p);ok(g.times.some(t=>/^≈\d\d:\d\d$/.test(t))&&!g.issues.length,'плановый приём с ≈, без пересечений '+theme+'/'+width+' '+JSON.stringify(g.issues));
   ok((await badgeContrast(p)).every(v=>v>=4.5),'приглушённый плановый бейдж контрастен '+theme+'/'+width);
   // Реальный ответ сервера после закрытия чата должен поставить точку.
-  await p.route('**/coach',async r=>{await new Promise(resolve=>setTimeout(resolve,600));await r.fulfill({json:{ok:true,reply:'Записал.',day:M.день()}})});
+  await p.route(/\/coach(\?|$)/,async r=>{await new Promise(resolve=>setTimeout(resolve,600));await r.fulfill({json:{ok:true,reply:'Записал.',day:M.день()}})});
   await p.locator('#coachnav').click();await p.locator('#ctext').fill('Обед');await p.locator('#csend').click();await p.locator('#coachclose').click();await p.waitForTimeout(850);
   ok(await p.locator('#coachnav').evaluate(e=>e.classList.contains('attn')&&getComputedStyle(e,'::after').content!== 'none'),'точка непрочитанного ответа '+theme+'/'+width);
   await p.locator('#coachnav').click();await p.locator('#coachclose').click();ok(!await p.locator('#coachnav').evaluate(e=>e.classList.contains('attn')),'точка снялась после чтения');

@@ -50,7 +50,7 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
   дано(await page.isVisible('#cattach'), 'прикреплённое фото видно в самом разговоре');
 
   /* 5. ответ приходит в ту же ленту */
-  await page.route('**/coach', async route => {
+  await page.route(/\/coach(\?|$)/, async route => {
     await new Promise(r => setTimeout(r, 300));
     route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ ok: true, reply: 'Записал: плов, 650 ккал.', day: M.день({}) }) });
@@ -69,8 +69,8 @@ const пр = (page, sel) => page.$eval(sel, e => e.getBoundingClientRect().toJSO
   дано(await page.$eval('#coachnav', e => getComputedStyle(e).pointerEvents !== 'none'), 'кнопка вернулась');
 
   /* 7. ответ пришёл, пока разговор закрыт: кнопка перестаёт прятаться */
-  await page.unroute('**/coach');
-  await page.route('**/coach', async route => {
+  await page.unroute(/\/coach(\?|$)/);
+  await page.route(/\/coach(\?|$)/, async route => {
     await new Promise(r => setTimeout(r, 1200));
     route.fulfill({ status: 200, contentType: 'application/json',
       body: JSON.stringify({ ok: true, reply: 'Понял, посчитал.', day: M.день({}) }) });
