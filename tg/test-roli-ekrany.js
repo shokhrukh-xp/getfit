@@ -23,7 +23,7 @@ function сервер(нач){
     if (p.endsWith('/roli/prog')) { s.отправлено = тело.prog; return { ok: true, at: 5 }; }
     if (p.endsWith('/roli/prog/take')) { const пр = s.offer && s.offer.prog; s.offer = null; return { ok: true, take: тело.take, prog: тело.take ? пр : null }; }
     if (p.endsWith('/roli/complain')) { s.жалоба = тело; return { ok: true }; }
-    if (p.endsWith('/roli/norm') && метод === 'GET') return { ok: true, sent: null, current: { kcal: 2100, prot: 150, fat: 70, pro: false } };
+    if (p.endsWith('/roli/norm') && метод === 'GET') return { ok: true, sent: null, current: { kcal: 2100, prot: 150, fat: 70, pro: false }, flags: s.отметки || [] };
     if (p.endsWith('/roli/norm')) { s.норма = тело; return { ok: true, at: 9 }; }
     if (p.endsWith('/roli/norm/take')) { s.взял = тело; const о = s.normOffer; s.normOffer = null; if (тело.take) s.norm = { name: о.name, kcal: о.kcal, prot: о.prot, fat: о.fat, rules: о.rules, note: '' }; return { ok: true, take: тело.take }; }
     if (p.endsWith('/roli/norm/off')) { s.norm = null; s.сняла = true; return { ok: true }; }
@@ -31,6 +31,7 @@ function сервер(нач){
     if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
     if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
+    if (p.endsWith('/roli/join') && метод === 'GET' && s.нутри) return { ok: true, preview: true, parq: 0, health: 4, prefill: [true, false, false, false], pro: { name: 'Нигора', kind: 'nutri', about: '' }, cats: ['food', 'food_photo', 'body'], can: МОЖНО.nutri, ver: ВЕР, text: 'Нутрициолог увидит: дневник еды, фото еды, вес и замеры.' };
     if (p.endsWith('/roli/join') && метод === 'GET' && s.безВозраста) return { status: 403, body: { ok: false, code: 'need_age', error: 'Укажите возраст в профиле — подключить специалиста можно с 18 лет.' } };
     if (p.endsWith('/roli/join') && метод === 'GET') return { ok: true, preview: true, parq: s.анкета ? 7 : 0, pro: { name: 'Тимур Ахмедов', kind: 'trainer', about: 'Зал на Чиланзаре, 8 лет' }, cats: ['gym', 'body'], can: МОЖНО.trainer, ver: ВЕР,
       text: 'Тренер увидит: тренировки, вес и замеры. Остальное — только если вы сами откроете. Каждый просмотр видно в «Кто смотрел». Отключить можно в любой момент.' };
@@ -357,6 +358,39 @@ async function проверить(p, где, имя, sel){
     await p.click('#rolmy [data-rol="normoff"]'); await p.waitForTimeout(500);
     ok(s.сняла === true && !/Норма от/.test(await p.$eval('#rolmy', e => e.textContent)), 'клиент: «Вернуть норму приложения»');
     ok(!err.length, 'клиент: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 12. этап 3б: анкета здоровья у нутрициолога, отметки и предупреждения */
+  {
+    const p = await b.newPage({ viewport: { width: 320, height: 760 } });
+    const s = сервер({ нутри: true }), o = opts('dark'); o.features = ['roli']; o.roli = s.обработчик; o.base = M.БАЗА + '?pro=TSTNTR01';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#roljbody [data-zd]', { timeout: 5000 }).catch(() => {});
+    ok(await p.$$eval('#roljbody [data-zd][data-v="1"]', ns => ns.map(n => n.getAttribute('aria-pressed')).join()) === 'true,false,false,false', 'анкета здоровья: диабет из профиля подставлен');
+    ok(await p.$eval('#roljok', e => e.disabled), 'анкета здоровья: пока не ответил на все — «Подключить» неактивна');
+    for (let i = 1; i < 4; i++) await p.click('#roljbody [data-zd="' + i + '"][data-v="' + (i === 2 ? 1 : 0) + '"]');
+    await проверить(p, '', 'анкета здоровья', '#roljm');
+    await p.click('#roljok'); await p.waitForTimeout(300);
+    const j = s.запросы.find(x => x.p.endsWith('/roli/join') && x.метод === 'POST');
+    ok(j && JSON.stringify(j.тело.health) === JSON.stringify([true, false, true, false]) && !('parq' in j.тело), 'анкета здоровья уходит с подключением: ' + JSON.stringify(j && j.тело.health));
+    ok(!err.length, 'анкета здоровья: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 800 } });
+    const s = сервер({ pro: [{ kind: 'nutri', name: 'Нигора', status: 'ok', code: 'TSTNTR01', link: 'https://t.me/x?start=s_TSTNTR01' }],
+      clients: [{ id: 'l2', kind: 'nutri', client: '777', name: 'Карина', cats: ['food', 'body'], flags: ['preg', 'diabetes'] }], отметки: ['preg', 'diabetes'] });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(300);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
+    await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
+    await p.click('#rolpro [data-rol="card"]'); await p.waitForTimeout(400);
+    ok(/Отметки здоровья: беременность или кормление, диабет\./.test(await p.$eval('#rolcbody', e => e.textContent)), 'нутрициолог: отметки в карточке');
+    await p.click('#rol-ccat button[data-v="norm"]'); await p.waitForSelector('#roln-kcal', { timeout: 3000 }).catch(() => {});
+    const т = await p.$eval('#rolcbody', e => e.textContent);
+    ok(/норма не ниже нормы приложения \(2100 ккал\)/.test(т) && /Диабет: углеводы ровно по приёмам/.test(т), 'нутрициолог: предупреждения в форме нормы: ' + т.slice(0, 160));
+    await проверить(p, '', 'форма нормы с предупреждениями', '#rolcm');
+    ok(!err.length, 'нутрициолог 3б: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 5. владелец: заявки в Админ панели */

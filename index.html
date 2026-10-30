@@ -18456,7 +18456,7 @@ function ролиКарточка(who, cat){
   if (x.kind === 'nutri') можно.push('norm');
   можно.push('chat');
   cat = cat || можно[0] || '';
-  ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
+  ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, flags: x.flags || null, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
   ROLI.chat = null;
   var m = document.getElementById('rolcm'); if (m) m.classList.add('show');
   ролиКарточкаРисовать();
@@ -18474,9 +18474,10 @@ function ролиКарточкаРисовать(){
   var k = ROLI.card, t = document.getElementById('rolct'), b = document.getElementById('rolcbody'); if (!k || !b) return;
   if (t) t.textContent = k.name;
   var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : c === 'norm' ? 'норма' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
-  var анкета = k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '';
+  var отметки = k.flags ? (k.flags.length ? '<p class="rolnote rolwarn">Отметки здоровья: ' + k.flags.map(function(f){ return esc(РОЛИ_ЗДОРОВЬЕ_ИМЯ[f] || f); }).join(', ') + '.</p>' : '<p class="rolnote">Отметок здоровья нет.</p>') : '';
+  var анкета = отметки + (k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '');
   if (k.cat === 'prog') { b.innerHTML = вкладки + анкета + ролиПрогHtml(k); return; }
-  if (k.cat === 'norm') { b.innerHTML = вкладки + ролиНормаФормаHtml(k); return; }
+  if (k.cat === 'norm') { b.innerHTML = вкладки + анкета + ролиНормаФормаHtml(k); return; }
   if (k.cat === 'chat') { b.innerHTML = вкладки + ролиЧатHtml(); ролиЧатРисовать(); return; }
   var тело = !k.cat ? '<p class="empt">Клиент пока не открыл вам ни одного раздела.</p>' :
     k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : !k.rows ? '<p class="empt">Загружаю…</p>' : !k.rows.length ? '<p class="empt">Записей нет.</p>' :
@@ -18626,7 +18627,7 @@ function ролиНормаЗагрузить(){
   fGet('/roli/norm?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(k.who)).then(function(r){
     if (ROLI.card !== k) return;
     var с = (r && r.sent) || {}, т = (r && r.current) || {};
-    k.н = { kcal: с.kcal || т.kcal || '', prot: с.prot || т.prot || '', fat: с.fat || т.fat || '', rules: (с.rules || []).concat(['', '', '', '', '']).slice(0, 5), note: с.note || '', сейчас: r && r.current, отпр: с.at || 0 };
+    k.н = { kcal: с.kcal || т.kcal || '', prot: с.prot || т.prot || '', fat: с.fat || т.fat || '', rules: (с.rules || []).concat(['', '', '', '', '']).slice(0, 5), note: с.note || '', сейчас: r && r.current, отпр: с.at || 0, flags: (r && r.flags) || null };
     ролиКарточкаРисовать();
   }).catch(function(e){ if (ROLI.card === k) { k.err = humanErr(e); k.н = { kcal: '', prot: '', fat: '', rules: ['', '', '', '', ''], note: '' }; ролиКарточкаРисовать(); } });
 }
@@ -18634,12 +18635,25 @@ function ролиНормаФормаHtml(k){
   var н = k.н; if (!н) return '<p class="empt">Загружаю…</p>';
   var поле = function(id, т, v){ return '<label class="rolfld rolnum">' + т + '<input id="' + id + '" type="number" inputmode="numeric" value="' + ролиА(v) + '"></label>'; };
   return (н.сейчас ? '<p class="rolnote">Сейчас у клиента: ' + esc(ролиНормаСтрока(н.сейчас)) + '.</p>' : '<p class="rolnote">Норму приложения видно, когда клиент откроет вам дневник еды.</p>') +
+    ролиНормаПредупр(k) +
     '<div class="rolnums">' + поле('roln-kcal', 'Калории', н.kcal) + поле('roln-prot', 'Белок, г', н.prot) + поле('roln-fat', 'Жиры, г', н.fat) + '</div>' +
     '<p class="rolnote">На обычный день без тренировки — зал и спорт приложение добавит сверху. Углеводы — остаток.</p>' +
     '<h4 class="pqlab">Правила</h4>' + н.rules.map(function(x, i){ return '<input class="roln-rule" data-i="' + i + '" type="text" maxlength="120" placeholder="' + (i ? '' : 'Например: без сладкого после 18:00') + '" aria-label="правило" value="' + ролиА(x) + '">'; }).join('') +
     '<label class="rolfld">Комментарий для клиента<textarea id="roln-note" maxlength="300" rows="2">' + esc(н.note || '') + '</textarea></label>' +
     (k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : '') + (k.ок ? '<p class="rolnote">' + esc(k.ок) + '</p>' : '') +
     '<button type="button" class="btn wide prim" data-rn="normsend"' + (k.шлём ? ' disabled' : '') + '>' + (k.шлём ? 'Отправляю…' : 'Отправить клиенту') + '</button>';
+}
+/* его выбор 30.10 «Запрет + предупреждения»: сервер не примет норму ниже нормы приложения
+   при беременности, кормлении и РПП и белок выше нормы приложения при болезни почек */
+var РОЛИ_ЗДОРОВЬЕ_В = ['Есть диабет (любого типа)?', 'Сейчас беременность или кормление грудью?', 'Есть или было расстройство пищевого поведения (РПП)?', 'Есть болезнь почек?'];
+var РОЛИ_ЗДОРОВЬЕ_ИМЯ = { diabetes: 'диабет', preg: 'беременность или кормление', ed: 'РПП', kidney: 'болезнь почек' };
+function ролиНормаПредупр(k){
+  var f = (k.н && k.н.flags) || k.flags || [], т = [];
+  var с = k.н && k.н.сейчас;
+  if (f.indexOf('preg') >= 0 || f.indexOf('ed') >= 0) т.push('Беременность, кормление или РПП: норма не ниже нормы приложения' + (с ? ' (' + с.kcal + ' ккал)' : '') + '.');
+  if (f.indexOf('kidney') >= 0) т.push('Болезнь почек: белок не выше нормы приложения' + (с ? ' (' + с.prot + ' г)' : '') + '.');
+  if (f.indexOf('diabetes') >= 0) т.push('Диабет: углеводы ровно по приёмам; при инсулине — риск низкого сахара, без резкого урезания.');
+  return т.map(function(x){ return '<p class="rolnote rolwarn">' + esc(x) + '</p>'; }).join('');
 }
 function ролиЗаметкаРедHtml(r){
   var з = r.note || {}, мет = ROLI.card.метка != null ? ROLI.card.метка : (з.mark || '');
@@ -18762,7 +18776,9 @@ function ролиПодключениеРисовать(){
   if (!r && !j.err) { b.innerHTML = '<p class="empt">Загружаю…</p>'; return; }
   if (!r || !r.pro) { b.innerHTML = '<p class="rolerr">' + esc(j.err || 'Ссылка не работает.') + '</p>' + (j.age || (r && r.code === 'need_age') ? '<button type="button" class="btn wide" id="roljage">Указать возраст</button>' : ''); return; }
   var нужна = +r.parq > 0; if (нужна && (!j.parq || j.parq.length !== +r.parq)) j.parq = РОЛИ_АНКЕТА.slice(0, +r.parq).map(function(){ return null; });
-  var всё = !нужна || j.parq.every(function(x){ return x !== null; }), есть = нужна && j.parq.some(function(x){ return x === true; });
+  /* 30.10, этап 3б: нутрициологу — 4 отметки здоровья; что есть в профиле — подставлено */
+  var зд = +r.health > 0; if (зд && (!j.zd || j.zd.length !== +r.health)) j.zd = РОЛИ_ЗДОРОВЬЕ_В.slice(0, +r.health).map(function(q, i){ return r.prefill && r.prefill[i] === true ? true : null; });
+  var всё = (!нужна || j.parq.every(function(x){ return x !== null; })) && (!зд || j.zd.every(function(x){ return x !== null; })), есть = нужна && j.parq.some(function(x){ return x === true; });
   b.innerHTML = '<div class="rolhd"><b>' + esc(r.pro.name) + '</b><span>' + esc(РОЛИ_ВИД[r.pro.kind] || '') + '</span></div>' +
     (r.pro.about ? '<p class="rolnote">' + esc(r.pro.about) + '</p>' : '') +
     '<p class="mtext">' + esc(r.text) + '</p>' +
@@ -18772,6 +18788,11 @@ function ролиПодключениеРисовать(){
         '<button type="button" data-parq="' + i + '" data-v="1" aria-pressed="' + (v === true) + '">Да</button></div></div>';
     }).join('') + '</div>' +
       (есть ? '<p class="rolnote rolwarn">Перед нагрузками покажитесь врачу. Тренер увидит только «нужен допуск врача», без ваших ответов.</p>' : '') : '') +
+    (зд ? '<h4 class="pqlab">Здоровье</h4><div class="rolparq">' + j.zd.map(function(v, i){
+      return '<div class="rolq"><span>' + esc(РОЛИ_ЗДОРОВЬЕ_В[i]) + '</span><div class="seg">' +
+        '<button type="button" data-zd="' + i + '" data-v="0" aria-pressed="' + (v === false) + '">Нет</button>' +
+        '<button type="button" data-zd="' + i + '" data-v="1" aria-pressed="' + (v === true) + '">Да</button></div></div>';
+    }).join('') + '</div><p class="rolnote">Нутрициолог увидит только отметки, без подробностей. Что было в профиле — подставлено.</p>' : '') +
     (j.err ? '<p class="rolerr">' + esc(j.err) + '</p>' : '') +
     '<button type="button" class="btn wide prim" id="roljok"' + (j.busy || !всё ? ' disabled' : '') + '>' + (j.busy ? 'Подключаю…' : !всё ? 'Ответьте на вопросы' : j.replace ? 'Заменить и подключить' : 'Подключить') + '</button>';
 }
@@ -18792,10 +18813,13 @@ document.addEventListener('click', function(e){
   }
   var q = e.target.closest && e.target.closest('[data-parq]');
   if (q) { j.parq[+q.dataset.parq] = q.dataset.v === '1'; ролиПодключениеРисовать(); return; }
-  if (e.target.id !== 'roljok' || j.busy || !j.r || (j.parq && j.parq.some(function(x){ return x === null; }))) return;
+  var qz = e.target.closest && e.target.closest('[data-zd]');
+  if (qz) { j.zd[+qz.dataset.zd] = qz.dataset.v === '1'; ролиПодключениеРисовать(); return; }
+  if (e.target.id !== 'roljok' || j.busy || !j.r || (j.parq && j.parq.some(function(x){ return x === null; })) || (j.zd && j.zd.some(function(x){ return x === null; }))) return;
   j.busy = true; j.err = ''; ролиПодключениеРисовать();
   var тело = { uid: syncUid(), code: j.code, consent: j.r.ver, replace: j.replace };
   if (+j.r.parq > 0) тело.parq = j.parq.map(function(x){ return x === true; });
+  if (+j.r.health > 0) тело.health = j.zd.map(function(x){ return x === true; });
   fPost('/roli/join', тело).then(function(){ j.busy = false; j.done = true; gset('roli_kod', null); haptic('ok'); ролиПодключениеРисовать(); })
     .catch(function(er){
       j.busy = false; j.err = er.message || humanErr(er);
