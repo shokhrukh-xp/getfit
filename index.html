@@ -3245,6 +3245,12 @@ body.nogym .l1-in{grid-template-columns:repeat(3,minmax(0,1fr))}
 #coachnav.attn::after{content:'';position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:999px;background:var(--warn);border:2px solid var(--surface)}
 body.coach #coachnav{pointer-events:none}
 body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
+/* 30.10: пока сервер не ответил, есть ли у человека данные, — только это, без анкеты */
+#cloudwait:not([hidden]){position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--bg);color:var(--muted);font-size:15px}
+#cloudwait .cwdot{width:8px;height:8px;border-radius:99px;background:var(--accent);animation:cwpulse 1s ease-in-out infinite alternate}
+@keyframes cwpulse{from{opacity:.25}to{opacity:1}}
+.nomo #cloudwait .cwdot{animation:none}
+@media (prefers-reduced-motion:reduce){#cloudwait .cwdot{animation:none}}
 .hbtime rect{fill:var(--surface);stroke:var(--line);stroke-width:1}
 .hbtime text{fill:var(--text);font-size:var(--badge-font,12px);font-weight:700;text-anchor:middle;font-variant-numeric:tabular-nums}
 .hbtime.hbplan text{fill:var(--muted);font-weight:500}
@@ -4834,6 +4840,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <p class="gerr" id="gerr"></p>
   </div>
 </div>
+<div id="cloudwait" role="status" aria-live="polite" hidden><span class="cwdot" aria-hidden="true"></span><span id="cwtext">Загружаю ваши данные…</span><button type="button" class="btn small" id="cwretry" hidden>Повторить</button></div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <!-- 24.10 Wellböl: шапка бренда — только при самом первом входе, на шаге «что будем вести» -->
@@ -7938,8 +7945,51 @@ function showPicker(first){
   if(firstRun) document.body.classList.add('onb');
 }
 function hidePicker(){
+  облакоЖдатьСнять();
   var el=document.getElementById('picker'); if(el) el.classList.remove('show');
   document.body.classList.remove('onb');
+}
+/* 30.10, его слова: «Я когда вхожу с личного аккаунта, у меня уже который раз открывается
+   страница с самого начала — выбор, что отслеживать… Я уже подумал, что все мои данные
+   сбросились». На устройстве без своих данных (новый адрес wellbol.app, почищенное хранилище
+   Telegram) анкета открывалась сразу, ДО ответа сервера, и висела, пока не приедут профиль и
+   программа. Теперь сначала «Загружаю ваши данные…», и только если на сервере профиля нет —
+   знакомство. Сервер молчит 12 с — знакомство, как раньше. */
+var ОБЛАКО_ЖДЁМ=false, облакоТаймер=0;
+function облакоЖдатьСнять(){ ОБЛАКО_ЖДЁМ=false; clearTimeout(облакоТаймер); var w=document.getElementById('cloudwait'); if(w) w.hidden=true; }
+/* 30.10 (аудит): сбой первого обмена (выкладка, обрыв) раньше сразу открывал анкету
+   существующему человеку — и она писала профиль поверх пустой копии. Теперь три попытки,
+   потом «Нет связи с сервером · Повторить»; анкета — только когда сервер ответил, что пусто. */
+function облакоЖдать(){
+  ОБЛАКО_ЖДЁМ=true; document.body.classList.add('onb');
+  var w=document.getElementById('cloudwait'), t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(w) w.hidden=false; if(t) t.textContent=тр('Загружаю ваши данные…'); if(b) b.hidden=true;
+  clearTimeout(облакоТаймер); облакоТаймер=setTimeout(облакоНетСвязи, 25000);
+  var попытка=0;
+  (function тянуть(){
+    cloudPull(true).then(function(n){
+      if(!ОБЛАКО_ЖДЁМ) return;
+      if(n!==undefined) return облакоОтветило();
+      if(++попытка<3) return setTimeout(тянуть, 2000*попытка);
+      облакоНетСвязи();
+    });
+  })();
+}
+function облакоНетСвязи(){
+  if(!ОБЛАКО_ЖДЁМ) return;
+  clearTimeout(облакоТаймер);
+  var t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(t) t.textContent=тр('Нет связи с сервером'); if(b) b.hidden=false;
+}
+document.getElementById('cwretry').addEventListener('click', function(){ haptic('light'); облакоЖдать(); });
+function облакоОтветило(){
+  if(!ОБЛАКО_ЖДЁМ) return;
+  облакоЖдатьСнять();
+  /* программу и указатель на неё сервер применил сам (hidePicker) — сюда не дойдём. «Только
+     еда» без указателя программы на сервере (такие есть с сентября): анкета заполнена — приложение */
+  var me=myData()||{};
+  if(me.only==='food' && meFull()){ hidePicker(); applyProfile(PROFILES[gget('profile',null)] ? gget('profile',null) : 'shp'); return; }
+  showPicker(true);
 }
 function choose(p, новая){
   /* 17.10, его выбор «Смена программы посреди недели»: когда человек САМ сменил
@@ -9958,7 +10008,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '29.10 21:30';
+var BUILD = '30.10 14:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -9972,11 +10022,10 @@ var LSNS = (function(){
   var id='';
   try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user;
        if(u&&u.id) id=String(u.id); }catch(e){}
-  /* 29.10, тестовая копия (wellbol.app/test/): тот же адрес — тот же localStorage,
-     и копия дневника с боя (его эпоха) попадала к тестовому серверу — профиль не
-     загружался: «Сервер вернул устаревшее состояние дневника». У тестовой
-     страницы свои ключи, боевые она не видит и не трогает. */
-  if(/^\/test(\/|$)/.test(location.pathname)) return id ? {ls:'shp_t_@'+id+'_', ms:'tgcs_t_@'+id+'_', id:id} : {ls:'shp_t_', ms:'tgcs_t_', id:''};
+  /* 30.10 (аудит): тестовая копия wellbol.app/test/ — тот же адрес, значит та же память
+     телефона. Очередь правок, метки и эпоха дневника были общими с рабочей: правки уходили
+     не на тот сервер. У копии свой префикс, рабочие ключи она не видит. */
+  if(/^\/test(\/|$)/.test(location.pathname)) return id ? {ls:'shp_t1_@'+id+'_', ms:'tgcs_t1_@'+id+'_', id:id} : {ls:'shp_t1_', ms:'tgcs_t1_', id:''};
   if(!id) return {ls:'shp_v1_', ms:'tgcs_', id:''};
   var своё={ls:'shp_v1_@'+id+'_', ms:'tgcs_@'+id+'_', id:id}, прежнее={ls:'shp_v1_', ms:'tgcs_', id:id};
   try{
@@ -12562,13 +12611,17 @@ function settingsDrain(uid,key){
   var run=function(){
     var q=settingsQueue(uid),jobs=q[key]||[],job=jobs[0];if(!job)return Promise.resolve({ok:true});
     if(uid!==syncUid()||DATASESSION.blocked)return Promise.reject(settingsError({error:'Аккаунт изменился.'},key));
-    if(job.epoch!==localDataSession().epoch){delete q[key];settingsStore(uid,q);return Promise.reject(settingsError({error:'Дневник был сброшен.'},key));}
+    if(job.epoch!==localDataSession().epoch){delete q[key];settingsStore(uid,q);dirtySet(key,false);return Promise.reject(settingsError({error:'Дневник был сброшен.'},key));}
     if(job.conflict)return Promise.reject(settingsError({code:'settings_conflict',error:'Эти настройки изменены на другом устройстве.'},key));
     if(Date.now()-job.at>7*864e5)return fetchCloudSnapshot().then(function(d){var st=(d.state||[]).find(function(v){return v.key===key;});job.conflict=(st&&st.data)||{};job.conflictPaths=job.changes.map(function(c){return c.path;});settingsStore(uid,q);throw settingsError({code:'settings_conflict',error:'Старая правка ожидает подтверждения.'},key);});
     return settingsPost({uid:uid,key:key,data:job.data,patch:{op:job.id,changes:job.changes}}).then(function(r){
       if(uid!==syncUid()||DATASESSION.blocked)throw settingsError({error:'Аккаунт изменился.'},key);
       q=settingsQueue(uid);jobs=q[key]||[];if(!jobs[0]||jobs[0].id!==job.id){if(r.ok)return run();throw settingsError({error:'Очередь изменилась.'},key);}
       if(!r.ok){
+        /* 30.10: 400 «некорректная правка» раньше оставалась первой в очереди навсегда и
+           блокировала ключ. Откладываем её в сторону (копия на устройстве), идём дальше. */
+        if(r.status===400&&r.code==='bad_settings'){var плохие=gget('settings_bad_'+key,[]);плохие.push(jobs.shift());gset('settings_bad_'+key,плохие.slice(-5));if(!jobs.length)delete q[key];settingsStore(uid,q);dirtySet(key,!!jobs.length);
+          if(jobs.length)return run();setTimeout(function(){cloudPull(true);},500);throw settingsError(r,key);}
         if(r.code==='settings_conflict'){jobs[0].conflict=r.data;jobs[0].conflictPaths=r.conflicts||[];settingsStore(uid,q);}
         if(!r.status||r.status===429||r.status>=500){var delay=[2000,5000,15000,60000][Math.min(3,SETTINGSRETRY[id]||0)];SETTINGSRETRY[id]=Math.min(3,(SETTINGSRETRY[id]||0)+1);SETTINGSTIMER[id]=setTimeout(function retry(){if(document.hidden||navigator.onLine===false){SETTINGSTIMER[id]=setTimeout(retry,60000);return;}settingsDrain(uid,key).catch(function(){});},delay);}
         throw settingsError(r,key);
@@ -12689,6 +12742,13 @@ function workSend(uid,id){
         if(cur && cur.operation===job.operation) delete s.pending[id];
         else if(cur) cur.version=s.versions[id];
         workStore(uid,s); return next();
+      }
+      /* 30.10 (аудит): спор по тренировке решить было негде (#syncst нет в разметке) — подходы
+         дня навсегда «не дошли». Подходы на этом телефоне — то, что он только что сделал:
+         серверную версию откладываем копией, свои отправляем поверх. Второй спор подряд — стоп. */
+      if(res && res.code==='conflict' && cur && !cur.авто){
+        var копии=gget('work_conflicts_'+uid,[])||[];копии.push({id:id,at:Date.now(),server:res,job:job});gset('work_conflicts_'+uid,копии.slice(-20));
+        cur.version=res.version||0;cur.operation=workOperation();cur.авто=1;delete cur.conflict;workStore(uid,s);return next();
       }
       if(res && res.code==='conflict' && cur){cur.conflict=res;workStore(uid,s);}
     });
@@ -12855,6 +12915,8 @@ function adoptState(key, b){
       if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
         if(b.sk && typeof b.sk==='object'){ SKIP=b.sk; set('skip',SKIP); }
       if(b.ord && typeof b.ord==='object'){ ORD=b.ord; set('ord',ORD); }
+      /* 30.10: суперсеты с сервера раньше не принимались вовсе — пары с другого устройства не появлялись */
+      if(b.pr && typeof b.pr==='object'){ PAIRS=b.pr; set('pairs',PAIRS); }
       if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
       renderList(); paintNote('');
       return true;
@@ -12888,6 +12950,9 @@ function pushDirty(){
   var ks=Object.keys(DIRTY); if(!ks.length) return Promise.resolve();
   var jobs=ks.map(function(k){
     if(SETTINGS_KEYS.indexOf(k)>=0)return (settingsQueue(syncUid())[k]||[]).length?settingsDrain(syncUid(),k):settingsMigrate(k);
+    /* 30.10 (аудит): своя программа лежит не под state/aiprog, а в ai_prog — раньше неудачная
+       отправка (продление фазы, новая программа) тихо выбрасывалась, сервер и тренер видели старую */
+    if(k==='aiprog'){ var ап=gget('ai_prog',null); if(!ап){ dirtySet(k,false); return Promise.resolve(); } return syncPush('state/aiprog', ап); }
     return csGet(csKey('state/'+k)).then(function(v){
       var b=null; if(v){ try{ b=JSON.parse(v); }catch(e){} }
       if(!b) { dirtySet(k,false); return; }
@@ -12897,6 +12962,41 @@ function pushDirty(){
   return Promise.all(jobs).catch(function(){});
 }
 var pulling=false, lastPull=0;
+/* 30.10, его слова: «Почему он меня спрашивает заполнить профиль возраст и рост? Почему мои
+   изменения в программе не сохраняются?» Правка, получившая 409 «изменено на другом
+   устройстве», висела первой в очереди навсегда: «Повторить» в зале её не трогал, выбор версии
+   был только в профиле, а пока ключ «грязный», свежие данные с сервера не принимались. Теперь
+   при каждом обмене с сервером: правки дня (subs) — его выбор поверх серверных (он их только
+   что сделал), профиль (me) — спорные поля берём с сервера, остальные его правки отправляем.
+   И если на телефоне в профиле нет пола, возраста, роста или веса, а на сервере есть, — берём
+   серверный профиль: такая копия получилась на пустом хранилище, она не правка человека. */
+function застрялоЛечить(сост){
+  var uid=syncUid(), q=settingsQueue(uid), loc0=myData()||{};
+  /* профиль: сам решаем спор, только если копия на телефоне неполная (пустое хранилище);
+     обычный спор двух устройств — по-прежнему его выбор в профиле (решение 20.10) */
+  var меНеполный=['sex','age','ht','bw'].some(function(f){ return !loc0[f]; });
+  /* 30.10, повтор у него в 13:30: правка профиля, посчитанная по неполной копии, стирала
+     возраст и рост — сервер отвечал 400, и она висела без спора («Ожидают отправки»).
+     Неполная копия + полный профиль на сервере → такие правки снимаем, профиль берём с сервера. */
+  var срв0=сост.me&&сост.me.data&&(сост.me.data.me||сост.me.data);
+  if(меНеполный && срв0 && ['sex','age','ht','bw'].every(function(f){ return срв0[f]; }) && (q.me||[]).length){
+    gset('settings_bad_me', q.me); delete q.me; settingsStore(uid,q); dirtySet('me',false);
+  }
+  ['subs','me'].forEach(function(k){
+    var j=(q[k]||[])[0]; if(!j || !j.conflict) return;
+    if(k==='me' && !меНеполный) return;
+    if(сост[k] && сост[k].data) j.conflict=сост[k].data;
+    settingsStore(uid,q);
+    var p=settingsResolve(k, k==='subs');
+    if(k==='subs') dayEditSaved(p,true); else p.catch(function(){});
+  });
+  q=settingsQueue(uid);
+  var st=сост.me, srv=st&&st.data&&(st.data.me||st.data), loc=myData()||{};
+  if(srv && !(q.me||[]).length && ['sex','age','ht','bw'].some(function(f){ return !loc[f] && srv[f]; })){
+    dirtySet('me',false);
+    if(adoptState('me', st.data)) markSet('me', +st.updated||Date.now());
+  }
+}
 function cloudPull(force){
   if(pulling) return Promise.resolve();
   if(!force && Date.now()-lastPull < 20000) return Promise.resolve();
@@ -12922,6 +13022,7 @@ function cloudPull(force){
       var localDeload={by:{}};localDeload.by[profile]={on:true,from:get('deload',TODAY),changed:Date.now()};
       gset('deload_user',localDeload);сохранитьСостояние('state/deload_user',localDeload).catch(function(){});
     }
+    try{ застрялоЛечить(сост); }catch(e){}
     var взято=[];
     PULLKEYS.forEach(function(k){
       var st=сост[k]; if(!st || DIRTY[k]) return;
@@ -13068,6 +13169,8 @@ function dayEditSaved(promise,cloud){
     if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';dayEditRepaint();
     DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';dayEditRepaint();}},3000);
   }).catch(function(e){if(gen!==DAYEDIT_GEN)return;
+    /* 30.10: спор по правкам дня не ждёт выбора в профиле — его правка ложится поверх серверной */
+    if(e&&e.code==='settings_conflict'&&e.settingsKey==='subs'&&!promise.__решено){var p2=settingsResolve('subs',true);p2.__решено=1;dayEditSaved(p2,cloud);return;}
     DAYEDIT_SAVE=правкаНадолго(e)?'err':'retry';
     /* очередь сама повторяет обрыв и 5xx; отказ без статуса — подталкиваем */
     if(DAYEDIT_SAVE==='retry')setTimeout(function(){settingsDrain(syncUid(),'subs').catch(function(){});},5000);
@@ -15825,6 +15928,9 @@ function wipeLocal(всё){
       if(всё){ убрать.push(k); continue; }
       var хвост=k.slice(LS.length);
       if(RESET_G.indexOf(хвост)>=0){ убрать.push(k); continue; }
+      /* 30.10 (аудит): очереди правок и тренировок прежнего дневника после сброса давали
+         ложный спор «удалить всё» */
+      if(/^(settings_queue_|settings_bad_|work_sync_|work_conflicts_)/.test(хвост)){ убрать.push(k); continue; }
       var м=хвост.match(/^[a-z]+_(.+)$/);        /* <программа>_<ключ> */
       if(м && (RESET_P.indexOf(м[1])>=0 || м[1].indexOf('pick_')===0)) убрать.push(k);
     }
@@ -23273,11 +23379,14 @@ if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
 else {
   /* Программу применяем молча, чтобы приложению было что рисовать, когда из
      облака приедет профиль, но за окном знакомства её не видно (body.onb). */
-  applyProfile('shp', true); showPicker(true);
+  applyProfile('shp', true);
+  if(TG && TG.initData) облакоЖдать(); else showPicker(true);
 }
 settingsRemember('me',{me:myData()||{}});
 settingsRemember('sched',{s:GYM_DAYS,p:profile});
-settingsRemember('subs',{s:SUBS,adj:ADJ,x:EXTRA,sk:SKIP,ord:ORD});
+/* 30.10: без pr база правок не знала суперсетов — первая же правка пары уходила как
+   «pr: не было → есть» и получала 409 (его «я просто соединил несколько упражнений в суперсеты») */
+settingsRemember('subs',{s:SUBS,adj:ADJ,x:EXTRA,sk:SKIP,ord:ORD,pr:PAIRS});
 settingsRemember('hurt',gget('hurt',{}));
 settingsRemember('program_draft',aiDraftData());aiDraftRestore();
 initDb();
