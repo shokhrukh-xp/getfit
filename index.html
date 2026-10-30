@@ -18483,7 +18483,11 @@ var РОЛИ_ЗНАЧ = { pending: 'на проверке', ok: 'принима�
 /* esc() не трогает кавычки — для значений атрибутов отдельно */
 function ролиА(t){ return esc(t).replace(/"/g, '&quot;'); }
 function ролиИмя(c){ return (ROLI.me && ROLI.me.names && ROLI.me.names[c]) || c; }
-function ролиДата(ms){ var d = new Date(+ms); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ', ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+/* 30.10: дата сразу на языке человека — подписи ответов ИИ-помощника слой перевода не всегда видит */
+function ролиДата(ms){ var d = new Date(+ms), t = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  if(ЯЗ === 'en') return ЯЗ_МЕС_T.en[d.getMonth()] + ' ' + d.getDate() + ', ' + t;
+  if(ЯЗ === 'uz') return d.getDate() + '-' + ЯЗ_МЕС_T.uz[d.getMonth()] + ', ' + t;
+  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ', ' + t; }
 function ролиДень(iso){ var d = new Date(iso + 'T12:00:00'); return d.getDate() + ' ' + MONTHS[d.getMonth()]; }
 function ролиЗагрузить(){
   if (!ЕСТЬ('roli') || ROLI.busy) return Promise.resolve(null);
