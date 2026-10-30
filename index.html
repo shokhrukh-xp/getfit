@@ -7818,6 +7818,23 @@ function облакоЖдать(){
     });
   })();
 }
+/* 30.10, живая проверка в Telegram Web: программа на устройстве уже была, а профиля и дневника
+   ещё нет — «Сегодня» ~10 с показывало 0 ккал и «заполните профиль — будет норма», пока не
+   приехали данные. Его слова раньше: «Я уже подумал, что все мои данные сбросились». Теперь
+   поверх — «Загружаю ваши данные…», пока не закончится первый обмен с сервером (не дольше 15 с).
+   Знакомство здесь не открываем: программа на устройстве есть. */
+function облакоПодгрузка(){
+  var w=document.getElementById('cloudwait'), t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(!w) return;
+  w.hidden=false; if(t) t.textContent=тр('Загружаю ваши данные…'); if(b) b.hidden=true;
+  var t0=Date.now(), был=false;
+  (function смотреть(){
+    if(pulling) был=true;
+    if(ОБЛАКО_ЖДЁМ) return;
+    if(meFull() || (был && !pulling) || Date.now()-t0>15000){ w.hidden=true; return; }
+    setTimeout(смотреть, 250);
+  })();
+}
 function облакоНетСвязи(){
   if(!ОБЛАКО_ЖДЁМ) return;
   clearTimeout(облакоТаймер);
@@ -22251,7 +22268,7 @@ window.addEventListener('load',function(){if(new URL(location.href).searchParams
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
 
 var _saved = gget('profile', null);
-if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
+if(_saved && PROFILES[_saved]){ applyProfile(_saved); if(TG && TG.initData && !meFull()) облакоПодгрузка(); }
 else {
   /* Программу применяем молча, чтобы приложению было что рисовать, когда из
      облака приедет профиль, но за окном знакомства её не видно (body.onb). */
