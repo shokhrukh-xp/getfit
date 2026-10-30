@@ -6,3 +6,6 @@ https://github.com/vulovix/body-muscles
 
 Пути переведены в абсолютные координаты, округлены и перегруппированы
 под 20 групп приложения. Лицензия Apache-2.0 сохраняется.
+
+QR-код в кабинете компании (kabinet/) рисует библиотека qrcode-generator 1.4.4
+(MIT License), Copyright (c) 2009 Kazuhiko Arase — vendor/LICENSE-qrcode-generator.txt.

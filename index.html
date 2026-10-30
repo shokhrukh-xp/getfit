@@ -19077,10 +19077,20 @@ function компРисовать(){
     if (!m) b.innerHTML = ошибка || '<p class="empt">Загружаю…</p>';
     else {
       var сотр = '<h4 class="pqlab">Я сотрудник</h4>' + компСотрудникHtml(m), каб = '<h4 class="pqlab">Кабинет компании</h4>' + (m.team.length ? m.team.map(компКабинетHtml).join('') : компЗаявкаHtml());
+      /* 30.10, этап 6б: кабинет в браузере — ссылка и входы с компьютера, только команде */
+      if (m.team.length) каб += компВебHtml(m);
       b.innerHTML = ошибка + (m.team.length && !m.member ? каб + сотр : сотр + каб);
     }
   }
   компАдмРисовать();
+}
+function компВебHtml(m){
+  var url = ''; try { url = new URL('kabinet/', location.href).href.split('#')[0]; } catch (e) {}
+  return '<h4 class="pqlab">С компьютера</h4><div class="rolcard"><p class="rolnote">Кабинет компании в браузере: откройте ссылку на компьютере и войдите, наведя этот телефон на QR-код.</p>' +
+    '<div class="invcode"><input type="text" readonly value="' + ролиА(url) + '" aria-label="ссылка на кабинет"><button type="button" class="btn small prim" data-ko="share" data-what="web" data-url="' + ролиА(url) + '">Отправить</button></div>' +
+    (!m.web ? '' : '<p class="rolnote">Входов с компьютера: ' + m.web + '</p>' + (КОМП.сменить === 'web'
+      ? '<div class="rolend"><span>Завершить все входы с компьютера? Кабинет закроется на всех компьютерах.</span><button type="button" class="btn small danger" data-ko="webend">Завершить</button><button type="button" class="btn small" data-ko="codeno">Нет</button></div>'
+      : '<div class="rolbtns"><button type="button" class="btn small" data-ko="webask">Завершить все входы</button></div>')) + '</div>';
 }
 function компГруппаHtml(ch){
   var г = ch.group || {};
@@ -19180,7 +19190,7 @@ function компКлик(e){
       .catch(function(er){ f.busy = false; f.err = er.message || humanErr(er); компРисовать(); });
   }
   if (д === 'share') {
-    var т = b.dataset.what === 'team' ? 'Зову вас в команду нашей компании в Wellböl.' : 'Присоединяйтесь к нашей компании в Wellböl — по ссылке видно, что компании будет видно.';
+    var т = b.dataset.what === 'team' ? 'Зову вас в команду нашей компании в Wellböl.' : b.dataset.what === 'web' ? 'Кабинет компании Wellböl — открыть на компьютере.' : 'Присоединяйтесь к нашей компании в Wellböl — по ссылке видно, что компании будет видно.';
     var su = 'https://t.me/share/url?url=' + encodeURIComponent(b.dataset.url) + '&text=' + encodeURIComponent(т);
     if (TG && TG.openTelegramLink) TG.openTelegramLink(su); else window.open(su, '_blank');
     return;
@@ -19189,6 +19199,8 @@ function компКлик(e){
   if (д === 'leave') { b.disabled = true; return fPost('/roli/co/leave', { uid: u, co: КОМП.me.member.co }).then(function(){ КОМП.уйти = false; haptic('light'); return компЗагрузить(); }).catch(ош); }
   if (д === 'chin' || д === 'chout') { b.disabled = true; return fPost('/roli/co/ch/join', { uid: u, id: b.dataset.id, on: д === 'chin' }).then(function(){ haptic('light'); return компЗагрузить(); }).catch(ош); }
   if (д === 'codeask' || д === 'codeno') { КОМП.сменить = д === 'codeask' ? co : ''; return компРисовать(); }
+  if (д === 'webask') { КОМП.сменить = 'web'; return компРисовать(); }
+  if (д === 'webend') { b.disabled = true; return fPost('/roli/co/web/end', { uid: u }).then(function(){ КОМП.сменить = ''; haptic('light'); return компЗагрузить(); }).catch(ош); }
   if (д === 'code') { b.disabled = true; return fPost('/roli/co/code', { uid: u, co: co }).then(function(){ КОМП.сменить = ''; return освежить(); }).catch(ош); }
   if (д === 'inv') { b.disabled = true; return fPost('/roli/co/invite', { uid: u, co: co, role: b.dataset.role }).then(function(r){ КОМП.invite[co] = { link: r.link, role: r.role }; haptic('light'); компРисовать(); }).catch(ош); }
   if (д === 'rm') { b.disabled = true; return fPost('/roli/co/team', { uid: u, co: co, who: b.dataset.who, remove: true }).then(освежить).catch(ош); }

@@ -46,7 +46,8 @@ function сервер(нач){
     if (p.endsWith('/admin/roli') && метод === 'GET') return { ok: true, pros: s.adm };
     if (p.endsWith('/admin/roli')) { const x = s.adm.find(a => a.uid === тело.who); x.status = тело.status; return { ok: true }; }
     /* этап 6: компания */
-    if (p.endsWith('/roli/co') && метод === 'GET') return { ok: true, ver: 'КВ1', min: 10, team: s.coTeam || [], member: s.coMember || null };
+    if (p.endsWith('/roli/co') && метод === 'GET') return { ok: true, ver: 'КВ1', min: 10, team: s.coTeam || [], member: s.coMember || null, web: s.coWeb || 0 };
+    if (p.endsWith('/roli/co/web/end')) { s.coВебВыход = true; s.coWeb = 0; return { ok: true }; }
     if (p.endsWith('/roli/co/card')) return s.coCard ? Object.assign({ ok: true }, s.coCard) : { status: 404, body: { ok: false, error: 'нет' } };
     if (p.endsWith('/roli/co/join') && метод === 'GET') return s.coJoin || { ok: true, preview: true, kind: 'member', co: { name: 'Альфа', about: 'IT, 40 человек' }, ver: 'КВ1',
       text: 'Компания увидит только общие цифры по группе от 10 человек: сколько участвуют, доля активных и средние за прошлую неделю, в челленджах — доля дошедших. Кто именно участвует, ваши еда, вес, тренировки и здоровье компании не видны. Свой прогресс в челлендже видите только вы. Выйти можно в любой момент.' };
@@ -502,7 +503,7 @@ async function проверить(p, где, имя, sel){
   for (const [width, theme] of [[320, 'light'], [390, 'dark']]) {
     const где = 'кабинет ' + width + ': ';
     const p = await b.newPage({ viewport: { width, height: 820 } });
-    const s = сервер({ coTeam: [{ id: 'c1', name: 'Альфа', status: 'ok', role: 'admin' }], coCard: {
+    const s = сервер({ coWeb: 2, coTeam: [{ id: 'c1', name: 'Альфа', status: 'ok', role: 'admin' }], coCard: {
       co: { id: 'c1', name: 'Альфа', status: 'ok', role: 'admin' }, min: 10, members: 12, link: 'https://t.me/WellbolTestBot?start=c_ALFAKOD1',
       team: [{ uid: '1', name: 'Азиз', role: 'admin', me: true }, { uid: 'm1', name: 'Мадина', role: 'manager' }],
       ch: [{ id: 'h1', title: 'Неделя хороших дней', metric: 'good_days', target: 5, start: M.Д(2), end: M.Д(-5), group: { n: 14, done: 35, avg: 50 } }],
@@ -526,6 +527,11 @@ async function проверить(p, где, имя, sel){
     await p.selectOption('#rolco select[data-who="m1"]', 'observer'); await p.waitForTimeout(400);
     ok(s.coКоманда && s.coКоманда.who === 'm1' && s.coКоманда.role === 'observer', где + 'смена роли ушла: ' + JSON.stringify(s.coКоманда));
     ok(!(await p.$('#rolco [data-ko="rm"][data-who="1"]')), где + 'себя убрать нельзя — кнопки нет');
+    ok(/Входов с компьютера: 2/.test(await p.$eval('#rolco', e => e.textContent)) && await p.$eval('#rolco input[aria-label="ссылка на кабинет"]', e => /\/kabinet\/$/.test(e.value)), где + '«С компьютера»: ссылка на кабинет и число входов');
+    await p.click('#rolco [data-ko="webask"]'); await p.waitForTimeout(150);
+    ok(!s.coВебВыход, где + 'завершить входы — только после подтверждения');
+    await p.click('#rolco [data-ko="webend"]'); await p.waitForTimeout(500);
+    ok(s.coВебВыход && !/Входов с компьютера/.test(await p.$eval('#rolco', e => e.textContent)), где + '«Завершить все входы» ушло');
     await проверить(p, где, 'кабинет компании', '#rolco');
     ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
