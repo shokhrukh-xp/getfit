@@ -33,7 +33,7 @@ function сервер(нач){
     else if (u.pathname === '/web/mail/link') { s.привязка = тело; b = тело.code ? { ok: true, email: тело.email } : { ok: true, sent: true }; }
     else if (u.pathname === '/web/co/invite-mail') { s.позвал = тело; b = { ok: true, email: тело.email, role: тело.role }; }
     else if (u.pathname === '/web/co/mailing') { s.рассылка = тело; (s.mailings = s.mailings || []).unshift({ id: 'm1', created: Date.now(), total: тело.emails.length, queued: тело.emails.length, sent: тело.emails.length, failed: 0, dup: 0, status: 'done' }); b = { ok: true, id: 'm1', total: тело.emails.length, queued: тело.emails.length, dup: 0, invalid: [] }; }
-    else if (u.pathname === '/web/co/mailings') b = { ok: true, mailings: s.mailings || [], max: 2000 };
+    else if (u.pathname === '/web/co/mailings') b = { ok: true, mailings: s.mailings || [], max: 2000, dayLimit: 80, sentToday: 12 };
     else if (u.pathname === '/web/me') b = { ok: true, name: 'Азиз', email: s.email || '', min: 10, team: [{ id: 'c1', name: 'Альфа Банк', status: 'ok', role: 'admin' }, { id: 'c2', name: 'Бета', status: 'pending', role: 'admin' }] };
     else if (u.pathname === '/web/co/card') b = s.card;
     else if (u.pathname === '/web/co/invite') b = { ok: true, role: тело.role, link: 'https://t.me/WellbolTestBot?start=c_TEAMCODE01' };
@@ -142,6 +142,7 @@ async function проверить(p, где, имя){
     await p.click('[data-a="mlsend"]'); await p.waitForTimeout(500);
     ok(s.рассылка && JSON.stringify(s.рассылка.emails) === '["ivanov@bank.uz","petrova@bank.uz"]', где + 'ушли только адреса, без имён и повторов');
     ok(/Рассылки/.test(await p.textContent('main')) && /готово/.test(await p.textContent('main')), где + 'история рассылок');
+    ok(/до 80 приглашений в сутки, сегодня ушло 12/.test(await p.textContent('main')), где + 'лимит тарифа почты виден');
     await проверить(p, где, 'кабинет с рассылкой');
     ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await ctx.close();

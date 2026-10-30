@@ -324,6 +324,7 @@ function рассылкаHtml(c, t){
     '<div class="btns"><label class="btn small" style="cursor:pointer">' + т('Выбрать файл CSV') + '<input id="ml-file" type="file" accept=".csv,.txt,text/csv,text/plain" hidden></label>' +
     '<span class="note" id="ml-count">' + счётHtml(разбор) + '</span></div>' +
     (сп.err ? '<p class="err">' + esc(сп.err) + '</p>' : '') +
+    (S.лимит && S.лимит[t.id] ? '<p class="note">' + т('Тариф почты: до {0} приглашений в сутки, сегодня ушло {1}. Остальные уйдут сами в следующие дни.', S.лимит[t.id].day, S.лимит[t.id].today) + '</p>' : '') +
     (S.confirm === 'ml' && разбор.ok.length
       ? '<div class="confirm"><span>' + т('Отправить {0} писем от имени «{1}»?', разбор.ok.length, esc(t.name)) + '</span><button type="button" class="btn small prim" data-a="mlsend">' + т('Отправить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
       : '<div class="btns"><button type="button" class="btn prim" data-a="ask" data-k="ml"' + (разбор.ok.length && !сп.busy ? '' : ' disabled') + '>' + (сп.busy ? т('Отправляю…') : т('Отправить приглашения')) + '</button></div>') +
@@ -354,7 +355,7 @@ function почтаВходаHtml(){
 }
 function рассылкиЗагрузить(co){
   return api('GET', '/web/co/mailings?co=' + encodeURIComponent(co)).then(function(r){
-    S.рассылки[co] = r.mailings; рисовать();
+    S.рассылки[co] = r.mailings; S.лимит = S.лимит || {}; S.лимит[co] = r.dayLimit ? { day: r.dayLimit, today: r.sentToday } : null; рисовать();
     clearTimeout(S.рт); if (r.mailings.some(function(x){ return x.status === 'sending'; })) S.рт = setTimeout(function(){ рассылкиЗагрузить(co); }, 3000);
   }).catch(function(){});
 }
