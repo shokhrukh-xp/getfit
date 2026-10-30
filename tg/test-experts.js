@@ -22,7 +22,8 @@ function сервер(нач){
     else if (u.pathname === '/web/pro/me') b = я();
     else if (u.pathname === '/web/pro/apply') {
       s.заявка = тело;
-      s.pro = тело.kinds.map(k => ({ kind: k, name: тело.name, about: тело.about, contact: тело.contact, docs: (s.pro[0] ? s.pro[0].docs : 0) + тело.docs.length, status: 'pending', link: null }));
+      const были = s.pro.filter(x => тело.kinds.indexOf(x.kind) < 0);
+      s.pro = были.concat(тело.kinds.map(k => ({ kind: k, name: тело.name, about: тело.about, contact: тело.contact, docs: (s.pro[0] ? s.pro[0].docs : 0) + тело.docs.length, status: 'pending', link: null })));
       b = я();
     }
     else b = { ok: true };
@@ -96,6 +97,15 @@ const кириллица = (p, свои) => p.evaluate(rx => {
     ok(await x.p.$eval('.link input', e => e.value) === 'https://t.me/WellbolTestBot?start=s_TSTRNR01', где + 'принят: ссылка для клиентов');
     ok(await x.p.$eval('a.btn[href="https://t.me/WellbolTestBot"]', a => a.target === '_blank').catch(() => false) && /Кабинет специалиста/.test(await x.p.textContent('main')), где + 'путь в приложение: «Кабинет специалиста», кнопка в бота');
     ok(/не принята/.test(await x.p.textContent('main')) && !(await x.p.$('[data-a="edit"]')), где + 'вторая заявка не принята — «Дополнить» нет');
+    await x.ctx.close();
+    /* проверка путей ролей: принятый тренер добавляет вторую специальность сам */
+    x = await открыть(b, w, тема, { ageKnown: true, pro: [{ kind: 'trainer', name: 'Дилшод', about: 'Тренер 6 лет, диплом УзГИФК.', contact: '+998', docs: 1, status: 'ok', link: 'https://t.me/WellbolTestBot?start=s_TSTRNR01' }] }, ТОК);
+    await x.p.waitForSelector('[data-a="edit"]', { timeout: 5000 }).catch(() => {});
+    ok(/Добавить специальность/.test(await x.p.textContent('main')), где + 'принят тренером — «Добавить специальность»');
+    await x.p.click('[data-a="edit"]'); await x.p.waitForSelector('#f-name', { timeout: 3000 }).catch(() => {});
+    ok(await x.p.$eval('[data-kind="trainer"]', e => e.disabled) && !(await x.p.$eval('[data-kind="nutri"]', e => e.disabled)), где + 'тренер уже принят — выбрать можно только нутрициолога');
+    await x.p.check('[data-kind="nutri"]'); await x.p.click('[data-a="send"]'); await x.p.waitForTimeout(500);
+    ok(x.s.заявка && x.s.заявка.kinds.join() === 'nutri' && x.s.заявка.docs.length === 0, где + 'ушла заявка нутрициолога, прежний диплом не дублируем: ' + JSON.stringify(x.s.заявка && x.s.заявка.kinds));
     await x.p.click('[data-a="copy"]'); await x.p.waitForTimeout(200);
     ok(await x.p.evaluate(() => navigator.clipboard.readText()).catch(() => '') === 'https://t.me/WellbolTestBot?start=s_TSTRNR01', где + 'копирование ссылки');
     await проверить(x.p, где, 'принят');

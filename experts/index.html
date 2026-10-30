@@ -268,7 +268,9 @@ function статусHtml(){
     }).join('') +
     (m.pro.some(function(x){ return x.status === 'ok'; }) ? '<p class="note" style="margin-top:14px">' + т('Клиенты, программы и переписка — в приложении Wellböl: Профиль → «Кабинет специалиста».') + '</p>' +
       (бот ? '<div class="btns"><a class="btn" href="' + esc(бот) + '" target="_blank" rel="noopener">' + т('Открыть Wellböl в Telegram') + '</a></div>' : '') : '') +
-    (ждёт ? '<div class="btns"><button type="button" class="btn small" data-a="edit">' + т('Дополнить заявку') + '</button></div>' : '') + '</div>';
+    /* проверка путей ролей: принятый тренер может позже стать и нутрициологом (и наоборот) — без поддержки */
+    (ждёт ? '<div class="btns"><button type="button" class="btn small" data-a="edit">' + т('Дополнить заявку') + '</button></div>'
+      : m.pro.length < 2 && m.pro[0].status === 'ok' ? '<div class="btns"><button type="button" class="btn small" data-a="edit">' + т('Добавить специальность') + '</button></div>' : '') + '</div>';
 }
 function страницаHtml(){
   var m = S.me;
