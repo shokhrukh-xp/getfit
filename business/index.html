@@ -173,6 +173,8 @@ function язык(L){
 function число(x){ return S.lang === 'en' ? String(x) : String(x).replace('.', ','); }
 function дата(iso){
   var d = new Date(iso + 'T12:00:00');
+  /* 30.10: Chrome пишет uz-Latn как «M07 6» — узбекские месяцы свои */
+  if (S.lang === 'uz') return d.getDate() + '-' + ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'][d.getMonth()];
   try { return d.toLocaleDateString(S.lang === 'uz' ? 'uz-Latn' : S.lang, { day: 'numeric', month: 'short' }); } catch (e) { return iso; }
 }
 function плюс(iso, n){ var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }

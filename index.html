@@ -18713,7 +18713,7 @@ function ролиИИПHtml(k){
   var h = '<div class="rolai"><p class="rolnote"><span>Спросите о клиенте словами. ИИ-помощник видит только то, что клиент вам открыл:</span> <b>' + открыто.map(ролиИмя).map(esc).join(' · ') + '</b><br><span>Каждый вопрос клиент видит в «Кто смотрел».</span></p>';
   if (a.items === null || a.items === undefined) h += '<p class="empt">Загружаю…</p>';
   else h += a.items.map(function(it){
-    return '<div class="rolaiqa"><p class="rolaiq">' + esc(it.q) + '</p><div class="rolaia">' + жирный(esc(it.a)).replace(/\n/g, '<br>') + '</div><small>' + ролиДата(it.at) + (it.used && it.used.length ? ' · ' + it.used.map(ролиИмя).map(esc).join(', ') : '') + '</small></div>';
+    return '<div class="rolaiqa"><p class="rolaiq">' + esc(it.q) + '</p><div class="rolaia">' + жирный(esc(it.a)).replace(/\n/g, '<br>') + '</div><small>' + ролиДата(it.at) + (it.used && it.used.length ? ' · ' + it.used.map(ролиИмя).map(esc).join(' · ') : '') + '</small></div>';
   }).join('');
   if (a.busy) h += '<div class="rolaiqa"><p class="rolaiq">' + esc(a.busy) + '</p><div class="rolaia muted">Смотрю данные клиента<span class="dots"><i></i><i></i><i></i></span></div></div>';
   if (a.err) h += '<p class="rolerr">' + esc(a.err) + '</p>';
