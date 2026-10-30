@@ -28,6 +28,8 @@ function сервер(нач){
     if (p.endsWith('/roli/norm/take')) { s.взял = тело; const о = s.normOffer; s.normOffer = null; if (тело.take) s.norm = { name: о.name, kcal: о.kcal, prot: о.prot, fat: о.fat, rules: о.rules, note: '' }; return { ok: true, take: тело.take }; }
     if (p.endsWith('/roli/norm/off')) { s.norm = null; s.сняла = true; return { ok: true }; }
     if (p.endsWith('/roli/meal-note')) { s.заметка = тело; return { ok: true }; }
+    if (p.endsWith('/roli/ex') && метод === 'GET') return { ok: true, ex: s.упр || [], lic: '2026-10-30.1' };
+    if (p.endsWith('/roli/ex')) { s.сохр = тело; const x = { id: 'uабв', n: тело.n, m: тело.m, sm: тело.sm, q: тело.q, c: тело.c, cues: тело.cues.filter(Boolean), img: (тело.photos || []).map((_, i) => 'exphoto0000' + (i + 1)), video: тело.video, own: true }; s.упр = [x]; return { ok: true, ex: x }; }
     if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
     if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
@@ -391,6 +393,57 @@ async function проверить(p, где, имя, sel){
     ok(/норма не ниже нормы приложения \(2100 ккал\)/.test(т) && /Диабет: углеводы ровно по приёмам/.test(т), 'нутрициолог: предупреждения в форме нормы: ' + т.slice(0, 160));
     await проверить(p, '', 'форма нормы с предупреждениями', '#rolcm');
     ok(!err.length, 'нутрициолог 3б: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 13. этап 4: своё упражнение тренера — форма, похожие, фото с правами, в конструкторе «моё» */
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 820 } });
+    const s = сервер({ pro: [{ kind: 'trainer', name: 'Тимур', status: 'ok', code: 'TSTRNR01', link: 'https://t.me/x?start=s_TSTRNR01' }],
+      clients: [{ id: 'l1', kind: 'trainer', client: '777', name: 'Карина', cats: [], parq: 'ok' }] });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(300);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
+    await p.waitForSelector('#rolpro [data-rol="exnew"]', { timeout: 3000 }).catch(() => {});
+    ok(/Своих пока нет/.test(await p.$eval('#rolpro', e => e.textContent)), 'своё: пустой список с подсказкой');
+    await p.click('#rolpro [data-rol="exnew"]'); await p.waitForSelector('#rolx-n', { timeout: 3000 }).catch(() => {});
+    await p.fill('#rolx-n', 'Присед со штангой у стены'); await p.waitForTimeout(500);
+    ok(/Похожие в каталоге: .*Присед/.test(await p.$eval('#rolx-similar', e => e.textContent)), 'своё: похожие из каталога — подсказкой: ' + (await p.$eval('#rolx-similar', e => e.textContent)).slice(0, 120));
+    await p.selectOption('#rolx-m', 'glutes'); await p.waitForTimeout(100);
+    await p.click('#rolexbody [data-rx="sm"][data-v="quadriceps"]'); await p.click('#rolexbody [data-rx="sm"][data-v="hamstrings"]');
+    await p.selectOption('#rolx-q', 'barbell');
+    await p.fill('#rolexbody .rolx-cue >> nth=0', 'Спина к стене'); await p.fill('#rolexbody .rolx-cue >> nth=1', 'Присед до параллели');
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR4nGP8z8Dwn4GBgYGJAQoAHwABAzS9JQAAAABJRU5ErkJggg==', 'base64');
+    await p.setInputFiles('#rolx-file', { name: 'a.png', mimeType: 'image/png', buffer: png }); await p.waitForSelector('#rolx-lic', { timeout: 3000 }).catch(() => {});
+    await p.click('#rolexbody [data-rx="save"]'); await p.waitForTimeout(200);
+    ok(/Подтвердите права на фото/.test(await p.$eval('#rolexbody', e => e.textContent)) && !s.сохр, 'своё: без галочки прав фото не уходит');
+    await p.check('#rolx-lic');
+    await проверить(p, '', 'форма своего упражнения', '#rolexm');
+    await p.click('#rolexbody [data-rx="save"]'); await p.waitForTimeout(500);
+    const x = s.сохр || {};
+    ok(x.n === 'Присед со штангой у стены' && x.m === 'glutes' && JSON.stringify(x.sm) === '["quadriceps","hamstrings"]' && x.q === 'barbell' && x.cues[0] === 'Спина к стене' && x.photos.length === 1 && x.lic === '2026-10-30.1',
+      'своё: ушло как заполнено, с лицензией: ' + JSON.stringify({ ...x, photos: (x.photos || []).length }).slice(0, 220));
+    ok(!(await виден(p, '#rolexm')) && /Присед со штангой у стены/.test(await p.$eval('#rolpro', e => e.textContent)), 'своё: лист закрылся, упражнение в списке');
+    await p.click('#rolpro [data-rol="card"]'); await p.waitForSelector('#rolcbody [data-rp="add"]', { timeout: 3000 }).catch(() => {});
+    await p.click('#rolcbody [data-rp="add"]'); await p.fill('#rolp-q', 'присед'); await p.waitForTimeout(600);
+    const перв = await p.$eval('#rolp-res .rolpick', e => e.textContent).catch(() => '');
+    ok(/^моё Присед со штангой у стены/.test(перв), 'своё: в конструкторе первым и с пометкой «моё»: ' + перв);
+    ok(!err.length, 'своё: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 14. этап 4: у клиента своё упражнение тренера — с его фото с нашего сервера */
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ my: [{ id: 'l1', kind: 'trainer', name: 'Тимур', proStatus: 'ok', cats: ['gym'] }],
+      offer: { name: 'Тимур', kind: 'trainer', at: 66, prog: { name: 'Своё · 1 день', note: '', author: { uid: 't1', name: 'Тимур', kind: 'trainer' },
+        days: [{ s: 'Низ', sub: '', ex: [{ id: 'uабв', n: 'Выпады у стены', en: 'Выпады у стены', m: 'glutes', q: 'kettlebells', sets: 3, reps: '10–12', rest: 90, img: ['exphoto00001'], cues: ['Спина к стене'], own: 'Тимур' }] }] } } });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(400);
+    await p.evaluate(() => { const b = document.querySelector('button[role="tab"][data-page="gym"]'); if (b) b.click(); });
+    await p.waitForSelector('#roloffer [data-rol="take"]', { timeout: 4000 }).catch(() => {});
+    await p.click('#roloffer [data-rol="take"]'); await p.waitForTimeout(1200);
+    const фото = await p.evaluate(() => !!document.querySelector('#p-gym [data-private-photo="exphoto00001"]'));
+    ok(фото, 'своё у клиента: в тренировке — фото тренера с нашего сервера');
+    ok(!err.length, 'своё у клиента: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 5. владелец: заявки в Админ панели */

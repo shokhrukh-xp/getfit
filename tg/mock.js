@@ -787,6 +787,8 @@ async function поднять(page, o) {
       return дать({ ok: true, prog: вторая, wt: 'down', gym: 'muscle', goal: 'lose_muscle', goalObj: null,
         ask: null, options: [], left: 0, hint: 'Всё учёл — программа твоя.', dislikes: ['колени беречь', 'кардио'] });
     }
+    /* 30.10, роли, этап 4: закрытое фото (своё упражнение тренера) — картинка 1×1 */
+    if (p.endsWith('/photo')) return route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==', 'base64') });
     /* 29.10, роли (этап 2а): o.roli — «сервер ролей» набора; без него — 404, как на бою без выключателя */
     if (/\/(roli\/|admin\/roli$)/.test(p)) {
       if (!o.roli) return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'не найдено' }) });

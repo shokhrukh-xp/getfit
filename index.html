@@ -4572,6 +4572,18 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 .roln-rule{display:block;width:100%;box-sizing:border-box;margin:0 0 8px;font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
 .rolnb{margin-top:6px;align-self:flex-start}
 .rolnoted{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.rolown{font-style:normal;font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;margin-right:4px}
+.rolchips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.rolchip{min-height:36px;padding:6px 12px;border-radius:18px;border:1px solid var(--tab-line);background:var(--surface);color:var(--text);font:inherit;font-size:14px;cursor:pointer}
+.rolchip[aria-pressed="true"]{background:var(--action);border-color:var(--action);color:#fff}
+#rolexbody select{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
+.rolxphs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rolxph{position:relative;display:inline-block}
+.rolxph img{width:96px;height:96px;object-fit:cover;border-radius:12px;display:block}
+.rolxph .btn{position:absolute;top:4px;right:4px;min-width:32px;min-height:32px;padding:0}
+.rolxadd{display:inline-flex;align-items:center;cursor:pointer}
+.rolxlic{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--text);margin:10px 0}
+.rolxlic input{width:22px;height:22px;flex:none;margin:0}
 .rolnoted textarea{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
 </style>
 </head>
@@ -5317,6 +5329,13 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <button type="button" class="btn wide" id="roljclose">Не сейчас</button>
   </div>
 </div>
+<div class="modal f-roli" id="rolexm" role="dialog" aria-modal="true" aria-labelledby="rolext">
+  <div class="modalbox">
+    <h3 id="rolext">Своё упражнение</h3>
+    <div id="rolexbody"></div>
+    <button type="button" class="btn wide" id="rolexclose">Закрыть</button>
+  </div>
+</div>
 <div class="modal f-roli" id="rolchatm" role="dialog" aria-modal="true" aria-labelledby="rolchatt">
   <div class="modalbox">
     <h3 id="rolchatt">Переписка</h3>
@@ -5469,6 +5488,8 @@ function кадр(ph, cat, n, big){
   return '<img src="'+IMGDIR+'t/'+(cat ? encodeURI(cat) : 'o/'+ph)+'-'+n+'.jpg'+IMGV+'" data-full="'+full+'" alt="" loading="lazy">';
 }
 function mediaFor(e, big){
+  if(e.img && e.img.length && ЕСТЬ('roli'))
+    return '<div class="fig2" role="img" aria-label="'+esc(e.n)+'">'+e.img.slice(0,2).map(function(k){ return '<img '+photoAttr(SYNCURL+'/photo?key='+encodeURIComponent(k),false,big)+' alt="" loading="lazy">'; }).join('')+'</div>';
   var own = e.cat ? catOwn(e.cat) : null;
   if(own){
     if(own.ph && FRAMES[own.ph]) return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
@@ -15343,8 +15364,10 @@ function installAiProg(prog){
     DAYS[k]={ name:'День '+(i+1), s:sLabel.slice(0,10), when:'', sub:d.sub||'', ex:(d.ex||[]).map(function(x){
       var time=/ с$/.test(x.reps||'');
       var ph0 = (x.q==='body only'?null:phGuess(x.en, x.q, x.m));
+      /* 30.10, роли, этап 4: своё упражнение тренера — фото с нашего сервера, техника и подпись автора */
       return { p:x.p||'', n:x.n, en:x.en||'', cat:x.id, m:x.m||'', sets:x.sets||3, reps:x.reps||'8–12', rest:x.rest||90,
-               ss:x.ss||undefined, inc:incFor(x.q), cues:[], why:x.why||'',
+               ss:x.ss||undefined, inc:incFor(x.q), cues:(x.own && Array.isArray(x.cues)) ? x.cues.slice(0,6) : [], why:x.why||(x.own ? 'Упражнение тренера '+x.own : ''),
+               img:(x.own && Array.isArray(x.img)) ? x.img.slice(0,2) : undefined, own:x.own||undefined,
                eq:({barbell:'штанга', dumbbell:'гантели', kettlebells:'гиря', machine:'тренажёр', cable:'блок'})[x.q]||'',
                ph:ph0, fig:null, ai:true,
                nw: (x.q==='body only' && (time || x.m==='abdominals')) || undefined };
@@ -18320,6 +18343,7 @@ function ролиЗагрузить(){
     ROLI.busy = false;
     if (!a[0] || !a[0].ok) throw new Error((a[0] && a[0].error) || 'нет ответа');
     ROLI.me = a[0]; ROLI.log = (a[1] && a[1].ok) ? a[1].log : []; ролиРисовать(); ролиЧатПоСсылке();
+    if (ROLI.me.pro.some(function(x){ return x.kind === 'trainer' && x.status === 'ok'; })) ролиУпрЗагрузить();
   }).catch(function(e){ ROLI.busy = false; ROLI.err = 'Не удалось загрузить: ' + humanErr(e); ролиРисовать(); });
 }
 function ролиСтрокиПрофиля(){
@@ -18382,13 +18406,14 @@ function ролиПроHtml(m){
     if (p.status === 'pending') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка на проверке. Как примем — здесь появится ссылка для клиентов.</p></div>';
     if (p.status !== 'ok') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка не принята.</p></div>';
     var свои = m.clients.filter(function(x){ return x.kind === p.kind; });
+    var упр = p.kind === 'trainer' ? '<h4 class="pqlab">Мои упражнения</h4>' + ролиУпрСписокHtml() + '<button type="button" class="btn small" data-rol="exnew">+ Своё упражнение</button>' : '';
     return '<div class="rolcard">' + шапка +
       '<p class="rolnote">Ссылка для клиентов: по ней они увидят, что вам будет видно, и подключатся сами.</p>' +
       '<div class="invcode"><input type="text" readonly value="' + ролиА(p.link || '') + '" aria-label="ссылка для клиентов"><button type="button" class="btn small prim" data-rol="share" data-url="' + ролиА(p.link || '') + '">Отправить</button></div>' +
       '<h4 class="pqlab">Клиенты</h4>' +
       (!свои.length ? '<p class="empt">Пока никого.</p>' : '<div class="pqgroup">' + свои.map(function(x){
         return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.cats.map(ролиИмя).map(esc).join(', ') + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
-      }).join('') + '</div>') + '</div>';
+      }).join('') + '</div>') + упр + '</div>';
   }).join('');
 }
 function ролиКлик(e){
@@ -18404,6 +18429,8 @@ function ролиКлик(e){
       .catch(function(er){ ROLI.жалобаОш = er.message || humanErr(er); ролиРисовать(); var t = document.getElementById('rol-comp'); if (t) t.value = тх; });
   }
   if (д === 'take') return ролиПрогВзять(b);
+  if (д === 'exnew') return ролиУпрФорма(null);
+  if (д === 'exedit') return ролиУпрФорма(b.dataset.id);
   if (д === 'normtake') return ролиНормаРешить(b, true);
   if (д === 'normlater') { var н0 = ROLI.me && ROLI.me.normOffer; if (н0) gset('roli_norm_skip', н0.at); return ролиРисовать(); }
   if (д === 'normoff') { b.disabled = true; return fPost('/roli/norm/off', { uid: syncUid() }).then(function(){ haptic('light'); try{ освежить(); }catch(e){} return ролиЗагрузить(); }).catch(function(er){ ROLI.err = er.message || humanErr(er); ролиРисовать(); }); }
@@ -18535,9 +18562,13 @@ function ролиПрогHtml(k){
 function ролиПоискHtml(q){
   if (!CAT) return '<p class="empt">Загружаю каталог…</p>';
   var сл = String(q || '').toLowerCase().split(/\s+/).filter(Boolean); if (!сл.length) return '<p class="rolnote">Начните вводить название: «жим», «тяга», «присед»…</p>';
-  var найдено = CAT.ex.filter(function(x){ var t = (x.n + ' ' + (x.e || '')).toLowerCase(); return сл.every(function(w){ return t.indexOf(w) >= 0; }); }).slice(0, 12);
-  if (!найдено.length) return '<p class="empt">Не нашёл.</p>';
-  return найдено.map(function(x){ return '<button type="button" class="rolpick" data-rp="pick" data-i="' + ролиА(x.i) + '">' + esc(x.n) + '</button>'; }).join('');
+  var подходит = function(t){ t = t.toLowerCase(); return сл.every(function(w){ return t.indexOf(w) >= 0; }); };
+  /* этап 4: свои упражнения тренера — первыми, с пометкой */
+  var свои = (ROLI.упр || []).filter(function(x){ return подходит(x.n); }).slice(0, 6);
+  var найдено = CAT.ex.filter(function(x){ return подходит(x.n + ' ' + (x.e || '')); }).slice(0, 12 - свои.length);
+  if (!найдено.length && !свои.length) return '<p class="empt">Не нашёл.</p>';
+  return свои.map(function(x){ return '<button type="button" class="rolpick" data-rp="pick" data-i="' + ролиА(x.id) + '"><em class="rolown">моё</em> ' + esc(x.n) + '</button>'; }).join('') +
+    найдено.map(function(x){ return '<button type="button" class="rolpick" data-rp="pick" data-i="' + ролиА(x.i) + '">' + esc(x.n) + '</button>'; }).join('');
 }
 function ролиПрогСобрать(){
   var k = ROLI.card, п = k && k.p; if (!п) return;
@@ -18557,7 +18588,9 @@ document.addEventListener('click', function(e){
   if (д === 'add') { k.поиск = i; k.q = ''; loadCatalog().then(function(){ if (ROLI.card === k) ролиКарточкаРисовать(); }).catch(function(){}); ролиКарточкаРисовать(); var q = document.getElementById('rolp-q'); if (q) q.focus(); return; }
   if (д === 'pick') {
     var x = (CAT && CAT.ex || []).filter(function(c){ return c.i === b.dataset.i; })[0];
-    if (x && k.поиск != null) п.days[k.поиск].ex.push({ id: x.i, n: x.n, en: x.e || x.n, m: x.m || '', q: x.q || '', sets: 3, reps: '8–12', rest: 90 });
+    var своё = (ROLI.упр || []).filter(function(c){ return c.id === b.dataset.i; })[0];
+    if (своё && k.поиск != null) п.days[k.поиск].ex.push({ id: своё.id, n: своё.n, en: своё.n, m: своё.m, q: своё.q, sets: 3, reps: '8–12', rest: 90 });
+    else if (x && k.поиск != null) п.days[k.поиск].ex.push({ id: x.i, n: x.n, en: x.e || x.n, m: x.m || '', q: x.q || '', sets: 3, reps: '8–12', rest: 90 });
     k.поиск = null; k.q = ''; haptic('light');
   }
   if (д === 'exrm') п.days[i].ex.splice(j, 1);
@@ -18684,6 +18717,119 @@ document.addEventListener('click', function(e){
     return fPost('/roli/norm', { uid: syncUid(), who: k.who, kcal: н.kcal, prot: н.prot, fat: н.fat, rules: н.rules, note: н.note }).then(function(){
       k.шлём = false; k.ок = 'Отправлено. Норма заработает, когда клиент её примет.'; haptic('ok'); ролиКарточкаРисовать();
     }).catch(function(er){ k.шлём = false; k.err = er.message || humanErr(er); ролиКарточкаРисовать(); });
+  }
+});
+
+/* ── свои упражнения тренера (этап 4; его решение 29.10 «даём всем создавать свои и
+   подписываем их именем тренера») ──
+   Одна форма с полями каталога; пока пишется название — похожие из каталога
+   (подсказка, не запрет). Фото — до 2, с подтверждением прав. */
+var РОЛИ_ЛИЦ = '2026-10-30.1';
+var РОЛИ_СНАРЯД = [['body only', 'Свой вес'], ['barbell', 'Штанга'], ['dumbbell', 'Гантели'], ['machine', 'Тренажёр'], ['cable', 'Блок'], ['kettlebells', 'Гиря'], ['bands', 'Резинка'], ['medicine ball', 'Медбол'], ['exercise ball', 'Фитбол'], ['e-z curl bar', 'EZ-гриф'], ['other', 'Другое']];
+var РОЛИ_ТИП = [['strength', 'Силовое'], ['cardio', 'Кардио'], ['stretching', 'Растяжка'], ['plyometrics', 'Прыжковое']];
+var РОЛИ_МЫШЦЫ_У = ['quadriceps', 'hamstrings', 'glutes', 'calves', 'chest', 'shoulders', 'traps', 'lats', 'middle back', 'lower back', 'biceps', 'triceps', 'forearms', 'abdominals', 'abductors', 'adductors', 'neck'];
+function ролиУпрЗагрузить(){
+  return fGet('/roli/ex?uid=' + encodeURIComponent(syncUid())).then(function(r){ ROLI.упр = (r && r.ok) ? r.ex : (ROLI.упр || []); ролиРисовать(); }).catch(function(){});
+}
+function ролиУпрСписокHtml(){
+  var у = ROLI.упр; if (!у) return '<p class="empt">Загружаю…</p>';
+  if (!у.length) return '<p class="rolnote">Своих пока нет. Их можно ставить в программу клиента — с вашей подписью.</p>';
+  return '<div class="pqgroup">' + у.map(function(x){
+    return '<button type="button" class="pqrow" data-rol="exedit" data-id="' + ролиА(x.id) + '"><span class="pqt"><b>' + esc(x.n) + '</b><small>' + esc(имяМышцы(x.m) || x.m) + ' · ' + esc((РОЛИ_СНАРЯД.filter(function(q){ return q[0] === x.q; })[0] || [0, x.q])[1]) + (x.img.length ? ' · фото ' + x.img.length : '') + '</small></span><i class="pqch">›</i></button>';
+  }).join('') + '</div>';
+}
+function ролиУпрФорма(id){
+  var x = id ? (ROLI.упр || []).filter(function(y){ return y.id === id; })[0] : null;
+  ROLI.ф = x ? { id: x.id, n: x.n, m: x.m, sm: x.sm.slice(), q: x.q, c: x.c, cues: x.cues.concat(['']).slice(0, 6), video: x.video, keep: x.img.slice(), новые: [], lic: false }
+             : { id: null, n: '', m: '', sm: [], q: '', c: 'strength', cues: ['', ''], video: '', keep: [], новые: [], lic: false };
+  var m = document.getElementById('rolexm'); if (m) m.classList.add('show');
+  var t = document.getElementById('rolext'); if (t) t.textContent = x ? 'Изменить упражнение' : 'Своё упражнение';
+  loadCatalog().then(ролиУпрРисовать, ролиУпрРисовать);
+  ролиУпрРисовать();
+}
+function ролиУпрСобрать(){
+  var ф = ROLI.ф; if (!ф) return;
+  var зн = function(id){ var e = document.getElementById(id); return e ? e.value : null; };
+  if (зн('rolx-n') != null) ф.n = зн('rolx-n');
+  if (зн('rolx-m') != null) ф.m = зн('rolx-m');
+  if (зн('rolx-q') != null) ф.q = зн('rolx-q');
+  if (зн('rolx-video') != null) ф.video = зн('rolx-video');
+  var шаги = document.querySelectorAll('#rolexbody .rolx-cue'); if (шаги.length) ф.cues = Array.prototype.map.call(шаги, function(i){ return i.value; });
+  var л = document.getElementById('rolx-lic'); if (л) ф.lic = л.checked;
+}
+function ролиПохожиеHtml(n){
+  if (!CAT || String(n || '').trim().length < 3) return '';
+  var сл = String(n).toLowerCase().split(/[\s,()]+/).filter(function(w){ return w.length >= 3; }); if (!сл.length) return '';
+  var оц = CAT.ex.map(function(x){ var t = x.n.toLowerCase(), k = 0; сл.forEach(function(w){ if (t.indexOf(w.slice(0, Math.max(4, w.length - 2))) >= 0) k++; }); return { x: x, k: k }; })
+    .filter(function(o){ return o.k >= Math.min(2, сл.length); }).sort(function(a, b){ return b.k - a.k; }).slice(0, 3);
+  return оц.length ? '<p class="rolnote">Похожие в каталоге: ' + оц.map(function(o){ return esc(o.x.n); }).join(' · ') + '. Если это то же — возьмите из каталога; своё будет с вашей подписью.</p>' : '';
+}
+function ролиУпрРисовать(){
+  var ф = ROLI.ф, b = document.getElementById('rolexbody'); if (!ф || !b) return;
+  var опции = function(список, v, пусто){ return (пусто ? '<option value="">' + пусто + '</option>' : '') + список.map(function(o){ return '<option value="' + ролиА(o[0]) + '"' + (o[0] === v ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join(''); };
+  var мышцы = РОЛИ_МЫШЦЫ_У.map(function(k){ return [k, имяМышцы(k) || k]; });
+  var фото = ф.keep.map(function(k){ return '<span class="rolxph"><img ' + photoAttr(SYNCURL + '/photo?key=' + encodeURIComponent(k), false) + ' alt=""><button type="button" class="btn small" data-rx="keeprm" data-k="' + ролиА(k) + '" aria-label="убрать фото">×</button></span>'; }).join('') +
+    ф.новые.map(function(x, i){ return '<span class="rolxph"><img src="data:' + x.mime + ';base64,' + x.b64 + '" alt=""><button type="button" class="btn small" data-rx="newrm" data-i="' + i + '" aria-label="убрать фото">×</button></span>'; }).join('');
+  b.innerHTML = '<label class="rolfld">Название<input id="rolx-n" type="text" maxlength="80" value="' + ролиА(ф.n) + '" placeholder="Например: выпады у стены с гирей"></label>' +
+    '<div id="rolx-similar">' + ролиПохожиеHtml(ф.n) + '</div>' +
+    '<label class="rolfld">Главная мышца<select id="rolx-m">' + опции(мышцы, ф.m, 'выберите') + '</select></label>' +
+    '<h4 class="pqlab">Помогают (до 3)</h4><div class="rolchips">' + мышцы.filter(function(o){ return o[0] !== ф.m; }).map(function(o){ return '<button type="button" class="rolchip" data-rx="sm" data-v="' + ролиА(o[0]) + '" aria-pressed="' + (ф.sm.indexOf(o[0]) >= 0) + '">' + esc(o[1]) + '</button>'; }).join('') + '</div>' +
+    '<label class="rolfld">Снаряд<select id="rolx-q">' + опции(РОЛИ_СНАРЯД, ф.q, 'выберите') + '</select></label>' +
+    '<div class="pf pfv"><span class="pfl">тип</span><div class="seg" id="rolx-c">' + segHtml('rolxc', РОЛИ_ТИП, ф.c) + '</div></div>' +
+    '<h4 class="pqlab">Техника — по шагам</h4>' + ф.cues.map(function(x, i){ return '<input class="rolx-cue roln-rule" type="text" maxlength="160" aria-label="шаг техники" placeholder="Шаг ' + (i + 1) + '" value="' + ролиА(x) + '">'; }).join('') +
+    (ф.cues.length < 6 ? '<button type="button" class="btn small" data-rx="cue">+ Шаг</button>' : '') +
+    '<h4 class="pqlab">Фото (до 2)</h4><div class="rolxphs">' + фото + '</div>' +
+    (ф.keep.length + ф.новые.length < 2 ? '<label class="btn small rolxadd">+ Фото<input id="rolx-file" type="file" accept="image/*" hidden></label>' : '') +
+    (ф.новые.length ? '<label class="rolxlic"><input id="rolx-lic" type="checkbox"' + (ф.lic ? ' checked' : '') + '> Фото мои или у меня есть права на них; разрешаю Wellböl показывать их моим клиентам.</label>' : '') +
+    '<label class="rolfld">Видео — ссылка (необязательно)<input id="rolx-video" type="url" maxlength="200" placeholder="https://…" value="' + ролиА(ф.video) + '"></label>' +
+    (ф.err ? '<p class="rolerr">' + esc(ф.err) + '</p>' : '') +
+    '<div class="rolbtns"><button type="button" class="btn wide prim" data-rx="save"' + (ф.шлём ? ' disabled' : '') + '>' + (ф.шлём ? 'Сохраняю…' : 'Сохранить') + '</button>' +
+    (ф.id ? '<button type="button" class="btn small danger" data-rx="del">Удалить</button>' : '') + '</div>';
+}
+/* фото уменьшаем на телефоне: длинная сторона 900 px, JPEG — чтобы не возить мегабайты */
+function ролиСжать(file){
+  return new Promise(function(ok, no){
+    var r = new FileReader(); r.onerror = no;
+    r.onload = function(){ var img = new Image(); img.onerror = no; img.onload = function(){
+      var k = Math.min(1, 900 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      ok({ b64: c.toDataURL('image/jpeg', 0.82).split(',')[1], mime: 'image/jpeg' });
+    }; img.src = r.result; };
+    r.readAsDataURL(file);
+  });
+}
+document.addEventListener('input', function(e){
+  if (e.target.id !== 'rolx-n' || !ROLI.ф) return;
+  ROLI.ф.n = e.target.value; var п = document.getElementById('rolx-similar'); if (п) п.innerHTML = ролиПохожиеHtml(ROLI.ф.n);
+});
+document.addEventListener('change', function(e){
+  if (!ROLI.ф) return;
+  if (e.target.id === 'rolx-m') { ролиУпрСобрать(); ROLI.ф.sm = ROLI.ф.sm.filter(function(x){ return x !== ROLI.ф.m; }); ролиУпрРисовать(); }
+  if (e.target.id === 'rolx-file' && e.target.files && e.target.files[0]) {
+    ролиУпрСобрать();
+    ролиСжать(e.target.files[0]).then(function(x){ ROLI.ф.новые.push(x); ROLI.ф.err = ''; ролиУпрРисовать(); }).catch(function(){ ROLI.ф.err = 'Не удалось прочитать фото.'; ролиУпрРисовать(); });
+  }
+});
+document.addEventListener('click', function(e){
+  if (e.target.id === 'rolexm' || e.target.id === 'rolexclose') { var m = document.getElementById('rolexm'); if (m) m.classList.remove('show'); ROLI.ф = null; return; }
+  var b = e.target.closest && e.target.closest('#rolexbody [data-rx], #rolx-c button[data-v]'); if (!b || !ROLI.ф) return;
+  var ф = ROLI.ф, д = b.dataset.rx; ролиУпрСобрать(); ф.err = '';
+  if (!д) { ф.c = b.dataset.v; return ролиУпрРисовать(); }
+  if (д === 'sm') { var i = ф.sm.indexOf(b.dataset.v); if (i >= 0) ф.sm.splice(i, 1); else if (ф.sm.length < 3) ф.sm.push(b.dataset.v); return ролиУпрРисовать(); }
+  if (д === 'cue' && ф.cues.length < 6) { ф.cues.push(''); return ролиУпрРисовать(); }
+  if (д === 'keeprm') { ф.keep = ф.keep.filter(function(k){ return k !== b.dataset.k; }); return ролиУпрРисовать(); }
+  if (д === 'newrm') { ф.новые.splice(+b.dataset.i, 1); return ролиУпрРисовать(); }
+  if (д === 'del') {
+    b.disabled = true;
+    return fPost('/roli/ex/del', { uid: syncUid(), id: ф.id }).then(function(){ var m = document.getElementById('rolexm'); if (m) m.classList.remove('show'); ROLI.ф = null; haptic('light'); ролиУпрЗагрузить(); })
+      .catch(function(er){ ф.err = er.message || humanErr(er); ролиУпрРисовать(); });
+  }
+  if (д === 'save') {
+    if (ф.новые.length && !ф.lic) { ф.err = 'Подтвердите права на фото — галочка выше.'; return ролиУпрРисовать(); }
+    ф.шлём = true; ролиУпрРисовать();
+    return fPost('/roli/ex', { uid: syncUid(), id: ф.id, n: ф.n, m: ф.m, sm: ф.sm, q: ф.q, c: ф.c, cues: ф.cues, video: ф.video, keep: ф.keep, photos: ф.новые, lic: ф.новые.length ? РОЛИ_ЛИЦ : undefined })
+      .then(function(){ var m = document.getElementById('rolexm'); if (m) m.classList.remove('show'); ROLI.ф = null; haptic('ok'); ролиУпрЗагрузить(); })
+      .catch(function(er){ ф.шлём = false; ф.err = er.message || humanErr(er); ролиУпрРисовать(); });
   }
 });
 
