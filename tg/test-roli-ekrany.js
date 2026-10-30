@@ -18,11 +18,16 @@ function сервер(нач){
   s.запросы = запросы;
   s.обработчик = async (p, u, тело, метод) => {
     запросы.push({ p, метод, тело, q: Object.fromEntries(u.searchParams) });
-    if (p.endsWith('/roli/me')) { if (s.сбойMe) return { status: 502, body: { error: 'Load failed' } }; return { ok: true, ver: ВЕР, cats: Object.keys(ИМЕНА), names: ИМЕНА, can: МОЖНО, pro: s.pro, my: s.my, clients: s.clients, offer: s.offer || null }; }
+    if (p.endsWith('/roli/me')) { if (s.сбойMe) return { status: 502, body: { error: 'Load failed' } }; return { ok: true, ver: ВЕР, cats: Object.keys(ИМЕНА), names: ИМЕНА, can: МОЖНО, pro: s.pro, my: s.my, clients: s.clients, offer: s.offer || null, normOffer: s.normOffer || null, norm: s.norm || null }; }
     if (p.endsWith('/roli/prog') && метод === 'GET') return { ok: true, prog: null, at: 0 };
     if (p.endsWith('/roli/prog')) { s.отправлено = тело.prog; return { ok: true, at: 5 }; }
     if (p.endsWith('/roli/prog/take')) { const пр = s.offer && s.offer.prog; s.offer = null; return { ok: true, take: тело.take, prog: тело.take ? пр : null }; }
     if (p.endsWith('/roli/complain')) { s.жалоба = тело; return { ok: true }; }
+    if (p.endsWith('/roli/norm') && метод === 'GET') return { ok: true, sent: null, current: { kcal: 2100, prot: 150, fat: 70, pro: false } };
+    if (p.endsWith('/roli/norm')) { s.норма = тело; return { ok: true, at: 9 }; }
+    if (p.endsWith('/roli/norm/take')) { s.взял = тело; const о = s.normOffer; s.normOffer = null; if (тело.take) s.norm = { name: о.name, kcal: о.kcal, prot: о.prot, fat: о.fat, rules: о.rules, note: '' }; return { ok: true, take: тело.take }; }
+    if (p.endsWith('/roli/norm/off')) { s.norm = null; s.сняла = true; return { ok: true }; }
+    if (p.endsWith('/roli/meal-note')) { s.заметка = тело; return { ok: true }; }
     if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
     if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
@@ -33,6 +38,7 @@ function сервер(нач){
     if (p.endsWith('/roli/grant')) { const l = s.my.find(x => x.id === тело.link); if (тело.allowed) l.cats.push(тело.cat); else l.cats = l.cats.filter(c => c !== тело.cat); return { ok: true, link: l.id, cats: l.cats }; }
     if (p.endsWith('/roli/end')) { s.my = s.my.filter(x => x.id !== тело.link); return { ok: true }; }
     if (p.endsWith('/roli/pro/apply')) { s.pro = [{ kind: тело.kind, name: тело.name, about: тело.about, status: 'pending', code: null }]; return { ok: true }; }
+    if (p.endsWith('/roli/client') && u.searchParams.get('cat') === 'food') return { ok: true, cat: 'food', photo: true, rows: [{ id: 'm1', date: '2026-10-29', t: '13:00', kind: 'обед', text: 'плов', kcal: 800 }, { id: 'm2', date: '2026-10-29', t: '19:00', kind: 'ужин', text: 'салат', kcal: 300, note: { text: 'Отлично', mark: 'ok' } }] };
     if (p.endsWith('/roli/client')) return { ok: true, cat: u.searchParams.get('cat'), photo: false, rows: [{ date: '2026-10-28', w: 79.5, fat: 24.1, waist: 84 }, { date: '2026-10-20', w: 80.2 }] };
     if (p.endsWith('/admin/roli') && метод === 'GET') return { ok: true, pros: s.adm };
     if (p.endsWith('/admin/roli')) { const x = s.adm.find(a => a.uid === тело.who); x.status = тело.status; return { ok: true }; }
@@ -296,6 +302,61 @@ async function проверить(p, где, имя, sel){
     ост = await кир('#rolchatbody .empt, #rolchatbody .rolnote, #rolmsg, #rolmsgsend, #rolchatclose');
     ok(!ост.length, яз + ': переписка без кириллицы: ' + ост.join(' | '));
     ok(!err.length, яз + ': без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 11. этап 3: нутрициолог — норма и комментарии; клиент — принять норму, видеть комментарий у приёма */
+  for (const width of [320, 390]) {
+    const где = 'нутрициолог ' + width + ': ';
+    const p = await b.newPage({ viewport: { width, height: 800 } });
+    const s = сервер({ pro: [{ kind: 'nutri', name: 'Нигора', status: 'ok', code: 'TSTNTR01', link: 'https://t.me/x?start=s_TSTNTR01' }],
+      clients: [{ id: 'l2', kind: 'nutri', client: '777', name: 'Карина', cats: ['food', 'body'] }] });
+    const o = opts('dark'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(300);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
+    await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
+    await p.click('#rolpro [data-rol="card"]'); await p.waitForTimeout(400);
+    ok(await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,food,norm,chat', где + 'вкладки нутрициолога: ' + await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()));
+    await p.click('#rol-ccat button[data-v="norm"]'); await p.waitForSelector('#roln-kcal', { timeout: 3000 }).catch(() => {});
+    ok(/Сейчас у клиента: 2100 ккал · белок 150 г · жиры 70 г/.test(await p.$eval('#rolcbody', e => e.textContent)), где + 'видна норма приложения');
+    ok(await p.$eval('#roln-kcal', e => e.value) === '2100', где + 'форма начинается с нормы приложения');
+    await p.fill('#roln-kcal', '1800'); await p.fill('#roln-prot', '140'); await p.fill('#roln-fat', '60');
+    await p.fill('#rolcbody .roln-rule[data-i="0"]', 'Без сладкого после 18:00');
+    await проверить(p, где, 'форма нормы', '#rolcm');
+    await p.click('#rolcbody [data-rn="normsend"]'); await p.waitForTimeout(400);
+    ok(s.норма && s.норма.kcal === 1800 && s.норма.prot === 140 && s.норма.fat === 60 && s.норма.rules[0] === 'Без сладкого после 18:00' && s.норма.who === '777', где + 'норма ушла: ' + JSON.stringify(s.норма));
+    ok(/Отправлено/.test(await p.$eval('#rolcbody', e => e.textContent)), где + '«Отправлено»');
+    await p.click('#rol-ccat button[data-v="food"]'); await p.waitForSelector('#rolcbody [data-rn="edit"]', { timeout: 3000 }).catch(() => {});
+    ok(/Ваш комментарий: хорошо\. Отлично/.test(await p.$eval('#rolcbody', e => e.textContent)), где + 'свой прошлый комментарий виден');
+    await p.click('#rolcbody [data-rn="edit"][data-id="m1"]'); await p.waitForTimeout(150);
+    await p.click('#rol-nmark button[data-v="q"]'); await p.fill('#rol-ntext', 'Многовато масла');
+    await проверить(p, где, 'комментарий к приёму', '#rolcm');
+    await p.click('#rolcbody [data-rn="save"]'); await p.waitForTimeout(300);
+    ok(s.заметка && s.заметка.id === 'm1' && s.заметка.mark === 'q' && s.заметка.text === 'Многовато масла' && s.заметка.who === '777', где + 'комментарий ушёл: ' + JSON.stringify(s.заметка));
+    ok(/Ваш комментарий: есть вопрос\. Многовато масла/.test(await p.$eval('#rolcbody', e => e.textContent)), где + 'после сохранения — виден');
+    ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ my: [{ id: 'l2', kind: 'nutri', name: 'Нигора', proStatus: 'ok', cats: ['food', 'body'] }],
+      normOffer: { name: 'Нигора', at: 55, kcal: 1800, prot: 140, fat: 60, rules: ['Без сладкого после 18:00', 'Овощи в каждый приём'], note: 'Пробуем 2 недели' } });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.page = 'food';
+    o.day = { proNotes: { '2': [{ name: 'Нигора', mark: 'q', text: 'Многовато масла', at: 1 }] } };
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#rolnormbox .roloffer', { timeout: 5000 }).catch(() => {});
+    const кн = await p.$eval('#rolnormbox', e => e.textContent).catch(() => '');
+    ok(/Нигора прислала норму питания/.test(кн) && /1800 ккал · белок 140 г · жиры 60 г/.test(кн) && /Без сладкого после 18:00/.test(кн), 'клиент: предложение нормы на «Еде»: ' + кн.slice(0, 140));
+    const зм = await p.$eval('#fmeals .fmeal[data-mid="2"] .rolmnote', e => e.textContent).catch(() => '');
+    ok(зм === 'Нигора · есть вопрос: Многовато масла', 'клиент: комментарий нутрициолога под приёмом: ' + зм);
+    await проверить(p, '', 'норма на «Еде»', '#p-food');
+    await p.click('#rolnormbox [data-rol="normtake"]'); await p.waitForTimeout(600);
+    ok(s.взял && s.взял.take === true && s.взял.at === 55, 'клиент: «Принять» — с версией предложения');
+    const ак = await p.$eval('#rolnormbox', e => e.textContent).catch(() => '');
+    ok(/Норма от Нигора/.test(ак) && /Овощи в каждый приём/.test(ак) && !/Вернуть/.test(ак), 'клиент: на «Еде» — действующая норма и правила: ' + ак.slice(0, 120));
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-spec'); await p.waitForTimeout(600);
+    await p.click('#rolmy [data-rol="normoff"]'); await p.waitForTimeout(500);
+    ok(s.сняла === true && !/Норма от/.test(await p.$eval('#rolmy', e => e.textContent)), 'клиент: «Вернуть норму приложения»');
+    ok(!err.length, 'клиент: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 5. владелец: заявки в Админ панели */
