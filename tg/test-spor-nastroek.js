@@ -80,5 +80,9 @@ async function стенд(browser,засеять,сервер){
     const src=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
     assert.match(src,/settingsRemember\('subs',\{s:SUBS,adj:ADJ,x:EXTRA,sk:SKIP,ord:ORD,pr:PAIRS\}\)/,'база правок дня при запуске знает суперсеты');
     console.log('PASS суперсеты с сервера принимаются; база правок дня — с pr');
+    /* аудит 30.10: тестовая копия со своим хранилищем; сброс дневника чистит очереди */
+    assert.ok(src.includes("{ls:'shp_t1_@'+id+'_'"),'тестовая копия — свой префикс хранилища');
+    assert.ok(src.includes('settings_queue_|settings_bad_|work_sync_|work_conflicts_'),'сброс дневника чистит очереди правок и тренировок');
+    console.log('PASS тестовая копия — своё хранилище; сброс дневника чистит очереди');
   }finally{await browser.close();}
 })().catch(e=>{console.error('FAIL',e.message);process.exit(1);});

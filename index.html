@@ -9863,6 +9863,10 @@ var LSNS = (function(){
   var id='';
   try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user;
        if(u&&u.id) id=String(u.id); }catch(e){}
+  /* 30.10 (аудит): тестовая копия wellbol.app/test/ — тот же адрес, значит та же память
+     телефона. Очередь правок, метки и эпоха дневника были общими с рабочей: правки уходили
+     не на тот сервер. У копии свой префикс, рабочие ключи она не видит. */
+  if(/^\/test(\/|$)/.test(location.pathname)) return id ? {ls:'shp_t1_@'+id+'_', ms:'tgcs_t1_@'+id+'_', id:id} : {ls:'shp_t1_', ms:'tgcs_t1_', id:''};
   if(!id) return {ls:'shp_v1_', ms:'tgcs_', id:''};
   var своё={ls:'shp_v1_@'+id+'_', ms:'tgcs_@'+id+'_', id:id}, прежнее={ls:'shp_v1_', ms:'tgcs_', id:id};
   try{
@@ -12448,7 +12452,7 @@ function settingsDrain(uid,key){
   var run=function(){
     var q=settingsQueue(uid),jobs=q[key]||[],job=jobs[0];if(!job)return Promise.resolve({ok:true});
     if(uid!==syncUid()||DATASESSION.blocked)return Promise.reject(settingsError({error:'Аккаунт изменился.'},key));
-    if(job.epoch!==localDataSession().epoch){delete q[key];settingsStore(uid,q);return Promise.reject(settingsError({error:'Дневник был сброшен.'},key));}
+    if(job.epoch!==localDataSession().epoch){delete q[key];settingsStore(uid,q);dirtySet(key,false);return Promise.reject(settingsError({error:'Дневник был сброшен.'},key));}
     if(job.conflict)return Promise.reject(settingsError({code:'settings_conflict',error:'Эти настройки изменены на другом устройстве.'},key));
     if(Date.now()-job.at>7*864e5)return fetchCloudSnapshot().then(function(d){var st=(d.state||[]).find(function(v){return v.key===key;});job.conflict=(st&&st.data)||{};job.conflictPaths=job.changes.map(function(c){return c.path;});settingsStore(uid,q);throw settingsError({code:'settings_conflict',error:'Старая правка ожидает подтверждения.'},key);});
     return settingsPost({uid:uid,key:key,data:job.data,patch:{op:job.id,changes:job.changes}}).then(function(r){
@@ -12579,6 +12583,13 @@ function workSend(uid,id){
         if(cur && cur.operation===job.operation) delete s.pending[id];
         else if(cur) cur.version=s.versions[id];
         workStore(uid,s); return next();
+      }
+      /* 30.10 (аудит): спор по тренировке решить было негде (#syncst нет в разметке) — подходы
+         дня навсегда «не дошли». Подходы на этом телефоне — то, что он только что сделал:
+         серверную версию откладываем копией, свои отправляем поверх. Второй спор подряд — стоп. */
+      if(res && res.code==='conflict' && cur && !cur.авто){
+        var копии=gget('work_conflicts_'+uid,[])||[];копии.push({id:id,at:Date.now(),server:res,job:job});gset('work_conflicts_'+uid,копии.slice(-20));
+        cur.version=res.version||0;cur.operation=workOperation();cur.авто=1;delete cur.conflict;workStore(uid,s);return next();
       }
       if(res && res.code==='conflict' && cur){cur.conflict=res;workStore(uid,s);}
     });
@@ -15756,6 +15767,9 @@ function wipeLocal(всё){
       if(всё){ убрать.push(k); continue; }
       var хвост=k.slice(LS.length);
       if(RESET_G.indexOf(хвост)>=0){ убрать.push(k); continue; }
+      /* 30.10 (аудит): очереди правок и тренировок прежнего дневника после сброса давали
+         ложный спор «удалить всё» */
+      if(/^(settings_queue_|settings_bad_|work_sync_|work_conflicts_)/.test(хвост)){ убрать.push(k); continue; }
       var м=хвост.match(/^[a-z]+_(.+)$/);        /* <программа>_<ключ> */
       if(м && (RESET_P.indexOf(м[1])>=0 || м[1].indexOf('pick_')===0)) убрать.push(k);
     }
