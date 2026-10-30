@@ -45,7 +45,7 @@ const M = require('./mock');
     /* 29.10, живая проверка в @WellbolTestBot: тестовая страница брала копию дневника с боя
        (тот же localStorage) — «Сервер вернул устаревшее состояние дневника», профиль не грузился */
     const ключи = await p3.evaluate(() => Object.keys(localStorage));
-    assert.ok(ключи.some(k => /^shp_t_/.test(k)), 'у тестовой страницы свои ключи shp_t_: ' + ключи.slice(0, 5).join(' '));
+    assert.ok(ключи.some(k => /^shp_t1_/.test(k)), 'у тестовой страницы свои ключи shp_t1_ (префикс из аудита 30.10): ' + ключи.slice(0, 5).join(' '));
     assert.deepEqual(ключи.filter(k => /^shp_v1_|^tgcs_/.test(k)).sort(), боевыеКлючи, 'боевые ключи тестовая страница не трогает');
     console.log('PASS выключатель: features → body[data-f], без них атрибута нет; /test/ → тестовый сервер, боевая страница — только боевой');
   } finally { await br.close(); }
