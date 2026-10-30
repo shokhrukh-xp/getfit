@@ -17,6 +17,7 @@ async function стенд(browser,засеять,сервер){
   await M.поднять(page,{wait:0,prog:PROG,profile:'ai',me:сервер.локМе||ME.me,handleRoute:async route=>{
     const u=new URL(route.request().url());
     if(u.pathname==='/s'&&route.request().method()==='POST'){const b=JSON.parse(route.request().postData()||'{}');posts.push(b);
+      if(сервер.отказ400&&b.key==='me')return route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({ok:false,status:400,code:'bad_settings',error:'Некорректные поля настроек.'})}).then(()=>true,()=>true);
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,data:b.data,updated:Date.now()})}).then(()=>true,()=>true);}
     if(u.pathname!=='/all')return false;
     await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({state:[
@@ -54,6 +55,22 @@ async function стенд(browser,засеять,сервер){
     assert.ok(!/Заполните профиль/.test(await page.evaluate(()=>document.body.innerText)),'плашки «Заполните профиль» нет');
     await page.close();
     console.log('PASS неполный профиль на телефоне — берётся с сервера, плашки нет');
+
+    /* 2б. 13:30: правка профиля по неполной копии (стирает возраст) — сервер 400, без спора.
+          Раньше «Ожидают отправки» навсегда; теперь правка отложена, профиль с сервера */
+    ({page,posts}=await стенд(browser,({UID})=>{
+      if(sessionStorage.getItem('seeded'))return; sessionStorage.setItem('seeded','1');
+      localStorage.setItem('shp_v1_sync_dirty',JSON.stringify({me:1}));
+      localStorage.setItem('shp_v1_settings_queue_'+UID,JSON.stringify({me:[{id:'op_me_old',at:Date.now()-600e3,epoch:0,
+        data:{me:{bw:85,only:'all'}},changes:[{path:['me','age'],before:{set:true,value:34},after:{set:false}}]}]}));
+    },{локМе:{bw:85,wt:'down',gym:'muscle',goal:'fat',only:'all'},отказ400:true}));
+    await page.waitForTimeout(5000);
+    const me2=await page.evaluate(()=>JSON.parse(localStorage.getItem('shp_v1_me')||'{}'));
+    assert.equal(me2.age,34,'профиль с сервера'); 
+    const q2=await page.evaluate(u=>JSON.parse(localStorage.getItem('shp_v1_settings_queue_'+u)||'{}'),UID);
+    assert.ok(!(q2.me||[]).length,'правка с 400 не висит в очереди: '+JSON.stringify(q2).slice(0,200));
+    await page.close();
+    console.log('PASS правка профиля по неполной копии (400) — отложена, профиль с сервера, очередь пуста');
 
     /* 3. суперсеты с сервера принимаются; база правок дня при запуске — с pr */
     ({page,posts}=await стенд(browser,null,{}));

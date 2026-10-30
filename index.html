@@ -12455,6 +12455,10 @@ function settingsDrain(uid,key){
       if(uid!==syncUid()||DATASESSION.blocked)throw settingsError({error:'Аккаунт изменился.'},key);
       q=settingsQueue(uid);jobs=q[key]||[];if(!jobs[0]||jobs[0].id!==job.id){if(r.ok)return run();throw settingsError({error:'Очередь изменилась.'},key);}
       if(!r.ok){
+        /* 30.10: 400 «некорректная правка» раньше оставалась первой в очереди навсегда и
+           блокировала ключ. Откладываем её в сторону (копия на устройстве), идём дальше. */
+        if(r.status===400&&r.code==='bad_settings'){var плохие=gget('settings_bad_'+key,[]);плохие.push(jobs.shift());gset('settings_bad_'+key,плохие.slice(-5));if(!jobs.length)delete q[key];settingsStore(uid,q);dirtySet(key,!!jobs.length);
+          if(jobs.length)return run();setTimeout(function(){cloudPull(true);},500);throw settingsError(r,key);}
         if(r.code==='settings_conflict'){jobs[0].conflict=r.data;jobs[0].conflictPaths=r.conflicts||[];settingsStore(uid,q);}
         if(!r.status||r.status===429||r.status>=500){var delay=[2000,5000,15000,60000][Math.min(3,SETTINGSRETRY[id]||0)];SETTINGSRETRY[id]=Math.min(3,(SETTINGSRETRY[id]||0)+1);SETTINGSTIMER[id]=setTimeout(function retry(){if(document.hidden||navigator.onLine===false){SETTINGSTIMER[id]=setTimeout(retry,60000);return;}settingsDrain(uid,key).catch(function(){});},delay);}
         throw settingsError(r,key);
@@ -12801,6 +12805,13 @@ function застрялоЛечить(сост){
   /* профиль: сам решаем спор, только если копия на телефоне неполная (пустое хранилище);
      обычный спор двух устройств — по-прежнему его выбор в профиле (решение 20.10) */
   var меНеполный=['sex','age','ht','bw'].some(function(f){ return !loc0[f]; });
+  /* 30.10, повтор у него в 13:30: правка профиля, посчитанная по неполной копии, стирала
+     возраст и рост — сервер отвечал 400, и она висела без спора («Ожидают отправки»).
+     Неполная копия + полный профиль на сервере → такие правки снимаем, профиль берём с сервера. */
+  var срв0=сост.me&&сост.me.data&&(сост.me.data.me||сост.me.data);
+  if(меНеполный && срв0 && ['sex','age','ht','bw'].every(function(f){ return срв0[f]; }) && (q.me||[]).length){
+    gset('settings_bad_me', q.me); delete q.me; settingsStore(uid,q); dirtySet('me',false);
+  }
   ['subs','me'].forEach(function(k){
     var j=(q[k]||[])[0]; if(!j || !j.conflict) return;
     if(k==='me' && !меНеполный) return;
