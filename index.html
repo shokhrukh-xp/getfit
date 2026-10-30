@@ -4513,6 +4513,22 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
 /* 29.10, роли: второй замок — без функции roli новое не видно, даже если код ошибётся */
 body:not([data-f~="roli"]) .f-roli{display:none!important}
 .rolcard{background:var(--surface);border-radius:16px;padding:14px;margin:0 0 12px}
+/* 30.10, роли, этап 6: компания */
+.rolfld select,.korow select{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
+.koch{padding:12px 0 2px;border-top:1px solid var(--tab-line);margin-top:10px}
+.kobar{height:8px;border-radius:4px;background:var(--tab-line);overflow:hidden;margin:10px 0 0}
+.kobar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.kowk{padding:10px 0;border-top:1px solid var(--tab-line)}
+.kowk h5{margin:0;font-size:13px;font-weight:700;color:var(--muted)}
+.kostat{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px;margin-top:6px}
+.kostat span{color:var(--muted)}
+.kostat b{color:var(--text);font-weight:700;text-align:right}
+.korow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--tab-line);flex-wrap:wrap}
+.korow b{flex:1 1 120px;min-width:0;font-size:14px;color:var(--text)}
+.korow b small{font-weight:400;color:var(--muted)}
+.kotwo{display:flex;gap:8px}
+.kotwo .rolfld{flex:1 1 0;min-width:0}
+.kofrm{border-top:1px solid var(--tab-line);margin-top:10px}
 .rolhd{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .rolhd b{font-size:16px;font-weight:800;color:var(--text)}
 .rolhd span{font-size:13px;color:var(--muted)}
@@ -4785,6 +4801,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
           </div>
         </div>
         <div class="f-roli" id="roladm"><h3 class="adh">специалисты</h3><div id="roladmlist"><p class="empt">Загружаю…</p></div></div>
+        <div class="f-roli" id="roladmco"><h3 class="adh">компании</h3><div id="roladmcolist"><p class="empt">Загружаю…</p></div></div>
       </div>
     </section>
 
@@ -5252,6 +5269,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <div class="pqgroup f-roli">
         <button type="button" class="pqrow" data-pp="rolspec" id="pq-spec"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"/></svg></span><span class="pqt"><b>Мои специалисты</b><small>тренер, нутрициолог</small></span><span class="pqv" id="pv-spec"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="rolpro" id="pq-pro"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M7.5 17.5c.9-1.8 2.6-2.8 4.5-2.8s3.6 1 4.5 2.8"/></svg></span><span class="pqt"><b>Я специалист</b><small>вести клиентов</small></span><span class="pqv" id="pv-pro"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" data-pp="rolco" id="pq-co"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="11" height="18" rx="1.5"/><path d="M15 9h4a1 1 0 0 1 1 1v11h-5M8 7h3M8 11h3M8 15h3M10 21v-3"/></svg></span><span class="pqt"><b>Компания</b><small>челленджи, кабинет</small></span><span class="pqv" id="pv-co"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab">Приложение</h4>
@@ -5319,6 +5337,9 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <section class="pqpage f-roli" data-pp="rolpro" data-title="Я специалист" hidden>
       <div id="rolpro"></div>
     </section>
+    <section class="pqpage f-roli" data-pp="rolco" data-title="Компания" hidden>
+      <div id="rolco"></div>
+    </section>
     </div>
   </div>
 </div>
@@ -5327,6 +5348,13 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <h3 id="roljt">Подключить специалиста</h3>
     <div id="roljbody"></div>
     <button type="button" class="btn wide" id="roljclose">Не сейчас</button>
+  </div>
+</div>
+<div class="modal f-roli" id="rolcom" role="dialog" aria-modal="true" aria-labelledby="rolcot">
+  <div class="modalbox">
+    <h3 id="rolcot">Присоединиться к компании</h3>
+    <div id="rolcobody"></div>
+    <button type="button" class="btn wide" id="rolcoclose">Не сейчас</button>
   </div>
 </div>
 <div class="modal f-roli" id="rolexm" role="dialog" aria-modal="true" aria-labelledby="rolext">
@@ -19000,7 +19028,274 @@ function ролиАдмРешить(who, kind, st, b){
 }
 document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#profboss')) ролиАдм(); });
 /* после /sub: функции известны — подхватить ссылку специалиста и цифры в строках профиля */
-function ролиПоказ(){ if (!ЕСТЬ('roli')) return; ролиПоСсылке(); if (!ROLI.me && !ROLI.busy) ролиЗагрузить(); }
+function ролиПоказ(){ if (!ЕСТЬ('roli')) return; ролиПоСсылке(); if (!ROLI.me && !ROLI.busy) ролиЗагрузить(); компПоСсылке(); if (!КОМП.me && !КОМП.busy) компЗагрузить(); }
+/* ══════════ РОЛИ, ЭТАП 6 (30.10): компания, пилот ══════════
+   Его выбор «Компания, пилот». Сотруднику — «Компания» в профиле: челленджи со
+   своим прогрессом (его видит только он) и выход. Команде компании — кабинет:
+   ссылка для сотрудников, сколько присоединилось, цифры прошлых недель только
+   по группе от 10 (сервер считает их один раз и замораживает), челленджи,
+   команда. По ссылке из бота (?co=КОД) — лист с текстом согласия от сервера.
+   Владельцу — заявки компаний в Админ панели. Всё — за ЕСТЬ('roli') и .f-roli. */
+var КОМП = { me: null, busy: false, err: '', card: {}, cardErr: {}, form: {}, chf: null, join: null, adm: null, admErr: '', invite: {}, уйти: false, сменить: '', снять: '' };
+var КОМП_РОЛЬ = { admin: 'админ', manager: 'менеджер', observer: 'наблюдатель' };
+var КОМП_СТАТУС = { pending: 'на проверке', ok: 'работает', off: 'выключена' };
+var КОМП_МЕРА = { active_days: 'активные дни', workouts: 'тренировки', food_days: 'дни с записанной едой', good_days: 'дни с оценкой от 7', steps: 'шаги' };
+function компU(){ return encodeURIComponent(syncUid()); }
+function компДата(iso){ return '<span>' + ролиДень(iso) + '</span>'; }
+function компПлюс(iso, n){ var d = dLocal(iso); d.setDate(d.getDate() + n); return isoOf(d); }
+function компДробь(x){ return String(x).replace('.', ','); }
+function компЗагрузить(){
+  if (!ЕСТЬ('roli') || КОМП.busy) return Promise.resolve(null);
+  КОМП.busy = true; КОМП.err = ''; компРисовать();
+  return fGet('/roli/co?uid=' + компU()).then(function(r){
+    КОМП.busy = false;
+    if (!r || !r.ok) throw new Error((r && r.error) || 'нет ответа');
+    КОМП.me = r; компРисовать();
+    r.team.forEach(function(c){ if (c.status === 'ok') компКарточка(c.id); });
+  }).catch(function(e){ КОМП.busy = false; КОМП.err = 'Не удалось загрузить: ' + humanErr(e); компРисовать(); });
+}
+function компКарточка(id){
+  return fGet('/roli/co/card?uid=' + компU() + '&co=' + encodeURIComponent(id)).then(function(r){
+    if (!r || !r.ok) throw new Error((r && r.error) || 'нет ответа');
+    КОМП.card[id] = r; КОМП.cardErr[id] = ''; компРисовать();
+  }).catch(function(e){ КОМП.cardErr[id] = humanErr(e); компРисовать(); });
+}
+/* перерисовка приходит и сама (ответ сервера) — набранное в формах не теряем */
+function компСнятьПоля(){
+  var v = function(id){ var el = document.getElementById(id); return el ? el.value : null; };
+  if (v('ko-name') != null) { КОМП.form.name = v('ko-name'); КОМП.form.about = v('ko-about'); }
+  var f = КОМП.chf; if (f && v('ko-title') != null) { f.title = v('ko-title'); f.metric = v('ko-metric'); f.target = v('ko-target'); f.days = v('ko-days'); f.start = v('ko-start'); }
+}
+function компРисовать(){
+  if (!ЕСТЬ('roli')) return;
+  компСнятьПоля();
+  var m = КОМП.me, v = document.getElementById('pv-co');
+  if (v) v.textContent = !m ? '' : m.member ? m.member.name : m.team.length ? m.team[0].name : '';
+  var b = document.getElementById('rolco');
+  if (b) {
+    var ошибка = КОМП.err ? '<p class="rolerr">' + esc(КОМП.err) + ' <button type="button" class="btn small" data-ko="reload">Повторить</button></p>' : '';
+    if (!m) b.innerHTML = ошибка || '<p class="empt">Загружаю…</p>';
+    else {
+      var сотр = '<h4 class="pqlab">Я сотрудник</h4>' + компСотрудникHtml(m), каб = '<h4 class="pqlab">Кабинет компании</h4>' + (m.team.length ? m.team.map(компКабинетHtml).join('') : компЗаявкаHtml());
+      b.innerHTML = ошибка + (m.team.length && !m.member ? каб + сотр : сотр + каб);
+    }
+  }
+  компАдмРисовать();
+}
+function компГруппаHtml(ch){
+  var г = ch.group || {};
+  if (г.done != null) return '<p class="rolnote">В группе ' + г.n + ' · дошли ' + г.done + '%</p>';
+  if (г.n) return '<p class="rolnote">В группе ' + г.n + '</p>';
+  return '<p class="rolnote">Цифры группы — когда участников будет от 10.</p>';
+}
+function компЧеллШапка(ch){
+  var конч = ch.end < TODAY, ждёт = ch.start > TODAY;
+  return '<div class="rolhd"><b>' + esc(ch.title) + '</b><span>' + (ждёт ? '<span>начнётся</span> ' + компДата(ch.start) : конч ? '<span>закончился</span>' : '<span>закончится</span> ' + компДата(ch.end)) + '</span></div>' +
+    '<p class="rolnote"><span>Цель: ' + ch.target + '</span> · <span>' + esc(КОМП_МЕРА[ch.metric] || ch.metric) + '</span></p>';
+}
+function компСотрудникHtml(m){
+  var x = m.member;
+  if (!x) return '<p class="empt">Работодатель пришлёт ссылку — по ней вы увидите, что компания будет видеть, и присоединитесь.</p>';
+  return '<div class="rolcard"><div class="rolhd"><b>' + esc(x.name) + '</b><span>вы участвуете</span></div>' +
+    '<p class="rolnote">Компания видит только общие цифры по группе от 10 человек — ни вас, ни ваших данных.</p>' +
+    (x.ch.length ? x.ch.map(function(ch){
+      var конч = ch.end < TODAY;
+      var моё = ch.joined && ch.mine != null ? '<div class="kobar" aria-hidden="true"><i style="width:' + Math.min(100, Math.round(ch.mine / ch.target * 100)) + '%"></i></div><p class="rolnote">У вас: ' + ch.mine + ' из ' + ch.target + '</p>' : '';
+      return '<div class="koch">' + компЧеллШапка(ch) + моё + компГруппаHtml(ch) +
+        (конч ? '' : '<div class="rolbtns">' + (ch.joined ? '<button type="button" class="btn small" data-ko="chout" data-id="' + ролиА(ch.id) + '">Не участвую</button>' : '<button type="button" class="btn small prim" data-ko="chin" data-id="' + ролиА(ch.id) + '">Участвую</button>') + '</div>') + '</div>';
+    }).join('') : '<p class="empt">Челленджей пока нет.</p>') +
+    (КОМП.уйти ? '<div class="rolend"><span>Выйти из компании? Из её челленджей — тоже.</span><button type="button" class="btn small danger" data-ko="leave">Выйти</button><button type="button" class="btn small" data-ko="leaveno">Нет</button></div>'
+      : '<div class="rolbtns"><button type="button" class="btn small rolendb" data-ko="leaveask">Выйти из компании</button></div>') + '</div>';
+}
+function компЗаявкаHtml(){
+  var f = КОМП.form;
+  return '<p class="pqlead">Компания зовёт сотрудников и запускает челленджи. Личных данных сотрудников она не видит — только общие цифры по группе от 10 человек. Заявку проверяем вручную.</p>' +
+    '<label class="rolfld">Название компании<input id="ko-name" type="text" maxlength="80" autocomplete="organization" value="' + ролиА(f.name || '') + '"></label>' +
+    '<label class="rolfld">Пара слов о компании — чем занимается, сколько людей<textarea id="ko-about" maxlength="300" rows="2">' + esc(f.about || '') + '</textarea></label>' +
+    (f.err ? '<p class="rolerr">' + esc(f.err) + '</p>' : '') +
+    '<button type="button" class="btn wide prim" data-ko="apply"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Отправляю…' : 'Отправить заявку') + '</button>';
+}
+function компНеделяHtml(w){
+  var шапка = '<h5>' + компДата(w.week) + ' – ' + компДата(компПлюс(w.week, 6)) + '</h5>';
+  if (!w.ok) return '<div class="kowk">' + шапка + '<p class="rolnote">Меньше 10 человек — не показываем.</p></div>';
+  var ряд = function(a, b){ return '<span>' + a + '</span><b>' + b + '</b>'; };
+  return '<div class="kowk">' + шапка + '<div class="kostat">' +
+    ряд('В группе', 'не меньше ' + w.n5) + ряд('Активны 3 дня и больше', w.active + '%') + ряд('Дней с записанной едой', компДробь(w.foodDays)) +
+    ряд('Тренировок', компДробь(w.workouts)) + ряд('Дней с оценкой от 7', компДробь(w.goodDays)) + (w.steps != null ? ряд('Шагов в день', w.steps) : '') +
+    '</div></div>';
+}
+function компЧеллФормаHtml(){
+  var f = КОМП.chf;
+  return '<div class="kofrm"><label class="rolfld">Название<input id="ko-title" type="text" maxlength="60" value="' + ролиА(f.title || '') + '"></label>' +
+    '<label class="rolfld">Что считаем<select id="ko-metric">' + Object.keys(КОМП_МЕРА).map(function(k){ return '<option value="' + k + '"' + (k === f.metric ? ' selected' : '') + '>' + КОМП_МЕРА[k] + '</option>'; }).join('') + '</select></label>' +
+    '<div class="kotwo"><label class="rolfld">Цель<input id="ko-target" type="number" inputmode="numeric" min="1" value="' + ролиА(f.target || '') + '"></label>' +
+    '<label class="rolfld">Дней<input id="ko-days" type="number" inputmode="numeric" min="3" max="60" value="' + ролиА(f.days || '') + '"></label></div>' +
+    '<label class="rolfld">Начало<input id="ko-start" type="date" min="' + TODAY + '" value="' + ролиА(f.start || TODAY) + '"></label>' +
+    '<p class="rolnote">Цель — сколько набрать за весь челлендж. Свой прогресс каждый видит сам, компания — только долю дошедших, когда участников от 10.</p>' +
+    (f.err ? '<p class="rolerr">' + esc(f.err) + '</p>' : '') +
+    '<div class="rolbtns"><button type="button" class="btn small prim" data-ko="chsave"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Сохраняю…' : 'Запустить') + '</button><button type="button" class="btn small" data-ko="chno">Отмена</button></div></div>';
+}
+function компКабинетHtml(t){
+  var шапка = '<div class="rolhd"><b>' + esc(t.name) + '</b><span><span>' + КОМП_РОЛЬ[t.role] + '</span> · <span>' + (КОМП_СТАТУС[t.status] || t.status) + '</span></span></div>';
+  if (t.status === 'pending') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка на проверке. Как примем — здесь появится ссылка для сотрудников.</p></div>';
+  if (t.status !== 'ok') return '<div class="rolcard">' + шапка + '<p class="rolnote">Компания выключена. Напишите в поддержку.</p></div>';
+  var c = КОМП.card[t.id], обёртка = '<div class="rolcard" data-co="' + ролиА(t.id) + '">' + шапка;
+  if (!c) return обёртка + (КОМП.cardErr[t.id] ? '<p class="rolerr">' + esc(КОМП.cardErr[t.id]) + '</p>' : '<p class="empt">Загружаю…</p>') + '</div>';
+  var мин = c.min || 10, правит = t.role !== 'observer', пр = КОМП.invite[t.id];
+  return обёртка + (КОМП.cardErr[t.id] ? '<p class="rolerr">' + esc(КОМП.cardErr[t.id]) + '</p>' : '') +
+    '<p class="rolnote"><span>Присоединились: ' + c.members + '</span>' + (c.members < мин ? ' · <span>цифры появятся от ' + мин + ' человек</span>' : '') + '</p>' +
+    (c.link ? '<h4 class="pqlab">Ссылка для сотрудников</h4><p class="rolnote">По ней сотрудник увидит, что компании видно, и присоединится сам.</p>' +
+      '<div class="invcode"><input type="text" readonly value="' + ролиА(c.link) + '" aria-label="ссылка для сотрудников"><button type="button" class="btn small prim" data-ko="share" data-url="' + ролиА(c.link) + '">Отправить</button></div>' +
+      (t.role !== 'admin' ? '' : КОМП.сменить === t.id
+        ? '<div class="rolend"><span>Старая ссылка перестанет работать. Кто уже присоединился — останется.</span><button type="button" class="btn small danger" data-ko="code">Сменить</button><button type="button" class="btn small" data-ko="codeno">Нет</button></div>'
+        : '<div class="rolbtns"><button type="button" class="btn small" data-ko="codeask">Сменить ссылку</button></div>') : '') +
+    '<h4 class="pqlab">Цифры по неделям</h4><p class="rolnote">Только по группе от 10 человек и округлённо. Неделя считается один раз после её конца и больше не меняется. Средние — на человека за неделю.</p>' +
+    (c.stats || []).slice().reverse().map(компНеделяHtml).join('') +
+    '<h4 class="pqlab">Челленджи</h4>' +
+    ((c.ch || []).length ? c.ch.map(function(ch){
+      return '<div class="koch">' + компЧеллШапка(ch) + компГруппаHtml(ch) + (!правит ? '' : КОМП.снять === ch.id
+        ? '<div class="rolend"><span>Снять челлендж? Участники его больше не увидят.</span><button type="button" class="btn small danger" data-ko="chdel" data-id="' + ролиА(ch.id) + '">Снять</button><button type="button" class="btn small" data-ko="chdelno">Нет</button></div>'
+        : '<div class="rolbtns"><button type="button" class="btn small" data-ko="chdelask" data-id="' + ролиА(ch.id) + '">Снять</button></div>') + '</div>';
+    }).join('') : '<p class="empt">Пока нет.</p>') +
+    (!правит ? '' : КОМП.chf && КОМП.chf.co === t.id ? компЧеллФормаHtml() : '<div class="rolbtns"><button type="button" class="btn small" data-ko="chnew">+ Челлендж</button></div>') +
+    (!c.team ? '' : '<h4 class="pqlab">Команда</h4>' + c.team.map(function(x){
+      return '<div class="korow"><b>' + esc(x.name || 'Без имени') + (x.me ? ' <small>вы</small>' : '') + '</b>' +
+        '<select data-ko="role" data-who="' + ролиА(x.uid) + '" aria-label="роль">' + ['admin', 'manager', 'observer'].map(function(r){ return '<option value="' + r + '"' + (r === x.role ? ' selected' : '') + '>' + КОМП_РОЛЬ[r] + '</option>'; }).join('') + '</select>' +
+        (x.me ? '' : '<button type="button" class="btn small" data-ko="rm" data-who="' + ролиА(x.uid) + '">Убрать</button>') + '</div>';
+    }).join('') +
+      '<p class="rolnote">Позвать в команду — ссылка на неделю, срабатывает один раз. Менеджер ведёт челленджи, наблюдатель только смотрит цифры.</p>' +
+      '<div class="rolbtns">' + [['manager', 'Менеджера'], ['observer', 'Наблюдателя'], ['admin', 'Админа']].map(function(r){ return '<button type="button" class="btn small" data-ko="inv" data-role="' + r[0] + '">' + r[1] + '</button>'; }).join('') + '</div>' +
+      (пр ? '<p class="rolnote"><span>Ссылка для роли:</span> <span>' + КОМП_РОЛЬ[пр.role] + '</span></p><div class="invcode"><input type="text" readonly value="' + ролиА(пр.link) + '" aria-label="ссылка в команду"><button type="button" class="btn small prim" data-ko="share" data-what="team" data-url="' + ролиА(пр.link) + '">Отправить</button></div>' : '')) +
+    '</div>';
+}
+function компКлик(e){
+  var b = e.target.closest('[data-ko]'); if (!b || b.tagName === 'SELECT') return;
+  var д = b.dataset.ko, карт = b.closest('[data-co]'), co = карт && карт.dataset.co, u = syncUid();
+  var ош = function(er){ b.disabled = false; КОМП.err = er.message || humanErr(er); компРисовать(); };
+  var освежить = function(){ haptic('light'); return co ? компКарточка(co) : компЗагрузить(); };
+  if (д === 'reload') return компЗагрузить();
+  if (д === 'apply') {
+    var f = КОМП.form; компСнятьПоля(); f.busy = true; f.err = ''; компРисовать();
+    return fPost('/roli/co/apply', { uid: u, name: f.name || '', about: f.about || '' }).then(function(){ f.busy = false; haptic('light'); return компЗагрузить(); })
+      .catch(function(er){ f.busy = false; f.err = er.message || humanErr(er); компРисовать(); });
+  }
+  if (д === 'share') {
+    var т = b.dataset.what === 'team' ? 'Зову вас в команду нашей компании в Wellböl.' : 'Присоединяйтесь к нашей компании в Wellböl — по ссылке видно, что компании будет видно.';
+    var su = 'https://t.me/share/url?url=' + encodeURIComponent(b.dataset.url) + '&text=' + encodeURIComponent(т);
+    if (TG && TG.openTelegramLink) TG.openTelegramLink(su); else window.open(su, '_blank');
+    return;
+  }
+  if (д === 'leaveask' || д === 'leaveno') { КОМП.уйти = д === 'leaveask'; return компРисовать(); }
+  if (д === 'leave') { b.disabled = true; return fPost('/roli/co/leave', { uid: u, co: КОМП.me.member.co }).then(function(){ КОМП.уйти = false; haptic('light'); return компЗагрузить(); }).catch(ош); }
+  if (д === 'chin' || д === 'chout') { b.disabled = true; return fPost('/roli/co/ch/join', { uid: u, id: b.dataset.id, on: д === 'chin' }).then(function(){ haptic('light'); return компЗагрузить(); }).catch(ош); }
+  if (д === 'codeask' || д === 'codeno') { КОМП.сменить = д === 'codeask' ? co : ''; return компРисовать(); }
+  if (д === 'code') { b.disabled = true; return fPost('/roli/co/code', { uid: u, co: co }).then(function(){ КОМП.сменить = ''; return освежить(); }).catch(ош); }
+  if (д === 'inv') { b.disabled = true; return fPost('/roli/co/invite', { uid: u, co: co, role: b.dataset.role }).then(function(r){ КОМП.invite[co] = { link: r.link, role: r.role }; haptic('light'); компРисовать(); }).catch(ош); }
+  if (д === 'rm') { b.disabled = true; return fPost('/roli/co/team', { uid: u, co: co, who: b.dataset.who, remove: true }).then(освежить).catch(ош); }
+  if (д === 'chnew') { КОМП.chf = { co: co, title: '', metric: 'active_days', target: '5', days: '7', start: TODAY }; return компРисовать(); }
+  if (д === 'chno') { КОМП.chf = null; return компРисовать(); }
+  if (д === 'chsave') {
+    var ф = КОМП.chf; if (!ф) return; компСнятьПоля(); ф.busy = true; ф.err = ''; компРисовать();
+    return fPost('/roli/co/ch', { uid: u, co: ф.co, title: ф.title, metric: ф.metric, target: +ф.target, days: +ф.days, start: ф.start })
+      .then(function(){ КОМП.chf = null; return освежить(); }).catch(function(er){ ф.busy = false; ф.err = er.message || humanErr(er); компРисовать(); });
+  }
+  if (д === 'chdelask' || д === 'chdelno') { КОМП.снять = д === 'chdelask' ? b.dataset.id : ''; return компРисовать(); }
+  if (д === 'chdel') { b.disabled = true; return fPost('/roli/co/ch/del', { uid: u, co: co, id: b.dataset.id }).then(function(){ КОМП.снять = ''; return освежить(); }).catch(ош); }
+  if (д === 'adm') return компАдмРешить(b.dataset.id, b.dataset.st, b);
+}
+document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('.f-roli [data-ko]')) компКлик(e); });
+document.addEventListener('change', function(e){
+  var s = e.target.closest && e.target.closest('.f-roli select[data-ko="role"]'); if (!s) return;
+  var карт = s.closest('[data-co]'), co = карт && карт.dataset.co; s.disabled = true;
+  fPost('/roli/co/team', { uid: syncUid(), co: co, who: s.dataset.who, role: s.value }).then(function(){ haptic('light'); return компКарточка(co); })
+    .catch(function(er){ КОМП.cardErr[co] = er.message || humanErr(er); компКарточка(co); });
+});
+document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#pq-co')) компЗагрузить(); });
+
+/* ── вход по ссылке: бот открывает приложение с ?co=КОД (сотрудник или команда) ── */
+function компПоСсылке(){
+  if (!ЕСТЬ('roli') || КОМП.join || ROLI.join) return;
+  var код = ''; try { код = new URLSearchParams(location.search).get('co') || ''; } catch (e) {}
+  if (/^[A-Za-z0-9]{6,12}$/.test(код)) {
+    /* как у специалиста: код из адреса один раз, но помним до знакомства — новичок упирается в возраст */
+    gset('komp_kod', код.toUpperCase());
+    try { var u = new URL(location.href); u.searchParams.delete('co'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  } else {
+    код = gget('komp_kod', '') || '';
+    if (!/^[A-Za-z0-9]{6,12}$/.test(код) || !(+((myData() || {}).age) >= 18)) return;
+  }
+  var j = КОМП.join = { code: код.toUpperCase(), r: null, err: '', busy: false, done: false, replace: false };
+  var m = document.getElementById('rolcom'); if (m) m.classList.add('show');
+  компВходРисовать();
+  fGet('/roli/co/join?uid=' + компU() + '&code=' + encodeURIComponent(j.code)).then(function(r){
+    if (КОМП.join !== j) return;
+    j.r = r; if (!r || !r.ok) j.err = (r && r.error) || 'Нет ответа.'; компВходРисовать();
+  }).catch(function(e){ if (КОМП.join === j) { j.err = humanErr(e); компВходРисовать(); } });
+}
+function компВходРисовать(){
+  var j = КОМП.join, b = document.getElementById('rolcobody'), cl = document.getElementById('rolcoclose'), h = document.getElementById('rolcot'); if (!j || !b) return;
+  var r = j.r, команда = r && r.kind === 'team';
+  if (cl) cl.textContent = j.done ? 'Готово' : 'Не сейчас';
+  if (h) h.textContent = команда ? 'Команда компании' : 'Присоединиться к компании';
+  if (j.done) { b.innerHTML = '<p class="mtext">' + (команда ? 'Вы в команде. Кабинет — Профиль → Компания.' : 'Готово. Челленджи и выход — Профиль → Компания.') + '</p>'; return; }
+  if (!r && !j.err) { b.innerHTML = '<p class="empt">Загружаю…</p>'; return; }
+  if (!r || !r.co) { b.innerHTML = '<p class="rolerr">' + esc(j.err || 'Ссылка не работает.') + '</p>' + (j.age || (r && r.code === 'need_age') ? '<button type="button" class="btn wide" id="rolcoage">Указать возраст</button>' : ''); return; }
+  b.innerHTML = '<div class="rolhd"><b>' + esc(r.co.name) + '</b><span>' + (команда ? '<span>роль:</span> <span>' + КОМП_РОЛЬ[r.role] + '</span>' : 'компания') + '</span></div>' +
+    (r.co.about ? '<p class="rolnote">' + esc(r.co.about) + '</p>' : '') +
+    '<p class="mtext">' + esc(r.text) + '</p>' +
+    (j.err ? '<p class="rolerr">' + esc(j.err) + '</p>' : '') +
+    '<button type="button" class="btn wide prim" id="rolcook"' + (j.busy ? ' disabled' : '') + '>' + (j.busy ? 'Минутку…' : команда ? 'Войти в команду' : j.replace ? 'Перейти в эту компанию' : 'Присоединиться') + '</button>';
+}
+document.addEventListener('click', function(e){
+  var j = КОМП.join; if (!j) return;
+  if (e.target.id === 'rolcom' || e.target.id === 'rolcoclose') {
+    var m = document.getElementById('rolcom'); if (m) m.classList.remove('show');
+    if (j.done || !(j.age || (j.r && j.r.code === 'need_age'))) gset('komp_kod', null);
+    КОМП.join = null; if (j.done) компЗагрузить(); return;
+  }
+  if (e.target.id === 'rolcoage') {
+    var m2 = document.getElementById('rolcom'); if (m2) m2.classList.remove('show'); КОМП.join = null; openProf();
+    setTimeout(function(){ var f = document.getElementById('mefields'), ed = document.getElementById('meedit'); if (f && f.hidden && ed) ed.click(); var a = document.getElementById('me-age'); if (a) a.focus(); }, 250);
+    return;
+  }
+  if (e.target.id !== 'rolcook' || j.busy || !j.r || !j.r.co) return;
+  j.busy = true; j.err = ''; компВходРисовать();
+  var команда = j.r.kind === 'team';
+  fPost('/roli/co/join', { uid: syncUid(), code: j.code, consent: команда ? true : j.r.ver, replace: j.replace }).then(function(){ j.busy = false; j.done = true; gset('komp_kod', null); haptic('ok'); компВходРисовать(); })
+    .catch(function(er){
+      j.busy = false; j.err = er.message || humanErr(er);
+      if (er.code === 'other_co') j.replace = true;
+      if (er.code === 'need_age') { j.r = null; j.age = true; }
+      компВходРисовать();
+    });
+});
+
+/* ── владелец: заявки компаний в Админ панели ── */
+function компАдм(){
+  if (!ЕСТЬ('roli') || !(SUB && SUB.boss)) return;
+  fGet('/roli/co/admin?uid=' + компU()).then(function(r){ КОМП.adm = r && r.ok ? r.companies : []; КОМП.admErr = r && r.ok ? '' : ((r && r.error) || 'нет ответа'); компАдмРисовать(); })
+    .catch(function(e){ КОМП.admErr = humanErr(e); компАдмРисовать(); });
+}
+function компАдмРисовать(){
+  var b = document.getElementById('roladmcolist'); if (!b) return;
+  if (КОМП.admErr) { b.innerHTML = '<p class="rolerr">' + esc(КОМП.admErr) + '</p>'; return; }
+  if (!КОМП.adm) { b.innerHTML = '<p class="empt">Загружаю…</p>'; return; }
+  if (!КОМП.adm.length) { b.innerHTML = '<p class="empt">Заявок нет.</p>'; return; }
+  b.innerHTML = КОМП.adm.map(function(c){
+    var к = function(st, t, cls){ return '<button type="button" class="btn small' + (cls ? ' ' + cls : '') + '" data-ko="adm" data-id="' + ролиА(c.id) + '" data-st="' + st + '">' + t + '</button>'; };
+    return '<div class="rolcard"><div class="rolhd"><b>' + esc(c.name) + '</b><span>' + esc(КОМП_СТАТУС[c.status] || c.status) + '</span></div>' +
+      (c.about ? '<p class="rolnote">' + esc(c.about) + '</p>' : '') +
+      '<p class="rolnote"><span>Завёл:</span> ' + esc(c.byName || c.by) + ' · <span>сотрудников: ' + c.members + '</span></p>' +
+      '<div class="rolbtns">' + (c.status === 'ok' ? к('off', 'Выключить', 'danger') : c.status === 'off' ? к('ok', 'Включить', 'prim') : к('ok', 'Принять', 'prim') + к('off', 'Отклонить', '')) + '</div></div>';
+  }).join('');
+}
+function компАдмРешить(id, st, b){
+  b.disabled = true;
+  fPost('/roli/co/admin', { uid: syncUid(), co: id, status: st }).then(function(){ haptic('light'); компАдм(); })
+    .catch(function(e){ КОМП.admErr = humanErr(e); компАдмРисовать(); });
+}
+document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#profboss')) компАдм(); });
+
 
 /* 17.09, его слова: «перенеси Приборную в профиль, убери с главной
    навигации». Владелец у приложения один, а пятая вкладка стояла у него в

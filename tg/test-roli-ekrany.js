@@ -45,6 +45,20 @@ function сервер(нач){
     if (p.endsWith('/roli/client')) return { ok: true, cat: u.searchParams.get('cat'), photo: false, rows: [{ date: '2026-10-28', w: 79.5, fat: 24.1, waist: 84 }, { date: '2026-10-20', w: 80.2 }] };
     if (p.endsWith('/admin/roli') && метод === 'GET') return { ok: true, pros: s.adm };
     if (p.endsWith('/admin/roli')) { const x = s.adm.find(a => a.uid === тело.who); x.status = тело.status; return { ok: true }; }
+    /* этап 6: компания */
+    if (p.endsWith('/roli/co') && метод === 'GET') return { ok: true, ver: 'КВ1', min: 10, team: s.coTeam || [], member: s.coMember || null };
+    if (p.endsWith('/roli/co/card')) return s.coCard ? Object.assign({ ok: true }, s.coCard) : { status: 404, body: { ok: false, error: 'нет' } };
+    if (p.endsWith('/roli/co/join') && метод === 'GET') return s.coJoin || { ok: true, preview: true, kind: 'member', co: { name: 'Альфа', about: 'IT, 40 человек' }, ver: 'КВ1',
+      text: 'Компания увидит только общие цифры по группе от 10 человек: сколько участвуют, доля активных и средние за прошлую неделю, в челленджах — доля дошедших. Кто именно участвует, ваши еда, вес, тренировки и здоровье компании не видны. Свой прогресс в челлендже видите только вы. Выйти можно в любой момент.' };
+    if (p.endsWith('/roli/co/join')) { if (s.coОтказ && !тело.replace) return { status: 409, body: s.coОтказ }; s.coВошёл = тело; s.coMember = { co: 'c1', name: 'Альфа', joined: 1, ch: s.coCh || [] }; return { ok: true, joined: true }; }
+    if (p.endsWith('/roli/co/ch/join')) { s.coУчастие = тело; s.coMember.ch.forEach(c => { if (c.id === тело.id) { c.joined = тело.on; c.mine = тело.on ? 2 : undefined; } }); return { ok: true, joined: тело.on }; }
+    if (p.endsWith('/roli/co/leave')) { s.coВышел = тело; s.coMember = null; return { ok: true }; }
+    if (p.endsWith('/roli/co/apply')) { s.coЗаявка = тело; s.coTeam = [{ id: 'c9', name: тело.name, status: 'pending', role: 'admin' }]; return { ok: true }; }
+    if (p.endsWith('/roli/co/ch')) { s.coЧелл = тело; return { ok: true }; }
+    if (p.endsWith('/roli/co/invite')) { s.coПригл = тело; return { ok: true, role: тело.role, link: 'https://t.me/WellbolTestBot?start=c_TEAMCODE01' }; }
+    if (p.endsWith('/roli/co/team')) { s.coКоманда = тело; return { ok: true }; }
+    if (p.endsWith('/roli/co/admin') && метод === 'GET') return { ok: true, companies: s.coAdm || [] };
+    if (p.endsWith('/roli/co/admin')) { const x = s.coAdm.find(a => a.id === тело.co); x.status = тело.status; return { ok: true }; }
     return { status: 404, body: { ok: false, error: 'не найдено' } };
   };
   return s;
@@ -444,6 +458,124 @@ async function проверить(p, где, имя, sel){
     const фото = await p.evaluate(() => !!document.querySelector('#p-gym [data-private-photo="exphoto00001"]'));
     ok(фото, 'своё у клиента: в тренировке — фото тренера с нашего сервера');
     ok(!err.length, 'своё у клиента: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 15. этап 6: сотрудник — по ссылке ?co= лист согласия, потом «Компания»: челлендж, свой прогресс, выход */
+  const ЧЕЛЛ = () => [{ id: 'h1', title: 'Неделя хороших дней', metric: 'good_days', metricName: 'дни с оценкой от 7', target: 5, start: M.Д(2), end: M.Д(-5), joined: false, group: { n: 14, done: 35, avg: 50 } },
+    { id: 'h2', title: 'Шаги', metric: 'steps', metricName: 'шаги', target: 70000, start: M.Д(-3), end: M.Д(-10), joined: false, group: { n: null, few: true } }];
+  for (const [width, theme] of [[320, 'dark'], [390, 'light']]) {
+    const где = 'сотрудник ' + width + ': ';
+    const p = await b.newPage({ viewport: { width, height: 820 } });
+    const s = сервер({ coCh: ЧЕЛЛ(), coОтказ: { ok: false, code: 'other_co', error: 'Вы уже в компании «Бета». Перейти в «Альфа»?' } });
+    const o = opts(theme); o.features = ['roli']; o.roli = s.обработчик; o.base = M.БАЗА + '?co=alfakod1';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#rolcook', { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(300);
+    const лист = await p.$eval('#rolcobody', e => e.textContent).catch(() => '');
+    ok(/Альфа/.test(лист) && /только общие цифры/.test(лист), где + 'лист: компания и текст согласия от сервера');
+    ok(s.запросы.some(x => x.p.endsWith('/roli/co/join') && x.метод === 'GET' && x.q.code === 'ALFAKOD1'), где + 'код из ссылки — в запросе');
+    ok(!s.запросы.some(x => x.p.endsWith('/roli/co/join') && x.метод === 'POST'), где + 'без нажатия никуда не вписан');
+    await проверить(p, где, 'лист компании', '#rolcom');
+    await p.click('#rolcook'); await p.waitForTimeout(400);
+    ok(/Перейти в эту компанию/.test(await p.$eval('#rolcook', e => e.textContent)) && /уже в компании/.test(await p.$eval('#rolcobody', e => e.textContent)), где + 'уже в другой — спрашиваем «перейти»');
+    await p.click('#rolcook'); await p.waitForTimeout(400);
+    ok(s.coВошёл && s.coВошёл.consent === 'КВ1' && s.coВошёл.code === 'ALFAKOD1' && s.coВошёл.replace === true, где + 'вписан с версией согласия: ' + JSON.stringify(s.coВошёл));
+    ok(/Профиль → Компания/.test(await p.$eval('#rolcobody', e => e.textContent)), где + 'после — куда смотреть');
+    await p.click('#rolcoclose'); await p.waitForTimeout(300);
+    ok(!(await виден(p, '#rolcom')), где + 'лист закрылся');
+    await p.click('#profbtn'); await p.waitForTimeout(300);
+    ok(/Альфа/.test(await p.$eval('#pv-co', e => e.textContent)), где + 'в строке профиля — компания');
+    await p.click('#pq-co'); await p.waitForSelector('#rolco [data-ko="chin"]', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
+    const стр = await p.$eval('#rolco', e => e.textContent);
+    ok(/ни вас, ни ваших данных/.test(стр) && /В группе 14 · дошли 35%/.test(стр) && /когда участников будет от 10/.test(стр), где + 'челленджи: цифры группы от 10, иначе — пояснение');
+    await p.click('#rolco [data-ko="chin"][data-id="h1"]'); await p.waitForTimeout(500);
+    ok(s.coУчастие && s.coУчастие.id === 'h1' && s.coУчастие.on === true, где + '«Участвую» ушло');
+    ok(/У вас: 2 из 5/.test(await p.$eval('#rolco', e => e.textContent)) && await виден(p, '#rolco .kobar'), где + 'свой прогресс — полоской');
+    await проверить(p, где, 'страница «Компания»', '#rolco');
+    await p.click('#rolco [data-ko="leaveask"]'); await p.waitForTimeout(150);
+    ok(!s.coВышел, где + 'выход — только после подтверждения');
+    await p.click('#rolco [data-ko="leave"]'); await p.waitForTimeout(500);
+    ok(s.coВышел && s.coВышел.co === 'c1' && /Работодатель пришлёт ссылку/.test(await p.$eval('#rolco', e => e.textContent)), где + 'вышел — снова «пришлёт ссылку»');
+    ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 16. этап 6: кабинет компании — цифры недель, челлендж, команда; и заявка новой компании */
+  for (const [width, theme] of [[320, 'light'], [390, 'dark']]) {
+    const где = 'кабинет ' + width + ': ';
+    const p = await b.newPage({ viewport: { width, height: 820 } });
+    const s = сервер({ coTeam: [{ id: 'c1', name: 'Альфа', status: 'ok', role: 'admin' }], coCard: {
+      co: { id: 'c1', name: 'Альфа', status: 'ok', role: 'admin' }, min: 10, members: 12, link: 'https://t.me/WellbolTestBot?start=c_ALFAKOD1',
+      team: [{ uid: '1', name: 'Азиз', role: 'admin', me: true }, { uid: 'm1', name: 'Мадина', role: 'manager' }],
+      ch: [{ id: 'h1', title: 'Неделя хороших дней', metric: 'good_days', target: 5, start: M.Д(2), end: M.Д(-5), group: { n: 14, done: 35, avg: 50 } }],
+      stats: [{ week: M.Д(30), ok: false, few: true }, { week: M.Д(23), ok: false, few: true }, { week: M.Д(16), ok: true, n5: 10, active: 45, foodDays: 3.5, workouts: 1.5, goodDays: 2, steps: null },
+        { week: M.Д(9), ok: true, n5: 10, active: 50, foodDays: 4, workouts: 2, goodDays: 2.5, steps: 7500 }] } });
+    const o = opts(theme); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(300);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-co');
+    await p.waitForSelector('#rolco .kostat', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
+    const т = await p.$eval('#rolco', e => e.textContent);
+    ok(/Присоединились: 12/.test(т) && /Меньше 10 человек — не показываем/.test(т) && /Активны 3 дня и больше50%/.test(т) && /Шагов в день7500/.test(т) && /Дней с записанной едой3,5/.test(т), где + 'цифры недель: от 10, округлённо, «мало» — без цифр');
+    ok(т.indexOf('Кабинет компании') < т.indexOf('Я сотрудник'), где + 'у команды без своей компании — кабинет первым');
+    await p.click('#rolco [data-ko="chnew"]'); await p.waitForSelector('#ko-title', { timeout: 2000 }).catch(() => {});
+    await p.fill('#ko-title', 'Октябрь в движении'); await p.selectOption('#ko-metric', 'workouts'); await p.fill('#ko-target', '8'); await p.fill('#ko-days', '14');
+    await проверить(p, где, 'форма челленджа', '#rolco');
+    await p.click('#rolco [data-ko="chsave"]'); await p.waitForTimeout(500);
+    const ч = s.coЧелл || {};
+    ok(ч.co === 'c1' && ч.title === 'Октябрь в движении' && ч.metric === 'workouts' && ч.target === 8 && ч.days === 14 && /^\d{4}-\d{2}-\d{2}$/.test(ч.start), где + 'челлендж ушёл как заполнен: ' + JSON.stringify(ч));
+    await p.click('#rolco [data-ko="inv"][data-role="manager"]'); await p.waitForTimeout(400);
+    ok(s.coПригл && s.coПригл.role === 'manager' && await p.$eval('#rolco', e => /TEAMCODE01/.test(e.innerHTML)), где + 'приглашение в команду — ссылка показана');
+    await p.selectOption('#rolco select[data-who="m1"]', 'observer'); await p.waitForTimeout(400);
+    ok(s.coКоманда && s.coКоманда.who === 'm1' && s.coКоманда.role === 'observer', где + 'смена роли ушла: ' + JSON.stringify(s.coКоманда));
+    ok(!(await p.$('#rolco [data-ko="rm"][data-who="1"]')), где + 'себя убрать нельзя — кнопки нет');
+    await проверить(p, где, 'кабинет компании', '#rolco');
+    ok(!err.length, где + 'без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 820 } });
+    const s = сервер(), o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(300);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-co');
+    await p.waitForSelector('#ko-name', { timeout: 3000 }).catch(() => {});
+    await p.fill('#ko-name', 'Гамма'); await p.fill('#ko-about', 'Логистика, 60 человек');
+    await p.click('#rolco [data-ko="apply"]'); await p.waitForTimeout(500);
+    ok(s.coЗаявка && s.coЗаявка.name === 'Гамма' && s.coЗаявка.about === 'Логистика, 60 человек', 'заявка компании ушла: ' + JSON.stringify(s.coЗаявка));
+    ok(/Заявка на проверке/.test(await p.$eval('#rolco', e => e.textContent)), 'заявка компании: «на проверке»');
+    ok(!err.length, 'заявка компании: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 17. этап 6 на английском и узбекском: страница «Компания» и лист без кириллицы (кроме названий и текста сервера) */
+  for (const яз of ['en', 'uz']) {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ coCh: ЧЕЛЛ() });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.me = Object.assign({}, o.me, { lang: яз }); o.base = M.БАЗА + '?co=ALFAKOD1';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#rolcook', { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(300);
+    const кир = sel => p.$$eval(sel, ns => ns.filter(n => n.offsetParent || n.getClientRects().length).map(n => (n.innerText || n.placeholder || '').trim()).filter(t => /[А-Яа-яЁё]/.test(t)));
+    let ост = await кир('#rolcom h3, #rolcobody .rolhd span, #rolcook, #rolcoclose');
+    ok(!ост.length, яз + ': лист компании без кириллицы: ' + ост.join(' | ').slice(0, 200));
+    await p.click('#rolcook'); await p.waitForTimeout(400); await p.click('#rolcoclose'); await p.waitForTimeout(200);
+    await p.click('#profbtn'); await p.waitForTimeout(300);
+    await p.click('#pq-co'); await p.waitForSelector('#rolco [data-ko="chin"]', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
+    await p.click('#rolco [data-ko="chin"][data-id="h1"]'); await p.waitForTimeout(500);
+    ост = await кир('#pq-co .pqt, #rolco .pqlab, #rolco .pqlead, #rolco label.rolfld, #rolco .rolnote, #rolco .rolhd span, #rolco .rolbtns button, #rolco .empt');
+    ok(!ост.length, яз + ': «Компания» без кириллицы: ' + ост.join(' | ').slice(0, 300));
+    ok(!err.length, яз + ': без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
+  /* 18. этап 6: владелец — заявки компаний в Админ панели */
+  {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ coAdm: [{ id: 'c9', name: 'Гамма', about: 'логистика', status: 'pending', by: '55', byName: 'Рустам', members: 0 }] });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.admin = { про: [], промо: [] };
+    const err = await M.поднять(p, o); await p.waitForTimeout(400);
+    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#profboss');
+    await p.waitForSelector('#roladmcolist [data-ko="adm"]', { timeout: 4000 }).catch(() => {});
+    ok(/Гамма/.test(await p.$eval('#roladmcolist', e => e.textContent)) && /Рустам/.test(await p.$eval('#roladmcolist', e => e.textContent)), 'админ: заявка компании видна');
+    await p.click('#roladmcolist [data-st="ok"]'); await p.waitForTimeout(400);
+    const r = s.запросы.find(x => x.p.endsWith('/roli/co/admin') && x.метод === 'POST');
+    ok(r && r.тело.co === 'c9' && r.тело.status === 'ok', 'админ: «Принять» компанию: ' + JSON.stringify(r && r.тело));
+    ok(/работает/.test(await p.$eval('#roladmcolist', e => e.textContent)), 'админ: после ответа — работает');
+    ok(!err.length, 'админ компаний: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 5. владелец: заявки в Админ панели */
