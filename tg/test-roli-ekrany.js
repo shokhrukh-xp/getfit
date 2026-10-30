@@ -600,7 +600,8 @@ async function проверить(p, где, имя, sel){
   /* 5. владелец: заявки в Админ панели */
   {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
-    const s = сервер({ adm: [{ uid: 't9', kind: 'trainer', name: 'Олег', about: 'кроссфит', status: 'pending', contact: '+998 90 111 22 33', adult: 1, docs: ['docphoto0001', 'docphoto0002'] }] });
+    const s = сервер({ adm: [{ uid: 't9', kind: 'trainer', name: 'Олег', about: 'кроссфит', status: 'pending', contact: '+998 90 111 22 33', adult: 1, docs: ['docphoto0001', 'docphoto0002'],
+      ai: { decision: 'doubt', confidence: 0.7, reasons: ['Имя на документе другое'], doc: { readable: true, type: 'Диплом', org: 'УзГИФК', year: '2015', name: 'Олег П.' } } }] });
     const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.admin = { про: [], промо: [] };
     const err = await M.поднять(p, o); await p.waitForTimeout(400);
     await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#profboss');
@@ -608,6 +609,8 @@ async function проверить(p, где, имя, sel){
     ok(/Олег/.test(await p.$eval('#roladmlist', e => e.textContent)), 'админ: заявка видна');
     /* этап 6г: заявка со страницы /experts/ — контакт, 18+ со слов, фото документов */
     const ат = await p.$eval('#roladmlist', e => e.textContent);
+    /* этап 6д: вывод ИИ — сомневается, причина, что прочитано на документе */
+    ok(/ИИ: сомневается · 70 % — Имя на документе другое/.test(ат) && /На документе: Диплом, УзГИФК, 2015, «Олег П\.»/.test(ат), 'админ: вывод ИИ и прочитанное с документа: ' + ат.slice(0, 200));
     ok(/Контакт: \+998 90 111 22 33/.test(ат) && /18\+ — со слов/.test(ат) && (await p.$$('#roladmlist .roldocs img')).length === 2, 'админ: контакт, 18+ со слов, два фото документа');
     await p.click('#roladmlist [data-st="ok"]'); await p.waitForTimeout(400);
     const r = s.запросы.find(x => x.p.endsWith('/admin/roli') && x.метод === 'POST');

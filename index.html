@@ -19135,6 +19135,15 @@ function ролиАдм(){
   fGet('/admin/roli?uid=' + encodeURIComponent(syncUid())).then(function(r){ ROLI.adm = r && r.ok ? r.pros : []; ROLI.admErr = r && r.ok ? '' : ((r && r.error) || 'нет ответа'); ролиАдмРисовать(); })
     .catch(function(e){ ROLI.admErr = humanErr(e); ролиАдмРисовать(); });
 }
+/* 30.10, этап 6д: вывод ИИ у заявки — принял сам, сомневается (что смутило) или не ответил; что прочитано на документе */
+function ролиИИHtml(p){
+  var a = p.ai; if (!a) return '';
+  if (a.error) return '<p class="rolnote"><span>ИИ не ответил — проверьте сами</span></p>';
+  var д = a.doc || {}, наДок = [д.type, д.org, д.year].filter(Boolean).map(esc).join(', ') + (д.name ? (д.type || д.org || д.year ? ', ' : '') + '«' + esc(д.name) + '»' : '');
+  return '<p class="rolnote"><b>' + (a.decision === 'accept' ? (p.by === 'ai' ? '<span>ИИ: принял</span>' : '<span>ИИ: можно принять</span>') : '<span>ИИ: сомневается</span>') + '</b> · ' + Math.round((+a.confidence || 0) * 100) + ' %' +
+    ((a.reasons || []).length ? ' — ' + a.reasons.map(esc).join('; ') : '') + '</p>' +
+    (наДок ? '<p class="rolnote"><span>На документе:</span> ' + наДок + '</p>' : (д.readable === false ? '<p class="rolnote"><span>Документ не прочитан</span></p>' : ''));
+}
 function ролиАдмРисовать(){
   var b = document.getElementById('roladmlist'); if (!b) return;
   if (ROLI.admErr) { b.innerHTML = '<p class="rolerr">' + esc(ROLI.admErr) + '</p>'; return; }
@@ -19146,6 +19155,7 @@ function ролиАдмРисовать(){
       (p.about ? '<p class="rolnote">' + esc(p.about) + '</p>' : '') +
       (p.contact ? '<p class="rolnote"><span>Контакт:</span> ' + esc(p.contact) + '</p>' : '') +
       (p.adult ? '<p class="rolnote">18+ — со слов, возраста в профиле нет</p>' : '') +
+      ролиИИHtml(p) +
       ((p.docs || []).length ? '<div class="roldocs">' + p.docs.map(function(k){ return '<img ' + photoAttr(SYNCURL + '/photo?key=' + encodeURIComponent(k), false, true) + ' alt="документ" loading="lazy">'; }).join('') + '</div>' : '') +
       '<div class="rolbtns">' + (p.status === 'ok' ? к('off', 'Выключить', 'danger') : p.status === 'off' ? к('ok', 'Принять', 'prim') : к('ok', 'Принять', 'prim') + к('off', 'Отклонить', '')) + '</div></div>';
   }).join('');
