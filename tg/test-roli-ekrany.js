@@ -275,6 +275,29 @@ async function проверить(p, где, имя, sel){
     ok(!err.length, 'тренер: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
+  /* 10. этап 2г: новые экраны на английском и узбекском — без кириллицы (кроме имён и текстов сервера) */
+  for (const яз of ['en', 'uz']) {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    const s = сервер({ анкета: true, my: [{ id: 'l1', kind: 'trainer', name: 'Тимур Ахмедов', proStatus: 'ok', cats: ['gym', 'body'], unread: 1 }], msgs: [] });
+    const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.me = Object.assign({}, o.me, { lang: яз }); o.base = M.БАЗА + '?pro=TSTRNR01';
+    const err = await M.поднять(p, o);
+    await p.waitForSelector('#roljbody [data-parq]', { timeout: 5000 }).catch(() => {}); await p.waitForTimeout(300);
+    const кир = sel => p.$$eval(sel, ns => ns.filter(n => n.offsetParent || n.getClientRects().length).map(n => (n.innerText || n.placeholder || '').trim()).filter(t => /[А-Яа-яЁё]/.test(t)));
+    let ост = await кир('#roljm h3, #roljbody .rolq, #roljbody h4, #roljok, #roljclose');
+    ok(!ост.length, яз + ': лист подключения и анкета без кириллицы: ' + ост.join(' | ').slice(0, 200));
+    await p.click('#roljclose'); await p.waitForTimeout(200);
+    await p.click('#profbtn'); await p.waitForTimeout(300);
+    ост = await кир('#pq-spec .pqt, #pq-pro .pqt, #pv-spec');
+    ok(!ост.length, яз + ': строки «Специалисты» в профиле: ' + ост.join(' | '));
+    await p.click('#pq-spec'); await p.waitForSelector('#rolmy .rolsw', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
+    ост = await кир('.pqpage[data-pp="rolspec"] .pqlead, .pqpage[data-pp="rolspec"] .pqlab, #rolmy .rolsw span, #rolmy .rolbtns button, #rollog');
+    ok(!ост.length, яз + ': «Мои специалисты» без кириллицы: ' + ост.join(' | ').slice(0, 200));
+    await p.click('#rolmy [data-rol="chat"]'); await p.waitForSelector('#rolmsgs .empt', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
+    ост = await кир('#rolchatbody .empt, #rolchatbody .rolnote, #rolmsg, #rolmsgsend, #rolchatclose');
+    ok(!ост.length, яз + ': переписка без кириллицы: ' + ост.join(' | '));
+    ok(!err.length, яз + ': без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await p.close();
+  }
   /* 5. владелец: заявки в Админ панели */
   {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
