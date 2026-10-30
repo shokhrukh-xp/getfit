@@ -51,6 +51,8 @@ main{max-width:1120px;margin:0 auto;padding:24px}
 .btn[disabled]{opacity:.55;cursor:default}
 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .login{max-width:760px;margin:24px auto;display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.loginwrap{max-width:760px;margin:24px auto 0}
+.loginwrap .login{margin-top:0}
 .qr{background:#FFFFFF;border-radius:16px;padding:12px;width:244px;height:244px;display:flex;align-items:center;justify-content:center}
 .qr svg{width:220px;height:220px;display:block}
 .qr.dim{opacity:.25}
@@ -86,6 +88,18 @@ main{max-width:1120px;margin:0 auto;padding:24px}
 .confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--warn-bg);border-radius:12px;padding:8px 12px;margin-top:10px;font-size:14px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700}
 .empty{color:var(--muted);font-size:14px}
+/* 30.10, этап 6в: вход по почте, рассылка */
+.seg{display:inline-flex;gap:2px;background:var(--tint);border-radius:12px;padding:3px;margin:0 0 14px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text)}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin:10px 0;max-width:420px}
+.fld input,.fld select,.fld textarea{padding:10px 12px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);font-size:15px;color:var(--text)}
+.fld textarea{max-width:none;min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.fld.wide{max-width:none}
+.code{letter-spacing:.3em;font-variant-numeric:tabular-nums;font-size:20px!important;max-width:220px}
+.mailbox{max-width:440px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}
+.row .fld{margin:0;flex:1 1 200px}
 @media (max-width:760px){
   .top{padding:12px 16px}
   main{padding:16px}
@@ -112,7 +126,9 @@ var API = 'https://api.wellbol.com' + (/^\/test\//.test(location.pathname) ? '/t
 var КЛ_ТОК = 'wb_kab_tok', КЛ_ЯЗ = 'wb_kab_lang';
 function взять(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
 function положить(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
-var S = { lang: взять(КЛ_ЯЗ) || 'ru', сл: {}, tok: взять(КЛ_ТОК), me: null, co: null, card: {}, cardErr: {}, err: '', login: null, chf: null, invite: {}, confirm: '', meErr: '', выход: '' };
+var S = { lang: взять(КЛ_ЯЗ) || 'ru', сл: {}, tok: взять(КЛ_ТОК), me: null, co: null, card: {}, cardErr: {}, err: '', login: null, chf: null, invite: {}, confirm: '', meErr: '', выход: '',
+  /* этап 6в */ способ: взять('wb_kab_how') === 'mail' ? 'mail' : 'qr', mail: { step: 'email' }, пригл: null, привязка: { step: 'email' }, рассылки: {}, список: {}, позвать: {} };
+(function(){ try { var u = new URL(location.href), к = u.searchParams.get('invite'); if (/^[A-Za-z0-9]{10}$/.test(к || '')) S.пригл = { code: к.toUpperCase(), r: null, err: '' }; } catch (e) {} })();
 
 /* ── язык: те же словари, что у приложения (ключ — русская строка, числа — {0}) ── */
 function т(k){
@@ -151,7 +167,17 @@ function api(метод, путь, тело){
     });
   }, function(){ throw new Error(т('Нет связи с сервером. Проверьте интернет.')); });
 }
-function сброс(почему){ S.tok = null; положить(КЛ_ТОК, null); S.me = null; S.card = {}; S.выход = почему || ''; входНачать(); }
+function сброс(почему){ S.tok = null; положить(КЛ_ТОК, null); S.me = null; S.card = {}; S.выход = почему || ''; S.mail = { step: 'email' }; if (S.способ === 'qr') входНачать(); else рисовать(); }
+function приглашениеЗагрузить(){
+  рисовать();
+  api('GET', '/web/invite?code=' + encodeURIComponent(S.пригл.code)).then(function(r){ S.пригл.r = r; S.mail = { step: 'email', email: r.email }; рисовать(); })
+    .catch(function(e){ S.пригл.err = e.message; рисовать(); });
+}
+function войтиСТокеном(tok){
+  S.tok = tok; положить(КЛ_ТОК, tok); S.login = null; S.выход = ''; clearTimeout(S.опрос);
+  if (S.пригл) { S.пригл = null; try { var u = new URL(location.href); u.searchParams.delete('invite'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} }
+  S.mail = { step: 'email' }; return загрузить();
+}
 
 /* ── вход по QR ── */
 function входНачать(){
@@ -166,7 +192,7 @@ function ждать(){
   S.опрос = setTimeout(function(){
     api('GET', '/web/login?id=' + encodeURIComponent(l.id) + '&secret=' + encodeURIComponent(l.secret)).then(function(r){
       if (S.login !== l) return;
-      if (r.state === 'ok') { S.tok = r.token; положить(КЛ_ТОК, r.token); S.login = null; S.выход = ''; return загрузить(); }
+      if (r.state === 'ok') return войтиСТокеном(r.token);
       if (r.state === 'denied' || r.state === 'expired') { l.state = r.state; return рисовать(); }
       if (r.state !== l.state) { l.state = r.state; рисовать(); } else минуты();
       ждать();
@@ -175,7 +201,35 @@ function ждать(){
 }
 function минуты(){ var e = document.getElementById('left'), l = S.login; if (e && l) e.textContent = т('Код действует ещё {0} мин.', Math.max(1, Math.ceil((l.until - Date.now()) / 60000))); }
 function qrSvg(текст, клетка){ try { var q = qrcode(0, 'M'); q.addData(текст); q.make(); return q.createSvgTag({ cellSize: клетка || 5, margin: 2, scalable: true }); } catch (e) { return ''; } }
+function почтаФормаHtml(m, пригл){
+  /* m.step: email → code; пригл — приглашение в команду (адрес задан им) */
+  var кнопка = function(a, t, prim){ return '<button type="button" class="btn' + (prim ? ' prim' : '') + '" data-a="' + a + '"' + (m.busy ? ' disabled' : '') + '>' + t + '</button>'; };
+  if (m.step === 'code') return '<div class="mailbox"><p class="note">' + т('Если адрес {0} есть в команде компании, мы отправили на него код. Код действует {1} мин.', esc(m.email), 10) + '</p>' +
+    '<label class="fld">' + т('Код из письма') + '<input id="m-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="' + esc(m.code || '') + '"></label>' +
+    (m.err ? '<p class="err">' + esc(m.err) + '</p>' : '') +
+    '<div class="btns">' + кнопка('mlogin', m.busy ? т('Минутку…') : т('Войти'), true) + кнопка('mresend', т('Отправить код ещё раз')) + (пригл ? '' : кнопка('mother', т('Другой адрес'))) + '</div></div>';
+  return '<div class="mailbox">' + (пригл ? '<p class="note">' + т('Адрес:') + ' <b>' + esc(m.email) + '</b></p>' :
+    '<label class="fld">' + т('Рабочая почта') + '<input id="m-email" type="email" autocomplete="email" inputmode="email" value="' + esc(m.email || '') + '"></label>') +
+    (пригл && пригл.r && !пригл.r.known ? '<label class="fld">' + т('Как вас подписывать') + '<input id="m-name" maxlength="60" autocomplete="name" value="' + esc(m.name || '') + '"></label>' : '') +
+    (m.err ? '<p class="err">' + esc(m.err) + '</p>' : '') +
+    '<div class="btns">' + кнопка('mcode', m.busy ? т('Отправляю…') : т('Получить код на почту'), true) + '</div>' +
+    (пригл ? '' : '<p class="note">' + т('Вход по почте — для тех, кто уже в команде: админ позвал вас по почте или вы привязали адрес в кабинете.') + '</p>') + '</div>';
+}
+function приглашениеHtml(){
+  var п = S.пригл, r = п.r;
+  if (!r) return '<div class="card loginwrap">' + (п.err ? '<p class="err">' + esc(п.err) + '</p><div class="btns"><button type="button" class="btn" data-a="noinvite">' + т('Ко входу') + '</button></div>' : '<p class="empty">' + т('Загружаю…') + '</p>') + '</div>';
+  return '<div class="card loginwrap"><h1 style="font-size:22px;margin:0 0 6px">' + т('Вас позвали в команду компании') + '</h1>' +
+    '<div class="head"><h2 style="margin:0">' + esc(r.co.name) + '</h2><span class="pill">' + esc(роль(r.role)) + '</span></div>' +
+    '<p class="note">' + т('Команда видит только общие цифры по группам от {0} человек — личных данных сотрудников не видит никто. Ссылка в команду срабатывает один раз.', 10) + '</p>' +
+    почтаФормаHtml(S.mail, п) + '</div>';
+}
 function входHtml(){
+  if (S.пригл) return приглашениеHtml();
+  var выбор = '<div class="seg" role="group"><button type="button" data-a="how" data-v="qr" aria-pressed="' + (S.способ === 'qr') + '">' + т('Через Telegram') + '</button><button type="button" data-a="how" data-v="mail" aria-pressed="' + (S.способ === 'mail') + '">' + т('По рабочей почте') + '</button></div>';
+  if (S.способ === 'mail') return '<div class="card loginwrap">' + выбор + '<h1 style="font-size:22px;margin:0 0 6px">' + т('Вход в кабинет компании') + '</h1>' + (S.выход ? '<p class="err">' + esc(S.выход) + '</p>' : '') + почтаФормаHtml(S.mail, null) + '</div>';
+  return '<div class="loginwrap">' + выбор + '</div>' + входQrHtml();
+}
+function входQrHtml(){
   var l = S.login || {}, жив = l.state === 'wait' || l.state === 'asked';
   var сост = l.state === 'load' ? т('Готовлю код…') : l.state === 'asked' ? т('Подтвердите вход в Telegram на телефоне — кнопка «Войти».') : l.state === 'denied' ? т('Вход отклонён.')
     : l.state === 'expired' ? т('Код устарел.') : l.state === 'err' ? (l.err || т('Не получилось.')) : '<span id="left"></span>';
@@ -201,7 +255,7 @@ function загрузить(){
 function карточка(id){
   var t = (S.me.team || []).filter(function(c){ return c.id === id; })[0];
   if (!t || t.status !== 'ok') return;
-  return api('GET', '/web/co/card?co=' + encodeURIComponent(id)).then(function(r){ S.card[id] = r; S.cardErr[id] = ''; рисовать(); })
+  return api('GET', '/web/co/card?co=' + encodeURIComponent(id)).then(function(r){ S.card[id] = r; S.cardErr[id] = ''; рисовать(); if (r.link) рассылкиЗагрузить(id); })
     .catch(function(e){ if (e.code !== 'web_auth') { S.cardErr[id] = e.message; рисовать(); } });
 }
 function недели(c){
@@ -255,7 +309,54 @@ function команда(c, t){
     }).join('') + '</tbody></table></div>' +
     '<h3>' + т('Позвать в команду') + '</h3><p class="note">' + т('Позвать в команду — ссылка на неделю, срабатывает один раз. Менеджер ведёт челленджи, наблюдатель только смотрит цифры.') + '</p>' +
     '<div class="btns">' + [['manager', 'Менеджера'], ['observer', 'Наблюдателя'], ['admin', 'Админа']].map(function(r){ return '<button type="button" class="btn small" data-a="inv" data-role="' + r[0] + '">' + т(r[1]) + '</button>'; }).join('') + '</div>' +
-    (п ? '<p class="note">' + т('Ссылка для роли:') + ' ' + esc(роль(п.role)) + '</p><div class="link"><input readonly value="' + esc(п.link) + '" aria-label="' + esc(т('ссылка в команду')) + '"><button type="button" class="btn prim" data-a="copy" data-v="' + esc(п.link) + '">' + т('Копировать') + '</button></div>' : '') + '</div>';
+    (п ? '<p class="note">' + т('Ссылка для роли:') + ' ' + esc(роль(п.role)) + '</p><div class="link"><input readonly value="' + esc(п.link) + '" aria-label="' + esc(т('ссылка в команду')) + '"><button type="button" class="btn prim" data-a="copy" data-v="' + esc(п.link) + '">' + т('Копировать') + '</button></div>' : '') +
+    '<h3>' + т('Позвать по почте') + '</h3><p class="note">' + т('Для тех, у кого нет Telegram на работе: письмо со ссылкой на кабинет, вход — кодом на этот адрес. Ссылка — на неделю, один раз.') + '</p>' +
+    '<div class="row"><label class="fld">' + т('Почта') + '<input id="i-email" type="email" autocomplete="off" value="' + esc((S.позвать[t.id] || {}).email || '') + '"></label>' +
+    '<label class="fld" style="flex:0 1 180px">' + т('Роль') + '<select id="i-role">' + ['manager', 'observer', 'admin'].map(function(r){ return '<option value="' + r + '"' + (r === ((S.позвать[t.id] || {}).role || 'manager') ? ' selected' : '') + '>' + esc(роль(r)) + '</option>'; }).join('') + '</select></label>' +
+    '<button type="button" class="btn prim" data-a="invmail">' + т('Отправить приглашение') + '</button></div></div>';
+}
+function рассылкаHtml(c, t){
+  var сп = S.список[t.id] || { text: '' }, р = S.рассылки[t.id], разбор = разобрать(сп.text);
+  return '<div class="card"><h2>' + т('Пригласить сотрудников по почте') + '</h2>' +
+    '<p class="note">' + т('Вставьте адреса — столбец из Excel или через запятую — или выберите файл CSV. Каждый получит письмо со ссылкой компании и сам решит, присоединиться ли.') + '</p>' +
+    '<p class="note">' + т('Кто из приглашённых присоединился, компания не узнает — ссылка у всех одна. Адреса храним только до отправки письма, повторно на тот же адрес не пишем.') + '</p>' +
+    '<label class="fld wide">' + т('Адреса') + '<textarea id="ml-text" spellcheck="false" placeholder="ivanov@bank.uz&#10;petrova@bank.uz">' + esc(сп.text) + '</textarea></label>' +
+    '<div class="btns"><label class="btn small" style="cursor:pointer">' + т('Выбрать файл CSV') + '<input id="ml-file" type="file" accept=".csv,.txt,text/csv,text/plain" hidden></label>' +
+    '<span class="note" id="ml-count">' + счётHtml(разбор) + '</span></div>' +
+    (сп.err ? '<p class="err">' + esc(сп.err) + '</p>' : '') +
+    (S.confirm === 'ml' && разбор.ok.length
+      ? '<div class="confirm"><span>' + т('Отправить {0} писем от имени «{1}»?', разбор.ok.length, esc(t.name)) + '</span><button type="button" class="btn small prim" data-a="mlsend">' + т('Отправить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
+      : '<div class="btns"><button type="button" class="btn prim" data-a="ask" data-k="ml"' + (разбор.ok.length && !сп.busy ? '' : ' disabled') + '>' + (сп.busy ? т('Отправляю…') : т('Отправить приглашения')) + '</button></div>') +
+    (р && р.length ? '<h3>' + т('Рассылки') + '</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>' + т('Когда') + '</th><th class="num">' + т('Новых адресов') + '</th><th class="num">' + т('Отправлено') + '</th><th class="num">' + т('Уже приглашали') + '</th><th class="num">' + т('Не ушло') + '</th><th>' + т('Статус') + '</th></tr></thead><tbody>' +
+      р.map(function(x){ return '<tr><td class="nw">' + esc(new Date(x.created).toLocaleString(S.lang === 'uz' ? 'uz-Latn' : S.lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</td><td class="num">' + x.queued + '</td><td class="num">' + x.sent + '</td><td class="num">' + x.dup + '</td><td class="num">' + x.failed + '</td><td>' + (x.status === 'done' ? т('готово') : т('отправляется…')) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>' : '') + '</div>';
+}
+function разобрать(text){
+  var видел = {}, ok = [], плохие = 0, повторы = 0;
+  String(text || '').split(/[\s,;]+/).forEach(function(x){
+    /* в строке CSV бывают имена и должности — берём только то, где есть «@» */
+    x = x.replace(/^["'<(]+|[">)]+$/g, '').trim().toLowerCase(); if (!x || x.indexOf('@') < 0) return;
+    if (!/^[a-z0-9._%+'-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(x)) { плохие++; return; }
+    if (видел[x]) { повторы++; return; } видел[x] = 1; ok.push(x);
+  });
+  return { ok: ok, плохие: плохие, повторы: повторы };
+}
+function счётHtml(р){ return р.ok.length || р.плохие ? т('Адресов: {0}', р.ok.length) + (р.плохие ? ' · ' + т('с ошибкой: {0}', р.плохие) : '') + (р.повторы ? ' · ' + т('повторов: {0}', р.повторы) : '') : ''; }
+function почтаВходаHtml(){
+  var m = S.me, п = S.привязка;
+  return '<div class="card"><h2>' + т('Вход по почте') + '</h2>' + (m.email && п.step !== 'code' && !п.edit
+    ? '<p class="note">' + т('Входите в кабинет кодом на адрес:') + ' <b>' + esc(m.email) + '</b></p><div class="btns"><button type="button" class="btn small" data-a="lnedit">' + т('Сменить адрес') + '</button></div>'
+    : '<p class="note">' + т('Привяжите рабочую почту — тогда в кабинет можно входить и без телефона, кодом на почту.') + '</p>' +
+      (п.step === 'code'
+        ? '<p class="note">' + т('Мы отправили код на {0}.', esc(п.email)) + '</p><div class="row"><label class="fld">' + т('Код из письма') + '<input id="ln-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button type="button" class="btn prim" data-a="lnok"' + (п.busy ? ' disabled' : '') + '>' + т('Подтвердить') + '</button><button type="button" class="btn" data-a="lnno">' + т('Отмена') + '</button></div>'
+        : '<div class="row"><label class="fld">' + т('Рабочая почта') + '<input id="ln-email" type="email" autocomplete="email" value="' + esc(п.email || '') + '"></label><button type="button" class="btn prim" data-a="lncode"' + (п.busy ? ' disabled' : '') + '>' + т('Получить код') + '</button>' + (m.email ? '<button type="button" class="btn" data-a="lnno">' + т('Отмена') + '</button>' : '') + '</div>') +
+      (п.err ? '<p class="err">' + esc(п.err) + '</p>' : '')) + '</div>';
+}
+function рассылкиЗагрузить(co){
+  return api('GET', '/web/co/mailings?co=' + encodeURIComponent(co)).then(function(r){
+    S.рассылки[co] = r.mailings; рисовать();
+    clearTimeout(S.рт); if (r.mailings.some(function(x){ return x.status === 'sending'; })) S.рт = setTimeout(function(){ рассылкиЗагрузить(co); }, 3000);
+  }).catch(function(){});
 }
 function кабинетHtml(){
   var m = S.me;
@@ -280,8 +381,9 @@ function кабинетHtml(){
       (t.role !== 'admin' ? '' : S.confirm === 'code'
         ? '<div class="confirm"><span>' + т('Старая ссылка перестанет работать. Кто уже присоединился — останется.') + '</span><button type="button" class="btn small danger" data-a="code">' + т('Сменить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
         : '<div class="btns"><button type="button" class="btn small" data-a="ask" data-k="code">' + т('Сменить ссылку') + '</button></div>') + '</div>' : '') +
+    (c.link ? рассылкаHtml(c, t) : '') +
     '<div class="card"><h2>' + т('Цифры по неделям') + '</h2>' + недели(c) + '</div>' +
-    челленджи(c, t) + команда(c, t);
+    челленджи(c, t) + команда(c, t) + почтаВходаHtml();
 }
 function шапкаКто(){
   var w = document.getElementById('who'); if (!w) return;
@@ -290,8 +392,14 @@ function шапкаКто(){
     : '<button type="button" class="btn small" data-a="out">' + т('Выйти из кабинета') + '</button><button type="button" class="btn small" data-a="ask" data-k="all">' + т('На всех компьютерах') + '</button>') : '';
 }
 function полеФормы(){
-  var f = S.chf; if (!f) return;
   var v = function(id){ var e = document.getElementById(id); return e ? e.value : null; };
+  if (v('m-email') != null) S.mail.email = v('m-email');
+  if (v('m-name') != null) S.mail.name = v('m-name');
+  if (v('m-code') != null) S.mail.code = v('m-code');
+  if (v('ln-email') != null) S.привязка.email = v('ln-email');
+  if (v('i-email') != null && S.co) S.позвать[S.co] = { email: v('i-email'), role: v('i-role') };
+  if (v('ml-text') != null && S.co) { S.список[S.co] = S.список[S.co] || {}; S.список[S.co].text = v('ml-text'); }
+  var f = S.chf; if (!f) return;
   if (v('f-title') != null) { f.title = v('f-title'); f.metric = v('f-metric'); f.target = v('f-target'); f.days = v('f-days'); f.start = v('f-start'); }
 }
 function рисовать(){
@@ -313,6 +421,41 @@ function действие(b){
   var a = b.dataset.a, co = S.co, ош = function(e){ b.disabled = false; if (e.code !== 'web_auth') { S.cardErr[co] = e.message; рисовать(); } };
   var освежить = function(){ S.confirm = ''; return карточка(co); };
   if (a === 'relogin') return входНачать();
+  if (a === 'how') { S.способ = b.dataset.v; положить('wb_kab_how', S.способ); S.выход = ''; if (S.способ === 'qr') { if (!S.login || S.login.state !== 'wait') входНачать(); else рисовать(); } else { clearTimeout(S.опрос); S.login = null; рисовать(); } return; }
+  if (a === 'noinvite') { S.пригл = null; return S.tok ? загрузить() : (S.способ === 'qr' ? входНачать() : рисовать()); }
+  if (a === 'mother') { S.mail = { step: 'email', email: S.mail.email }; return рисовать(); }
+  if (a === 'mcode' || a === 'mresend') {
+    полеФормы(); var м = S.mail, inv = S.пригл ? S.пригл.code : undefined;
+    if (S.пригл && S.пригл.r && !S.пригл.r.known && String(м.name || '').trim().length < 2) { м.err = т('Как вас подписывать — имя от 2 знаков.'); return рисовать(); }
+    м.busy = true; м.err = ''; рисовать();
+    return api('POST', '/web/mail/code', { email: м.email, invite: inv }).then(function(){ м.busy = false; м.step = 'code'; м.code = ''; рисовать(); var e = document.getElementById('m-code'); if (e) e.focus(); })
+      .catch(function(e){ м.busy = false; м.err = e.message; рисовать(); });
+  }
+  if (a === 'mlogin') {
+    полеФормы(); var м2 = S.mail; м2.busy = true; м2.err = ''; рисовать();
+    return api('POST', '/web/mail/login', { email: м2.email, code: м2.code, invite: S.пригл ? S.пригл.code : undefined, name: м2.name })
+      .then(function(r){ return войтиСТокеном(r.token); }).catch(function(e){ м2.busy = false; м2.err = e.message; рисовать(); });
+  }
+  if (a === 'lnedit') { S.привязка = { step: 'email', edit: true }; return рисовать(); }
+  if (a === 'lnno') { S.привязка = { step: 'email' }; return рисовать(); }
+  if (a === 'lncode' || a === 'lnok') {
+    полеФормы(); var п = S.привязка, кодП = a === 'lnok' ? ((document.getElementById('ln-code') || {}).value || '') : undefined;
+    п.busy = true; п.err = ''; рисовать();
+    return api('POST', '/web/mail/link', { email: п.email, code: кодП }).then(function(r){
+      п.busy = false; if (a === 'lncode') { п.step = 'code'; return рисовать(); }
+      S.me.email = r.email; S.привязка = { step: 'email' }; всплыть(т('Почта привязана')); рисовать();
+    }).catch(function(e){ п.busy = false; п.err = e.message; рисовать(); });
+  }
+  if (a === 'invmail') {
+    полеФормы(); var пз = S.позвать[co] || {}; b.disabled = true;
+    return api('POST', '/web/co/invite-mail', { co: co, email: пз.email, role: пз.role || 'manager' }).then(function(r){ S.позвать[co] = { role: пз.role }; всплыть(т('Приглашение отправлено: {0}', r.email)); рисовать(); }).catch(ош);
+  }
+  if (a === 'mlsend') {
+    полеФормы(); var сп = S.список[co] || {}, разбор = разобрать(сп.text); S.confirm = ''; сп.busy = true; сп.err = ''; рисовать();
+    return api('POST', '/web/co/mailing', { co: co, emails: разбор.ok }).then(function(r){
+      сп.busy = false; сп.text = ''; всплыть(т('Новых адресов: {0}, уже приглашали: {1}', r.queued, r.dup)); рисовать(); return рассылкиЗагрузить(co);
+    }).catch(function(e){ сп.busy = false; сп.err = e.message; рисовать(); });
+  }
   if (a === 'reload') return S.me ? карточка(co) : загрузить();
   if (a === 'co') { S.co = b.dataset.id; S.chf = null; S.confirm = ''; рисовать(); return карточка(S.co); }
   if (a === 'ask') { S.confirm = b.dataset.k; return рисовать(); }
@@ -351,11 +494,25 @@ document.addEventListener('change', function(e){
   api('POST', '/web/co/team', { co: co, who: s.dataset.who, role: s.value }).then(function(){ всплыть(т('Сохранено')); return карточка(co); })
     .catch(function(e2){ if (e2.code !== 'web_auth') { S.cardErr[co] = e2.message; карточка(co); } });
 });
+document.addEventListener('input', function(e){
+  if (e.target.id === 'ml-text') { var с = document.getElementById('ml-count'); if (с) с.innerHTML = счётHtml(разобрать(e.target.value)); var кн = document.querySelector('[data-k="ml"]'); if (кн) кн.disabled = !разобрать(e.target.value).ok.length; }
+  if (e.target.id === 'm-code' && /^\d{6}$/.test(e.target.value)) { var вх = document.querySelector('[data-a="mlogin"]'); if (вх) вх.click(); }
+});
+document.addEventListener('change', function(e){
+  if (e.target.id !== 'ml-file' || !e.target.files || !e.target.files[0]) return;
+  var f = e.target.files[0], co = S.co; if (f.size > 2e6) { всплыть(т('Файл больше 2 МБ')); return; }
+  f.text().then(function(t){ полеФормы(); S.список[co] = S.список[co] || {}; S.список[co].text = ((S.список[co].text || '').trim() + '\n' + t).trim(); рисовать(); });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Enter') return;
+  var id = e.target.id, a = id === 'm-email' || id === 'm-name' ? 'mcode' : id === 'm-code' ? 'mlogin' : id === 'ln-email' ? 'lncode' : id === 'ln-code' ? 'lnok' : '';
+  if (a) { var кн = document.querySelector('[data-a="' + a + '"]'); if (кн && !кн.disabled) { e.preventDefault(); кн.click(); } }
+});
 /* вернулся на вкладку — свежие цифры; вход ждёт дальше */
 document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && S.tok && S.me && S.co) карточка(S.co); });
 
 язык(S.lang);
-if (S.tok) загрузить(); else входНачать();
+if (S.пригл) приглашениеЗагрузить(); else if (S.tok) загрузить(); else if (S.способ === 'qr') входНачать(); else рисовать();
 </script>
 </body>
 </html>
