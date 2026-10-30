@@ -4745,7 +4745,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
     <p class="gerr" id="gerr"></p>
   </div>
 </div>
-<div id="cloudwait" role="status" aria-live="polite" hidden><span class="cwdot" aria-hidden="true"></span><span>Загружаю ваши данные…</span></div>
+<div id="cloudwait" role="status" aria-live="polite" hidden><span class="cwdot" aria-hidden="true"></span><span id="cwtext">Загружаю ваши данные…</span><button type="button" class="btn small" id="cwretry" hidden>Повторить</button></div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <!-- 24.10 Wellböl: шапка бренда — только при самом первом входе, на шаге «что будем вести» -->
@@ -7800,12 +7800,31 @@ function hidePicker(){
    знакомство. Сервер молчит 12 с — знакомство, как раньше. */
 var ОБЛАКО_ЖДЁМ=false, облакоТаймер=0;
 function облакоЖдатьСнять(){ ОБЛАКО_ЖДЁМ=false; clearTimeout(облакоТаймер); var w=document.getElementById('cloudwait'); if(w) w.hidden=true; }
+/* 30.10 (аудит): сбой первого обмена (выкладка, обрыв) раньше сразу открывал анкету
+   существующему человеку — и она писала профиль поверх пустой копии. Теперь три попытки,
+   потом «Нет связи с сервером · Повторить»; анкета — только когда сервер ответил, что пусто. */
 function облакоЖдать(){
   ОБЛАКО_ЖДЁМ=true; document.body.classList.add('onb');
-  var w=document.getElementById('cloudwait'); if(w) w.hidden=false;
-  облакоТаймер=setTimeout(function(){ облакоОтветило(); }, 12000);
-  setTimeout(function(){ cloudPull(true).then(облакоОтветило, облакоОтветило); }, 0);
+  var w=document.getElementById('cloudwait'), t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(w) w.hidden=false; if(t) t.textContent=тр('Загружаю ваши данные…'); if(b) b.hidden=true;
+  clearTimeout(облакоТаймер); облакоТаймер=setTimeout(облакоНетСвязи, 25000);
+  var попытка=0;
+  (function тянуть(){
+    cloudPull(true).then(function(n){
+      if(!ОБЛАКО_ЖДЁМ) return;
+      if(n!==undefined) return облакоОтветило();
+      if(++попытка<3) return setTimeout(тянуть, 2000*попытка);
+      облакоНетСвязи();
+    });
+  })();
 }
+function облакоНетСвязи(){
+  if(!ОБЛАКО_ЖДЁМ) return;
+  clearTimeout(облакоТаймер);
+  var t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(t) t.textContent=тр('Нет связи с сервером'); if(b) b.hidden=false;
+}
+document.getElementById('cwretry').addEventListener('click', function(){ haptic('light'); облакоЖдать(); });
 function облакоОтветило(){
   if(!ОБЛАКО_ЖДЁМ) return;
   облакоЖдатьСнять();
@@ -12722,6 +12741,8 @@ function adoptState(key, b){
       if(b.x && typeof b.x==='object'){ EXTRA=b.x; set('extra',EXTRA); }
         if(b.sk && typeof b.sk==='object'){ SKIP=b.sk; set('skip',SKIP); }
       if(b.ord && typeof b.ord==='object'){ ORD=b.ord; set('ord',ORD); }
+      /* 30.10: суперсеты с сервера раньше не принимались вовсе — пары с другого устройства не появлялись */
+      if(b.pr && typeof b.pr==='object'){ PAIRS=b.pr; set('pairs',PAIRS); }
       if(!anyTouched()){ sess=blankSess(); saveSess(); } else loadSess();
       renderList(); paintNote('');
       return true;
@@ -12755,6 +12776,9 @@ function pushDirty(){
   var ks=Object.keys(DIRTY); if(!ks.length) return Promise.resolve();
   var jobs=ks.map(function(k){
     if(SETTINGS_KEYS.indexOf(k)>=0)return (settingsQueue(syncUid())[k]||[]).length?settingsDrain(syncUid(),k):settingsMigrate(k);
+    /* 30.10 (аудит): своя программа лежит не под state/aiprog, а в ai_prog — раньше неудачная
+       отправка (продление фазы, новая программа) тихо выбрасывалась, сервер и тренер видели старую */
+    if(k==='aiprog'){ var ап=gget('ai_prog',null); if(!ап){ dirtySet(k,false); return Promise.resolve(); } return syncPush('state/aiprog', ап); }
     return csGet(csKey('state/'+k)).then(function(v){
       var b=null; if(v){ try{ b=JSON.parse(v); }catch(e){} }
       if(!b) { dirtySet(k,false); return; }
@@ -12764,6 +12788,34 @@ function pushDirty(){
   return Promise.all(jobs).catch(function(){});
 }
 var pulling=false, lastPull=0;
+/* 30.10, его слова: «Почему он меня спрашивает заполнить профиль возраст и рост? Почему мои
+   изменения в программе не сохраняются?» Правка, получившая 409 «изменено на другом
+   устройстве», висела первой в очереди навсегда: «Повторить» в зале её не трогал, выбор версии
+   был только в профиле, а пока ключ «грязный», свежие данные с сервера не принимались. Теперь
+   при каждом обмене с сервером: правки дня (subs) — его выбор поверх серверных (он их только
+   что сделал), профиль (me) — спорные поля берём с сервера, остальные его правки отправляем.
+   И если на телефоне в профиле нет пола, возраста, роста или веса, а на сервере есть, — берём
+   серверный профиль: такая копия получилась на пустом хранилище, она не правка человека. */
+function застрялоЛечить(сост){
+  var uid=syncUid(), q=settingsQueue(uid), loc0=myData()||{};
+  /* профиль: сам решаем спор, только если копия на телефоне неполная (пустое хранилище);
+     обычный спор двух устройств — по-прежнему его выбор в профиле (решение 20.10) */
+  var меНеполный=['sex','age','ht','bw'].some(function(f){ return !loc0[f]; });
+  ['subs','me'].forEach(function(k){
+    var j=(q[k]||[])[0]; if(!j || !j.conflict) return;
+    if(k==='me' && !меНеполный) return;
+    if(сост[k] && сост[k].data) j.conflict=сост[k].data;
+    settingsStore(uid,q);
+    var p=settingsResolve(k, k==='subs');
+    if(k==='subs') dayEditSaved(p,true); else p.catch(function(){});
+  });
+  q=settingsQueue(uid);
+  var st=сост.me, srv=st&&st.data&&(st.data.me||st.data), loc=myData()||{};
+  if(srv && !(q.me||[]).length && ['sex','age','ht','bw'].some(function(f){ return !loc[f] && srv[f]; })){
+    dirtySet('me',false);
+    if(adoptState('me', st.data)) markSet('me', +st.updated||Date.now());
+  }
+}
 function cloudPull(force){
   if(pulling) return Promise.resolve();
   if(!force && Date.now()-lastPull < 20000) return Promise.resolve();
@@ -12789,6 +12841,7 @@ function cloudPull(force){
       var localDeload={by:{}};localDeload.by[profile]={on:true,from:get('deload',TODAY),changed:Date.now()};
       gset('deload_user',localDeload);сохранитьСостояние('state/deload_user',localDeload).catch(function(){});
     }
+    try{ застрялоЛечить(сост); }catch(e){}
     var взято=[];
     PULLKEYS.forEach(function(k){
       var st=сост[k]; if(!st || DIRTY[k]) return;
@@ -12935,6 +12988,8 @@ function dayEditSaved(promise,cloud){
     if(gen!==DAYEDIT_GEN)return;DAYEDIT_SAVE=cloud?'saved':'local';dayEditRepaint();
     DAYEDIT_TIMER=setTimeout(function(){if(gen===DAYEDIT_GEN){DAYEDIT_SAVE='';dayEditRepaint();}},3000);
   }).catch(function(e){if(gen!==DAYEDIT_GEN)return;
+    /* 30.10: спор по правкам дня не ждёт выбора в профиле — его правка ложится поверх серверной */
+    if(e&&e.code==='settings_conflict'&&e.settingsKey==='subs'&&!promise.__решено){var p2=settingsResolve('subs',true);p2.__решено=1;dayEditSaved(p2,cloud);return;}
     DAYEDIT_SAVE=правкаНадолго(e)?'err':'retry';
     /* очередь сама повторяет обрыв и 5xx; отказ без статуса — подталкиваем */
     if(DAYEDIT_SAVE==='retry')setTimeout(function(){settingsDrain(syncUid(),'subs').catch(function(){});},5000);
@@ -22177,7 +22232,9 @@ else {
 }
 settingsRemember('me',{me:myData()||{}});
 settingsRemember('sched',{s:GYM_DAYS,p:profile});
-settingsRemember('subs',{s:SUBS,adj:ADJ,x:EXTRA,sk:SKIP,ord:ORD});
+/* 30.10: без pr база правок не знала суперсетов — первая же правка пары уходила как
+   «pr: не было → есть» и получала 409 (его «я просто соединил несколько упражнений в суперсеты») */
+settingsRemember('subs',{s:SUBS,adj:ADJ,x:EXTRA,sk:SKIP,ord:ORD,pr:PAIRS});
 settingsRemember('hurt',gget('hurt',{}));
 settingsRemember('program_draft',aiDraftData());aiDraftRestore();
 initDb();
