@@ -29,7 +29,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   /* 2. главный список профиля */
   await p.click('#profbtn');await p.waitForTimeout(500);
   const гр=await p.$$eval('#pqmain .pqlab',ns=>ns.filter(n=>n.offsetParent).map(n=>n.textContent.trim()));
-  ok(гр.join('|')==='О вас|Тренер|Зал|Друзья|Приложение',где+'группы по порядку: '+гр.join(' · '));
+  ok(гр.join('|')==='О вас|ИИ-тренер|Зал|Друзья|Приложение',где+'группы по порядку: '+гр.join(' · '));
   const строки=await p.$$eval('#pqmain .pqrow',ns=>ns.filter(n=>n.offsetParent).map(n=>({id:n.id,h:n.getBoundingClientRect().height,
    t:(n.querySelector('.pqt b')||{}).textContent,s:(n.querySelector('.pqt small')||{}).textContent||'',v:(n.querySelector('.pqv')||{}).textContent||''})));
   ok(строки.every(x=>x.h>=44),где+'все строки не ниже 44 px');
@@ -47,7 +47,7 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
 
   /* 3. каждая строка открывает свой лист, назад — в список */
   for(const [id,т,внутри] of [['zdtoggle','Здоровье','#zdbody'],['bttoggle','Быт и еда','#btbody'],['pq-only','Что веду','#me-only'],
-    ['pq-voice','Характер тренера','#me-voice'],['pq-gym','Программа','#progcard'],['pq-ref','Пригласить друга','#reflink']]){
+    ['pq-voice','Характер ИИ-тренера','#me-voice'],['pq-gym','Программа','#progcard'],['pq-ref','Пригласить друга','#reflink']]){
    await p.click('#'+id);await p.waitForTimeout(250);
    const с=await p.evaluate(()=>({т:document.getElementById('proftitle').textContent,назад:!document.getElementById('pqback').hidden,
     список:!document.getElementById('pqmain').hidden,верх:document.querySelector('#profm .modalbox').scrollTop}));

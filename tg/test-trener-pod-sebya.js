@@ -30,7 +30,7 @@ const ЦЕЛЬ = { text: '75 кг к январю', wt: 'down', rate: -0.5, from
       await page.click('#trcard [data-tr="open"]'); await page.waitForTimeout(300);
       const лист = page.locator('#trenm');
       дано(await лист.isVisible(), тема + ': открылся лист знакомства');
-      дано(/Дайте имя своему тренеру/.test(await лист.innerText()), тема + ': шаг 1 — «Дайте имя своему тренеру»');
+      дано(/Дайте имя своему ИИ-тренеру/.test(await лист.innerText()), тема + ': шаг 1 — «Дайте имя своему тренеру»');
       await page.click('#trenm [data-trname="Лола"]');
       дано((await page.inputValue('#trname')) === 'Лола', тема + ': подсказка вписывает имя');
       await page.click('#trenm [data-tr="next"]');

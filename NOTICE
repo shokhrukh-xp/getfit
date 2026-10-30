@@ -9,3 +9,7 @@ https://github.com/vulovix/body-muscles
 
 QR-код в кабинете компании (kabinet/) рисует библиотека qrcode-generator 1.4.4
 (MIT License), Copyright (c) 2009 Kazuhiko Arase — vendor/LICENSE-qrcode-generator.txt.
+
+ESG-отчёт компании в PDF (business/) собирает pdf-lib 1.17.1 (MIT License), Copyright (c) 2019 Andrew Dillon — vendor/LICENSE-pdf-lib.txt,
+и @pdf-lib/fontkit 1.1.1 (MIT License) — vendor/LICENSE-pdf-lib-fontkit.txt. Шрифт в PDF — Manrope (SIL Open Font License 1.1, fonts/OFL-Manrope.txt),
+статические начертания 400 и 700 получены из вариативного Manrope[wght] (Google Fonts) инструментом fontTools.

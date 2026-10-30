@@ -33,6 +33,10 @@ function сервер(нач){
     if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
     if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
+    /* 30.10: ИИ-помощник специалиста */
+    if (p.endsWith('/roli/ai/attention')) return { ok: true, clients: [{ who: '777', name: 'Мадина', kind: 'trainer', why: [{ k: 'food_rare', n: 2, t: 'еду записывает 2 из 7 дней' }] }] };
+    if (p.endsWith('/roli/ai/ask')) { s.спросили = тело; return { ok: true, item: { id: 2, q: тело.q, a: 'Вес снижается: **−0,7 кг** за 2 недели.', used: ['body'], at: Date.parse('2026-10-30T07:00:00Z') } }; }
+    if (p.endsWith('/roli/ai')) return { ok: true, items: [], open: ['gym', 'body'] };
     if (p.endsWith('/roli/join') && метод === 'GET' && s.нутри) return { ok: true, preview: true, parq: 0, health: 4, prefill: [true, false, false, false], pro: { name: 'Нигора', kind: 'nutri', about: '' }, cats: ['food', 'food_photo', 'body'], can: МОЖНО.nutri, ver: ВЕР, text: 'Нутрициолог увидит: дневник еды, фото еды, вес и замеры.' };
     if (p.endsWith('/roli/join') && метод === 'GET' && s.безВозраста) return { status: 403, body: { ok: false, code: 'need_age', error: 'Укажите возраст в профиле — подключить специалиста можно с 18 лет.' } };
     if (p.endsWith('/roli/join') && метод === 'GET') return { ok: true, preview: true, parq: s.анкета ? 7 : 0, pro: { name: 'Тимур Ахмедов', kind: 'trainer', about: 'Зал на Чиланзаре, 8 лет' }, cats: ['gym', 'body'], can: МОЖНО.trainer, ver: ВЕР,
@@ -108,7 +112,7 @@ async function проверить(p, где, имя, sel){
     /* 3. «Мои специалисты» */
     await p.click('#profbtn'); await p.waitForTimeout(400);
     const гр = await p.$$eval('#pqmain .pqlab', ns => ns.filter(n => n.offsetParent).map(n => n.textContent.trim()));
-    ok(гр.join('|') === 'О вас|Тренер|Зал|Друзья|Специалисты|Приложение', где + 'группа «Специалисты» перед «Приложением»: ' + гр.join(' · '));
+    ok(гр.join('|') === 'О вас|ИИ-тренер|Зал|Друзья|Специалисты|Приложение', где + 'группа «Специалисты» перед «Приложением»: ' + гр.join(' · '));
     await p.waitForFunction(() => /1 подключён/.test((document.getElementById('pv-spec') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
     ok(/1 подключён/.test(await p.$eval('#pv-spec', e => e.textContent)), где + 'справа в строке — сколько подключено');
     await p.click('#pq-spec'); await p.waitForSelector('#rolmy .rolsw', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(400);
@@ -136,7 +140,7 @@ async function проверить(p, где, имя, sel){
     const err0 = await M.поднять(p0, o0); await p0.waitForTimeout(600);
     await p0.click('#profbtn'); await p0.waitForTimeout(300);
     const гр2 = await p0.$$eval('#pqmain .pqlab', ns => ns.filter(n => n.offsetParent).map(n => n.textContent.trim()));
-    ok(гр2.join('|') === 'О вас|Тренер|Зал|Друзья|Приложение', где + 'обычному пользователю — ни «Специалистов», ни «Компании»: ' + гр2.join(' · '));
+    ok(гр2.join('|') === 'О вас|ИИ-тренер|Зал|Друзья|Приложение', где + 'обычному пользователю — ни «Специалистов», ни «Компании»: ' + гр2.join(' · '));
     ok(!(await виден(p0, '#pq-spec')) && !(await виден(p0, '#pq-pro')) && !(await виден(p0, '#pq-co')), где + 'строк ролей не видно');
     ok(!err0.length, где + 'обычный пользователь: без ошибок страницы ' + err0.join(' | ').slice(0, 200));
     await p0.close();
@@ -164,12 +168,19 @@ async function проверить(p, где, имя, sel){
     ok(к && к.q.who === '777' && к.q.cat === 'body' && к.q.uid, где + 'клиент — в who, свой uid — в uid, первым — замеры: ' + JSON.stringify(к && к.q));
     const кт = await p2.$eval('#rolcbody', e => e.textContent);
     ok(/79,5 кг · жир 24,1 % · талия 84 см/.test(кт) && /Кто смотрел/.test(кт), где + 'замеры клиента и напоминание про журнал: ' + кт.slice(0, 140));
-    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,gym,prog,chat', где + 'вкладки — открытые разделы, программа и переписка');
+    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,gym,prog,ai,chat', где + 'вкладки — открытые разделы, программа, ИИ-помощник и переписка');
     await проверить(p2, где, 'карточка клиента', '#rolcm');
     await p2.click('#rol-ccat button[data-v="gym"]'); await p2.waitForTimeout(300);
     ok(s2.запросы.some(x => x.p.endsWith('/roli/client') && x.q.cat === 'gym'), где + 'вкладка «тренировки» — свой запрос');
+    await p2.click('#rol-ccat button[data-v="ai"]'); await p2.waitForSelector('#rolcbody [data-rai="q"]', { timeout: 3000 }).catch(() => {});
+    ok(/видит только то, что клиент вам открыл: тренировки · вес и замеры/.test(await p2.$eval('#rolcbody', e => e.textContent)), где + 'ИИ-помощник: сказано, что он видит');
+    await p2.click('#rolcbody [data-rai="q"]'); await p2.waitForFunction(() => /−0,7 кг/.test((document.getElementById('rolcbody') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
+    ok(s2.спросили && s2.спросили.who === '777' && /прогресс/.test(s2.спросили.q) && /−0,7 кг/.test(await p2.$eval('#rolcbody', e => e.textContent)) && await p2.$('#rolcbody .rolaia b'), где + 'ИИ-помощник: готовый вопрос → ответ с жирным');
+    await проверить(p2, где, 'ИИ-помощник', '#rolcm');
     await p2.click('#rolcclose'); await p2.waitForTimeout(200);
     ok(!(await виден(p2, '#rolcm')), где + '«Закрыть» закрывает карточку');
+    await p2.click('#rolpro [data-rol="attn"]'); await p2.waitForFunction(() => /2 из 7 дней/.test((document.getElementById('rolpro') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
+    ok(/Кому нужно внимание/.test(await p2.$eval('#rolpro', e => e.textContent)) && /еду записывает 2 из 7 дней/.test(await p2.$eval('#rolpro', e => e.textContent)), где + '«Кому нужно внимание»: клиент и причина');
     ok(!err2.length, где + 'специалист: без ошибок страницы ' + err2.join(' | ').slice(0, 200));
     await p2.close();
   }
@@ -344,7 +355,7 @@ async function проверить(p, где, имя, sel){
     await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
     await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
     await p.click('#rolpro [data-rol="card"]'); await p.waitForTimeout(400);
-    ok(await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,food,norm,chat', где + 'вкладки нутрициолога: ' + await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()));
+    ok(await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,food,norm,ai,chat', где + 'вкладки нутрициолога: ' + await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()));
     await p.click('#rol-ccat button[data-v="norm"]'); await p.waitForSelector('#roln-kcal', { timeout: 3000 }).catch(() => {});
     ok(/Сейчас у клиента: 2100 ккал · белок 150 г · жиры 70 г/.test(await p.$eval('#rolcbody', e => e.textContent)), где + 'видна норма приложения');
     ok(await p.$eval('#roln-kcal', e => e.value) === '2100', где + 'форма начинается с нормы приложения');

@@ -22,7 +22,7 @@ const подпись=p=>p.$eval('#food-add small',e=>e.textContent.trim());
  {const {p}=await стенд(b,390,'dark',{sub:'нет',бесплатно:{left:0,of:3}});
   ok(/кончились/.test(await подпись(p)),'лимит исчерпан — так и написано: '+await подпись(p));await p.close();}
  {const {p}=await стенд(b,390,'dark',{});
-  ok(await подпись(p)==='Фото или пара слов тренеру','с доступом — подпись прежняя');await p.close();}
+  ok(await подпись(p)==='Фото или пара слов ИИ-тренеру','с доступом — подпись прежняя');await p.close();}
  /* 2. вопрос про незаписанные приёмы */
  for(const theme of ['light','dark'])for(const width of [320,390]){
   const где=theme+' '+width+': ',o={time:'23:22',day:{meals:УЖИН,пробелы:{kinds:['завтрак','обед'],ответ:null}}};

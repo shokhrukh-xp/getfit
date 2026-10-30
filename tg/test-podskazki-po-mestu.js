@@ -37,7 +37,7 @@ async function новичок(b,theme,width){
   await p.click('.l1 [data-page="home"]');await p.waitForTimeout(1500);
   if(await вид(p,'#startcard')){ ok(!(await пузырь(p)),где+'пока висит «С чего начнём?» — подсказок нет'); await p.click('#startcard [data-start="later"]'); }
   const п1=await ждатьПузырь(p);
-  ok(п1&&/Тренер/.test(п1.t)&&/доставкой/.test(п1.t),где+'первая подсказка — у кнопки «Тренер», про еду и доставку: '+(п1&&п1.t));
+  ok(п1&&/ИИ-тренер/.test(п1.t)&&/доставкой/.test(п1.t),где+'первая подсказка — у кнопки «Тренер», про еду и доставку: '+(п1&&п1.t));
   ok(п1&&п1.l>=15&&п1.r<=width-15,где+'строка в экране с полями 16: '+(п1&&[п1.l,п1.r]));
   ok(п1&&п1.btn>=44,где+'«Понятно» не меньше 44');
   const nav=await p.$eval('#coachnav',e=>{const r=e.getBoundingClientRect();return {l:r.left,t:r.top,w:r.width,h:r.height};});

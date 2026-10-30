@@ -44,7 +44,7 @@ let плохо=0;const дано=(у,т)=>{console.log((у?'  ok  ':'  ПРОВА
   дано(/Цель сохранена/.test(t)&&o.goal&&o.goal.body&&o.goal.body.muscle==='develop','сохранено: цель на сервере');
   const gc=(o.me&&(o.me.me||o.me).goalContext)||{};дано(gc.health==='limited'&&gc.note==='Болит колено','ограничения сохранены в профиле: '+JSON.stringify(gc));
   await page.click('#goalconversation [data-gta="finish"]');await page.waitForTimeout(300);
-  дано(await page.evaluate(()=>document.getElementById('coachtitle').textContent)==='Тренер','после «Готово» заголовок снова «Тренер»');
+  дано(await page.evaluate(()=>document.getElementById('coachtitle').textContent)==='ИИ-тренер','после «Готово» заголовок снова «ИИ-тренер»');
   дано(!errs.length,'ошибок страницы нет '+errs.join('; '));
   const ширина=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth);дано(ширина,width+' px без горизонтальной прокрутки');
   await page.close();

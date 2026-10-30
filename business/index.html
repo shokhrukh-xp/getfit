@@ -121,6 +121,19 @@ main{max-width:1120px;margin:0 auto;padding:24px}
   .form label:first-child{grid-column:1/-1}
   .card{padding:16px}
 }
+.dgridwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:16px}
+.dfig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 12px 6px}
+.dfig figcaption{font-size:13px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dkey{display:inline-block;width:10px;height:10px;border-radius:3px;background:#F2B547;margin-left:8px}
+.dch{width:100%;height:auto;display:block}.dch .dgrid{stroke:var(--line);stroke-width:1}.dch .dline{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.dch .ddot{fill:var(--surface);stroke:var(--accent);stroke-width:2}.dch .dax{font-size:11px;fill:var(--muted);font-family:inherit}.dch .dval{font-size:13px;font-weight:800;fill:var(--text);font-family:inherit}
+.dch .dbar{fill:rgba(var(--accent-rgb),.35)}.dch .dbar2{fill:#F2B547}
+.dtiles .tile small{display:block;font-size:12px;margin-top:4px;color:var(--muted)}.dtiles .tile small.up{color:var(--ok)}.dtiles .tile small.down{color:var(--warn)}
+.dh3{font-size:16px;margin:22px 0 8px}.dchrow{display:grid;grid-template-columns:1fr minmax(200px,40%);gap:4px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.dchrow small{display:block;color:var(--muted);font-size:12px}.dprog{height:10px;border-radius:6px;background:var(--tint);overflow:hidden}.dprog span{display:block;height:100%;background:var(--accent);border-radius:6px}
+.dtbl{margin-top:18px}.dtbl summary{cursor:pointer;font-weight:700}.esg .tabs{margin:12px 0 4px;flex-wrap:wrap}
+.esgview p{line-height:1.55}.esgpara{background:var(--tint);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}.esgpara p{margin:0;flex:1}
+@media (max-width:560px){.dchrow{grid-template-columns:1fr}.esgpara{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -132,6 +145,7 @@ main{max-width:1120px;margin:0 auto;padding:24px}
 <main id="app"><p class="empty">Загружаю…</p></main>
 <div class="toast" id="toast" hidden></div>
 <script src="../vendor/qrcode-generator-1.4.4.js"></script>
+<script src="dash.js"></script>
 <script>
 'use strict';
 var API = 'https://api.wellbol.com' + (/^\/test\//.test(location.pathname) ? '/test' : '');
@@ -404,7 +418,7 @@ function кабинетHtml(){
         ? '<div class="confirm"><span>' + т('Старая ссылка перестанет работать. Кто уже присоединился — останется.') + '</span><button type="button" class="btn small danger" data-a="code">' + т('Сменить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
         : '<div class="btns"><button type="button" class="btn small" data-a="ask" data-k="code">' + т('Сменить ссылку') + '</button></div>') + '</div>' : '') +
     (c.link ? рассылкаHtml(c, t) : '') +
-    '<div class="card"><h2>' + т('Цифры по неделям') + '</h2>' + недели(c) + '</div>' +
+    (typeof дашHtml === 'function' ? дашHtml(t, c) : '<div class="card"><h2>' + т('Цифры по неделям') + '</h2>' + недели(c) + '</div>') +
     челленджи(c, t) + команда(c, t) + почтаВходаHtml();
 }
 /* этап 6г: заявка компании — здесь; в приложении её больше нет */

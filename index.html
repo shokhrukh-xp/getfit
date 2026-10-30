@@ -1354,6 +1354,8 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
   color:var(--accent-txt);padding:6px 10px;min-height:44px}
 .chatsep{align-self:center;font-size:12px;color:var(--dim);padding:2px 0}
 .msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5;white-space:pre-line}
+.rolai .rolaiqa{margin:12px 0;padding-bottom:10px;border-bottom:1px solid var(--line,#d4e2e3)}.rolai .rolaiq{font-weight:600;margin:0 0 6px}.rolai .rolaia{font-size:15px;line-height:1.5}.rolai .rolaiqa small{color:var(--muted,#5a6b6e);font-size:12px}.rolaichips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.rolaichips .chip{font-size:13px;padding:6px 10px;border-radius:14px;border:1px solid var(--line,#d4e2e3);background:var(--card2,#eaf0f1);color:inherit}.rolaiform{display:flex;gap:8px;align-items:flex-end}.rolaiform textarea{flex:1;min-height:44px}.rolattn{margin:12px 0}.rolattnrow small{white-space:normal}
+.cirnote.cirtop{margin:6px 0 10px;font-size:13px;line-height:1.45;color:var(--muted)}.cirnote.cirtop b{color:var(--text)}
 .msg.me .mphoto{display:inline-flex;align-items:center;gap:2px;vertical-align:-3px;opacity:.85}
 .msg.me{align-self:flex-end;max-width:80%;padding:9px 13px;font-size:15px;line-height:1.45;
   background:var(--action);border:none;color:var(--on-accent);
@@ -4640,7 +4642,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
-    <button type="button" id="coachnav" aria-label="Спросить тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span>Тренер</span></button>
+    <button type="button" id="coachnav" aria-label="Спросить ИИ-тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span>ИИ-тренер</span></button>
   </div>
 </nav>
 
@@ -4738,7 +4740,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
         <div class="fday" id="fday"></div>
         <div class="group fmealgroup"><div class="factlist" id="facts"></div><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
-        <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов тренеру</small></button></div>
+        <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов ИИ-тренеру</small></button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
              с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
              разу не пользовался. Еда и занятия записываются в чате с тренером
@@ -4861,7 +4863,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <h3 id="picktitle">С чего начнём?</h3>
     <p class="mtext" id="pickhi">Расскажите о себе — тренер задаст пару вопросов и соберёт программу.</p>
     <!-- 14.10, его выбор: знакомство по шагам 1–4 (что ведём → параметры →
-         цель → ограничения; для зала ещё «где и когда»). Характер тренера —
+         цель → ограничения; для зала ещё «где и когда»). Характер ИИ-тренера —
          карточкой на главной после первого шага в приложении. -->
     <div id="wzonly" hidden>
       <div class="wzpick" id="wz-only" role="group" aria-label="Что будем вести"></div>
@@ -4936,7 +4938,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="coachtitle">Тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><h3 id="coachtitle">ИИ-тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
     <p id="coachdate" class="mtext" style="flex:none;margin:0;padding:0 16px 8px" aria-live="polite"></p>
     <button type="button" class="btn" id="goalchatopen">Обсудить цель</button>
     <section id="goalconversation" hidden aria-label="Обсуждение цели"></section>
@@ -5264,11 +5266,11 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
         <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>готовка, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
       </div>
 
-      <h4 class="pqlab">Тренер</h4>
+      <h4 class="pqlab">ИИ-тренер</h4>
       <div class="pqgroup">
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" id="pq-tren"><span class="pqic" id="pqi-tren"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="pq-tren"><span class="pqic" id="pqi-tren"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как ИИ-тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
         <div class="pqrow pqlang" id="pq-lang"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></span><span class="pqt"><b>Язык</b><small>приложения, бота и тренера</small></span><span class="langseg" role="group" aria-label="Язык" data-noi18n><button type="button" data-lang="ru">RU</button><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="en">EN</button></span></div>
         <button type="button" class="pqrow" id="pq-fem" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></span><span class="pqt"><b>Женское здоровье</b><small>цикл, беременность, кормление</small></span><span class="pqv" id="pv-fem"></span><i class="pqch">›</i></button>
       </div>
@@ -5321,7 +5323,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <div class="pf pfv pqopts"><div class="seg" id="me-only"></div></div>
     </section>
     <!-- 13.10: характер тренера — его выбор: три на выбор, спросить каждого -->
-    <section class="pqpage" data-pp="voice" data-title="Характер тренера" hidden>
+    <section class="pqpage" data-pp="voice" data-title="Характер ИИ-тренера" hidden>
       <p class="pqlead">Как тренер пишет в чате, в напоминаниях и после записи еды и замеров. Сменить можно и словами в чате.</p>
       <div class="pf pfv pqopts"><div class="seg" id="me-voice"></div></div>
       <p class="seghint pfvh" id="me-voice-hint"></p>
@@ -5400,7 +5402,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
   <div class="modalbox">
     <h3 id="resettitle">Начать заново</h3>
-    <p class="mtext">Тренер заново спросит о вас и соберёт программу.</p>
+    <p class="mtext">ИИ-тренер заново спросит о вас и соберёт программу.</p>
     <div class="rsopts">
       <button type="button" class="rsbtn" data-reset="prog"><b>Пересобрать программу</b><i>Профиль и программа сбросятся. Еда, замеры и тренировки останутся.</i></button>
       <button type="button" class="rsbtn bad" data-reset="all"><b>Стереть дневник</b><i>Дневник и профиль удалятся на всех устройствах. Подписка и круги останутся.</i></button>
@@ -6874,11 +6876,11 @@ function renderVoiceNudge(){
   var надо=meFull() && hasGoal(me) && !me.voice && !gget('startcard',0) && !тренерКарточкаНадо() && !me.coach_at;
   el.hidden=!надо; if(!надо) return;
   if(el.firstChild) return;
-  el.innerHTML='<b id="vntitle">Какой тренер вам нужен?</b><span class="vnsub">Поменять можно в профиле или просто написать тренеру.</span>'+
+  el.innerHTML='<b id="vntitle">Какой ИИ-тренер вам нужен?</b><span class="vnsub">Поменять можно в профиле или просто написать ИИ-тренеру.</span>'+
     '<div class="vnbtns">'+VOICEKEYS.map(function(x){ return '<button type="button" data-voice="'+x[0]+'"><b>'+x[1]+'</b><span>'+VOICESHORT[x[0]]+'</span></button>'; }).join('')+'</div>';
 }
 /* 14.10, его выбор: сразу после знакомства — одна карточка «С чего начнём?».
-   Характер тренера спрашиваем после неё, не вперемешку. */
+   Характер ИИ-тренера спрашиваем после неё, не вперемешку. */
 function renderStartCard(){
   var el=document.getElementById('startcard'); if(!el) return;
   var on=!!gget('startcard',0) && meFull();
@@ -6910,7 +6912,7 @@ function подсказкаУбрать(k){ gset('hint_'+k,1); cmDone(k==='gym'?
 var CM_GAP=30000;
 var CM=[
   {k:'coach', where:'home', sel:'#coachnav',
-   t:function(){ return '<b>Тренер</b> — фото еды, вопрос или «что заказать в Evos с доставкой». Нажмите и попробуйте.'; }},
+   t:function(){ return '<b>ИИ-тренер</b> — фото еды, вопрос или «что заказать в Evos с доставкой». Нажмите и попробуйте.'; }},
   {k:'meas', where:'home', after:'coach', sel:'#fw', on:'focus',
    t:function(){ return 'Вес — сюда, утром натощак. По нему тренер подстраивает норму.'; }},
   {k:'foodadd', where:'food', sel:'#food-add',
@@ -7668,7 +7670,7 @@ function renderWzGoal(){
   if(WIZ.gwt==='keep'){
     segSet('g-body', '<div class="gbig"><b>'+gвес(s.w)+'</b><small>кг</small></div>'+
       '<div class="gsub">вес держим, работаем над составом</div>');
-    why.textContent='Норму посчитаю на поддержание. Захотите снижать — скажете тренеру, пересчитаю.';
+    why.textContent='Норму посчитаю на поддержание. Захотите снижать — скажете ИИ-тренеру, пересчитаю.';
     go.disabled=false; go.textContent='Так и делаем';
     return;
   }
@@ -8225,7 +8227,7 @@ function goalTalkOpen(onboard,text){
 }
 function goalTalkFinish(){
   var onboarding=GOALTALK.onboard;GOALTALK.active=false;GOALTALK.onboard=false;goalTalkLayout();closeCoach();
-  var t=document.getElementById('coachtitle');if(t)t.textContent=t.dataset.was||'Тренер';
+  var t=document.getElementById('coachtitle');if(t)t.textContent=t.dataset.was||'ИИ-тренер';
   if(onboarding){var me=myData()||{};if(me.only==='food')choose(profile||'shp');else{WIZ.step='form';WIZ.step0='form';renderPicker();document.getElementById('picker').classList.add('show');}}
 }
 document.getElementById('goalchatopen').addEventListener('click',function(){goalTalkOpen(false);});
@@ -9501,7 +9503,7 @@ document.getElementById('nudge').addEventListener('click', function(){ openProf(
 /* ══ ТРЕНЕР ПОД СЕБЯ (24.10, этап 4) ══
    Его идея: «дадим пользователям давать имя тренеру самим, выбирать его
    характер, пол». Макеты 4.0–4.6 (холст «бренд в приложении»), его правка:
-   «очевиднее пиши, например „Дайте имя своему тренеру“». Хранится в профиле:
+   «очевиднее пиши, например „Дайте имя своему ИИ-тренеру“». Хранится в профиле:
    me.coach_name, me.coach_sex ('m'|'f'), me.addr ('vy'|'ty'), me.coach_at;
    характер — прежний me.voice. Тем, кто уже пользуется, — карточка один раз,
    до выбора всё как было (его характер и «ты»). Образ тренера — только как он
@@ -9567,14 +9569,14 @@ function openTren(изКарточки){
 function closeTren(){ var m=document.getElementById('trenm'); if(m) m.classList.remove('show'); }
 function renderTren(){
   var box=document.getElementById('trbox'); if(!box) return;
-  var n=ТР.step, имя=ТР.name.trim()||'Тренер', h='';
+  var n=ТР.step, имя=ТР.name.trim()||'ИИ-тренер', h='';
   h+='<div class="trhd">'+(n>1?'<button type="button" class="trback" data-tr="back">← Назад</button>':'<button type="button" class="trback" data-tr="skip" aria-label="Закрыть">✕</button>')+
     '<span class="trbars" aria-hidden="true">'+[1,2,3,4].map(function(i){ return '<i'+(i<=n?' class="on"':'')+'></i>'; }).join('')+'</span><span class="trn">'+n+' из 4</span></div>';
   var тав='img/av/'+ТР.av+'.jpg';
   var пример='<div class="trsay"><span class="trava3">'+аватарHTML(тав)+'</span><div><small>'+esc(имя)+' · '+esc(lbl(VOICEKEYS,ТР.voice))+(n===4?' · '+(ТР.addr==='vy'?'на «вы»':'на «ты»'):'')+'</small>'+esc(тренерПример())+'</div></div>';
   if(n===1){
     h+='<div class="trbig"><span class="trava2">'+аватарHTML(тав)+'</span></div>'+
-      '<h3 class="trh" id="trh">Дайте имя своему тренеру</h3><p class="trp">Это имя тренер будет использовать в чате и в боте. Впишите своё или выберите из подсказок.</p>'+
+      '<h3 class="trh" id="trh">Дайте имя своему ИИ-тренеру</h3><p class="trp">Это имя ИИ-тренер будет использовать в чате и в боте. Впишите своё или выберите из подсказок.</p>'+
       '<input id="trname" type="text" maxlength="24" autocomplete="off" placeholder="Например, Кай" value="'+esc(ТР.name)+'" aria-label="Имя тренера">'+
       '<div class="trchips">'+ТРЕНЕР_ИМЕНА.map(function(x){ return '<button type="button" data-trname="'+x+'" aria-pressed="'+(ТР.name===x)+'">'+x+'</button>'; }).join('')+'</div>';
   } else if(n===2){
@@ -9695,7 +9697,7 @@ function renderFem(){
     if(ц) h+='<div class="fmcyc"><span>Сейчас</span><b>День '+ц.день+' из ~'+ц.len+'</b><span>'+
       (ц.день>ц.len+7?'Дольше обычного цикла. Выводов не делаем; если беспокоит — к врачу.':ц.день>ц.len-5?'Скоро месячные. В эти дни вес может прибавить 0,5–2 кг воды: это не жир.':ц.день<=5?'Месячные. Если тяжело — зал можно облегчить.':'Тренер учитывает фазу цикла.')+
       '</span><div class="fmbar"><i style="width:'+Math.min(100,Math.round(ц.день/ц.len*100))+'%"></i></div></div>';
-    h+='<button type="button" class="fmgo" data-fm="start">Начались сегодня</button><p class="fmnote">Или напишите тренеру «начались». Длину цикла приложение считает по отметкам.</p>';
+    h+='<button type="button" class="fmgo" data-fm="start">Начались сегодня</button><p class="fmnote">Или напишите ИИ-тренеру «начались». Длину цикла приложение считает по отметкам.</p>';
     if(!ц) h+='<div class="fmrow"><label>Последнее начало<input id="fm-start" type="date" max="'+TODAY+'" value="'+esc(ФМ.start)+'"></label><label>Обычная длина, дней<input id="fm-len" type="number" inputmode="numeric" min="21" max="45" value="'+esc(String(ФМ.len))+'"></label></div>';
   }
   h+='<span class="fmlab">ЧТО ЕЩЁ УЧЕСТЬ</span><textarea id="fm-note" maxlength="300" placeholder="Например: анемия, в первые дни цикла сильная слабость">'+esc(ФМ.note)+'</textarea>'+
@@ -14301,7 +14303,7 @@ function renderBlock(){
   var h='<p class="blkh">Программа идёт '+срок+' с '+ruDate(b.since)+
         (счёт.length?' · '+счёт.join(' · '):'')+
         (мало?' · '+мало+' ещё без сравнения':'')+'</p>';
-  if((c.stall||c.fall||c.hurt)) h+='<button type="button" class="btn blkask" id="blkask">Спросить тренера, что оставить</button>';
+  if((c.stall||c.fall||c.hurt)) h+='<button type="button" class="btn blkask" id="blkask">Спросить ИИ-тренера, что оставить</button>';
   box.innerHTML=h;
 }
 
@@ -17837,7 +17839,15 @@ function renderCircle(){
     var глав = function(r){ return r.today&&r.today.r!=null?r.today.r:-1; };
     var втор = function(r){ return r.ravg==null?-1:r.ravg; };
     var список = b.slice().sort(function(x,y){ return (глав(y)-глав(x)) || (втор(y)-втор(x)) || ((y.streak||0)-(x.streak||0)); });
-    h+='<div class="group lb"><div class="lbhead"><span></span><span></span><span></span><span>сегодня</span></div>'+список.map(function(r,i){
+    var пояснение='';
+  пояснение+='<p class="cirnote cirtop">Цифра у каждого — оценка питания за сегодня, из 10: насколько день попал в <b>свою</b> норму калорий, белка, жира, клетчатки и сахара. Сравнивается попадание, а не сама еда. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
+  if(CIRCRULES) пояснение+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
+    'Пока день идёт, оценивается съеденное: каждый приём — своей долей дня, недобор не штраф, перебор — да. В полночь фиксируется итог по всей норме.<br>'+
+    'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
+    'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
+    'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
+    h+=пояснение;
+    h+='<div class="group lb"><div class="lbhead"><span></span><span></span><span></span><span>оценка</span></div>'+список.map(function(r,i){
       var dots=(r.days||[]).map(function(st,k){ return '<s class="'+(st?'lbd-'+st:'')+'" title="'+['пн','вт','ср','чт','пт','сб','вс'][k]+': '+({ok:'7+',low:'ниже 7',today:'сегодня'}[st]||'нет зачёта')+'"></s>'; }).join('');
       var t=r.today||null, has=t&&t.r!=null;
       var число = has?fmtR(t.r):'—';
@@ -17864,12 +17874,6 @@ function renderCircle(){
      '<p class="lbkey">'+(откр
        ? 'Соседи видят вашу еду и могут её оценить. Тарелку можно скрыть.'
        : 'В таблице вы есть, еду соседи не увидят.')+'</p>';
-  h+='<p class="cirnote">Балл — из 10, каждому по своей норме. <button type="button" id="cirhow">'+(CIRCRULES?'Скрыть правила':'Как считается →')+'</button></p>';
-  if(CIRCRULES) h+='<div class="cirrules">Из 10 вычитается: калории до 4 (в ±10 % от нормы — ничего, к ±30 % — все 4; недоесть так же плохо, как переесть), белок до 3 (от 90 % нормы — ничего), жир до 1 (только за перебор), клетчатка до 1, сахар в еде до 1 (норма — ничего).<br>'+
-    'Пока день идёт, оценивается съеденное: каждый приём — своей долей дня, недобор не штраф, перебор — да. В полночь фиксируется итог по всей норме.<br>'+
-    'В зачёт недели идут дни с двумя и более приёмами; день без записей — ноль.<br>'+
-    'Балл недели — средняя оценка прошедших дней, считая с понедельника; сегодняшний войдёт после полуночи.<br>'+
-    'Серия — сколько дней подряд записана еда; пропуск дня обнуляет.</div>';
   box.innerHTML=h;
 }
 /* ── страница человека: его еда за день с фото, по приёмам (вместо ленты) ── */
@@ -18439,7 +18443,7 @@ function renderSrez(){
   }
   if(d.дальше && d.дальше.text){
     h+='<div class="sract"><u>'+esc(d.дальше.text)+'</u></div>'+
-       '<button type="button" class="srgo" id="sr-ask">Спросить тренера →</button>';
+       '<button type="button" class="srgo" id="sr-ask">Спросить ИИ-тренера →</button>';
   }
   box.innerHTML=h;
 }
@@ -18569,6 +18573,7 @@ function ролиПроHtml(m){
     return '<div class="rolcard">' + шапка +
       '<p class="rolnote">Ссылка для клиентов: по ней они увидят, что вам будет видно, и подключатся сами.</p>' +
       '<div class="invcode"><input type="text" readonly value="' + ролиА(p.link || '') + '" aria-label="ссылка для клиентов"><button type="button" class="btn small prim" data-rol="share" data-url="' + ролиА(p.link || '') + '">Отправить</button></div>' +
+      (свои.length ? '<div class="rolattn" id="rol-attn-' + p.kind + '">' + ролиВниманиеHtml(p.kind) + '</div>' : '') +
       '<h4 class="pqlab">Клиенты</h4>' +
       (!свои.length ? '<p class="empt">Пока никого.</p>' : '<div class="pqgroup">' + свои.map(function(x){
         return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.cats.map(ролиИмя).map(esc).join(', ') + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
@@ -18621,6 +18626,7 @@ function ролиКлик(e){
     return;
   }
   if (д === 'card') return ролиКарточка(b.dataset.who);
+  if (д === 'attn') return ролиВниманиеЗагрузить();
   if (д === 'adm') return ролиАдмРешить(b.dataset.who, b.dataset.kind, b.dataset.st, b);
 }
 document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('.f-roli [data-rol]')) ролиКлик(e); });
@@ -18640,15 +18646,18 @@ function ролиКарточка(who, cat){
   /* программу тренер собирает всегда — это не данные клиента, а его работа */
   if (x.kind === 'trainer') можно.push('prog');
   if (x.kind === 'nutri') можно.push('norm');
+  /* 30.10: ИИ-помощник — когда клиент открыл хоть один раздел данных */
+  if (РОЛИ_КАРТОЧКА.some(function(c){ return x.cats.indexOf(c) >= 0; })) можно.push('ai');
   можно.push('chat');
   cat = cat || можно[0] || '';
-  ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, flags: x.flags || null, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null };
+  ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, flags: x.flags || null, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null, ai: ROLI.card && ROLI.card.who === who ? ROLI.card.ai : null };
   ROLI.chat = null;
   var m = document.getElementById('rolcm'); if (m) m.classList.add('show');
   ролиКарточкаРисовать();
   if (!cat) return;
   if (cat === 'prog') return ролиПрогЗагрузить();
   if (cat === 'norm') return ролиНормаЗагрузить();
+  if (cat === 'ai') return ролиИИПЗагрузить();
   if (cat === 'chat') { ROLI.card.unread = 0; return ролиЧатОткрыть(x.id, ROLI.card.name, 'card'); }
   fGet('/roli/client?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(who) + '&cat=' + cat).then(function(r){
     if (!ROLI.card || ROLI.card.who !== who || ROLI.card.cat !== cat) return;
@@ -18659,12 +18668,13 @@ function ролиКарточка(who, cat){
 function ролиКарточкаРисовать(){
   var k = ROLI.card, t = document.getElementById('rolct'), b = document.getElementById('rolcbody'); if (!k || !b) return;
   if (t) t.textContent = k.name;
-  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : c === 'norm' ? 'норма' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
+  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : c === 'norm' ? 'норма' : c === 'ai' ? 'ИИ-помощник' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
   var отметки = k.flags ? (k.flags.length ? '<p class="rolnote rolwarn">Отметки здоровья: ' + k.flags.map(function(f){ return esc(РОЛИ_ЗДОРОВЬЕ_ИМЯ[f] || f); }).join(', ') + '.</p>' : '<p class="rolnote">Отметок здоровья нет.</p>') : '';
   var анкета = отметки + (k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '');
   if (k.cat === 'prog') { b.innerHTML = вкладки + анкета + ролиПрогHtml(k); return; }
   if (k.cat === 'norm') { b.innerHTML = вкладки + анкета + ролиНормаФормаHtml(k); return; }
   if (k.cat === 'chat') { b.innerHTML = вкладки + ролиЧатHtml(); ролиЧатРисовать(); return; }
+  if (k.cat === 'ai') { b.innerHTML = вкладки + ролиИИПHtml(k); var об = b.querySelector('.rolaiq'); if (об) об.scrollIntoView({ block: 'end' }); return; }
   var тело = !k.cat ? '<p class="empt">Клиент пока не открыл вам ни одного раздела.</p>' :
     k.err ? '<p class="rolerr">' + esc(k.err) + '</p>' : !k.rows ? '<p class="empt">Загружаю…</p>' : !k.rows.length ? '<p class="empt">Записей нет.</p>' :
     '<div class="pqgroup rollist">' + k.rows.slice(0, 60).map(function(r){
@@ -18681,6 +18691,67 @@ document.addEventListener('click', function(e){
   if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show'); ROLI.card = null; ROLI.chat = null; ролиЗагрузить(); }
 });
 
+/* ── 30.10: ИИ-помощник специалиста (его ответ «Сделать на тестовой копии и снять») ──
+   Вопрос словами о клиенте → ответ по тем разделам, что клиент открыл; закрытое
+   модель не видит. Каждый вопрос клиент видит в «Кто смотрел». */
+var РОЛИ_ИИП_ВОПРОСЫ = { trainer: ['Как идёт прогресс за 2 недели?', 'Что мешает снижению веса?', 'Хватает ли белка для силовых?'],
+  nutri: ['Как питание за неделю против нормы?', 'Где лишние калории?', 'Хватает ли белка и клетчатки?'] };
+function ролиИИПЗагрузить(){
+  var k = ROLI.card; if (!k) return;
+  if (k.ai && k.ai.who === k.who) return ролиКарточкаРисовать();
+  k.ai = { who: k.who, items: null, err: '', busy: false };
+  ролиКарточкаРисовать();
+  fGet('/roli/ai?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(k.who)).then(function(r){
+    if (!ROLI.card || ROLI.card.who !== k.who) return;
+    k.ai.items = (r && r.items) || []; k.ai.open = (r && r.open) || []; ролиКарточкаРисовать();
+  }).catch(function(e){ if (ROLI.card) { k.ai.err = humanErr(e); k.ai.items = []; ролиКарточкаРисовать(); } });
+}
+function ролиИИПHtml(k){
+  var a = k.ai || {}, x = ((ROLI.me && ROLI.me.clients) || []).filter(function(c){ return c.client === k.who; })[0] || {};
+  var вопросы = РОЛИ_ИИП_ВОПРОСЫ[x.kind] || РОЛИ_ИИП_ВОПРОСЫ.trainer;
+  var открыто = (a.open || x.cats || []).filter(function(c){ return РОЛИ_КАРТОЧКА.indexOf(c) >= 0; });
+  var h = '<div class="rolai"><p class="rolnote"><span>Спросите о клиенте словами. ИИ-помощник видит только то, что клиент вам открыл:</span> <b>' + открыто.map(ролиИмя).map(esc).join(' · ') + '</b><br><span>Каждый вопрос клиент видит в «Кто смотрел».</span></p>';
+  if (a.items === null || a.items === undefined) h += '<p class="empt">Загружаю…</p>';
+  else h += a.items.map(function(it){
+    return '<div class="rolaiqa"><p class="rolaiq">' + esc(it.q) + '</p><div class="rolaia">' + жирный(esc(it.a)).replace(/\n/g, '<br>') + '</div><small>' + ролиДата(it.at) + (it.used && it.used.length ? ' · ' + it.used.map(ролиИмя).map(esc).join(', ') : '') + '</small></div>';
+  }).join('');
+  if (a.busy) h += '<div class="rolaiqa"><p class="rolaiq">' + esc(a.busy) + '</p><div class="rolaia muted">Смотрю данные клиента<span class="dots"><i></i><i></i><i></i></span></div></div>';
+  if (a.err) h += '<p class="rolerr">' + esc(a.err) + '</p>';
+  h += '<div class="rolaichips">' + вопросы.map(function(q){ return '<button type="button" class="chip" data-rai="q" data-q="' + ролиА(q) + '"' + (a.busy ? ' disabled' : '') + '>' + esc(q) + '</button>'; }).join('') + '</div>';
+  h += '<div class="rolaiform"><textarea id="rol-aiq" rows="2" maxlength="500" placeholder="Например: почему вес стоит третью неделю?"' + (a.busy ? ' disabled' : '') + '></textarea><button type="button" class="btn prim" data-rai="ask"' + (a.busy ? ' disabled' : '') + '>Спросить</button></div></div>';
+  return h;
+}
+function ролиИИПСпросить(q){
+  var k = ROLI.card; if (!k || !k.ai || k.ai.busy) return;
+  q = String(q || '').trim(); if (q.length < 3) { k.ai.err = 'Напишите вопрос.'; return ролиКарточкаРисовать(); }
+  k.ai.busy = q; k.ai.err = ''; ролиКарточкаРисовать();
+  fPost('/roli/ai/ask', { uid: syncUid(), who: k.who, q: q }).then(function(r){
+    if (!ROLI.card || ROLI.card.who !== k.who) return;
+    k.ai.busy = false; if (r && r.item) (k.ai.items = k.ai.items || []).push(r.item); haptic('light'); ролиКарточкаРисовать();
+  }).catch(function(e){ if (!ROLI.card) return; k.ai.busy = false; k.ai.err = e.message || humanErr(e); ролиКарточкаРисовать(); var t = document.getElementById('rol-aiq'); if (t) t.value = q; });
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#rolcbody [data-rai]'); if (!b) return;
+  if (b.dataset.rai === 'q') return ролиИИПСпросить(b.dataset.q);
+  if (b.dataset.rai === 'ask') return ролиИИПСпросить((document.getElementById('rol-aiq') || {}).value);
+});
+/* «Кому нужно внимание»: сводка по всем клиентам — считает сервер по открытым разделам, без модели */
+function ролиВниманиеHtml(kind){
+  var a = ROLI.attn;
+  if (!a) return '<button type="button" class="btn small" data-rol="attn">Кому нужно внимание</button>';
+  if (a.busy) return '<p class="empt">Смотрю клиентов…</p>';
+  if (a.err) return '<p class="rolerr">' + esc(a.err) + '</p><button type="button" class="btn small" data-rol="attn">Повторить</button>';
+  var свои = a.clients.filter(function(x){ return x.kind === kind; });
+  var нужно = свои.filter(function(x){ return x.why.length; });
+  return '<h4 class="pqlab">Кому нужно внимание</h4>' + (!нужно.length ? '<p class="empt">У всех клиентов всё в порядке.</p>' : '<div class="pqgroup">' + нужно.map(function(x){
+    return '<button type="button" class="pqrow rolattnrow" data-rol="card" data-who="' + ролиА(x.who) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.why.map(function(w){ return esc(w.t); }).join(' · ') + '</small></span><i class="pqch">›</i></button>';
+  }).join('') + '</div>') + '<p class="rolnote">По разделам, которые клиенты вам открыли. Просмотр — в их «Кто смотрел».</p>';
+}
+function ролиВниманиеЗагрузить(){
+  ROLI.attn = { busy: true }; ролиРисовать();
+  fGet('/roli/ai/attention?uid=' + encodeURIComponent(syncUid())).then(function(r){ ROLI.attn = { clients: (r && r.clients) || [] }; ролиРисовать(); })
+    .catch(function(e){ ROLI.attn = { err: humanErr(e) }; ролиРисовать(); });
+}
 /* ── программа от тренера (этап 2б; его выбор «Программа от тренера», «Спросить „Перейти?“») ──
    Тренер собирает из каталога: дни, упражнения, подходы × повторы. Клиенту —
    предложение «Перейти на неё»; сама программа клиента не меняется, пока он не решит. */
@@ -20049,7 +20120,7 @@ function подКак(v, ц){
 /* Каталог — это выбор ДО еды, а не запись после неё: человек смотрит на
    незнакомое название и хочет понять, что это и где такое дают. 17.09, его
    просьба: вместо «Записать» — поиск по названию. Запись осталась там, где
-   ей место: фото или пара слов тренеру и «Мой день».
+   ей место: фото или пара слов ИИ-тренеру и «Мой день».
 
    Ссылку открываем через Telegram: внутри мини-аппа window.open молча
    не срабатывает, и кнопка выглядит сломанной. */
@@ -20301,7 +20372,7 @@ function renderEat(){
     }
     return s;
   }).join('');
-  if(!сп.length) h+='<p class="podall">Ничего не нашлось. Сбросьте фильтры или напишите блюдо тренеру — он посчитает.</p>';
+  if(!сп.length) h+='<p class="podall">Ничего не нашлось. Сбросьте фильтры или напишите блюдо ИИ-тренеру — он посчитает.</p>';
   box.innerHTML=h;
   renderPod();
 }
@@ -20677,7 +20748,7 @@ function foodHeroHtml(d, line){
    осталось, видно на самой кнопке, а не после отправки. */
 function едаБесплатноСлово(){
   var с=SUB&&SUB.sub, б=SUB&&SUB.бесплатно;
-  if(!с || с.ok || !б) return 'Фото или пара слов тренеру';
+  if(!с || с.ok || !б) return 'Фото или пара слов ИИ-тренеру';
   return б.left>0 ? 'Фото или пара слов · бесплатно ещё '+б.left+' из '+б.of : 'Бесплатные записи на сегодня кончились';
 }
 /* 14.10, GF-04: незаписанный приём — не значит «пропущен». Его выбор:
@@ -20819,7 +20890,7 @@ function renderFoodDay(){
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
   if(!ml.innerHTML) ml.innerHTML='<p class="empt">'+((d.date||fDate())===TODAY?'За сегодня записей нет.':'За этот день записей нет.')+
-    '<br>Напишите тренеру, что ели, или пришлите фото — кнопка справа внизу. Посчитает и покажет, сколько до нормы.</p>';
+    '<br>Напишите ИИ-тренеру, что ели, или пришлите фото — кнопка справа внизу. Посчитает и покажет, сколько до нормы.</p>';
 }
 /* ══ СВОБОДНЫЙ ДЕНЬ НА «ЕДЕ» (02.10) ══
    Его слова: «если объявить день чит-днём, то ничего из еды не просить
@@ -20966,7 +21037,7 @@ function renderWear(){
     ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
     '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — ориентир '+тыс(цельШ)+' и больше':'',
       н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':'')+' — нужно от 7 часов':''].filter(Boolean).join(' · ')+
-    '. Новые числа — скриншотом тренеру; к норме еды шаги не прибавляются.</p>';
+    '. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>';
 }
 document.addEventListener('click', function(e){
   if(e.target.closest('[data-day-retry]')){ loadDay(); return; }
@@ -21146,7 +21217,7 @@ function разборHtml(p){
   }).join('');
   return '<div class="pz-h">Почему <b>'+fmtR(p.r)+'</b> из 10</div>'+ряды+
     '<div class="pz-h pz-h2">Что было бы лучше</div>'+
-    ((p.why||[]).length ? '<div id="mv-better"><p class="pz-wait">Тренер подбирает правку под это блюдо…</p></div>'
+    ((p.why||[]).length ? '<div id="mv-better"><p class="pz-wait">ИИ-тренер подбирает правку под это блюдо…</p></div>'
                         : '<p class="pz-wait" id="mv-better">Ничего — приём в норме.</p>');
 }
 function советыHtml(сс){
@@ -21715,7 +21786,7 @@ function deliveryHTML(acts){
  else if(phase==='search'||phase==='starting')h+='<p role="status" aria-live="polite">'+esc(s&&s.stage||'Запускаю поиск…')+'<span class="dots long"><i></i><i></i><i></i></span></p><p class="muted">Полный поиск идёт по очереди. Блюда появляются по одному, до пяти из разных заведений. Если начали в боте — они также придут в исходный чат, остальные меню проверятся в фоне.</p>';
  if((phase==='search'||phase==='starting')&&s&&s.preview)h+=deliveryCards(s.preview,true);
  if(phase==='done'&&s&&s.result){h+=deliveryCards(s.result,false);
- }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите тренеру.')+'</p>';
+ }else if(phase==='failed'||phase==='cancelled')h+='<p>'+esc(s&&s.error||'Поиск завершён. Для нового подбора напишите ИИ-тренеру.')+'</p>';
  else if(!['location','search','starting'].includes(phase)&&!(cache&&cache.error))h+='<p role="status">Загружаю подбор…</p>';
  return h+'</div>';
 }
@@ -21766,7 +21837,7 @@ function deliveryBind(box){
 }
 
 function ответТренера(текст, время, cls, src, menu, кнопки){
-  return '<div class="turn"><div class="who">'+аватарHTML(аватарТренера())+esc(имяТренера()||'тренер')+
+  return '<div class="turn"><div class="who">'+аватарHTML(аватарТренера())+esc(имяТренера()||'ИИ-тренер')+
     (время?' · '+время:'')+'</div><div class="say'+(cls?' '+cls:'')+'">'+текст+'</div>'+источникиHTML(src)+
     (ЧАТ_МЕНЮ[menu]?'<button type="button" class="chatmenu" data-cmenu="'+menu+'">'+ЧАТ_МЕНЮ[menu]+'</button>':'')+(кнопки||'')+'</div>';
 }
