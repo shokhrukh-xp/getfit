@@ -19141,7 +19141,7 @@ function ролиИИHtml(p){
   if (a.error) return '<p class="rolnote"><span>ИИ не ответил — проверьте сами</span></p>';
   var д = a.doc || {}, наДок = [д.type, д.org, д.year].filter(Boolean).map(esc).join(', ') + (д.name ? (д.type || д.org || д.year ? ', ' : '') + '«' + esc(д.name) + '»' : '');
   return '<p class="rolnote"><b>' + (a.decision === 'accept' ? (p.by === 'ai' ? '<span>ИИ: принял</span>' : '<span>ИИ: можно принять</span>') : '<span>ИИ: сомневается</span>') + '</b> · ' + Math.round((+a.confidence || 0) * 100) + ' %' +
-    ((a.reasons || []).length ? ' — ' + a.reasons.map(esc).join('; ') : '') + '</p>' +
+    (function(){ var л = a.decision === 'accept' ? (a.reasons || []) : ((a.concerns || []).length ? a.concerns : (a.reasons || [])); return л.length ? ' — ' + л.map(esc).join('; ') : ''; })() + '</p>' +
     (наДок ? '<p class="rolnote"><span>На документе:</span> ' + наДок + '</p>' : (д.readable === false ? '<p class="rolnote"><span>Документ не прочитан</span></p>' : ''));
 }
 function ролиАдмРисовать(){
