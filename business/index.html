@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../img/wb-icon-192.png">
+<title>Wellböl для компаний</title>
+<!-- 30.10, этап 6г: страница переехала с /kabinet/ на /business/ (его решение) и стала входом для компаний:
+     заявка компании — здесь, а не в приложении («приложение должно быть только для пользователей»).
+     Вход по QR может любой (подать заявку); кабинет открывается только команде принятой компании. -->
+<!-- 30.10, роли, этап 6б: кабинет компании в браузере. Его решение: целится в
+     крупные компании и банки, им нужен кабинет с компьютера — «тот же кабинет в
+     браузере», не отдельный сайт. Те же ручки и правила сервера, что в
+     приложении (/web/* — веб-сессия), вход по QR через бота, без пароля и
+     почты. Только команда компании. Личных данных сотрудников здесь нет и
+     быть не может: сервер отдаёт только цифры групп от 10 человек. -->
+<style>
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url(../fonts/manrope-cyr.woff2) format('woff2');unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(../fonts/manrope-lat.woff2) format('woff2')}
+:root{color-scheme:light;--bg:#EAF0F1;--surface:#FFFFFF;--tint:#E3EFF0;--line:#DCE5E6;--tab-line:#CBDADC;--text:#1F2D30;--muted:#5A6B6E;
+  --accent:#176775;--on-accent:#FFFFFF;--ok:#337459;--warn:#A94E35;--warn-bg:#FBF0EB;--accent-rgb:23,103,117}
+@media (prefers-color-scheme: dark){:root{color-scheme:dark;--bg:#000000;--surface:#0E1416;--tint:rgba(59,163,181,.14);--line:#1B2427;--tab-line:#1F2A2E;
+  --text:#E8EEF0;--muted:#8E9DA3;--accent:#3BA3B5;--on-accent:#021013;--ok:#3FBF8A;--warn:#E07A55;--warn-bg:#22160E;--accent-rgb:59,163,181}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit;color:inherit}
+/* как в приложении (28.10): родные поля даты на iPhone выходят за рамку — без системного вида и сжимаются */
+:where(input[type="date"]){-webkit-appearance:none;appearance:none}
+:where(input:not([type="checkbox"]):not([type="radio"]),select){min-width:0;max-width:100%}
+input[type="date"]::-webkit-date-and-time-value{text-align:left;min-width:0}
+a{color:var(--accent)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand img{width:32px;height:32px;border-radius:8px}
+.brand b{font-size:17px;font-weight:800}
+.brand span{color:var(--muted);font-size:14px}
+.langs{display:flex;gap:2px;background:var(--tint);border-radius:10px;padding:3px}
+.langs button{border:0;background:none;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted)}
+.langs button[aria-pressed="true"]{background:var(--surface);color:var(--text)}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+main{max-width:1120px;margin:0 auto;padding:24px}
+.card{background:var(--surface);border-radius:20px;padding:20px 22px;margin:0 0 18px}
+.card h2{margin:0 0 4px;font-size:17px;font-weight:800}
+.card h3{margin:18px 0 8px;font-size:15px;font-weight:800}
+.note{color:var(--muted);font-size:13px;margin:4px 0 0}
+.err{color:var(--warn);font-size:14px;margin:8px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 16px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);cursor:pointer;font-weight:700;font-size:14px;text-decoration:none;color:var(--text)}
+.btn.prim{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--warn);border-color:var(--warn)}
+.btn.small{min-height:34px;padding:5px 12px;font-size:13px}
+.btn[disabled]{opacity:.55;cursor:default}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.login{max-width:760px;margin:24px auto;display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.loginwrap{max-width:760px;margin:24px auto 0}
+.loginwrap .login{margin-top:0}
+.qr{background:#FFFFFF;border-radius:16px;padding:12px;width:244px;height:244px;display:flex;align-items:center;justify-content:center}
+.qr svg{width:220px;height:220px;display:block}
+.qr.dim{opacity:.25}
+.login h1{font-size:22px;margin:0 0 10px;font-weight:800}
+.login ol{margin:8px 0 0;padding-left:20px}
+.login li{margin:6px 0}
+.state{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--tint);font-size:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.tabs button{border:1px solid var(--tab-line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:14px}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.head h1{margin:0;font-size:24px;font-weight:800}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--tint);font-size:13px;font-weight:700;color:var(--text)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.tile{background:var(--tint);border-radius:16px;padding:14px 16px}
+.tile b{display:block;font-size:28px;font-weight:800;line-height:1.2}
+.tile span{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.link{display:flex;gap:8px;flex-wrap:wrap}
+.link input{flex:1 1 260px;min-width:0;padding:9px 12px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.tbl th{color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:last-child td,.tbl tr:last-child th{border-bottom:0}
+.tbl .nw{white-space:nowrap}
+.tblwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.tbl select{padding:6px 8px;border-radius:10px;border:1px solid var(--tab-line);background:var(--surface)}
+.form{display:grid;grid-template-columns:2fr 1.4fr .7fr .7fr 1fr;gap:10px;align-items:end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.form input,.form select{padding:9px 10px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);min-width:0}
+.form .wide{grid-column:1/-1}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--warn-bg);border-radius:12px;padding:8px 12px;margin-top:10px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700}
+.empty{color:var(--muted);font-size:14px}
+/* 30.10, этап 6в: вход по почте, рассылка */
+.seg{display:inline-flex;gap:2px;background:var(--tint);border-radius:12px;padding:3px;margin:0 0 14px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text)}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin:10px 0;max-width:420px}
+.fld input,.fld select,.fld textarea{padding:10px 12px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);font-size:15px;color:var(--text)}
+.fld textarea{max-width:none;min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.fld.wide{max-width:none}
+.code{letter-spacing:.3em;font-variant-numeric:tabular-nums;font-size:20px!important;max-width:220px}
+.mailbox{max-width:440px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}
+.row .fld{margin:0;flex:1 1 200px}
+/* 30.10, этап 6г: вступление для компаний и заявка */
+.hero{max-width:760px;margin:24px auto 0}
+.hero h1{font-size:28px;line-height:1.2;margin:0 0 10px;font-weight:800}
+.hero ul{margin:10px 0 0;padding-left:20px}
+.hero li{margin:6px 0}
+.chk{display:flex;align-items:flex-start;gap:8px;margin:12px 0;font-size:14px}
+.chk input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
+.apply .row{margin:0}
+.apply .fld{max-width:none}
+@media (max-width:760px){
+  .top{padding:12px 16px}
+  main{padding:16px}
+  .login{grid-template-columns:1fr;justify-items:center;text-align:left}
+  .grid2{grid-template-columns:1fr}
+  .form{grid-template-columns:1fr 1fr}
+  .form label:first-child{grid-column:1/-1}
+  .card{padding:16px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="../img/wb-icon-192.png" alt=""><b>Wellböl</b><span id="ttl">для компаний</span></div>
+  <div class="langs" id="langs" role="group" aria-label="язык"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="en">EN</button></div>
+  <div class="who" id="who"></div>
+</header>
+<main id="app"><p class="empty">Загружаю…</p></main>
+<div class="toast" id="toast" hidden></div>
+<script src="../vendor/qrcode-generator-1.4.4.js"></script>
+<script>
+'use strict';
+var API = 'https://api.wellbol.com' + (/^\/test\//.test(location.pathname) ? '/test' : '');
+var КЛ_ТОК = 'wb_kab_tok', КЛ_ЯЗ = 'wb_kab_lang';
+function взять(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function положить(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+var S = { lang: взять(КЛ_ЯЗ) || 'ru', сл: {}, tok: взять(КЛ_ТОК), me: null, co: null, card: {}, cardErr: {}, err: '', login: null, chf: null, invite: {}, confirm: '', meErr: '', выход: '',
+  /* этап 6г */ заявка: { name: '', about: '', site: '', contact: '', size: '', adult: false, err: '', busy: false },
+  /* этап 6в */ способ: взять('wb_kab_how') === 'mail' ? 'mail' : 'qr', mail: { step: 'email' }, пригл: null, привязка: { step: 'email' }, рассылки: {}, список: {}, позвать: {} };
+(function(){ try { var u = new URL(location.href), к = u.searchParams.get('invite'); if (/^[A-Za-z0-9]{10}$/.test(к || '')) S.пригл = { code: к.toUpperCase(), r: null, err: '' }; } catch (e) {} })();
+
+/* ── язык: те же словари, что у приложения (ключ — русская строка, числа — {0}) ── */
+function т(k){
+  var a = arguments, v = S.lang !== 'ru' && S.сл[S.lang] ? S.сл[S.lang][k] : null;
+  return String(v == null ? k : v).replace(/\{(\d+)\}/g, function(_, i){ var x = a[+i + 1]; return x == null ? '' : x; });
+}
+/* текст ошибки сервера: переводим, если такая строка есть в словаре */
+function тОш(s){ return т(String(s || '')); }
+function язык(L){
+  if (['ru', 'uz', 'en'].indexOf(L) < 0) L = 'ru';
+  S.lang = L; положить(КЛ_ЯЗ, L); document.documentElement.lang = L;
+  if (L === 'ru' || S.сл[L]) return Promise.resolve(рисовать());
+  return fetch('../i18n/' + L + '.json').then(function(r){ return r.json(); }).then(function(d){ S.сл[L] = d; рисовать(); }).catch(function(){ рисовать(); });
+}
+function число(x){ return S.lang === 'en' ? String(x) : String(x).replace('.', ','); }
+function дата(iso){
+  var d = new Date(iso + 'T12:00:00');
+  try { return d.toLocaleDateString(S.lang === 'uz' ? 'uz-Latn' : S.lang, { day: 'numeric', month: 'short' }); } catch (e) { return iso; }
+}
+function плюс(iso, n){ var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function сегодня(){ var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function роль(r){ return т({ admin: 'админ', manager: 'менеджер', observer: 'наблюдатель' }[r] || r); }
+function статус(s){ return т({ pending: 'на проверке', ok: 'работает', off: 'выключена' }[s] || s); }
+function мера(m){ return { active_days: т('активные дни'), workouts: т('тренировки'), food_days: т('дни с записанной едой'), good_days: т('дни с оценкой от {0}', 7), steps: т('шаги') }[m] || m; }
+function всплыть(t){ var e = document.getElementById('toast'); e.textContent = t; e.hidden = false; clearTimeout(всплыть.т); всплыть.т = setTimeout(function(){ e.hidden = true; }, 1800); }
+
+/* ── сервер: веб-сессия в заголовке, 401 — назад ко входу ── */
+function api(метод, путь, тело){
+  var h = {}; if (тело) h['Content-Type'] = 'application/json'; if (S.tok) h.Authorization = 'Bearer ' + S.tok;
+  return fetch(API + путь, { method: метод, headers: h, body: тело ? JSON.stringify(тело) : undefined }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if (r.status === 401 && j.code === 'web_auth') { сброс(т('Сессия закончилась — войдите снова.')); var e0 = new Error('web_auth'); e0.code = 'web_auth'; throw e0; }
+      if (!r.ok || j.ok === false) { var e = new Error(тОш(j.error) || ('HTTP ' + r.status)); e.code = j.code; throw e; }
+      return j;
+    });
+  }, function(){ throw new Error(т('Нет связи с сервером. Проверьте интернет.')); });
+}
+function сброс(почему){ S.tok = null; положить(КЛ_ТОК, null); S.me = null; S.card = {}; S.выход = почему || ''; S.mail = { step: 'email' }; if (S.способ === 'qr') входНачать(); else рисовать(); }
+function приглашениеЗагрузить(){
+  рисовать();
+  api('GET', '/web/invite?code=' + encodeURIComponent(S.пригл.code)).then(function(r){ S.пригл.r = r; S.mail = { step: 'email', email: r.email }; рисовать(); })
+    .catch(function(e){ S.пригл.err = e.message; рисовать(); });
+}
+function войтиСТокеном(tok){
+  S.tok = tok; положить(КЛ_ТОК, tok); S.login = null; S.выход = ''; clearTimeout(S.опрос);
+  if (S.пригл) { S.пригл = null; try { var u = new URL(location.href); u.searchParams.delete('invite'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} }
+  S.mail = { step: 'email' }; return загрузить();
+}
+
+/* ── вход по QR ── */
+function входНачать(){
+  clearTimeout(S.опрос); S.login = { state: 'load' }; рисовать();
+  api('POST', '/web/login', { for: 'business' }).then(function(r){
+    S.login = { state: 'wait', id: r.id, secret: r.secret, link: r.link, until: Date.now() + r.ttl * 1000 }; рисовать(); ждать();
+  }).catch(function(e){ S.login = { state: 'err', err: e.message }; рисовать(); });
+}
+function ждать(){
+  var l = S.login; clearTimeout(S.опрос); if (!l || !l.id) return;
+  if (Date.now() > l.until) { l.state = 'expired'; return рисовать(); }
+  S.опрос = setTimeout(function(){
+    api('GET', '/web/login?id=' + encodeURIComponent(l.id) + '&secret=' + encodeURIComponent(l.secret)).then(function(r){
+      if (S.login !== l) return;
+      if (r.state === 'ok') return войтиСТокеном(r.token);
+      if (r.state === 'denied' || r.state === 'expired') { l.state = r.state; return рисовать(); }
+      if (r.state !== l.state) { l.state = r.state; рисовать(); } else минуты();
+      ждать();
+    }).catch(function(){ if (S.login === l) ждать(); });
+  }, 2000);
+}
+function минуты(){ var e = document.getElementById('left'), l = S.login; if (e && l) e.textContent = т('Код действует ещё {0} мин.', Math.max(1, Math.ceil((l.until - Date.now()) / 60000))); }
+function qrSvg(текст, клетка){ try { var q = qrcode(0, 'M'); q.addData(текст); q.make(); return q.createSvgTag({ cellSize: клетка || 5, margin: 2, scalable: true }); } catch (e) { return ''; } }
+function почтаФормаHtml(m, пригл){
+  /* m.step: email → code; пригл — приглашение в команду (адрес задан им) */
+  var кнопка = function(a, t, prim){ return '<button type="button" class="btn' + (prim ? ' prim' : '') + '" data-a="' + a + '"' + (m.busy ? ' disabled' : '') + '>' + t + '</button>'; };
+  if (m.step === 'code') return '<div class="mailbox"><p class="note">' + т('Если адрес {0} есть в команде компании, мы отправили на него код. Код действует {1} мин.', esc(m.email), 10) + '</p>' +
+    '<label class="fld">' + т('Код из письма') + '<input id="m-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" value="' + esc(m.code || '') + '"></label>' +
+    (m.err ? '<p class="err">' + esc(m.err) + '</p>' : '') +
+    '<div class="btns">' + кнопка('mlogin', m.busy ? т('Минутку…') : т('Войти'), true) + кнопка('mresend', т('Отправить код ещё раз')) + (пригл ? '' : кнопка('mother', т('Другой адрес'))) + '</div></div>';
+  return '<div class="mailbox">' + (пригл ? '<p class="note">' + т('Адрес:') + ' <b>' + esc(m.email) + '</b></p>' :
+    '<label class="fld">' + т('Рабочая почта') + '<input id="m-email" type="email" autocomplete="email" inputmode="email" value="' + esc(m.email || '') + '"></label>') +
+    (пригл && пригл.r && !пригл.r.known ? '<label class="fld">' + т('Как вас подписывать') + '<input id="m-name" maxlength="60" autocomplete="name" value="' + esc(m.name || '') + '"></label>' : '') +
+    (m.err ? '<p class="err">' + esc(m.err) + '</p>' : '') +
+    '<div class="btns">' + кнопка('mcode', m.busy ? т('Отправляю…') : т('Получить код на почту'), true) + '</div>' +
+    (пригл ? '' : '<p class="note">' + т('Вход по почте — для тех, кто уже в команде: админ позвал вас по почте или вы привязали адрес в кабинете.') + '</p>') + '</div>';
+}
+function приглашениеHtml(){
+  var п = S.пригл, r = п.r;
+  if (!r) return '<div class="card loginwrap">' + (п.err ? '<p class="err">' + esc(п.err) + '</p><div class="btns"><button type="button" class="btn" data-a="noinvite">' + т('Ко входу') + '</button></div>' : '<p class="empty">' + т('Загружаю…') + '</p>') + '</div>';
+  return '<div class="card loginwrap"><h1 style="font-size:22px;margin:0 0 6px">' + т('Вас позвали в команду компании') + '</h1>' +
+    '<div class="head"><h2 style="margin:0">' + esc(r.co.name) + '</h2><span class="pill">' + esc(роль(r.role)) + '</span></div>' +
+    '<p class="note">' + т('Команда видит только общие цифры по группам от {0} человек — личных данных сотрудников не видит никто. Ссылка в команду срабатывает один раз.', 10) + '</p>' +
+    почтаФормаHtml(S.mail, п) + '</div>';
+}
+function входHtml(){
+  if (S.пригл) return приглашениеHtml();
+  var выбор = '<div class="seg" role="group"><button type="button" data-a="how" data-v="qr" aria-pressed="' + (S.способ === 'qr') + '">' + т('Через Telegram') + '</button><button type="button" data-a="how" data-v="mail" aria-pressed="' + (S.способ === 'mail') + '">' + т('По рабочей почте') + '</button></div>';
+  if (S.способ === 'mail') return '<div class="card loginwrap">' + выбор + '<h1 style="font-size:22px;margin:0 0 6px">' + т('Вход в кабинет компании') + '</h1>' + (S.выход ? '<p class="err">' + esc(S.выход) + '</p>' : '') + почтаФормаHtml(S.mail, null) + '</div>';
+  return героHtml() + '<div class="loginwrap">' + выбор + '</div>' + входQrHtml();
+}
+function героHtml(){
+  return '<div class="hero card"><h1>' + т('Wellböl для компаний') + '</h1>' +
+    '<p class="note">' + т('Забота о здоровье сотрудников — без доступа к их личным данным.') + '</p>' +
+    '<ul><li>' + т('Сотрудники пользуются Wellböl в Telegram: еда, тренировки, вес, вода.') + '</li>' +
+    '<li>' + т('Компания запускает челленджи и видит только общие цифры по группам от {0} человек.', 10) + '</li>' +
+    '<li>' + т('Пригласить сотрудников — ссылкой, QR-кодом на плакате или письмом на рабочую почту.') + '</li>' +
+    '<li>' + т('Кабинет — в браузере: вход через Telegram или по рабочей почте.') + '</li></ul></div>';
+}
+function входQrHtml(){
+  var l = S.login || {}, жив = l.state === 'wait' || l.state === 'asked';
+  var сост = l.state === 'load' ? т('Готовлю код…') : l.state === 'asked' ? т('Подтвердите вход в Telegram на телефоне — кнопка «Войти».') : l.state === 'denied' ? т('Вход отклонён.')
+    : l.state === 'expired' ? т('Код устарел.') : l.state === 'err' ? (l.err || т('Не получилось.')) : '<span id="left"></span>';
+  return '<div class="login"><div class="qr' + (жив ? '' : ' dim') + '" aria-label="QR">' + (l.link ? qrSvg(l.link, 5) : '') + '</div><div>' +
+    '<h1>' + т('Войдите, чтобы подать заявку или открыть кабинет') + '</h1>' +
+    (S.выход ? '<p class="err">' + esc(S.выход) + '</p>' : '') +
+    '<ol><li>' + т('Наведите камеру телефона на код — откроется Telegram.') + '</li><li>' + т('Нажмите «Старт», затем «Войти» в сообщении бота.') + '</li><li>' + т('Кабинет откроется здесь сам.') + '</li></ol>' +
+    '<p class="note">' + т('Новой компании — подать заявку, команде компании — открыть кабинет. Сотрудникам страница не нужна: у них приложение.') + '</p>' +
+    '<div class="state" role="status">' + сост + '</div>' +
+    '<div class="btns">' + (l.link && жив ? '<a class="btn small" href="' + esc(l.link) + '" target="_blank" rel="noopener">' + т('Открыть Telegram на этом устройстве') + '</a>' : '') +
+    (!жив && l.state !== 'load' ? '<button type="button" class="btn prim" data-a="relogin">' + т('Новый код') + '</button>' : '') + '</div></div></div>';
+}
+
+/* ── кабинет ── */
+function загрузить(){
+  S.meErr = ''; рисовать();
+  return api('GET', '/web/me').then(function(r){
+    S.me = r; var ids = r.team.map(function(c){ return c.id; });
+    if (ids.indexOf(S.co) < 0) S.co = (r.team.filter(function(c){ return c.status === 'ok'; })[0] || r.team[0] || {}).id || null;
+    рисовать(); if (S.co) карточка(S.co);
+  }).catch(function(e){ if (e.code !== 'web_auth') { S.meErr = e.message; рисовать(); } });
+}
+function карточка(id){
+  var t = (S.me.team || []).filter(function(c){ return c.id === id; })[0];
+  if (!t || t.status !== 'ok') return;
+  return api('GET', '/web/co/card?co=' + encodeURIComponent(id)).then(function(r){ S.card[id] = r; S.cardErr[id] = ''; рисовать(); if (r.link) рассылкиЗагрузить(id); })
+    .catch(function(e){ if (e.code !== 'web_auth') { S.cardErr[id] = e.message; рисовать(); } });
+}
+function недели(c){
+  var w = (c.stats || []).slice(-4), мин = c.min || 10;
+  var ряд = function(имя, f){ return '<tr><th scope="row">' + имя + '</th>' + w.map(function(x){ return '<td class="num">' + (x.ok ? f(x) : '—') + '</td>'; }).join('') + '</tr>'; };
+  return '<div class="tblwrap"><table class="tbl"><thead><tr><th></th>' + w.map(function(x){ return '<th class="num">' + esc(дата(x.week)) + ' – ' + esc(дата(плюс(x.week, 6))) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    ряд(т('В группе'), function(x){ return т('не меньше {0}', x.n5); }) +
+    ряд(т('Активны {0} дня и больше', 3), function(x){ return x.active + '%'; }) +
+    ряд(т('Дней с записанной едой'), function(x){ return число(x.foodDays); }) +
+    ряд(т('Тренировок'), function(x){ return число(x.workouts); }) +
+    ряд(т('Дней с оценкой от {0}', 7), function(x){ return число(x.goodDays); }) +
+    ряд(т('Шагов в день'), function(x){ return x.steps == null ? '—' : x.steps; }) +
+    '</tbody></table></div><p class="note">' + т('«—» — меньше {0} человек в группе недели, не показываем.', мин) + ' ' +
+    т('Только по группе от {0} человек и округлённо. Неделя считается один раз после её конца и больше не меняется. Средние — на человека за неделю.', мин) + '</p>';
+}
+function челленджи(c, t){
+  var правит = t.role !== 'observer', сег = сегодня();
+  var строки = (c.ch || []).map(function(ch){
+    var г = ch.group || {}, конч = ch.end < сег;
+    return '<tr><td><b>' + esc(ch.title) + '</b>' + (конч ? ' <span class="pill">' + т('закончился') + '</span>' : ch.start > сег ? ' <span class="pill">' + т('начнётся') + '</span>' : '') + '</td>' +
+      '<td>' + esc(мера(ch.metric)) + '</td><td class="num">' + ch.target + '</td><td class="nw">' + esc(дата(ch.start)) + ' – ' + esc(дата(ch.end)) + '</td>' +
+      '<td class="num">' + (г.n ? г.n : т('меньше {0}', c.min || 10)) + '</td><td class="num">' + (г.done != null ? г.done + '%' : '—') + '</td>' +
+      (правит ? '<td>' + (S.confirm === 'ch:' + ch.id
+        ? '<button type="button" class="btn small danger" data-a="chdel" data-id="' + esc(ch.id) + '">' + т('Снять') + '</button> <button type="button" class="btn small" data-a="no">' + т('Нет') + '</button>'
+        : '<button type="button" class="btn small" data-a="ask" data-k="ch:' + esc(ch.id) + '">' + т('Снять') + '</button>') + '</td>' : '') + '</tr>';
+  }).join('');
+  var ф = S.chf && S.chf.co === t.id ? S.chf : null;
+  return '<div class="card"><h2>' + т('Челленджи') + '</h2><p class="note">' + т('Свой прогресс каждый видит сам, компания — только долю дошедших, когда участников от {0}.', c.min || 10) + '</p>' +
+    (строки ? '<div class="tblwrap"><table class="tbl"><thead><tr><th>' + т('Название') + '</th><th>' + т('Что считаем') + '</th><th class="num">' + т('Цель') + '</th><th>' + т('Сроки') + '</th><th class="num">' + т('Участники') + '</th><th class="num">' + т('Дошли') + '</th>' + (правит ? '<th></th>' : '') + '</tr></thead><tbody>' + строки + '</tbody></table></div>' : '<p class="empty">' + т('Пока нет.') + '</p>') +
+    (!правит ? '' : ф ? '<div class="form">' +
+      '<label>' + т('Название') + '<input id="f-title" maxlength="60" value="' + esc(ф.title) + '"></label>' +
+      '<label>' + т('Что считаем') + '<select id="f-metric">' + ['active_days', 'workouts', 'food_days', 'good_days', 'steps'].map(function(m){ return '<option value="' + m + '"' + (m === ф.metric ? ' selected' : '') + '>' + esc(мера(m)) + '</option>'; }).join('') + '</select></label>' +
+      '<label>' + т('Цель') + '<input id="f-target" type="number" min="1" value="' + esc(ф.target) + '"></label>' +
+      '<label>' + т('Дней') + '<input id="f-days" type="number" min="3" max="60" value="' + esc(ф.days) + '"></label>' +
+      '<label>' + т('Начало') + '<input id="f-start" type="date" min="' + сег + '" value="' + esc(ф.start) + '"></label>' +
+      '<p class="note wide">' + т('Цель — сколько набрать за весь челлендж. Свой прогресс каждый видит сам, компания — только долю дошедших, когда участников от {0}.', c.min || 10) + '</p>' +
+      (ф.err ? '<p class="err wide">' + esc(ф.err) + '</p>' : '') +
+      '<div class="btns wide"><button type="button" class="btn prim" data-a="chsave"' + (ф.busy ? ' disabled' : '') + '>' + (ф.busy ? т('Сохраняю…') : т('Запустить')) + '</button><button type="button" class="btn" data-a="chno">' + т('Отмена') + '</button></div></div>'
+      : '<div class="btns"><button type="button" class="btn" data-a="chnew">' + т('+ Челлендж') + '</button></div>') + '</div>';
+}
+function команда(c, t){
+  if (!c.team) return '';
+  var п = S.invite[t.id];
+  return '<div class="card"><h2>' + т('Команда') + '</h2><div class="tblwrap"><table class="tbl"><thead><tr><th>' + т('Имя') + '</th><th>' + т('Роль') + '</th><th></th></tr></thead><tbody>' +
+    c.team.map(function(x){
+      return '<tr><td>' + esc(x.name || т('Без имени')) + (x.me ? ' <span class="pill">' + т('вы') + '</span>' : '') + '</td>' +
+        '<td><select data-a="role" data-who="' + esc(x.uid) + '" aria-label="' + esc(т('роль')) + '">' + ['admin', 'manager', 'observer'].map(function(r){ return '<option value="' + r + '"' + (r === x.role ? ' selected' : '') + '>' + esc(роль(r)) + '</option>'; }).join('') + '</select></td>' +
+        '<td>' + (x.me ? '' : S.confirm === 'rm:' + x.uid
+          ? '<button type="button" class="btn small danger" data-a="rm" data-who="' + esc(x.uid) + '">' + т('Убрать') + '</button> <button type="button" class="btn small" data-a="no">' + т('Нет') + '</button>'
+          : '<button type="button" class="btn small" data-a="ask" data-k="rm:' + esc(x.uid) + '">' + т('Убрать') + '</button>') + '</td></tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<h3>' + т('Позвать в команду') + '</h3><p class="note">' + т('Позвать в команду — ссылка на неделю, срабатывает один раз. Менеджер ведёт челленджи, наблюдатель только смотрит цифры.') + '</p>' +
+    '<div class="btns">' + [['manager', 'Менеджера'], ['observer', 'Наблюдателя'], ['admin', 'Админа']].map(function(r){ return '<button type="button" class="btn small" data-a="inv" data-role="' + r[0] + '">' + т(r[1]) + '</button>'; }).join('') + '</div>' +
+    (п ? '<p class="note">' + т('Ссылка для роли:') + ' ' + esc(роль(п.role)) + '</p><div class="link"><input readonly value="' + esc(п.link) + '" aria-label="' + esc(т('ссылка в команду')) + '"><button type="button" class="btn prim" data-a="copy" data-v="' + esc(п.link) + '">' + т('Копировать') + '</button></div>' : '') +
+    '<h3>' + т('Позвать по почте') + '</h3><p class="note">' + т('Для тех, у кого нет Telegram на работе: письмо со ссылкой на кабинет, вход — кодом на этот адрес. Ссылка — на неделю, один раз.') + '</p>' +
+    '<div class="row"><label class="fld">' + т('Почта') + '<input id="i-email" type="email" autocomplete="off" value="' + esc((S.позвать[t.id] || {}).email || '') + '"></label>' +
+    '<label class="fld" style="flex:0 1 180px">' + т('Роль') + '<select id="i-role">' + ['manager', 'observer', 'admin'].map(function(r){ return '<option value="' + r + '"' + (r === ((S.позвать[t.id] || {}).role || 'manager') ? ' selected' : '') + '>' + esc(роль(r)) + '</option>'; }).join('') + '</select></label>' +
+    '<button type="button" class="btn prim" data-a="invmail">' + т('Отправить приглашение') + '</button></div></div>';
+}
+function рассылкаHtml(c, t){
+  var сп = S.список[t.id] || { text: '' }, р = S.рассылки[t.id], разбор = разобрать(сп.text);
+  return '<div class="card"><h2>' + т('Пригласить сотрудников по почте') + '</h2>' +
+    '<p class="note">' + т('Вставьте адреса — столбец из Excel или через запятую — или выберите файл CSV. Каждый получит письмо со ссылкой компании и сам решит, присоединиться ли.') + '</p>' +
+    '<p class="note">' + т('Кто из приглашённых присоединился, компания не узнает — ссылка у всех одна. Адреса храним только до отправки письма, повторно на тот же адрес не пишем.') + '</p>' +
+    '<label class="fld wide">' + т('Адреса') + '<textarea id="ml-text" spellcheck="false" placeholder="ivanov@bank.uz&#10;petrova@bank.uz">' + esc(сп.text) + '</textarea></label>' +
+    '<div class="btns"><label class="btn small" style="cursor:pointer">' + т('Выбрать файл CSV') + '<input id="ml-file" type="file" accept=".csv,.txt,text/csv,text/plain" hidden></label>' +
+    '<span class="note" id="ml-count">' + счётHtml(разбор) + '</span></div>' +
+    (сп.err ? '<p class="err">' + esc(сп.err) + '</p>' : '') +
+    (S.лимит && S.лимит[t.id] ? '<p class="note">' + т('Тариф почты: до {0} приглашений в сутки, сегодня ушло {1}. Остальные уйдут сами в следующие дни.', S.лимит[t.id].day, S.лимит[t.id].today) + '</p>' : '') +
+    (S.confirm === 'ml' && разбор.ok.length
+      ? '<div class="confirm"><span>' + т('Отправить {0} писем от имени «{1}»?', разбор.ok.length, esc(t.name)) + '</span><button type="button" class="btn small prim" data-a="mlsend">' + т('Отправить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
+      : '<div class="btns"><button type="button" class="btn prim" data-a="ask" data-k="ml"' + (разбор.ok.length && !сп.busy ? '' : ' disabled') + '>' + (сп.busy ? т('Отправляю…') : т('Отправить приглашения')) + '</button></div>') +
+    (р && р.length ? '<h3>' + т('Рассылки') + '</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>' + т('Когда') + '</th><th class="num">' + т('Новых адресов') + '</th><th class="num">' + т('Отправлено') + '</th><th class="num">' + т('Уже приглашали') + '</th><th class="num">' + т('Не ушло') + '</th><th>' + т('Статус') + '</th></tr></thead><tbody>' +
+      р.map(function(x){ return '<tr><td class="nw">' + esc(new Date(x.created).toLocaleString(S.lang === 'uz' ? 'uz-Latn' : S.lang, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) + '</td><td class="num">' + x.queued + '</td><td class="num">' + x.sent + '</td><td class="num">' + x.dup + '</td><td class="num">' + x.failed + '</td><td>' + (x.status === 'done' ? т('готово') : т('отправляется…')) + '</td></tr>'; }).join('') +
+      '</tbody></table></div>' : '') + '</div>';
+}
+function разобрать(text){
+  var видел = {}, ok = [], плохие = 0, повторы = 0;
+  String(text || '').split(/[\s,;]+/).forEach(function(x){
+    /* в строке CSV бывают имена и должности — берём только то, где есть «@» */
+    x = x.replace(/^["'<(]+|[">)]+$/g, '').trim().toLowerCase(); if (!x || x.indexOf('@') < 0) return;
+    if (!/^[a-z0-9._%+'-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(x)) { плохие++; return; }
+    if (видел[x]) { повторы++; return; } видел[x] = 1; ok.push(x);
+  });
+  return { ok: ok, плохие: плохие, повторы: повторы };
+}
+function счётHtml(р){ return р.ok.length || р.плохие ? т('Адресов: {0}', р.ok.length) + (р.плохие ? ' · ' + т('с ошибкой: {0}', р.плохие) : '') + (р.повторы ? ' · ' + т('повторов: {0}', р.повторы) : '') : ''; }
+function почтаВходаHtml(){
+  var m = S.me, п = S.привязка;
+  return '<div class="card"><h2>' + т('Вход по почте') + '</h2>' + (m.email && п.step !== 'code' && !п.edit
+    ? '<p class="note">' + т('Входите в кабинет кодом на адрес:') + ' <b>' + esc(m.email) + '</b></p><div class="btns"><button type="button" class="btn small" data-a="lnedit">' + т('Сменить адрес') + '</button></div>'
+    : '<p class="note">' + т('Привяжите рабочую почту — тогда в кабинет можно входить и без телефона, кодом на почту.') + '</p>' +
+      (п.step === 'code'
+        ? '<p class="note">' + т('Мы отправили код на {0}.', esc(п.email)) + '</p><div class="row"><label class="fld">' + т('Код из письма') + '<input id="ln-code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button type="button" class="btn prim" data-a="lnok"' + (п.busy ? ' disabled' : '') + '>' + т('Подтвердить') + '</button><button type="button" class="btn" data-a="lnno">' + т('Отмена') + '</button></div>'
+        : '<div class="row"><label class="fld">' + т('Рабочая почта') + '<input id="ln-email" type="email" autocomplete="email" value="' + esc(п.email || '') + '"></label><button type="button" class="btn prim" data-a="lncode"' + (п.busy ? ' disabled' : '') + '>' + т('Получить код') + '</button>' + (m.email ? '<button type="button" class="btn" data-a="lnno">' + т('Отмена') + '</button>' : '') + '</div>') +
+      (п.err ? '<p class="err">' + esc(п.err) + '</p>' : '')) + '</div>';
+}
+function рассылкиЗагрузить(co){
+  return api('GET', '/web/co/mailings?co=' + encodeURIComponent(co)).then(function(r){
+    S.рассылки[co] = r.mailings; S.лимит = S.лимит || {}; S.лимит[co] = r.dayLimit ? { day: r.dayLimit, today: r.sentToday } : null; рисовать();
+    clearTimeout(S.рт); if (r.mailings.some(function(x){ return x.status === 'sending'; })) S.рт = setTimeout(function(){ рассылкиЗагрузить(co); }, 3000);
+  }).catch(function(){});
+}
+function кабинетHtml(){
+  var m = S.me;
+  if (!m) return S.meErr ? '<div class="card"><p class="err">' + esc(S.meErr) + '</p><button type="button" class="btn" data-a="reload">' + т('Повторить') + '</button></div>' : '<p class="empty">' + т('Загружаю…') + '</p>';
+  if (!m.team.length) return заявкаHtml();
+  var t = m.team.filter(function(x){ return x.id === S.co; })[0] || m.team[0];
+  var вкладки = m.team.length > 1 ? '<div class="tabs" role="group">' + m.team.map(function(x){ return '<button type="button" data-a="co" data-id="' + esc(x.id) + '" aria-pressed="' + (x.id === t.id) + '">' + esc(x.name) + '</button>'; }).join('') + '</div>' : '';
+  var шапка = '<div class="head"><h1>' + esc(t.name) + '</h1><span class="pill">' + esc(роль(t.role)) + '</span><span class="pill">' + esc(статус(t.status)) + '</span></div>';
+  if (t.status === 'pending') return вкладки + '<div class="card">' + шапка + '<p class="note">' + т('Заявка на проверке. Как примем — здесь появится ссылка для сотрудников.') + '</p><p class="note">' + т('Ответ придёт в Telegram.') + '</p></div>';
+  if (t.status !== 'ok') return вкладки + '<div class="card">' + шапка + '<p class="note">' + т('Компания выключена. Напишите в поддержку.') + '</p></div>';
+  var c = S.card[t.id];
+  if (!c) return вкладки + '<div class="card">' + шапка + (S.cardErr[t.id] ? '<p class="err">' + esc(S.cardErr[t.id]) + '</p><button type="button" class="btn" data-a="reload">' + т('Повторить') + '</button>' : '<p class="empty">' + т('Загружаю…') + '</p>') + '</div>';
+  var мин = c.min || 10, сег = сегодня(), живых = (c.ch || []).filter(function(x){ return x.end >= сег; }).length;
+  return вкладки + '<div class="card">' + шапка + (S.cardErr[t.id] ? '<p class="err">' + esc(S.cardErr[t.id]) + '</p>' : '') +
+    '<div class="tiles"><div class="tile"><b>' + c.members + '</b><span>' + т('присоединились') + '</span></div>' +
+    '<div class="tile"><b>' + живых + '</b><span>' + т('живых челленджей') + '</span></div>' +
+    '<div class="tile"><b>' + мин + '</b><span>' + т('порог приватности: в группе меньше людей — цифры скрыты') + '</span></div></div>' +
+    (c.members < мин ? '<p class="note">' + т('цифры появятся от {0} человек', мин) + '</p>' : '') + '</div>' +
+    (c.link ? '<div class="card"><h2>' + т('Ссылка для сотрудников') + '</h2><p class="note">' + т('По ней сотрудник увидит, что компании видно, и присоединится сам.') + '</p>' +
+      '<div class="link" style="margin-top:10px"><input readonly value="' + esc(c.link) + '" aria-label="' + esc(т('ссылка для сотрудников')) + '"><button type="button" class="btn prim" data-a="copy" data-v="' + esc(c.link) + '">' + т('Копировать') + '</button>' +
+      '<button type="button" class="btn" data-a="qr">' + т('Скачать QR для плаката') + '</button></div>' +
+      (t.role !== 'admin' ? '' : S.confirm === 'code'
+        ? '<div class="confirm"><span>' + т('Старая ссылка перестанет работать. Кто уже присоединился — останется.') + '</span><button type="button" class="btn small danger" data-a="code">' + т('Сменить') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button></div>'
+        : '<div class="btns"><button type="button" class="btn small" data-a="ask" data-k="code">' + т('Сменить ссылку') + '</button></div>') + '</div>' : '') +
+    (c.link ? рассылкаHtml(c, t) : '') +
+    '<div class="card"><h2>' + т('Цифры по неделям') + '</h2>' + недели(c) + '</div>' +
+    челленджи(c, t) + команда(c, t) + почтаВходаHtml();
+}
+/* этап 6г: заявка компании — здесь; в приложении её больше нет */
+function заявкаHtml(){
+  var m = S.me, f = S.заявка, пол = function(id, t, v, extra){ return '<label class="fld">' + t + '<input id="' + id + '" value="' + esc(v) + '"' + (extra || '') + '></label>'; };
+  return '<div class="card apply"><h2>' + т('Заявка компании') + '</h2>' +
+    '<p class="note">' + т('Wellböl проверит заявку вручную и ответит в Telegram. После этого здесь откроется кабинет: ссылка для сотрудников, челленджи, цифры по группам.') + '</p>' +
+    '<div class="row">' + пол('c-name', т('Название компании'), f.name, ' maxlength="80" autocomplete="organization"') + пол('c-site', т('Сайт'), f.site, ' maxlength="120" inputmode="url"') + '</div>' +
+    '<div class="row">' + пол('c-about', т('Чем занимается компания'), f.about, ' maxlength="300"') + '</div>' +
+    '<div class="row">' + пол('c-contact', т('Контакт — телефон или почта'), f.contact, ' maxlength="120" autocomplete="email"') +
+      '<label class="fld">' + т('Сотрудников') + '<select id="c-size"><option value="">—</option>' + (m.sizes || []).map(function(x){ return '<option value="' + esc(x) + '"' + (x === f.size ? ' selected' : '') + '>' + esc(т(x)) + '</option>'; }).join('') + '</select></label></div>' +
+    (m.ageKnown ? '' : '<label class="chk"><input type="checkbox" id="c-adult"' + (f.adult ? ' checked' : '') + '><span>' + т('Мне есть 18 лет') + '</span></label>') +
+    (f.err ? '<p class="err">' + esc(f.err) + '</p>' : '') +
+    '<div class="btns"><button type="button" class="btn prim" data-a="coapply"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? т('Отправляю…') : т('Отправить заявку')) + '</button></div>' +
+    '<p class="note">' + т('Вас позвали в команду уже работающей компании? Откройте ссылку от админа в Telegram или войдите по рабочей почте.') + '</p></div>';
+}
+function шапкаКто(){
+  var w = document.getElementById('who'); if (!w) return;
+  w.innerHTML = S.tok && S.me ? '<span>' + esc(S.me.name || '') + '</span>' + (S.confirm === 'all'
+    ? '<button type="button" class="btn small danger" data-a="outall">' + т('Выйти на всех компьютерах') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button>'
+    : '<button type="button" class="btn small" data-a="out">' + т('Выйти из кабинета') + '</button><button type="button" class="btn small" data-a="ask" data-k="all">' + т('На всех компьютерах') + '</button>') : '';
+}
+function полеФормы(){
+  var v = function(id){ var e = document.getElementById(id); return e ? e.value : null; };
+  if (v('m-email') != null) S.mail.email = v('m-email');
+  if (v('m-name') != null) S.mail.name = v('m-name');
+  if (v('m-code') != null) S.mail.code = v('m-code');
+  if (v('ln-email') != null) S.привязка.email = v('ln-email');
+  if (v('c-name') != null) { var з = S.заявка; з.name = v('c-name'); з.site = v('c-site'); з.about = v('c-about'); з.contact = v('c-contact'); з.size = v('c-size'); var ад = document.getElementById('c-adult'); if (ад) з.adult = ад.checked; }
+  if (v('i-email') != null && S.co) S.позвать[S.co] = { email: v('i-email'), role: v('i-role') };
+  if (v('ml-text') != null && S.co) { S.список[S.co] = S.список[S.co] || {}; S.список[S.co].text = v('ml-text'); }
+  var f = S.chf; if (!f) return;
+  if (v('f-title') != null) { f.title = v('f-title'); f.metric = v('f-metric'); f.target = v('f-target'); f.days = v('f-days'); f.start = v('f-start'); }
+}
+function рисовать(){
+  полеФормы();
+  document.title = 'Wellböl · ' + т('для компаний');
+  document.getElementById('ttl').textContent = т('для компаний');
+  Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang)); });
+  document.getElementById('app').innerHTML = S.tok ? кабинетHtml() : входHtml();
+  шапкаКто(); минуты();
+}
+
+/* ── действия ── */
+function копировать(v){
+  var ok = function(){ всплыть(т('Скопировано')); };
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(v).then(ok, function(){ всплыть(v); });
+  всплыть(v);
+}
+function действие(b){
+  var a = b.dataset.a, co = S.co, ош = function(e){ b.disabled = false; if (e.code !== 'web_auth') { S.cardErr[co] = e.message; рисовать(); } };
+  var освежить = function(){ S.confirm = ''; return карточка(co); };
+  if (a === 'relogin') return входНачать();
+  if (a === 'coapply') {
+    полеФормы(); var з = S.заявка;
+    if (!S.me.ageKnown && !з.adult) { з.err = т('Подтвердите, что вам есть 18 лет.'); return рисовать(); }
+    з.busy = true; з.err = ''; рисовать();
+    return api('POST', '/web/co/apply', { name: з.name, about: з.about, site: з.site, contact: з.contact, size: з.size, adult: S.me.ageKnown ? undefined : з.adult === true })
+      .then(function(){ з.busy = false; всплыть(т('Заявка отправлена')); return загрузить(); }).catch(function(e){ з.busy = false; з.err = e.message; рисовать(); });
+  }
+  if (a === 'how') { S.способ = b.dataset.v; положить('wb_kab_how', S.способ); S.выход = ''; if (S.способ === 'qr') { if (!S.login || S.login.state !== 'wait') входНачать(); else рисовать(); } else { clearTimeout(S.опрос); S.login = null; рисовать(); } return; }
+  if (a === 'noinvite') { S.пригл = null; return S.tok ? загрузить() : (S.способ === 'qr' ? входНачать() : рисовать()); }
+  if (a === 'mother') { S.mail = { step: 'email', email: S.mail.email }; return рисовать(); }
+  if (a === 'mcode' || a === 'mresend') {
+    полеФормы(); var м = S.mail, inv = S.пригл ? S.пригл.code : undefined;
+    if (S.пригл && S.пригл.r && !S.пригл.r.known && String(м.name || '').trim().length < 2) { м.err = т('Как вас подписывать — имя от 2 знаков.'); return рисовать(); }
+    м.busy = true; м.err = ''; рисовать();
+    return api('POST', '/web/mail/code', { email: м.email, invite: inv }).then(function(){ м.busy = false; м.step = 'code'; м.code = ''; рисовать(); var e = document.getElementById('m-code'); if (e) e.focus(); })
+      .catch(function(e){ м.busy = false; м.err = e.message; рисовать(); });
+  }
+  if (a === 'mlogin') {
+    полеФормы(); var м2 = S.mail; м2.busy = true; м2.err = ''; рисовать();
+    return api('POST', '/web/mail/login', { email: м2.email, code: м2.code, invite: S.пригл ? S.пригл.code : undefined, name: м2.name })
+      .then(function(r){ return войтиСТокеном(r.token); }).catch(function(e){ м2.busy = false; м2.err = e.message; рисовать(); });
+  }
+  if (a === 'lnedit') { S.привязка = { step: 'email', edit: true }; return рисовать(); }
+  if (a === 'lnno') { S.привязка = { step: 'email' }; return рисовать(); }
+  if (a === 'lncode' || a === 'lnok') {
+    полеФормы(); var п = S.привязка, кодП = a === 'lnok' ? ((document.getElementById('ln-code') || {}).value || '') : undefined;
+    п.busy = true; п.err = ''; рисовать();
+    return api('POST', '/web/mail/link', { email: п.email, code: кодП }).then(function(r){
+      п.busy = false; if (a === 'lncode') { п.step = 'code'; return рисовать(); }
+      S.me.email = r.email; S.привязка = { step: 'email' }; всплыть(т('Почта привязана')); рисовать();
+    }).catch(function(e){ п.busy = false; п.err = e.message; рисовать(); });
+  }
+  if (a === 'invmail') {
+    полеФормы(); var пз = S.позвать[co] || {}; b.disabled = true;
+    return api('POST', '/web/co/invite-mail', { co: co, email: пз.email, role: пз.role || 'manager' }).then(function(r){ S.позвать[co] = { role: пз.role }; всплыть(т('Приглашение отправлено: {0}', r.email)); рисовать(); }).catch(ош);
+  }
+  if (a === 'mlsend') {
+    полеФормы(); var сп = S.список[co] || {}, разбор = разобрать(сп.text); S.confirm = ''; сп.busy = true; сп.err = ''; рисовать();
+    return api('POST', '/web/co/mailing', { co: co, emails: разбор.ok }).then(function(r){
+      сп.busy = false; сп.text = ''; всплыть(т('Новых адресов: {0}, уже приглашали: {1}', r.queued, r.dup)); рисовать(); return рассылкиЗагрузить(co);
+    }).catch(function(e){ сп.busy = false; сп.err = e.message; рисовать(); });
+  }
+  if (a === 'reload') return S.me ? карточка(co) : загрузить();
+  if (a === 'co') { S.co = b.dataset.id; S.chf = null; S.confirm = ''; рисовать(); return карточка(S.co); }
+  if (a === 'ask') { S.confirm = b.dataset.k; return рисовать(); }
+  if (a === 'no') { S.confirm = ''; return рисовать(); }
+  if (a === 'copy') return копировать(b.dataset.v);
+  if (a === 'qr') {
+    var c = S.card[co], svg = qrSvg(c.link, 12); if (!svg) return;
+    var url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })), ссылка = document.createElement('a');
+    ссылка.href = url; ссылка.download = 'wellbol-qr.svg'; document.body.appendChild(ссылка); ссылка.click(); ссылка.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    return;
+  }
+  if (a === 'out' || a === 'outall') {
+    b.disabled = true;
+    return api('POST', '/web/logout', a === 'outall' ? { all: true } : {}).then(function(){ S.confirm = ''; сброс(''); }, function(){ сброс(''); });
+  }
+  if (a === 'code') { b.disabled = true; return api('POST', '/web/co/code', { co: co }).then(освежить).catch(ош); }
+  if (a === 'inv') { b.disabled = true; return api('POST', '/web/co/invite', { co: co, role: b.dataset.role }).then(function(r){ S.invite[co] = { link: r.link, role: r.role }; рисовать(); }).catch(ош); }
+  if (a === 'rm') { b.disabled = true; return api('POST', '/web/co/team', { co: co, who: b.dataset.who, remove: true }).then(освежить).catch(ош); }
+  if (a === 'chnew') { S.chf = { co: co, title: '', metric: 'active_days', target: '5', days: '7', start: сегодня() }; return рисовать(); }
+  if (a === 'chno') { S.chf = null; return рисовать(); }
+  if (a === 'chsave') {
+    var ф = S.chf; полеФормы(); ф.busy = true; ф.err = ''; рисовать();
+    return api('POST', '/web/co/ch', { co: co, title: ф.title, metric: ф.metric, target: +ф.target, days: +ф.days, start: ф.start })
+      .then(function(){ S.chf = null; return освежить(); }).catch(function(e){ ф.busy = false; ф.err = e.message; рисовать(); });
+  }
+  if (a === 'chdel') { b.disabled = true; return api('POST', '/web/co/ch/del', { co: co, id: b.dataset.id }).then(освежить).catch(ош); }
+}
+document.addEventListener('click', function(e){
+  var l = e.target.closest('#langs button'); if (l) return язык(l.dataset.lang);
+  var b = e.target.closest('[data-a]'); if (!b || b.tagName === 'SELECT' || b.disabled) return;
+  действие(b);
+});
+document.addEventListener('change', function(e){
+  var s = e.target.closest('select[data-a="role"]'); if (!s) return;
+  var co = S.co; s.disabled = true;
+  api('POST', '/web/co/team', { co: co, who: s.dataset.who, role: s.value }).then(function(){ всплыть(т('Сохранено')); return карточка(co); })
+    .catch(function(e2){ if (e2.code !== 'web_auth') { S.cardErr[co] = e2.message; карточка(co); } });
+});
+document.addEventListener('input', function(e){
+  if (e.target.id === 'ml-text') { var с = document.getElementById('ml-count'); if (с) с.innerHTML = счётHtml(разобрать(e.target.value)); var кн = document.querySelector('[data-k="ml"]'); if (кн) кн.disabled = !разобрать(e.target.value).ok.length; }
+  if (e.target.id === 'm-code' && /^\d{6}$/.test(e.target.value)) { var вх = document.querySelector('[data-a="mlogin"]'); if (вх) вх.click(); }
+});
+document.addEventListener('change', function(e){
+  if (e.target.id !== 'ml-file' || !e.target.files || !e.target.files[0]) return;
+  var f = e.target.files[0], co = S.co; if (f.size > 2e6) { всплыть(т('Файл больше 2 МБ')); return; }
+  f.text().then(function(t){ полеФормы(); S.список[co] = S.список[co] || {}; S.список[co].text = ((S.список[co].text || '').trim() + '\n' + t).trim(); рисовать(); });
+});
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Enter') return;
+  var id = e.target.id, a = id === 'm-email' || id === 'm-name' ? 'mcode' : id === 'm-code' ? 'mlogin' : id === 'ln-email' ? 'lncode' : id === 'ln-code' ? 'lnok' : '';
+  if (a) { var кн = document.querySelector('[data-a="' + a + '"]'); if (кн && !кн.disabled) { e.preventDefault(); кн.click(); } }
+});
+/* вернулся на вкладку — свежие цифры; вход ждёт дальше */
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && S.tok && S.me && S.co) карточка(S.co); });
+
+язык(S.lang);
+if (S.пригл) приглашениеЗагрузить(); else if (S.tok) загрузить(); else if (S.способ === 'qr') входНачать(); else рисовать();
+</script>
+</body>
+</html>

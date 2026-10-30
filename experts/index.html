@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../img/wb-icon-192.png">
+<title>Wellböl для специалистов</title>
+<!-- 30.10, роли, этап 6г. Его слова: «приложение должно быть только для пользователей. тренеры и
+     нутрициологи должны регистрироваться как-то иначе. Я не хочу путать пользователей». Заявка тренера и
+     нутрициолога — здесь, а не в приложении: опыт, контакт для проверки, фото диплома или сертификата.
+     Вход — QR через бота (специалисту нужен Telegram: клиенты подключаются к нему в приложении).
+     Проверяет Wellböl вручную; после «Принять» в приложении появляется «Кабинет специалиста». -->
+<style>
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url(../fonts/manrope-cyr.woff2) format('woff2');unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:'Manrope';font-style:normal;font-weight:200 800;font-display:swap;src:url(../fonts/manrope-lat.woff2) format('woff2')}
+:root{color-scheme:light;--bg:#EAF0F1;--surface:#FFFFFF;--tint:#E3EFF0;--line:#DCE5E6;--tab-line:#CBDADC;--text:#1F2D30;--muted:#5A6B6E;
+  --accent:#176775;--on-accent:#FFFFFF;--ok:#337459;--warn:#A94E35;--warn-bg:#FBF0EB;--accent-rgb:23,103,117}
+@media (prefers-color-scheme: dark){:root{color-scheme:dark;--bg:#000000;--surface:#0E1416;--tint:rgba(59,163,181,.14);--line:#1B2427;--tab-line:#1F2A2E;
+  --text:#E8EEF0;--muted:#8E9DA3;--accent:#3BA3B5;--on-accent:#021013;--ok:#3FBF8A;--warn:#E07A55;--warn-bg:#22160E;--accent-rgb:59,163,181}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit;color:inherit}
+/* как в приложении (28.10): родные поля даты на iPhone выходят за рамку — без системного вида и сжимаются */
+:where(input[type="date"]){-webkit-appearance:none;appearance:none}
+:where(input:not([type="checkbox"]):not([type="radio"]),select){min-width:0;max-width:100%}
+input[type="date"]::-webkit-date-and-time-value{text-align:left;min-width:0}
+a{color:var(--accent)}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.brand img{width:32px;height:32px;border-radius:8px}
+.brand b{font-size:17px;font-weight:800}
+.brand span{color:var(--muted);font-size:14px}
+.langs{display:flex;gap:2px;background:var(--tint);border-radius:10px;padding:3px}
+.langs button{border:0;background:none;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted)}
+.langs button[aria-pressed="true"]{background:var(--surface);color:var(--text)}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+main{max-width:1120px;margin:0 auto;padding:24px}
+.card{background:var(--surface);border-radius:20px;padding:20px 22px;margin:0 0 18px}
+.card h2{margin:0 0 4px;font-size:17px;font-weight:800}
+.card h3{margin:18px 0 8px;font-size:15px;font-weight:800}
+.note{color:var(--muted);font-size:13px;margin:4px 0 0}
+.err{color:var(--warn);font-size:14px;margin:8px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 16px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);cursor:pointer;font-weight:700;font-size:14px;text-decoration:none;color:var(--text)}
+.btn.prim{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--warn);border-color:var(--warn)}
+.btn.small{min-height:34px;padding:5px 12px;font-size:13px}
+.btn[disabled]{opacity:.55;cursor:default}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.login{max-width:760px;margin:24px auto;display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.loginwrap{max-width:760px;margin:24px auto 0}
+.loginwrap .login{margin-top:0}
+.qr{background:#FFFFFF;border-radius:16px;padding:12px;width:244px;height:244px;display:flex;align-items:center;justify-content:center}
+.qr svg{width:220px;height:220px;display:block}
+.qr.dim{opacity:.25}
+.login h1{font-size:22px;margin:0 0 10px;font-weight:800}
+.login ol{margin:8px 0 0;padding-left:20px}
+.login li{margin:6px 0}
+.state{margin-top:14px;padding:10px 12px;border-radius:12px;background:var(--tint);font-size:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.tabs button{border:1px solid var(--tab-line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:14px}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.head h1{margin:0;font-size:24px;font-weight:800}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--tint);font-size:13px;font-weight:700;color:var(--text)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.tile{background:var(--tint);border-radius:16px;padding:14px 16px}
+.tile b{display:block;font-size:28px;font-weight:800;line-height:1.2}
+.tile span{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.link{display:flex;gap:8px;flex-wrap:wrap}
+.link input{flex:1 1 260px;min-width:0;padding:9px 12px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.tbl th{color:var(--muted);font-weight:700;font-size:13px;white-space:nowrap}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr:last-child td,.tbl tr:last-child th{border-bottom:0}
+.tbl .nw{white-space:nowrap}
+.tblwrap{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.tbl select{padding:6px 8px;border-radius:10px;border:1px solid var(--tab-line);background:var(--surface)}
+.form{display:grid;grid-template-columns:2fr 1.4fr .7fr .7fr 1fr;gap:10px;align-items:end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.form input,.form select{padding:9px 10px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);min-width:0}
+.form .wide{grid-column:1/-1}
+.confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--warn-bg);border-radius:12px;padding:8px 12px;margin-top:10px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700}
+.empty{color:var(--muted);font-size:14px}
+/* 30.10, этап 6в: вход по почте, рассылка */
+.seg{display:inline-flex;gap:2px;background:var(--tint);border-radius:12px;padding:3px;margin:0 0 14px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--text)}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);margin:10px 0;max-width:420px}
+.fld input,.fld select,.fld textarea{padding:10px 12px;border-radius:12px;border:1px solid var(--tab-line);background:var(--surface);font-size:15px;color:var(--text)}
+.fld textarea{max-width:none;min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+.fld.wide{max-width:none}
+.code{letter-spacing:.3em;font-variant-numeric:tabular-nums;font-size:20px!important;max-width:220px}
+.mailbox{max-width:440px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:10px}
+.row .fld{margin:0;flex:1 1 200px}
+/* 30.10, этап 6г: вступление для компаний и заявка */
+.hero{max-width:760px;margin:24px auto 0}
+.hero h1{font-size:28px;line-height:1.2;margin:0 0 10px;font-weight:800}
+.hero ul{margin:10px 0 0;padding-left:20px}
+.hero li{margin:6px 0}
+.chk{display:flex;align-items:flex-start;gap:8px;margin:12px 0;font-size:14px}
+.chk input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
+.apply .row{margin:0}
+.apply .fld{max-width:none}
+@media (max-width:760px){
+  .top{padding:12px 16px}
+  main{padding:16px}
+  .login{grid-template-columns:1fr;justify-items:center;text-align:left}
+  .grid2{grid-template-columns:1fr}
+  .form{grid-template-columns:1fr 1fr}
+  .form label:first-child{grid-column:1/-1}
+  .card{padding:16px}
+}
+.hero{max-width:760px;margin:24px auto 0}
+.hero h1{font-size:28px;line-height:1.2;margin:0 0 10px;font-weight:800}
+.hero ul{margin:10px 0 0;padding-left:20px}
+.hero li{margin:6px 0}
+.kinds{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+.kinds label{display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--tab-line);border-radius:12px;cursor:pointer;font-weight:700;color:var(--text);font-size:14px}
+.kinds input{width:18px;height:18px;accent-color:var(--accent)}
+.chk{display:flex;align-items:flex-start;gap:8px;margin:12px 0;font-size:14px}
+.chk input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
+.docs{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0}
+.doc{position:relative;width:112px;height:112px;border-radius:12px;overflow:hidden;background:var(--tint)}
+.doc img{width:100%;height:100%;object-fit:cover;display:block}
+.doc button{position:absolute;top:4px;right:4px;border:0;border-radius:999px;width:26px;height:26px;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;font-size:15px;line-height:1}
+.fld textarea.txt{font-family:inherit;font-size:15px;min-height:110px}
+.st{display:inline-block;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:700;background:var(--tint)}
+.st.ok{color:var(--ok)}.st.off{color:var(--warn)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><img src="../img/wb-icon-192.png" alt=""><b>Wellböl</b><span id="ttl">для специалистов</span></div>
+  <div class="langs" id="langs" role="group" aria-label="язык"><button type="button" data-lang="ru">RU</button><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="en">EN</button></div>
+  <div class="who" id="who"></div>
+</header>
+<main id="app"><p class="empty">Загружаю…</p></main>
+<div class="toast" id="toast" hidden></div>
+<script src="../vendor/qrcode-generator-1.4.4.js"></script>
+<script>
+'use strict';
+var API = 'https://api.wellbol.com' + (/^\/test\//.test(location.pathname) ? '/test' : '');
+var КЛ_ТОК = 'wb_exp_tok', КЛ_ЯЗ = 'wb_kab_lang';
+function взять(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+function положить(k, v){ try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+var S = { lang: взять(КЛ_ЯЗ) || 'ru', сл: {}, tok: взять(КЛ_ТОК), me: null, meErr: '', login: null, выход: '', confirm: '',
+  f: { kinds: [], name: '', about: '', contact: '', adult: false, docs: [], err: '', busy: false }, правка: false };
+
+/* ── язык: словари приложения (ключ — русская строка, числа — {0}) ── */
+function т(k){
+  var a = arguments, v = S.lang !== 'ru' && S.сл[S.lang] ? S.сл[S.lang][k] : null;
+  return String(v == null ? k : v).replace(/\{(\d+)\}/g, function(_, i){ var x = a[+i + 1]; return x == null ? '' : x; });
+}
+function язык(L){
+  if (['ru', 'uz', 'en'].indexOf(L) < 0) L = 'ru';
+  S.lang = L; положить(КЛ_ЯЗ, L); document.documentElement.lang = L;
+  if (L === 'ru' || S.сл[L]) return Promise.resolve(рисовать());
+  return fetch('../i18n/' + L + '.json').then(function(r){ return r.json(); }).then(function(d){ S.сл[L] = d; рисовать(); }).catch(function(){ рисовать(); });
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function вид(k){ return т({ trainer: 'Тренер', nutri: 'Нутрициолог' }[k] || k); }
+function статус(s){ return т({ pending: 'на проверке', ok: 'принята', off: 'не принята' }[s] || s); }
+function всплыть(t){ var e = document.getElementById('toast'); e.textContent = t; e.hidden = false; clearTimeout(всплыть.т); всплыть.т = setTimeout(function(){ e.hidden = true; }, 1800); }
+
+/* ── сервер: веб-сессия в заголовке, 401 — назад ко входу ── */
+function api(метод, путь, тело){
+  var h = {}; if (тело) h['Content-Type'] = 'application/json'; if (S.tok) h.Authorization = 'Bearer ' + S.tok;
+  return fetch(API + путь, { method: метод, headers: h, body: тело ? JSON.stringify(тело) : undefined }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(j){
+      if (r.status === 401 && j.code === 'web_auth') { сброс(т('Сессия закончилась — войдите снова.')); var e0 = new Error('web_auth'); e0.code = 'web_auth'; throw e0; }
+      if (!r.ok || j.ok === false) { var e = new Error(т(String(j.error || '')) || ('HTTP ' + r.status)); e.code = j.code; throw e; }
+      return j;
+    });
+  }, function(){ throw new Error(т('Нет связи с сервером. Проверьте интернет.')); });
+}
+function сброс(почему){ S.tok = null; положить(КЛ_ТОК, null); S.me = null; S.выход = почему || ''; входНачать(); }
+
+/* ── вход по QR (тот же, что у страницы компаний) ── */
+function входНачать(){
+  clearTimeout(S.опрос); S.login = { state: 'load' }; рисовать();
+  api('POST', '/web/login', { for: 'experts' }).then(function(r){
+    S.login = { state: 'wait', id: r.id, secret: r.secret, link: r.link, until: Date.now() + r.ttl * 1000 }; рисовать(); ждать();
+  }).catch(function(e){ S.login = { state: 'err', err: e.message }; рисовать(); });
+}
+function ждать(){
+  var l = S.login; clearTimeout(S.опрос); if (!l || !l.id) return;
+  if (Date.now() > l.until) { l.state = 'expired'; return рисовать(); }
+  S.опрос = setTimeout(function(){
+    api('GET', '/web/login?id=' + encodeURIComponent(l.id) + '&secret=' + encodeURIComponent(l.secret)).then(function(r){
+      if (S.login !== l) return;
+      if (r.state === 'ok') { S.tok = r.token; положить(КЛ_ТОК, r.token); S.login = null; S.выход = ''; return загрузить(); }
+      if (r.state === 'denied' || r.state === 'expired') { l.state = r.state; return рисовать(); }
+      if (r.state !== l.state) { l.state = r.state; рисовать(); } else минуты();
+      ждать();
+    }).catch(function(){ if (S.login === l) ждать(); });
+  }, 2000);
+}
+function минуты(){ var e = document.getElementById('left'), l = S.login; if (e && l) e.textContent = т('Код действует ещё {0} мин.', Math.max(1, Math.ceil((l.until - Date.now()) / 60000))); }
+function qrSvg(текст, клетка){ try { var q = qrcode(0, 'M'); q.addData(текст); q.make(); return q.createSvgTag({ cellSize: клетка || 5, margin: 2, scalable: true }); } catch (e) { return ''; } }
+function входHtml(){
+  var l = S.login || {}, жив = l.state === 'wait' || l.state === 'asked';
+  var сост = l.state === 'load' ? т('Готовлю код…') : l.state === 'asked' ? т('Подтвердите вход в Telegram на телефоне — кнопка «Войти».') : l.state === 'denied' ? т('Вход отклонён.')
+    : l.state === 'expired' ? т('Код устарел.') : l.state === 'err' ? (l.err || т('Не получилось.')) : '<span id="left"></span>';
+  return '<div class="hero card"><h1>' + т('Ведите клиентов в Wellböl') + '</h1>' +
+    '<p class="note">' + т('Для тренеров и нутрициологов. Ваши клиенты пользуются Wellböl в Telegram — едой, тренировками, весом, — а вы видите то, что они вам открыли.') + '</p>' +
+    '<ul><li>' + т('Клиент сам решает, какие разделы вам открыть, и видит каждый ваш просмотр.') + '</li>' +
+    '<li>' + т('Тренер составляет программу из каталога упражнений и своих упражнений.') + '</li>' +
+    '<li>' + т('Нутрициолог задаёт норму и правила, комментирует приёмы пищи.') + '</li>' +
+    '<li>' + т('Переписка с клиентом — отдельно от ИИ, он её не читает.') + '</li>' +
+    '<li>' + т('Каждую заявку Wellböl проверяет вручную: опыт, диплом или сертификат.') + '</li></ul></div>' +
+    '<div class="login"><div class="qr' + (жив ? '' : ' dim') + '" aria-label="QR">' + (l.link ? qrSvg(l.link, 5) : '') + '</div><div>' +
+    '<h1>' + т('Войдите, чтобы подать заявку') + '</h1>' + (S.выход ? '<p class="err">' + esc(S.выход) + '</p>' : '') +
+    '<ol><li>' + т('Наведите камеру телефона на код — откроется Telegram.') + '</li><li>' + т('Нажмите «Старт», затем «Войти» в сообщении бота.') + '</li><li>' + т('Анкета откроется здесь сама.') + '</li></ol>' +
+    '<p class="note">' + т('Нужен Telegram: клиенты подключаются к вам в приложении Wellböl.') + '</p>' +
+    '<div class="state" role="status">' + сост + '</div>' +
+    '<div class="btns">' + (l.link && жив ? '<a class="btn small" href="' + esc(l.link) + '" target="_blank" rel="noopener">' + т('Открыть Telegram на этом устройстве') + '</a>' : '') +
+    (!жив && l.state !== 'load' ? '<button type="button" class="btn prim" data-a="relogin">' + т('Новый код') + '</button>' : '') + '</div></div></div>';
+}
+
+/* ── заявка и её статус ── */
+function загрузить(){
+  S.meErr = ''; рисовать();
+  return api('GET', '/web/pro/me').then(function(r){
+    S.me = r; var p0 = r.pro[0];
+    if (p0 && !S.правка) { S.f.name = p0.name; S.f.about = p0.about; S.f.contact = p0.contact; S.f.kinds = r.pro.map(function(x){ return x.kind; }); }
+    рисовать();
+  }).catch(function(e){ if (e.code !== 'web_auth') { S.meErr = e.message; рисовать(); } });
+}
+function формаHtml(){
+  var m = S.me, f = S.f, были = m.pro.length ? m.pro[0].docs : 0, места = Math.max(0, (m.maxDocs || 3) - были - f.docs.length);
+  var есть = {}; m.pro.forEach(function(x){ есть[x.kind] = x.status; });
+  return '<div class="card"><h2>' + т(m.pro.length ? 'Дополнить заявку' : 'Заявка специалиста') + '</h2>' +
+    '<p class="note">' + т('Заполните анкету — Wellböl проверит её вручную и ответит в Telegram. Специалистом — с 18 лет.') + '</p>' +
+    '<div class="fld wide">' + т('Кто вы') + '<div class="kinds">' + ['trainer', 'nutri'].map(function(k){
+      var закрыт = есть[k] === 'off' || есть[k] === 'ok';
+      return '<label><input type="checkbox" data-kind="' + k + '"' + (f.kinds.indexOf(k) >= 0 ? ' checked' : '') + (закрыт ? ' disabled' : '') + '>' + вид(k) + '</label>';
+    }).join('') + '</div></div>' +
+    '<label class="fld">' + т('Как вас подписывать для клиентов') + '<input id="f-name" maxlength="60" autocomplete="name" value="' + esc(f.name) + '"></label>' +
+    '<label class="fld wide">' + т('Опыт и образование — где учились, сколько лет работаете, с кем') + '<textarea id="f-about" class="txt" maxlength="1000">' + esc(f.about) + '</textarea></label>' +
+    '<label class="fld">' + т('Контакт для проверки — телефон, Instagram или сайт') + '<input id="f-contact" maxlength="160" value="' + esc(f.contact) + '"></label>' +
+    '<div class="fld wide">' + т('Фото диплома или сертификата') + '<span class="note">' + (были ? т('Уже приложено: {0}.', были) + ' ' : '') + т('До {0} фото. Видят только вы и Wellböl.', m.maxDocs || 3) + '</span>' +
+      '<div class="docs">' + f.docs.map(function(d, i){ return '<div class="doc"><img src="data:image/jpeg;base64,' + d.b64 + '" alt=""><button type="button" data-a="docdel" data-i="' + i + '" aria-label="' + esc(т('Убрать')) + '">×</button></div>'; }).join('') + '</div>' +
+      (места ? '<label class="btn small"><input type="file" id="f-docs" accept="image/*" multiple hidden>' + т('Добавить фото') + '</label>' : '') + '</div>' +
+    (m.ageKnown ? '' : '<label class="chk"><input type="checkbox" id="f-adult"' + (f.adult ? ' checked' : '') + '><span>' + т('Мне есть 18 лет') + '</span></label>') +
+    (f.err ? '<p class="err">' + esc(f.err) + '</p>' : '') +
+    '<div class="btns"><button type="button" class="btn prim" data-a="send"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? т('Отправляю…') : т('Отправить заявку')) + '</button>' +
+    (m.pro.length ? '<button type="button" class="btn" data-a="editno">' + т('Отмена') + '</button>' : '') + '</div></div>';
+}
+function статусHtml(){
+  var m = S.me, бот = '';
+  m.pro.forEach(function(x){ if (x.link) бот = x.link.split('?')[0]; });
+  var ждёт = m.pro.some(function(x){ return x.status === 'pending'; });
+  return '<div class="card"><div class="head"><h1>' + esc(m.pro[0].name) + '</h1></div>' +
+    m.pro.map(function(x){
+      return '<h3>' + вид(x.kind) + ' <span class="st ' + x.status + '">' + esc(статус(x.status)) + '</span></h3>' +
+        (x.status === 'pending' ? '<p class="note">' + т('Проверяем вручную — ответ придёт в Telegram.') + '</p>' : '') +
+        (x.status === 'off' ? '<p class="note">' + т('Заявка не принята. Если это ошибка — напишите в поддержку.') + '</p>' : '') +
+        (x.status === 'ok' && x.link ? '<p class="note">' + т('Ссылка для клиентов: по ней они увидят, что вам будет видно, и подключатся сами.') + '</p>' +
+          '<div class="link" style="margin-top:8px"><input readonly value="' + esc(x.link) + '" aria-label="' + esc(т('ссылка для клиентов')) + '"><button type="button" class="btn prim" data-a="copy" data-v="' + esc(x.link) + '">' + т('Копировать') + '</button>' +
+          '<button type="button" class="btn" data-a="qr" data-v="' + esc(x.link) + '">' + т('Скачать QR') + '</button></div>' : '');
+    }).join('') +
+    (m.pro.some(function(x){ return x.status === 'ok'; }) ? '<p class="note" style="margin-top:14px">' + т('Клиенты, программы и переписка — в приложении Wellböl: Профиль → «Кабинет специалиста».') + '</p>' +
+      (бот ? '<div class="btns"><a class="btn" href="' + esc(бот) + '" target="_blank" rel="noopener">' + т('Открыть Wellböl в Telegram') + '</a></div>' : '') : '') +
+    (ждёт ? '<div class="btns"><button type="button" class="btn small" data-a="edit">' + т('Дополнить заявку') + '</button></div>' : '') + '</div>';
+}
+function страницаHtml(){
+  var m = S.me;
+  if (!m) return S.meErr ? '<div class="card"><p class="err">' + esc(S.meErr) + '</p><button type="button" class="btn" data-a="reload">' + т('Повторить') + '</button></div>' : '<p class="empty">' + т('Загружаю…') + '</p>';
+  if (!m.tg) return '<div class="card"><h2>' + т('Нужен вход через Telegram') + '</h2><p class="note">' + т('Специалисту нужен Telegram: клиенты подключаются к вам в приложении. Войдите через Telegram.') + '</p><div class="btns"><button type="button" class="btn prim" data-a="out">' + т('Войти заново') + '</button></div></div>';
+  return !m.pro.length || S.правка ? формаHtml() : статусHtml();
+}
+function шапкаКто(){
+  var w = document.getElementById('who'); if (!w) return;
+  w.innerHTML = S.tok && S.me ? '<span>' + esc(S.me.name || '') + '</span>' + (S.confirm === 'all'
+    ? '<button type="button" class="btn small danger" data-a="outall">' + т('Выйти на всех компьютерах') + '</button><button type="button" class="btn small" data-a="no">' + т('Нет') + '</button>'
+    : '<button type="button" class="btn small" data-a="out">' + т('Выйти из аккаунта') + '</button><button type="button" class="btn small" data-a="ask">' + т('На всех компьютерах') + '</button>') : '';
+}
+function полеФормы(){
+  var v = function(id){ var e = document.getElementById(id); return e ? e.value : null; }, f = S.f;
+  if (v('f-name') != null) { f.name = v('f-name'); f.about = v('f-about'); f.contact = v('f-contact'); }
+  var a = document.getElementById('f-adult'); if (a) f.adult = a.checked;
+  var к = document.querySelectorAll('[data-kind]'); if (к.length) f.kinds = Array.prototype.filter.call(к, function(x){ return x.checked && !x.disabled; }).map(function(x){ return x.dataset.kind; });
+}
+function рисовать(){
+  полеФормы();
+  document.title = 'Wellböl · ' + т('для специалистов');
+  document.getElementById('ttl').textContent = т('для специалистов');
+  Array.prototype.forEach.call(document.querySelectorAll('#langs button'), function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang)); });
+  document.getElementById('app').innerHTML = S.tok ? страницаHtml() : входHtml();
+  шапкаКто(); минуты();
+}
+
+/* ── фото документа: уменьшаем на устройстве до 1600 px, JPEG ── */
+function сжать(file){
+  return new Promise(function(ok, no){
+    var r = new FileReader();
+    r.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var к = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * к); c.height = Math.round(img.height * к);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var q = 0.85, b = c.toDataURL('image/jpeg', q).split(',')[1];
+        while (b.length > 880000 && q > 0.4) { q -= 0.15; b = c.toDataURL('image/jpeg', q).split(',')[1]; }
+        ok({ b64: b, mime: 'image/jpeg' });
+      };
+      img.onerror = function(){ no(new Error(т('Это не похоже на фото.'))); };
+      img.src = r.result;
+    };
+    r.onerror = function(){ no(new Error(т('Не удалось прочитать файл.'))); };
+    r.readAsDataURL(file);
+  });
+}
+function копировать(v){
+  var ok = function(){ всплыть(т('Скопировано')); };
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(v).then(ok, function(){ всплыть(v); });
+  всплыть(v);
+}
+function действие(b){
+  var a = b.dataset.a;
+  if (a === 'relogin') return входНачать();
+  if (a === 'reload') return загрузить();
+  if (a === 'edit') { S.правка = true; return рисовать(); }
+  if (a === 'editno') { S.правка = false; S.f.docs = []; S.f.err = ''; return загрузить(); }
+  if (a === 'docdel') { полеФормы(); S.f.docs.splice(+b.dataset.i, 1); return рисовать(); }
+  if (a === 'copy') return копировать(b.dataset.v);
+  if (a === 'qr') {
+    var svg = qrSvg(b.dataset.v, 12); if (!svg) return;
+    var url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' })), с = document.createElement('a');
+    с.href = url; с.download = 'wellbol-qr.svg'; document.body.appendChild(с); с.click(); с.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    return;
+  }
+  if (a === 'ask') { S.confirm = 'all'; return рисовать(); }
+  if (a === 'no') { S.confirm = ''; return рисовать(); }
+  if (a === 'out' || a === 'outall') {
+    b.disabled = true;
+    return api('POST', '/web/logout', a === 'outall' ? { all: true } : {}).then(function(){ S.confirm = ''; сброс(''); }, function(){ сброс(''); });
+  }
+  if (a === 'send') {
+    полеФормы(); var f = S.f;
+    if (!f.kinds.length) { f.err = т('Кем вы работаете: тренер или нутрициолог?'); return рисовать(); }
+    if (!S.me.ageKnown && !f.adult) { f.err = т('Подтвердите, что вам есть 18 лет.'); return рисовать(); }
+    f.busy = true; f.err = ''; рисовать();
+    return api('POST', '/web/pro/apply', { kinds: f.kinds, name: f.name, about: f.about, contact: f.contact, adult: S.me.ageKnown ? undefined : f.adult === true, docs: f.docs })
+      .then(function(r){ f.busy = false; f.docs = []; S.правка = false; S.me = r; всплыть(т('Заявка отправлена')); рисовать(); window.scrollTo(0, 0); })
+      .catch(function(e){ f.busy = false; f.err = e.message; рисовать(); });
+  }
+}
+document.addEventListener('click', function(e){
+  var l = e.target.closest('#langs button'); if (l) return язык(l.dataset.lang);
+  var b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
+  действие(b);
+});
+document.addEventListener('change', function(e){
+  if (e.target.id !== 'f-docs' || !e.target.files) return;
+  полеФормы();
+  var m = S.me, места = Math.max(0, (m.maxDocs || 3) - (m.pro.length ? m.pro[0].docs : 0) - S.f.docs.length);
+  var файлы = Array.prototype.slice.call(e.target.files, 0, места);
+  Promise.all(файлы.map(сжать)).then(function(a){ S.f.docs = S.f.docs.concat(a); S.f.err = ''; рисовать(); })
+    .catch(function(er){ S.f.err = er.message; рисовать(); });
+});
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && S.tok && S.me && !S.правка && S.me.pro.length) загрузить(); });
+
+язык(S.lang);
+if (S.tok) загрузить(); else входНачать();
+</script>
+</body>
+</html>

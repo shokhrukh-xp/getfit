@@ -51,7 +51,8 @@ const ИСХОДНИК = fs.existsSync(path.join(ROOT, 'getfit-tg.html')) ? 'get
 const ФАЙЛЫ = new Map();
 const положить = (url, файл) => { try { ФАЙЛЫ.set(url, fs.readFileSync(файл)); } catch (e) {} };
 положить('/index.html', path.join(ROOT, ИСХОДНИК));
-положить('/kabinet/index.html', path.join(ROOT, 'kabinet', 'index.html'));   /* 30.10: кабинет компании в браузере */
+/* 30.10: кабинет компании в браузере; этап 6г — страницы для компаний и специалистов, /kabinet/ ведёт на /business/ */
+for (const п of ['kabinet', 'business', 'experts']) положить('/' + п + '/index.html', path.join(ROOT, п, 'index.html'));
 положить('/catalog.json', path.join(ROOT, 'catalog.json'));
 положить('/tech.json', path.join(ROOT, 'tech.json'));          /* 24.09: техника упражнений */
 const из = (папка, rx, куда) => { try { fs.readdirSync(папка).filter(f => rx.test(f)).forEach(f => положить(куда + f, path.join(папка, f))); } catch (e) {} };
@@ -68,7 +69,7 @@ const ТИПЫ = { '.js': 'text/javascript; charset=utf-8', '.wasm': 'applicatio
 const сервер = http.createServer((req, res) => {
   let u = decodeURIComponent(req.url.split('?')[0]);
   if (u === '/' || u === '') u = '/index.html';
-  if (u === '/kabinet/' || u === '/kabinet') u = '/kabinet/index.html';
+  if (/^\/(kabinet|business|experts)\/?$/.test(u)) u = u.replace(/\/?$/, '/index.html');
   const тело = ФАЙЛЫ.get(u);
   if (!тело) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'Content-Type': ТИПЫ[path.extname(u)] || 'application/octet-stream', 'Content-Length': тело.length });

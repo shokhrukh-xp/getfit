@@ -4521,6 +4521,10 @@ img.avface{border-radius:50%;object-fit:cover}
 input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-width:0}
 /* 29.10, роли: второй замок — без функции roli новое не видно, даже если код ошибётся */
 body:not([data-f~="roli"]) .f-roli{display:none!important}
+/* 30.10, этап 6г: строки ролей в профиле — только тем, кого касаются (.pqrow ниже по файлу задаёт display) */
+#pq-rolilab.hide,#pq-roli.hide,#pq-roli .pqrow.hide{display:none!important}
+.roldocs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.roldocs img{width:96px;height:96px;object-fit:cover;border-radius:10px;background:var(--track)}
 .rolcard{background:var(--surface);border-radius:16px;padding:14px;margin:0 0 12px}
 /* 30.10, роли, этап 6: компания */
 .rolfld select,.korow select{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
@@ -5275,11 +5279,11 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       </div>
 
       <!-- 29.10, роли, этап 2а: только при функции roli (CSS .f-roli и ЕСТЬ('roli')) -->
-      <h4 class="pqlab f-roli">Специалисты</h4>
-      <div class="pqgroup f-roli">
-        <button type="button" class="pqrow" data-pp="rolspec" id="pq-spec"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"/></svg></span><span class="pqt"><b>Мои специалисты</b><small>тренер, нутрициолог</small></span><span class="pqv" id="pv-spec"></span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" data-pp="rolpro" id="pq-pro"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M7.5 17.5c.9-1.8 2.6-2.8 4.5-2.8s3.6 1 4.5 2.8"/></svg></span><span class="pqt"><b>Я специалист</b><small>вести клиентов</small></span><span class="pqv" id="pv-pro"></span><i class="pqch">›</i></button>
-        <button type="button" class="pqrow" data-pp="rolco" id="pq-co"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="11" height="18" rx="1.5"/><path d="M15 9h4a1 1 0 0 1 1 1v11h-5M8 7h3M8 11h3M8 15h3M10 21v-3"/></svg></span><span class="pqt"><b>Компания</b><small>челленджи, кабинет</small></span><span class="pqv" id="pv-co"></span><i class="pqch">›</i></button>
+      <h4 class="pqlab f-roli hide" id="pq-rolilab">Специалисты</h4>
+      <div class="pqgroup f-roli hide" id="pq-roli">
+        <button type="button" class="pqrow hide" data-pp="rolspec" id="pq-spec"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.8.8 3 2.6 3 5.2"/></svg></span><span class="pqt"><b>Мои специалисты</b><small>тренер, нутрициолог</small></span><span class="pqv" id="pv-spec"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow hide" data-pp="rolpro" id="pq-pro"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><circle cx="12" cy="10" r="3"/><path d="M7.5 17.5c.9-1.8 2.6-2.8 4.5-2.8s3.6 1 4.5 2.8"/></svg></span><span class="pqt"><b>Кабинет специалиста</b><small>клиенты, программы, переписка</small></span><span class="pqv" id="pv-pro"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow hide" data-pp="rolco" id="pq-co"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="11" height="18" rx="1.5"/><path d="M15 9h4a1 1 0 0 1 1 1v11h-5M8 7h3M8 11h3M8 15h3M10 21v-3"/></svg></span><span class="pqt"><b>Компания</b><small>челленджи, кабинет</small></span><span class="pqv" id="pv-co"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab">Приложение</h4>
@@ -5344,7 +5348,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <h4 class="pqlab">Кто смотрел</h4>
       <div id="rollog"></div>
     </section>
-    <section class="pqpage f-roli" data-pp="rolpro" data-title="Я специалист" hidden>
+    <section class="pqpage f-roli" data-pp="rolpro" data-title="Кабинет специалиста" hidden>
       <div id="rolpro"></div>
     </section>
     <section class="pqpage f-roli" data-pp="rolco" data-title="Компания" hidden>
@@ -18479,11 +18483,31 @@ function ролиЗагрузить(){
   return Promise.all([fGet('/roli/me?uid=' + u), fGet('/roli/log?uid=' + u)]).then(function(a){
     ROLI.busy = false;
     if (!a[0] || !a[0].ok) throw new Error((a[0] && a[0].error) || 'нет ответа');
-    ROLI.me = a[0]; ROLI.log = (a[1] && a[1].ok) ? a[1].log : []; ролиРисовать(); ролиЧатПоСсылке();
+    ROLI.me = a[0]; ROLI.log = (a[1] && a[1].ok) ? a[1].log : []; ролиРисовать(); ролиЧатПоСсылке(); ролиОткрытьКабинет();
     if (ROLI.me.pro.some(function(x){ return x.kind === 'trainer' && x.status === 'ok'; })) ролиУпрЗагрузить();
   }).catch(function(e){ ROLI.busy = false; ROLI.err = 'Не удалось загрузить: ' + humanErr(e); ролиРисовать(); });
 }
+/* 30.10, этап 6г — его слова: «приложение должно быть только для пользователей. тренеры и нутрициологи должны
+   регистрироваться как-то иначе. Я не хочу путать пользователей». Заявок в приложении больше нет (страницы
+   wellbol.app/experts/ и /business/), а строки в профиле видит только тот, кого они касаются: «Мои специалисты» —
+   кто подключён к специалисту (или ему прислали программу, норму), «Кабинет специалиста» — принятому специалисту,
+   «Компания» — сотруднику и команде компании. */
+function ролиСтрокиВидно(){
+  var m = ROLI.me, k = (typeof КОМП !== 'undefined' && КОМП) ? КОМП.me : null;
+  var spec = !!(m && (m.my.length || m.offer || m.normOffer || m.norm || (ROLI.log || []).length));
+  var pro = !!(m && m.pro.some(function(x){ return x.status === 'ok'; }));
+  var co = !!(k && (k.member || (k.team || []).length));
+  var по = function(id, on){ var e = document.getElementById(id); if (e) e.classList.toggle('hide', !on); };
+  по('pq-spec', spec); по('pq-pro', pro); по('pq-co', co); по('pq-roli', spec || pro || co); по('pq-rolilab', spec || pro || co);
+  var лаб = document.getElementById('pq-rolilab'); if (лаб) лаб.textContent = co && !spec && !pro ? 'Компания' : 'Специалисты';
+}
+/* из сообщения бота «Заявка принята» (?pp=rolpro) — сразу в кабинет специалиста */
+function ролиОткрытьКабинет(){
+  if (ROLI.открыть !== 'rolpro' || !ROLI.me || !ROLI.me.pro.some(function(x){ return x.status === 'ok'; })) return;
+  ROLI.открыть = ''; try { openProf('rolpro'); } catch (e) {}
+}
 function ролиСтрокиПрофиля(){
+  ролиСтрокиВидно();
   var m = ROLI.me, мои = m ? m.my.length : 0;
   var новых = m ? m.my.reduce(function(a, l){ return a + (l.unread || 0); }, 0) : 0;
   var vs = document.getElementById('pv-spec'); if (vs) vs.textContent = m ? (новых ? новых + ' ' + plural(новых, ['новое', 'новых', 'новых']) : мои ? мои + ' ' + plural(мои, ['подключён', 'подключено', 'подключено']) : 'нет') : '';
@@ -18529,15 +18553,8 @@ function ролиРисовать(){
   ролиАдмРисовать();
 }
 function ролиПроHtml(m){
-  if (!m.pro.length) {
-    var f = ROLI.form;
-    return '<p class="pqlead">Тренер или нутрициолог ведёт клиентов в Wellböl: видит только то, что клиент открыл. Заявку проверяем вручную, специалистом — с 18 лет.</p>' +
-      '<div class="pf pfv"><span class="pfl">кто вы</span><div class="seg" id="rol-kind">' + segHtml('rolkind', [['trainer', 'Тренер'], ['nutri', 'Нутрициолог']], f.kind) + '</div></div>' +
-      '<label class="rolfld">Как вас подписывать<input id="rol-name" type="text" maxlength="60" autocomplete="name" value="' + ролиА(f.name || '') + '"></label>' +
-      '<label class="rolfld">О себе — опыт, где работаете<textarea id="rol-about" maxlength="500" rows="3">' + esc(f.about || '') + '</textarea></label>' +
-      (f.err ? '<p class="rolerr">' + esc(f.err) + '</p>' : '') +
-      '<button type="button" class="btn wide prim" data-rol="apply"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Отправляю…' : 'Отправить заявку') + '</button>';
-  }
+  /* этап 6г: заявка — на сайте, сюда принятый специалист попадает из профиля или из сообщения бота */
+  if (!m.pro.length) return '<p class="pqlead">Заявки тренеров и нутрициологов принимаем на сайте wellbol.app/experts</p>';
   return m.pro.map(function(p){
     var шапка = '<div class="rolhd"><b>' + esc(p.name) + '</b><span>' + esc(РОЛИ_ВИД[p.kind] || p.kind) + ' · ' + esc(РОЛИ_ЗНАЧ[p.status] || p.status) + '</span></div>';
     if (p.status === 'pending') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка на проверке. Как примем — здесь появится ссылка для клиентов.</p></div>';
@@ -19127,6 +19144,9 @@ function ролиАдмРисовать(){
     var к = function(st, t, cls){ return '<button type="button" class="btn small' + (cls ? ' ' + cls : '') + '" data-rol="adm" data-who="' + ролиА(p.uid) + '" data-kind="' + p.kind + '" data-st="' + st + '">' + t + '</button>'; };
     return '<div class="rolcard"><div class="rolhd"><b>' + esc(p.name) + '</b><span>' + esc(РОЛИ_ВИД[p.kind] || p.kind) + ' · ' + esc(РОЛИ_ЗНАЧ[p.status] || p.status) + '</span></div>' +
       (p.about ? '<p class="rolnote">' + esc(p.about) + '</p>' : '') +
+      (p.contact ? '<p class="rolnote"><span>Контакт:</span> ' + esc(p.contact) + '</p>' : '') +
+      (p.adult ? '<p class="rolnote">18+ — со слов, возраста в профиле нет</p>' : '') +
+      ((p.docs || []).length ? '<div class="roldocs">' + p.docs.map(function(k){ return '<img ' + photoAttr(SYNCURL + '/photo?key=' + encodeURIComponent(k), false, true) + ' alt="документ" loading="lazy">'; }).join('') + '</div>' : '') +
       '<div class="rolbtns">' + (p.status === 'ok' ? к('off', 'Выключить', 'danger') : p.status === 'off' ? к('ok', 'Принять', 'prim') : к('ok', 'Принять', 'prim') + к('off', 'Отклонить', '')) + '</div></div>';
   }).join('');
 }
@@ -19137,7 +19157,14 @@ function ролиАдмРешить(who, kind, st, b){
 }
 document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#profboss')) ролиАдм(); });
 /* после /sub: функции известны — подхватить ссылку специалиста и цифры в строках профиля */
-function ролиПоказ(){ if (!ЕСТЬ('roli')) return; ролиПоСсылке(); if (!ROLI.me && !ROLI.busy) ролиЗагрузить(); компПоСсылке(); if (!КОМП.me && !КОМП.busy) компЗагрузить(); }
+function ролиПоказ(){ if (!ЕСТЬ('roli')) return;
+  if (ROLI.открыть == null) {
+    var pp = ''; try { pp = new URLSearchParams(location.search).get('pp') || ''; } catch (e) {}
+    ROLI.открыть = pp === 'rolpro' ? 'rolpro' : '';
+    if (pp) { try { var u = new URL(location.href); u.searchParams.delete('pp'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {} }
+    ролиОткрытьКабинет();
+  }
+  ролиПоСсылке(); if (!ROLI.me && !ROLI.busy) ролиЗагрузить(); компПоСсылке(); if (!КОМП.me && !КОМП.busy) компЗагрузить(); }
 /* ══════════ РОЛИ, ЭТАП 6 (30.10): компания, пилот ══════════
    Его выбор «Компания, пилот». Сотруднику — «Компания» в профиле: челленджи со
    своим прогрессом (его видит только он) и выход. Команде компании — кабинет:
@@ -19180,12 +19207,14 @@ function компРисовать(){
   компСнятьПоля();
   var m = КОМП.me, v = document.getElementById('pv-co');
   if (v) v.textContent = !m ? '' : m.member ? m.member.name : m.team.length ? m.team[0].name : '';
+  ролиСтрокиВидно();
   var b = document.getElementById('rolco');
   if (b) {
     var ошибка = КОМП.err ? '<p class="rolerr">' + esc(КОМП.err) + ' <button type="button" class="btn small" data-ko="reload">Повторить</button></p>' : '';
     if (!m) b.innerHTML = ошибка || '<p class="empt">Загружаю…</p>';
     else {
-      var сотр = '<h4 class="pqlab">Я сотрудник</h4>' + компСотрудникHtml(m), каб = '<h4 class="pqlab">Кабинет компании</h4>' + (m.team.length ? m.team.map(компКабинетHtml).join('') : компЗаявкаHtml());
+      /* этап 6г: заявка компании — на странице wellbol.app/business/; здесь — сотрудник и команда */
+      var сотр = m.member || !m.team.length ? '<h4 class="pqlab">Я сотрудник</h4>' + компСотрудникHtml(m) : '', каб = m.team.length ? '<h4 class="pqlab">Кабинет компании</h4>' + m.team.map(компКабинетHtml).join('') : '';
       /* 30.10, этап 6б: кабинет в браузере — ссылка и входы с компьютера, только команде */
       if (m.team.length) каб += компВебHtml(m);
       b.innerHTML = ошибка + (m.team.length && !m.member ? каб + сотр : сотр + каб);
@@ -19194,7 +19223,7 @@ function компРисовать(){
   компАдмРисовать();
 }
 function компВебHtml(m){
-  var url = ''; try { url = new URL('kabinet/', location.href).href.split('#')[0]; } catch (e) {}
+  var url = ''; try { url = new URL('business/', location.href).href.split('#')[0]; } catch (e) {}
   return '<h4 class="pqlab">С компьютера</h4><div class="rolcard"><p class="rolnote">Кабинет компании в браузере: откройте ссылку на компьютере и войдите, наведя этот телефон на QR-код.</p>' +
     '<div class="invcode"><input type="text" readonly value="' + ролиА(url) + '" aria-label="ссылка на кабинет"><button type="button" class="btn small prim" data-ko="share" data-what="web" data-url="' + ролиА(url) + '">Отправить</button></div>' +
     (!m.web ? '' : '<p class="rolnote">Входов с компьютера: ' + m.web + '</p>' + (КОМП.сменить === 'web'
@@ -19225,14 +19254,6 @@ function компСотрудникHtml(m){
     }).join('') : '<p class="empt">Челленджей пока нет.</p>') +
     (КОМП.уйти ? '<div class="rolend"><span>Выйти из компании? Из её челленджей — тоже.</span><button type="button" class="btn small danger" data-ko="leave">Выйти</button><button type="button" class="btn small" data-ko="leaveno">Нет</button></div>'
       : '<div class="rolbtns"><button type="button" class="btn small rolendb" data-ko="leaveask">Выйти из компании</button></div>') + '</div>';
-}
-function компЗаявкаHtml(){
-  var f = КОМП.form;
-  return '<p class="pqlead">Компания зовёт сотрудников и запускает челленджи. Личных данных сотрудников она не видит — только общие цифры по группе от 10 человек. Заявку проверяем вручную.</p>' +
-    '<label class="rolfld">Название компании<input id="ko-name" type="text" maxlength="80" autocomplete="organization" value="' + ролиА(f.name || '') + '"></label>' +
-    '<label class="rolfld">Пара слов о компании — чем занимается, сколько людей<textarea id="ko-about" maxlength="300" rows="2">' + esc(f.about || '') + '</textarea></label>' +
-    (f.err ? '<p class="rolerr">' + esc(f.err) + '</p>' : '') +
-    '<button type="button" class="btn wide prim" data-ko="apply"' + (f.busy ? ' disabled' : '') + '>' + (f.busy ? 'Отправляю…' : 'Отправить заявку') + '</button>';
 }
 function компНеделяHtml(w){
   var шапка = '<h5>' + компДата(w.week) + ' – ' + компДата(компПлюс(w.week, 6)) + '</h5>';
@@ -19406,6 +19427,9 @@ function компАдмРисовать(){
     var к = function(st, t, cls){ return '<button type="button" class="btn small' + (cls ? ' ' + cls : '') + '" data-ko="adm" data-id="' + ролиА(c.id) + '" data-st="' + st + '">' + t + '</button>'; };
     return '<div class="rolcard"><div class="rolhd"><b>' + esc(c.name) + '</b><span>' + esc(КОМП_СТАТУС[c.status] || c.status) + '</span></div>' +
       (c.about ? '<p class="rolnote">' + esc(c.about) + '</p>' : '') +
+      (c.site ? '<p class="rolnote"><span>Сайт:</span> ' + esc(c.site) + '</p>' : '') +
+      (c.contact ? '<p class="rolnote"><span>Контакт:</span> ' + esc(c.contact) + '</p>' : '') +
+      (c.size ? '<p class="rolnote"><span>Сотрудников:</span> ' + esc(c.size) + '</p>' : '') +
       '<p class="rolnote"><span>Завёл:</span> ' + esc(c.byName || c.by) + ' · <span>сотрудников: ' + c.members + '</span></p>' +
       '<div class="rolbtns">' + (c.status === 'ok' ? к('off', 'Выключить', 'danger') : c.status === 'off' ? к('ok', 'Включить', 'prim') : к('ok', 'Принять', 'prim') + к('off', 'Отклонить', '')) + '</div></div>';
   }).join('');

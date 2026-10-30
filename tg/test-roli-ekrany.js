@@ -5,7 +5,7 @@
    этапа; (2) по ссылке из бота (?pro=КОД) — лист с текстом согласия от сервера,
    подключение уходит с версией согласия; (3) «Мои специалисты»: что открыто,
    переключатели, «Отключить» с подтверждением, «Кто смотрел»; (4) «Я
-   специалист»: заявка, ссылка, клиенты и карточка клиента; (5) заявки в
+   специалист» (с 30.10 «Кабинет специалиста», только принятому): ссылка, клиенты и карточка клиента; (5) заявки в
    Админ панели; всё — на 320 и 390, в обеих темах, без вылезания и с контрастом. */
 const { chromium } = require('playwright'), M = require('./mock'), { opts } = require('./shot-clean'), bounds = require('./viewport-check'), contrast = require('./contrast-check');
 let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ  ') + t); if (!c) bad++; };
@@ -129,24 +129,35 @@ async function проверить(p, где, имя, sel){
     ok(!err.length, где + 'клиент: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
 
-    /* 4. специалист: заявка → ссылка и клиенты → карточка */
+    /* 4. этап 6г (его слова: «приложение должно быть только для пользователей»): заявки в приложении нет —
+       обычному пользователю ни «Специалистов», ни «Компании»; на проверке — тоже ничего; принят — «Кабинет специалиста» */
+    const p0 = await b.newPage({ viewport: { width, height: 760 } });
+    const s0 = сервер(), o0 = opts(theme); o0.features = ['roli']; o0.roli = s0.обработчик;
+    const err0 = await M.поднять(p0, o0); await p0.waitForTimeout(600);
+    await p0.click('#profbtn'); await p0.waitForTimeout(300);
+    const гр2 = await p0.$$eval('#pqmain .pqlab', ns => ns.filter(n => n.offsetParent).map(n => n.textContent.trim()));
+    ok(гр2.join('|') === 'О вас|Тренер|Зал|Друзья|Приложение', где + 'обычному пользователю — ни «Специалистов», ни «Компании»: ' + гр2.join(' · '));
+    ok(!(await виден(p0, '#pq-spec')) && !(await виден(p0, '#pq-pro')) && !(await виден(p0, '#pq-co')), где + 'строк ролей не видно');
+    ok(!err0.length, где + 'обычный пользователь: без ошибок страницы ' + err0.join(' | ').slice(0, 200));
+    await p0.close();
+    const sП = сервер({ pro: [{ kind: 'nutri', name: 'Нигора', status: 'pending', code: null }] }), pП = await b.newPage({ viewport: { width, height: 760 } });
+    const oП = opts(theme); oП.features = ['roli']; oП.roli = sП.обработчик; await M.поднять(pП, oП); await pП.waitForTimeout(600);
+    await pП.click('#profbtn'); await pП.waitForTimeout(300);
+    ok(!(await виден(pП, '#pq-pro')) && !(await виден(pП, '#pq-roli')), где + 'заявка на проверке — кабинета в приложении ещё нет');
+    await pП.close();
+    const s2 = сервер({ pro: [{ kind: 'trainer', name: 'Тимур Ахмедов', status: 'ok', code: 'TSTRNR01', link: 'https://t.me/WellbolTestBot?start=s_TSTRNR01' }],
+      clients: [{ id: 'l1', kind: 'trainer', client: '777', name: 'Карина', cats: ['gym', 'body'] }] });
+    const o2 = opts(theme); o2.features = ['roli']; o2.roli = s2.обработчик; o2.base = M.БАЗА + '?pp=rolpro';
     const p2 = await b.newPage({ viewport: { width, height: 760 } });
-    const s2 = сервер(), o2 = opts(theme); o2.features = ['roli']; o2.roli = s2.обработчик;
-    const err2 = await M.поднять(p2, o2); await p2.waitForTimeout(400);
-    await p2.click('#profbtn'); await p2.waitForTimeout(300);
-    await p2.click('#pq-pro'); await p2.waitForSelector('#rol-name', { timeout: 3000 }).catch(() => {});
-    await проверить(p2, где, 'заявка специалиста', '#profm');
-    await p2.click('#rol-kind button[data-v="nutri"]'); await p2.fill('#rol-name', 'Нигора'); await p2.fill('#rol-about', 'Нутрициолог, 5 лет');
-    await p2.click('#rolpro [data-rol="apply"]'); await p2.waitForTimeout(400);
-    const a = s2.запросы.find(x => x.p.endsWith('/roli/pro/apply'));
-    ok(a && a.тело.kind === 'nutri' && a.тело.name === 'Нигора' && a.тело.about === 'Нутрициолог, 5 лет', где + 'заявка уходит как заполнена: ' + JSON.stringify(a && a.тело));
-    ok(/на проверке/.test(await p2.$eval('#rolpro', e => e.textContent)), где + 'после заявки — «на проверке»');
-    s2.pro = [{ kind: 'trainer', name: 'Тимур Ахмедов', status: 'ok', code: 'TSTRNR01', link: 'https://t.me/WellbolTestBot?start=s_TSTRNR01' }];
-    s2.clients = [{ id: 'l1', kind: 'trainer', client: '777', name: 'Карина', cats: ['gym', 'body'] }];
-    await p2.click('#pqback'); await p2.waitForTimeout(200); await p2.click('#pq-pro'); await p2.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
+    const err2 = await M.поднять(p2, o2); await p2.waitForTimeout(800);
+    ok(await виден(p2, '#rolpro') && !/[?&]pp=/.test(await p2.evaluate(() => location.search)), где + 'из сообщения «Заявка принята» (?pp=rolpro) — сразу кабинет специалиста');
+    await p2.click('#pqback'); await p2.waitForTimeout(300);
+    ok(await виден(p2, '#pq-pro') && /Кабинет специалиста/.test(await p2.$eval('#pq-pro', e => e.textContent)), где + 'принятому — «Кабинет специалиста»');
+    ok(!(await виден(p2, '#pq-spec')) && !(await виден(p2, '#pq-co')), где + 'остальные строки — нет (он не клиент и не в компании)');
+    await p2.click('#pq-pro'); await p2.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
     ok(await p2.$eval('#rolpro .invcode input', e => e.value) === 'https://t.me/WellbolTestBot?start=s_TSTRNR01', где + 'ссылка для клиентов — от сервера');
     ok(/1 клиент/.test(await p2.$eval('#pv-pro', e => e.textContent)), где + 'справа в строке — сколько клиентов');
-    await проверить(p2, где, 'Я специалист', '#profm');
+    await проверить(p2, где, 'Кабинет специалиста', '#profm');
     await p2.click('#rolpro [data-rol="card"]'); await p2.waitForFunction(() => /79,5 кг/.test((document.getElementById('rolcbody') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
     ok(await виден(p2, '#rolcm'), где + 'карточка клиента открылась');
     const к = s2.запросы.find(x => x.p.endsWith('/roli/client'));
@@ -515,7 +526,7 @@ async function проверить(p, где, имя, sel){
     await p.waitForSelector('#rolco .kostat', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(300);
     const т = await p.$eval('#rolco', e => e.textContent);
     ok(/Присоединились: 12/.test(т) && /Меньше 10 человек — не показываем/.test(т) && /Активны 3 дня и больше50%/.test(т) && /Шагов в день7500/.test(т) && /Дней с записанной едой3,5/.test(т), где + 'цифры недель: от 10, округлённо, «мало» — без цифр');
-    ok(т.indexOf('Кабинет компании') < т.indexOf('Я сотрудник'), где + 'у команды без своей компании — кабинет первым');
+    ok(т.indexOf('Кабинет компании') >= 0 && т.indexOf('Я сотрудник') < 0, где + 'у команды, которая сама не участвует, — только кабинет (этап 6г: без пустого «Я сотрудник»)');
     await p.click('#rolco [data-ko="chnew"]'); await p.waitForSelector('#ko-title', { timeout: 2000 }).catch(() => {});
     await p.fill('#ko-title', 'Октябрь в движении'); await p.selectOption('#ko-metric', 'workouts'); await p.fill('#ko-target', '8'); await p.fill('#ko-days', '14');
     await проверить(p, где, 'форма челленджа', '#rolco');
@@ -527,7 +538,7 @@ async function проверить(p, где, имя, sel){
     await p.selectOption('#rolco select[data-who="m1"]', 'observer'); await p.waitForTimeout(400);
     ok(s.coКоманда && s.coКоманда.who === 'm1' && s.coКоманда.role === 'observer', где + 'смена роли ушла: ' + JSON.stringify(s.coКоманда));
     ok(!(await p.$('#rolco [data-ko="rm"][data-who="1"]')), где + 'себя убрать нельзя — кнопки нет');
-    ok(/Входов с компьютера: 2/.test(await p.$eval('#rolco', e => e.textContent)) && await p.$eval('#rolco input[aria-label="ссылка на кабинет"]', e => /\/kabinet\/$/.test(e.value)), где + '«С компьютера»: ссылка на кабинет и число входов');
+    ok(/Входов с компьютера: 2/.test(await p.$eval('#rolco', e => e.textContent)) && await p.$eval('#rolco input[aria-label="ссылка на кабинет"]', e => /\/business\/$/.test(e.value)), где + '«С компьютера»: ссылка на кабинет и число входов');
     await p.click('#rolco [data-ko="webask"]'); await p.waitForTimeout(150);
     ok(!s.coВебВыход, где + 'завершить входы — только после подтверждения');
     await p.click('#rolco [data-ko="webend"]'); await p.waitForTimeout(500);
@@ -538,15 +549,17 @@ async function проверить(p, где, имя, sel){
   }
   {
     const p = await b.newPage({ viewport: { width: 390, height: 820 } });
-    const s = сервер(), o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
-    const err = await M.поднять(p, o); await p.waitForTimeout(300);
-    await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-co');
-    await p.waitForSelector('#ko-name', { timeout: 3000 }).catch(() => {});
-    await p.fill('#ko-name', 'Гамма'); await p.fill('#ko-about', 'Логистика, 60 человек');
-    await p.click('#rolco [data-ko="apply"]'); await p.waitForTimeout(500);
-    ok(s.coЗаявка && s.coЗаявка.name === 'Гамма' && s.coЗаявка.about === 'Логистика, 60 человек', 'заявка компании ушла: ' + JSON.stringify(s.coЗаявка));
-    ok(/Заявка на проверке/.test(await p.$eval('#rolco', e => e.textContent)), 'заявка компании: «на проверке»');
-    ok(!err.length, 'заявка компании: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    /* этап 6г: заявка компании — на странице wellbol.app/business/; в приложении у человека без компании пункта нет,
+       у подавшего заявку (команда, на проверке) — есть, с «на проверке» и без формы */
+    const s = сервер({ coTeam: [{ id: 'c9', name: 'Гамма', status: 'pending', role: 'admin' }] }), o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
+    const err = await M.поднять(p, o); await p.waitForTimeout(600);
+    await p.click('#profbtn'); await p.waitForTimeout(300);
+    ok(await виден(p, '#pq-co') && (await p.$$eval('#pqmain .pqlab', ns => ns.filter(n => n.offsetParent).map(n => n.textContent.trim()))).includes('Компания'), 'подал заявку на странице — строка «Компания» под заголовком «Компания»');
+    await p.click('#pq-co'); await p.waitForTimeout(400);
+    const тк = await p.$eval('#rolco', e => e.textContent);
+    ok(/Заявка на проверке/.test(тк) && !(await p.$('#ko-name')) && !/Я сотрудник/.test(тк), 'на проверке — без формы и без «Я сотрудник»: ' + тк.slice(0, 120));
+    ok(!s.запросы.some(x => x.p.endsWith('/roli/co/apply')), 'из приложения заявку не шлём');
+    ok(!err.length, 'компания на проверке: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
   }
   /* 17. этап 6 на английском и узбекском: страница «Компания» и лист без кириллицы (кроме названий и текста сервера) */
@@ -587,12 +600,15 @@ async function проверить(p, где, имя, sel){
   /* 5. владелец: заявки в Админ панели */
   {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
-    const s = сервер({ adm: [{ uid: 't9', kind: 'trainer', name: 'Олег', about: 'кроссфит', status: 'pending' }] });
+    const s = сервер({ adm: [{ uid: 't9', kind: 'trainer', name: 'Олег', about: 'кроссфит', status: 'pending', contact: '+998 90 111 22 33', adult: 1, docs: ['docphoto0001', 'docphoto0002'] }] });
     const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик; o.admin = { про: [], промо: [] };
     const err = await M.поднять(p, o); await p.waitForTimeout(400);
     await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#profboss');
     await p.waitForSelector('#roladmlist [data-rol="adm"]', { timeout: 4000 }).catch(() => {});
     ok(/Олег/.test(await p.$eval('#roladmlist', e => e.textContent)), 'админ: заявка видна');
+    /* этап 6г: заявка со страницы /experts/ — контакт, 18+ со слов, фото документов */
+    const ат = await p.$eval('#roladmlist', e => e.textContent);
+    ok(/Контакт: \+998 90 111 22 33/.test(ат) && /18\+ — со слов/.test(ат) && (await p.$$('#roladmlist .roldocs img')).length === 2, 'админ: контакт, 18+ со слов, два фото документа');
     await p.click('#roladmlist [data-st="ok"]'); await p.waitForTimeout(400);
     const r = s.запросы.find(x => x.p.endsWith('/admin/roli') && x.метод === 'POST');
     ok(r && r.тело.who === 't9' && r.тело.status === 'ok' && r.тело.kind === 'trainer', 'админ: «Принять» — специалист в who: ' + JSON.stringify(r && r.тело));

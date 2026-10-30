@@ -1,6 +1,6 @@
 'use strict';
 /* 30.10, роли — этап 6б (его «хорошо, делай» на «кабинет компании в браузере»):
-   страница wellbol.app/kabinet/. Проверяется: (1) вход по QR — код, ожидание,
+   страница wellbol.app/kabinet/ (с 30.10, этап 6г — /business/, с заявкой компании). Проверяется: (1) вход по QR — код, ожидание,
    «подтвердите в Telegram», токен сохраняется и уходит заголовком Authorization;
    (2) кабинет: цифры недель таблицей («—» для групп меньше 10), челлендж из
    формы, смена роли, ссылка в команду, копирование; (3) сессия кончилась —
@@ -9,7 +9,7 @@
    вылезания и с контрастом. */
 const { chromium } = require('playwright'), M = require('./mock'), bounds = require('./viewport-check'), contrast = require('./contrast-check');
 let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ  ') + t); if (!c) bad++; };
-const АДРЕС = M.БАЗА + 'kabinet/';
+const АДРЕС = M.БАЗА + 'business/';   /* 30.10, этап 6г: кабинет переехал с /kabinet/ */
 const Д = n => M.Д(n);
 function сервер(нач){
   const s = Object.assign({ опрос: 0, запросы: [] }, нач);
@@ -34,6 +34,9 @@ function сервер(нач){
     else if (u.pathname === '/web/co/invite-mail') { s.позвал = тело; b = { ok: true, email: тело.email, role: тело.role }; }
     else if (u.pathname === '/web/co/mailing') { s.рассылка = тело; (s.mailings = s.mailings || []).unshift({ id: 'm1', created: Date.now(), total: тело.emails.length, queued: тело.emails.length, sent: тело.emails.length, failed: 0, dup: 0, status: 'done' }); b = { ok: true, id: 'm1', total: тело.emails.length, queued: тело.emails.length, dup: 0, invalid: [] }; }
     else if (u.pathname === '/web/co/mailings') b = { ok: true, mailings: s.mailings || [], max: 2000, dayLimit: 80, sentToday: 12 };
+    else if (u.pathname === '/web/co/apply') { s.заявка = тело; b = { ok: true, co: { id: 'c9', name: тело.name, status: 'pending' } }; }
+    else if (u.pathname === '/web/me' && s.безКоманды) b = { ok: true, name: 'Азиз', ageKnown: false, adult: false, sizes: ['до 50', '50–250', '250–1000', 'больше 1000'], min: 10,
+      team: s.заявка ? [{ id: 'c9', name: s.заявка.name, status: 'pending', role: 'admin' }] : [] };
     else if (u.pathname === '/web/me') b = { ok: true, name: 'Азиз', email: s.email || '', min: 10, team: [{ id: 'c1', name: 'Альфа Банк', status: 'ok', role: 'admin' }, { id: 'c2', name: 'Бета', status: 'pending', role: 'admin' }] };
     else if (u.pathname === '/web/co/card') b = s.card;
     else if (u.pathname === '/web/co/invite') b = { ok: true, role: тело.role, link: 'https://t.me/WellbolTestBot?start=c_TEAMCODE01' };
@@ -160,6 +163,37 @@ async function проверить(p, где, имя){
     ok(в && в.тело && в.тело.all === true && await x.p.$('.qr svg') !== null, 'выйти на всех компьютерах: запрос и снова вход');
     await x.ctx.close();
   }
+  /* этап 6г: страница для компаний — вступление на входе, заявка компании вместо «вы не в команде», старый /kabinet/ ведёт сюда */
+  for (const [w, тема] of [[1280, 'light'], [390, 'dark']]) {
+    const где = w + ' ' + тема + ': ';
+    const x = await открыть(b, w, тема, { послеОпросов: 99 });
+    await x.p.waitForSelector('.qr svg', { timeout: 5000 }).catch(() => {});
+    ok(/Wellböl для компаний/.test(await x.p.textContent('main')) && /от 10 человек/.test(await x.p.textContent('main')), где + 'вход: вступление для компаний');
+    ok((x.s.запросы.find(q => q.p === '/web/login' && q.м === 'POST') || {}).тело.for === 'business', где + 'код входа — для страницы компаний');
+    await проверить(x.p, где, 'вход со вступлением');
+    await x.ctx.close();
+    const { ctx, p, s, err } = await открыть(b, w, тема, { безКоманды: true }, 'wb_' + 'f'.repeat(48));
+    await p.waitForSelector('#c-name', { timeout: 5000 }).catch(() => {});
+    ok(/Заявка компании/.test(await p.textContent('main')) && await p.$('#c-adult') !== null, где + 'не в команде — форма заявки, 18+ — галочкой (возраста нет)');
+    ok(await p.$$eval('#c-size option', o => o.map(x => x.value).join('|')) === '|до 50|50–250|250–1000|больше 1000', где + 'размер — из ответа сервера');
+    await проверить(p, где, 'заявка компании');
+    await p.fill('#c-name', 'Банк Бета'); await p.fill('#c-site', 'beta.uz'); await p.fill('#c-about', 'Банк'); await p.fill('#c-contact', 'hr@beta.uz'); await p.selectOption('#c-size', '250–1000');
+    await p.click('[data-a="coapply"]'); await p.waitForTimeout(200);
+    ok(!s.заявка && /Подтвердите, что вам есть 18 лет/.test(await p.textContent('main')), где + 'без галочки 18+ — не отправляем');
+    ok(await p.$eval('#c-name', e => e.value) === 'Банк Бета', где + 'набранное не теряется');
+    await p.check('#c-adult'); await p.click('[data-a="coapply"]'); await p.waitForTimeout(500);
+    ok(s.заявка && s.заявка.name === 'Банк Бета' && s.заявка.site === 'beta.uz' && s.заявка.contact === 'hr@beta.uz' && s.заявка.size === '250–1000' && s.заявка.adult === true, где + 'заявка ушла как заполнена: ' + JSON.stringify(s.заявка));
+    ok(/Заявка на проверке/.test(await p.textContent('main')) && /Ответ придёт в Telegram/.test(await p.textContent('main')), где + 'после заявки — «на проверке», ответ в Telegram');
+    ok(!err.length, где + 'заявка: без ошибок страницы ' + err.join(' | ').slice(0, 200));
+    await ctx.close();
+  }
+  {
+    const ctx = await b.newContext(), p = await ctx.newPage();
+    await ctx.route('https://api.wellbol.com/**', сервер().обработчик);
+    await p.goto(M.БАЗА + 'kabinet/?invite=ABCDEFGH23'); await p.waitForURL(/\/business\/\?invite=ABCDEFGH23$/, { timeout: 5000 }).catch(() => {});
+    ok(/\/business\/\?invite=ABCDEFGH23$/.test(p.url()), 'старый адрес /kabinet/ ведёт на /business/ с приглашением: ' + p.url());
+    await ctx.close();
+  }
   /* английский и узбекский: без кириллицы, кроме названий компаний и имён */
   for (const яз of ['en', 'uz']) {
     const { ctx, p, err } = await открыть(b, 1280, 'light', { lang: яз }, 'wb_' + 'd'.repeat(48));
@@ -179,6 +213,15 @@ async function проверить(p, где, имя){
     await x.p.waitForSelector('[data-a="how"][data-v="mail"]', { timeout: 5000 }).catch(() => {}); await x.p.click('[data-a="how"][data-v="mail"]'); await x.p.waitForTimeout(200);
     const кир3 = await x.p.evaluate(() => { const out = [], w = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const t = n.nodeValue.trim(); if (t && /[А-Яа-яЁё]/.test(t)) out.push(t); } return out; });
     ok(!кир3.length, яз + ': вход по почте без кириллицы: ' + кир3.join(' | '));
+    await x.p.click('[data-a="how"][data-v="qr"]'); await x.p.waitForTimeout(300);
+    /* «Войти» в кавычках — это надпись кнопки в боте, бот пишет по-русски (перевод рядом в скобках) */
+    const кир4 = await x.p.evaluate(() => { const out = [], w = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const t = n.nodeValue.trim(); if (t && /[А-Яа-яЁё]/.test(t.replace(/[«“]Войти[»”]/g, ''))) out.push(t); } return out; });
+    ok(!кир4.length, яз + ': вступление и вход по QR без кириллицы: ' + кир4.join(' | '));
+    const з = await открыть(b, 1280, 'light', { lang: яз, безКоманды: true }, 'wb_' + 'f'.repeat(48));
+    await з.p.waitForSelector('#c-name', { timeout: 5000 }).catch(() => {}); await з.p.waitForTimeout(400);
+    const кир5 = await з.p.evaluate(() => { const out = [], w = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const t = n.nodeValue.trim(); if (t && /[А-Яа-яЁё]/.test(t)) out.push(t); } return out; });
+    ok(!кир5.length, яз + ': заявка компании без кириллицы: ' + кир5.join(' | '));
+    await з.ctx.close();
     ok(!err.length && !x.err.length, яз + ': без ошибок страницы ' + err.concat(x.err).join(' | ').slice(0, 200));
     await x.ctx.close();
   }
