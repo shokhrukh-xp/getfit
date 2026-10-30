@@ -3245,6 +3245,12 @@ body.nogym .l1-in{grid-template-columns:repeat(3,minmax(0,1fr))}
 #coachnav.attn::after{content:'';position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:999px;background:var(--warn);border:2px solid var(--surface)}
 body.coach #coachnav{pointer-events:none}
 body.onb .top,body.onb .l1,body.onb .wrap{visibility:hidden}
+/* 30.10: пока сервер не ответил, есть ли у человека данные, — только это, без анкеты */
+#cloudwait:not([hidden]){position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--bg);color:var(--muted);font-size:15px}
+#cloudwait .cwdot{width:8px;height:8px;border-radius:99px;background:var(--accent);animation:cwpulse 1s ease-in-out infinite alternate}
+@keyframes cwpulse{from{opacity:.25}to{opacity:1}}
+.nomo #cloudwait .cwdot{animation:none}
+@media (prefers-reduced-motion:reduce){#cloudwait .cwdot{animation:none}}
 .hbtime rect{fill:var(--surface);stroke:var(--line);stroke-width:1}
 .hbtime text{fill:var(--text);font-size:var(--badge-font,12px);font-weight:700;text-anchor:middle;font-variant-numeric:tabular-nums}
 .hbtime.hbplan text{fill:var(--muted);font-weight:500}
@@ -4739,6 +4745,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
     <p class="gerr" id="gerr"></p>
   </div>
 </div>
+<div id="cloudwait" role="status" aria-live="polite" hidden><span class="cwdot" aria-hidden="true"></span><span>Загружаю ваши данные…</span></div>
 <div class="modal" id="picker" role="dialog" aria-modal="true" aria-labelledby="picktitle">
   <div class="modalbox">
     <!-- 24.10 Wellböl: шапка бренда — только при самом первом входе, на шаге «что будем вести» -->
@@ -7781,8 +7788,32 @@ function showPicker(first){
   if(firstRun) document.body.classList.add('onb');
 }
 function hidePicker(){
+  облакоЖдатьСнять();
   var el=document.getElementById('picker'); if(el) el.classList.remove('show');
   document.body.classList.remove('onb');
+}
+/* 30.10, его слова: «Я когда вхожу с личного аккаунта, у меня уже который раз открывается
+   страница с самого начала — выбор, что отслеживать… Я уже подумал, что все мои данные
+   сбросились». На устройстве без своих данных (новый адрес wellbol.app, почищенное хранилище
+   Telegram) анкета открывалась сразу, ДО ответа сервера, и висела, пока не приедут профиль и
+   программа. Теперь сначала «Загружаю ваши данные…», и только если на сервере профиля нет —
+   знакомство. Сервер молчит 12 с — знакомство, как раньше. */
+var ОБЛАКО_ЖДЁМ=false, облакоТаймер=0;
+function облакоЖдатьСнять(){ ОБЛАКО_ЖДЁМ=false; clearTimeout(облакоТаймер); var w=document.getElementById('cloudwait'); if(w) w.hidden=true; }
+function облакоЖдать(){
+  ОБЛАКО_ЖДЁМ=true; document.body.classList.add('onb');
+  var w=document.getElementById('cloudwait'); if(w) w.hidden=false;
+  облакоТаймер=setTimeout(function(){ облакоОтветило(); }, 12000);
+  setTimeout(function(){ cloudPull(true).then(облакоОтветило, облакоОтветило); }, 0);
+}
+function облакоОтветило(){
+  if(!ОБЛАКО_ЖДЁМ) return;
+  облакоЖдатьСнять();
+  /* программу и указатель на неё сервер применил сам (hidePicker) — сюда не дойдём. «Только
+     еда» без указателя программы на сервере (такие есть с сентября): анкета заполнена — приложение */
+  var me=myData()||{};
+  if(me.only==='food' && meFull()){ hidePicker(); applyProfile(PROFILES[gget('profile',null)] ? gget('profile',null) : 'shp'); return; }
+  showPicker(true);
 }
 function choose(p, новая){
   /* 17.10, его выбор «Смена программы посреди недели»: когда человек САМ сменил
@@ -22141,7 +22172,8 @@ if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
 else {
   /* Программу применяем молча, чтобы приложению было что рисовать, когда из
      облака приедет профиль, но за окном знакомства её не видно (body.onb). */
-  applyProfile('shp', true); showPicker(true);
+  applyProfile('shp', true);
+  if(TG && TG.initData) облакоЖдать(); else showPicker(true);
 }
 settingsRemember('me',{me:myData()||{}});
 settingsRemember('sched',{s:GYM_DAYS,p:profile});
