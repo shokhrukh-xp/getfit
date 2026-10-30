@@ -58,7 +58,7 @@ var ДАШ_МЕРЫ = [
   { k: 'active', t: 'Активны 3 дня в неделю и больше', fmt: function(v){ return Math.round(v) + '%'; }, min: 0, max: 100 },
   { k: 'score', t: 'Оценка питания, из 10', fmt: function(v){ return дашЧ(v, 1); }, min: 0, max: 10, span: 2 },
   { k: 'steps', t: 'Шагов в день', fmt: дашШаги, min: 0, span: 2000 },
-  { k: 'sleep', t: 'Сон, часов', fmt: function(v){ return дашЧ(v, 2); }, span: 1 },
+  { k: 'sleep', t: 'Сон, часов', fmt: function(v){ return дашЧ(v, 2); }, min: 5, max: 9 },
   { k: 'workouts', t: 'Тренировок в неделю на человека', fmt: function(v){ return дашЧ(v, 1); }, min: 0, span: 1 },
   { k: 'foodDays', t: 'Дней с записанной едой', fmt: function(v){ return дашЧ(v, 1); }, min: 0, max: 7 }];
 function дашHtml(t, c){
