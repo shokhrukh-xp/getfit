@@ -375,6 +375,9 @@ body.nogym .gymonly{display:none!important}
    оставались от снятого заголовка и читались как пустая полоса */
 .page > .sec:first-child{margin-top:0}
 .zseg + .todaybar{padding-top:2px}
+/* 30.10, эталон экранов перед выпуском ролей: скрытый #roloffer встал между .zseg и .todaybar —
+   правило выше перестало срабатывать, у всех (роли выключены) над датой в «Зале» был лишний отступ 18 px */
+.zseg + #roloffer:empty + .todaybar, body:not([data-f~="roli"]) .zseg + #roloffer + .todaybar{padding-top:2px}
 
 /* ── Главная «Сегодня» ──
    Один экран отвечает на три вопроса: что делать сейчас, как идёт день и где
