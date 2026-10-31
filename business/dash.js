@@ -72,7 +72,7 @@ function дашHtml(t, c){
   var плитка = function(v, подпись, доп){ return '<div class="tile"><b>' + v + '</b><span>' + подпись + '</span>' + (доп || '') + '</div>'; };
   var плитки = '<div class="tiles dtiles">' +
     плитка(String((w[w.length - 1] || {}).members || c.members || 0), т('в программе')) +
-    плитка(последн ? последн.active + '%' : '—', т('активны 3+ дня в неделю'), дельта('active', function(v){ return Math.round(v) + ' п.п.'; })) +
+    плитка(последн ? последн.active + '%' : '—', т('активны 3+ дня в неделю'), дельта('active', function(v){ return Math.round(v) + ' ' + т('п.п.'); })) +
     плитка(последн && последн.score != null ? дашЧ(последн.score, 1) : '—', т('оценка питания из 10'), дельта('score', function(v){ return дашЧ(v, 1); })) +
     плитка(последн ? дашШаги(последн.steps) : '—', т('шагов в день'), дельта('steps', дашШаги)) + '</div>';
   var ряд = function(k){ return w.map(function(x){ return { l: дата(x.week), v: x.ok ? x[k] : null }; }); };
