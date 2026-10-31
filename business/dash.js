@@ -81,7 +81,7 @@ function дашHtml(t, c){
     ДАШ_МЕРЫ.map(function(м){ return '<figure class="dfig"><figcaption>' + т(м.t) + '</figcaption>' + дашЛиния(ряд(м.k), { fmt: м.fmt, min: м.min, max: м.max, span: м.span, label: т(м.t) }) + '</figure>'; }).join('') + '</div>';
   var чел = (д.ch || []).length ? '<h3 class="dh3">' + т('Челленджи') + '</h3><div class="dch-list">' + д.ch.map(function(ch){
     var г = ch.group || {};
-    return '<div class="dchrow"><div><b>' + esc(ch.title) + '</b><small>' + esc(мера(ch.metric)) + ' · ' + т('цель {0}', число(ch.target)) + ' · ' + esc(дата(ch.start)) + ' – ' + esc(дата(ch.end)) + '</small></div>' +
+    return '<div class="dchrow"><div><b>' + esc(ch.title) + '</b><small>' + esc(мера(ch.metric)) + ' · ' + т('цель {0}', дашШаги(ch.target)) + ' · ' + esc(дата(ch.start)) + ' – ' + esc(дата(ch.end)) + '</small></div>' +
       (г.few || г.done == null ? '<span class="note">' + т('меньше {0} участников — не показываем', 10) + '</span>' :
         '<div class="dprog"><span style="width:' + Math.max(2, г.avg) + '%"></span></div><small>' + т('в среднем пройдено {0}%', г.avg) + ' · ' + т('дошли {0}%', г.done) + (г.n ? ' · ' + т('участников {0}', г.n) : '') + '</small>') + '</div>';
   }).join('') + '</div>' : '';
