@@ -5251,6 +5251,147 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
 <script>
 (function(){
 'use strict';
+/* ── Слой платформы ──
+   31.10: Wellböl выходит отдельным приложением в App Store и Google Play (его решение
+   31.10: Capacitor, вход Telegram + Apple + почта, «Открыть везде к выпуску»). Всё, что
+   раньше брали прямо у Telegram WebApp (кто открыл, подпись для сервера, окна, отклик,
+   «назад», ссылки, цвет шапки), идёт через ПЛ. Три режима:
+   telegram — мини-апп, ровно как раньше (методы Telegram зовём в момент вызова: перевод
+             интерфейса и проверки подменяют их на лету);
+   native   — приложение из магазина (Capacitor): вход по сессии Wellböl, плагины Capacitor;
+   web      — обычный браузер: то, что умеет браузер (как было вне Telegram).
+   В Telegram поведение не меняется — это условие (29.10: «ничего не сломать из того,
+   что уже работает»). */
+var ПЛ=(function(){
+  var w=(window.Telegram&&window.Telegram.WebApp)||null;
+  var cap=window.Capacitor||null;
+  var родное=false;
+  try{ родное=!!(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform()); }catch(e){}
+  function вTelegram(){ return !!(w&&w.initData); }
+  /* прежний путь: всё, кроме приложения из магазина, зовёт Telegram WebApp при тех же
+     условиях, что и до 31.10 (TG && TG.метод) — в браузере тоже, как было */
+  var ТГ=null;
+  var имя=вTelegram()?'telegram':(родное?'native':'web');
+  ТГ=(имя!=='native')?w:null;
+  try{ document.documentElement.setAttribute('data-platforma', имя);   /* не data-pl: так помечены строки круга */ }catch(e){}
+  function плагин(n){ try{ return (родное&&cap.Plugins&&cap.Plugins[n])||null; }catch(e){ return null; } }
+  function тихо(p){ try{ if(p&&typeof p.catch==='function') p.catch(function(){}); }catch(e){} }
+  /* Сессия приложения: сервер выдаёт её после входа (Telegram, Apple, почта) —
+     {token, user:{id, first_name, last_name, username, language_code}}. id — uid Wellböl:
+     у тех, кто вошёл через Telegram, это тот же Telegram id, что в мини-аппе, — дневник один. */
+  var СЕССИЯ='wb_session';
+  function сессия(){
+    if(имя!=='native') return null;
+    try{ var s=JSON.parse(localStorage.getItem(СЕССИЯ)||'null');
+      return (s&&s.token&&s.user&&s.user.id)?s:null; }catch(e){ return null; }
+  }
+  function пользователь(){
+    if(w&&w.initDataUnsafe&&w.initDataUnsafe.user) return w.initDataUnsafe.user;
+    var s=сессия(); return s?s.user:null;
+  }
+  var назадФ=null, назадВкл=false, назадСлушает=false;
+  return {
+    имя:имя,
+    tg:w,
+    вTelegram:вTelegram,
+    пользователь:пользователь,
+    сессия:сессия,
+    сессияЗапомнить:function(s){ try{ if(s) localStorage.setItem(СЕССИЯ, JSON.stringify(s)); else localStorage.removeItem(СЕССИЯ); }catch(e){} },
+    /* вошёл ли человек так, что сервер его узнает: подпись Telegram или сессия приложения */
+    естьВход:function(){ return вTelegram() || !!сессия(); },
+    /* заголовки входа для сервера: Telegram — подпись initData, приложение — сессия */
+    заголовки:function(h){
+      h=h||{};
+      if(вTelegram()) h['x-tg-init']=w.initData;
+      else { var s=сессия(); if(s) h['x-wb-session']=s.token; }
+      return h;
+    },
+    сообщить:function(t){
+      try{ if(ТГ&&ТГ.showAlert){ ТГ.showAlert(t); return; } }catch(e){}
+      try{ alert(t); }catch(e){}
+    },
+    спросить:function(t, cb){
+      if(ТГ&&ТГ.showConfirm){ ТГ.showConfirm(t, cb); return; }
+      cb(window.confirm(t));
+    },
+    /* тактильная отдача: light/medium/heavy/rigid/soft, ok, err */
+    отклик:function(kind){
+      try{
+        if(ТГ){ if(!ТГ.HapticFeedback) return;
+          if(kind==='ok') ТГ.HapticFeedback.notificationOccurred('success');
+          else if(kind==='err') ТГ.HapticFeedback.notificationOccurred('error');
+          else ТГ.HapticFeedback.impactOccurred(kind||'light');
+          return;
+        }
+        var h=плагин('Haptics'); if(!h) return;
+        if(kind==='ok') тихо(h.notification({type:'SUCCESS'}));
+        else if(kind==='err') тихо(h.notification({type:'ERROR'}));
+        else тихо(h.impact({style:({medium:'MEDIUM',heavy:'HEAVY',rigid:'HEAVY'})[kind]||'LIGHT'}));
+      }catch(e){}
+    },
+    /* внешняя ссылка (сайт, меню заведения): Telegram — своим браузером, приложение —
+       системным браузером поверх (плагин Browser), браузер — новой вкладкой */
+    открыть:function(u){
+      try{ if(ТГ&&ТГ.openLink){ ТГ.openLink(u); return; } }catch(e){}
+      var b=плагин('Browser'); if(b){ тихо(b.open({url:u})); return; }
+      try{ window.open(u,'_blank','noopener'); }catch(e){}
+    },
+    /* ссылка t.me (бот, «поделиться»): в Telegram — внутри Telegram, иначе — снаружи */
+    открытьTelegram:function(u){
+      if(ТГ&&ТГ.openTelegramLink){ ТГ.openTelegramLink(u); return; }
+      var b=плагин('Browser'); if(b){ тихо(b.open({url:u})); return; }
+      window.open(u,'_blank');
+    },
+    /* тема: Telegram говорит сам; иначе null — берём настройку системы */
+    тема:function(){ return (ТГ&&ТГ.colorScheme)?(ТГ.colorScheme==='dark'?'dark':'light'):null; },
+    цветШапки:function(bg, тёмная){
+      try{
+        if(ТГ){ if(ТГ.setHeaderColor) ТГ.setHeaderColor(bg); if(ТГ.setBackgroundColor) ТГ.setBackgroundColor(bg); return; }
+        var sb=плагин('StatusBar'); if(!sb) return;
+        тихо(sb.setStyle({style:тёмная?'DARK':'LIGHT'}));
+        if(sb.setBackgroundColor) тихо(sb.setBackgroundColor({color:bg}));
+      }catch(e){}
+    },
+    наСменуТемы:function(f){ try{ if(ТГ&&ТГ.onEvent) ТГ.onEvent('themeChanged', f); }catch(e){} },
+    /* запуск: Telegram — на весь экран, без свайп-закрытия; приложение — кнопка «назад» Android */
+    старт:function(){
+      if(ТГ){
+        try{
+          ТГ.ready(); ТГ.expand();
+          if(ТГ.disableVerticalSwipes) ТГ.disableVerticalSwipes();   /* иначе скролл списка закрывает окно */
+          /* «Изменения могут не сохраниться» — только пока они правда не сохранены:
+             включается при первом касании, выключается, как только запись ушла */
+          if(ТГ.disableClosingConfirmation) ТГ.disableClosingConfirmation();
+        }catch(e){}
+        return;
+      }
+      var app=плагин('App'); if(!app||назадСлушает) return; назадСлушает=true;
+      /* Android «назад»: шаг назад в приложении, а на главной — свернуть, как обычные приложения */
+      тихо(app.addListener('backButton', function(){
+        if(назадВкл&&назадФ){ назадФ(); return; }
+        if(app.minimizeApp) тихо(app.minimizeApp());
+      }));
+    },
+    охранаЗакрытия:function(on){
+      try{ if(!ТГ) return;
+        if(on){ if(ТГ.enableClosingConfirmation) ТГ.enableClosingConfirmation(); }
+        else if(ТГ.disableClosingConfirmation) ТГ.disableClosingConfirmation(); }catch(e){}
+    },
+    /* «назад»: f — что делает шаг назад, on — есть ли куда. Telegram — стрелка в шапке
+       (подписка один раз, показать/спрятать); приложение — системная «назад» Android
+       (см. старт), на iOS — жест с края (его даёт свой экран, не система). */
+    назад:function(f, on, первый){
+      if(ТГ){ var bb=ТГ.BackButton; if(!bb) return;
+        if(первый) bb.onClick(f);
+        if(on) bb.show(); else bb.hide();
+        return;
+      }
+      назадФ=f; назадВкл=!!on;
+    },
+    /* оплата Stars — только в Telegram; в приложении Pro продаётся покупкой магазина (этап 3) */
+    оплатаStars:function(){ return (ТГ&&ТГ.openInvoice)?ТГ:null; }
+  };
+})();
 /* 22.10, дизайн-аудит (его выбор «Глубокая полировка», пакет А): значки —
    одного рисунка SVG вместо текстовых ▼ ▶ ⚙ 📷 ↗, которые в разных шрифтах
    выглядят по-разному и отрываются от подписи на 320. */
@@ -7954,7 +8095,7 @@ function goalPull(strict, accept, signal){
       if(d.deload && d.deload.on && d.deload.from && gget('deload_srv',null)!==d.deload.from){
         gset('deload_srv', d.deload.from);
         var manual=(gget('deload_user',{}).by||{})[profile];
-        if(!deloadOn() && !(manual && manual.from>=d.deload.from)){ setDeload(true,{from:d.deload.from}); paintNote(''); try{ TG && TG.showAlert && TG.showAlert('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
+        if(!deloadOn() && !(manual && manual.from>=d.deload.from)){ setDeload(true,{from:d.deload.from}); paintNote(''); try{ ПЛ.сообщить('Тренер включил лёгкую неделю: '+(d.deload.why||'веса падали два занятия подряд')+'. Половина подходов, те же веса.'); }catch(e){} }
       }
       if(d.goal && d.goal.text) takeGoal(d.goal, d.progress);
       else { var g=gget('goal',null); if(strict)gset('goal',null);else if(g){ gset('goal', Object.assign({}, g, {progress:d.progress||g.progress||null})); } }
@@ -9326,10 +9467,9 @@ function назадЦель(){
 function назад(){ var f=назадЦель(); if(f){ f(); haptic('light'); } назадОбновить(); }
 var BBON=null, BBREG=false;
 function назадОбновить(){
-  try{ var bb=TG&&TG.BackButton; if(!bb) return;
-    if(!BBREG){ bb.onClick(назад); BBREG=true; }
-    var on=!!назадЦель(); if(on===BBON) return; BBON=on;
-    if(on) bb.show(); else bb.hide();
+  try{ var первый=!BBREG; BBREG=true;
+    var on=!!назадЦель(); if(on===BBON && !первый) return; BBON=on;
+    ПЛ.назад(назад, on, первый);
   }catch(e){}
 }
 (function(){
@@ -9878,7 +10018,7 @@ var BUILD = '31.10 13:44';
    никому (облако восстановит). */
 var LSNS = (function(){
   var id='';
-  try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user;
+  try{ var u=ПЛ.пользователь();
        if(u&&u.id) id=String(u.id); }catch(e){}
   /* 30.10 (аудит): тестовая копия wellbol.app/test/ — тот же адрес, значит та же память
      телефона. Очередь правок, метки и эпоха дневника были общими с рабочей: правки уходили
@@ -9940,7 +10080,7 @@ var ЯЗ_ТОК=new RegExp('(\\d{1,2})[ \\u00a0](' + ЯЗ_МЕС.join('|') + ')|
 var ЯЗ_АТР=['placeholder','title','aria-label','alt'];
 function языкАвто(){
   var c='';
-  try{ var w=window.Telegram&&window.Telegram.WebApp, u=w&&w.initDataUnsafe&&w.initDataUnsafe.user; c=String((u&&u.language_code)||''); }catch(e){}
+  try{ var u=ПЛ.пользователь(); c=String((u&&u.language_code)||''); }catch(e){}
   try{ var q=localStorage.getItem('gf_lang_tg'); if(q) c=q; }catch(e){}   /* стенд проверок */
   c=c.toLowerCase().slice(0,2);
   if(c==='uz') return 'uz';
@@ -11910,14 +12050,16 @@ document.getElementById('list').addEventListener('change', function(ev){
    Зеркало в localStorage: если Telegram недоступен (открыли в браузере),
    приложение продолжает работать локально. */
 
-var TG = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-var CS = (TG && TG.CloudStorage && typeof TG.CloudStorage.setItem === 'function') ? TG.CloudStorage : null;
+var TG = ПЛ.tg;   /* 31.10: сам Telegram WebApp; вызывать — через ПЛ */
+/* 31.10: в приложении из магазина облака Telegram нет (скрипт мини-аппа может загрузиться,
+   но хранилище там не наше) — только сервер и память телефона */
+var CS = (ПЛ.имя!=='native' && TG && TG.CloudStorage && typeof TG.CloudStorage.setItem === 'function') ? TG.CloudStorage : null;
 var STORENAME = CS ? 'в Telegram' : 'на телефоне';
 /* Telegram сам говорит, кто открыл приложение — спрашивать имя не нужно.
    initDataUnsafe нельзя доверять для авторизации (подпись проверяется только
    на сервере, а его у нас нет), но для выбора программы это и не требуется:
    подделывать тут нечего, данные у каждого свои. */
-var TGUSER = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user) ? TG.initDataUnsafe.user : null;
+var TGUSER = ПЛ.пользователь();   /* 31.10: в приложении из магазина — пользователь сессии */
 function whoName(){
   if(!TGUSER) return '';
   return (TGUSER.first_name||'') + (TGUSER.last_name ? ' '+TGUSER.last_name : '');
@@ -12106,7 +12248,7 @@ function ensureDataSession(force){
   if(DATASESSION.blocked)return Promise.reject(new Error('Дневник обновляется после сброса.'));
   if(force || DATASESSION.uid!==uid){DATASESSION.promise=null;DATASESSION.uid=uid;}
   if(!DATASESSION.promise){
-    var headers={};if(TG && TG.initData)headers['x-tg-init']=TG.initData;var tz0=поясТелефона();if(tz0)headers['x-tz']=tz0;
+    var headers=ПЛ.заголовки({});var tz0=поясТелефона();if(tz0)headers['x-tz']=tz0;
     DATASESSION.promise=fetch(SYNCURL+'/session?uid='+encodeURIComponent(uid),{headers:headers,cache:'no-store'})
       .then(function(r){return r.json().then(function(d){
         if(!r.ok){if(d.code==='auth'||d.code==='stale'||d.code==='invite')gateShow(d.code,d.error);throw new Error(d.error||'Не удалось проверить дневник.');}
@@ -12121,8 +12263,7 @@ function поясТелефона(){ try { return Intl.DateTimeFormat().resolved
 function tgFetch(url, opts){
   opts = opts || {};
   var h = Object.assign({}, opts.headers || {});
-  var init = (TG && TG.initData) ? TG.initData : '';
-  if (init) h['x-tg-init'] = init;
+  ПЛ.заголовки(h);
   var tz = поясТелефона(); if (tz) h['x-tz'] = tz;
   opts.headers = h;
   var entering=new URL(url,location.href).pathname==='/join';
@@ -12654,7 +12795,7 @@ function workResolve(id){
     workStore(uid,s);cloudPull(true);
   };
   var text='Тренировка '+id.slice(0,10)+': оставить версию с этого устройства? Отмена — принять серверную версию. Резервная копия локальной правки останется на этом устройстве.';
-  if(TG && TG.showConfirm)TG.showConfirm(text,choose);else choose(window.confirm(text));
+  ПЛ.спросить(text,choose);
 }
 function fetchCloudSnapshot(){
   var data=null,seen={};
@@ -12945,10 +13086,7 @@ var PROFKEY=sessionNamespace()+'app_profile';
 /* ── тактильная отдача Telegram ── */
 function haptic(kind){
   try{
-    if(!TG || !TG.HapticFeedback) return;
-    if(kind==='ok')       TG.HapticFeedback.notificationOccurred('success');
-    else if(kind==='err') TG.HapticFeedback.notificationOccurred('error');
-    else                  TG.HapticFeedback.impactOccurred(kind||'light');
+    ПЛ.отклик(kind);
   }catch(e){}
 }
 
@@ -13444,7 +13582,7 @@ function errBeacon(where, m){
     /* 29.10: открыто не из Telegram (сканеры нового домена wellbol.app, превью ссылок) —
        сервер честно отвечает «Откройте приложение через Telegram». Это не сбой у человека,
        в Wellbol Ops не шлём: 15:16–15:33 так пришли 9 ложных тревог */
-    if(!(typeof TG!=='undefined' && TG && TG.initData) && !window.__errBeacon) return;
+    if(!ПЛ.естьВход() && !window.__errBeacon) return;
     var key=String(where)+'|'+m.slice(0,120); if(ERR_SENT[key] || ERR_N>=10) return;
     ERR_SENT[key]=1; ERR_N++;
     var body=JSON.stringify({m:m.slice(0,300), w:String(where||'').slice(0,40), b:BUILD});
@@ -14823,7 +14961,7 @@ function nextGymDay(){
    палитру. Шапка Telegram и theme-color получают вычисленный --bg нашей темы. */
 /* Telegram меняет colorScheme; themeParams не меняют фон и текст карточек. */
 function themeNow(){
-  if(TG && TG.colorScheme) return TG.colorScheme==='dark' ? 'dark' : 'light';
+  var тг=ПЛ.тема(); if(тг) return тг;
   try{ return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }catch(e){ return 'dark'; }
 }
 function applyTheme(){
@@ -14833,29 +14971,17 @@ function applyTheme(){
   var bg=getComputedStyle(root).getPropertyValue('--bg').trim();
   var m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',bg);
   try{
-    if(TG && TG.setHeaderColor)     TG.setHeaderColor(bg);
-    if(TG && TG.setBackgroundColor) TG.setBackgroundColor(bg);
+    ПЛ.цветШапки(bg, t==='dark');
   }catch(e){}
 }
 applyTheme();
-try{ if(TG && TG.onEvent) TG.onEvent('themeChanged', applyTheme); }catch(e){}
-try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if(!(TG&&TG.colorScheme)) applyTheme(); }); }catch(e){}
+ПЛ.наСменуТемы(applyTheme);
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(){ if(!ПЛ.тема()) applyTheme(); }); }catch(e){}
 
 /* ── Telegram WebApp: разворачиваем на весь экран и глушим свайп-закрытие ── */
-if(TG){
-  try{
-    TG.ready();
-    TG.expand();
-    if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();   /* иначе скролл списка закрывает окно */
-    /* «Изменения могут не сохраниться» — только пока они правда не сохранены:
-       включается при первом касании, выключается, как только запись ушла */
-    if(TG.disableClosingConfirmation) TG.disableClosingConfirmation();
-  }catch(e){}
-}
+ПЛ.старт();   /* 31.10: Telegram — на весь экран без свайп-закрытия; приложение — «назад» Android */
 function guardClose(on){
-  try{ if(!TG) return;
-    if(on){ if(TG.enableClosingConfirmation) TG.enableClosingConfirmation(); }
-    else if(TG.disableClosingConfirmation) TG.disableClosingConfirmation(); }catch(e){}
+  ПЛ.охранаЗакрытия(on);
 }
 /* ── «Изменения могут не сохраниться» — ровно когда это правда ──
    16.09 человек увидел этот вопрос на полностью сохранённом дне и, разумно,
@@ -17538,7 +17664,7 @@ function renderHome(){
   var box=document.getElementById('homebody'); if(!box) return;
   box.addEventListener('click', function(e){
     if(e.target.closest('#hbot')){
-      if(TG && TG.openTelegramLink) TG.openTelegramLink(BOTLINK); else window.open(BOTLINK,'_blank');
+      ПЛ.открытьTelegram(BOTLINK);
       haptic('medium'); return;
     }
     /* 06.10: раскрытый кружок дуги (hbxOpen) */
@@ -17577,7 +17703,7 @@ var CIRC=null, CIRCID=gget('circle','') || '', DAYSC=null, CIRCRULES=false;
    «10,0» (24.09): идеальный приём с хвостом «,0» читается как недоделанный. */
 function fmtR(x){ if(x==null) return '—'; var r=Math.round(x*10)/10; return r>=10 ? '10' : r.toFixed(1).replace('.',','); }
 function whyText(w){ return (w&&w.length) ? w.map(function(x){ return x.t+(x.v!=null?' (−'+fmtR(x.v)+')':''); }).join('; ') : 'всё в норме'; }
-function say(msg){ try{ if(TG && TG.showAlert){ TG.showAlert(msg); return; } }catch(e){} try{ alert(msg); }catch(e){} }
+function say(msg){ ПЛ.сообщить(msg); }
 var CIRCACHE={}, CIRCERROR=false, CIRCBUSY=false, CIRCGEN=0;
 function circlePull(id){
   if(id!=null) CIRCID=id;
@@ -18012,7 +18138,7 @@ function shareCircle(c){
   if(!c) return;
   var text='Приглашаю в Wellböl — тренер в Telegram, круг «'+c.name+'». Код: '+c.code;
   var u='https://t.me/share/url?url='+encodeURIComponent(c.link||'https://t.me/WellbolBot')+'&text='+encodeURIComponent(text);
-  if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
+  ПЛ.открытьTelegram(u);
   haptic('light');
 }
 function circleShare(id){
@@ -18358,7 +18484,7 @@ document.getElementById('probox').addEventListener('click', function(e){
     if(!PRO.last) return;
     var text='Дарю тебе Pro в Wellböl — тренер прямо в Telegram, бесплатно '+proСрок(PRO.last.days)+'. Заходи по ссылке.';
     var u='https://t.me/share/url?url='+encodeURIComponent(PRO.last.link)+'&text='+encodeURIComponent(text);
-    if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
+    ПЛ.открытьTelegram(u);
     haptic('light'); return; }
 });
 function renderSub(){
@@ -18448,8 +18574,8 @@ document.addEventListener('click', function(e){
   if(m && m.classList.contains('show') && e.target===m){ closeSub(); return; }
   if(e.target.closest('#sub-buy')){
     if(SUBBUSY || !SUB || !SUB.link) return;
-    var tg=window.Telegram&&window.Telegram.WebApp;
-    if(!tg||!tg.openInvoice){ say('Оплата открывается только внутри Telegram.'); return; }
+    var tg=ПЛ.оплатаStars();
+    if(!tg){ say('Оплата открывается только внутри Telegram.'); return; }
     SUBBUSY=true; renderSub();
     tg.openInvoice(SUB.link, function(st){
       SUBBUSY=false;
@@ -18604,7 +18730,7 @@ function admУдалить(uid, имя){
       .then(function(d){ ADMBUSY=false; haptic('ok'); say('Удалено: '+имя+(d && d.cleanupPending ? '. Фото ещё дочищаются в хранилище — это само.' : '')); admPull(); })
       .catch(function(err){ ADMBUSY=false; haptic('err'); say(humanErr(err)); });
   };
-  if(TG && TG.showConfirm) TG.showConfirm(т, дальше); else дальше(window.confirm(т));
+  ПЛ.спросить(т, дальше);
 }
 document.getElementById('admbody').addEventListener('click', function(e){
   if(e.target.closest('#admall')){ ADMALL=true; renderAdmin(); return; }
@@ -18666,7 +18792,7 @@ document.getElementById('refshare').addEventListener('click', function(){
   if(!REF||!REF.link) return;
   var text='Веду еду и зал в Wellböl — тренер прямо в Telegram. Заходи по ссылке.';
   var u='https://t.me/share/url?url='+encodeURIComponent(REF.link)+'&text='+encodeURIComponent(text);
-  if(TG && TG.openTelegramLink) TG.openTelegramLink(u); else window.open(u,'_blank');
+  ПЛ.открытьTelegram(u);
   haptic('light');
 });
 document.getElementById('refspend').addEventListener('click', function(){
@@ -18912,8 +19038,7 @@ function подКак(v, ц){
    Ссылку открываем через Telegram: внутри мини-аппа window.open молча
    не срабатывает, и кнопка выглядит сломанной. */
 function вебОткрыть(u){
-  try{ if(TG && TG.openLink){ TG.openLink(u); return; } }catch(e){}
-  try{ window.open(u,'_blank','noopener'); }catch(e){}
+  ПЛ.открыть(u);
 }
 /* Названия написаны для дневника: «Сазан на углях, подача с костями»,
    «Роллы с лососем, 6 шт», «Плов с говядиной полпорции, салат, лепёшка».
@@ -20592,7 +20717,8 @@ function deliveryPosition(){
  return new Promise(function(resolve,reject){
   var done=false,timer=setTimeout(function(){finish(new Error('Не удалось определить место. Проверьте доступ к геолокации в настройках и повторите.'));},22000);
   function finish(err,p){if(done)return;done=true;clearTimeout(timer);if(err)reject(err);else if(!p||!Number.isFinite(p.latitude)||!Number.isFinite(p.longitude)||p.accuracy>2000)reject(new Error('Место определено неточно. Повторите геолокацию.'));else resolve({latitude:p.latitude,longitude:p.longitude,accuracy:p.accuracy==null?null:p.accuracy,at:Date.now()});}
-  var lm=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.LocationManager;
+  /* 31.10: в приложении из магазина место даёт система (navigator.geolocation в Capacitor), не Telegram */
+  var lm=ПЛ.имя!=='native'&&window.Telegram&&Telegram.WebApp&&Telegram.WebApp.LocationManager;
   if(lm&&(!Telegram.WebApp.isVersionAtLeast||Telegram.WebApp.isVersionAtLeast('8.0'))){try{lm.init(function(){if(done)return;if(!lm.isLocationAvailable){finish(new Error('Геолокация недоступна. Проверьте разрешение Telegram в настройках устройства.'));return;}lm.getLocation(function(p){finish(p?null:new Error('Доступ к геолокации не получен. Разрешите его в настройках Telegram.'),p?{latitude:p.latitude,longitude:p.longitude,accuracy:p.horizontal_accuracy==null?(p.accuracy==null?null:p.accuracy):p.horizontal_accuracy}:null);});});return;}catch(e){}}
   if(!navigator.geolocation){finish(new Error('Геолокация недоступна в этом браузере.'));return;}
   navigator.geolocation.getCurrentPosition(function(p){finish(null,p.coords);},function(){finish(new Error('Не удалось определить место. Разрешите геолокацию в настройках приложения и повторите.'));},{enableHighAccuracy:false,maximumAge:0,timeout:18000});
@@ -21245,7 +21371,7 @@ function applyAuto(list, opts){
       renderList(); paintNote('');
       try{ fPost('/reco', {uid:syncUid(), ids:ids}).catch(function(){}); }catch(e){}
     }
-    if(done.length && !opts.quiet){ try{ if(TG && TG.showAlert) TG.showAlert('Тренер поменял программу:\n'+done.join('\n')); }catch(e){} }
+    if(done.length && !opts.quiet){ try{ ПЛ.сообщить('Тренер поменял программу:\n'+done.join('\n')); }catch(e){} }
     /* не нашли замену — оставляем как предложение с кнопкой, пусть выберет сам */
     if(notFound.length && !RECO2){ RECO2=notFound[0]; gset('coach_reco', notFound[0]); renderReco2(); }
     return done;
@@ -21275,7 +21401,7 @@ function applyRebuild(rb){
   var т = rb.day
     ? ('День '+rb.day+' пересобран.'+((rb.vol&&rb.vol.length)?' Подходов в неделю: '+rb.vol.join('; ')+'.':'')+' Веса из истории на месте.'+правки)
     : ('Тренер перестроил программу: '+(rb.why||'новый блок')+'. Теперь «'+(rb.prog.name||'')+'», веса из истории на месте.'+правки);
-  try{ if(TG && TG.showAlert) TG.showAlert(т); }catch(e){}
+  try{ ПЛ.сообщить(т); }catch(e){}
   try{ renderList(); }catch(e){}
 }
 function recoPull(){
@@ -22275,12 +22401,12 @@ window.addEventListener('load',function(){if(new URL(location.href).searchParams
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
 
 var _saved = gget('profile', null);
-if(_saved && PROFILES[_saved]){ applyProfile(_saved); if(TG && TG.initData && !meFull()) облакоПодгрузка(); }
+if(_saved && PROFILES[_saved]){ applyProfile(_saved); if(ПЛ.естьВход() && !meFull()) облакоПодгрузка(); }
 else {
   /* Программу применяем молча, чтобы приложению было что рисовать, когда из
      облака приедет профиль, но за окном знакомства её не видно (body.onb). */
   applyProfile('shp', true);
-  if(TG && TG.initData) облакоЖдать(); else showPicker(true);
+  if(ПЛ.естьВход()) облакоЖдать(); else showPicker(true);
 }
 settingsRemember('me',{me:myData()||{}});
 settingsRemember('sched',{s:GYM_DAYS,p:profile});
