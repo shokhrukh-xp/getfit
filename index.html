@@ -19326,10 +19326,12 @@ function компГруппаHtml(ch){
   if (г.n) return '<p class="rolnote">В группе ' + г.n + '</p>';
   return '<p class="rolnote">Цифры группы — когда участников будет от 10.</p>';
 }
+/* 31.10: «119 146 из 200 000», а не «119146 из 200000» */
+function компЧ(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0'); }
 function компЧеллШапка(ch){
   var конч = ch.end < TODAY, ждёт = ch.start > TODAY;
   return '<div class="rolhd"><b>' + esc(ch.title) + '</b><span>' + (ждёт ? '<span>начнётся</span> ' + компДата(ch.start) : конч ? '<span>закончился</span>' : '<span>закончится</span> ' + компДата(ch.end)) + '</span></div>' +
-    '<p class="rolnote"><span>Цель: ' + ch.target + '</span> · <span>' + esc(КОМП_МЕРА[ch.metric] || ch.metric) + '</span></p>';
+    '<p class="rolnote"><span>Цель: ' + компЧ(ch.target) + '</span> · <span>' + esc(КОМП_МЕРА[ch.metric] || ch.metric) + '</span></p>';
 }
 function компСотрудникHtml(m){
   var x = m.member;
@@ -19338,7 +19340,7 @@ function компСотрудникHtml(m){
     '<p class="rolnote">Компания видит только общие цифры по группе от 10 человек — ни вас, ни ваших данных.</p>' +
     (x.ch.length ? x.ch.map(function(ch){
       var конч = ch.end < TODAY;
-      var моё = ch.joined && ch.mine != null ? '<div class="kobar" aria-hidden="true"><i style="width:' + Math.min(100, Math.round(ch.mine / ch.target * 100)) + '%"></i></div><p class="rolnote">У вас: ' + ch.mine + ' из ' + ch.target + '</p>' : '';
+      var моё = ch.joined && ch.mine != null ? '<div class="kobar" aria-hidden="true"><i style="width:' + Math.min(100, Math.round(ch.mine / ch.target * 100)) + '%"></i></div><p class="rolnote">У вас: ' + компЧ(ch.mine) + ' из ' + компЧ(ch.target) + '</p>' : '';
       return '<div class="koch">' + компЧеллШапка(ch) + моё + компГруппаHtml(ch) +
         (конч ? '' : '<div class="rolbtns">' + (ch.joined ? '<button type="button" class="btn small" data-ko="chout" data-id="' + ролиА(ch.id) + '">Не участвую</button>' : '<button type="button" class="btn small prim" data-ko="chin" data-id="' + ролиА(ch.id) + '">Участвую</button>') + '</div>') + '</div>';
     }).join('') : '<p class="empt">Челленджей пока нет.</p>') +
