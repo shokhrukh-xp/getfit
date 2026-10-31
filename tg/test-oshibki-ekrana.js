@@ -18,6 +18,15 @@ const M=require('./mock');
   assert.equal(мои.length,1,'одна и та же ошибка — один раз: '+JSON.stringify(o.errs));
   assert.equal(мои[0].w,'js');assert.match(мои[0].b,/^\d\d\.\d\d \d\d:\d\d$/,'метка сборки');assert.ok(!('uid' in мои[0]),'без uid');
   assert.ok(!(o.errs||[]).some(x=>/Script error/.test(x)),'Script error — мимо');
+  // 31.10, сводка Ops: штатная перезагрузка после сброса — не сбой
+  const до=(o.errs||[]).length;
+  await page.evaluate(()=>window.dispatchEvent(new ErrorEvent('error',{message:'Дневник обновляется после сброса.',lineno:3})));
+  await page.waitForTimeout(400);
+  assert.ok(!(o.errs||[]).slice(до).some(x=>/Дневник обновляется/.test(x)),'сброс дневника — не ошибка');
+  // профиль из облака до открытия дня: список без сессии не рисуется (было «adopt me: sess.ex»)
+  const src=require('fs').readFileSync(require('path').join(__dirname,'..','index.html'),'utf8');
+  const rl=src.slice(src.indexOf('function renderList(){'),src.indexOf('function renderList(){')+600);
+  assert.match(rl,/if\(!sess \|\| !sess\.ex\) return;/,'renderList без сессии выходит');
   await page.evaluate(()=>{for(let i=0;i<30;i++)window.dispatchEvent(new ErrorEvent('error',{message:'сбой '+i,lineno:i}));});await page.waitForTimeout(600);
   assert.ok((o.errs||[]).length<=10,'не больше 10 за открытие: '+(o.errs||[]).length);
   // без флага стенд не шлёт ничего
@@ -25,6 +34,6 @@ const M=require('./mock');
   await M.поднять(page2,o2);await page2.evaluate(()=>window.dispatchEvent(new ErrorEvent('error',{message:'без флага',lineno:1})));await page2.waitForTimeout(400);
   assert.equal((o2.errs||[]).length,0,'стенд без флага не шлёт');
   assert.deepEqual(errors.filter(e=>!/Тестовый сбой|сбой \d|Script error/.test(e)),[]);
-  console.log('PASS ошибки экранов: строка уходит на /err один раз, не больше 10, без uid; стенд без флага молчит');
+  console.log('PASS ошибки экранов: строка уходит на /err один раз, не больше 10, без uid; стенд без флага молчит; сброс дневника — не ошибка; список без сессии не падает');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
