@@ -33,6 +33,8 @@ function сервер(нач){
     if (p.endsWith('/roli/chat') && метод === 'GET') return { ok: true, link: u.searchParams.get('link'), msgs: s.msgs || [] };
     if (p.endsWith('/roli/chat')) { (s.msgs = s.msgs || []).push({ id: s.msgs.length + 1, me: true, text: тело.text, at: Date.parse('2026-10-30T07:00:00Z'), seen: false }); s.написано = тело; return { ok: true, id: s.msgs.length }; }
     if (p.endsWith('/roli/log')) return { ok: true, log: s.log };
+    /* 01.11 «Клиенты»: сводка клиента (в ответе есть поле body — поэтому обёрткой) */
+    if (p.endsWith('/roli/summary')) return { status: 200, body: { ok: true, kind: 'trainer', open: ['gym', 'body'], gym: { week: 1, last: { date: '2026-10-28', name: 'Ноги' } }, body: { now: 79.5, before: 80.2, last: '2026-10-28' }, unread: 0 } };
     /* 30.10: ИИ-помощник специалиста */
     if (p.endsWith('/roli/ai/attention')) return { ok: true, clients: [{ who: '777', name: 'Мадина', kind: 'trainer', why: [{ k: 'food_rare', n: 2, t: 'еду записывает 2 из 7 дней' }] }] };
     if (p.endsWith('/roli/ai/ask')) { s.спросили = тело; return { ok: true, item: { id: 2, q: тело.q, a: 'Вес снижается: **−0,7 кг** за 2 недели.', used: ['body'], at: Date.parse('2026-10-30T07:00:00Z') } }; }
@@ -164,11 +166,14 @@ async function проверить(p, где, имя, sel){
     await проверить(p2, где, 'Кабинет специалиста', '#profm');
     await p2.click('#rolpro [data-rol="card"]'); await p2.waitForFunction(() => /79,5 кг/.test((document.getElementById('rolcbody') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
     ok(await виден(p2, '#rolcm'), где + 'карточка клиента открылась');
+    /* 01.11: первой — сводка; карточка не поверх кабинета */
+    ok(/Тренировки: 1 за 7 дней/.test(await p2.$eval('#rolcbody', e => e.textContent)) && !(await виден(p2, '#profm')), где + 'карточка открывается со сводки, кабинет спрятан');
+    await p2.click('#rol-ccat button[data-v="body"]'); await p2.waitForFunction(() => /79,5 кг · жир/.test((document.getElementById('rolcbody') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
     const к = s2.запросы.find(x => x.p.endsWith('/roli/client'));
     ok(к && к.q.who === '777' && к.q.cat === 'body' && к.q.uid, где + 'клиент — в who, свой uid — в uid, первым — замеры: ' + JSON.stringify(к && к.q));
     const кт = await p2.$eval('#rolcbody', e => e.textContent);
     ok(/79,5 кг · жир 24,1 % · талия 84 см/.test(кт) && /Кто смотрел/.test(кт), где + 'замеры клиента и напоминание про журнал: ' + кт.slice(0, 140));
-    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,gym,prog,ai,chat', где + 'вкладки — открытые разделы, программа, ИИ-помощник и переписка');
+    ok(await p2.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'sum,body,gym,prog,ai,chat', где + 'вкладки — сводка, открытые разделы, программа, ИИ-помощник и переписка');
     await проверить(p2, где, 'карточка клиента', '#rolcm');
     await p2.click('#rol-ccat button[data-v="gym"]'); await p2.waitForTimeout(300);
     ok(s2.запросы.some(x => x.p.endsWith('/roli/client') && x.q.cat === 'gym'), где + 'вкладка «тренировки» — свой запрос');
@@ -178,9 +183,10 @@ async function проверить(p, где, имя, sel){
     ok(s2.спросили && s2.спросили.who === '777' && /прогресс/.test(s2.спросили.q) && /−0,7 кг/.test(await p2.$eval('#rolcbody', e => e.textContent)) && await p2.$('#rolcbody .rolaia b'), где + 'ИИ-помощник: готовый вопрос → ответ с жирным');
     await проверить(p2, где, 'ИИ-помощник', '#rolcm');
     await p2.click('#rolcclose'); await p2.waitForTimeout(200);
-    ok(!(await виден(p2, '#rolcm')), где + '«Закрыть» закрывает карточку');
-    await p2.click('#rolpro [data-rol="attn"]'); await p2.waitForFunction(() => /2 из 7 дней/.test((document.getElementById('rolpro') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
-    ok(/Кому нужно внимание/.test(await p2.$eval('#rolpro', e => e.textContent)) && /еду записывает 2 из 7 дней/.test(await p2.$eval('#rolpro', e => e.textContent)), где + '«Кому нужно внимание»: клиент и причина');
+    ok(!(await виден(p2, '#rolcm')) && await виден(p2, '#rolpro'), где + '«Закрыть» закрывает карточку и возвращает в кабинет');
+    /* 01.11: причины «внимания» — прямо в строке клиента, сами */
+    await p2.waitForFunction(() => /2 из 7 дней/.test((document.getElementById('rolpro') || {}).textContent || ''), null, { timeout: 3000 }).catch(() => {});
+    ok(/еду записывает 2 из 7 дней/.test(await p2.$eval('#rolpro', e => e.textContent)), где + 'причина внимания — в строке клиента');
     ok(!err2.length, где + 'специалист: без ошибок страницы ' + err2.join(' | ').slice(0, 200));
     await p2.close();
   }
@@ -211,7 +217,7 @@ async function проверить(p, где, имя, sel){
     const o = opts('light'); o.features = ['roli']; o.roli = s.обработчик;
     const err = await M.поднять(p, o); await p.waitForTimeout(300);
     await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
-    await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
+    await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(400);   /* причины «внимания» подгружаются сами */
     await p.click('#rolpro [data-rol="card"]'); await p.waitForSelector('#rolp-name', { timeout: 3000 }).catch(() => {});
     const т = await p.$eval('#rolcbody', e => e.textContent);
     ok(/нужен допуск врача/.test(т), где + 'итог анкеты виден тренеру: ' + т.slice(0, 80));
@@ -355,7 +361,7 @@ async function проверить(p, где, имя, sel){
     await p.click('#profbtn'); await p.waitForTimeout(300); await p.click('#pq-pro');
     await p.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
     await p.click('#rolpro [data-rol="card"]'); await p.waitForTimeout(400);
-    ok(await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'body,food,norm,ai,chat', где + 'вкладки нутрициолога: ' + await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()));
+    ok(await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()) === 'sum,body,food,norm,ai,chat', где + 'вкладки нутрициолога: ' + await p.$$eval('#rol-ccat button', ns => ns.map(n => n.dataset.v).join()));
     await p.click('#rol-ccat button[data-v="norm"]'); await p.waitForSelector('#roln-kcal', { timeout: 3000 }).catch(() => {});
     ok(/Сейчас у клиента: 2100 ккал · белок 150 г · жиры 70 г/.test(await p.$eval('#rolcbody', e => e.textContent)), где + 'видна норма приложения');
     ok(await p.$eval('#roln-kcal', e => e.value) === '2100', где + 'форма начинается с нормы приложения');

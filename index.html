@@ -4687,6 +4687,24 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 #rolp-q{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--text);background:var(--bg);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px;margin:8px 0 4px}
 .rolpick{display:block;width:100%;min-height:44px;text-align:left;font:inherit;font-size:14px;color:var(--text);background:none;border:0;border-top:1px solid var(--tab-line);padding:10px 2px;cursor:pointer}
 .roloffer{margin:8px 0 12px}
+/* 01.11 «Тренер — два голоса»: живой специалист — тёплый цвет, ИИ — свой */
+.dgwho{display:flex;gap:10px;align-items:center;padding:0 16px 8px;font-size:13px;color:var(--muted);flex:none}
+.dgwho b{color:var(--text)}
+.dgav{width:30px;height:30px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:var(--warn-bg,#FBEFE6);color:var(--warn,#B4632B)}
+.msg.pro{background:var(--warn-bg,#FBEFE6);color:var(--text);border-radius:16px 16px 16px 4px;padding:9px 12px;margin:6px 0;max-width:86%;font-size:15px;line-height:1.4}
+.msg.pro .dgfrom{display:block;font-size:12px;font-weight:700;color:var(--warn,#B4632B);margin-bottom:2px}
+.msg.pro small,.msg.me.topro small{display:block;font-size:11px;opacity:.7;margin-top:3px}
+.msg.me.topro .dgto{display:block;font-size:11px;opacity:.85;margin-bottom:2px}
+.dgkomu{display:flex;gap:6px;padding:6px 12px 0;flex:none}
+.dgkomu button{flex:1 1 0;min-width:0;min-height:36px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600}
+.dgkomu button[aria-pressed="true"]{background:var(--action);color:var(--on-accent);border-color:transparent}
+.dgkomu button.pro[aria-pressed="true"]{background:var(--warn,#B4632B)}
+.dghome{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}
+.dgcard{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--warn,#B4632B);background:var(--warn-bg,#FBEFE6);border-radius:16px;padding:12px;text-align:left;width:100%;color:var(--text);font:inherit}
+.dgcard b{display:block;font-size:15px}.dgcard span{font-size:13px;color:var(--muted)}
+.dgbadge{position:absolute;top:0;left:calc(50% + 10px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--warn,#B4632B);color:#fff;font-size:10px;font-style:normal;font-weight:700;line-height:16px;text-align:center}
+.dgpro{border:1px solid var(--warn,#B4632B);border-radius:14px;padding:10px 12px;margin:8px 0;background:var(--warn-bg,#FBEFE6)}
+.dgpro .dgq{display:block;margin:4px 0 8px}
 .rolchat{display:flex;flex-direction:column;gap:8px}
 .rolmsgs{max-height:50vh;min-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0}
 .rolb{max-width:85%;padding:8px 12px;border-radius:14px;font-size:15px;line-height:1.35}
@@ -4742,7 +4760,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
-    <button type="button" id="coachnav" aria-label="Спросить ИИ-тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span>ИИ-тренер</span></button>
+    <button type="button" id="coachnav" aria-label="Спросить ИИ-тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span id="coachnavt">ИИ-тренер</span><i class="dgbadge" id="coachnavn" hidden></i></button>
   </div>
 </nav>
 
@@ -4752,6 +4770,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <div class="sec" style="margin-top:0">
         <button type="button" class="nudge onb" id="onbbar" hidden></button>
         <button type="button" class="nudge onb" id="zdnudge" hidden></button>
+        <div class="dghome f-roli" id="rolhome" hidden></div>
         <!-- 14.10, его выбор: после знакомства — «С чего начнём?», один раз -->
         <div class="nudge onb startcard" id="startcard" role="group" aria-labelledby="sctitle" hidden></div>
         <div class="nudge onb trcard" id="trcard" role="group" aria-labelledby="trtitle" hidden></div>
@@ -5069,11 +5088,14 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="coachtitle">ИИ-тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <!-- 01.11, его выбор «A: Тренер — два голоса»: кто ведёт и что ИИ — помощник -->
+    <div class="dgwho f-roli" id="coachpro" hidden></div>
     <p id="coachdate" class="mtext" style="flex:none;margin:0;padding:0 16px 8px" aria-live="polite"></p>
     <button type="button" class="btn" id="goalchatopen">Обсудить цель</button>
     <section id="goalconversation" hidden aria-label="Обсуждение цели"></section>
     <div class="chatlog" id="chatlog"></div>
     <div class="attbox" id="cattach" hidden></div>
+    <div class="dgkomu f-roli" id="ckomu" role="group" aria-label="Кому" hidden></div>
     <div class="chatask">
       <div class="cpill">
         <textarea id="ctext" rows="1" placeholder="Еда или вопрос"></textarea>
@@ -19720,11 +19742,14 @@ function ролиРисовать(){
     }).join('') + '</div>';
   if (pr) pr.innerHTML = (m ? ошибка : '') + ((!m && (ошибка || ждём)) || (!m ? '' : ролиПроHtml(m)));
   ролиАдмРисовать();
+  try { дгРисовать(); } catch (e) {}
 }
 function ролиПроHtml(m){
   /* этап 6г: заявка — на сайте, сюда принятый специалист попадает из профиля или из сообщения бота */
   if (!m.pro.length) return '<p class="pqlead">Заявки тренеров и нутрициологов принимаем на сайте wellbol.app/experts</p>';
-  return m.pro.map(function(p){
+  дгВниманиеСамо();
+  var почему = function(who){ var a = ROLI.attn && ROLI.attn.clients; var x = a && a.filter(function(c){ return c.who === who; })[0]; return x && x.why.length ? x.why : null; };
+  return (дгСпец() ? '<div class="rolbtns" style="margin:0 0 10px"><button type="button" class="btn small" data-dg="myai">Мой ИИ-тренер</button></div>' : '') + m.pro.map(function(p){
     var шапка = '<div class="rolhd"><b>' + esc(p.name) + '</b><span>' + esc(РОЛИ_ВИД[p.kind] || p.kind) + ' · ' + esc(РОЛИ_ЗНАЧ[p.status] || p.status) + '</span></div>';
     if (p.status === 'pending') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка на проверке. Как примем — здесь появится ссылка для клиентов.</p></div>';
     if (p.status !== 'ok') return '<div class="rolcard">' + шапка + '<p class="rolnote">Заявка не принята.</p></div>';
@@ -19733,10 +19758,11 @@ function ролиПроHtml(m){
     return '<div class="rolcard">' + шапка +
       '<p class="rolnote">Ссылка для клиентов: по ней они увидят, что вам будет видно, и подключатся сами.</p>' +
       '<div class="invcode"><input type="text" readonly value="' + ролиА(p.link || '') + '" aria-label="ссылка для клиентов"><button type="button" class="btn small prim" data-rol="share" data-url="' + ролиА(p.link || '') + '">Отправить</button></div>' +
-      (свои.length ? '<div class="rolattn" id="rol-attn-' + p.kind + '">' + ролиВниманиеHtml(p.kind) + '</div>' : '') +
+      (свои.length && ROLI.attn && ((ROLI.attn.busy && !ROLI.attn.тихо) || ROLI.attn.err) ? '<div class="rolattn" id="rol-attn-' + p.kind + '">' + ролиВниманиеHtml(p.kind) + '</div>' : '') +
       '<h4 class="pqlab">Клиенты</h4>' +
       (!свои.length ? '<p class="empt">Пока никого.</p>' : '<div class="pqgroup">' + свои.map(function(x){
-        return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.cats.map(ролиИмя).map(esc).join(', ') + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
+        var пч = почему(x.client);
+        return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small' + (пч ? ' class="rolwarn"' : '') + '>' + (пч ? пч.map(function(w){ return esc(w.t); }).join(' · ') : x.cats.map(ролиИмя).map(esc).join(', ')) + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
       }).join('') + '</div>') + упр + '</div>';
   }).join('');
 }
@@ -19802,19 +19828,26 @@ document.addEventListener('click', function(e){ if (e.target.closest && e.target
 var РОЛИ_КАРТОЧКА = ['body', 'gym', 'food'];
 function ролиКарточка(who, cat){
   var x = ((ROLI.me && ROLI.me.clients) || []).filter(function(c){ return c.client === who; })[0]; if (!x) return;
-  var можно = РОЛИ_КАРТОЧКА.filter(function(c){ return x.cats.indexOf(c) >= 0; });
+  /* 01.11 «Клиенты» (его «Да, как в макете»): первой — сводка, что изменилось и что сделать */
+  var можно = ['sum'].concat(РОЛИ_КАРТОЧКА.filter(function(c){ return x.cats.indexOf(c) >= 0; }));
   /* программу тренер собирает всегда — это не данные клиента, а его работа */
   if (x.kind === 'trainer') можно.push('prog');
   if (x.kind === 'nutri') можно.push('norm');
   /* 30.10: ИИ-помощник — когда клиент открыл хоть один раздел данных */
   if (РОЛИ_КАРТОЧКА.some(function(c){ return x.cats.indexOf(c) >= 0; })) можно.push('ai');
   можно.push('chat');
-  cat = cat || можно[0] || '';
+  /* данных клиент не открыл — сводке нечего сказать, сразу программа (норма) */
+  cat = cat || (можно.some(function(c){ return РОЛИ_КАРТОЧКА.indexOf(c) >= 0; }) ? 'sum' : можно.filter(function(c){ return c !== 'sum'; })[0]) || '';
   ROLI.card = { who: who, link: x.id, unread: x.unread || 0, name: x.name || 'Клиент', cats: можно, cat: cat, rows: null, err: '', parq: x.parq, flags: x.flags || null, p: ROLI.card && ROLI.card.who === who ? ROLI.card.p : null, ai: ROLI.card && ROLI.card.who === who ? ROLI.card.ai : null };
   ROLI.chat = null;
   var m = document.getElementById('rolcm'); if (m) m.classList.add('show');
   ролиКарточкаРисовать();
   if (!cat) return;
+  /* не лист поверх листа: кабинет прячем, при закрытии карточки он вернётся */
+  var пф = document.getElementById('profm'); if (пф && пф.classList.contains('show')) { ROLI.card.изКабинета = true; closeProf(); }
+  else if (ROLI.картаИзКабинета) ROLI.card.изКабинета = true;
+  ROLI.картаИзКабинета = !!ROLI.card.изКабинета;
+  if (cat === 'sum') return дгСводкаЗагрузить();
   if (cat === 'prog') return ролиПрогЗагрузить();
   if (cat === 'norm') return ролиНормаЗагрузить();
   if (cat === 'ai') return ролиИИПЗагрузить();
@@ -19828,9 +19861,10 @@ function ролиКарточка(who, cat){
 function ролиКарточкаРисовать(){
   var k = ROLI.card, t = document.getElementById('rolct'), b = document.getElementById('rolcbody'); if (!k || !b) return;
   if (t) t.textContent = k.name;
-  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'prog' ? 'программа' : c === 'norm' ? 'норма' : c === 'ai' ? 'ИИ-помощник' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
+  var вкладки = k.cats.length > 1 ? '<div class="seg" id="rol-ccat">' + segHtml('rolccat', k.cats.map(function(c){ return [c, c === 'sum' ? 'сводка' : c === 'prog' ? 'программа' : c === 'norm' ? 'норма' : c === 'ai' ? 'ИИ-помощник' : c === 'chat' ? 'переписка' + (k.unread ? ' · ' + k.unread : '') : ролиИмя(c)]; }), k.cat) + '</div>' : '';
   var отметки = k.flags ? (k.flags.length ? '<p class="rolnote rolwarn">Отметки здоровья: ' + k.flags.map(function(f){ return esc(РОЛИ_ЗДОРОВЬЕ_ИМЯ[f] || f); }).join(', ') + '.</p>' : '<p class="rolnote">Отметок здоровья нет.</p>') : '';
   var анкета = отметки + (k.parq === 'ok' ? '<p class="rolnote">Анкета готовности: готов к нагрузке.</p>' : k.parq === 'doctor' ? '<p class="rolnote rolwarn">Анкета готовности: нужен допуск врача. Нагрузку — после разрешения.</p>' : '');
+  if (k.cat === 'sum') { b.innerHTML = вкладки + анкета + дгСводкаHtml(k); return; }
   if (k.cat === 'prog') { b.innerHTML = вкладки + анкета + ролиПрогHtml(k); return; }
   if (k.cat === 'norm') { b.innerHTML = вкладки + анкета + ролиНормаФормаHtml(k); return; }
   if (k.cat === 'chat') { b.innerHTML = вкладки + ролиЧатHtml(); ролиЧатРисовать(); return; }
@@ -19848,7 +19882,8 @@ function ролиКарточкаРисовать(){
 }
 document.addEventListener('click', function(e){
   var s = e.target.closest && e.target.closest('#rol-ccat button[data-v]'); if (s && ROLI.card) return ролиКарточка(ROLI.card.who, s.dataset.v);
-  if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show'); ROLI.card = null; ROLI.chat = null; ролиЗагрузить(); }
+  if (e.target.id === 'rolcm' || (e.target.closest && e.target.closest('#rolcclose'))) { var m = document.getElementById('rolcm'); if (m) m.classList.remove('show');
+    var назад = ROLI.картаИзКабинета; ROLI.картаИзКабинета = false; ROLI.card = null; ROLI.chat = null; ролиЗагрузить(); if (назад) { try { openProf('rolpro'); } catch (e2) {} } }
 });
 
 /* ── 30.10: ИИ-помощник специалиста (его ответ «Сделать на тестовой копии и снять») ──
@@ -19907,9 +19942,19 @@ function ролиВниманиеHtml(kind){
     return '<button type="button" class="pqrow rolattnrow" data-rol="card" data-who="' + ролиА(x.who) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small>' + x.why.map(function(w){ return esc(w.t); }).join(' · ') + '</small></span><i class="pqch">›</i></button>';
   }).join('') + '</div>') + '<p class="rolnote">По разделам, которые клиенты вам открыли. Просмотр — в их «Кто смотрел».</p>';
 }
-function ролиВниманиеЗагрузить(){
-  ROLI.attn = { busy: true }; ролиРисовать();
-  fGet('/roli/ai/attention?uid=' + encodeURIComponent(syncUid())).then(function(r){ ROLI.attn = { clients: (r && r.clients) || [] }; ролиРисовать(); })
+/* 01.11: причины — прямо в списке клиентов. Сводка пишется клиентам в «Кто смотрел», поэтому сама — не чаще раза в 6 часов */
+function дгВниманиеСамо(){
+  if (ROLI.attn || !дгСпец() || !(ROLI.me.clients || []).length) return;
+  var пф = document.getElementById('profm'); if (!пф || !пф.classList.contains('show')) return;   /* только когда кабинет открыт */
+  var к = gget('rol_attn', null);
+  if (к && к.at && Date.now() - к.at < 6 * 3600e3 && к.uid === syncUid()) { ROLI.attn = { clients: к.clients || [] }; return; }
+  setTimeout(function(){ ролиВниманиеЗагрузить(true); }, 0);
+}
+function ролиВниманиеЗагрузить(тихо){
+  /* сама — без «Смотрю клиентов…»: перерисовка под пальцем срывала нажатие на клиента */
+  ROLI.attn = { busy: true, тихо: !!тихо }; if (!тихо) ролиРисовать();
+  fGet('/roli/ai/attention?uid=' + encodeURIComponent(syncUid())).then(function(r){ ROLI.attn = { clients: (r && r.clients) || [] };
+    gset('rol_attn', { at: Date.now(), uid: syncUid(), clients: ROLI.attn.clients }); ролиРисовать(); })
     .catch(function(e){ ROLI.attn = { err: humanErr(e) }; ролиРисовать(); });
 }
 /* ── программа от тренера (этап 2б; его выбор «Программа от тренера», «Спросить „Перейти?“») ──
@@ -20281,6 +20326,153 @@ function ролиЧатПоСсылке(){
   var кл = ROLI.me.clients.filter(function(x){ return x.id === id; })[0];
   if (кл) ролиКарточка(кл.client, 'chat');
 }
+
+/* ══ 01.11, его выбор «A: Тренер — два голоса» и «Клиенты» у специалиста ══
+   Клиенту: кнопка внизу «Тренер» — одна лента, где говорят живой специалист и ИИ;
+   «Кому» у поля; на «Сегодня» — «От Тимура», когда есть новое; ИИ передаёт специалисту
+   то, что решает он. Специалисту: кнопка внизу «Клиенты» — кабинет; карточка клиента
+   открывается со сводки. */
+var ДГ = { чаты: {}, кому: '', т: null, тянем: false };
+function дгВедут(){ var m = ROLI.me; return (ЕСТЬ('roli') && m && m.my) ? m.my.filter(function(l){ return l.proStatus === 'ok'; }) : []; }
+function дгСпец(){ var m = ROLI.me; return !!(ЕСТЬ('roli') && m && m.pro && m.pro.some(function(x){ return x.status === 'ok'; })); }
+function дгИнициалы(n){ return String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function(w){ return w.charAt(0).toUpperCase(); }).join(''); }
+function дгИмя(n){ return String(n || '').split(/\s+/)[0] || 'Специалист'; }
+function дгЛинк(id){ return дгВедут().filter(function(l){ return l.id === id; })[0] || null; }
+function дгРисовать(){
+  if (!ЕСТЬ('roli')) return;
+  var вед = дгВедут(), спец = дгСпец(), m = ROLI.me || {};
+  var t = document.getElementById('coachnavt'); if (t) t.textContent = спец ? 'Клиенты' : вед.length ? 'Тренер' : 'ИИ-тренер';
+  var nav = document.getElementById('coachnav'); if (nav) nav.setAttribute('aria-label', спец ? 'Клиенты' : вед.length ? 'Тренер' : 'Спросить ИИ-тренера');
+  var n = спец ? (m.clients || []).reduce(function(a, c){ return a + (c.unread || 0); }, 0) : вед.reduce(function(a, l){ return a + (l.unread || 0); }, 0);
+  var бд = document.getElementById('coachnavn'); if (бд) { бд.hidden = !n; бд.textContent = n > 9 ? '9+' : String(n); }
+  var кто = document.getElementById('coachpro');
+  if (кто) { кто.hidden = !вед.length;
+    кто.innerHTML = вед.length ? '<span class="dgav" aria-hidden="true">' + esc(дгИнициалы(вед[0].name)) + '</span><span>' +
+      вед.map(function(l){ return '<b>' + esc(l.name || 'Специалист') + '</b> ' + (l.kind === 'nutri' ? 'ведёт питание' : 'ведёт тренировки'); }).join(', ') +
+      '<br>ИИ помогает между встречами</span>' : ''; }
+  var ct = document.getElementById('coachtitle'); if (ct && !(typeof GOALTALK !== 'undefined' && GOALTALK.active)) ct.textContent = вед.length ? 'Тренер' : 'ИИ-тренер';
+  if (ДГ.кому && !дгЛинк(ДГ.кому)) ДГ.кому = '';
+  дгКомуРисовать(); дгДомРисовать();
+}
+function дгКомуРисовать(){
+  var box = document.getElementById('ckomu'), вед = дгВедут(); if (!box) return;
+  box.hidden = !вед.length;
+  box.innerHTML = !вед.length ? '' : '<button type="button" data-komu="" aria-pressed="' + (!ДГ.кому) + '">ИИ-помощник</button>' +
+    вед.map(function(l){ return '<button type="button" class="pro" data-komu="' + ролиА(l.id) + '" aria-pressed="' + (ДГ.кому === l.id) + '">' + esc(вед.length > 1 ? дгИмя(l.name) : (l.name || 'Специалист')) + (l.unread ? ' · ' + l.unread : '') + '</button>'; }).join('');
+  var л = дгЛинк(ДГ.кому), ph = document.getElementById('ctext');
+  if (ph) ph.placeholder = л ? 'Сообщение — прочитает ' + дгИмя(л.name) : (CHAT.date === TODAY ? (function(){ try { return chatHint(); } catch (e) { return 'Еда или вопрос'; } })() : 'Еда или вопрос');
+  ['cphoto', 'cscan'].forEach(function(id){ var b = document.getElementById(id); if (b) b.hidden = !!л; });
+}
+/* «От Тимура» на «Сегодня»: непрочитанное, присланная программа или норма */
+function дгДомРисовать(){
+  var box = document.getElementById('rolhome'); if (!box) return;
+  var m = ROLI.me || {}, вед = дгВедут();
+  var карт = вед.map(function(l){
+    var что = [];
+    if (l.unread) что.push(l.unread + ' ' + plural(l.unread, ['новое сообщение', 'новых сообщения', 'новых сообщений']));
+    if (m.offer && l.kind === 'trainer' && m.offer.name === l.name) что.push('прислал программу «' + (m.offer.prog && m.offer.prog.name || '') + '»');
+    if (m.normOffer && l.kind === 'nutri' && m.normOffer.name === l.name) что.push('прислала норму питания');
+    if (!что.length) return '';
+    return '<button type="button" class="dgcard" data-dg="open" data-link="' + ролиА(l.id) + '"><span class="dgav" aria-hidden="true">' + esc(дгИнициалы(l.name)) + '</span>' +
+      '<span><b>' + esc(l.name || 'Специалист') + ' · ' + (l.kind === 'nutri' ? 'нутрициолог' : 'тренер') + '</b><span>' + esc(что.join(' · ')) + '</span></span></button>';
+  }).join('');
+  box.hidden = !карт; box.innerHTML = карт;
+}
+/* лента: ответы ИИ и переписка со специалистом — по времени */
+function дгЛента(items){
+  var доп = [];
+  Object.keys(ДГ.чаты).forEach(function(id){ var ч = ДГ.чаты[id]; if (!ч || !дгЛинк(id)) return;
+    (ч.msgs || []).forEach(function(x){ доп.push({ role: 'pro', me: x.me, text: x.text, ts: x.at, name: ч.name, seen: x.seen }); }); });
+  if (!доп.length) return items;
+  return items.map(function(c, i){ return { c: c, k: c.ts || 0, i: i }; }).concat(доп.map(function(c, i){ return { c: c, k: c.ts || 0, i: 1e6 + i }; }))
+    .sort(function(a, b){ return (a.k - b.k) || (a.i - b.i); }).map(function(x){ return x.c; });
+}
+function дгПузырь(c){
+  var вр = (function(){ try { return chatВремя(c.ts); } catch (e) { return ''; } })();
+  if (c.me) return '<div class="msg me topro" data-noi18n><span class="dgto">→ ' + esc(дгИмя(c.name)) + '</span>' + esc(c.text) + '<small>' + esc(вр) + (c.seen ? ' · прочитано' : '') + '</small></div>';
+  return '<div class="msg pro" data-noi18n><span class="dgfrom">' + esc(дгИмя(c.name)) + '</span>' + esc(c.text) + '<small>' + esc(вр) + '</small></div>';
+}
+function дгТянуть(){
+  var вед = дгВедут(); if (!вед.length || ДГ.тянем) return Promise.resolve();
+  ДГ.тянем = true;
+  return Promise.all(вед.map(function(l){
+    return fGet('/roli/chat?uid=' + encodeURIComponent(syncUid()) + '&link=' + encodeURIComponent(l.id)).then(function(r){
+      if (!r || !r.ok) return false;
+      var было = ДГ.чаты[l.id], sig = JSON.stringify(r.msgs);
+      ДГ.чаты[l.id] = { msgs: r.msgs, name: l.name, kind: l.kind, sig: sig };
+      l.unread = 0;
+      return !было || было.sig !== sig;
+    }).catch(function(){ return false; });
+  })).then(function(изм){ ДГ.тянем = false; дгРисовать();
+    if (изм.some(Boolean) && document.body.classList.contains('coach')) renderChat(); });
+}
+function дгОтправить(){
+  var л = дгЛинк(ДГ.кому), поле = document.getElementById('ctext'), тх = поле ? поле.value.trim() : ''; if (!л || !тх) return;
+  var ч = ДГ.чаты[л.id] = ДГ.чаты[л.id] || { msgs: [], name: л.name, kind: л.kind, sig: '' };
+  ч.msgs = (ч.msgs || []).concat([{ id: 0, me: true, text: тх, at: Date.now(), seen: false }]);
+  поле.value = ''; поле.style.height = 'auto'; try { chatSendState(); } catch (e) {}
+  renderChat(); haptic('light');
+  fPost('/roli/chat', { uid: syncUid(), link: л.id, text: тх }).then(function(){ дгТянуть(); })
+    .catch(function(er){ ч.msgs = ч.msgs.filter(function(x){ return !(x.id === 0 && x.text === тх); }); поле.value = тх; CHAT.err = 'Не отправилось: ' + (er.message || humanErr(er)); renderChat(); });
+}
+/* ИИ предложил передать специалисту — карточка «Передать» */
+function дгПередатьHtml(c){
+  var имя = дгИмя(c.name);
+  var кому = c.kind === 'nutri' ? 'нутрициологу' : 'тренеру';
+  if (c.sent) return '<div class="dgpro"><b>Передано ' + кому + '</b> — ' + esc(имя) + ' ответит здесь же.</div>';
+  return '<div class="dgpro"><b>Передать ' + кому + ' (' + esc(имя) + ')?</b><span class="dgq">«' + esc(c.text) + '»</span><div class="rb rb3"><button type="button" class="go" data-reco2="prosend">Передать</button>' +
+    '<button type="button" data-reco2="proself">Сам напишу</button><button type="button" class="rx" data-reco2="no" aria-label="Не надо">✕</button></div></div>';
+}
+setInterval(function(){
+  if (!ЕСТЬ('roli') || document.hidden || !(дгВедут().length || дгСпец())) return;
+  if (document.body.classList.contains('coach')) { if (дгВедут().length) дгТянуть(); return; }
+  if (document.querySelector('.modal.show')) return;
+  ролиЗагрузить();
+}, 60000);
+document.addEventListener('click', function(e){
+  var к = e.target.closest && e.target.closest('#ckomu button[data-komu]');
+  if (к) { ДГ.кому = к.dataset.komu || ''; дгКомуРисовать(); haptic('light'); var t = document.getElementById('ctext'); if (t) t.focus(); return; }
+  var о = e.target.closest && e.target.closest('[data-dg="open"]');
+  if (о) { var m = ROLI.me || {}, л = дгЛинк(о.dataset.link); haptic('light');
+    if (л && !л.unread && m.offer && л.kind === 'trainer') return goPage('gym');
+    if (л && !л.unread && m.normOffer && л.kind === 'nutri') return goPage('food');
+    ДГ.кому = л ? л.id : ''; openCoach(); return; }
+  var мой = e.target.closest && e.target.closest('[data-dg="myai"]');
+  if (мой) { closeProf(); openCoach(); haptic('light'); }
+});
+/* специалисту кнопка внизу — его кабинет «Клиенты» */
+document.addEventListener('click', function(e){
+  if (!(e.target.closest && e.target.closest('#coachnav')) || !дгСпец()) return;
+  e.stopPropagation(); e.preventDefault(); haptic('light'); openProf('rolpro'); ролиЗагрузить();
+}, true);
+/* сводка клиента у специалиста */
+function дгСводкаЗагрузить(){
+  var k = ROLI.card; if (!k) return;
+  if (k.sum) return ролиКарточкаРисовать();
+  fGet('/roli/summary?uid=' + encodeURIComponent(syncUid()) + '&who=' + encodeURIComponent(k.who)).then(function(r){
+    if (ROLI.card !== k) return; k.sum = (r && r.ok) ? r : { err: (r && r.error) || 'Нет ответа.' }; ролиКарточкаРисовать();
+  }).catch(function(e){ if (ROLI.card === k) { k.sum = { err: humanErr(e) }; ролиКарточкаРисовать(); } });
+}
+function дгСводкаHtml(k){
+  var с = k.sum;
+  if (!с) return '<p class="empt">Загружаю…</p>';
+  if (с.err) return '<p class="rolerr">' + esc(с.err) + '</p>';
+  var стр = [], зпт = function(x){ return String(x).replace('.', ','); };
+  if (с.gym) стр.push('<b>Тренировки:</b> ' + с.gym.week + ' за 7 дней' + (с.gym.last ? ' · последняя ' + ролиДень(с.gym.last.date) + (с.gym.last.name ? ', ' + esc(с.gym.last.name) : '') : ' · ни одной за 2 недели'));
+  if (с.body) стр.push('<b>Вес:</b> ' + (с.body.now != null ? зпт(с.body.now) + ' кг в среднем за неделю' + (с.body.before != null ? ' (' + (с.body.now - с.body.before > 0 ? '+' : '−') + зпт(Math.abs(Math.round((с.body.now - с.body.before) * 10) / 10)) + ' за 2 недели)' : '') : 'не взвешивался неделю'));
+  if (с.food) стр.push('<b>Еда:</b> записывал ' + с.food.days + ' из 7 дней');
+  if (!стр.length) стр.push('Клиент пока не открыл вам данных — только переписка' + (с.kind === 'trainer' ? ' и программа.' : ' и норма.'));
+  var что = с.kind === 'trainer' ? 'Программа' : 'Норма';
+  var отпр = с.sent ? '<p class="rolnote">' + что + (с.sent.name ? ' «' + esc(с.sent.name) + '»' : '') + ' — ' + (с.sent.taken ? 'клиент принял' : 'ждёт решения клиента') + ', отправлена ' + ролиДата(с.sent.at) + '.</p>' : '<p class="rolnote">' + что + ' ещё не отправлена.</p>';
+  return '<div class="rolcard">' + стр.map(function(x){ return '<p style="margin:4px 0">' + x + '</p>'; }).join('') + '</div>' + отпр +
+    (с.unread ? '<p class="rolnote rolwarn">Ждёт ответа: ' + с.unread + ' ' + plural(с.unread, ['сообщение', 'сообщения', 'сообщений']) + '.</p>' : '') +
+    '<div class="rolbtns"><button type="button" class="btn small prim" data-dgtab="chat">Написать</button>' +
+    '<button type="button" class="btn small" data-dgtab="' + (с.kind === 'trainer' ? 'prog' : 'norm') + '">' + (с.kind === 'trainer' ? 'Программа' : 'Норма') + '</button>' +
+    (k.cats.indexOf('ai') >= 0 ? '<button type="button" class="btn small" data-dgtab="ai">Спросить ИИ-помощника</button>' : '') + '</div>';
+}
+document.addEventListener('click', function(e){
+  var т = e.target.closest && e.target.closest('[data-dgtab]'); if (т && ROLI.card) { haptic('light'); ролиКарточка(ROLI.card.who, т.dataset.dgtab); }
+});
 
 /* ── подключение по ссылке специалиста: бот открывает приложение с ?pro=КОД ── */
 function ролиПоСсылке(){
@@ -22865,6 +23057,7 @@ function openCoach(date){
   if(ph){ try{ ph.placeholder=CHAT.date===TODAY?chatHint():'Еда или вопрос'; }catch(e){} }
   coachAttn(false);
   chatPull();
+  try { дгРисовать(); if (дгВедут().length) { дгТянуть(); clearInterval(ДГ.т); ДГ.т = setInterval(function(){ if (!document.body.classList.contains('coach')) return clearInterval(ДГ.т); дгТянуть(); }, 8000); } } catch (e) {}
   setTimeout(function(){
     var t=document.getElementById('ctext'); if(t && window.innerWidth>700) t.focus();
   }, 220);
@@ -23033,7 +23226,7 @@ function renderChat(scroll){
   else {
     /* Лента не должна расти бесконечно: показываем последние шесть реплик,
        остальное — по кнопке. */
-    var все=CHAT.items, скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
+    var все=дгЛента(CHAT.items), скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
     if(CHAT.intro && !скрыто) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     if(скрыто) h+='<button type="button" class="chatmore" id="chatmore">Показать, что было раньше ('+скрыто+')</button>';
     var день='', живая=чатЖивая(все);
@@ -23041,6 +23234,7 @@ function renderChat(scroll){
     h+=(скрыто?все.slice(-6):все).map(function(c){
       var d=chatДень(c.ts), шапка='';
       if(d && d!==день){ день=d; шапка='<div class="chatsep">'+esc(d)+'</div>'; }
+      if(c.role==='pro') return шапка+дгПузырь(c);
       /* 30.10: сервер дописывает к тексту « [фото]» по-русски — в ленте вместо пометки значок камеры (на любом языке) */
       if(c.role==='user'){ var фм=String(c.text||'').match(/^([\s\S]*?)\s*\[фото(?: ×(\d+))?\]\s*$/);
         return шапка+'<div class="msg me" data-noi18n>'+(фм?(фм[1]?esc(фм[1])+' ':'')+'<span class="mphoto" aria-label="photo">'+ИК.cam+(фм[2]?'×'+фм[2]:'')+'</span>':esc(c.text))+'</div>'; }
@@ -23373,6 +23567,7 @@ function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
   if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
   if(c.what==='today') return сегодняКарточка(c, где);
+  if(c.what==='pro') return где==='chat' ? дгПередатьHtml(c) : '';
   var can=recoCan(c);
   var цель=recoTargetHtml(c, can);
   var подпись = (can && can.kind==='swap' && c.nocat) ? 'Выбрать в каталоге' : (c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить'));
@@ -23697,6 +23892,14 @@ function сегодняКарточка(c, где){
 function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
   var cт=RECO2 || gget('coach_reco', null);
+  if(cт && cт.what==='pro' && /^pro/.test(b.dataset.reco2)){
+    if(b.dataset.reco2==='prosend'){ b.disabled=true;
+      fPost('/roli/chat', {uid:syncUid(), link:cт.link, text:cт.text}).then(function(){ cт.sent=true; RECO2=cт; gset('coach_reco', cт); renderReco2(); haptic('ok'); дгТянуть(); })
+        .catch(function(er){ b.disabled=false; CHAT.err='Не передалось: '+(er.message||humanErr(er)); renderChat(false); });
+      return; }
+    ДГ.кому=cт.link; var пл=document.getElementById('ctext'); if(пл){ пл.value=cт.text; try{ chatSendState(); }catch(e2){} }
+    gset('reco2_seen', cт.id); RECO2=null; renderReco2(); дгКомуРисовать(); haptic('light'); return;
+  }
   if(cт && cт.what==='today' && /^today/.test(b.dataset.reco2)){
     if(b.dataset.reco2==='today'){
       set('tplace_'+TODAY, {dk:day, pl:cт.place==='s'?'s':'h', full:cт.items.map(function(it){ return {i:it.i, n:((CAT&&catById(it.i))||{}).n||it.n, sets:it.sets, reps:it.reps}; })});
@@ -23751,6 +23954,11 @@ function takeChanges(d){
   /* правка дня уже применена программой целиком: карточка с кнопкой «Другое»
      здесь предложила бы отменить то, чего в ней нет */
   if(c.what==='day') return;
+  /* 01.11 «Тренер — два голоса»: ИИ предлагает передать вопрос живому специалисту */
+  if(c.what==='pro'){
+    if(!c.link) return;
+    c.id=recoId(c); gset('reco2_seen', null); RECO2=c; gset('coach_reco', c); renderReco2(); return;
+  }
   /* 01.11 (D): тренировка на сегодня — карточкой с картинками, «Сделать сегодняшней» */
   if(c.what==='today'){
     if(!c.items || !c.items.length) return;
@@ -23896,6 +24104,7 @@ document.getElementById('coachnav').addEventListener('click', function(){ openCo
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 function cGo(){
+  if(ДГ.кому && дгЛинк(ДГ.кому)) return дгОтправить();
   if(CHAT.busy || CHAT.prep) return;
   var t=document.getElementById('ctext').value.trim();
   if(!t && !CHAT.att) return;
