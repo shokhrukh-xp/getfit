@@ -6506,7 +6506,8 @@ function местоЗамена(x, тп){
 function местоКандидаты(c, где, занято){
   if(!c || !CAT) return [];
   var вид=catKind(c), движ=function(x){ return noYo(String(x.n||'').split('(')[0]).trim(); }, слово=function(x){ return движ(x).split(' ')[0]; };
-  return CAT.ex.filter(function(x){ return x.i!==c.i && (x.m===c.m || x.m2===c.m) && catKind(x)===вид && местоOk(x, где) && !NOPE[x.i] && !(занято||{})[x.i]; })
+  var естьМ=катЕсть(где)||[];
+  return CAT.ex.filter(function(x){ return x.i!==c.i && (x.m===c.m || x.m2===c.m) && catKind(x)===вид && местоOk(x, где, естьМ) && !NOPE[x.i] && !(занято||{})[x.i]; })
     /* было с весом (штанга, тренажёр, гантели) — сначала то, где вес есть и здесь: гантели, гиря, резинка */
     .map(function(x){ var свес=/^(barbell|dumbbell|machine|cable|kettlebells|e-z curl bar)$/.test(c.q||''), есть=(x.nd||[]).some(function(k){ return /^(db|kb|band)$/.test(k); });
       /* та же поза (стоя/сидя) и обе руки/ноги, если так было */
@@ -6684,12 +6685,12 @@ function кандидаты(e, dk){
   var род = catKind(свой || {c:'strength'});
   var сегодня = {}; exList(dk||day).forEach(function(x){ var i=x.cat||x.id; if(i) сегодня[i]=1; });
   /* 01.11 (C+D): дома и на улице — только то, что там можно сделать с тем, что есть */
-  var гдеК=местоДня(dk||day);
+  var гдеК=местоДня(dk||day), естьК=гдеК?(катЕсть(гдеК)||[]):null;
   return CAT.ex.filter(function(x){
     if(x.m!==м && x.m2!==м) return false;
     if(catKind(x)!==род) return false;
     if(NOPE[x.i]) return false;
-    if(гдеК && !местоOk(x, гдеК)) return false;
+    if(гдеК && !местоOk(x, гдеК, естьК)) return false;
     if(сегодня[x.i]) return false;
     return true;
   }).sort(function(a,b){
@@ -6951,13 +6952,14 @@ function катЕсть(где){
   return null;
 }
 /* можно ли сделать упражнение там-то с тем, что есть */
-function местоOk(x, где){
+function местоOk(x, где, есть){
   if(!где || где==='g') return true;
   if(String(x.pl||'g').indexOf(где)<0) return false;
-  var есть=катЕсть(где)||[];
+  /* есть можно передать готовым: myData() читает хранилище, а каталог — тысяча строк */
+  есть=есть||катЕсть(где)||[];
   return (x.nd||[]).every(function(k){ return k!=='gym' && есть.indexOf(k)>=0; });
 }
-function катЕстьOk(x){ return !catWhere || catWhere==='g' || местоOk(x, catWhere); }
+function катЕстьOk(x, есть){ return !catWhere || catWhere==='g' || местоOk(x, catWhere, есть); }
 function катЕстьHtml(где, подпись){
   где=где||catWhere;
   if(где!=='h' && где!=='s') return '';
@@ -7095,9 +7097,10 @@ function catKind(x){ var c=x.c||'strength'; return c==='powerlifting' ? 'strengt
 function catFiltered(ignoreEquipment,ignoreType){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
+  var естьF=(catWhere==='h'||catWhere==='s') ? (катЕсть()||[]) : null;
   return CAT.ex.filter(function(x){
     if(!catWhereOk(x)) return false;
-    if(!катЕстьOk(x)) return false;
+    if(!катЕстьOk(x, естьF)) return false;
     if(!pickGroupMatch(x))return false;
     if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
     if(!ignoreEquipment && ((catEquip && x.q!==catEquip)||!catMachineMatch(x,catMachine))) return false;
@@ -7451,7 +7454,7 @@ function renderCatalog(){
       var ключ=Object.keys(нехват).sort(function(a,b){ return нехват[b]-нехват[a]; })[0];
       var мыш={}; вЗале.forEach(function(x){ мыш[x.m]=(мыш[x.m]||0)+1; });
       var гл=Object.keys(мыш).sort(function(a,b){ return мыш[b]-мыш[a]; })[0], вид=catKind(вЗале[0]);
-      var похож=CAT.ex.filter(function(x){ return x.m===гл && catKind(x)===вид && catWhereOk(x) && катЕстьOk(x) && !NOPE[x.i]; })
+      var похож=CAT.ex.filter(function(x){ return x.m===гл && catKind(x)===вид && catWhereOk(x) && катЕстьOk(x, естьУ) && !NOPE[x.i]; })
         .sort(function(a,b){ return катПоп(a)-катПоп(b); }).slice(0,3);
       var здесь=catWhere==='h'?'дома':'на улице';
       box.innerHTML=h+'<div class="catempt"><b>'+(catWhere==='h'?'Дома':'На улице')+' такого нет</b>'+
