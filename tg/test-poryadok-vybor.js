@@ -3,8 +3,11 @@ const {chromium}=require('playwright'),M=require('./mock'),assert=require('asser
 const shots=process.env.GF_PICK_SHOTS;if(shots)fs.mkdirSync(shots,{recursive:true});let bad=0;
 const give=(r,d,status=200)=>r.fulfill({status,contentType:'application/json',body:JSON.stringify(d)});
 async function snap(p,name,theme,width){assert.deepEqual(await viewport(p),[]);const c=await contrast(p);assert(c.checked>0);assert.deepEqual(c.failures,[]);if(shots)await p.screenshot({path:path.join(shots,`${name}-${theme}-${width}.png`)});}
+/* 01.11: набор упирался в потолок 6 мин в общем прогоне — GF_PART=k/n (tg/run-fast.js) делит его на части */
+const ЧАСТЬ=(process.env.GF_PART||'').match(/^(\d+)\/(\d+)$/), моё=i=>!ЧАСТЬ||i%+ЧАСТЬ[2]===+ЧАСТЬ[1];let проход=0;
 (async()=>{const b=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390])for(const name of (process.env.GF_PICK_CASE||'order,picker,404,410,503').split(',')){
+ if(!моё(проход++))continue;
  const p=await b.newPage({viewport:{width,height:844}});p.setDefaultTimeout(15000); // 20.10: под нагрузкой ответ стенда идёт дольше 4,5 с
  try{
  if(name==='503')await p.addInitScript(()=>{window.__паузыОтправки=[200,200];}); /* 22.10: 5xx возврат повторяет сам, два раза */

@@ -85,7 +85,7 @@ const наборы = fs.readdirSync(TG).filter(f => /^test-.*\.js$/.test(f)).sor
 const ВСЕ_РАЗМЕРЫ = дальше.includes('--все') || дальше.includes('--all');
 /* 01.11, его выбор «Разбить ds1/ds5 на части»: по 6 минут каждый целиком упирались в потолок;
    частями (GF_PART=k/n, см. сами наборы) — параллельно, как обходчик */
-const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 4, 'tyk.js': 6, 'test-ds1.js': 4, 'test-ds5.js': 3 };
+const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 4, 'tyk.js': 6, 'test-ds1.js': 4, 'test-ds5.js': 3, 'test-poryadok-vybor.js': 2 };
 /* 01.11, «ds1/ds5 — в фоне»: --без-долгих (полный прогон перед push) их пропускает */
 const БЕЗ_ДОЛГИХ = дальше.includes('--без-долгих');
 const имя = f => f.replace(/^test-/, '').replace(/\.js$/, '');
