@@ -8,10 +8,10 @@
    «Загружаю ваши данные…». Новичок (на сервере пусто) и сбой сервера — знакомство, как раньше. */
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),M=require('./mock'),PROG=require('./fixtures/prog-3dnya.json');
 const ME={me:{sex:'m',age:34,ht:178,bw:85.6,wt:'down',gym:'muscle',goal:'fat',level:'mid',only:'all',place:'gym',min:45}};
-async function прогон(browser,задержка,ответ){
+async function прогон(browser,задержка,ответ,своя){
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const t0=Date.now(),лог=[];
-  await M.поднять(page,{newbie:true,wait:0,handleRoute:async route=>{
+  await M.поднять(page,{newbie:!своя,wait:0,handleRoute:async route=>{
     const u=new URL(route.request().url());
     if(u.pathname!=='/all')return false;
     await new Promise(r=>setTimeout(r,задержка));
@@ -23,7 +23,9 @@ async function прогон(browser,задержка,ответ){
     return true;}});
   for(let i=0;i<20;i++){
     const v=await page.evaluate(()=>{const p=document.getElementById('picker'),w=document.getElementById('cloudwait');
-      return (p&&p.classList.contains('show')&&getComputedStyle(p).display!=='none')?'АНКЕТА':(w&&!w.hidden)?'жду':'приложение';}).catch(()=>null);
+      if(p&&p.classList.contains('show')&&getComputedStyle(p).display!=='none')return 'АНКЕТА';
+      if(w&&!w.hidden)return 'жду';
+      return /заполните профиль/i.test(document.body.innerText)?'НУЛИ':'приложение';}).catch(()=>null);
     лог.push(((Date.now()-t0)/1000).toFixed(1)+'с '+v);
     await page.waitForTimeout(250);
   }
@@ -52,5 +54,13 @@ async function прогон(browser,задержка,ответ){
     лог=await прогон(browser,0,'еда');
     assert.ok(!лог.some(x=>/АНКЕТА/.test(x))&&/приложение/.test(лог[лог.length-1]),'«только еда» с анкетой, но без указателя программы — приложение: '+лог.join(' · '));
     console.log('PASS «только еда» без указателя программы на сервере — приложение, без анкеты');
+    /* 30.10, живая проверка в Telegram Web: программа на устройстве уже сохранена, а профиля нет —
+       ~10 с было «0 ккал · заполните профиль — будет норма». Теперь «Загружаю ваши данные…». */
+    лог=await прогон(browser,3000,undefined,true);
+    console.log('программа на устройстве, профиля нет, сервер через 3 с: '+лог.join(' · '));
+    assert.ok(!лог.some(x=>/АНКЕТА|НУЛИ/.test(x)),'ни анкеты, ни «заполните профиль», пока едут данные: '+лог.join(' · '));
+    assert.ok(лог.some(x=>/жду/.test(x)),'пока сервер молчит — «Загружаю ваши данные…»');
+    assert.ok(/приложение/.test(лог[лог.length-1]),'в конце — приложение');
+    console.log('PASS программа на устройстве без профиля — «Загружаю ваши данные…», без нулей');
   }finally{await browser.close();}
 })().catch(e=>{console.error('FAIL',e.message);process.exit(1);});

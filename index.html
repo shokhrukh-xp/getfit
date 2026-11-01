@@ -8491,6 +8491,23 @@ function облакоЖдать(){
     });
   })();
 }
+/* 30.10, живая проверка в Telegram Web: программа на устройстве уже была, а профиля и дневника
+   ещё нет — «Сегодня» ~10 с показывало 0 ккал и «заполните профиль — будет норма», пока не
+   приехали данные. Его слова раньше: «Я уже подумал, что все мои данные сбросились». Теперь
+   поверх — «Загружаю ваши данные…», пока не закончится первый обмен с сервером (не дольше 15 с).
+   Знакомство здесь не открываем: программа на устройстве есть. */
+function облакоПодгрузка(){
+  var w=document.getElementById('cloudwait'), t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
+  if(!w) return;
+  w.hidden=false; if(t) t.textContent=тр('Загружаю ваши данные…'); if(b) b.hidden=true;
+  var t0=Date.now(), был=false;
+  (function смотреть(){
+    if(pulling) был=true;
+    if(ОБЛАКО_ЖДЁМ) return;
+    if(meFull() || (был && !pulling) || Date.now()-t0>15000){ w.hidden=true; return; }
+    setTimeout(смотреть, 250);
+  })();
+}
 function облакоНетСвязи(){
   if(!ОБЛАКО_ЖДЁМ) return;
   clearTimeout(облакоТаймер);
@@ -10523,7 +10540,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '31.10 16:45';
+var BUILD = '01.11 10:27';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11971,6 +11988,10 @@ function ordБросить(e){
 }
 function renderList(){
   var box = document.getElementById('list'), h='';
+  /* 31.10, сводка Ops: «adopt me: null is not an object (sess.ex)» — профиль из облака
+     приходил раньше, чем открылся день, и список рисовался без сессии. Нарисуется сразу
+     после loadSess() при открытии дня. */
+  if(!sess || !sess.ex) return;
   /* 07.10: прошлый день недели — тот же список, правка той записи; «Очистить
      день» и «+ Занятие вне зала» (они про сегодня) прячет CSS */
   var gw=document.getElementById('gym-work');
@@ -14107,6 +14128,9 @@ var ERR_SENT={}, ERR_N=0;
 function errBeacon(where, m){
   try{
     m=String(m||''); if(!m || /^Script error\.?/.test(m)) return;
+    /* 31.10: «Дневник обновляется после сброса» — не сбой, а штатная перезагрузка после
+       сброса дневника; в сводку Ops как ошибка экрана не шлём */
+    if(/Дневник обновляется/.test(m)) return;
     /* стенд (127.0.0.1) не шлёт на боевой сервер; проверка включает отправку сама */
     if(/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname) && !window.__errBeacon) return;
     /* 29.10: открыто не из Telegram (сканеры нового домена wellbol.app, превью ссылок) —
@@ -18811,7 +18835,8 @@ function номерОтправки(){ return Date.now().toString(36)+Math.rando
 function отправкаПовторима(e){
   if(!e || e.code==='tg_closed' || e.code==='sub') return false;
   if(!e.status) return true;
-  return e.status>=500 || e.status===429;
+  /* 30.10: чат фоном — сервер перезапустился посреди ответа (410 job_lost): сверяем историю */
+  return e.status>=500 || e.status===429 || e.code==='job_lost';
 }
 /* 22.10, его слова «проверь весь код на такие ошибки»: запись, которую сервер
    мог принять, а ответ потерялся (связь в зале, 5xx), повторяем сами тем же
@@ -23145,7 +23170,9 @@ function coachSend(text, image){
       CHAT.stage=t; var el=document.getElementById('cwait'); if(el) el.textContent=t;
     }).catch(function(){});
   }, 1500);
-  fPost('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
+  /* 30.10 (аудит): чат фоном (?job=) — iPhone рвал ответ, на который 60 с не пришло ни байта,
+     и человек видел «Нет связи», хотя сервер отвечал. Номер операции защищает от двойной записи. */
+  fPostДолгий('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
@@ -24148,7 +24175,7 @@ function входApple(){
 var _ai=gget('ai_prog', null); if(_ai){ try{ installAiProg(_ai); }catch(e){} }
 
 var _saved = gget('profile', null);
-if(_saved && PROFILES[_saved]){ applyProfile(_saved); }
+if(_saved && PROFILES[_saved]){ applyProfile(_saved); if(TG && TG.initData && !meFull()) облакоПодгрузка(); }
 else {
   /* Программу применяем молча, чтобы приложению было что рисовать, когда из
      облака приедет профиль, но за окном знакомства её не видно (body.onb). */
