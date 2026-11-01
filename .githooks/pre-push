@@ -37,13 +37,15 @@ case "$MODE" in
     TESTS=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).tests.join(" "))' "$PLANFILE") || exit 1
     echo "pre-push: адресный прогон — $TESTS"
     set -- $TESTS ;;
-  full) echo "pre-push: полный прогон приложения"; set -- ;;
+  # 01.11, его выбор «ds1/ds5 — в фоне»: два самых долгих набора дизайна не держат push,
+  # они идут в полном прогоне после него (tools/full-after.sh)
+  full) echo "pre-push: полный прогон приложения (ds1 и ds5 — в фоне после push)"; set -- --без-долгих ;;
   *) echo "pre-push: неизвестный план — остановка"; exit 1 ;;
 esac
 if sh tg/run.sh "$@" > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
   # 28.10: адресно перед выпуском — полный сразу после, в фоне (tools/full-after.sh)
-  if [ "$MODE" = targeted ] && [ "${GETFIT_NO_AFTER:-0}" != 1 ]; then
+  if [ "$MODE" != meta ] && [ "${GETFIT_NO_AFTER:-0}" != 1 ]; then
     SHA=$(tail -1 "$REFILE" | cut -f2)
     nohup sh tools/full-after.sh "$SHA" >/dev/null 2>&1 &
     echo "pre-push: полный прогон запущен в фоне для ${SHA%${SHA#???????}} — итог: sh tools/full-after.sh --status"

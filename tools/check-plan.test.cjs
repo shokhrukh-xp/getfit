@@ -15,6 +15,9 @@ assert.equal(plan([change(много)],T).mode,'full');
 const кат=plan([change('{"ex":[1]}','catalog.json','{"ex":[1,2]}')],{katalog:"fetch('catalog.json')",x:'a',y:'b',z:'c'});
 assert.equal(кат.mode,'targeted'); assert(кат.tests.includes('katalog'));
 assert.equal(plan([change(null,'tg/test-foo.js','y')],{}).mode,'full');
+/* 01.11: переводы — адресно: наборы языков и те, что открывают приложение на другом языке */
+{const p=plan([change('{"a":"b"}','i18n/en.json','{"a":"c"}')],{yazyki:'x',ui:'tgLang:"en"',drugoy:'zzz'});
+ assert.equal(p.mode,'targeted');assert.ok(p.tests.includes('yazyki')&&p.tests.includes('ui')&&!p.tests.includes('drugoy'),JSON.stringify(p));}
 assert.equal(plan([change('x','docs/a.md','y')],{}).mode,'meta');
 assert(plan([change('x','tg/test-food.js','y')],{}).tests.includes('food'));
 assert(plan([change(html.replace('red','blue'))],{food:'selector .foo'}).tests.includes('food'));

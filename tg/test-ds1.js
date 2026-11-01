@@ -7,7 +7,13 @@
 const viewport=require('./viewport-check');
 const {chromium}=require('playwright'),M=require('./mock');let плохо=0;
 function дано(ok,t){console.log((ok?'  ok  ':'  ПРОВАЛ  ')+t);if(!ok)плохо++}
+/* 01.11, его выбор «Разбить ds1/ds5 на части»: с GF_PART=k/n (tg/run-fast.js) набор делает
+   только свою долю тяжёлых проходов (номер прохода по кругу), лёгкие проверки — в части 0.
+   Без GF_PART — целиком, как раньше. */
+const ЧАСТЬ=(process.env.GF_PART||'').match(/^(\d+)\/(\d+)$/);
+const моё=i=>!ЧАСТЬ||i%+ЧАСТЬ[2]===+ЧАСТЬ[1], перваяЧасть=!ЧАСТЬ||+ЧАСТЬ[1]===0;let проход=0;
 (async()=>{const b=await chromium.launch();try{
+if(перваяЧасть){
 for(const theme of ['light','dark'])for(const width of [320,390]){
 const p=await b.newPage({viewport:{width,height:844}});const err=await M.поднять(p,{theme});
 const tokens=await p.evaluate(()=>{const c=getComputedStyle(document.documentElement);return ['--bg','--card','--text','--shadow'].map(k=>c.getPropertyValue(k).trim())});
@@ -76,11 +82,13 @@ const q=await b.newPage();await M.поднять(q,{page});
 дано(await q.locator('#hctx .ds-eyebrow').allTextContents().then(a=>a.join(''))===label,'капитель раздела '+page+': '+(label||'нет'));
 await q.close();
 }
+}   /* перваяЧасть */
 /* 04.10: по ревью Claude. Композиция rgba/opacity по предкам;
    WCAG large text: 18pt=24px, жирный 14pt=18⅔px, не 14px.
    Изображения/градиенты требуют визуального ревью, disabled исключены WCAG. */
 const контраст=require('./contrast-check');
 for(const theme of ['light','dark'])for(const width of [320,390])for(const name of ['home','gym','food','eat','circle','log','ref']){
+ if(!моё(проход++))continue;
  const q=await b.newPage({viewport:{width,height:844}});await M.поднять(q,{theme,page:name,hist:M.журнал()});
  дано(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'без горизонтальной прокрутки '+theme+'/'+width+'/'+name);
  const bounds=await viewport(q);дано(!bounds.length,'границы всех видимых элементов '+theme+'/'+width+'/'+name+' '+JSON.stringify(bounds));
@@ -106,6 +114,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
 
 // Этап 3: особые состояния нового hero тоже проходят тот же контрастный обход.
 for(const theme of ['light','dark'])for(const width of [320,390])for(const state of ['free','empty','closed']){
+ if(!моё(проход++))continue;
  const q=await b.newPage({viewport:{width,height:844}}),o={theme,page:'food'};
  if(state==='free')o.free=[M.Д(0)];
  if(state==='empty'){o.day={meals:[],kcal:0,prot:0};o.score={r:null}}
@@ -118,6 +127,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const state
 
 // Заполненное меню: «съедено» приглушено цветом, а не нечитаемой opacity.
 for(const theme of ['light','dark'])for(const width of [320,390]){
+ if(!моё(проход++))continue;
  const q=await b.newPage({viewport:{width,height:844}});
  const menu={ok:true,span:'today',date:M.TODAY,from:M.TODAY,норма:{kcal:2110,prot:165},съел:{kcal:1030,prot:67},ост:{kcal:1080,prot:98},съедено:M.день().meals,дни:[{приёмы:[{id:'t1',kind:'ужин',text:'Куриная грудка с гречкой',kcal:520,prot:62,готовое:true}]}]};
  await M.поднять(q,{theme,page:'eat',onMenu:()=>menu});
@@ -131,8 +141,11 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
 const sheets=require('./ds5-scenes');
 // 26.10: шесть внутренних браузеров плюс внешний прогон перегружали WebView.
 // Те же сцены/темы/ширины, по три страницы одновременно.
-for(const theme of ['light','dark']) await Promise.all([320,390,430].map(async width=>{
-for(const name of sheets.scenes){
+/* номер прохода — из индексов, а не счётчиком: ширины идут параллельно */
+const листы0=проход;
+for(const [ti,theme] of ['light','dark'].entries()) await Promise.all([320,390,430].map(async (width,wi)=>{
+for(const [si,name] of sheets.scenes.entries()){
+ if(!моё(листы0+(ti*3+wi)*sheets.scenes.length+si))continue;
  const q=await b.newPage({viewport:{width,height:844}});
  try{
   const root=await sheets.open(q,name,theme),bounds=await viewport(q),c=await контраст(q,root);

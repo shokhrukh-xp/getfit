@@ -61,6 +61,12 @@ function plan(changes, tests){
       const к=c.file==='catalog.json'?['catalog','CAT.','каталог']:['tech.json','техник'];
       поКлючам(к); ui=true; почему.push(c.file); continue;
     }
+    /* 01.11, его выбор «Переводы — адресно»: словари i18n — данные, а не код. Наборы языков
+       и те, что открывают приложение на другом языке; полный — после push, в фоне */
+    if(/^i18n\/[\w-]+\.json$/.test(c.file)&&c.after!==null){
+      selected.add('yazyki'); for(const n of имена)if(/tgLang|gf_lang_tg|i18n\//.test(tests[n]))selected.add(n);
+      ui=true; почему.push(c.file); continue;
+    }
     if(c.file!=='index.html'||c.before===null||c.after===null) return {mode:'full',reason:'Общий код, данные, ресурсы или неизвестный файл: '+c.file};
     const normalize=s=>s.replace(/^var BUILD = '[^']*';?$/m,"var BUILD = ''; ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'<style></style>');
     const a=normalize(c.before), b=normalize(c.after);

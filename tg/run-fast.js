@@ -83,9 +83,14 @@ const наборы = fs.readdirSync(TG).filter(f => /^test-.*\.js$/.test(f)).sor
    по заданиям (3, с «--все» — 5; см. ЗАДАНИЯ в audit.js), тыкалка — по
    шести экранам приложения. */
 const ВСЕ_РАЗМЕРЫ = дальше.includes('--все') || дальше.includes('--all');
-const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 4, 'tyk.js': 6 };
+/* 01.11, его выбор «Разбить ds1/ds5 на части»: по 6 минут каждый целиком упирались в потолок;
+   частями (GF_PART=k/n, см. сами наборы) — параллельно, как обходчик */
+const ЧАСТЕЙ = { 'audit.js': ВСЕ_РАЗМЕРЫ ? 5 : 4, 'tyk.js': 6, 'test-ds1.js': 4, 'test-ds5.js': 3 };
+/* 01.11, «ds1/ds5 — в фоне»: --без-долгих (полный прогон перед push) их пропускает */
+const БЕЗ_ДОЛГИХ = дальше.includes('--без-долгих');
 const имя = f => f.replace(/^test-/, '').replace(/\.js$/, '');
-let файлы = наборы.concat(Object.keys(ЧАСТЕЙ));
+let файлы = наборы.concat(Object.keys(ЧАСТЕЙ).filter(f => !наборы.includes(f)));
+if (БЕЗ_ДОЛГИХ) файлы = файлы.filter(f => !/^test-ds[15]\.js$/.test(f));
 if (фильтр.length) файлы = файлы.filter(f => фильтр.some(ф => имя(f).includes(ф)));
 if (!файлы.length) { console.error('Под «' + фильтр.join(' ') + '» ни одного набора.'); process.exit(2); }
 const список = [];
@@ -145,7 +150,7 @@ const сек = мс => (мс / 1000).toFixed(1).padStart(5) + ' с';
     const з = список[i++], f = з.f; идут++;
     const t0 = Date.now(), вывод = [];
     const env1 = Object.assign({}, env); if (з.часть) env1.GF_PART = з.часть; else delete env1.GF_PART;
-    const p = spawn(process.execPath, [path.join(TG, f)].concat(ЧАСТЕЙ[f] ? дальше : []), { cwd: ROOT, env: env1 });
+    const p = spawn(process.execPath, [path.join(TG, f)].concat(ЧАСТЕЙ[f] ? дальше.filter(a => a !== '--без-долгих') : []), { cwd: ROOT, env: env1 });
     const таймер = setTimeout(() => { вывод.push(Buffer.from('\nПРОГОН: снят по потолку ' + ПОТОЛОК / 60000 + ' мин\n')); p.kill('SIGKILL'); }, ПОТОЛОК);
     p.stdout.on('data', d => вывод.push(d)); p.stderr.on('data', d => вывод.push(d));
     p.on('close', code => {

@@ -1,10 +1,16 @@
 'use strict';
 const {chromium}=require('playwright'),M=require('./mock'),S=require('./ds5-scenes'),viewport=require('./viewport-check');
 let failures=0;const ok=(v,t)=>{console.log((v?'  ok  ':'  ПРОВАЛ  ')+t);if(!v)failures++};
+/* 01.11, его выбор «Разбить ds1/ds5 на части»: с GF_PART=k/n (tg/run-fast.js) набор делает
+   только свою долю тяжёлых проходов (номер прохода по кругу), лёгкие проверки — в части 0.
+   Без GF_PART — целиком, как раньше. */
+const ЧАСТЬ=(process.env.GF_PART||'').match(/^(\d+)\/(\d+)$/);
+const моё=i=>!ЧАСТЬ||i%+ЧАСТЬ[2]===+ЧАСТЬ[1], перваяЧасть=!ЧАСТЬ||+ЧАСТЬ[1]===0;let проход=0;
 const progress={verdict:{state:'мало',text:'Мало замеров для сравнения.'},sila:{verdict:'растёт',up:1,flat:0,down:0,rows:[{name:'Подтягивания',now:{w:0,r:8,date:M.Д(1)},was:{w:0,r:6,date:M.Д(15)},pct:33},{name:'Жим',now:{w:60,r:8},was:{w:55,r:8},pct:9}]}};
 (async()=>{const b=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390]){
  for(const n of [0,1,3]){
+  if(!моё(проход++))continue;
   const p=await b.newPage({viewport:{width,height:844}});await M.поднять(p,{theme,meas:M.замеры().slice(0,n),goal:{text:"75 кг",wt:"down",rate:-.6,from:M.Д(29),w0:92},progress});
   ok(await p.locator('.vztemp p.muted').count()===1,'F1: вердикт мало виден при '+n+' замерах '+theme+'/'+width);
   /* 17.10: на «Сегодня» — «Зал на неделе», рабочие веса и список упражнений — в Журнале */
@@ -17,6 +23,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   await p.locator('#logsila .vzsila summary').click();await p.click('.l1 [data-page="food"]');await вЖурнал();ok(!await p.locator('#logsila .vzsila').evaluate(e=>e.open),'явное сворачивание тоже сохранено');await p.close();
  }
  for(const name of ['profile','srez','meal-edit','coach','subscription','catalog-picker','schedule','onboard-filled']){
+  if(!моё(проход++))continue;
   const p=await b.newPage({viewport:{width,height:844}}),root=await S.open(p,name,theme);
   const geo=await p.locator(root+' .modalbox').evaluate(e=>{let c=getComputedStyle(e),h=e.querySelector('h3'),r=e.getBoundingClientRect();return {bg:c.backgroundColor,title:getComputedStyle(h).fontSize,weight:getComputedStyle(h).fontWeight,handle:getComputedStyle(e,'::before').display,left:r.left,right:r.right};});
   /* 22.10, редизайн «Бирюза, но смелее»: тёмная поверхность #0D191B, заголовки листов 800. */
@@ -32,6 +39,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
 }
 // Клавиатура: высота layout viewport и отдельно уменьшенный visual viewport.
 for(const theme of ['light','dark'])for(const width of [320,430])for(const height of [844,667]){
+ if(!моё(проход++))continue;
  const p=await b.newPage({viewport:{width,height}});await S.open(p,'coach',theme);ok(await p.locator('#ctext').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=16),'поле чата не вызывает увеличение из-за мелкого шрифта');await p.focus('#ctext');
  await p.evaluate(({height})=>{Object.defineProperty(visualViewport,'height',{configurable:true,value:height-300});Object.defineProperty(visualViewport,'offsetTop',{configurable:true,value:20});visualViewport.dispatchEvent(new Event('resize'));}, {height});
  await p.waitForTimeout(150);
@@ -42,6 +50,7 @@ for(const theme of ['light','dark'])for(const width of [320,430])for(const heigh
 }
 // Отказ по HTTP, по JSON и сети; успешный повтор, затем отказ снять реакцию.
 for(const theme of ['light','dark']){
+ if(!моё(проход++))continue;
  let mode='http',calls=0;const p=await b.newPage({viewport:{width:320,height:844}});await p.addInitScript(()=>{window.__паузыОтправки=[100,100];});
  await M.поднять(p,{theme,page:'circle',handleRoute:async route=>{if(new URL(route.request().url()).pathname!=='/react')return false;calls++;await new Promise(r=>setTimeout(r,150));if(mode==='network')await route.abort();else await route.fulfill({status:mode==='http'?503:200,contentType:'application/json',body:JSON.stringify(mode==='success'?{ok:true,likes:9,liked:true}:{ok:false})});return true;}});
  await p.locator('[data-lbwho]:not(.lbme)').first().click();await p.locator('.plate').first().click();
