@@ -6243,8 +6243,8 @@ function loadCatalog(){
      человек ещё сутки видел бы старые имена. */
   /* 21.10: в зале сеть рвётся — один тихий повтор через секунду, прежде
      чем говорить «не удалось»; ответ не 200 — тоже сбой, а не пустой каталог */
-  /* 01.11: «-k2» — каталог пополнился (дом и улица) без смены метки сборки на тестовой копии */
-  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)+'-k2';
+  /* 01.11: «-k3» — каталог пополнился (дом и улица, затем поле места pl) без смены метки сборки на тестовой копии */
+  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)+'-k3';
   /* одна попытка = ответ + JSON + проверка состава: пустой каталог тоже повторяем (ревью Codex P3) */
   var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); })
     .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); return j; }); };
