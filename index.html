@@ -7854,11 +7854,13 @@ function облакоПодгрузка(){
   var w=document.getElementById('cloudwait'), t=document.getElementById('cwtext'), b=document.getElementById('cwretry');
   if(!w) return;
   w.hidden=false; if(t) t.textContent=тр('Загружаю ваши данные…'); if(b) b.hidden=true;
+  /* 01.11: быстрый обмен (меньше 250 мс между проверками) не замечался — «Загружаю…» висел все 15 с
+     и закрывал экран (так падали circle-error, zamery, otpravka-*, udalenie). Теперь — по счётчику: первый обмен закончился и новый не идёт — закрываем. */
   var t0=Date.now(), был=false;
   (function смотреть(){
     if(pulling) был=true;
     if(ОБЛАКО_ЖДЁМ) return;
-    if(meFull() || (был && !pulling) || Date.now()-t0>15000){ w.hidden=true; return; }
+    if(meFull() || (был && !pulling) || (!pulling && pullГотово>0) || Date.now()-t0>15000){ w.hidden=true; return; }
     setTimeout(смотреть, 250);
   })();
 }
@@ -9620,16 +9622,16 @@ document.getElementById('pq-fem').addEventListener('click', function(){ openFem(
 /* ══ РЕЖИМ ДНЯ (01.11.2026) ══
    Его запрос: друг Фаррух работает в логистике США из Ташкента — ночью; «нужно сделать так,
    чтобы приложение могло это учитывать». Выборы: «Ночь + сменный», «Анкета + тренер»,
-   «По науке, мягко», «Шаг 1 сразу», ввод смены — «Готовые кнопки».
-   me.rezhim = { vid: 'noch'|'smeny', smena: {s, d[, tz]}, son: {s, d} } — то же читает сервер
-   (режимИз в getfit-sync). Смена «США» хранится по часам работодателя: перевод часов там
-   приложение и сервер считают сами. Сон хранится, только если человек сам его поправил;
+   «По науке, мягко», «Шаг 1 сразу», ввод смены — «Готовые кнопки»; кнопку «США» он убрал
+   («как-то неправильно сравнивать с США») — смена вводится по местным часам.
+   me.rezhim = { vid: 'noch'|'smeny', smena: {s, d}, son: {s, d} } — то же читает сервер
+   (режимИз в getfit-sync; smena.tz сервер понимает, если тренеру назвали чужие часы, —
+   в листе его не ставим, но и не стираем). Сон хранится, только если человек сам его поправил;
    иначе он — через час после смены, 7 часов (так же считает сервер). Обычный день — поля нет. */
 var РЕЖ_КАРТ=[['den','Сплю ночью','день — для дел, ночь — для сна'],['noch','Работаю ночью','смена ночью, сплю днём'],['smeny','Смены день и ночь','дневные и ночные чередуются']];
 var РЕЖ_ВИЗ=[['den','сплю ночью'],['noch','работаю ночью'],['smeny','смены']];
-var РЕЖ_СМЕНЫ=[['18-03','18–03'],['22-07','22–07'],['us','США'],['own','Другое']];
-var РЕЖ_ПРЕСЕТ={'18-03':{s:'18:00',d:'03:00'},'22-07':{s:'22:00',d:'07:00'},'us':{s:'09:00',d:'18:00'}};
-var РЕЖ_США=[['America/New_York','Нью-Йорк'],['America/Chicago','Чикаго'],['America/Los_Angeles','Лос-Анджелес']];
+var РЕЖ_СМЕНЫ=[['18-03','18–03'],['22-07','22–07'],['own','Другое']];
+var РЕЖ_ПРЕСЕТ={'18-03':{s:'18:00',d:'03:00'},'22-07':{s:'22:00',d:'07:00'}};
 var РЖ=null;
 function рМин(hm){ return +hm.slice(0,2)*60 + +hm.slice(3,5); }
 function рЧМ(m){ m=((Math.round(m)%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
@@ -9662,9 +9664,10 @@ function режимСнять(){
 }
 function openRez(вид){
   var me=myData()||{}, r=me.rezhim||{}, с=r.smena||{}, preset=с.s?'own':'22-07';
-  if(с.tz) preset='us';
-  else Object.keys(РЕЖ_ПРЕСЕТ).forEach(function(k){ if(k!=='us' && РЕЖ_ПРЕСЕТ[k].s===с.s && РЕЖ_ПРЕСЕТ[k].d===с.d) preset=k; });
-  РЖ={vid:вид||режимВид(me), preset:preset, tz:с.tz||'America/New_York', s:с.s||'', d:с.d||'',
+  /* смену, которую тренер записал по чужим часам (smena.tz), показываем местными часами */
+  var см0=режимСменаМест(r);
+  if(см0 && !с.tz) Object.keys(РЕЖ_ПРЕСЕТ).forEach(function(k){ if(РЕЖ_ПРЕСЕТ[k].s===см0.s && РЕЖ_ПРЕСЕТ[k].d===см0.d) preset=k; });
+  РЖ={vid:вид||режимВид(me), preset:preset, s:см0?см0.s:'', d:см0?см0.d:'',
       ss:(r.son&&r.son.s)||'', sd:(r.son&&r.son.d)||'', сонСвой:!!(r.son&&r.son.s), изАнкеты:!!вид, ош:''};
   renderRez();
   var m=document.getElementById('rezm'); if(m) m.classList.add('show'); haptic('light');
@@ -9674,7 +9677,6 @@ function closeRez(){
   if(РЖ && РЖ.изАнкеты) try{ renderWzOnly(); }catch(e){}   /* закрыл без сохранения — в анкете прежний выбор */
 }
 function рСменаТек(){
-  if(РЖ.preset==='us') return {s:'09:00',d:'18:00',tz:РЖ.tz};
   if(РЕЖ_ПРЕСЕТ[РЖ.preset]) return {s:РЕЖ_ПРЕСЕТ[РЖ.preset].s,d:РЕЖ_ПРЕСЕТ[РЖ.preset].d};
   return рВерно(РЖ.s)&&рВерно(РЖ.d)&&РЖ.s!==РЖ.d?{s:РЖ.s,d:РЖ.d}:null;
 }
@@ -9692,13 +9694,10 @@ function renderRez(){
   if(РЖ.vid==='noch'){
     h+='<span class="rzlab">СМЕНА</span><div class="trchips">'+РЕЖ_СМЕНЫ.map(function(x){
       return '<button type="button" data-rzsm="'+x[0]+'" aria-pressed="'+(РЖ.preset===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
-    if(РЖ.preset==='us') h+='<div class="trchips">'+РЕЖ_США.map(function(x){
-      return '<button type="button" data-rztz="'+x[0]+'" aria-pressed="'+(РЖ.tz===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>'+
-      '<p class="rznote">9:00–18:00 по их часам. Когда в США переводят часы, приложение сдвинет смену само.</p>';
     if(РЖ.preset==='own') h+='<div class="rzrow"><label>Начало<input id="rz-s" type="time" value="'+esc(РЖ.s)+'"></label><label>Конец<input id="rz-d" type="time" value="'+esc(РЖ.d)+'"></label></div>';
   }
   if(РЖ.vid!=='den'){
-    var см=РЖ.vid==='noch'?рСменаТек():null, смМ=см?(см.tz?{s:рИзПояса(см.s,см.tz),d:рИзПояса(см.d,см.tz)}:см):null, сон=рСонТек(смМ);
+    var смМ=РЖ.vid==='noch'?рСменаТек():null, сон=рСонТек(смМ);
     h+='<span class="rzlab">СПЛЮ</span><div class="rzrow"><label>Ложусь<input id="rz-ss" type="time" value="'+(сон?сон.s:'')+'"></label><label>Встаю<input id="rz-sd" type="time" value="'+(сон?сон.d:'')+'"></label></div>';
     if(смМ||сон) h+='<div class="rzday"><div class="rzbar">'+(сон?рКуски(сон.s,сон.d,'son'):'')+(смМ?рКуски(смМ.s,смМ.d,'sm'):'')+'</div>'+
       '<div class="rzax"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div><div class="rzleg">'+
@@ -9728,10 +9727,9 @@ function rezСохранить(){
 }
 document.getElementById('rezm').addEventListener('click', function(e){
   if(e.target.id==='rezm'){ closeRez(); return; }
-  var b=e.target.closest('[data-rz],[data-rzvid],[data-rzsm],[data-rztz]'); if(!b) return;
+  var b=e.target.closest('[data-rz],[data-rzvid],[data-rzsm]'); if(!b) return;
   if(b.dataset.rzvid!=null){ РЖ.vid=b.dataset.rzvid; РЖ.ош=''; renderRez(); haptic('light'); return; }
   if(b.dataset.rzsm!=null){ РЖ.preset=b.dataset.rzsm; РЖ.ош=''; renderRez(); haptic('light'); return; }
-  if(b.dataset.rztz!=null){ РЖ.tz=b.dataset.rztz; renderRez(); haptic('light'); return; }
   if(b.dataset.rz==='close'){ closeRez(); return; }
   if(b.dataset.rz==='save') rezСохранить();
 });
@@ -12978,7 +12976,7 @@ function pushDirty(){
   });
   return Promise.all(jobs).catch(function(){});
 }
-var pulling=false, lastPull=0;
+var pulling=false, lastPull=0, pullГотово=0;   /* pullГотово — сколько обменов закончилось (01.11, «Загружаю…») */
 /* 30.10, его слова: «Почему он меня спрашивает заполнить профиль возраст и рост? Почему мои
    изменения в программе не сохраняются?» Правка, получившая 409 «изменено на другом
    устройстве», висела первой в очереди навсегда: «Повторить» в зале её не трогал, выбор версии
@@ -13062,7 +13060,7 @@ function cloudPull(force){
       });
     });
   }).catch(function(){ SYNCOK=false; paintSync(); })
-    .then(function(n){ pulling=false; return n; });
+    .then(function(n){ pulling=false; pullГотово++; return n; });
 }
 /* Полночь: сначала сохраняем вчерашний ввод под вчерашней датой. Затем
    открываем новый день, не перенося в него старые подходы. */

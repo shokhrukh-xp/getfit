@@ -801,6 +801,11 @@ async function поднять(page, o) {
     адрес += (адрес.indexOf('?') >= 0 ? '&' : '?') + 'p=' + o.page;
   await page.goto(адрес, { waitUntil: 'domcontentloaded' });   /* o.base — эскиз на другом порту */
   await успокоиться(page, o.wait || 1400);
+  /* 01.11: без полного профиля приложение сначала показывает «Загружаю ваши данные…» (с 30.10),
+     пока не закончится первый обмен с сервером; наборы нажимали сквозь него и падали по таймауту
+     (home, circle-error, zamery, otpravka-*, udalenie). Ждём, пока заставка уйдёт; wait:0 и
+     новичок — без ожидания (test-novoe-ustroystvo проверяет саму заставку). */
+  if (o.wait !== 0 && !o.newbie) await page.waitForSelector('#cloudwait', { state: 'hidden', timeout: 5000 }).catch(() => {});
   return ошибки;
 }
 
