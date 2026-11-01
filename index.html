@@ -11201,10 +11201,11 @@ function шапкаДняБольшая(nx, doneToday){
   else if(сохрСегодня && сохрСегодня.date===TODAY && doneToday===day){ ст='сделан сегодня · '+метка; кл=' done'; }
   else if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
   else if(todayLetter() && day===nx){ ст='сегодня зал · '+метка; }
-  var тпШ=!ДЕНЬ_ДАТА && местоСегодня(day);
-  if(тпШ && !кл){ var базаШ=(myData()||{}).place; ст='сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' · вместо '+(базаШ==='home'?'дома':базаШ==='street'?'улицы':'зала'); }
   else if(day===nx){ ст=метка+' · следующий по очереди'; кл=' rest'; }
   else { var w=whenLabel(day); ст=метка+((w&&w!=='—')?' · '+w:''); кл=' rest'; }
+  /* 01.11 (C+D): «Сегодня дома / на улице» — шапка говорит, где сегодня */
+  var тпШ=!ДЕНЬ_ДАТА && местоСегодня(day);
+  if(тпШ && кл!==' done'){ var базаШ=(myData()||{}).place; ст='сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' · вместо '+(базаШ==='home'?'дома':базаШ==='street'?'улицы':'зала'); кл=''; }
   var пр=пр0, доля = пр.total ? Math.round(пр.done/пр.total*100) : 0;
   return '<u class="'+кл.trim()+'">'+esc(ст)+'</u><b>'+esc(String(d.sub||'').replace(/^./,function(c){return c.toUpperCase();}))+'</b>'+
     '<div class="dhtr"><span><s class="'+(пр.total&&пр.done>=пр.total?'full':'')+'" style="width:'+доля+'%"></s></span>'+
@@ -11746,7 +11747,7 @@ function exRow(e,di,метка){
   else { var t=targetOf(e); вес='<s>'+((hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—')+'</s>'; }
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
-    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.показ||имяИзКаталога(e)||e.n)+'</b>'+
+    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.показ||e.n)+'</b>'+
       '<i>'+(мышцаГлавная(e)?esc(мышцаГлавная(e))+' · ':'')+setsFor(e,di)+' × '+repsOf(e)+'</i>'+
       (e.was?'<em class="exwas">вместо: '+esc(e.was)+'</em>':'')+'</span>'+
     '<span class="exrv'+(сделано?' был':'')+'">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';

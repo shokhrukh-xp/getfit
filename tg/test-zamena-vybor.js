@@ -88,7 +88,9 @@ const слот = page => page.evaluate(() => { try { return JSON.parse(localStor
   дано(await page.evaluate(() => { const e = document.getElementById('coachreco'); return !e || e.hidden || !e.textContent.trim(); }), 'карточка ушла');
   дано(reco.some(b => /"done":1/.test(b)), 'сервер узнал, что правка сделана');
   const экран = await page.$eval('#list', e => e.textContent).catch(() => '');
-  дано(экран.indexOf(второй.n) >= 0, 'в списке дня — новое упражнение');
+  /* 01.11: в карточке — короткое имя каталога, в дне — полное; сверяем по каталогу */
+  const полное = await page.evaluate(async id => ((await (await fetch('catalog.json')).json()).ex.find(x => x.i === id) || {}).n || '', второй.id);
+  дано(экран.indexOf(полное || второй.n) >= 0, 'в списке дня — новое упражнение: ' + (полное || второй.n));
   await page.close();
 
   /* ── 3. весь каталог ── */
