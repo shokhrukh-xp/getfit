@@ -12379,6 +12379,9 @@ var SYNCURL='https://api.wellbol.com', SYNCURL_OLD='https://getfit-sync.sh-pulat
    страница на wellbol.app/test/ (ветка test) и свой сервер за api.wellbol.com/test
    со своей базой. Боевая страница этот адрес не берёт никогда. */
 if (/^\/test(\/|$)/.test(location.pathname)) SYNCURL='https://api.wellbol.com/test';
+/* 31.10: приложение из магазина открывается с capacitor://localhost — адрес сервера кладёт сборка
+   (wellbol-app/scripts/www.sh: window.WB_API; по умолчанию тестовая копия) */
+if (ПЛ.имя==='native' && /^https:\/\/[a-z0-9.-]+(\/[a-z0-9-]+)?$/.test(window.WB_API||'')) SYNCURL=window.WB_API;
 var SYNCOK=null;
 function syncUid(){
   var b=(TGUSER && TGUSER.id) ? String(TGUSER.id) : (mGet('anon_uid') || (function(){
@@ -12685,7 +12688,9 @@ function фкПроверить(key){
 new MutationObserver(loadPrivatePhotos).observe(document.body,{childList:true,subtree:true});
 function gateShow(code, msg){
   /* 31.10: в приложении из магазина «войдите заново» — экран входа, а не «откройте Telegram» */
-  if (ПЛ.имя === 'native' && (code === 'login' || code === 'auth' || code === 'stale')) { ПЛ.сессияЗапомнить(null); входПоказать(msg); return; }
+  /* до входа сервер отвечает «откройте через Telegram» — в приложении это не к месту: без сессии — просто экран
+     входа, была сессия и кончилась — «войдите заново» */
+  if (ПЛ.имя === 'native' && (code === 'login' || code === 'auth' || code === 'stale')) { var была = !!ПЛ.сессия(); ПЛ.сессияЗапомнить(null); входПоказать(была ? 'Сессия закончилась — войдите заново.' : ''); return; }
   var g = document.getElementById('gate'); if (!g) return;
   GATE.shown = true; GATE.code = code;
   var inTg = !!(TG && TG.initData);
