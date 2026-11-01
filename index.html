@@ -6580,8 +6580,10 @@ document.getElementById('tplm').addEventListener('click', function(e){
 });
 function местоВернуть(){ set('tplace_'+TODAY, null); rebuildSess(); renderDayHead(); renderList(); haptic('light'); }
 /* строка под карточкой дня: «Сегодня не в зале? Дома · На улице» или «Сегодня дома · Вернуть зал» */
-function renderTplace(){
+function renderTplace(){ try{ renderTplace0(); }catch(e){ var b=document.getElementById('tplace'); if(b) b.hidden=true; } }
+function renderTplace0(){
   var box=document.getElementById('tplace'), card=box && box.previousElementSibling; if(!box) return;
+  if(!DAYS || !day){ box.hidden=true; return; }
   var me=myData()||{}, база=me.place==='home'?'h':me.place==='street'?'s':'g';
   var тп=(!ДЕНЬ_ДАТА && DAYS[day]) ? местоСегодня(day) : null;
   if(card) { card.classList.toggle('tpl-h', !!тп && тп.pl==='h'); card.classList.toggle('tpl-s', !!тп && тп.pl==='s'); }
@@ -7685,7 +7687,10 @@ function cmPlace(){
   var bw=b.offsetWidth, bh=b.offsetHeight, W=document.documentElement.clientWidth;
   var x=Math.min(Math.max(16, r.left+r.width/2-bw/2), W-16-bw);
   /* под целью, если влезает; иначе над ней (нижняя панель, «Завершить») */
-  var вниз = r.bottom+pad+12+bh <= innerHeight-8;
+  /* 01.11: нижняя панель — тоже граница: пузырь под строкой упражнения закрывал вкладки */
+  var низ=innerHeight-8, нав=document.querySelector('.l1');
+  if(нав){ var нр=нав.getBoundingClientRect(); if(нр.height && нр.top>r.bottom && нр.top<innerHeight) низ=Math.min(низ, нр.top-8); }
+  var вниз = r.bottom+pad+12+bh <= низ;
   var y = вниз ? r.bottom+pad+12 : r.top-pad-12-bh;
   b.style.left=x+'px'; b.style.top=Math.max(8,y)+'px';
   b.classList.toggle('down', вниз); b.classList.toggle('up', !вниз);
@@ -11718,6 +11723,12 @@ function мышцыЕщё(e){
     .slice(0,3).join(', ');
 }
 /* свёрнутое упражнение: фото, название, рабочий вес и сколько подходов закрыто */
+/* 01.11 (D): замены и добавленное из каталога — тем же коротким именем, что в каталоге и у тренера */
+function имяИзКаталога(e){
+  if(!(e && (e.sub || e.add) && e.cat && CAT) || (typeof ЯЗ!=='undefined' && ЯЗ!=='ru')) return '';
+  var x=catById(e.cat); if(!(x && x.ns && x.n===e.n)) return '';   /* только имя из каталога как есть, своё не трогаем */
+  var к=катИмя(x); return к.имя+(к.под?' · '+к.под:'');
+}
 function exRow(e,di,метка){
   var st=sess.ex[di].sets, сделано=st.filter(function(v){ return v.done; }).length;
   var всё=exDone(di);
@@ -11735,7 +11746,7 @@ function exRow(e,di,метка){
   else { var t=targetOf(e); вес='<s>'+((hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—')+'</s>'; }
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
-    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.показ||e.n)+'</b>'+
+    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.показ||имяИзКаталога(e)||e.n)+'</b>'+
       '<i>'+(мышцаГлавная(e)?esc(мышцаГлавная(e))+' · ':'')+setsFor(e,di)+' × '+repsOf(e)+'</i>'+
       (e.was?'<em class="exwas">вместо: '+esc(e.was)+'</em>':'')+'</span>'+
     '<span class="exrv'+(сделано?' был':'')+'">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
@@ -16280,7 +16291,7 @@ var MINKEYS=[['30','30'],['45','45'],['60','60'],['90','90']];
 var PLACEKEYS2=[['gym','в зале'],['home','дома'],['street','на улице']];
 /* 01.11 (макет C+D): на улице — свой список «Что есть» и сколько подтягиваний подряд */
 var EQKEYS_S=[['bar','турник'],['dips','брусья'],['rings','петли, кольца'],['band','резинка']];
-var PULLKEYS=[['0','0'],['1','1–4'],['5','5–10'],['10','больше 10']];
+var ПОДТЯГКЛЮЧИ=[['0','0'],['1','1–4'],['5','5–10'],['10','больше 10']];
 var ALSOKEYS=[['gym','в зале'],['home','дома'],['street','на улице']];
 var SBPLATE=[['0.5','0,5 кг'],['1.25','1,25'],['2.5','2,5'],['5','5']];
 function sbPick(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; }
@@ -16337,7 +16348,7 @@ function openSbor(){
   set('sb-min', MINKEYS, String(me.min||45));
   set('sb-place', PLACEKEYS2, me.place||'gym');
   SB_EQ={home:(me.eq||[]).slice(), street:Array.isArray(me.eqs)?me.eqs.slice():['bar','dips']};
-  set('sb-pull', PULLKEYS, me.pull!=null?String(me.pull):'1');
+  set('sb-pull', ПОДТЯГКЛЮЧИ, me.pull!=null?String(me.pull):'1');
   set('sb-also', ALSOKEYS, me.also||[], true);
   set('sb-focus', FOCUSKEYS, (me.focus&&me.focus.length)?me.focus:['even'], true);
   set('sb-plate', SBPLATE, String(me.plate||'2.5'));
