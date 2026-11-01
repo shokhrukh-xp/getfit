@@ -65,7 +65,7 @@ const полоса = page => page.evaluate(() => {
   await page.click('.l1-in button[data-page="gym"]');
   await page.waitForTimeout(1100);
   const кнопок = await page.evaluate(() => Array.from(document.querySelectorAll('button'))
-    .filter(b => b.offsetParent && /занятие вне зала/i.test(b.textContent)).length);
+    .filter(b => b.offsetParent && /Другое занятие/i.test(b.textContent)).length);
   дано(кнопок === 1, 'на странице тренировки ровно одна кнопка про занятие вне зала: ' + кнопок);
   дано(await page.$('#me-plan') === null && await page.$('#planwrap') === null,
     'отдельного редактора расписания больше нет нигде');
