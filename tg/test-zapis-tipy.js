@@ -49,7 +49,8 @@ async function свернуть(page){ const sh = await page.$('#list [data-shut
   const cat = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'catalog.json'), 'utf8'));
   const by = {}; cat.ex.forEach(e => by[e.i] = e);
   const cnt = {}; cat.ex.forEach(e => { cnt[e.lg || 'кг×повт'] = (cnt[e.lg || 'кг×повт'] || 0) + 1; });
-  дано(cat.ex.length === 881 && Object.keys(cnt).every(k => ['кг×повт', 'r+', 'r', 's', 'ks', 'min', 'km'].includes(k)), 'каталог: 881, способы только известные ' + JSON.stringify(cnt));
+  /* 01.11: +120 упражнений для дома и улицы (RepDB) — 1001 */
+  дано(cat.ex.length === 1001 && Object.keys(cnt).every(k => ['кг×повт', 'r+', 'r', 's', 'ks', 'min', 'km'].includes(k)), 'каталог: 1001, способы только известные ' + JSON.stringify(cnt));
   дано(['Step_Mill', 'Stairmaster', 'Walking_Treadmill', 'Jogging_Treadmill', 'Running_Treadmill', 'Elliptical_Trainer', 'Rowing_Stationary', 'Bicycling_Stationary', 'Recumbent_Bike']
     .every(i => by[i] && by[i].lg === 'min'), 'лестница, степпер, дорожки, эллипс, гребля, вело — минуты');
   дано(cat.ex.filter(e => e.tm).every(e => e.lg === 's'), 'все удержания (tm) — секунды');

@@ -21,7 +21,11 @@ const дубли = Object.keys(счёт).filter(n => счёт[n] > 1);
    фото показывали рисованную схему, и Шохрух попросил их убрать. */
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const кадры = (html.match(/var FRAMES=\{([\s\S]*?)\};/) || [, ''])[1];
-const безФото = cat.filter(x => x.own ? !(x.ph && new RegExp('\\b' + x.ph + ':1').test(кадры)) : !x.i);
+/* 01.11: упражнения RepDB (ph «r-…») в FRAMES не вписаны — у них проверяем сами файлы:
+   оба кадра и обе миниатюры лежат в img/ */
+const естьФайл = f => fs.existsSync(path.join(__dirname, '..', 'img', f));
+const кадрыRepDB = ph => [0, 1].every(n => естьФайл(ph + '-' + n + '.jpg') && естьФайл('t/o/' + ph + '-' + n + '.jpg'));
+const безФото = cat.filter(x => x.own ? !(x.ph && (/^r-/.test(x.ph) ? кадрыRepDB(x.ph) : new RegExp('\\b' + x.ph + ':1').test(кадры))) : !x.i);
 дано(!безФото.length, 'у каждого упражнения есть фото' + (безФото.length ? ': ' + безФото.slice(0, 4).map(x => x.n).join(' · ') : ''));
 
 const служебные = cat.filter(x => /друго|прочее|unknown/i.test(x.n));

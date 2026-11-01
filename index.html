@@ -5333,6 +5333,8 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
         <p class="mtext bline" id="buildline"></p>
         <!-- 22.10: «Как пользоваться» убрана (его выбор) — строка лицензии анатомии живёт здесь -->
         <p class="foot howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
+        <!-- 01.11: условие бесплатной лицензии RepDB — видимая ссылка в приложении -->
+        <p class="foot howattr"><a href="https://repdb.co" target="_blank" rel="noopener nofollow">Exercise data by RepDB (repdb.co)</a></p>
         <button class="btn wide danger" id="profreset">Начать заново</button>
         <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
       </div>
@@ -5642,6 +5644,13 @@ var FRAMES={abduction:1,abwheel:1,bench:1,benchdb:1,calf:1,chop:1,crunch:1,curl:
             legpress:1,legraise:1,lunge:1,ohp:1,pallof:1,plank:1,pullup:1,rdl:1,
             reardelt:1,row:1,rowcable:1,sideplank:1,squat:1,triceps:1,
             kickback:1};   /* 21.10: отведение ноги назад — кадры кикбэка на блоке (free-exercise-db) */
+/* 01.11, его слова «давай добавим то, что бесплатно найдём для дома, для улицы»:
+   120 упражнений для дома, турника, брусьев, колец, петель и резинок из бесплатного
+   набора RepDB (repdb.co, лицензия: в приложении можно, с подписью в профиле;
+   нельзя выкладывать набором и прогонять рисунки через ИИ). Кадры лежат в img/
+   как r-<id>-0/1.jpg (фон перекрашен в белый скриптом), миниатюры — в img/t/o/.
+   По одному их в FRAMES не вписываем: своё упражнение с ph «r-…» — значит кадры есть. */
+function естьКадры(ph){ return !!ph && (FRAMES[ph]===1 || /^r-[a-z0-9-]+$/.test(ph)); }
 /* Адрес папки с фотографиями собираем абсолютным. Telegram открывает Mini App
    с параметрами в адресе, и относительный путь «img/…» в некоторых клиентах
    разрешается не от папки приложения, а от корня сайта — картинки молча падают
@@ -5712,7 +5721,7 @@ function mediaFor(e, big){
     return '<div class="fig2" role="img" aria-label="'+esc(e.n)+'">'+e.img.slice(0,2).map(function(k){ return '<img '+photoAttr(SYNCURL+'/photo?key='+encodeURIComponent(k),false,big)+' alt="" loading="lazy">'; }).join('')+'</div>';
   var own = e.cat ? catOwn(e.cat) : null;
   if(own){
-    if(own.ph && FRAMES[own.ph]) return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
+    if(естьКадры(own.ph)) return '<div class="fig2" role="img" aria-label="'+e.n+'" data-fig="'+(e.fig||'')+'">'+
            кадр(own.ph,null,0,big)+кадр(own.ph,null,1,big)+
            '</div>';
     return figSvg(own.fig || e.fig) || '';
@@ -5723,7 +5732,7 @@ function mediaFor(e, big){
            кадр(null,e.cat,0,big)+кадр(null,e.cat,1,big)+
            '</div>';
   }
-  if(e.ph && FRAMES[e.ph]){
+  if(естьКадры(e.ph)){
     return '<div class="fig2" role="img" aria-label="'+e.n+' — начальная и рабочая фаза" data-fig="'+(e.fig||'')+'">'+
            кадр(e.ph,null,0,big)+кадр(e.ph,null,1,big)+
            '</div>';
@@ -6232,7 +6241,8 @@ function loadCatalog(){
      человек ещё сутки видел бы старые имена. */
   /* 21.10: в зале сеть рвётся — один тихий повтор через секунду, прежде
      чем говорить «не удалось»; ответ не 200 — тоже сбой, а не пустой каталог */
-  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD);
+  /* 01.11: «-k2» — каталог пополнился (дом и улица) без смены метки сборки на тестовой копии */
+  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)+'-k2';
   /* одна попытка = ответ + JSON + проверка состава: пустой каталог тоже повторяем (ревью Codex P3) */
   var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); })
     .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); return j; }); };
@@ -6866,7 +6876,7 @@ function catTag(x){
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
   return '<div class="catitem'+(NOPE[x.i]?' nope':'')+'" data-i="'+CAT.ex.indexOf(x)+'">'+
-    (x.own ? (x.ph && FRAMES[x.ph] ? кадр(x.ph,null,0) : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
+    (x.own ? (естьКадры(x.ph) ? кадр(x.ph,null,0) : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : кадр(null,x.i,0))+
     '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
     '<span class="cattag">'+catTag(x)+'</span>'+(catGroup&&!catPrimaryGroup(x)?'<span class="cattag">'+esc((PICKGROUPS.find(function(g){return g[0]===catGroup;})||[])[1]||'Группа')+' — дополнительные мышцы</span>':'')+
