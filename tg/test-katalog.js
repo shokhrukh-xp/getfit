@@ -199,7 +199,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   await page.click('#progedit');
   await page.waitForTimeout(600);
   дано(await page.isVisible('#sborm'), 'кнопка открывает лист сборки, а не собирает молча');
-  for (const id of ['sb-wd', 'sb-min', 'sb-level', 'sb-place', 'sb-focus', 'sb-plate', 'sb-lim', 'sb-dis'])
+  for (const id of ['sb-wd', 'sb-min', 'sb-level', 'sb-dpl', 'sb-focus', 'sb-plate', 'sb-lim', 'sb-dis'])
     дано(await page.isVisible('#' + id), 'в листе спрашивается ' + id);
   const дней = await page.$$eval('#sb-wd button', bs => bs.filter(b => b.getAttribute('aria-pressed') === 'true').length);
   дано(дней >= 2, 'дни подставлены из расписания: ' + дней);

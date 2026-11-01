@@ -20,12 +20,13 @@ let bad=0;const ok=(c,t)=>{console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
   const meal=requests.find(x=>x.url==='/meal/upd');ok(meal&&meal.body.kcal===2350&&meal.body.prot===137&&meal.body.fat===124&&meal.body.fib===31,tag+'сохранение всех четырёх значений прежним маршрутом');
   // Сборка: группировка не отрывает контролы от существующих обработчиков.
   await p.click('#profbtn');await p.click('#pq-gym');await p.click('#progedit');
-  const groups=await p.locator('#sborm .sbgroup').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,ids:[...e.querySelectorAll('.seg,.wdgrid,input')].map(x=>x.id)})));
-  ok(groups.length===2&&groups[0].title==='Когда и сколько'&&groups[0].ids.join()==='sb-wd,sb-when,sb-min'&&groups[1].title==='Условия и предпочтения'&&['sb-level','sb-place','sb-eq','sb-focus','sb-plate','sb-lim','sb-dis'].every(id=>groups[1].ids.includes(id)),tag+'два раздела и все прежние условия '+JSON.stringify(groups));
+  const groups=await p.locator('#sborm .sbgroup').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,ids:[...e.querySelectorAll('.seg,.wdgrid,.dplgrid,input')].map(x=>x.id).filter(Boolean)})));
+  ok(groups.length===2&&groups[0].title==='Когда и сколько'&&groups[0].ids.join()==='sb-wd,sb-when,sb-min'&&groups[1].title==='Условия и предпочтения'&&['sb-level','sb-dpl','sb-eq','sb-focus','sb-plate','sb-lim','sb-dis'].every(id=>groups[1].ids.includes(id)),tag+'два раздела и все прежние условия '+JSON.stringify(groups));
   await p.click('#sb-min [data-v="60"]');
   ok(/24 подхода за занятие/.test(await p.textContent('#sb-minh')),tag+'минуты меняют прежнюю подсказку подходов');
-  await p.click('#sb-place [data-v="home"]');ok(await p.isVisible('#sb-eqrow')&&!await p.isVisible('#sb-platerow'),tag+'дома — инвентарь вместо блина');
-  await p.click('#sb-place [data-v="gym"]');ok(!await p.isVisible('#sb-eqrow')&&await p.isVisible('#sb-platerow'),tag+'зал — блин вместо домашнего инвентаря');await clean('#sborm');
+  const всеДни=async v=>{for(const x of await p.locator('#sb-dpl .seg').all())await x.locator('[data-v="'+v+'"]').click();};
+  await всеДни('home');ok(await p.isVisible('#sb-eqrow')&&!await p.isVisible('#sb-platerow'),tag+'дома — инвентарь вместо блина');
+  await всеДни('gym');ok(!await p.isVisible('#sb-eqrow')&&await p.isVisible('#sb-platerow'),tag+'зал — блин вместо домашнего инвентаря');await clean('#sborm');
   await p.click('#sborclose');await p.waitForSelector('#profm.show #progedit');ok(await p.textContent('#proftitle')==='Программа'&&await p.isVisible('#progedit'),tag+'закрытие сборки возвращает в лист программы');
   /* 22.10: «Как пользоваться» убрана (его выбор) — вместо неё подсказки по месту, test-podskazki-po-mestu */
   await p.click('#pqback');ok(!(await p.locator('#profhow').count())&&/body-muscles, Apache-2.0/.test(await p.textContent('#profm')),tag+'справки в профиле нет, лицензия анатомии — внизу');await p.click('#profclose');
