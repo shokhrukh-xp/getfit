@@ -3544,6 +3544,27 @@ body.ordmode #list .sstag{color:var(--text)}
 #femm .fmgo{min-height:50px;border-radius:16px;border:0;background:#F4B860;color:#4A3000;font:700 16px inherit;font-family:inherit}
 #femm .fmsave{min-height:50px;border-radius:16px;border:0;background:var(--action,#13707A);color:#FFFFFF;font:700 16px inherit;font-family:inherit}
 #femm .fmnote{font-size:12px;color:var(--muted);line-height:1.4;margin:0}
+/* 01.11: режим дня — работа ночью и смены */
+#rezm{z-index:140}
+#picker .pf.wzrez{flex-direction:column;align-items:stretch;gap:6px;margin-top:0}
+#picker .pf.wzrez .pfl{flex:none}
+#rezm .modalbox{display:flex;flex-direction:column;gap:12px}
+#rezm .rzlab{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+#rezm .rzrow{display:flex;gap:10px}
+#rezm .rzrow label{flex:1 1 0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+#rezm input{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 16px inherit;font-family:inherit;padding:0 12px;box-sizing:border-box;width:100%}
+#rezm .rzday{border-radius:16px;background:var(--field);padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px}
+#rezm .rzbar{position:relative;height:14px;border-radius:7px;background:color-mix(in srgb,var(--accent) 20%,var(--line))}
+#rezm .rzbar i{position:absolute;top:0;bottom:0;border-radius:7px}
+#rezm .rzbar i.son,#rezm .rzleg i.son{background:#6B6FD6}
+#rezm .rzbar i.sm,#rezm .rzleg i.sm{background:#F4B860}
+#rezm .rzax{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+#rezm .rzleg{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+#rezm .rzleg b{color:var(--text);font-weight:800}
+#rezm .rzleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#rezm .rznote{font-size:12px;color:var(--muted);line-height:1.4;margin:0}
+#rezm .rzerr{font-size:13px;color:#E5484D;margin:0}
+#rezm .rzsave{min-height:50px;border-radius:16px;border:0;background:var(--action,#13707A);color:#FFFFFF;font:700 16px inherit;font-family:inherit}
 /* ══ 24.10 этап 4: тренер под себя — карточка на главной и лист знакомства ══ */
 .trcard{background:radial-gradient(120% 90% at 88% 0%,#239C92 0%,rgba(35,156,146,0) 55%),linear-gradient(160deg,#126A73 0%,#08363E 100%);color:#FFFFFF;border:0;padding:16px}
 .trcard .trtop{display:flex;gap:12px;align-items:center}
@@ -4758,6 +4779,8 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
          карточкой на главной после первого шага в приложении. -->
     <div id="wzonly" hidden>
       <div class="wzpick" id="wz-only" role="group" aria-label="Что будем вести"></div>
+      <!-- 01.11: режим дня (его «Анкета + тренер») — на первом шаге, его видят все -->
+      <div class="pf wzrez"><span class="pfl">режим дня</span><div class="seg" id="wz-rez"></div></div>
       <button class="btn prim wide" id="wz-only-go">Далее</button>
     </div>
     <div id="wzme" hidden>
@@ -5040,6 +5063,8 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
 <div class="modal" id="trenm" role="dialog" aria-modal="true" aria-labelledby="trh"><div class="modalbox" id="trbox"></div></div>
 <!-- 24.10 этап 5: женское здоровье — сейчас, цикл, «что ещё учесть» -->
 <div class="modal" id="femm" role="dialog" aria-modal="true" aria-labelledby="fmh"><div class="modalbox" id="fmbox"></div></div>
+<!-- 01.11: режим дня — работа ночью и смены (его «Шаг 1 сразу») -->
+<div class="modal" id="rezm" role="dialog" aria-modal="true" aria-labelledby="rzh"><div class="modalbox" id="rzbox"></div></div>
 <div class="modal" id="subm" role="dialog" aria-modal="true" aria-labelledby="subtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="subtitle">Wellböl Pro</h3><button class="xbtn" id="subclose" aria-label="Закрыть">✕</button></div>
@@ -5155,6 +5180,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
       <div class="pqgroup">
         <button type="button" class="pqrow" data-pp="zd" id="zdtoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="pqt"><b>Здоровье</b><small>учтёт норма и меню</small></span><span class="pqv" id="zdsum">не заполнено</span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>готовка, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow" id="pq-rez"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><span class="pqt"><b>Режим дня</b><small>сон и работа</small></span><span class="pqv" id="pv-rez"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab">Тренер</h4>
@@ -7158,6 +7184,7 @@ function шагиЗнакомства(){
 var ONLYCARD={all:['Еда и зал','Дневник еды, норма и тренировки по программе'],food:['Только еда','Дневник еды и норма, без зала']};
 function renderWzOnly(){
   var v=WIZ.only||(myData()||{}).only||'all';
+  segSet('wz-rez', segHtml('rez',РЕЖ_ВИЗ,режимВид(myData()||{})));   /* 01.11: режим дня */
   segSet('wz-only', ['all','food'].map(function(k){
     return '<button type="button" data-only="'+k+'" aria-pressed="'+(v===k)+'"><b>'+ONLYCARD[k][0]+'</b><span>'+ONLYCARD[k][1]+'</span></button>'; }).join(''));
 }
@@ -9177,6 +9204,7 @@ function pqVals(){
   try{ var пи=document.getElementById('pqi-tren'), ас=аватарТренера(me); if(пи && пи.getAttribute('data-av')!==ас){ пи.setAttribute('data-av', ас); пи.innerHTML=/\/av\//.test(ас)?аватарHTML(ас,'pqav'):'<img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px">'; } }catch(e){}
   set('pv-tren', (me.coach_name ? me.coach_name+' · ' : '')+(me.addr==='vy' ? 'на «вы»' : 'на «ты»'));
   { var pf=document.getElementById('pq-fem'); if(pf) pf.hidden=me.sex!=='f'; set('pv-fem', женСводка(me)); }
+  set('pv-rez', режимСводка(me));   /* 01.11 */
   var дни=0; try{ дни=Object.keys(GYM_DAYS||{}).length; }catch(e){}
   var имяП=(typeof PROF!=='undefined' && PROF && PROF.name) ? имяПрог() : '';
   set('pq-gymsub', имяП ? имяП+(дни && !/\d\s*(день|дня|дней)/.test(имяП) ? ' · '+дни+' '+plural(дни,['день','дня','дней'])+' в неделю' : '') : 'по ней собирается день в «Тренировке»');
@@ -9589,6 +9617,133 @@ document.getElementById('femcard').addEventListener('click', function(e){
   else { gset('femcard_off',1); renderFemCard(); haptic('light'); }
 });
 document.getElementById('pq-fem').addEventListener('click', function(){ openFem(false); });
+/* ══ РЕЖИМ ДНЯ (01.11.2026) ══
+   Его запрос: друг Фаррух работает в логистике США из Ташкента — ночью; «нужно сделать так,
+   чтобы приложение могло это учитывать». Выборы: «Ночь + сменный», «Анкета + тренер»,
+   «По науке, мягко», «Шаг 1 сразу», ввод смены — «Готовые кнопки».
+   me.rezhim = { vid: 'noch'|'smeny', smena: {s, d[, tz]}, son: {s, d} } — то же читает сервер
+   (режимИз в getfit-sync). Смена «США» хранится по часам работодателя: перевод часов там
+   приложение и сервер считают сами. Сон хранится, только если человек сам его поправил;
+   иначе он — через час после смены, 7 часов (так же считает сервер). Обычный день — поля нет. */
+var РЕЖ_КАРТ=[['den','Сплю ночью','день — для дел, ночь — для сна'],['noch','Работаю ночью','смена ночью, сплю днём'],['smeny','Смены день и ночь','дневные и ночные чередуются']];
+var РЕЖ_ВИЗ=[['den','сплю ночью'],['noch','работаю ночью'],['smeny','смены']];
+var РЕЖ_СМЕНЫ=[['18-03','18–03'],['22-07','22–07'],['us','США'],['own','Другое']];
+var РЕЖ_ПРЕСЕТ={'18-03':{s:'18:00',d:'03:00'},'22-07':{s:'22:00',d:'07:00'},'us':{s:'09:00',d:'18:00'}};
+var РЕЖ_США=[['America/New_York','Нью-Йорк'],['America/Chicago','Чикаго'],['America/Los_Angeles','Лос-Анджелес']];
+var РЖ=null;
+function рМин(hm){ return +hm.slice(0,2)*60 + +hm.slice(3,5); }
+function рЧМ(m){ m=((Math.round(m)%1440)+1440)%1440; return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+function рВерно(x){ return typeof x==='string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(x); }
+/* часы пояса работодателя → часы телефона, на сегодня (с переводом часов там) */
+function рИзПояса(hm, tz){
+  try{
+    var my=поясТелефона()||'Asia/Tashkent';
+    var parts=function(ms,z){ var f=new Intl.DateTimeFormat('en-GB',{timeZone:z,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date(ms));
+      var g=function(t){ return (f.find(function(x){ return x.type===t; })||{}).value; }; return [+g('year'),+g('month'),+g('day'),(+g('hour'))%24,+g('minute')]; };
+    var p=parts(Date.now(),tz), цель=Date.UTC(p[0],p[1]-1,p[2],+hm.slice(0,2),+hm.slice(3,5)), t=цель;
+    for(var i=0;i<3;i++){ var x=parts(t,tz); t+=цель-Date.UTC(x[0],x[1]-1,x[2],x[3],x[4]); }
+    var r=parts(t,my); return рЧМ(r[3]*60+r[4]);
+  }catch(e){ return hm; }
+}
+function режимВид(me){ var r=me&&me.rezhim; return r&&(r.vid==='noch'||r.vid==='smeny')?r.vid:'den'; }
+function режимСменаМест(r){ var с=r&&r.smena; if(!с||!рВерно(с.s)||!рВерно(с.d)) return null; return с.tz?{s:рИзПояса(с.s,с.tz),d:рИзПояса(с.d,с.tz)}:{s:с.s,d:с.d}; }
+function режимСонМест(r, см){ var с=r&&r.son; if(с&&рВерно(с.s)&&рВерно(с.d)) return {s:с.s,d:с.d}; if(см){ var s=рМин(см.d)+60; return {s:рЧМ(s),d:рЧМ(s+420)}; } return null; }
+function рКоротко(hm){ return hm.slice(3)==='00'?hm.slice(0,2):hm; }
+function режимСводка(me){
+  var в=режимВид(me); if(в==='den') return 'обычный';
+  if(в==='smeny') return 'смены';
+  var см=режимСменаМест(me.rezhim); return см?'ночью '+рКоротко(см.s)+'–'+рКоротко(см.d):'ночью';
+}
+function режимСнять(){
+  var me=myData()||{}; if(!me.rezhim) return;
+  delete me.rezhim; gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  try{ fillMe(); }catch(e){}
+}
+function openRez(вид){
+  var me=myData()||{}, r=me.rezhim||{}, с=r.smena||{}, preset=с.s?'own':'22-07';
+  if(с.tz) preset='us';
+  else Object.keys(РЕЖ_ПРЕСЕТ).forEach(function(k){ if(k!=='us' && РЕЖ_ПРЕСЕТ[k].s===с.s && РЕЖ_ПРЕСЕТ[k].d===с.d) preset=k; });
+  РЖ={vid:вид||режимВид(me), preset:preset, tz:с.tz||'America/New_York', s:с.s||'', d:с.d||'',
+      ss:(r.son&&r.son.s)||'', sd:(r.son&&r.son.d)||'', сонСвой:!!(r.son&&r.son.s), изАнкеты:!!вид, ош:''};
+  renderRez();
+  var m=document.getElementById('rezm'); if(m) m.classList.add('show'); haptic('light');
+}
+function closeRez(){
+  var m=document.getElementById('rezm'); if(m) m.classList.remove('show');
+  if(РЖ && РЖ.изАнкеты) try{ renderWzOnly(); }catch(e){}   /* закрыл без сохранения — в анкете прежний выбор */
+}
+function рСменаТек(){
+  if(РЖ.preset==='us') return {s:'09:00',d:'18:00',tz:РЖ.tz};
+  if(РЕЖ_ПРЕСЕТ[РЖ.preset]) return {s:РЕЖ_ПРЕСЕТ[РЖ.preset].s,d:РЕЖ_ПРЕСЕТ[РЖ.preset].d};
+  return рВерно(РЖ.s)&&рВерно(РЖ.d)&&РЖ.s!==РЖ.d?{s:РЖ.s,d:РЖ.d}:null;
+}
+function рСонТек(смМ){ return РЖ.сонСвой&&рВерно(РЖ.ss)&&рВерно(РЖ.sd)&&РЖ.ss!==РЖ.sd?{s:РЖ.ss,d:РЖ.sd}:режимСонМест(null,смМ); }
+/* полоса суток 0–24: сон и смена (через полночь — двумя кусками) */
+function рКуски(s,d,cls){
+  var a=рМин(s)/14.4, b=рМин(d)/14.4, k=function(x,y){ return '<i class="'+cls+'" style="left:'+x.toFixed(2)+'%;width:'+Math.max(0,y-x).toFixed(2)+'%"></i>'; };
+  return a<=b?k(a,b):k(a,100)+k(0,b);
+}
+function renderRez(){
+  var box=document.getElementById('rzbox'); if(!box||!РЖ) return;
+  var h='<div class="cathead"><h3 id="rzh">Режим дня</h3><button class="xbtn" data-rz="close" aria-label="Закрыть">✕</button></div>';
+  h+='<span class="rzlab">СЕЙЧАС</span><div class="trlist">'+РЕЖ_КАРТ.map(function(x){
+    return '<button type="button" class="tropt" data-rzvid="'+x[0]+'" aria-pressed="'+(РЖ.vid===x[0])+'"><b>'+x[1]+'</b><span>'+x[2]+'</span></button>'; }).join('')+'</div>';
+  if(РЖ.vid==='noch'){
+    h+='<span class="rzlab">СМЕНА</span><div class="trchips">'+РЕЖ_СМЕНЫ.map(function(x){
+      return '<button type="button" data-rzsm="'+x[0]+'" aria-pressed="'+(РЖ.preset===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>';
+    if(РЖ.preset==='us') h+='<div class="trchips">'+РЕЖ_США.map(function(x){
+      return '<button type="button" data-rztz="'+x[0]+'" aria-pressed="'+(РЖ.tz===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div>'+
+      '<p class="rznote">9:00–18:00 по их часам. Когда в США переводят часы, приложение сдвинет смену само.</p>';
+    if(РЖ.preset==='own') h+='<div class="rzrow"><label>Начало<input id="rz-s" type="time" value="'+esc(РЖ.s)+'"></label><label>Конец<input id="rz-d" type="time" value="'+esc(РЖ.d)+'"></label></div>';
+  }
+  if(РЖ.vid!=='den'){
+    var см=РЖ.vid==='noch'?рСменаТек():null, смМ=см?(см.tz?{s:рИзПояса(см.s,см.tz),d:рИзПояса(см.d,см.tz)}:см):null, сон=рСонТек(смМ);
+    h+='<span class="rzlab">СПЛЮ</span><div class="rzrow"><label>Ложусь<input id="rz-ss" type="time" value="'+(сон?сон.s:'')+'"></label><label>Встаю<input id="rz-sd" type="time" value="'+(сон?сон.d:'')+'"></label></div>';
+    if(смМ||сон) h+='<div class="rzday"><div class="rzbar">'+(сон?рКуски(сон.s,сон.d,'son'):'')+(смМ?рКуски(смМ.s,смМ.d,'sm'):'')+'</div>'+
+      '<div class="rzax"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div><div class="rzleg">'+
+      (смМ?'<span><i class="sm"></i>смена <b>'+смМ.s+'–'+смМ.d+'</b></span>':'')+(сон?'<span><i class="son"></i>сон <b>'+сон.s+'–'+сон.d+'</b></span>':'')+'</div></div>';
+    if(РЖ.vid==='smeny') h+='<p class="rznote">О сменах просто скажите тренеру: «с четверга три ночи».</p>';
+  }
+  h+='<p class="rznote">'+(РЖ.vid==='den'?'Утро — в 9:00, вечер — в 20:00, как у всех.':'Тренер учтёт: пока вы спите — не пишет, «утро» — после подъёма, ночную еду не называет поздней.')+'</p>';
+  if(РЖ.ош) h+='<p class="rzerr">'+esc(РЖ.ош)+'</p>';
+  h+='<button type="button" class="rzsave" data-rz="save">Сохранить</button>';
+  box.innerHTML=h;
+}
+function rezСохранить(){
+  var me=myData()||{};
+  if(РЖ.vid==='den') delete me.rezhim;
+  else {
+    var r={vid:РЖ.vid, at:new Date().toISOString()};
+    if(РЖ.vid==='noch'){ var см=рСменаТек(); if(!см){ РЖ.ош='Укажите начало и конец смены.'; renderRez(); haptic('err'); return; } r.smena=см; }
+    if(РЖ.сонСвой && рВерно(РЖ.ss) && рВерно(РЖ.sd) && РЖ.ss!==РЖ.sd) r.son={s:РЖ.ss,d:РЖ.sd};
+    if(РЖ.vid==='smeny' && !r.son && (рВерно(РЖ.ss)&&рВерно(РЖ.sd))) r.son={s:РЖ.ss,d:РЖ.sd};
+    me.rezhim=r;
+  }
+  gset('me', me);
+  if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  var изА=РЖ.изАнкеты; РЖ.изАнкеты=false; closeRez();
+  try{ fillMe(); }catch(e){} if(изА) try{ renderWzOnly(); }catch(e){}
+  haptic('ok');
+}
+document.getElementById('rezm').addEventListener('click', function(e){
+  if(e.target.id==='rezm'){ closeRez(); return; }
+  var b=e.target.closest('[data-rz],[data-rzvid],[data-rzsm],[data-rztz]'); if(!b) return;
+  if(b.dataset.rzvid!=null){ РЖ.vid=b.dataset.rzvid; РЖ.ош=''; renderRez(); haptic('light'); return; }
+  if(b.dataset.rzsm!=null){ РЖ.preset=b.dataset.rzsm; РЖ.ош=''; renderRez(); haptic('light'); return; }
+  if(b.dataset.rztz!=null){ РЖ.tz=b.dataset.rztz; renderRez(); haptic('light'); return; }
+  if(b.dataset.rz==='close'){ closeRez(); return; }
+  if(b.dataset.rz==='save') rezСохранить();
+});
+/* время меняется — полоса и сон по умолчанию пересчитываются */
+document.getElementById('rezm').addEventListener('change', function(e){
+  if(!РЖ) return; var id=e.target.id;
+  if(id==='rz-s') РЖ.s=e.target.value; else if(id==='rz-d') РЖ.d=e.target.value;
+  else if(id==='rz-ss' || id==='rz-sd'){ var a=document.getElementById('rz-ss'), b=document.getElementById('rz-sd'); РЖ.ss=a?a.value:''; РЖ.sd=b?b.value:''; РЖ.сонСвой=true; }
+  else return;
+  РЖ.ош=''; renderRez();
+});
+document.getElementById('pq-rez').addEventListener('click', function(){ openRez(); });
 document.getElementById('voicenudge').addEventListener('click', function(e){
   var b=e.target.closest('button[data-voice]'); if(!b) return;
   голосЗадать(b.dataset.voice); try{ fillMe(); }catch(_){} renderVoiceNudge(); haptic('medium');
@@ -14994,6 +15149,12 @@ document.getElementById('picker').addEventListener('click', function(e){
     if(id==='g-wt' || id==='g-gym'){
       if(id==='g-wt'){ WIZ.gwt=sb.dataset.v; wzTargetReset(); } else WIZ.ggym=sb.dataset.v;
       renderPicker(); haptic('light'); return;
+    }
+    /* 01.11: режим дня — «ночью» сразу, остальное — листом «Режим дня» поверх анкеты */
+    if(id==='wz-rez'){
+      if(sb.dataset.v==='den'){ режимСнять(); renderWzOnly(); }
+      else openRez(sb.dataset.v);
+      haptic('light'); return;
     }
     if(id==='wz-sex' || id==='wz-only' || id==='wz-voice'){
       Array.prototype.forEach.call(seg.querySelectorAll('button'),function(x){ x.setAttribute('aria-pressed', String(x===sb)); });
