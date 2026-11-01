@@ -20,7 +20,7 @@ const {chromium}=require('playwright'),M=require('./mock'),{opts}=require('./sho
   await until(async()=>граница.test(await p.locator('#fday [data-fk="prot"] .fh b').innerText()),'новая граница белка отрисована');assert(after.prot<server.targets({...f.me(),med:{}},null,0,0,0).prot);
   await p.click('#pqback');}await p.click('#profclose');await p.click('.l1 [data-page="gym"]');await p.click('#schedbtn');
   // Все семь — отдых. Пустой объект означает выбор, не отсутствие настройки.
-  while(await p.locator('#schedlist .schrow.on').count())await p.locator('#schedlist .schrow.on').first().click();
+  while(await p.locator('#schedlist .schrow.on').count())await p.locator('#schedlist .schrow.on [data-pl="off"]').first().click();
   await until(()=>{const r=f.sq.prepare("SELECT data FROM state WHERE uid='svc_settings' AND key='sched'").get();return r&&Object.keys(JSON.parse(r.data).s||{}).length===0},'пустое расписание на сервере');
   await p.reload();await sleep(1800);await p.click('.l1 [data-page="gym"]');await p.click('#schedbtn');assert.equal(await p.locator('#schedlist .schrow.on').count(),0,'все дни отдыха остаются после перезапуска');
   const remote=f.me();remote.only='food';f.sq.prepare("UPDATE state SET data=?,updated=? WHERE uid='svc_settings' AND key='me'").run(JSON.stringify({me:remote}),Date.now()+1000);

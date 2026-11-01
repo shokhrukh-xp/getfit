@@ -29,7 +29,7 @@ async function новичок(b,theme,width){
     goals:[...document.querySelectorAll('#picklist button[data-prof] u')].map(x=>x.textContent),note:(document.querySelector('#picklist .wzfree')||{}).textContent||''}));
   ok(сп.names.length>=2&&сп.names.every(n=>!/вес (вниз|вверх|на месте)/.test(n)),где+'имена готовых без слова про вес: '+сп.names.join(' | '));
   ok(сп.goals.every(g=>!/^вес /.test(g)),где+'под именем — только зал: '+сп.goals.join(' | '));
-  ok(/только про зал/.test(сп.note)&&!/больше всех/.test(сп.note),где+'строка над списком честная: '+сп.note.slice(0,80));
+  ok(/для зала, для дома и для улицы/.test(сп.note)&&!/больше всех/.test(сп.note),где+'строка над списком честная: '+сп.note.slice(0,80));
   await p.click('#picklist button[data-prof]');await p.waitForTimeout(1500);
   const дни=await p.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('shp_v1_sched_any')||'{}')).map(Number).sort().join());
   ok(дни==='1,3,5',где+'дни зала — из анкеты (пн/ср/пт), а не готовой программы: '+дни);

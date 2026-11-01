@@ -323,7 +323,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .aiex{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)}
 .aiex:last-child{border-bottom:none}
 #catalog.aidraft{z-index:135}
-.aiedit{grid-column:2;display:grid;grid-template-columns:1fr 1fr;gap:8px}.aimoves{display:flex;gap:8px}.aiparams{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.aiparams label{min-width:0;font-size:12px;color:var(--muted)}.aiparams input{display:block;width:100%;min-width:0;min-height:44px;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px;font:inherit;font-size:16px}.aiparams>.btn{grid-column:1/-1;min-height:44px}.aiqopt{border-bottom:1px solid var(--line-soft);padding:12px 0}.aiqopt .ropt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px}.aiqopt .ropt .fig2,.aiqopt .ropt .fig{flex:0 0 64px;width:64px;max-width:64px;border-radius:12px}.aiqopt .rtx{display:flex;flex-direction:column;gap:4px;min-width:0;line-height:1.35}.aiqopt .rtx b{font-size:14px}.aiqopt .rtx i{font-size:12px;font-style:normal;color:var(--muted)}.aiqactions{display:flex;gap:8px}.aiqactions button{flex:1;min-height:44px}.aiqactions .catpick{position:static}.aiqstatus{font-size:13px;color:var(--muted)}.aiedit .btn{min-height:44px;flex:1;padding:8px;font-size:13px}.aiedit .btn:disabled{opacity:.45}
+.aiedit{grid-column:2;display:flex;flex-wrap:wrap;align-items:center;gap:0 14px}.aimoves{display:flex;gap:2px;margin-left:auto}
+/* 01.11, разбор пути: пять больших кнопок под каждым упражнением делали черновик панелью настроек — теперь строка тихих ссылок */
+.aiedit>.btn,.aimoves>.btn{background:none;border:0;box-shadow:none;width:auto;min-height:40px;padding:4px 0;font-size:13px;font-weight:600;color:var(--accent-txt)}
+.aimoves>.btn{padding:4px 10px}.aiedit .btn:disabled{opacity:.35}.aiparams{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr;gap:8px}.aiparams label{min-width:0;font-size:12px;color:var(--muted)}.aiparams input{display:block;width:100%;min-width:0;min-height:44px;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:8px;font:inherit;font-size:16px}.aiparams>.btn{grid-column:1/-1;min-height:44px}.aiqopt{border-bottom:1px solid var(--line-soft);padding:12px 0}.aiqopt .ropt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px}.aiqopt .ropt .fig2,.aiqopt .ropt .fig{flex:0 0 64px;width:64px;max-width:64px;border-radius:12px}.aiqopt .rtx{display:flex;flex-direction:column;gap:4px;min-width:0;line-height:1.35}.aiqopt .rtx b{font-size:14px}.aiqopt .rtx i{font-size:12px;font-style:normal;color:var(--muted)}.aiqactions{display:flex;gap:8px}.aiqactions button{flex:1;min-height:44px}.aiqactions .catpick{position:static}.aiqstatus{font-size:13px;color:var(--muted)}.aiedit .btn{min-height:44px;flex:1;padding:8px;font-size:13px}.aiedit .btn:disabled{opacity:.45}
 .aiex .exph{width:56px;height:56px;border-radius:16px;overflow:hidden;display:block;background:var(--field)}
 .aiex .exph .fig2,.aiex .exph .fig{width:56px;border-radius:16px}
 .aiex .exph .fig2{aspect-ratio:1}
@@ -1750,6 +1753,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catcard .catsubbig{color:var(--muted);font-size:13.5px;margin:-2px 0 6px}
 .catcard .btn.wide{margin-top:12px}
 #sb-go.off{opacity:.55}
+.sbnote{background:var(--warn-bg,#FBF3E2);color:var(--text);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13.5px;line-height:1.45}
+.sbnote button{display:inline-block;margin-top:8px;background:none;border:0;padding:0;color:var(--accent-txt);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
 #sb-wd.need{outline:2px solid var(--warn,#E0A030);outline-offset:4px;border-radius:12px}
 .dplgrid{display:flex;flex-direction:column;gap:6px}
 .dplrow{display:flex;align-items:center;gap:8px}
@@ -2460,10 +2465,14 @@ body.onb #picker .modalbox::before{display:none}
   color:var(--accent-txt);font-size:12px;line-height:1.5}
 #schedclose{margin-top:4px}
 /* ── расписание: день недели → день программы ── */
-.schrow{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding:11px 12px;width:100%;
-  border:1px solid var(--line);border-radius:12px;background:var(--card-2);text-align:left}
-.schrow.on{border-color:var(--accent-txt)}
-.schrow .schwd{flex:1 1 auto;font-size:13px;color:var(--text)}
+.schrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;width:100%;text-align:left}
+/* 01.11, разбор пути: у дня — отдых / зал / дома / улица (было «зал»/«отдых» кнопкой) */
+.schrow .schwd{flex:0 0 26px;font-size:13px;color:var(--text)}
+.schrow .schpl button{padding:9px 2px;font-size:12.5px}
+.wzeq{align-items:flex-start}.wzeq .seg button{flex:0 1 auto}.wzeq .pfl{padding-top:8px}
+#wz-dplbox .dplrow{margin:0 0 6px}
+#wz-dplopen{background:none;border:0;color:var(--accent-txt);font:inherit;font-size:13px;padding:2px 0 10px;text-decoration:underline;text-underline-offset:3px}
+.schh{font-size:12.5px;color:var(--dim);margin:2px 0 8px;line-height:1.45}
 .schrow.off .schwd{color:var(--dim)}
 .schrow .schst{font-weight:500;font-family:inherit;font-size:12px;color:var(--dim)}
 .schrow.on .schst{color:var(--accent-txt)}
@@ -5014,6 +5023,10 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <div id="wzform">
       <div class="pf"><span class="pfl">где</span><div class="seg" id="wz-place"></div></div>
       <div class="pf"><span class="pfl">дни</span><div class="seg wd" id="wz-wd"></div></div>
+      <!-- 01.11, разбор пути: в разные дни — разное место, и что есть дома / на площадке -->
+      <div id="wz-dplbox"></div>
+      <div class="pf wzeq" id="wz-eqrow" hidden><span class="pfl">дома есть</span><div class="seg multi" id="wz-eq"></div></div>
+      <div class="pf wzeq" id="wz-eqsrow" hidden><span class="pfl">на площадке</span><div class="seg multi" id="wz-eqs"></div></div>
       <div class="pf"><span class="pfl">минут</span><div class="seg" id="wz-min"></div></div>
       <label class="mlab">о себе и цели
         <textarea id="wz-text" rows="3" placeholder="хочу убрать живот и не сорвать спину, сижу за компом, в зале был давно"></textarea></label>
@@ -5225,7 +5238,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 </div>
 <div class="modal" id="sportm" role="dialog" aria-modal="true" aria-labelledby="sporttitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="sporttitle">Занятие вне зала</h3><button class="xbtn" id="sportclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><h3 id="sporttitle">Другое занятие</h3><button class="xbtn" id="sportclose" aria-label="Закрыть">✕</button></div>
     <!-- 17.09, его слова: «теперь на странице тренировок + занятие вне зала в
          двух местах». Кнопки было две: одна записывала занятие, другая
          заводила повторение — читались они одинаково. Осталась одна, а
@@ -5315,6 +5328,8 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
   <div class="modalbox">
     <div class="cathead"><h3 id="sbortitle">Собрать программу</h3><button class="xbtn" id="sborclose" aria-label="Закрыть">✕</button></div>
     <p class="mtext" id="sborgoal"></p>
+    <!-- 01.11, разбор пути: без цели и без Pro — говорим сверху, до заполнения листа -->
+    <div class="sbnote" id="sbnote" hidden></div>
     <section class="sbgroup" aria-labelledby="sb-time-title">
       <h4 id="sb-time-title">Когда и сколько</h4>
     <div class="sbrow"><span class="sblab">В какие дни</span><div class="wdgrid" id="sb-wd"></div>
@@ -6040,6 +6055,125 @@ DAYS.W2={name:'День 2', s:'Тело Б', when:'', sub:'Задняя цепь
    cues:['Отрывайте лопатки, а не поясницу','Руки у висков, не тяните голову руками','Внизу не расслабляйтесь полностью'],
    why:'Динамическая работа пресса в пару к статической планке из первого дня.'}
 ]};
+/* ══════════ ГОТОВЫЕ ДЛЯ ДОМА И УЛИЦЫ ══════════
+   01.11, его слова: «пару готовых программ для дома и улицы тоже нужно сделать для
+   бесплатного тарифа». Дом — без снарядов (есть гантели или турник — «Заменить» и
+   «что есть»), улица — турник и брусья. Всё тело за три дня, у каждой мышцы два-три
+   раза в неделю; вес заменяют темп, амплитуда и опора. */
+DAYS.H1={name:'День 1', s:'Дом А', when:'', sub:'Ноги, грудь, спина', ex:[
+  {p:"Ноги", n:"Присед", id:"Bodyweight_Squat", cat:"Bodyweight_Squat", eq:"свой вес", inc:0, sets:3, reps:"15–20", rest:60,
+   cues:["Стопы на ширине плеч, вес на всей стопе", "Таз назад и вниз, колени смотрят по носкам", "Легко сделали 20 — делайте медленно: 3 секунды вниз"],
+   why:"Главное упражнение на ноги без снарядов. Медленный темп заменяет вес."},
+  {p:"Грудь", n:"Отжимания", id:"Pushups", cat:"Pushups", eq:"свой вес", inc:0, sets:3, reps:"6–15", rest:75,
+   cues:["Тело одной линией от головы до пяток", "Локти под углом к корпусу, не в стороны", "Не выходит 6 раз — с колен или руками на диван"],
+   why:"Грудь, плечи и трицепс за одно движение. Опора повыше — легче, ниже — тяжелее."},
+  {p:"Спина", n:"Лодочка", id:"Superman", cat:"Superman", eq:"свой вес", inc:0, sets:3, reps:"10–12", rest:60,
+   cues:["Лёжа на животе, поднимите грудь и ноги", "Задержка на 2 секунды вверху", "Шея продолжает позвоночник, голову не задирайте"],
+   why:"Без турника спину дома держит она: разгибатели спины и задние дельты."},
+  {p:"Ягодицы", n:"Ягодичный мостик на одной ноге", id:"Single_Leg_Glute_Bridge", cat:"Single_Leg_Glute_Bridge", eq:"свой вес", inc:0, sets:3, reps:"10–12 на ногу", rest:60,
+   cues:["Лопатки на полу, одна нога согнута", "Поднимайте таз пяткой, а не поясницей", "Вверху сожмите ягодицу на секунду"],
+   why:"Ягодицы и задняя поверхность бедра — на одной ноге нагрузки хватает без гантелей."},
+  {p:"Икры", n:"Подъём на носки", id:"R_Bodyweight_Calf_Raise", cat:"R_Bodyweight_Calf_Raise", eq:"свой вес", inc:0, sets:2, reps:"15–25", rest:45,
+   cues:["Встаньте на ступеньку, пятки свисают", "Вверх до упора, вниз — ниже ступеньки", "Держитесь рукой за стену для равновесия"],
+   why:"Икры дома растут от полной амплитуды и медленного опускания."},
+  {p:"Корпус", n:"Планка", id:"Plank", cat:"Plank", eq:"свой вес", inc:0, sets:3, reps:"20–45 с", rest:45,
+   cues:["Таз подкручен, поясница не провисает", "Дышите ровно", "Три коротких подхода лучше одного долгого с провалом"],
+   why:"База для всех упражнений стоя."}
+]};
+DAYS.H2={name:'День 2', s:'Дом Б', when:'', sub:'Ноги, плечи, трицепс', ex:[
+  {p:"Ноги", n:"Выпады", id:"Bodyweight_Walking_Lunge", cat:"Bodyweight_Walking_Lunge", eq:"свой вес", inc:0, sets:3, reps:"10–12 на ногу", rest:75,
+   cues:["Шаг широкий, корпус вертикально", "Заднее колено почти касается пола", "Нет места — выпады на месте, назад"],
+   why:"Каждая нога работает отдельно, равновесие тоже тренируется."},
+  {p:"Плечи", n:"Отжимания уголком", id:"R_Pike_Push_Ups", cat:"R_Pike_Push_Ups", eq:"свой вес", inc:0, sets:3, reps:"6–12", rest:75,
+   cues:["Таз вверх, тело — перевёрнутая буква V", "Опускайте голову между ладоней", "Тяжело — ноги ближе к рукам"],
+   why:"Жим вверх без гантелей: плечи и трицепс."},
+  {p:"Спина", n:"Лодочка", id:"Superman", cat:"Superman", eq:"свой вес", inc:0, sets:3, reps:"10–12", rest:60,
+   cues:["Поднимайте грудь и ноги одновременно", "Задержка на 2 секунды вверху", "Руки вперёд — тяжелее, вдоль тела — легче"],
+   why:"Вторая тренировка спины за неделю."},
+  {p:"Трицепс", n:"Отжимания от стула", id:"Bench_Dips", cat:"Bench_Dips", eq:"стул", inc:0, sets:3, reps:"8–15", rest:60,
+   cues:["Руки на краю устойчивого стула или дивана", "Опускайтесь до прямого угла в локтях", "Ноги ближе — легче, дальше — тяжелее"],
+   why:"Трицепс дома без гантелей."},
+  {p:"Корпус", n:"Мёртвый жук", id:"Dead_Bug", cat:"Dead_Bug", eq:"свой вес", inc:0, sets:3, reps:"8 на сторону", rest:45,
+   cues:["Поясница прижата к полу всё время", "Тянитесь рукой и противоположной ногой", "Медленно, без рывков"],
+   why:"Пресс, который учит держать поясницу — полезно всем, кто сидит."},
+  {p:"Корпус", n:"Боковая планка", id:"Side_Bridge", cat:"Side_Bridge", eq:"свой вес", inc:0, sets:2, reps:"20–30 с на сторону", rest:45,
+   cues:["Локоть под плечом", "Таз не проваливается", "Тяжело — с колен"],
+   why:"Косые мышцы и устойчивость корпуса."}
+]};
+DAYS.H3={name:'День 3', s:'Дом В', when:'', sub:'Всё тело', ex:[
+  {p:"Ноги", n:"Зашагивания", id:"Step-up_with_Knee_Raise", cat:"Step-up_with_Knee_Raise", eq:"стул или ступенька", inc:0, sets:3, reps:"10 на ногу", rest:75,
+   cues:["Вся стопа на опоре", "Поднимайтесь ногой, которая сверху, а не толчком нижней", "Устойчивая опора: ступенька, скамья, стул у стены"],
+   why:"Ноги и ягодицы, близко к ходьбе по лестнице."},
+  {p:"Грудь", n:"Отжимания", id:"Pushups", cat:"Pushups", eq:"свой вес", inc:0, sets:3, reps:"6–15", rest:75,
+   cues:["Тело одной линией", "Опускайтесь грудью до кулака от пола", "Легко 15 — ставьте ноги на диван"],
+   why:"Вторая тренировка груди за неделю."},
+  {p:"Ягодицы", n:"Мостик", id:"Butt_Lift_Bridge", cat:"Butt_Lift_Bridge", eq:"свой вес", inc:0, sets:3, reps:"15–20", rest:60,
+   cues:["Пятки ближе к тазу", "Поднимайте таз до прямой линии колени — плечи", "Вверху пауза 2 секунды"],
+   why:"Ягодицы на обе ноги — проще, чем на одной, больше повторов."},
+  {p:"Спина", n:"Лодочка", id:"Superman", cat:"Superman", eq:"свой вес", inc:0, sets:3, reps:"10–12", rest:60,
+   cues:["Задержка на 2 секунды вверху", "Шея продолжает позвоночник", "Есть турник или резинка — замените на тягу в «Заменить»"],
+   why:"Спина третий раз за неделю — без снарядов это главное движение."},
+  {p:"Кардио", n:"Скалолаз", id:"Mountain_Climbers", cat:"Mountain_Climbers", eq:"свой вес", inc:0, sets:3, reps:"30 с", rest:45,
+   cues:["Упор лёжа, колени по очереди к груди", "Таз не задирайте", "Темп — такой, чтобы держать 30 секунд"],
+   why:"Пульс и корпус в конце тренировки."},
+  {p:"Корпус", n:"Скручивания", id:"Crunches", cat:"Crunches", eq:"свой вес", inc:0, sets:3, reps:"12–15", rest:45,
+   cues:["Отрывайте лопатки, а не поясницу", "Руки у висков, голову не тяните", "Выдох на подъёме"],
+   why:"Прямая мышца живота в пару к планке."}
+]};
+DAYS.S1={name:'День 1', s:'Улица А', when:'', sub:'Подтягивания и брусья', ex:[
+  {p:"Спина", n:"Подтягивания", id:"Pullups", cat:"Pullups", eq:"турник", inc:0, sets:4, reps:"3–8", rest:120,
+   cues:["Хват чуть шире плеч, вис на прямых руках", "Тяните локти вниз к рёбрам, подбородок выше перекладины", "Не выходит ни разу — делайте медленный спуск 3–5 секунд с прыжка"],
+   why:"Главное упражнение на спину. Пока не подтягиваетесь — медленные спуски."},
+  {p:"Грудь", n:"Отжимания на брусьях", id:"Parallel_Bar_Dip", cat:"Parallel_Bar_Dip", eq:"брусья", inc:0, sets:3, reps:"5–12", rest:120,
+   cues:["Плечи вниз, не к ушам", "Опускайтесь до прямого угла в локтях", "Не выходит 5 — медленный спуск с прыжка"],
+   why:"Грудь, трицепс, передние дельты — жим лёжа уличной площадки."},
+  {p:"Ноги", n:"Присед", id:"Bodyweight_Squat", cat:"Bodyweight_Squat", eq:"свой вес", inc:0, sets:3, reps:"15–20", rest:60,
+   cues:["Таз назад, колени по носкам", "3 секунды вниз", "Легко 20 — присед с выпрыгиванием"],
+   why:"Ноги между тяжёлыми подходами на руки."},
+  {p:"Ноги", n:"Выпады", id:"Bodyweight_Walking_Lunge", cat:"Bodyweight_Walking_Lunge", eq:"свой вес", inc:0, sets:3, reps:"10–12 на ногу", rest:60,
+   cues:["Шаг широкий, корпус вертикально", "Заднее колено почти касается земли", "Можно в движении вдоль площадки"],
+   why:"Каждая нога отдельно и равновесие."},
+  {p:"Пресс", n:"Подъём ног в висе", id:"Hanging_Leg_Raise", cat:"Hanging_Leg_Raise", eq:"турник", inc:0, sets:3, reps:"6–12", rest:60,
+   cues:["Без раскачки, плечи напряжены", "Тяжело — поднимайте согнутые колени", "Опускайте медленно"],
+   why:"Пресс на турнике — сильнее скручиваний на полу."}
+]};
+DAYS.S2={name:'День 2', s:'Улица Б', when:'', sub:'Тяга, отжимания, ноги', ex:[
+  {p:"Спина", n:"Австралийские подтягивания", id:"Inverted_Row", cat:"Inverted_Row", eq:"низкая перекладина", inc:0, sets:3, reps:"8–12", rest:90,
+   cues:["Перекладина на уровне пояса, тело прямое под ней", "Тяните грудь к перекладине", "Ноги ближе — легче, дальше — тяжелее"],
+   why:"Тяга к груди — середина спины и ступенька к подтягиваниям."},
+  {p:"Грудь", n:"Отжимания", id:"Pushups", cat:"Pushups", eq:"свой вес", inc:0, sets:3, reps:"10–20", rest:75,
+   cues:["Тело одной линией", "Легко 20 — ноги на скамейку", "Локти под углом к корпусу"],
+   why:"Объём для груди в пару к брусьям."},
+  {p:"Ноги", n:"Зашагивания", id:"Step-up_with_Knee_Raise", cat:"Step-up_with_Knee_Raise", eq:"скамейка", inc:0, sets:3, reps:"10 на ногу", rest:75,
+   cues:["Вся стопа на скамейке", "Поднимайтесь верхней ногой", "Колено свободной ноги вверх"],
+   why:"Ноги и ягодицы на любой лавке."},
+  {p:"Ягодицы", n:"Ягодичный мостик на одной ноге", id:"Single_Leg_Glute_Bridge", cat:"Single_Leg_Glute_Bridge", eq:"свой вес", inc:0, sets:3, reps:"10–12 на ногу", rest:60,
+   cues:["Пятку можно поставить на лавку — тяжелее", "Таз вверх пяткой", "Пауза вверху"],
+   why:"Задняя поверхность бедра — на улице её больше нечем нагрузить."},
+  {p:"Корпус", n:"Планка", id:"Plank", cat:"Plank", eq:"свой вес", inc:0, sets:3, reps:"30–60 с", rest:45,
+   cues:["Таз подкручен", "Дышите ровно", "Легко 60 с — поднимите одну руку"],
+   why:"Корпус держит подтягивания и брусья."}
+]};
+DAYS.S3={name:'День 3', s:'Улица В', when:'', sub:'Подтягивания обратным хватом', ex:[
+  {p:"Спина", n:"Подтягивания обратным хватом", id:"Chin-Up", cat:"Chin-Up", eq:"турник", inc:0, sets:4, reps:"3–8", rest:120,
+   cues:["Ладони к себе, хват на ширине плеч", "Грудь к перекладине", "Не выходит — медленный спуск с прыжка"],
+   why:"Спина и бицепс; обратным хватом подтягиваться легче."},
+  {p:"Грудь", n:"Отжимания на брусьях", id:"Parallel_Bar_Dip", cat:"Parallel_Bar_Dip", eq:"брусья", inc:0, sets:3, reps:"5–12", rest:120,
+   cues:["Плечи вниз", "До прямого угла в локтях", "Легко 12 — пауза внизу 2 секунды"],
+   why:"Вторая тренировка брусьев за неделю."},
+  {p:"Ноги", n:"Присед с выпрыгиванием", id:"Freehand_Jump_Squat", cat:"Freehand_Jump_Squat", eq:"свой вес", inc:0, sets:3, reps:"8–12", rest:75,
+   cues:["Мягкое приземление на всю стопу", "Сразу в следующий присед", "Колени болят — обычный присед"],
+   why:"Ноги и взрывная сила, пульс вверх."},
+  {p:"Ноги", n:"Выпады", id:"Bodyweight_Walking_Lunge", cat:"Bodyweight_Walking_Lunge", eq:"свой вес", inc:0, sets:3, reps:"10–12 на ногу", rest:60,
+   cues:["Корпус вертикально", "Шаг широкий", "Можно с рюкзаком для веса"],
+   why:"Третий раз ноги за неделю, но легче."},
+  {p:"Пресс", n:"Подъём ног в висе", id:"Hanging_Leg_Raise", cat:"Hanging_Leg_Raise", eq:"турник", inc:0, sets:3, reps:"6–12", rest:60,
+   cues:["Без раскачки", "Колени согнуты — легче", "Медленно вниз"],
+   why:"Пресс на турнике."},
+  {p:"Икры", n:"Подъём на носки", id:"R_Bodyweight_Calf_Raise", cat:"R_Bodyweight_Calf_Raise", eq:"свой вес", inc:0, sets:2, reps:"15–25", rest:45,
+   cues:["На бордюре или ступеньке", "Пятки ниже опоры внизу", "Медленно вниз"],
+   why:"Икры — 5 минут в конце."}
+]};
 /* ══════════ ПРОФИЛИ ══════════
    Данные Telegram CloudStorage и так разделены по пользователям, поэтому
    двум людям хватает одного приложения и одного бота. Разделять нужно только
@@ -6096,6 +6230,38 @@ var PROFILES = {
        d:'<p><b>3 × 12–15</b>, запас 3 повтора. Техника уже своя, можно добавлять вес: дошли до 15 во всех подходах — поднимайте.</p>'},
       {id:'w3', s:'Ф3', t:'Фаза 3 · Нагрузка', ds:1, rir:2, w:[9,99],
        d:'<p><b>3 × 10–12</b>, запас 2 повтора. Настоящая тренировочная работа: вес растёт, повторов меньше.</p>'}
+    ]
+  },
+  home: {
+    name:'Дома · всё тело · 3 дня', goal:'вес по цели, дома — всё тело', place:'home',
+    fit:{wt:{down:3,keep:3,up:1}, gym:{muscle:2,strength:1,endur:2,health:3}, level:{new:3,mid:2,exp:0}, days:3, place:{home:5,street:1,gym:-4}},
+    sub:'Без снарядов, свой вес. Три дня по 35–40 минут',
+    heavy:['H1','H2','H3'], lightDays:[],
+    gymDays:{1:'H1', 3:'H2', 5:'H3'},
+    start:[2026,10,1],
+    phases:[
+      {id:'h1', s:'Ф1', t:'Фаза 1 · Привыкание', ds:-1, rir:4, w:[1,3],
+       d:'<p><b>На подход меньше</b>, запас 4 повтора. Выучить движения и найти, где у вас дома опора и место.</p>'},
+      {id:'h2', s:'Ф2', t:'Фаза 2 · Нагрузка', ds:0, rir:3, w:[4,8],
+       d:'<p>Запас 3 повтора. Дошли до верха повторов во всех подходах — делайте медленнее или выбирайте вариант тяжелее.</p>'},
+      {id:'h3', s:'Ф3', t:'Фаза 3 · Плотнее', ds:0, rir:2, w:[9,99],
+       d:'<p>Запас 2 повтора, отдых короче. Пора отметить «что есть дома» — гантели и резинки добавят рост.</p>'}
+    ]
+  },
+  street: {
+    name:'Улица · турник и брусья · 3 дня', goal:'вес по цели, на улице — турник и брусья', place:'street',
+    fit:{wt:{down:3,keep:3,up:2}, gym:{muscle:3,strength:3,endur:2,health:2}, level:{new:2,mid:3,exp:2}, days:3, place:{street:5,home:-1,gym:-4}},
+    sub:'Турник, брусья и свой вес. Три дня по 40 минут',
+    heavy:['S1','S2','S3'], lightDays:[],
+    gymDays:{1:'S1', 3:'S2', 5:'S3'},
+    start:[2026,10,1],
+    phases:[
+      {id:'u1', s:'Ф1', t:'Фаза 1 · Привыкание', ds:-1, rir:3, w:[1,3],
+       d:'<p><b>На подход меньше.</b> Подтягивания и брусья — медленные спуски, если целиком пока не выходит.</p>'},
+      {id:'u2', s:'Ф2', t:'Фаза 2 · Нагрузка', ds:0, rir:2, w:[4,8],
+       d:'<p>Запас 2 повтора. Каждую неделю — на повтор больше в подтягиваниях и брусьях.</p>'},
+      {id:'u3', s:'Ф3', t:'Фаза 3 · Сложнее', ds:0, rir:1, w:[9,99],
+       d:'<p>Делаете 10 подтягиваний — хват шире, пауза вверху; в брусьях — пауза внизу.</p>'}
     ]
   }
 };
@@ -6503,6 +6669,12 @@ function местоДня(dk){
   var т=местоСегодня(dk); if(т) return т.pl;
   var me=myData()||{}; return me.place==='home'?'h':me.place==='street'?'s':'';
 }
+/* 01.11, разбор пути: над «Тренировкой» — где сегодня, а не всегда «Зал» */
+function тренСлово(){
+  try{ var т=(DAYS && day && DAYS[day] && !ДЕНЬ_ДАТА) ? местоСегодня(day) : null;
+       var p=т ? т.pl : ({home:'h',street:'s'}[(myData()||{}).place]||'g');
+       return {g:'Зал',h:'Дома',s:'Улица'}[p]||'Зал'; }catch(e){ return 'Зал'; }
+}
 function местоСегодня(dk){
   var т=get('tplace_'+TODAY, null);
   /* 01.11 «А: день → место»: сегодня по расписанию дом или улица — замены ставятся сами */
@@ -6511,19 +6683,25 @@ function местоСегодня(dk){
 }
 var АВТО_МЕСТО=0;
 /* место сегодня по расписанию из «Собрать»: 'h' | 's' | '' (как обычно) */
+/* место сегодня: по расписанию из «Мои дни»/«Собрать», иначе основное.
+   {pl:'h'|'s', base:true — это и есть основное место} или null (зал — программа как есть).
+   01.11, разбор пути: программа для зала (готовая или собранная до смены места), а человек дома —
+   замены встают и в основном месте, если в дне есть то, что там не сделать. */
 function местоПоРасписанию(){
-  var me=myData()||{}, wd=new Date(TODAY+'T12:00:00').getDay(), p=(me.dpl||{})[wd], база=me.place||'gym';
-  if(!p || p===база) return '';
-  return p==='home'?'h':p==='street'?'s':'';    /* зал при программе для дома — делается как есть */
+  var me=myData()||{}, wd=new Date(TODAY+'T12:00:00').getDay(), база=me.place||'gym', p=(me.dpl||{})[wd]||база;
+  var код=p==='home'?'h':p==='street'?'s':''; if(!код) return null;
+  return {pl:код, base:p===база};
 }
 function местоАвто(dk){
-  var pl=местоПоРасписанию(); if(!pl || !DAYS || !DAYS[dk]) return null;
+  var r=местоПоРасписанию(); if(!r || !DAYS || !DAYS[dk]) return null;
   if(!CAT){ if(!местоАвто.ждём){ местоАвто.ждём=1; loadCatalog().then(function(){ местоАвто.ждём=0;
       if(местоАвто(day)){ rebuildSess(); renderDayHead(); renderList(); } }).catch(function(){ местоАвто.ждём=0; }); }
     return null; }
-  var план; АВТО_МЕСТО=1; try{ план=местоПлан(dk, pl); } finally{ АВТО_МЕСТО=0; }
-  var sw={}; план.forEach(function(r){ if(r.варианты && r.варианты.length) sw[r.k]=r.варианты[0].i; });
-  var т={dk:dk, pl:pl, sw:sw, auto:1}; set('tplace_'+TODAY, т); return т;
+  var план; АВТО_МЕСТО=1; try{ план=местоПлан(dk, r.pl); } finally{ АВТО_МЕСТО=0; }
+  var sw={}; план.forEach(function(x){ if(x.варианты && x.варианты.length) sw[x.k]=x.варианты[0].i; });
+  /* основное место и всё в дне здесь делается — запоминаем «нечего менять», чтобы не считать снова */
+  if(r.base && !Object.keys(sw).length){ set('tplace_'+TODAY, {dk:dk, pl:'', auto:1, none:1}); return null; }
+  var т={dk:dk, pl:r.pl, sw:sw, auto:1, base:r.base?1:0}; set('tplace_'+TODAY, т); return т;
 }
 function местоЗамена(x, тп){
   var id=тп.sw && тп.sw[x.k]; if(!id) return x;
@@ -6614,7 +6792,10 @@ document.getElementById('tplm').addEventListener('click', function(e){
 });
 function местоВернуть(){ var т=get('tplace_'+TODAY, null); set('tplace_'+TODAY, (т && (т.auto || местоПоРасписанию())) ? {dk:т.dk, pl:'', off:1} : null); rebuildSess(); renderDayHead(); renderList(); haptic('light'); }
 /* строка под карточкой дня: «Сегодня не в зале? Дома · На улице» или «Сегодня дома · Вернуть зал» */
-function renderTplace(){ try{ renderTplace0(); }catch(e){ var b=document.getElementById('tplace'); if(b) b.hidden=true; } }
+function renderTplace(){ try{ renderTplace0(); }catch(e){ var b=document.getElementById('tplace'); if(b) b.hidden=true; }
+  /* шапка «Зал / Дома / Улица» — за местом дня */
+  try{ var hc=document.getElementById('hctx'), э=hc && hc.querySelector('.ds-eyebrow'); if(э && {gym:1,log:1,ref:1}[gget('page','')]) э.textContent=тренСлово(); }catch(e){}
+}
 function renderTplace0(){
   var box=document.getElementById('tplace'), card=box && box.previousElementSibling; if(!box) return;
   if(!DAYS || !day){ box.hidden=true; return; }
@@ -6625,8 +6806,12 @@ function renderTplace0(){
   var имяБазы={g:'зал',h:'дом',s:'улицу'}[база];
   if(тп){
     box.hidden=false;
-    box.innerHTML='<span>Сегодня '+(тп.pl==='h'?'дома':'на улице')+(тп.auto?' по расписанию':'')+(тп.full?' — тренировка тренера':' — замен: '+Object.keys(тп.sw||{}).length)+'</span>'+
-      '<button type="button" class="fx" data-tplback="1">Вернуть '+имяБазы+'</button>';
+    var нз=Object.keys(тп.sw||{}).length;
+    box.innerHTML = (тп.auto && тп.base)
+      ? '<span>'+(тп.pl==='h'?'Дома':'На улице')+' не сделать '+нз+' '+plural(нз,['упражнение','упражнения','упражнений'])+' программы — заменил</span>'+
+        '<button type="button" class="fx" data-tplback="1">Как в программе</button>'
+      : '<span>Сегодня '+(тп.pl==='h'?'дома':'на улице')+(тп.auto?' по расписанию':'')+(тп.full?' — тренировка тренера':' — замен: '+нз)+'</span>'+
+        '<button type="button" class="fx" data-tplback="1">Вернуть '+имяБазы+'</button>';
     return;
   }
   var куда=['h','s'].filter(function(p){ return p!==база; });
@@ -6927,6 +7112,8 @@ function openCatalog(ctx){
   /* 01.11 (доработка): «Добавить» в дне открывается на мышцах этого дня — её можно снять */
   if(ctx && ctx.add && !ctx.pairWith && !ctx.draft) catGroup=деньГруппа(ctx.dk||day);
   catWhereDefault();
+  /* «Добавить» и «Заменить» в дне — на месте этого дня: сегодня дома — список домашний */
+  if(ctx && !ctx.draft && (ctx.add || ctx.dk!=null)) catWhere=катМестоДня(ctx.dk||day);
   var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
   if(t) t.textContent = (ctx&&ctx.quick) ? 'Варианты замены' : (ctx && ctx.pairWith) ? 'В пару к «'+ctx.pairName+'»' : (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
@@ -6969,7 +7156,12 @@ var catWhere='', catWhereSet=false;
 var CAT_WHERE=[['g','Зал','<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>'],['h','Дом','<path d="M4 11l8-6 8 6v8H4z"/><path d="M10 19v-5h4v5"/>'],
                ['s','Улица','<path d="M5 20V7M19 20V7M3 7h18"/>']];
 /* место по умолчанию — из профиля: занимается дома — каталог открывается на «Дом» */
-function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; var me=myData()||{}; catWhere=me.place==='home'?'h':me.place==='street'?'s':'g'; }
+function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; catWhere=катМестоДня(day); }
+/* 01.11, разбор пути: место дня (сегодня дома по расписанию — «Дом»), иначе из профиля */
+function катМестоДня(dk){
+  var me=myData()||{}, база=me.place==='home'?'h':me.place==='street'?'s':'g';
+  try{ return (DAYS && dk && DAYS[dk] && местоДня(dk)) || база; }catch(e){ return база; }
+}
 function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>=0; }
 /* 01.11, макет «Каталог: доработка (A + B)», его «Да, как в макете»: дома и на
    улице вместо «Снаряд» и «Тренажёр» — что у человека есть. Дома — me.eq из
@@ -7545,7 +7737,9 @@ function openCatPage(){
 var WIZ={place:'gym', wd:null, min:45, text:'', qa:[], ask:null, opts:[], hint:'', goal:null,
          gwt:'down', ggym:'muscle', target:null, safe:null, safeBusy:false, safeErr:false,
          likes:[], dislikes:[], prog:null, stage:'form', step:'form', meErr:'',
-         busy:false, err:'', fallback:false, show:false, touched:false};
+         busy:false, err:'', fallback:false, show:false, touched:false, dpl:{}, dplOpen:false, eq:null, eqs:null};
+/* место дня в знакомстве: своё, если отмечено, иначе «где» */
+function wizМеста(){ var out={}; wizDays().forEach(function(d){ out[d]=(WIZ.dpl||{})[d]||WIZ.place||'gym'; }); return out; }
 var SEXES=[['m','мужской'],['f','женский']];
 /* Режим «только питание» (11.09) — его вопрос: «а что для пользователей,
    которые не ходят в зал, а только питание будут отслеживать?». Следов зала
@@ -7793,7 +7987,7 @@ function aiСтрока(x, index, editable, view){
   var first=index,last=index,rows=view&&view._вкладкаПрог&&view._вкладкаПрог.days[view.dayTab||0].ex;
   if(rows&&x.ss){while(first>0&&rows[first-1].ss===x.ss)first--;while(last<rows.length-1&&rows[last+1].ss===x.ss)last++;}
   return '<div class="aiex"><span class="exph">'+mediaFor(e)+'</span><span class="aien"><b>'+
-    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button><button type="button" class="btn" data-aiedit="params" data-aiindex="'+index+'" aria-label="'+escAttr('Подходы и повторения: '+x.n)+'">Подходы · повторы</button><span class="aimoves"><button type="button" class="btn" data-aiedit="up" data-aiindex="'+index+'" aria-label="'+escAttr('Поднять: '+x.n)+'"'+(first===0?' disabled':'')+'>↑</button><button type="button" class="btn" data-aiedit="down" data-aiindex="'+index+'" aria-label="'+escAttr('Опустить: '+x.n)+'"'+(last===editable-1?' disabled':'')+'>↓</button></span></div>'+ (view.params===index ? '<form class="aiparams" data-aiindex="'+index+'"><label>Подходы<input name="sets" type="number" min="1" max="20" step="1" required value="'+x.sets+'"></label><label>Повторы / время<input name="reps" type="text" maxlength="40" required value="'+escAttr(x.reps)+'"></label><button type="submit" class="btn">Готово</button></form>' : '') : '')+'</div>';
+    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button><button type="button" class="btn" data-aiedit="params" data-aiindex="'+index+'" aria-label="'+escAttr('Подходы и повторения: '+x.n)+'">Подходы</button><span class="aimoves"><button type="button" class="btn" data-aiedit="up" data-aiindex="'+index+'" aria-label="'+escAttr('Поднять: '+x.n)+'"'+(first===0?' disabled':'')+'>↑</button><button type="button" class="btn" data-aiedit="down" data-aiindex="'+index+'" aria-label="'+escAttr('Опустить: '+x.n)+'"'+(last===editable-1?' disabled':'')+'>↓</button></span></div>'+ (view.params===index ? '<form class="aiparams" data-aiindex="'+index+'"><label>Подходы<input name="sets" type="number" min="1" max="20" step="1" required value="'+x.sets+'"></label><label>Повторы / время<input name="reps" type="text" maxlength="40" required value="'+escAttr(x.reps)+'"></label><button type="submit" class="btn">Готово</button></form>' : '') : '')+'</div>';
 }
 /* 27.10: предложение можно править до принятия. Каталог меняет только
    захваченный черновик: ни SUBS/EXTRA, ни установленная программа не пишутся. */
@@ -7972,7 +8166,10 @@ document.addEventListener('click', function(e){
   if(tab)tab.focus({preventScroll:true});
 });
 function wizSummary(){
-  var d=wizDays();
+  var d=wizDays(), мз=wizМеста(), гр={};
+  d.forEach(function(x){ (гр[мз[x]]=гр[мз[x]]||[]).push(WD[x]); });
+  if(Object.keys(гр).length>1) return ['gym','home','street'].filter(function(k){ return гр[k]; })
+      .map(function(k){ return {gym:'зал',home:'дома',street:'улица'}[k]+' '+гр[k].join(' '); }).join(' · ')+' · до '+WIZ.min+' мин';
   return (WIZ.place==='home'?'дома':WIZ.place==='street'?'на улице':'зал')+' · '+
          (d.length ? d.map(function(x){ return WD[x]; }).join(' ') : 'дни не выбраны')+
          ' · до '+WIZ.min+' мин';
@@ -8122,6 +8319,20 @@ function wzMeNext(){
 }
 function renderWzForm(){
   segSet('wz-place', segHtml('place',PLACES,WIZ.place));
+  /* места по дням: по умолчанию одно на все дни; «в разные дни — разное место» раскрывает строки */
+  var me0=myData()||{}; if(WIZ.eq==null) WIZ.eq=(me0.eq||[]).slice(); if(WIZ.eqs==null) WIZ.eqs=Array.isArray(me0.eqs)?me0.eqs.slice():['bar','dips'];
+  var мз=wizМеста(), разные=Object.keys(WIZ.dpl||{}).some(function(d){ return WIZ.wd[d] && WIZ.dpl[d]!==WIZ.place; });
+  var бокс=document.getElementById('wz-dplbox');
+  if(бокс){
+    var дн=wizDays();
+    бокс.innerHTML = (WIZ.dplOpen||разные) && дн.length>1
+      ? дн.map(function(d){ return '<div class="dplrow"><b>'+WD[d]+'</b><div class="seg" data-wzdpl="'+d+'">'+
+          [['gym','зал'],['home','дома'],['street','улица']].map(function(x){ return '<button type="button" data-pl="'+x[0]+'" aria-pressed="'+(мз[d]===x[0])+'">'+x[1]+'</button>'; }).join('')+'</div></div>'; }).join('')
+      : (дн.length>1 ? '<button type="button" id="wz-dplopen">В разные дни — разные места?</button>' : '');
+  }
+  var есть={}; Object.keys(мз).forEach(function(d){ есть[мз[d]]=1; }); if(!wizDays().length) есть[WIZ.place]=1;
+  var r1=document.getElementById('wz-eqrow'); if(r1){ r1.hidden=!есть.home; if(есть.home) segSet('wz-eq', segHtml('eq',EQKEYS,WIZ.eq,true)); }
+  var r2=document.getElementById('wz-eqsrow'); if(r2){ r2.hidden=!есть.street; if(есть.street) segSet('wz-eqs', segHtml('eqs',EQKEYS_S,WIZ.eqs,true)); }
   segSet('wz-wd', WEEK.map(function(d){
     var on=!!WIZ.wd[d];
     return '<button type="button" data-wd="'+d+'" aria-pressed="'+on+'">'+WD[d]+'</button>';
@@ -8129,6 +8340,8 @@ function renderWzForm(){
   segSet('wz-min', segHtml('min',MINS,String(WIZ.min)));
   var ta=document.getElementById('wz-text');
   if(ta && document.activeElement!==ta && ta.value!==WIZ.text) ta.value=WIZ.text;
+  /* без Pro текст «о себе» читает не тренер — поле не показываем */
+  if(ta && ta.closest('label')) ta.closest('label').hidden=безПро();
   var n=wizDays().length;
   var e=document.getElementById('wz-err');
   /* «оставить дни не выбранными нельзя» — говорим об этом до нажатия, а не после */
@@ -8228,7 +8441,7 @@ function renderWzList(){
     h+='<button class="pbtn best" data-prof="'+k+'"><em>'+(автор ? 'от тренера '+esc(автор) : 'ваша программа')+'</em><b>'+esc(P.name)+'</b><u>'+esc(P.goal)+'</u><i>'+esc(P.sub)+'</i></button>';
   });
   if(готовые){
-    if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно и только про зал: вес ведём по вашей цели. Первая ближе всех к вашим дням и опыту. Свою под вас соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
+    if(WIZ.free) h+='<p class="mtext wzfree">Готовые программы — бесплатно: для зала, для дома и для улицы. Вес ведём по вашей цели. Первая ближе всех к вашим дням, месту и опыту. Свою под вас соберёт тренер в Pro. <button type="button" class="lnk" id="wz-pro">Что такое Pro</button></p>';
     else if(WIZ.fallback) h+='<p class="mtext" style="margin:14px 0 8px">Пока тренер недоступен, можно начать с готовой — свою соберём потом.</p>';
     var scored=Object.keys(PROFILES).filter(function(k){ return !PROFILES[k].custom; }).map(function(k){
       return {k:k, s:fitScore(k, {wt:goalPair(me).wt, gym:goalPair(me).gym, level:me.level||'new', place:WIZ.place}, wizDays().length)};
@@ -8239,7 +8452,7 @@ function renderWzList(){
          подпись «готовая» их различает */
       h+='<button class="pbtn" data-prof="'+x.k+'"><em class="dim">готовая</em><b>'+esc(имяПрог(P))+'</b><u>'+esc(цельПрог(P))+'</u><i>'+esc(P.sub)+'</i></button>';
     });
-  } else if(WIZ.stage==='form' && WIZ.step==='form'){
+  } else if(WIZ.stage==='form' && WIZ.step==='form' && !безПро()){   /* без Pro главная кнопка и так ведёт к готовым */
     /* запасной выход должен быть с самого начала: у кого программа уже есть,
        того незачем сначала гонять через анкету о себе */
     /* 30.10, его слова: «текст „есть своя программа“ воспринимается как у пользователя есть своя программа, но показывал уже заготовленные» */
@@ -8463,10 +8676,12 @@ function renderPicker(){
   if(шаг){
     шаг.hidden = WIZ.stage!=='form' || iш<0 || все.length<2;
     шаг.textContent = 'шаг '+(iш+1)+' из '+все.length;
+    /* 01.11, разбор пути: после цели знакомство продолжается с «где и когда» — счётчик не пропадает */
+    if(WIZ.онбШаг && WIZ.stage==='form' && WIZ.step==='form'){ шаг.hidden=false; шаг.textContent='шаг 3 из 3'; все=['only','discussion','form']; iш=2; }
   }
   var путь=document.getElementById('wzpath');
   if(путь){
-    путь.hidden=!шаг || шаг.hidden;
+    путь.hidden=!шаг || шаг.hidden;   /* все/iш — с учётом шага после цели */
     путь.innerHTML=все.map(function(_,i){return '<span'+(i<=iш?' class="reached"':'')+'></span>';}).join('');
   }
   var назад=document.getElementById('wz-prev'); if(назад) назад.hidden = WIZ.stage!=='form' || iш<=0 || WIZ.busy;
@@ -8551,10 +8766,11 @@ function wzSend(){
   WIZ.busy=true; WIZ.err=''; WIZ.stage = WIZ.stage==='form' ? 'chat' : WIZ.stage;
   renderPicker();
   var me=myData()||{};
-  var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:me.eq||[],
+  var мзS=wizМеста(), оснS=местоИзДней(мзS, WIZ.place), eqS=WIZ.eq||me.eq||[];
+  var body={ uid:syncUid(), wd:wizDays(), min:WIZ.min, text:WIZ.text, qa:WIZ.qa, eq:eqS,
     after: !!WIZ.after, prog: WIZ.after ? WIZ.prog : null,
     me:{ sex:me.sex||'m', age:me.age||null, ht:me.ht||null, bw:me.bw||null,
-         place:WIZ.place, level:me.level||null, wt:goalPair(me).wt, gym:goalPair(me).gym, goal:me.goal||null, lim:me.lim||[], eq:me.eq||[],
+         place:оснS, dpl:мзS, eqs:WIZ.eqs||me.eqs||[], level:me.level||null, wt:goalPair(me).wt, gym:goalPair(me).gym, goal:me.goal||null, lim:me.lim||[], eq:eqS,
          likes:me.likes||[], dislikes:me.dislikes||[], sports:me.sports||'' } };
   if(wzCtl) try{ wzCtl.abort(); }catch(e){}
   wzCtl = ('AbortController' in window) ? new AbortController() : null;
@@ -8605,7 +8821,11 @@ function wzAnswer(a){
 }
 function wzSaveMe(){
   var me=myData()||{}, ch=false;
-  if(WIZ.place && me.place!==WIZ.place){ me.place=WIZ.place; ch=true; }
+  if(WIZ.place){ var мз=wizМеста(), осн=местоИзДней(мз, WIZ.place);
+    if(me.place!==осн){ me.place=осн; ch=true; }
+    if(JSON.stringify(me.dpl||{})!==JSON.stringify(мз)){ me.dpl=мз; ch=true; }
+    if(WIZ.eq && JSON.stringify(me.eq||[])!==JSON.stringify(WIZ.eq)){ me.eq=WIZ.eq.slice(); ch=true; }
+    if(WIZ.eqs && JSON.stringify(me.eqs||[])!==JSON.stringify(WIZ.eqs)){ me.eqs=WIZ.eqs.slice(); ch=true; } }
   if(WIZ.min && me.min!==WIZ.min){ me.min=WIZ.min; ch=true; }
   if(WIZ.text && me.about!==WIZ.text){ me.about=WIZ.text; ch=true; }
   /* цель человек больше не выбирает из списка — её понял тренер по его словам,
@@ -8744,6 +8964,11 @@ function choose(p, новая){
      смену не ставят (ревью Codex U3). */
   var прежУк=null; try{ прежУк=JSON.parse(mGet(PROFKEY)||'null'); }catch(e){}
   var сменил=!!новая || (!!profile && p!==profile);
+  /* 01.11: выбрал готовую для дома или улицы — это и есть его место (если места по дням не разные) */
+  try{ var Pм=PROFILES[p]; if(Pм && Pм.place){ var meм=myData()||{}, дм=meм.dpl||{};
+    var разные=Object.keys(дм).some(function(d){ return дм[d]!==meм.place; });
+    if(!разные && meм.place!==Pм.place){ meм.place=Pм.place; Object.keys(дм).forEach(function(d){ дм[d]=Pм.place; }); meм.dpl=дм;
+      gset('me', meм); syncPush('state/me', {me:meм, at:new Date().toISOString()}); } } }catch(e){}
   if(firstRun){ gset('startcard',1); gset('cm_on',1); }
   hidePicker();
   чернСтереть();
@@ -8778,14 +9003,41 @@ function choose(p, новая){
 
 /* ── переключатель фаз ── */
 /* ── «мои дни»: семь строк недели, в каждой — день программы или отдых ── */
+var SCH_PL=[['off','отдых'],['gym','зал'],['home','дома'],['street','улица']];
+/* Под какое место собирать программу при местах по дням. Замена на сегодня умеет только
+   «из зала — домой/на улицу», поэтому есть хоть один день в зале — зал; без зала — где
+   дней больше (поровну — дом). Нет дней — прежнее место. */
+function местоИзДней(dpl, прежнее){
+  var к={gym:0,home:0,street:0};
+  Object.keys(dpl||{}).forEach(function(d){ к[dpl[d]]=(к[dpl[d]]||0)+1; });
+  if(к.gym) return 'gym';
+  if(к.home||к.street) return к.street>к.home ? 'street' : 'home';
+  return прежнее||'gym';
+}
+/* место каждого дня тренировки: из me.dpl, иначе — основное */
+function местаДней(){
+  var me=myData()||{}, dpl=me.dpl||{}, база=me.place||'gym', out={};
+  Object.keys(GYM_DAYS).forEach(function(d){ if(GYM_DAYS[d]) out[d]=dpl[d]||база; });
+  return out;
+}
+/* «Программа — для зала. В ср, сб тренер сам заменит…» — одна строка для «Мои дни» и «Собрать» */
+function местаПодсказка(м, где){
+  var другие=WEEK.filter(function(d){ return м[d] && м[d]!==где; });
+  if(!другие.length) return '';
+  return 'Программа — для '+({gym:'зала',home:'дома',street:'улицы'}[где])+'. В '+другие.map(function(d){ return WD[d]; }).join(', ')+
+    ' тренер сам заменит то, что там не сделать: та же мышца, из того, что есть.';
+}
 function renderSched(){
   var box=document.getElementById('schedlist'); if(!box) return;
-  var h='';
+  var h='', м=местаДней();
   for(var i=1;i<=7;i++){
-    var wd=i%7, on=!!GYM_DAYS[wd];
-    h+='<button type="button" class="schrow '+(on?'on':'off')+'" data-wd="'+wd+'" aria-pressed="'+on+'">'+
-       '<span class="schwd">'+WDFULL[wd]+'</span><span class="schst">'+(on?'зал':'отдых')+'</span></button>';
+    var wd=i%7, on=!!GYM_DAYS[wd], pl=on?м[wd]:'off';
+    h+='<div class="schrow '+(on?'on':'off')+'" data-wd="'+wd+'"><span class="schwd">'+WD[wd]+'</span>'+
+       '<div class="seg schpl" role="group" aria-label="'+WDFULL[wd]+'">'+SCH_PL.map(function(x){
+         return '<button type="button" data-wd="'+wd+'" data-pl="'+x[0]+'" aria-pressed="'+(x[0]===pl)+'">'+x[1]+'</button>'; }).join('')+'</div></div>';
   }
+  var подск=местаПодсказка(м, (myData()||{}).place||'gym');
+  if(подск) h+='<p class="schh">'+esc(подск)+'</p>';
   h+='<button class="phrow reset" id="schedreset" type="button">как в программе</button>';
   box.innerHTML=h;
 }
@@ -8959,7 +9211,7 @@ function goalTalkOpen(onboard,text){
 function goalTalkFinish(){
   var onboarding=GOALTALK.onboard;GOALTALK.active=false;GOALTALK.onboard=false;goalTalkLayout();closeCoach();
   var t=document.getElementById('coachtitle');if(t)t.textContent=t.dataset.was||'ИИ-тренер';
-  if(onboarding){var me=myData()||{};if(me.only==='food')choose(profile||'shp');else{WIZ.step='form';WIZ.step0='form';renderPicker();document.getElementById('picker').classList.add('show');}}
+  if(onboarding){var me=myData()||{};if(me.only==='food')choose(profile||'shp');else{WIZ.step='form';WIZ.step0='form';WIZ.онбШаг=true;renderPicker();document.getElementById('picker').classList.add('show');}}
 }
 document.getElementById('goalchatopen').addEventListener('click',function(){goalTalkOpen(false);});
 document.getElementById('goalconversation').addEventListener('click',function(e){
@@ -9010,7 +9262,10 @@ function goalScreenFetch(save){
   return fPost('/goal/plan',{uid:uid,g:GS.g,w:GS.w,f:GS.f,date:GS.date||null,profile:GS.profile,health:GS.health,save:!!save}).then(function(r){
     if(n!==GS.n||uid!==syncUid())return;
     GS.data=r;GS.error='';if(r.w!=null)GS.w=r.w;if(GS.g==='loss'||GS.g==='keep')GS.f=null;
-    if(save&&r.saved){GS.saved=true;if(r.me)gset('me',r.me);takeGoal(r.goal,null);try{renderHome();}catch(e){}haptic('ok');}
+    if(save&&r.saved){GS.saved=true;if(r.me)gset('me',r.me);takeGoal(r.goal,null);
+      /* 01.11, разбор пути: про здоровье ответили здесь — плашка «научилось учитывать здоровье» не нужна */
+      if(GS.health){gset('zd_seen',1);try{renderZdNudge();}catch(e){}}
+      try{renderHome();}catch(e){}haptic('ok');}
   }).catch(function(e){if(n!==GS.n)return;GS.error=e.message||'Нет связи. Повторите.';}).finally(function(){if(n===GS.n){GS.busy=false;GS.saving=false;goalTalkRender();}});
 }
 function goalScreenLater(){clearTimeout(GS.t);GS.saved=false;goalTalkRender();GS.t=setTimeout(function(){goalScreenFetch();},250);}
@@ -9040,7 +9295,7 @@ function goalTalkRender(){
   if(GS.g!=='keep'&&L){
     h+='<p class="gs-lbl">Куда хотите прийти</p><div class="gs-fields">';
     h+='<div class="gs-row"><div class="gs-name"><b>Вес</b><small>можно <b>'+gsЧ(L.wMin)+'–'+gsЧ(L.wMax)+'</b> кг</small></div><div class="gs-step"><button type="button" data-gs="w" data-v="-0.5" aria-label="Вес меньше">−</button><output id="gs-w">'+gsЧ(d.w)+' <small>кг</small></output><button type="button" data-gs="w" data-v="0.5" aria-label="Вес больше">+</button></div></div>';
-    if(GS.g!=='loss'&&L.fLo!=null)h+='<div class="gs-row"><div class="gs-name"><b>Жир</b><small>при '+gsЧ(d.w)+' кг: <b>'+L.fLo+'–'+L.fHi+'%</b>'+(GS.f==null?' · необязательно':'')+'</small></div><div class="gs-step"><button type="button" data-gs="f" data-v="-1" aria-label="Жир меньше">−</button><output id="gs-f">'+(GS.f==null?'—':GS.f)+' <small>%</small></output><button type="button" data-gs="f" data-v="1" aria-label="Жир больше">+</button></div></div>';
+    if(GS.g!=='loss'&&L.fLo!=null)h+='<div class="gs-row"><div class="gs-name"><b>Жир</b><small>при '+gsЧ(d.w)+' кг: <b>'+(L.fLo===L.fHi?L.fLo:L.fLo+'–'+L.fHi)+'%</b>'+(GS.f==null?' · необязательно':'')+'</small></div><div class="gs-step"><button type="button" data-gs="f" data-v="-1" aria-label="Жир меньше">−</button><output id="gs-f">'+(GS.f==null?'—':GS.f)+' <small>%</small></output><button type="button" data-gs="f" data-v="1" aria-label="Жир больше">+</button></div></div>';
     h+='<div class="gs-row gs-srok"><div class="gs-name"><b>Срок</b></div><div class="gs-chips"><button type="button" class="gs-chip" data-gs="nodate" aria-pressed="'+(!GS.date)+'">Без срока</button><label class="gs-chip gs-date'+(GS.date?' on':'')+'"><span aria-hidden="true">'+(GS.date?esc(gsДата(GS.date)):'Своя дата')+'</span><input type="date" id="gs-date" aria-label="Своя дата" value="'+esc(GS.date)+'" min="'+esc(new Date(Date.now()+864e5).toISOString().slice(0,10))+'"></label></div>'+
       /* 28.10: «не раньше …» — штриховкой на полосе времени, флажок — выбранный срок */
       путьHtml({earliest:L.earliest,date:GS.date||null,eta:GS.date?null:(d.result&&d.result.eta),late:поздно,aria:'Раньше '+путьКор(L.earliest)+' нельзя'+(GS.date?'; срок '+путьКор(GS.date):'')})+
@@ -9164,7 +9419,7 @@ function путьHtml(o){
      а по-английски и по-узбекски — ещё шире); не влезла — прячется, а не наезжает и не режется рамкой */
   var метки=[], чис=function(x){ return x.toFixed(2); };
   if(d!=null) метки.push({x:p(d),t:путьКор(o.date),c:'flag'+(o.late?' late':'')});
-  if(eta!=null) метки.push({x:p(eta),t:путьКор(o.eta),c:'dot'});
+  if(eta!=null) метки.push({x:p(eta),t:'≈'+путьКор(o.eta),c:'dot'});   /* 01.11, разбор пути: это прогноз, а не выбранный срок */
   if(o.late&&e!=null) метки.push({x:p(e),t:путьКор(o.earliest),c:'dot'});
   if(lo!=null&&hi!=null&&hi>0) метки.push({x:(p(Math.max(0,lo))+p(hi))/2,t:'по вашему темпу',c:'band',a:p(Math.max(0,lo)),b:p(hi)});
   if(e!=null&&e>0&&!o.late) метки.push({x:p(e),t:'не раньше '+путьКор(o.earliest),c:'zone',end:p(e)});  /* у правого края штриховки */
@@ -10141,7 +10396,7 @@ function renderZdNudge(){
   var el=document.getElementById('zdnudge'); if(!el) return;
   var me=myData()||{};
   var готов = !!(me.bw && me.age && me.ht);
-  var спросили = !!(me.med && me.med.at);
+  var спросили = !!(me.med && me.med.at) || !!(me.goalContext && me.goalContext.health);
   el.hidden = !(готов && !спросили && !gget('zd_seen', 0));
   if(!el.hidden) el.innerHTML='<b>Приложение научилось учитывать здоровье.</b> Если есть диабет, давление или что-то, чего вам нельзя, — скажите, и норма с программой это учтут. Полминуты.';
 }
@@ -10501,8 +10756,7 @@ function fitScore(k, me, daysOverride){
 }
 function recoProgram(me){
   if(!me) return null;
-  /* дома готовых программ нет: единственный путь — собрать под себя */
-  if((me.place==='home'||me.place==='street') && !(PROFILES[profile]||{}).custom) return {home:true, street:me.place==='street'};
+  /* 01.11: у дома и улицы есть свои готовые — подбираем, как для зала */
   if(!hasGoal(me)) return null;
   var best=null, bs=-99;
   Object.keys(PROFILES).forEach(function(k){ var sc=fitScore(k,me); if(sc>bs){ bs=sc; best=k; } });
@@ -11175,6 +11429,15 @@ function шапкаДня(){
   var d=DAYS[day]||{};
   return '<b>'+dayLabel(day)+'</b> · '+String(d.sub||'').toLowerCase();
 }
+/* 01.11, разбор пути: места по дням разные — на кнопке дня видно, где он: «ср · дом» */
+function днёмМесто(k, fc){
+  try{
+    var f=(fc||{})[k]; if(!f) return '';
+    var м=местаДней(), база=(myData()||{}).place||'gym', pl=м[dLocal(f).getDay()];
+    if(!pl || pl===база) return '';
+    return ' · '+({gym:'зал',home:'дом',street:'ул.'}[pl]);
+  }catch(e){ return ''; }
+}
 /* ── выбор дня ── */
 function renderDayHead(){
   var nx = suggestedDay();
@@ -11184,7 +11447,7 @@ function renderDayHead(){
   Array.prototype.forEach.call(document.querySelectorAll('#dayseg button, #liteseg button'),function(b){
     var k=b.dataset.day, зап=записьНедели(k);
     b.setAttribute('aria-pressed', String(k===day));
-    var i=b.querySelector('i'); if(i) i.textContent = (зап && зап.date!==TODAY) ? когдаСделан(зап.date) : whenLabel(k, fc);
+    var i=b.querySelector('i'); if(i) i.textContent = (зап && зап.date!==TODAY) ? когдаСделан(зап.date) : whenLabel(k, fc)+днёмМесто(k, fc);
     if(k===doneToday || зап){ b.setAttribute('data-done','1'); b.removeAttribute('data-next'); }
     else { b.removeAttribute('data-done');
            if(k===nx && k!==day) b.setAttribute('data-next','1'); else b.removeAttribute('data-next'); }
@@ -11235,13 +11498,15 @@ function шапкаДняБольшая(nx, doneToday){
   var сохрСегодня=записьНедели(day), когда;
   if(ДЕНЬ_ДАТА){ когда=когдаСделан(ДЕНЬ_ДАТА); ст='сделан '+(когда==='вчера'?'вчера':'в '+когда)+' · '+метка; кл=' done'; }
   else if(сохрСегодня && сохрСегодня.date===TODAY && doneToday===day){ ст='сделан сегодня · '+метка; кл=' done'; }
-  else if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
-  else if(todayLetter() && day===nx){ ст='сегодня зал · '+метка; }
+  else if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'тренировка идёт · ')+метка; кл=всёЗакрыто?' done':''; }
+  else if(todayLetter() && day===nx){ ст='сегодня '+({home:'дома',street:'на улице'}[(myData()||{}).place]||'зал')+' · '+метка; }
   else if(day===nx){ ст=метка+' · следующий по очереди'; кл=' rest'; }
   else { var w=whenLabel(day); ст=метка+((w&&w!=='—')?' · '+w:''); кл=' rest'; }
   /* 01.11 (C+D): «Сегодня дома / на улице» — шапка говорит, где сегодня */
   var тпШ=!ДЕНЬ_ДАТА && местоСегодня(day);
-  if(тпШ && кл!==' done'){ var базаШ=(myData()||{}).place; ст='сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' · вместо '+(базаШ==='home'?'дома':базаШ==='street'?'улицы':'зала'); кл=''; }
+  if(тпШ && кл!==' done'){ var базаШ=(myData()||{}).place; ст=(тпШ.auto && тпШ.base) ? 'сегодня '+(тпШ.pl==='h'?'дома':'на улице')+' · '+метка
+      : тпШ.auto ? 'сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' по расписанию · '+метка
+      : 'сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' · вместо '+(базаШ==='home'?'дома':базаШ==='street'?'улицы':'зала'); кл=''; }
   var пр=пр0, доля = пр.total ? Math.round(пр.done/пр.total*100) : 0;
   return '<u class="'+кл.trim()+'">'+esc(ст)+'</u><b>'+esc(String(d.sub||'').replace(/^./,function(c){return c.toUpperCase();}))+'</b>'+
     '<div class="dhtr"><span><s class="'+(пр.total&&пр.done>=пр.total?'full':'')+'" style="width:'+доля+'%"></s></span>'+
@@ -12254,7 +12519,7 @@ function renderList(){
   var sl=document.getElementById('sportlow');
   /* 29.10: записанные занятия — строкой здесь, у кнопки, а не среди упражнений (его выбор по макету) */
   if(sl) sl.innerHTML='<div id="sporttoday"></div>'+
-     '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Занятие вне зала</button>'+
+     '<button type="button" class="btn wide sportbtn sportadd" id="addsport">+ Другое занятие</button>'+
      '<p class="sptoday">Теннис, бег, прогулка — поднимает норму еды.</p>';   /* 23.10: короче; подпись — его решение 24.09 «с подписью» (test-sport) */
   /* дорожка в шапке считает закрытые подходы — она меняется вместе со списком */
   var hh=document.getElementById('nexthint');
@@ -15339,7 +15604,22 @@ function stepText(e){
    Добрал — растёт вес, повторы падают к нижней границе, и цикл повторяется.
    Это операционализация прогрессивной перегрузки: без неё объём и близость
    к отказу работать не начнут. */
+/* 01.11, разбор пути: вернулся после перерыва 10+ дней — первый раз веса легче (~−10%).
+   Считаем от последней тренировки ДО сегодня: сегодняшняя отметка не выключает правило посреди занятия. */
+function перерывДней(){
+  try{ var last=''; (HIST||[]).forEach(function(w){ if(w && w.date && w.date<TODAY && w.date>last) last=w.date; });
+       return last ? Math.round((dLocal(TODAY)-dLocal(last))/864e5) : 0; }catch(e){ return 0; }
+}
 function advice(e){
+  var a=advice0(e), п=перерывДней();
+  if(п<10 || !a || a.kind==='wait' || a.kind==='start' || a.lw==null || !hasW(e)) return a;
+  var st=stepOf(e)||2.5, tw=Math.max(st, Math.round(a.lw*0.9/st)*st);
+  if(tw>=a.lw) return a;
+  return {kind:'back', tw:tw, tr:topReps(e), lw:a.lw,
+    short:'После перерыва — <b>'+fmtKg(tw)+' кг</b>, не '+fmtKg(a.lw)+' · вернётесь за пару тренировок',
+    text:'Вы не тренировались '+п+' '+plural(п,['день','дня','дней'])+'. Сегодня <b>'+fmtKg(tw)+' кг</b> (около −10%) — к прежним '+fmtKg(a.lw)+' кг вернётесь за пару тренировок.'};
+}
+function advice0(e){
   if(!HIST) return {kind:'wait', lw:null, short:'смотрю историю…', text:'Смотрю вашу историю по этому упражнению…'};
   var h = историяДо(e);   /* 09.10: та же история, что у «было» и «прошлый раз» */
   var top = topReps(e), st = stepOf(e), tm = isTime(e);
@@ -15668,7 +15948,8 @@ function goPage(p){
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
   if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
-          else hc.innerHTML=({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p]?'<span class="ds-eyebrow">'+({gym:'Зал',log:'Зал',ref:'Зал',food:'Питание',eat:'Питание',circle:'Питание'}[p])+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; }
+          else { var бр=({gym:1,log:1,ref:1}[p]) ? тренСлово() : ({food:'Питание',eat:'Питание',circle:'Питание'}[p]||'');
+            hc.innerHTML=(бр?'<span class="ds-eyebrow">'+бр+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; } }
   /* 17.10, его слова: «на странице в админ панели нет кнопки назад». Админ
      панель открывается из профиля и вкладки внизу у неё нет — назад ведёт
      туда, откуда пришёл, и снова открывает профиль. Та же кнопка — системная
@@ -15840,11 +16121,24 @@ document.getElementById('schedwhen').addEventListener('click', function(e){
   var b=e.target.closest('button[data-v]'); if(b) setWhen(b.dataset.v);
 });
 document.getElementById('schedlist').addEventListener('click', function(e){
-  var b=e.target.closest('button[data-wd]'); if(!b) return;
-  var wd=+b.dataset.wd;
-  if(GYM_DAYS[wd]) delete GYM_DAYS[wd]; else GYM_DAYS[wd]=1;
+  var b=e.target.closest('button[data-pl]'); if(!b) return;
+  var wd=+b.dataset.wd, pl=b.dataset.pl, me=myData()||{}, dpl=Object.assign({}, me.dpl||{});
+  if(pl==='off'){ delete GYM_DAYS[wd]; delete dpl[wd]; }
+  else { GYM_DAYS[wd]=1; dpl[wd]=pl; }
+  /* у отмеченных дней без своего места — прежнее основное */
+  Object.keys(GYM_DAYS).forEach(function(d){ if(GYM_DAYS[d] && !dpl[d]) dpl[d]=me.place||'gym'; });
+  Object.keys(dpl).forEach(function(d){ if(!GYM_DAYS[d]) delete dpl[d]; });
+  местаСохранить(dpl);
   schedApplied();
 });
+/* места по дням изменились: основное место — по правилу, сегодняшняя подстановка — заново */
+function местаСохранить(dpl){
+  var me=myData()||{};
+  me.dpl=dpl; me.place=местоИзДней(dpl, me.place);
+  var тп=get('tplace_'+TODAY, null); if(тп && (тп.auto || тп.off)) set('tplace_'+TODAY, null);
+  gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
+  try{ rebuildSess(); renderList(); renderProgCard(); }catch(e){}
+}
 document.getElementById('deloadbox').addEventListener('click', function(e){
   if(e.target.closest('#deloadon'))  setDeload(true);
   if(e.target.closest('#deloadoff')) setDeload(false);
@@ -15906,7 +16200,9 @@ document.getElementById('picker').addEventListener('click', function(e){
       haptic('light'); return;
     }
     WIZ.touched=true;
-    if(id==='wz-place') WIZ.place=sb.dataset.v; else if(id==='wz-min') WIZ.min=+sb.dataset.v;
+    if(id==='wz-place'){ WIZ.place=sb.dataset.v; WIZ.dpl={}; } else if(id==='wz-min') WIZ.min=+sb.dataset.v;
+    else if(id==='wz-eq' || id==='wz-eqs'){ var ключ=id==='wz-eq'?'eq':'eqs', сп=(WIZ[ключ]||[]).slice(), ii=сп.indexOf(sb.dataset.v);
+      if(ii>=0) сп.splice(ii,1); else сп.push(sb.dataset.v); WIZ[ключ]=сп; }
     renderPicker(); haptic('light'); return;
   }
   var oc=e.target.closest('#wz-only button[data-only]');
@@ -15918,6 +16214,9 @@ document.getElementById('picker').addEventListener('click', function(e){
   if(e.target.closest('#wz-me-go')){ wzMeNext(); return; }
   if(e.target.closest('#g-retry')){ WIZ.safeErr=false; renderPicker(); wzGoalPull(); haptic('light'); return; }
   if(e.target.closest('#g-go')){ wzGoalNext(); haptic('medium'); return; }
+  if(e.target.closest('#wz-dplopen')){ WIZ.dplOpen=true; renderPicker(); haptic('light'); return; }
+  var дпл=e.target.closest('[data-wzdpl] button[data-pl]');
+  if(дпл){ WIZ.touched=true; WIZ.dpl=Object.assign({}, WIZ.dpl||{}); WIZ.dpl[+дпл.parentNode.dataset.wzdpl]=дпл.dataset.pl; renderPicker(); haptic('light'); return; }
   var wd=e.target.closest('#wz-wd button[data-wd]');
   if(wd){
     var d=+wd.dataset.wd; WIZ.touched=true; WIZ.wdTouched=true;
@@ -16402,7 +16701,7 @@ function openSbor(){
   var g=document.getElementById('sborgoal');
   if(g){ var gt=goalObj();
     g.textContent = gt&&gt.text ? ('Цель: '+gt.text+'.') : ''; g.hidden=!g.textContent; }
-  sbDplUI(); sbСчёт();
+  sbDplUI(); sbСчёт(); sbЗаметка();
   var m=document.getElementById('sborm'); if(m) m.classList.add('show');
 }
 var SB_DPL={}, DPLKEYS=[['gym','Зал'],['home','Дома'],['street','Улица']];
@@ -16417,13 +16716,7 @@ function sbМестаДней(){
 /* Под какое место собирать программу. Замена на сегодня умеет только «из зала — домой/на улицу»,
    поэтому есть хоть один день в зале — программа для зала, а дни дома и на улице приложение
    подстраивает само. Без зала — то место, где дней больше (поровну — дом). */
-function sbГде(){
-  var м=sbМестаДней(), к={gym:0,home:0,street:0};
-  Object.keys(м).forEach(function(d){ к[м[d]]=(к[м[d]]||0)+1; });
-  if(к.gym) return 'gym';
-  if(к.home||к.street) return к.street>к.home ? 'street' : 'home';
-  return (myData()||{}).place||'gym';
-}
+function sbГде(){ return местоИзДней(sbМестаДней(), (myData()||{}).place); }
 function sbDplUI(){
   var box=document.getElementById('sb-dpl'); if(!box) return;
   sbМестаДней();
@@ -16447,18 +16740,25 @@ function sbPlaceUI(){
   if(al) Array.prototype.forEach.call(al.querySelectorAll('button'), function(b){ b.hidden=!!есть[b.dataset.v]; });   /* отметку не снимаем — при сохранении отфильтруется */
   var pr=document.getElementById('sb-platerow'); if(pr) pr.hidden=!зал;
   var h=document.getElementById('sb-dplh');
-  if(h){
-    var другие=Object.keys(м).filter(function(d){ return м[d]!==где; });
-    var имя={gym:'зала',home:'дома',street:'улицы'}[где];
-    h.textContent = !другие.length ? '' :
-      'Программа — для '+имя+'. В '+другие.map(function(d){ return WD[d]; }).join(', ')+' тренер сам заменит то, что там не сделать: та же мышца, из того, что есть.';
-    h.hidden=!h.textContent;
+  if(h){ h.textContent=местаПодсказка(м, где); h.hidden=!h.textContent; }
+}
+/* без цели собирать нечего, без Pro собирает не тренер — сверху листа, а не после «Собрать» */
+function sbЗаметка(){
+  var n=document.getElementById('sbnote'), g=document.getElementById('sb-go'), me=myData()||{};
+  var нетЦели=!hasGoal(me), про=!безПро();
+  if(n){
+    n.hidden=!(нетЦели || !про);
+    n.innerHTML = нетЦели ? '<b>Сначала цель.</b> От неё зависят веса, объём и норма еды — без неё программу не собрать.<br><button type="button" id="sb-goal">Выбрать цель</button>'
+      : !про ? 'Собрать программу под вас — в Pro. Без Pro: готовая программа, а в дни дома и на улице приложение само заменит то, что там не сделать.<br><button type="button" id="sb-pro">Что даёт Pro</button>' : '';
   }
+  if(g) g.textContent = нетЦели ? 'Сохранить условия' : про ? 'Собрать' : 'Сохранить и подобрать готовую';
 }
 function closeSbor(){ var m=document.getElementById('sborm'); if(m) m.classList.remove('show'); }
 document.getElementById('sborclose').addEventListener('click', closeSbor);
 document.getElementById('sborm').addEventListener('click', function(e){
   if(e.target.id==='sborm'){ closeSbor(); return; }
+  if(e.target.closest('#sb-goal')){ closeSbor(); goalTalkOpen(false); haptic('light'); return; }
+  if(e.target.closest('#sb-pro')){ closeSbor(); openSub(); try{ subPull(); }catch(e2){} haptic('light'); return; }
   var cb=e.target.closest('#sb-cyc button[data-cyc]');
   if(cb){ SBCYC=cb.dataset.cyc; sbЦиклUI(); haptic('light'); return; }
   var b=e.target.closest('#sborm .seg button, #sb-wd button'); if(!b) return;
@@ -16505,6 +16805,9 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.level=sbPick('sb-level')||me.level||null;
   var цр=document.getElementById('sb-cycrow'); if(цр && !цр.hidden && SBCYC) me.phases=SBCYC;   /* 29.10: фазы */
   gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
+  /* без цели — условия сохранены, дальше цель; без Pro — готовые программы, места по дням работают и с ними */
+  if(!hasGoal(me)){ closeSbor(); goalTalkOpen(false); return; }
+  if(безПро()){ closeSbor(); showPicker(false); wzГотовые(); return; }
   closeSbor(); openProf('gym'); renderProgCard();
   aiBuild();
 });
@@ -16519,7 +16822,12 @@ function renderProgCard(){
   /* 17.09, его слова: «часть про зал упрости как выглядит». Было семь строк
      подряд, каждая со своим ярлыком, и все они повторяли то, что и так
      открывается кнопкой ниже. Осталось имя, дни и одна строка условий. */
-  var усл=[уп, (me.place==='home'?'дома':me.place==='street'?'на улице':'в зале'), (me.min||45)+' мин'];
+  /* 01.11, разбор пути: места по дням — «зал пн, пт · дома ср», а не одно «в зале» */
+  var мд=местаДней(), гр={};
+  WEEK.forEach(function(d){ if(мд[d]) (гр[мд[d]]=гр[мд[d]]||[]).push(WD[d]); });
+  var гдеТ=Object.keys(гр).length>1 ? ['gym','home','street'].filter(function(k){ return гр[k]; }).map(function(k){ return {gym:'зал',home:'дома',street:'улица'}[k]+' '+гр[k].join(', '); }).join(' · ')
+    : (me.place==='home'?'дома':me.place==='street'?'на улице':'в зале');
+  var усл=[уп, гдеТ, (me.min||45)+' мин'];
   if(me.place!=='home' && me.place!=='street') усл.push('блин '+String(me.plate||2.5).replace('.',',')+' кг');
   if((me.lim||[]).length) усл.push('беречь: '+me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', '));
   box.innerHTML='<h4>'+esc(имяПрог()||'Программа')+'</h4>'+
@@ -18185,7 +18493,7 @@ function залНеделиHtml(){
   var h='<div class="vzplan zk">';
   var мес=function(a,b){ var x=dLocal(a), y=dLocal(b); return x.getMonth()===y.getMonth() ? x.getDate()+'–'+y.getDate()+' '+MONTHS[y.getMonth()] : x.getDate()+' '+MONTHS[x.getMonth()]+' – '+y.getDate()+' '+MONTHS[y.getMonth()]; };
   if(!н) return h+'<div class="zkhd"><span>Зал на неделе</span></div><p class="zknote">Загружаю тренировки…</p></div>';
-  h+='<div class="zkhd"><span>Зал · '+мес(н.пн,н.вс)+'</span></div>';
+  h+='<div class="zkhd"><span>'+({home:'Дома',street:'Улица'}[(myData()||{}).place]||'Зал')+' · '+мес(н.пн,н.вс)+'</span></div>';
   /* 1. регулярность */
   var точки='';
   if(н.план && н.план<=7){ for(var i=0;i<н.план;i++) точки+='<i class="'+(i<н.занятий?'on':'')+'"></i>'; }
@@ -18453,7 +18761,7 @@ function залОтметить(st){
 /* 24.09, его просьба: кнопка занятия — внизу главной, у всех. С «Еды» она
    ушла; лист тот же (sportadd → openSport). */
 function homeSport(){
-  return '<button type="button" class="btn wide sportbtn sportadd hsport" id="addsport3">+ Занятие вне зала</button>';
+  return '<button type="button" class="btn wide sportbtn sportadd hsport" id="addsport3">+ Другое занятие</button>';
 }
 /* перерисовываем одну панель, а не весь экран: дорожки не должны заново
    ехать из нуля каждый раз, когда сменилось состояние записи */

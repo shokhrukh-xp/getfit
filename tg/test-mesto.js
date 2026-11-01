@@ -103,6 +103,28 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   assert.equal(await p.locator('#list .exwas').count(),0,'«Вернуть зал» — день как в программе');
   assert.match(await p.textContent('#tplace'),/Сегодня не в зале\?/,'и замены не возвращаются сами '+tag);
   assert.deepEqual(errs,[]);await p.close();}
+ /* 5. 01.11, разбор пути: «Мои дни» — у дня отдых / зал / дома / улица; кнопки дней и шапка — по месту */
+ {const p=await b.newPage({viewport:{width,height:844}});const errs=await M.поднять(p,{theme,page:'gym'});
+  await p.click('.l1 button[data-page="gym"]');await p.waitForSelector('#schedbtn');await p.click('#schedbtn');await p.waitForSelector('#schedm.show');
+  assert.equal(await p.locator('#schedlist .schrow').count(),7);
+  assert.deepEqual(await p.locator('#schedlist .schrow').first().locator('button').allTextContents(),['отдых','зал','дома','улица']);
+  const на=await p.locator('#schedlist .schrow.on').first().getAttribute('data-wd');
+  await p.click('#schedlist [data-wd="'+на+'"][data-pl="home"]');
+  assert.match(await p.textContent('#schedlist .schh'),/Программа — для зала/,'подсказка про замены '+tag);
+  await p.click('#schedlist [data-wd="'+на+'"][data-pl="off"]');
+  assert.equal(await p.locator('#schedlist .schrow[data-wd="'+на+'"].off').count(),1,'«отдых» снимает день');
+  assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'«Мои дни» без переполнения '+tag);
+  assert.deepEqual(errs,[]);await p.close();}
+ /* 6. программа для зала, а основное место — дом: замены встают сами, «Как в программе» их снимает */
+ {const p=await b.newPage({viewport:{width,height:844}});
+  const errs=await M.поднять(p,{theme,page:'gym',me:{sex:'m',age:34,ht:178,bw:88.1,place:'home',eq:[]}});
+  await p.click('.l1 button[data-page="gym"]');await p.waitForSelector('#tplace:not([hidden])');
+  await p.waitForFunction(()=>/не сделать/.test(document.getElementById('tplace').textContent),null,{timeout:8000});
+  assert.ok(await p.locator('#list .exwas').count()>0,'штанга заменена на домашнее '+tag);
+  assert.equal((await p.textContent('#hctx .ds-eyebrow')).trim(),'Дома','над «Тренировкой» — место, а не «Зал»');
+  await p.click('#tplace [data-tplback]');await p.waitForTimeout(300);
+  assert.equal(await p.locator('#list .exwas').count(),0,'«Как в программе» — день как в программе');
+  assert.deepEqual(errs,[]);await p.close();}
  console.log('PASS место: улица в сборке, «Сегодня дома» и «Вернуть зал» — '+tag);
 }
 }finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1});
