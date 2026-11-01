@@ -45,6 +45,15 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   await p.locator('#list .exrow',{hasText:'Приседания со штангой'}).first().click();await p.waitForTimeout(500);
   assert.match(await p.textContent('#list'),/После перерыва — [\d,]+ кг, не 70/,'после двух недель — легче прошлых 70 кг '+tag);
   assert.deepEqual(errs,[]);await p.close();}
+ /* 5. 01.11 «сделай»: замена учитывает уровень — новичку дома не встаёт «эксперт» (нордик вместо румынской тяги) */
+ {const cat=require('../catalog.json'),ур={};cat.ex.forEach(x=>ур[x.i]=x.l);
+  const p=await b.newPage({viewport:{width,height:844}});
+  const errs=await M.поднять(p,{theme,page:'gym',me:{sex:'m',age:34,ht:178,bw:88.1,place:'home',eq:[],level:'new'}});
+  await p.click('.l1 button[data-page="gym"]');await p.waitForFunction(()=>/не сделать/.test(document.getElementById('tplace').textContent),null,{timeout:8000});
+  const ids=await p.evaluate(()=>{const k=Object.keys(localStorage).find(k=>/tplace_/.test(k));const t=k&&JSON.parse(localStorage.getItem(k));return t&&t.sw?Object.values(t.sw):[];});
+  assert.ok(ids.length>0,'замены есть');
+  assert.deepEqual(ids.filter(i=>ур[i]==='expert'),[],'новичку — без «эксперт»: '+ids.join(', '));
+  assert.deepEqual(errs,[]);await p.close();}
  console.log('PASS путь пользователя: места в знакомстве, готовые для дома и улицы, лист без Pro, перерыв — '+tag);
 }
 }finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

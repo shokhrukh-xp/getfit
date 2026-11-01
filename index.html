@@ -6718,13 +6718,21 @@ function местоКандидаты(c, где, занято){
   if(!c || !CAT) return [];
   var вид=catKind(c), движ=function(x){ return noYo(String(x.n||'').split('(')[0]).trim(); }, слово=function(x){ return движ(x).split(' ')[0]; };
   var естьМ=катЕсть(где)||[];
-  return CAT.ex.filter(function(x){ return x.i!==c.i && (x.m===c.m || x.m2===c.m) && catKind(x)===вид && местоOk(x, где, естьМ) && !NOPE[x.i] && !(занято||{})[x.i]; })
+  /* 01.11, его «сделай» (замена с учётом уровня): дома вместо румынской тяги вставало нордик-сгибание.
+     Сложнее уровня человека — сильно ниже в списке; заметно легче — чуть ниже. С партнёром одному не сделать. */
+  var ур={new:0,mid:1,exp:2}[(myData()||{}).level]; if(ур==null) ур=0;
+  var рангК=function(x){ return {beginner:0,intermediate:1,expert:2}[x.l]; };
+  /* дома для задней поверхности бедра без снарядов — только тяжёлые подъёмы; соседняя мышца (ягодицы, мостики) — тоже ответ */
+  var СОСЕДИ={hamstrings:['glutes'], glutes:['hamstrings']}, сосед=function(x){ return (СОСЕДИ[c.m]||[]).indexOf(x.m)>=0; };
+  return CAT.ex.filter(function(x){ return x.i!==c.i && (x.m===c.m || x.m2===c.m || сосед(x)) && catKind(x)===вид && местоOk(x, где, естьМ) && !NOPE[x.i] && !(занято||{})[x.i] &&
+      !/партн[её]р/i.test(x.n||''); })
     /* было с весом (штанга, тренажёр, гантели) — сначала то, где вес есть и здесь: гантели, гиря, резинка */
     .map(function(x){ var свес=/^(barbell|dumbbell|machine|cable|kettlebells|e-z curl bar)$/.test(c.q||''), есть=(x.nd||[]).some(function(k){ return /^(db|kb|band)$/.test(k); });
       /* та же поза (стоя/сидя) и обе руки/ноги, если так было */
       var поза=function(n){ return /стоя/.test(n)?'стоя':/сидя/.test(n)?'сидя':''; }, одна=function(n){ return /одной/.test(n); };
       var штраф=(поза(c.n)&&поза(x.n)&&поза(c.n)!==поза(x.n)?2:0)+(одна(x.n)&&!одна(c.n)?1:0);
-      return {x:x, s:(x.m===c.m?0:8)+(движ(x)===движ(c)?0:слово(x)===слово(c)?2:4)+(x.mc&&x.mc===c.mc?0:2)+(свес&&!есть?3:0)+штраф+катПоп(x)/10}; })
+      var рк=рангК(x), уровень = рк==null ? 0 : (рк>ур ? (рк-ур)*6 : (ур-рк)*1);
+      return {x:x, s:(x.m===c.m?0:сосед(x)?5:8)+(движ(x)===движ(c)?0:слово(x)===слово(c)?2:4)+(x.mc&&x.mc===c.mc?0:2)+(свес&&!есть?3:0)+штраф+уровень+катПоп(x)/10}; })
     .sort(function(a,b){ return a.s-b.s; }).map(function(o){ return o.x; });
 }
 /* что заменить в дне dk для места где: {строки:[{k, c, начато, варианты}]} — без уже начатых */
