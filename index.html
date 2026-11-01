@@ -4787,6 +4787,8 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="zseg-ref"></div>
         <input class="catsearch big" id="pcatsearch" type="search" placeholder="Что ищете? жим, тяга, присед…" autocomplete="off">
+        <!-- 01.11, его слова «я не вижу в каталоге категорий в зале, дома, на улице» -->
+        <div class="mchips catwhere" id="pcatwhere" role="group" aria-label="Где тренируетесь"></div>
         <div class="catf">
           <button type="button" class="fbtn" id="pcatfbtn" aria-expanded="false"></button>
           <button type="button" class="fx" id="pcatreset" hidden>сбросить</button>
@@ -6681,6 +6683,28 @@ function closeCatalog(){
 }
 
 var catEquip='', catLevel='', catType='', catShown=40, catNope='', catGroup='', catMachine='', catGearOpen=false, catGearTab='basic';
+/* 01.11, его слова «я не вижу в каталоге категорий в зале, дома, на улице».
+   У каждого упражнения поле pl — где его можно сделать: g зал, h дом, s улица
+   (турник, брусья, кольца, петли — «gs»; свой вес без снарядов — «ghs»;
+   гантели, гиря, резинки — «gh»; штанга, блоки, тренажёры — «g»).
+   Выбор места — отдельный ряд над фильтрами: «сбросить» его не трогает. */
+var catWhere='';
+var CAT_WHERE=[['','Все'],['g','Зал'],['h','Дом'],['s','Улица']];
+function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>=0; }
+function catWhereHtml(){
+  /* числа на чипах — сколько останется при остальных выбранных фильтрах */
+  var был=catWhere; catWhere='';
+  var base=catFiltered();
+  catWhere=был;
+  return CAT_WHERE.map(function(w){
+    var n=w[0]?base.filter(function(x){ return String(x.pl||'g').indexOf(w[0])>=0; }).length:base.length;
+    return '<button type="button" class="mchip'+(catWhere===w[0]?' on':'')+'" data-where="'+w[0]+'" aria-pressed="'+(catWhere===w[0])+'">'+w[1]+' <s>'+n+'</s></button>';
+  }).join('');
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('.catwhere [data-where]'); if(!b||!CAT) return;
+  catWhere=b.dataset.where; catShown=40; renderCatalog(); haptic('light');
+});
 /* 07.10 B3: короткие группы для выбора, без ранжирования «полезностью».
    Точные мышцы и остальные фильтры остаются на странице каталога. */
 var PICKGROUPS=[
@@ -6773,6 +6797,7 @@ function catFiltered(ignoreEquipment,ignoreType){
   var q=catQuery.trim().toLowerCase();
   var words=q?q.split(/\s+/).filter(Boolean):[];
   return CAT.ex.filter(function(x){
+    if(!catWhereOk(x)) return false;
     if(!pickGroupMatch(x))return false;
     if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
     if(!ignoreEquipment && ((catEquip && x.q!==catEquip)||!catMachineMatch(x,catMachine))) return false;
@@ -6832,7 +6857,7 @@ function катВес(x){
 function катПодборки(){
   var по={}, всего={};
   CAT.ex.forEach(function(x){
-    if(катВид(x)!=='strength') return;
+    if(катВид(x)!=='strength' || !catWhereOk(x)) return;
     [x.m, x.m2].forEach(function(m){
       if(!m) return;
       всего[m]=(всего[m]||0)+1;
@@ -6922,6 +6947,7 @@ function renderCatalog(){
     var св=катСводка(), fb=document.getElementById('pcatfbtn'), fr=document.getElementById('pcatreset');
     if(fb) fb.innerHTML = '<s>фильтры</s>'+(св.length ? '<b>'+esc(св.join(' · '))+'</b>' : '<i>ничего не выбрано</i>');
     if(fr) fr.hidden = катЧисто();
+    var wr=document.getElementById('pcatwhere'); if(wr) wr.innerHTML=catWhereHtml();
   }
   if(onPage && fbox && !fbox.hidden){
     var нету=нетуСписок();
@@ -6951,7 +6977,7 @@ function renderCatalog(){
   }
   if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
   var lim=catShown, shown=list.slice(0,lim);
-  var h = onPage ? '' : pickGroupChips()+catGearHtml();
+  var h = onPage ? '' : '<div class="mchips catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+pickGroupChips()+catGearHtml();
   if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
   if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
      ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';

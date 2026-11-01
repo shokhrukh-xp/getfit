@@ -150,6 +150,21 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
     'флаг дракона есть и с картинкой RepDB: ' + (флаг.map(f => f.имя).join(', ') || 'пусто'));
   дано(!флаг.some(f => f.схема), 'рисованных схем вместо фото в выдаче нет');
 
+  /* 01.11, его слова «я не вижу в каталоге категорий в зале, дома, на улице»:
+     ряд «Все · Зал · Дом · Улица» над фильтрами */
+  const имена2 = () => page.$$eval('#pcatbody .catitem .cattx b', bs => bs.map(b => b.textContent));
+  дано(await page.$$eval('#pcatwhere [data-where]', bs => bs.map(b => b.textContent.replace(/\s*\d+$/, '').trim()).join(' · ')) === 'Все · Зал · Дом · Улица',
+    'над фильтрами ряд «Все · Зал · Дом · Улица»');
+  await page.click('#pcatwhere [data-where="s"]'); await page.fill('#pcatsearch', 'вис'); await page.waitForTimeout(700);
+  дано((await имена2()).includes('Вис на турнике'), '«Улица»: вис на турнике есть');
+  await page.fill('#pcatsearch', 'штанг'); await page.waitForTimeout(700);
+  дано(!(await имена2()).length, '«Улица»: упражнений со штангой нет');
+  await page.click('#pcatwhere [data-where="h"]'); await page.fill('#pcatsearch', 'подтягивания'); await page.waitForTimeout(700);
+  дано(!(await имена2()).some(n => /^Подтягивания \(обычные\)/.test(n)), '«Дом»: турника нет — подтягиваний нет');
+  await page.fill('#pcatsearch', 'отжимания'); await page.waitForTimeout(700);
+  дано((await имена2()).some(n => /^Отжимания с колен/.test(n)), '«Дом»: отжимания с колен есть');
+  await page.click('#pcatwhere [data-where=""]'); await page.fill('#pcatsearch', ''); await page.waitForTimeout(500);
+
   /* ── ЛИСТ СБОРКИ (12.09) ──
      «Почему при нажатии на собрать заново не спрашиваются дни, минуты, упор,
      зал или дома, блины? Это нужно спрашивать здесь, а не показывать в профиле
