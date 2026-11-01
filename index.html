@@ -1749,6 +1749,26 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catcard .tfacts b{font-size:13.5px}
 .catcard .catsubbig{color:var(--muted);font-size:13.5px;margin:-2px 0 6px}
 .catcard .btn.wide{margin-top:12px}
+/* 01.11, макет «Место и тренер (C + D)»: «Сегодня не в зале?», лист замен, день дома */
+.tdrow{display:flex;align-items:center;gap:10px;width:100%;padding:6px 0;text-align:left}
+.tdrow .fig2,.tdrow .fig{flex:0 0 52px;width:52px;max-width:52px;border-radius:12px}
+.tdrow .rtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tdrow .rtx i{font-style:normal;font-size:12px;color:var(--muted)}
+.tdsets{flex:0 0 auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.tplace{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 6px 6px 12px;margin:10px 0 0;font-size:13.5px;color:var(--muted)}
+.tplace span{flex:1;min-width:120px}
+.tplace button{min-height:44px;padding:8px 14px;border-radius:12px;border:0;background:var(--accent-ghost);color:var(--accent-txt);font:inherit;font-weight:700;cursor:pointer}
+.tplace button.fx{background:none;text-decoration:underline;font-weight:600}
+.gym-day.tpl-h,.gym-day.tpl-s{background:linear-gradient(135deg,#8A6A2C,#5E4718)!important}
+.tplsw{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1.2fr);gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.tplsw s{color:var(--dim)}.tplsw em{font-style:normal;color:var(--muted);text-align:center}
+.tplsw button{min-height:44px;text-align:left;border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:12px;padding:6px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.tplalt{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 2px}
+.tplalt button{min-height:44px;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+.tplalt button[aria-pressed="true"]{background:var(--accent-txt);border-color:var(--accent-txt);color:var(--bg);font-weight:700}
+.tplkeep{font-size:12.5px;color:var(--good,#2E7D5B);padding:8px 0}
+.tplno{font-size:12.5px;color:var(--muted);padding:8px 0}
+.exwas{display:block;font-size:11.5px;color:var(--dim);font-style:normal;margin-top:1px}
 /* 01.11, макет «Каталог: доработка (A + B)» */
 .catinv{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 12px;margin:0 0 10px}
 .catinv p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
@@ -4760,6 +4780,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
         <div class="gym-day group"><div class="dayhd" id="nexthint"></div>
         <div class="dayseg" id="dayseg"></div>
         <div class="dayseg lite" id="liteseg"></div></div>
+        <div class="tplace" id="tplace" hidden></div>
         <button type="button" class="nudge" id="nudge" hidden></button>
         <button type="button" class="nudge" id="newver" hidden></button>
         <div id="planbox" hidden></div>
@@ -5260,6 +5281,12 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     <div id="krugbody"></div>
   </div>
 </div>
+<div class="modal" id="tplm" role="dialog" aria-modal="true" aria-labelledby="tpltitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="tpltitle">Сегодня дома</h3><button class="xbtn" id="tplclose" aria-label="Закрыть">✕</button></div>
+    <div id="tplbody"></div>
+  </div>
+</div>
 <div class="modal" id="techm" role="dialog" aria-modal="true" aria-labelledby="techtitle">
   <div class="modalbox">
     <div class="cathead"><h3 id="techtitle">Как делать</h3><button class="xbtn" id="techclose" aria-label="Закрыть">✕</button></div>
@@ -5296,7 +5323,11 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
          приложения и читался как что-то ещё. -->
     <div class="sbrow"><span class="sblab">Опыт</span><div class="seg" id="sb-level"></div></div>
     <div class="sbrow"><span class="sblab">Где</span><div class="seg" id="sb-place"></div></div>
-    <div class="sbrow" id="sb-eqrow" hidden><span class="sblab">Что есть дома</span><div class="seg multi" id="sb-eq"></div></div>
+    <div class="sbrow" id="sb-eqrow" hidden><span class="sblab" id="sb-eqlab">Что есть дома</span><div class="seg multi" id="sb-eq"></div></div>
+    <div class="sbrow" id="sb-pullrow" hidden><span class="sblab">Сколько раз подтянетесь подряд?</span><div class="seg" id="sb-pull"></div>
+      <p class="sbhint" id="sb-pullh"></p></div>
+    <div class="sbrow" id="sb-alsorow"><span class="sblab">Иногда ещё</span><div class="seg multi" id="sb-also"></div>
+      <p class="sbhint">Тогда на дне будет «Сегодня не в зале?» — тренер заменит то, что там не сделать</p></div>
     <div class="sbrow"><span class="sblab">Упор</span><div class="seg multi" id="sb-focus"></div>
       <p class="sbhint">Выбранным — от 10 подходов в неделю, остальным 3–5 тяжёлых: держим, не теряем</p></div>
     <!-- 29.10, фазы программы (его «Да, делай» по макету): только при «всё тело» и нехватке времени -->
@@ -6439,8 +6470,138 @@ function exList(dk){
                rest:x.rest||90, cat:x.i, add:true, cues:x.cues||[], why:x.why||'', ph:null, fig:null,
                k:dk+':x'+(x.id||xi), xi:xi });
   });
+  var тп=местоСегодня(dk);
+  /* 01.11 (D): «Сделать сегодняшней» из чата — на сегодня день целиком из карточки тренера */
+  if(тп && тп.full && тп.full.length) out=тп.full.map(function(it, j){
+    /* имя — полное каталожное, записано при «Сделать сегодняшней»: по нему история весов */
+    var y=catById(it.i)||{};
+    return { p:'', n:it.n, en:y.e||'', m:y.m||'', sm:(y.sm||[]).slice(), sets:+it.sets||3, reps:String(it.reps||'10–12'),
+             rest:60, cat:it.i, add:true, cues:[], why:'', ph:null, fig:null, k:dk+':t'+j, tpl:тп.pl, показ:y.ns?катИмя(y).имя:'' };
+  });
+  else if(тп) out=out.map(function(x){ return местоЗамена(x, тп); });
   return спарить(dk, упорядочить(dk, безПовторов(out)));
 }
+/* ── СЕГОДНЯ ДОМА / НА УЛИЦЕ ──
+   01.11, макет «Место и тренер (C + D)», его «Да, как в макете». Программа не
+   трогается: на сегодня тренер заменяет только то, что там не сделать, — та же
+   мышца и движение, из того, что есть. Хранится на сегодняшнюю дату:
+   tplace_<дата> = {dk, pl:'h'|'s', sw:{ключ строки: id каталога}}. */
+/* где человек занимается в этот день: «Сегодня дома/на улице» или место из профиля */
+function местоДня(dk){
+  var т=местоСегодня(dk); if(т) return т.pl;
+  var me=myData()||{}; return me.place==='home'?'h':me.place==='street'?'s':'';
+}
+function местоСегодня(dk){ var т=get('tplace_'+TODAY, null); return (т && т.dk===dk && т.pl) ? т : null; }
+function местоЗамена(x, тп){
+  var id=тп.sw && тп.sw[x.k]; if(!id) return x;
+  var y=catById(id); if(!y) return x;
+  var м=/^(\d+)[–-](\d+)$/.exec(String(x.reps||''));
+  /* веса дома и на улице легче — повторов чуть больше */
+  var повт=м && +м[2]<=15 ? (+м[1]+2)+'–'+(+м[2]+2) : x.reps;
+  var z={}; for(var q in x) z[q]=x[q];
+  z.n=y.n; z.en=y.e; z.cat=y.i; z.id=null; z.m=y.m||x.m; z.sm=(y.sm||[]).slice(); z.p=''; z.ph=null; z.fig=null;
+  z.sub=true; z.was=x.n; z.tpl=тп.pl; z.reps=повт; z.cues=[]; z.показ=катИмя(y).имя;
+  return z;
+}
+function местоКандидаты(c, где, занято){
+  if(!c || !CAT) return [];
+  var вид=catKind(c), движ=function(x){ return noYo(String(x.n||'').split('(')[0]).trim(); }, слово=function(x){ return движ(x).split(' ')[0]; };
+  return CAT.ex.filter(function(x){ return x.i!==c.i && (x.m===c.m || x.m2===c.m) && catKind(x)===вид && местоOk(x, где) && !NOPE[x.i] && !(занято||{})[x.i]; })
+    /* было с весом (штанга, тренажёр, гантели) — сначала то, где вес есть и здесь: гантели, гиря, резинка */
+    .map(function(x){ var свес=/^(barbell|dumbbell|machine|cable|kettlebells|e-z curl bar)$/.test(c.q||''), есть=(x.nd||[]).some(function(k){ return /^(db|kb|band)$/.test(k); });
+      /* та же поза (стоя/сидя) и обе руки/ноги, если так было */
+      var поза=function(n){ return /стоя/.test(n)?'стоя':/сидя/.test(n)?'сидя':''; }, одна=function(n){ return /одной/.test(n); };
+      var штраф=(поза(c.n)&&поза(x.n)&&поза(c.n)!==поза(x.n)?2:0)+(одна(x.n)&&!одна(c.n)?1:0);
+      return {x:x, s:(x.m===c.m?0:8)+(движ(x)===движ(c)?0:слово(x)===слово(c)?2:4)+(x.mc&&x.mc===c.mc?0:2)+(свес&&!есть?3:0)+штраф+катПоп(x)/10}; })
+    .sort(function(a,b){ return a.s-b.s; }).map(function(o){ return o.x; });
+}
+/* что заменить в дне dk для места где: {строки:[{k, c, начато, варианты}]} — без уже начатых */
+function местоПлан(dk, где){
+  var прежн=get('tplace_'+TODAY, null); set('tplace_'+TODAY, null);      /* смотрим на день без прежних замен */
+  var список=exList(dk); if(прежн) set('tplace_'+TODAY, прежн);
+  var занято={}; список.forEach(function(e){ var i=e.cat||e.id; if(i) занято[i]=1; });
+  var начатые={}; if(dk===day && sess && sess.ex) sess.ex.forEach(function(v,i){ if(v && (v.sets||[]).some(function(z){ return z.done; })) начатые[i]=1; });
+  return список.map(function(e, i){
+    var c=catById(e.cat||e.id);
+    if(!c || местоOk(c, где)) return {k:e.k, e:e, ок:true};
+    if(начатые[i]) return {k:e.k, e:e, начато:true};
+    var в=местоКандидаты(c, где, занято).slice(0,4);
+    if(в[0]) занято[в[0].i]=1;
+    return {k:e.k, e:e, варианты:в};
+  });
+}
+var ТПЛ=null;   /* открытый лист: {dk, pl, план, выбор:{k:id}, открыт:k} */
+function тплОткрыть(где){
+  if(!CAT){ loadCatalog().then(function(){ тплОткрыть(где); }).catch(function(){}); return; }
+  ТПЛ={dk:day, pl:где, выбор:{}, открыт:''};
+  var т=document.getElementById('tpltitle'); if(т) т.textContent=где==='h'?'Сегодня дома':'Сегодня на улице';
+  тплОбновить();
+  var m=document.getElementById('tplm'); if(m) m.classList.add('show');
+}
+function тплОбновить(){
+  if(!ТПЛ) return;
+  var b=document.getElementById('tplbody'); if(!b) return;
+  var план=местоПлан(ТПЛ.dk, ТПЛ.pl), где=ТПЛ.pl, h='';
+  ТПЛ.план=план;
+  h+='<p class="catsubbig">'+esc(dayShort(ТПЛ.dk))+(DAYS[ТПЛ.dk]&&DAYS[ТПЛ.dk].sub?' · '+esc(DAYS[ТПЛ.dk].sub):'')+'</p>';
+  h+='<div class="catinv">'+катЕстьHtml(где, где==='h'?'Что есть дома':'Что есть на площадке')+'</div>';
+  var замен=план.filter(function(r){ return r.варианты && r.варианты.length; });
+  if(замен.length) h+='<p class="tsub">Заменю то, что '+(где==='h'?'дома':'на улице')+' не сделать</p>';
+  план.forEach(function(r){
+    if(r.ок) return;
+    if(r.начато){ h+='<p class="tplno">'+esc(r.e.n)+' — уже начато, остаётся</p>'; return; }
+    if(!r.варианты.length){ h+='<p class="tplno">'+esc(r.e.n)+' — нечем заменить с тем, что есть, остаётся</p>'; return; }
+    var id=ТПЛ.выбор[r.k]||r.варианты[0].i, y=catById(id);
+    var ки=катИмя(y);
+    h+='<div class="tplsw"><s>'+esc(r.e.n)+'</s><em>→</em><button type="button" data-tplk="'+escAttr(r.k)+'" aria-expanded="'+(ТПЛ.открыт===r.k)+'">'+esc(ки.имя)+(ки.под?'<span class="catsub">'+esc(ки.под)+'</span>':'')+'</button>'+
+      (ТПЛ.открыт===r.k ? '<div class="tplalt">'+r.варианты.map(function(v){ return '<button type="button" data-tplv="'+escAttr(r.k+'|'+v.i)+'" aria-pressed="'+(v.i===id)+'">'+esc(катИмя(v).имя)+(катИмя(v).под?' · '+esc(катИмя(v).под):'')+'</button>'; }).join('')+'</div>' : '')+
+      '</div>';
+  });
+  var ок=план.filter(function(r){ return r.ок; });
+  if(ок.length) h+='<p class="tplkeep">✓ '+ок.map(function(r){ return esc(r.e.n); }).join(', ')+' — '+(ок.length>1?'остаются':'остаётся')+'</p>';
+  h+='<button type="button" class="btn wide go" id="tplgo">'+(где==='h'?'Заниматься дома сегодня':'Заниматься на улице сегодня')+'</button>'+
+     '<p class="catnote">Только на сегодня. Веса у каждого упражнения — свои, история не смешивается.</p>';
+  b.innerHTML=h;
+}
+function тплЗакрыть(){ var m=document.getElementById('tplm'); if(m) m.classList.remove('show'); ТПЛ=null; }
+document.getElementById('tplclose').addEventListener('click', тплЗакрыть);
+document.getElementById('tplm').addEventListener('click', function(e){
+  if(e.target.id==='tplm'){ тплЗакрыть(); return; }
+  var k=e.target.closest('[data-tplk]');
+  if(k){ ТПЛ.открыт = ТПЛ.открыт===k.dataset.tplk ? '' : k.dataset.tplk; тплОбновить(); haptic('light'); return; }
+  var v=e.target.closest('[data-tplv]');
+  if(v){ var p=v.dataset.tplv.split('|'); ТПЛ.выбор[p[0]]=p[1]; ТПЛ.открыт=''; тплОбновить(); haptic('light'); return; }
+  if(e.target.closest('#tplgo')){
+    var sw={};
+    (ТПЛ.план||[]).forEach(function(r){ if(r.варианты && r.варианты.length) sw[r.k]=ТПЛ.выбор[r.k]||r.варианты[0].i; });
+    set('tplace_'+TODAY, {dk:ТПЛ.dk, pl:ТПЛ.pl, sw:sw});
+    тплЗакрыть(); rebuildSess(); renderDayHead(); renderList(); haptic('ok');
+  }
+});
+function местоВернуть(){ set('tplace_'+TODAY, null); rebuildSess(); renderDayHead(); renderList(); haptic('light'); }
+/* строка под карточкой дня: «Сегодня не в зале? Дома · На улице» или «Сегодня дома · Вернуть зал» */
+function renderTplace(){
+  var box=document.getElementById('tplace'), card=box && box.previousElementSibling; if(!box) return;
+  var me=myData()||{}, база=me.place==='home'?'h':me.place==='street'?'s':'g';
+  var тп=(!ДЕНЬ_ДАТА && DAYS[day]) ? местоСегодня(day) : null;
+  if(card) { card.classList.toggle('tpl-h', !!тп && тп.pl==='h'); card.classList.toggle('tpl-s', !!тп && тп.pl==='s'); }
+  if(ДЕНЬ_ДАТА || !DAYS[day]){ box.hidden=true; return; }
+  var имяБазы={g:'зал',h:'дом',s:'улицу'}[база];
+  if(тп){
+    box.hidden=false;
+    box.innerHTML='<span>Сегодня '+(тп.pl==='h'?'дома':'на улице')+(тп.full?' — тренировка тренера':' — замен: '+Object.keys(тп.sw||{}).length)+'</span>'+
+      '<button type="button" class="fx" data-tplback="1">Вернуть '+имяБазы+'</button>';
+    return;
+  }
+  var куда=['h','s'].filter(function(p){ return p!==база; });
+  box.hidden=false;
+  box.innerHTML='<span>Сегодня не '+({g:'в зале',h:'дома',s:'на улице'}[база])+'?</span>'+
+    куда.map(function(p){ return '<button type="button" data-tplgo="'+p+'">'+(p==='h'?'Дома':'На улице')+'</button>'; }).join('');
+}
+document.getElementById('tplace').addEventListener('click', function(e){
+  var g=e.target.closest('[data-tplgo]'); if(g){ тплОткрыть(g.dataset.tplgo); haptic('light'); return; }
+  if(e.target.closest('[data-tplback]')) местоВернуть();
+});
 /* что в этом дне поправлено руками — для строки «вернуть как было» */
 function dayEdits(dk){
   var base=((DAYS[dk]||{}).ex||[]).length, убрано=0;
@@ -6520,10 +6681,13 @@ function кандидаты(e, dk){
   var свой = (CAT.ex||[]).filter(function(y){ return y.i===(e.cat||e.id); })[0];
   var род = catKind(свой || {c:'strength'});
   var сегодня = {}; exList(dk||day).forEach(function(x){ var i=x.cat||x.id; if(i) сегодня[i]=1; });
+  /* 01.11 (C+D): дома и на улице — только то, что там можно сделать с тем, что есть */
+  var гдеК=местоДня(dk||day);
   return CAT.ex.filter(function(x){
     if(x.m!==м && x.m2!==м) return false;
     if(catKind(x)!==род) return false;
     if(NOPE[x.i]) return false;
+    if(гдеК && !местоOk(x, гдеК)) return false;
     if(сегодня[x.i]) return false;
     return true;
   }).sort(function(a,b){
@@ -6769,7 +6933,7 @@ var catWhere='', catWhereSet=false;
 var CAT_WHERE=[['g','Зал','<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>'],['h','Дом','<path d="M4 11l8-6 8 6v8H4z"/><path d="M10 19v-5h4v5"/>'],
                ['s','Улица','<path d="M5 20V7M19 20V7M3 7h18"/>']];
 /* место по умолчанию — из профиля: занимается дома — каталог открывается на «Дом» */
-function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; var me=myData()||{}; catWhere=me.place==='home'?'h':'g'; }
+function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; var me=myData()||{}; catWhere=me.place==='home'?'h':me.place==='street'?'s':'g'; }
 function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>=0; }
 /* 01.11, макет «Каталог: доработка (A + B)», его «Да, как в макете»: дома и на
    улице вместо «Снаряд» и «Тренажёр» — что у человека есть. Дома — me.eq из
@@ -6778,30 +6942,37 @@ function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>
 var КАТ_ЕСТЬ={h:[['db','Гантели'],['kb','Гиря'],['bar','Турник'],['bench','Скамья'],['band','Резинка'],['rings','Петли'],['ball','Мяч'],['roll','Ролл']],
               s:[['bar','Турник'],['dips','Брусья'],['rings','Петли, кольца'],['band','Резинка']]};
 var КАТ_НУЖНО={db:'гантели',kb:'гиря',band:'резинка',bar:'турник',dips:'брусья',bench:'скамья или тумба',rings:'петли или кольца',ball:'мяч',roll:'ролл'};
-function катЕсть(){
-  var me=myData()||{};
-  if(catWhere==='s') return Array.isArray(me.eqs) ? me.eqs : ['bar','dips'];
-  if(catWhere==='h') return Array.isArray(me.eq) ? me.eq : [];
+function катЕсть(где){
+  где=где||catWhere; var me=myData()||{};
+  if(где==='s') return Array.isArray(me.eqs) ? me.eqs : ['bar','dips'];
+  if(где==='h') return Array.isArray(me.eq) ? me.eq : [];
   return null;
 }
-function катЕстьOk(x){
-  var есть=катЕсть(); if(!есть) return true;
+/* можно ли сделать упражнение там-то с тем, что есть */
+function местоOk(x, где){
+  if(!где || где==='g') return true;
+  if(String(x.pl||'g').indexOf(где)<0) return false;
+  var есть=катЕсть(где)||[];
   return (x.nd||[]).every(function(k){ return k!=='gym' && есть.indexOf(k)>=0; });
 }
-function катЕстьHtml(){
-  if(catWhere!=='h' && catWhere!=='s') return '';
-  var есть=катЕсть();
-  return '<p>'+(catWhere==='h' ? 'Что есть дома — из профиля, меняется здесь же' : 'Что есть на площадке — меняется здесь же')+'</p><div>'+
-    '<button type="button" data-catinv="" aria-pressed="'+(!есть.length)+'">Ничего</button>'+
-    КАТ_ЕСТЬ[catWhere].map(function(o){ return '<button type="button" data-catinv="'+o[0]+'" aria-pressed="'+(есть.indexOf(o[0])>=0)+'">'+o[1]+'</button>'; }).join('')+'</div>';
+function катЕстьOk(x){ return !catWhere || catWhere==='g' || местоOk(x, catWhere); }
+function катЕстьHtml(где, подпись){
+  где=где||catWhere;
+  if(где!=='h' && где!=='s') return '';
+  var есть=катЕсть(где);
+  return '<p>'+(подпись || (где==='h' ? 'Что есть дома — из профиля, меняется здесь же' : 'Что есть на площадке — меняется здесь же'))+'</p><div>'+
+    '<button type="button" data-catinv="" data-pl="'+где+'" aria-pressed="'+(!есть.length)+'">Ничего</button>'+
+    КАТ_ЕСТЬ[где].map(function(o){ return '<button type="button" data-catinv="'+o[0]+'" data-pl="'+где+'" aria-pressed="'+(есть.indexOf(o[0])>=0)+'">'+o[1]+'</button>'; }).join('')+'</div>';
 }
 document.addEventListener('click',function(e){
-  var b=e.target.closest&&e.target.closest('[data-catinv]'); if(!b||!CAT) return;
-  var k=b.dataset.catinv, есть=(катЕсть()||[]).slice(), i=есть.indexOf(k);
+  var b=e.target.closest&&e.target.closest('[data-catinv]'); if(!b) return;
+  var где=b.dataset.pl||catWhere, k=b.dataset.catinv, есть=(катЕсть(где)||[]).slice(), i=есть.indexOf(k);
   if(!k) есть=[]; else if(i>=0) есть.splice(i,1); else есть.push(k);
-  var me=myData()||{}; if(catWhere==='s') me.eqs=есть; else me.eq=есть;
+  var me=myData()||{}; if(где==='s') me.eqs=есть; else me.eq=есть;
   gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
-  catShown=40; renderCatalog(); haptic('light');
+  if(CAT && !b.closest('#tplm')){ catShown=40; renderCatalog(); }
+  if(b.closest('#tplm')) тплОбновить();
+  haptic('light');
 });
 /* «Показать в зале» из пустой выдачи дома или на улице */
 document.addEventListener('click',function(e){
@@ -7761,7 +7932,7 @@ document.addEventListener('click', function(e){
 });
 function wizSummary(){
   var d=wizDays();
-  return (WIZ.place==='home'?'дома':'зал')+' · '+
+  return (WIZ.place==='home'?'дома':WIZ.place==='street'?'на улице':'зал')+' · '+
          (d.length ? d.map(function(x){ return WD[x]; }).join(' ') : 'дни не выбраны')+
          ' · до '+WIZ.min+' мин';
 }
@@ -9062,7 +9233,7 @@ function goalText(me){ var g=goalPair(me); if(!g.wt) return ''; return 'вес '
 function progName(gym,wt,n){ n=+n||0; return (lbl(GYMS,gym)||'Программа')+' · '+(WT_WORD[wt]||'вес на месте')+' · '+n+' '+plural(n,['день','дня','дней']); }
 var GOALS=[['fat','Похудеть, сохранив мышцы'],['tone','Подтянуться'],['muscle','Набрать мышцы'],['strength','Стать сильнее'],['health','Форма и здоровье'],['endur','Выносливость'],['mobil','Подвижность и осанка']];
 var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опытный']];
-var PLACES=[['gym','зал'],['home','дом']];
+var PLACES=[['gym','зал'],['home','дом'],['street','улица']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var PLATEKEYS=[['1.25','1,25 кг'],['2.5','2,5 кг'],['5','5 кг']];
 var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки'],['rings','петли'],['ball','мяч'],['roll','ролл']];
@@ -10290,7 +10461,7 @@ function fitScore(k, me, daysOverride){
 function recoProgram(me){
   if(!me) return null;
   /* дома готовых программ нет: единственный путь — собрать под себя */
-  if(me.place==='home' && !(PROFILES[profile]||{}).custom) return {home:true};
+  if((me.place==='home'||me.place==='street') && !(PROFILES[profile]||{}).custom) return {home:true, street:me.place==='street'};
   if(!hasGoal(me)) return null;
   var best=null, bs=-99;
   Object.keys(PROFILES).forEach(function(k){ var sc=fitScore(k,me); if(sc>bs){ bs=sc; best=k; } });
@@ -10407,8 +10578,8 @@ function renderReco(){
   if(seen===sig || (!RECO.prog && !RECO.swaps.length && !RECO.dis.length)){ box.innerHTML=rb; paintProfBtn(); return; }
   var h=rb;
   if(RECO.prog && RECO.prog.home){
-    h+='<div class="reco"><h4>Вы занимаетесь дома, а программа — для зала</h4>'+
-       '<p>Готовых домашних нет. Отметьте, что есть дома, и соберите свою — ниже кнопка.</p>'+
+    h+='<div class="reco"><h4>Вы занимаетесь '+(RECO.prog.street?'на улице':'дома')+', а программа — для зала</h4>'+
+       '<p>Готовых '+(RECO.prog.street?'уличных':'домашних')+' нет. Отметьте, что есть '+(RECO.prog.street?'на площадке':'дома')+', и соберите свою — ниже кнопка.</p>'+
        '<div class="rbtns"><button type="button" class="btn go" data-reco="ai">Собрать под меня</button>'+
        '<button type="button" class="btn" data-reco="skip">Оставить</button></div></div>';
   } else if(RECO.prog){
@@ -10981,6 +11152,7 @@ function renderDayHead(){
   });
   var h=document.getElementById('nexthint');
   if(h) h.innerHTML = шапкаДняБольшая(nx, doneToday);
+  renderTplace();
 }
 /* Шапка дня (11.09): статус строчными, название дня крупно, дорожка подходов.
    Раньше на этом месте стояли дата, чип статуса, пять кнопок дней и строка
@@ -11024,6 +11196,8 @@ function шапкаДняБольшая(nx, doneToday){
   else if(сохрСегодня && сохрСегодня.date===TODAY && doneToday===day){ ст='сделан сегодня · '+метка; кл=' done'; }
   else if(doneToday===day){ ст=(всёЗакрыто?'сегодня закрыт · ':'зал идёт · ')+метка; кл=всёЗакрыто?' done':''; }
   else if(todayLetter() && day===nx){ ст='сегодня зал · '+метка; }
+  var тпШ=!ДЕНЬ_ДАТА && местоСегодня(day);
+  if(тпШ && !кл){ var базаШ=(myData()||{}).place; ст='сегодня · '+(тпШ.pl==='h'?'дома':'на улице')+' · вместо '+(базаШ==='home'?'дома':базаШ==='street'?'улицы':'зала'); }
   else if(day===nx){ ст=метка+' · следующий по очереди'; кл=' rest'; }
   else { var w=whenLabel(day); ст=метка+((w&&w!=='—')?' · '+w:''); кл=' rest'; }
   var пр=пр0, доля = пр.total ? Math.round(пр.done/пр.total*100) : 0;
@@ -11561,8 +11735,9 @@ function exRow(e,di,метка){
   else { var t=targetOf(e); вес='<s>'+((hasW(e) && t.tw!=null) ? fmtKg(t.tw)+' кг' : '—')+'</s>'; }
   return '<button type="button" class="exrow'+(всё?' done':'')+'" data-pickex="'+di+'">'+
     '<span class="exph">'+mediaFor(e)+'</span>'+
-    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.n)+'</b>'+
-      '<i>'+(мышцаГлавная(e)?esc(мышцаГлавная(e))+' · ':'')+setsFor(e,di)+' × '+repsOf(e)+'</i></span>'+
+    '<span class="exrn"><b>'+(метка?'<span class="sstag">'+метка+'</span>':'')+esc(e.показ||e.n)+'</b>'+
+      '<i>'+(мышцаГлавная(e)?esc(мышцаГлавная(e))+' · ':'')+setsFor(e,di)+' × '+repsOf(e)+'</i>'+
+      (e.was?'<em class="exwas">вместо: '+esc(e.was)+'</em>':'')+'</span>'+
     '<span class="exrv'+(сделано?' был':'')+'">'+вес+'<u>'+сделано+' из '+st.length+(всё?' ✓':'')+'</u></span></button>';
 }
 /* Добавить или убрать подход в конкретном упражнении на сегодня.
@@ -16102,7 +16277,11 @@ function focusMus(list){
   return out;
 }
 var MINKEYS=[['30','30'],['45','45'],['60','60'],['90','90']];
-var PLACEKEYS2=[['gym','в зале'],['home','дома']];
+var PLACEKEYS2=[['gym','в зале'],['home','дома'],['street','на улице']];
+/* 01.11 (макет C+D): на улице — свой список «Что есть» и сколько подтягиваний подряд */
+var EQKEYS_S=[['bar','турник'],['dips','брусья'],['rings','петли, кольца'],['band','резинка']];
+var PULLKEYS=[['0','0'],['1','1–4'],['5','5–10'],['10','больше 10']];
+var ALSOKEYS=[['gym','в зале'],['home','дома'],['street','на улице']];
 var SBPLATE=[['0.5','0,5 кг'],['1.25','1,25'],['2.5','2,5'],['5','5']];
 function sbPick(id){ var b=document.querySelector('#'+id+' button[aria-pressed="true"]'); return b?b.dataset.v:null; }
 function sbMulti(id){ return Array.prototype.map.call(
@@ -16157,7 +16336,9 @@ function openSbor(){
   set('sb-when', WHENKEYS, me.when||'auto');
   set('sb-min', MINKEYS, String(me.min||45));
   set('sb-place', PLACEKEYS2, me.place||'gym');
-  set('sb-eq', EQKEYS, me.eq||[], true);
+  SB_EQ={home:(me.eq||[]).slice(), street:Array.isArray(me.eqs)?me.eqs.slice():['bar','dips']};
+  set('sb-pull', PULLKEYS, me.pull!=null?String(me.pull):'1');
+  set('sb-also', ALSOKEYS, me.also||[], true);
   set('sb-focus', FOCUSKEYS, (me.focus&&me.focus.length)?me.focus:['even'], true);
   set('sb-plate', SBPLATE, String(me.plate||'2.5'));
   set('sb-lim', LIMKEYS, me.lim||[], true);
@@ -16170,10 +16351,24 @@ function openSbor(){
   sbPlaceUI(); sbСчёт();
   var m=document.getElementById('sborm'); if(m) m.classList.add('show');
 }
+var SB_EQ={home:[], street:[]};
 function sbPlaceUI(){
-  var дома = sbPick('sb-place')==='home';
-  var r=document.getElementById('sb-eqrow'); if(r) r.hidden=!дома;
-  var pr=document.getElementById('sb-platerow'); if(pr) pr.hidden=дома;
+  var где=sbPick('sb-place')||'gym', дома=где==='home', улица=где==='street';
+  /* «Что есть» — свой список у дома и у улицы; переключение места не теряет отметки */
+  var eq=document.getElementById('sb-eq'), лаб=document.getElementById('sb-eqlab');
+  if(eq && (дома||улица) && eq.dataset.pl!==где){
+    if(eq.dataset.pl) SB_EQ[eq.dataset.pl]=sbMulti('sb-eq');
+    eq.dataset.pl=где; eq.innerHTML=segHtml('sb-eq', улица?EQKEYS_S:EQKEYS, SB_EQ[где]||[], true);
+  }
+  if(лаб) лаб.textContent=улица?'Что есть на площадке':'Что есть дома';
+  var r=document.getElementById('sb-eqrow'); if(r) r.hidden=!(дома||улица);
+  var pu=document.getElementById('sb-pullrow'); if(pu) pu.hidden=!улица;
+  var ph=document.getElementById('sb-pullh');
+  if(ph) ph.textContent={'0':'Начнём с виса и негативных подтягиваний — рост ступенями','1':'Начнём с негативных и подтягиваний с паузой — рост ступенями',
+    '5':'Обычные подтягивания, потом широким и узким хватом','10':'Сложные: «лучник», с паузой вверху, выход силой'}[sbPick('sb-pull')||'1'];
+  var al=document.getElementById('sb-also');
+  if(al) Array.prototype.forEach.call(al.querySelectorAll('button'), function(b){ b.hidden=b.dataset.v===где; });   /* отметку не снимаем — при сохранении своё место отфильтруется */
+  var pr=document.getElementById('sb-platerow'); if(pr) pr.hidden=дома||улица;
 }
 function closeSbor(){ var m=document.getElementById('sborm'); if(m) m.classList.remove('show'); }
 document.getElementById('sborclose').addEventListener('click', closeSbor);
@@ -16196,7 +16391,7 @@ document.getElementById('sborm').addEventListener('click', function(e){
   } else {
     Array.prototype.forEach.call(box.querySelectorAll('button'), function(x){ x.setAttribute('aria-pressed', String(x===b)); });
   }
-  if(box.id==='sb-place') sbPlaceUI();
+  if(box.id==='sb-place' || box.id==='sb-pull') sbPlaceUI();
   sbСчёт(); haptic('light');
 });
 document.getElementById('sb-go').addEventListener('click', function(){
@@ -16208,7 +16403,10 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.when=sbPick('sb-when')||me.when||'auto';
   me.min=+sbPick('sb-min')||45;
   me.place=sbPick('sb-place')||'gym';
-  me.eq=sbMulti('sb-eq');
+  var eqEl=document.getElementById('sb-eq'); if(eqEl && eqEl.dataset.pl) SB_EQ[eqEl.dataset.pl]=sbMulti('sb-eq');
+  me.eq=SB_EQ.home||[]; me.eqs=SB_EQ.street||[];
+  if(me.place==='street') me.pull=+(sbPick('sb-pull')||1);
+  me.also=sbMulti('sb-also').filter(function(k){ return k!==me.place; });
   me.focus=sbMulti('sb-focus').filter(function(k){ return k!=='even'; });
   me.plate=+(sbPick('sb-plate')||2.5);
   me.lim=sbMulti('sb-lim');
@@ -16230,8 +16428,8 @@ function renderProgCard(){
   /* 17.09, его слова: «часть про зал упрости как выглядит». Было семь строк
      подряд, каждая со своим ярлыком, и все они повторяли то, что и так
      открывается кнопкой ниже. Осталось имя, дни и одна строка условий. */
-  var усл=[уп, (me.place==='home'?'дома':'в зале'), (me.min||45)+' мин'];
-  if(me.place!=='home') усл.push('блин '+String(me.plate||2.5).replace('.',',')+' кг');
+  var усл=[уп, (me.place==='home'?'дома':me.place==='street'?'на улице':'в зале'), (me.min||45)+' мин'];
+  if(me.place!=='home' && me.place!=='street') усл.push('блин '+String(me.plate||2.5).replace('.',',')+' кг');
   if((me.lim||[]).length) усл.push('беречь: '+me.lim.map(function(k){ return (LIMKEYS.filter(function(x){return x[0]===k;})[0]||[0,k])[1]; }).join(', '));
   box.innerHTML='<h4>'+esc(имяПрог()||'Программа')+'</h4>'+
     '<i>'+(дни.length?дни.map(function(d){ return WD[d]; }).join(', ')+' · '+дни.length+' '+plural(дни.length,['день','дня','дней'])+' в неделю':'дни не выбраны')+'</i>'+
@@ -16295,7 +16493,7 @@ var СБОРКА_ФРАЗЫ={
 };
 function сборкаЖдём(тело){
   var me=myData()||{}, ф=СБОРКА_ФРАЗЫ[me.voice==='standard'||me.voice==='hard'?me.voice:'fun'], ты=me.addr==='ty';
-  var n=+((тело&&тело.days)||3)||3, мин=+((тело&&тело.min)||me.min||45)||45, дом=((тело&&тело.me&&тело.me.place)||me.place)==='home';
+  var n=+((тело&&тело.days)||3)||3, мин=+((тело&&тело.min)||me.min||45)||45, дом=/^(home|street)$/.test((тело&&тело.me&&тело.me.place)||me.place||'');
   var дни=n+' '+(n%10===1&&n%100!==11?'день':(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?'дня':'дней');
   var под=function(x){ return x.replace(/\{([^|{}]*)\|([^{}]*)\}/g,function(_,a,b){ return ты?b:a; })
     .replace(/\{дни\}/g,дни).replace(/\{M\}/g,String(мин)).replace(/\{место\}/g,дом?'домашний инвентарь':(ты?'твой зал':'ваш зал')); };
@@ -22733,7 +22931,7 @@ function recoOptHtml(x, совет){
   var сн=(CAT.equip&&CAT.equip[x.q])||x.q||'';
   return '<button type="button" class="ropt'+(совет?' first':'')+'" data-reco2="pick" data-ci="'+esc(x.i)+'">'+
     mediaFor({cat:x.i, n:x.n, fig:''})+
-    '<span class="rtx"><b>'+esc(x.n)+'</b>'+(сн?'<i>'+esc(сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
+    '<span class="rtx"><b>'+esc(катИмя(x).имя)+'</b>'+((катИмя(x).под||сн)?'<i>'+esc(катИмя(x).под||сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
 }
 /* «Почему: по просьбе» — чьей? (его вопрос 23.10). Общая причина сервера —
    значит, просил сам человек: показываем его слова из чата, если они есть. */
@@ -22760,13 +22958,14 @@ function recoOptsHtml(c, can){
     var совет = (i===0 && перв && перв.i===x.i);
     return '<button type="button" class="ropt'+(совет?' first':'')+'" data-reco2="pick" data-ci="'+esc(x.i)+'">'+
       mediaFor({cat:x.i, n:x.n, fig:''})+
-      '<span class="rtx"><b>'+esc(x.n)+'</b>'+(сн?'<i>'+esc(сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
+      '<span class="rtx"><b>'+esc(катИмя(x).имя)+'</b>'+((катИмя(x).под||сн)?'<i>'+esc(катИмя(x).под||сн)+'</i>':'')+(совет?'<em>совет тренера</em>':'')+'</span></button>';
   }).join('')+'</div>';
 }
 var recoКатЖдём=false, recoКатСбой=false;
 function recoCard(где){
   var c=RECO2 || gget('coach_reco', null);
   if(!c || !c.text || gget('reco2_seen',null)===c.id) return '';
+  if(c.what==='today') return сегодняКарточка(c, где);
   var can=recoCan(c);
   var цель=recoTargetHtml(c, can);
   var подпись = (can && can.kind==='swap' && c.nocat) ? 'Выбрать в каталоге' : (c.btn || (can && can.kind==='swap' ? 'Заменить в программе' : 'Применить'));
@@ -23072,8 +23271,37 @@ function recoPull(){
       else renderReco2();
     }).catch(function(){});
 }
+/* 01.11, макет «Место и тренер», экран 5: «Дома · 30 мин · 5 упражнений» — те же картинки
+   и имена, что в каталоге; «Сделать сегодняшней» ставит её вместо дня на сегодня */
+function сегодняКарточка(c, где){
+  var гдеИ=c.place==='s'?'На улице':'Дома', n=(c.items||[]).length;
+  var строки=(c.items||[]).map(function(it){
+    var x=CAT?catById(it.i):null, имя=x?катИмя(x).имя:(it.n||'');
+    return '<div class="ropt tdrow">'+(x?mediaFor({cat:x.i, n:x.n, fig:''}):'')+'<span class="rtx"><b>'+esc(имя)+'</b>'+
+      (x&&катИмя(x).под?'<i>'+esc(катИмя(x).под)+'</i>':'')+'</span><span class="tdsets">'+(+it.sets||3)+' × '+esc(String(it.reps||'10–12'))+'</span></div>';
+  }).join('');
+  var тп=get('tplace_'+TODAY,null), стоит=!!(тп && тп.full && c.applied);
+  return '<div class="reco2 '+(где==='chat'?'inchat':'')+'"><u>✦ '+гдеИ+' · '+(+c.min||30)+' мин · '+n+' '+plural(n,['упражнение','упражнения','упражнений'])+'</u>'+
+    '<div class="ropts">'+строки+'</div>'+
+    (стоит ? '<div class="rb"><button type="button" data-reco2="todayback">Вернуть день по программе</button><button type="button" class="rx" data-reco2="no" aria-label="Скрыть">✕</button></div>'
+           : '<div class="rb rb3"><button type="button" class="go" data-reco2="today">Сделать сегодняшней</button><button type="button" data-reco2="todaymore">Другие</button>'+
+             '<button type="button" class="rx" data-reco2="no" aria-label="Не сейчас">✕</button></div>')+'</div>';
+}
 function recoClick(e){
   var b=e.target.closest('button[data-reco2]'); if(!b) return;
+  var cт=RECO2 || gget('coach_reco', null);
+  if(cт && cт.what==='today' && /^today/.test(b.dataset.reco2)){
+    if(b.dataset.reco2==='today'){
+      set('tplace_'+TODAY, {dk:day, pl:cт.place==='s'?'s':'h', full:cт.items.map(function(it){ return {i:it.i, n:((CAT&&catById(it.i))||{}).n||it.n, sets:it.sets, reps:it.reps}; })});
+      cт.applied=true; RECO2=cт; gset('coach_reco', cт);
+      rebuildSess(); renderDayHead(); renderList(); renderReco2(); haptic('ok'); return;
+    }
+    if(b.dataset.reco2==='todayback'){ местоВернуть(); cт.applied=false; RECO2=cт; gset('coach_reco', cт); renderReco2(); return; }
+    if(b.dataset.reco2==='todaymore'){
+      gset('reco2_seen', cт.id); recoDone(); renderReco2();
+      openCoach(); coachSend('Другие упражнения для тренировки на сегодня — '+(cт.place==='s'?'на улице':'дома')+', из того, что есть.'); haptic('medium'); return;
+    }
+  }
   if(b.dataset.reco2==='do'){ applyReco2(); return; }
   if(b.dataset.reco2==='more'){
     var box=b.closest('.reco2'), m=box&&box.querySelector('.rmore'); if(!m) return;
@@ -23116,6 +23344,13 @@ function takeChanges(d){
   /* правка дня уже применена программой целиком: карточка с кнопкой «Другое»
      здесь предложила бы отменить то, чего в ней нет */
   if(c.what==='day') return;
+  /* 01.11 (D): тренировка на сегодня — карточкой с картинками, «Сделать сегодняшней» */
+  if(c.what==='today'){
+    if(!c.items || !c.items.length) return;
+    c.id=recoId(c); gset('reco2_seen', null); RECO2=c; gset('coach_reco', c);
+    if(!CAT) loadCatalog().then(renderReco2).catch(renderReco2); else renderReco2();
+    return;
+  }
   /* 21.10: правок подходов и замен может прийти несколько — по одной на день.
      Встают все; карточка показывает первую. */
   var ещё=d.changes.slice(1).filter(function(x){ return x && x.text && (x.what==='sets' || x.what==='swap'); });
@@ -23172,7 +23407,8 @@ function coachSend(text, image){
   }, 1500);
   /* 30.10 (аудит): чат фоном (?job=) — iPhone рвал ответ, на который 60 с не пришло ни байта,
      и человек видел «Нет связи», хотя сервер отвечал. Номер операции защищает от двойной записи. */
-  fPostДолгий('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
+  fPostДолгий('/coach', Object.assign({uid:syncUid(), text:text||'', image:image||null, mime:image?'image/jpeg':null, date:date, operation:операция, replyRecovery:1, stage:этапId,
+    tplace:(date===TODAY && (get('tplace_'+TODAY,null)||{}).pl)||null}, (image && CHAT.ean) ? {ean:CHAT.ean} : {}))
     .then(function(d){
       var сейчас=Date.now();
       CHAT.items=(CHAT.items||[]).concat([
