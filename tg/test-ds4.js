@@ -31,9 +31,10 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  await q.locator('.bodymap .mnm[data-m="quad"]').click();ok(await q.locator('[data-catmus="quadriceps"]').isVisible(),'нажатие подписи открывает прежнее действие '+tag);
  ok(await q.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'журнал без переполнения '+tag);await q.close();
  const r=await b.newPage({viewport:{width,height:844}});await M.поднять(r,{theme,page:'ref'});
- const h=r.locator('.catgrp h4').first();await h.evaluate(e=>window.scrollTo(0,e.getBoundingClientRect().top+scrollY+45));await r.waitForTimeout(100);
- ok(await h.evaluate(e=>Math.abs(e.getBoundingClientRect().top)<1&&getComputedStyle(e).position==='sticky'),'заголовок закреплён при прокрутке '+tag);
- await h.locator('button').click();ok(await r.locator('.catgrp').count()===0,'все N открывает группу '+tag);
+ /* 01.11: вместо закреплённых заголовков групп — плитки «Что тренируем» */
+ const t=r.locator('#pcatbody [data-grp]').first();
+ ok(await r.locator('#pcatbody [data-grp]').evaluateAll(bs=>bs.every(b=>{const q=b.getBoundingClientRect();return q.height>=44&&q.right<=innerWidth+1;})),'плитки «Что тренируем» не меньше 44 px и в экране '+tag);
+ await t.click();ok(await r.locator('#pcatbody .catitem').count()>0&&await r.locator('#pcatchips [data-catchip="grp"]').count()===1,'плитка открывает список группы '+tag);
  ok(await r.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'каталог без переполнения '+tag);
  ok(!errors.length,'ошибок запуска нет '+tag);await r.close();
 }

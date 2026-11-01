@@ -270,7 +270,7 @@ const ГЛУБЖЕ = [
     for (const b of await p.$$('.zseg button'))
       if ((await b.textContent()).trim() === 'Каталог' && await b.isVisible()) { await b.click(); break; }
     await p.waitForTimeout(1300);
-    const h = await p.$('.catgrp h4 button, .catlist h4 button'); if (h) { await h.click(); await p.waitForTimeout(700); }
+    const h = await p.$('#pcatbody [data-grp], .catgrp h4 button, .catlist h4 button'); if (h) { await h.click(); await p.waitForTimeout(700); }
   }]
 ];
 async function закрытьВсё(page) {

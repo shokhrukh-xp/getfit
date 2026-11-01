@@ -24,7 +24,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   await p.waitForFunction(()=>document.body.classList.contains('ordmode'));await row.dispatchEvent('pointerup');await snap(p,'order-mode',theme,width);await p.click('#orddone');
  }else if(name==='picker'){
   await p.click('#addex');await p.locator('#catalog [data-pickgroup="legs"]').waitFor();
-  assert.deepEqual(await p.locator('#catalog [data-pickgroup]').allTextContents(),['Все','Ноги','Спина','Грудь','Плечи','Руки','Пресс','Кардио']);
+  assert.deepEqual(await p.locator('#catalog [data-pickgroup]').allTextContents(),['Все','Ноги','Ягодицы','Спина','Грудь','Плечи','Руки','Пресс','Растяжка','Кардио']);
   assert((await p.locator('#catsearch').boundingBox()).y<(await p.locator('.pickgroups').boundingBox()).y,'Поиск сверху');
   assert.equal(await p.locator('#catalog [data-pick]').count(),40);const first=await p.locator('#catalog [data-pick]').evaluateAll(a=>a.map(x=>+x.dataset.pick));assert.deepEqual(first,Array.from({length:40},(_,i)=>i),'Без ранжирования');
   await snap(p,'picker',theme,width);await p.click('#catalog #catmore');assert.equal(await p.locator('#catalog [data-pick]').count(),80);

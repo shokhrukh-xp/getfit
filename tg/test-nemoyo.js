@@ -19,12 +19,8 @@ const вКаталог = async page => {
   await page.locator('button', { hasText: 'каталог' }).first().click();
   await page.waitForTimeout(1400);
 };
-const открытьФильтры = async page => {
-  if (!(await page.isVisible('#pcatfilters').catch(() => false))) {
-    await page.click('#pcatfbtn');
-    await page.waitForTimeout(400);
-  }
-};
+/* 01.11: фильтры каталога — чипы под поиском, отдельной кнопки больше нет */
+const открытьФильтры = async page => { await page.waitForSelector('#pcatchips:not([hidden])'); };
 
 (async () => {
   const br = await chromium.launch();
@@ -37,7 +33,7 @@ const открытьФильтры = async page => {
   /* ── пока ничего не отмечено, фильтра нет: мёртвых кнопок не держим ── */
   await вКаталог(page);
   await открытьФильтры(page);
-  дано(!(await page.$('#pcatfilters .mchips[data-f="nope"]')), 'без отметок фильтра «моё» нет вовсе');
+  дано(!(await page.$('#pcatchips [data-catchip="nope"]')), 'без отметок фильтра «моё» нет вовсе');
 
   /* ── отмечаем одно упражнение большим пальцем вниз ── */
   await page.locator('.l1-in button', { hasText: 'Тренировка' }).first().click();
@@ -62,7 +58,7 @@ const открытьФильтры = async page => {
   /* ── фильтр появился и показывает ровно отмеченное ── */
   await вКаталог(page);
   await открытьФильтры(page);
-  const чип = await page.$('#pcatfilters .mchips[data-f="nope"] .mchip[data-v="no"]');
+  const чип = await page.$('#pcatchips [data-catchip="nope"]');
   дано(!!чип, 'фильтр появился, как только появилась первая отметка');
   const подпись = чип ? (await чип.textContent()).replace(/\s+/g, ' ').trim() : '';
   дано(/заменённые/.test(подпись) && /1/.test(подпись), 'на чипе «заменённые» и счёт: ' + подпись);
@@ -86,7 +82,7 @@ const открытьФильтры = async page => {
   const вСтроке = await page.$eval('#pcatbody [data-unnope]', e => e.dataset.unnope).catch(() => '');
   дано(!!ключ && ключ === вСтроке, 'в списке ровно то упражнение, что отмечено: ' + вСтроке);
   дано(строки[0] && строки[0].кнопка === 'вернуть', 'вместо «видео» — «вернуть»: ' + (строки[0] || {}).кнопка);
-  дано(/заменённые/.test(await page.textContent('#pcatfbtn')), 'кнопка фильтров признаётся, что фильтрует: ' + (await page.textContent('#pcatfbtn')).replace(/\s+/g, ' ').trim());
+  дано(await page.$eval('#pcatchips [data-catchip="nope"]', e => e.classList.contains('set')), 'чип «заменённые» горит — видно, что список отфильтрован');
 
   /* ── вернули: отметка снята, список опустел, фильтр сам выключился ── */
   await page.click('#pcatbody [data-unnope]');
@@ -94,7 +90,7 @@ const открытьФильтры = async page => {
   const после = await page.$$eval('#pcatbody .catitem.nope', els => els.length);
   дано(после === 0, 'отмеченных больше нет: ' + после);
   await открытьФильтры(page);
-  дано(!(await page.$('#pcatfilters .mchips[data-f="nope"]')), 'и фильтр снова исчез — отмечать нечего');
+  дано(!(await page.$('#pcatchips [data-catchip="nope"]')), 'и фильтр снова исчез — отмечать нечего');
 
   /* ── и упражнение снова годится в замены ── */
   const вернулось = await page.evaluate(() => {

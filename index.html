@@ -1715,6 +1715,39 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
    надо было листать. Теперь сверху поиск, под ним одна строка «фильтры» со
    сводкой выбранного, а без запроса — подборки по мышцам. */
 .catsearch.big{font-size:15px;padding:14px 16px}
+/* 01.11: новый каталог — место сегментом, «Что тренируем» сеткой, чипы фильтров, строка 2A */
+.catseg{display:flex;gap:3px;padding:3px;margin:0 0 12px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.catseg button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:0;border-radius:11px;
+  background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.catseg button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.catseg button[aria-pressed="true"]{background:var(--accent-ghost);color:var(--accent-txt);box-shadow:inset 0 0 0 1.5px var(--accent-txt)}
+.catlab{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:14px 2px 8px}
+.catgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.catgrid button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-height:58px;padding:10px;border-radius:14px;
+  border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.catgrid button b{font-size:14px;font-weight:700}
+.catgrid button span{font-size:12px;color:var(--muted)}
+.catgrid button:disabled{opacity:.45}
+.catchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 8px;padding:0 16px 2px}
+.catchips::-webkit-scrollbar{display:none}
+.catchips button{flex:0 0 auto;white-space:nowrap;min-height:36px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.catchips button[aria-pressed="true"],.catchips button.set{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.catchips button.fx{border-color:transparent;background:none;color:var(--accent-txt)}
+#pcatfilters{margin-bottom:10px}
+#pcatfilters .mchips{flex-wrap:wrap}
+.catsub{display:block;font-size:12.5px;color:var(--muted);margin-top:1px;line-height:1.3}
+.catlv{display:inline-flex;gap:3px;margin-top:5px;vertical-align:middle}
+.catlv i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.catlv i.on{background:var(--accent-txt)}
+.catgo{flex:0 0 auto;color:var(--dim);font-size:22px;line-height:1;padding:0 4px}
+#pcatbody .catitem{cursor:pointer}
+.catcard .tfacts{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.catcard .tfacts span{background:var(--card2);border-radius:12px;padding:8px 10px;min-width:0}
+.catcard .tfacts small{display:block;font-size:11.5px;color:var(--muted)}
+.catcard .tfacts b{font-size:13.5px}
+.catcard .catsubbig{color:var(--muted);font-size:13.5px;margin:-2px 0 6px}
+.catcard .btn.wide{margin-top:12px}
 .catf{display:flex;gap:8px;align-items:stretch;margin:10px 0 2px}
 .catf button{border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;
   font-size:13px;font-weight:600;border-radius:12px;padding:11px 13px}
@@ -4787,14 +4820,14 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
       <div class="sec" style="padding-top:18px">
         <div class="zseg" id="zseg-ref"></div>
         <input class="catsearch big" id="pcatsearch" type="search" placeholder="Что ищете? жим, тяга, присед…" autocomplete="off">
-        <!-- 01.11, его слова «я не вижу в каталоге категорий в зале, дома, на улице» -->
-        <div class="mchips catwhere" id="pcatwhere" role="group" aria-label="Где тренируетесь"></div>
-        <div class="catf">
-          <button type="button" class="fbtn" id="pcatfbtn" aria-expanded="false"></button>
-          <button type="button" class="fx" id="pcatreset" hidden>сбросить</button>
-        </div>
-        <p class="lede" id="catn"></p>
+        <!-- 01.11, его слова «переделай каталог и сделай его более удобным и понятным», макет
+             «Каталог — новый вид», выбор 2A (списком) + «добавь ещё фильтр по тренажёру»:
+             место (Зал / Дом / Улица) → «Что тренируем» сеткой → список; снаряд, тренажёр
+             и уровень — чипами над списком, панель под ними -->
+        <div class="catseg catwhere" id="pcatwhere" role="group" aria-label="Где тренируетесь"></div>
+        <div class="catchips" id="pcatchips" hidden></div>
         <div id="pcatfilters" hidden></div>
+        <p class="lede" id="catn"></p>
         <div id="pcatbody"></div>
       </div>
     </section>
@@ -6658,6 +6691,7 @@ function openCatalog(ctx){
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
   catMuscle = (ctx && ctx.muscle) || '';
+  catWhereDefault();
   var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
   if(t) t.textContent = (ctx&&ctx.quick) ? 'Варианты замены' : (ctx && ctx.pairWith) ? 'В пару к «'+ctx.pairName+'»' : (ctx && ctx.add) ? 'Добавить упражнение' : ctx ? 'Чем заменить' : 'Каталог упражнений';
@@ -6688,8 +6722,11 @@ var catEquip='', catLevel='', catType='', catShown=40, catNope='', catGroup='', 
    (турник, брусья, кольца, петли — «gs»; свой вес без снарядов — «ghs»;
    гантели, гиря, резинки — «gh»; штанга, блоки, тренажёры — «g»).
    Выбор места — отдельный ряд над фильтрами: «сбросить» его не трогает. */
-var catWhere='';
-var CAT_WHERE=[['','Все'],['g','Зал'],['h','Дом'],['s','Улица']];
+var catWhere='', catWhereSet=false;
+var CAT_WHERE=[['g','Зал','<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>'],['h','Дом','<path d="M4 11l8-6 8 6v8H4z"/><path d="M10 19v-5h4v5"/>'],
+               ['s','Улица','<path d="M5 20V7M19 20V7M3 7h18"/>']];
+/* место по умолчанию — из профиля: занимается дома — каталог открывается на «Дом» */
+function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; var me=myData()||{}; catWhere=me.place==='home'?'h':'g'; }
 function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>=0; }
 function catWhereHtml(){
   /* числа на чипах — сколько останется при остальных выбранных фильтрах */
@@ -6697,31 +6734,38 @@ function catWhereHtml(){
   var base=catFiltered();
   catWhere=был;
   return CAT_WHERE.map(function(w){
-    var n=w[0]?base.filter(function(x){ return String(x.pl||'g').indexOf(w[0])>=0; }).length:base.length;
-    return '<button type="button" class="mchip'+(catWhere===w[0]?' on':'')+'" data-where="'+w[0]+'" aria-pressed="'+(catWhere===w[0])+'">'+w[1]+' <s>'+n+'</s></button>';
+    var n=base.filter(function(x){ return String(x.pl||'g').indexOf(w[0])>=0; }).length;
+    return '<button type="button" data-where="'+w[0]+'" aria-pressed="'+(catWhere===w[0])+'" aria-label="'+w[1]+', '+n+' '+plural(n,['упражнение','упражнения','упражнений'])+'">'+
+      '<svg viewBox="0 0 24 24" aria-hidden="true">'+w[2]+'</svg>'+w[1]+'</button>';
   }).join('');
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest&&e.target.closest('.catwhere [data-where]'); if(!b||!CAT) return;
-  catWhere=b.dataset.where; catShown=40; renderCatalog(); haptic('light');
+  catWhere=b.dataset.where; catWhereSet=true; catShown=40; renderCatalog(); haptic('light');
 });
 /* 07.10 B3: короткие группы для выбора, без ранжирования «полезностью».
    Точные мышцы и остальные фильтры остаются на странице каталога. */
+/* 01.11, новый каталог: девять плиток «Что тренируем» — ягодицы отдельно от ног,
+   растяжка и кардио рядом с мышцами, а не спрятанным «типом» */
 var PICKGROUPS=[
-  ['legs','Ноги',['quadriceps','hamstrings','glutes','calves','abductors','adductors','tibialis']],
+  ['legs','Ноги',['quadriceps','hamstrings','calves','abductors','adductors','tibialis']],
+  ['glutes','Ягодицы',['glutes']],
   ['back','Спина',['middle back','lats','lower back','traps','neck']],
   ['chest','Грудь',['chest']],['shoulders','Плечи',['shoulders','rear delts']],
-  ['arms','Руки',['biceps','triceps','forearms']],['abs','Пресс',['abdominals','obliques']],['cardio','Кардио',[]]
+  ['arms','Руки',['biceps','triceps','forearms']],['abs','Пресс',['abdominals','obliques']],
+  ['stretch','Растяжка',[]],['cardio','Кардио',[]]
 ];
 function pickGroupMatch(x){
   if(!catGroup)return true;
   if(catGroup==='cardio')return catKind(x)==='cardio';
+  if(catGroup==='stretch')return catKind(x)==='stretching';
   var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});
+  if(catKind(x)==='stretching'||catKind(x)==='cardio') return false;   /* мышцы — силовые и прыжки, растяжка своей плиткой */
   return !!g && [x.m,x.m2].concat(Array.isArray(x.sm)?x.sm:[]).some(function(m){return g[2].indexOf(m)>=0;});
 }
 /* 27.10: «Ноги» — вся группа, включая дополнительные мышцы из каталога.
    Сначала основные упражнения, затем те, где группа помогает движению. */
-function catPrimaryGroup(x){var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});return !g||g[0]==='cardio'||g[2].indexOf(x.m)>=0||g[2].indexOf(x.m2)>=0;}
+function catPrimaryGroup(x){var g=PICKGROUPS.find(function(g){return g[0]===catGroup;});return !g||g[0]==='cardio'||g[0]==='stretch'||g[2].indexOf(x.m)>=0||g[2].indexOf(x.m2)>=0;}
 var CAT_MACHINES=[
  ['smith','Смит','Smith_Machine_Squat'],['legpress','Жим ногами','Leg_Press'],['hack','Гакк-присед','Hack_Squat'],
  ['legext','Разгибание ног','Leg_Extensions'],['legcurl','Сгибание ног','Seated_Leg_Curl'],
@@ -6775,8 +6819,8 @@ document.addEventListener('click',function(e){
   var tab=e.target.closest&&e.target.closest('[data-geartab]');if(tab){catGearTab=tab.dataset.geartab;catGearOpen=true;renderCatalog();var nextTab=document.querySelector((catCtx?'#catalog':'#pcatfilters')+' [data-geartab="'+catGearTab+'"]');if(nextTab)nextTab.focus({preventScroll:true});return;}
   var gear=e.target.closest&&e.target.closest('[data-gear]');if(gear&&!gear.disabled){
     var v=gear.dataset.gear;catEquip=v.indexOf('q:')===0?v.slice(2):'';catMachine=v.indexOf('m:')===0?v.slice(2):'';catGearOpen=false;catType='';catShown=40;
-    if(!catCtx){document.getElementById('pcatfilters').hidden=true;document.getElementById('pcatfbtn').setAttribute('aria-expanded','false');}
-    renderCatalog();var back=document.querySelector(catCtx?'#catalog .catgear summary':'#pcatfbtn');if(back)back.focus({preventScroll:true});haptic('light');return;
+    if(!catCtx) catPanel='';
+    renderCatalog();var back=document.querySelector(catCtx?'#catalog .catgear summary':'#pcatchips [data-catchip="'+(catMachine?'m':'q')+'"]');if(back)back.focus({preventScroll:true});haptic('light');return;
   }
   if(e.target.closest&&e.target.closest('[data-catall]')){catShown=catFiltered().length;renderCatalog();}
 });
@@ -6888,6 +6932,7 @@ function катСводка(){
 /* подборки показываем, пока человек ничего не сузил сам; тип «сила» по
    умолчанию сужением не считаем — подборки и так про силовые */
 function катЧисто(){ return !catQuery.trim() && !catGroup && !catMachine && !catMuscle && !catEquip && !catLevel && !catNope && (!catType || catType==='strength'); }
+/* окно «Добавить упражнение»: тоже место по умолчанию из профиля */
 /* Снаряд в имени уже написан — «Присед (штанга, Зерхера)», — и повторять его
    в подписи значит писать одно и то же дважды в одной строке. Оставляем в
    подписи только то, чего в имени нет. */
@@ -6898,13 +6943,98 @@ function catTag(x){
   if(x.c && x.c!=='strength' && x.c!=='powerlifting') ч.push(((CAT.cats||{})[x.c])||x.c);
   return ч.join(' · ');
 }
+/* 01.11, новый каталог. «Жим лёжа (наклон вверх, штанга, скамья)» — крупно
+   «Жим лёжа», серым «наклон вверх, штанга, скамья»; снаряд — если его нет в скобках. */
+function катИмя(x){
+  var m=/^(.*?)\s*\((.*)\)\s*$/.exec(x.n||''), имя=m?m[1]:(x.n||''), под=m?m[2]:'';
+  var сн=CAT.equip[x.q]||'';
+  if(сн && x.q!=='other' && под.toLowerCase().indexOf(сн.toLowerCase())<0 && имя.toLowerCase().indexOf(сн.toLowerCase())<0) под=под?под+' · '+сн:сн;
+  if(x.lg==='s' && !/держ|удерж/i.test(имя+под)) под=(под?под+' · ':'')+'держать, секунды';
+  return {имя:имя, под:под};
+}
+function катУровень(x){
+  var n=x.l==='expert'?3:x.l==='intermediate'?2:1;
+  return '<span class="catlv" role="img" aria-label="'+esc(CAT.level[x.l]||'')+'">'+[0,1,2].map(function(k){ return '<i'+(k<n?' class="on"':'')+'></i>'; }).join('')+'</span>';
+}
+/* популярные — упражнения готовых программ и базовые движения дома и на улице */
+var КАТ_ПОПУЛЯРНЫЕ={};
+('Barbell_Bench_Press_-_Medium_Grip Barbell_Squat Wide-Grip_Lat_Pulldown Seated_Cable_Rows Bent_Over_Barbell_Row Leg_Press '+
+ 'Dumbbell_Bench_Press Dumbbell_Bicep_Curl Side_Lateral_Raise Standing_Dumbbell_Press Triceps_Pushdown Seated_Leg_Curl Leg_Extensions '+
+ 'Barbell_Glute_Bridge Face_Pull Cable_Crossover Butterfly Hack_Squat One-Arm_Dumbbell_Row Hanging_Leg_Raise Plank Pullups Pushups '+
+ 'Crunches Side_Bridge Dumbbell_Lunges Standing_Calf_Raises Seated_Calf_Raise Machine_Bench_Press Leverage_Shoulder_Press '+
+ 'Smith_Machine_Squat Stiff-Legged_Dumbbell_Deadlift Reverse_Flyes EZ-Bar_Curl Thigh_Abductor Thigh_Adductor Pallof_Press '+
+ 'Hyperextensions_Back_Extensions One-Arm_Kettlebell_Swings Band_Pull_Apart Bodyweight_Squat Running_Treadmill Stairmaster '+
+ 'Elliptical_Trainer Bicycling_Stationary Rowing_Stationary Chin-Up Dips_-_Triceps_Version Inverted_Row '+
+ 'R_Negative_Pull_Ups R_Dead_Hang R_Knee_Push_Ups R_Burpees R_Jumping_Jacks R_Lunge R_Wall_Sit R_Hollow_Body_Hold R_Bicycle_Crunch '+
+ 'R_Bird_Dog R_High_Plank R_Ring_Row R_TRX_Row R_Banded_Glute_Bridge R_Banded_Lateral_Walk R_Hanging_Knee_Raise R_Pike_Push_Ups').split(' ')
+ .forEach(function(i){ КАТ_ПОПУЛЯРНЫЕ[i]=1; });
+function катПоп(x){ return (КАТ_ПОПУЛЯРНЫЕ[x.i]?-30:0)+катВес(x)+(x.l==='expert'?4:x.l==='intermediate'?1:0); }
+var catPanel='';
+function катЧипыHtml(){
+  var g=PICKGROUPS.find(function(p){ return p[0]===catGroup; }), h='';
+  if(g) h+='<button type="button" class="set" data-catchip="grp" aria-label="Убрать: '+esc(g[1])+'">'+esc(g[1])+' ✕</button>';
+  else if(catMuscle) h+='<button type="button" class="set" data-catchip="grp" aria-label="Убрать: '+esc(CAT.muscles[catMuscle]||catMuscle)+'">'+esc(CAT.muscles[catMuscle]||catMuscle)+' ✕</button>';
+  var маш=catMachine?((CAT_MACHINES.find(function(x){ return x[0]===catMachine; })||[])[1]||catMachine):'';
+  h+='<button type="button" data-catchip="q" aria-expanded="'+(catPanel==='q')+'"'+(catEquip?' class="set"':'')+'>'+esc(catEquip?(CAT.equip[catEquip]||catEquip):'Снаряд')+' ▾</button>';
+  if(!catWhere || catWhere==='g')
+    h+='<button type="button" data-catchip="m" aria-expanded="'+(catPanel==='m')+'"'+(catMachine?' class="set"':'')+'>'+esc(маш||'Тренажёр')+' ▾</button>';
+  h+='<button type="button" data-catchip="l" aria-expanded="'+(catPanel==='l')+'"'+(catLevel?' class="set"':'')+'>'+esc(catLevel?(CAT.level[catLevel]||catLevel):'Уровень')+' ▾</button>';
+  var нету=нетуСписок().length;
+  if(нету) h+='<button type="button" data-catchip="nope"'+(catNope?' class="set"':'')+'>заменённые '+нету+'</button>';
+  if(!катЧисто()) h+='<button type="button" class="fx" data-catchip="reset">сбросить</button>';
+  return h;
+}
+function катПанельHtml(){
+  if(!catPanel) return '';
+  if(catPanel==='l') return '<div class="mchips">'+[['','любой']].concat(Object.keys(CAT.level).map(function(k){ return [k,CAT.level[k]]; })).map(function(o){
+      return '<button type="button" class="mchip'+(catLevel===o[0]?' on':'')+'" data-catlvl="'+o[0]+'">'+esc(o[1])+'</button>'; }).join('')+'</div>';
+  /* снаряд и тренажёр — те же плитки с картинками, что были в «Оборудовании», без вкладок */
+  var base=catFiltered(true,true), маш=catPanel==='m';
+  var tiles=маш?CAT_MACHINES.map(function(g){return {v:'m:'+g[0],n:g[1],pic:g[2],count:base.filter(function(x){return catMachineMatch(x,g[0]);}).length};})
+               :Object.keys(CAT.equip).map(function(q){return {v:'q:'+q,n:CAT.equip[q],pic:CAT_GEAR_PICS[q],count:base.filter(function(x){return x.q===q;}).length};});
+  var sel=catMachine?'m:'+catMachine:catEquip?'q:'+catEquip:'';
+  return '<button type="button" class="btn wide" data-gear="">'+(маш?'Любой тренажёр':'Любой снаряд')+'</button><div class="catgeargrid">'+
+    tiles.filter(function(t){ return t.count; }).map(function(t){
+      var pic=catById(t.pic)||CAT.ex.find(function(x){return t.v.indexOf('q:')===0?x.q===t.v.slice(2):catMachineMatch(x,t.v.slice(2));});
+      return '<button type="button" class="catgeartile" data-gear="'+escAttr(t.v)+'" aria-pressed="'+(sel===t.v)+'">'+(pic?mediaFor({cat:pic.i,n:pic.n}):'')+'<b>'+esc(t.n)+'</b><span>'+t.count+' '+plural(t.count,['упражнение','упражнения','упражнений'])+'</span></button>';
+    }).join('')+'</div>';
+}
+/* 01.11: карточка упражнения из каталога — два кадра, что работает, где делать, шаги и «Добавить в день» */
+function катКарточка(x){
+  var e={cat:x.i, n:x.n, en:x.e}, ки=катИмя(x), шаги=техШаги(e);
+  var где=String(x.pl||'g').split('').map(function(k){ return {g:'зал',h:'дом',s:'улица'}[k]; }).filter(Boolean).join(' · ');
+  var пом=(x.sm||[]).filter(function(m){ return m!==x.m; }).map(function(m){ return (CAT.muscles[m]||m).toLowerCase(); }).slice(0,3).join(', ');
+  var есть=!!(DAYS && DAYS[day]);
+  return '<div class="catcard">'+(ки.под?'<p class="catsubbig">'+esc(ки.под)+'</p>':'')+техКадры(e)+
+    '<div class="tfacts"><span><small>Работает</small><b>'+esc(CAT.muscles[x.m]||x.m||'—')+'</b></span>'+
+    (пом?'<span><small>Помогают</small><b>'+esc(пом)+'</b></span>':'')+
+    '<span><small>Уровень</small><b>'+катУровень(x)+'</b></span><span><small>Где</small><b>'+esc(где)+'</b></span></div>'+
+    (шаги?'<p class="tsub">Как делать</p><ol class="tsteps">'+шаги.map(function(t){ return '<li'+(/^(Совет|Осторожно|Вариант):/.test(t)?' class="tip"':'')+'>'+esc(t)+'</li>'; }).join('')+'</ol>'
+         :'<p class="tnone">Описания пока нет — посмотрите видео.</p>')+
+    (есть?'<button type="button" class="btn wide go" data-catadd="'+CAT.ex.indexOf(x)+'">Добавить в тренировку</button>':'')+
+    '<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(x.e||x.n)+'">'+ИК.play+'<span>Видео техники</span></a>'+
+    '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div></div>';
+}
+function openCatCard(x){
+  var m=document.getElementById('techm'), b=document.getElementById('techbody'), t=document.getElementById('techtitle');
+  if(!m||!b||!x) return;
+  t.textContent=катИмя(x).имя;
+  b.innerHTML=TECH?катКарточка(x):'<p class="tnone">Загружаю…</p>';
+  m.classList.add('show');
+  if(!TECH) loadTech().then(function(){ if(m.classList.contains('show')) b.innerHTML=катКарточка(x); })
+    .catch(function(){ if(m.classList.contains('show')) b.innerHTML=катКарточка(x); });
+}
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('[data-catadd]'); if(!a||!CAT) return;
+  var x=CAT.ex[+a.dataset.catadd]; if(!x) return;
+  addEx(x); a.disabled=true; a.textContent='Добавлено в тренировку дня';
+});
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
   return '<div class="catitem'+(NOPE[x.i]?' nope':'')+'" data-i="'+CAT.ex.indexOf(x)+'">'+
     (x.own ? (естьКадры(x.ph) ? кадр(x.ph,null,0) : (x.fig && FIG[x.fig] ? figSvg(x.fig) : '<span class="catnoimg"></span>'))
            : кадр(null,x.i,0))+
-    '<div class="cattx"><b>'+x.n+'</b><i>'+x.e+'</i>'+
-    '<span class="cattag">'+catTag(x)+'</span>'+(catGroup&&!catPrimaryGroup(x)?'<span class="cattag">'+esc((PICKGROUPS.find(function(g){return g[0]===catGroup;})||[])[1]||'Группа')+' — дополнительные мышцы</span>':'')+
+    '<div class="cattx"><b>'+esc(катИмя(x).имя)+'</b><span class="catsub">'+esc(катИмя(x).под)+'</span>'+катУровень(x)+(catGroup&&!catPrimaryGroup(x)?'<span class="cattag">'+esc((PICKGROUPS.find(function(g){return g[0]===catGroup;})||[])[1]||'Группа')+' — дополнительные мышцы</span>':'')+
     /* ТЯЖЁЛЫЙ ВАРИАНТ — не отдельная строка каталога. Присед с паузой и
        присед Андерсона это тот же присед, то же фото и то же место в
        программе; разводить их в разные упражнения значило бы удвоить список
@@ -6914,8 +7044,7 @@ function catRow(x, выбор){
     '</div>'+
     (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
           : (NOPE[x.i] ? '<button class="catpick undo" data-unnope="'+esc(x.i)+'">вернуть</button>'
-          :'<a class="catpick" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query='+
-            encodeURIComponent(x.e+' exercise technique')+'">видео</a>'))+
+          :'<span class="catgo" aria-hidden="true">›</span>'))+
     '</div>';
 }
 /* 27.10: три лучших совпадения каталога, без ещё одного запроса ИИ.
@@ -6943,13 +7072,13 @@ function renderCatalog(){
   var box=document.getElementById(onPage?'pcatbody':'catbody'); if(!box||!CAT) return;
   var fbox=document.getElementById('pcatfilters');
   if(onPage){
-    /* кнопка фильтров говорит, что ВЫБРАНО; список возможностей — внутри */
-    var св=катСводка(), fb=document.getElementById('pcatfbtn'), fr=document.getElementById('pcatreset');
-    if(fb) fb.innerHTML = '<s>фильтры</s>'+(св.length ? '<b>'+esc(св.join(' · '))+'</b>' : '<i>ничего не выбрано</i>');
-    if(fr) fr.hidden = катЧисто();
+    /* 01.11: место сегментом, снаряд / тренажёр / уровень — чипами, панель под ними */
+    catWhereDefault();
     var wr=document.getElementById('pcatwhere'); if(wr) wr.innerHTML=catWhereHtml();
+    var чипы=document.getElementById('pcatchips'); if(чипы){ чипы.hidden=false; чипы.innerHTML=катЧипыHtml(); }
+    if(fbox){ var пан=катПанельHtml(); fbox.hidden=!пан; fbox.innerHTML=пан; }
   }
-  if(onPage && fbox && !fbox.hidden){
+  if(false){   /* 01.11: прежние четыре ряда фильтров на странице заменены чипами (катЧипыHtml) — оставлено до чистки */
     var нету=нетуСписок();
     fbox.innerHTML = pickGroupChips()+catGearHtml()+(нету.length ? '<div class="mchips" data-f="nope"><span class="chlab">моё</span>'+
                        '<button class="mchip'+(catNope?'':' on')+'" data-v="">все</button>'+
@@ -6975,9 +7104,11 @@ function renderCatalog(){
     var пвес=function(x){ return (x.own?-5:0)+(x.mc==='c'?6:0)+(КАТСНАРЯД[x.q]!=null?КАТСНАРЯД[x.q]:9)-(x.l==='beginner'?0.5:0); };
     list=list.slice().sort(function(a,b){ return пвес(a)-пвес(b); });
   }
+  /* 01.11: сначала популярные и простые (раньше — по алфавиту: первыми шли «Броски набивного мяча») */
+  if(onPage) list=list.slice().sort(function(a,b){ return катПоп(a)-катПоп(b); });   /* в окне выбора порядок прежний — так решено раньше (test-poryadok-vybor) */
   if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
   var lim=catShown, shown=list.slice(0,lim);
-  var h = onPage ? '' : '<div class="mchips catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+pickGroupChips()+catGearHtml();
+  var h = onPage ? '' : '<div class="catseg catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+pickGroupChips()+catGearHtml();
   if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
   if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
      ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';
@@ -6987,14 +7118,14 @@ function renderCatalog(){
   }
   /* Без запроса и фильтров — подборки по мышцам вместо простыни из 633 строк */
   if(onPage && катЧисто()){
-    var гр=катПодборки(), hh='';
-    гр.forEach(function(g){
-      hh+='<div class="catgrp"><h4><span>'+esc(g.имя)+' <em>'+g.всего+'</em></span>'+
-          '<button type="button" data-grp="'+esc(g.m)+'">все '+g.всего+' →</button></h4>';
-      g.л.forEach(function(x){ hh+=catRow(x,false); });
-      hh+='</div>';
-    });
-    box.innerHTML=hh;
+    var где=((CAT_WHERE.find(function(w){ return w[0]===catWhere; })||[])[1]||'').toLowerCase();
+    var попул=catFiltered().slice().sort(function(a,b){ return катПоп(a)-катПоп(b); }).slice(0,6);
+    box.innerHTML='<p class="catlab">Что тренируем</p><div class="catgrid">'+PICKGROUPS.map(function(g){
+        var был=catGroup; catGroup=g[0]; var n=catFiltered().length; catGroup=был;
+        return '<button type="button" data-grp="'+g[0]+'"'+(n?'':' disabled')+'><b>'+esc(g[1])+'</b><span>'+n+'</span></button>';
+      }).join('')+'</div>'+
+      (попул.length?'<p class="catlab">Популярное'+(где==='дом'?' дома':где==='улица'?' на улице':где==='зал'?' в зале':'')+'</p><div class="catlist">'+
+        попул.map(function(x){ return catRow(x,false); }).join('')+'</div>':'');
     return;
   }
   if(!list.length){
@@ -7005,7 +7136,7 @@ function renderCatalog(){
       '</div>';
     return;
   }
-  h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+
+  h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+(onPage?' · сначала популярные':'')+
      (list.length>lim?' · показано '+lim+' <button type="button" class="linkbtn" data-catall>Показать все</button>':'')+'</p>';
   h+='<div class="catlist">';
   shown.forEach(function(x){ h+=catRow(x,!!catCtx); });
@@ -7020,7 +7151,7 @@ function openCatPage(){
   catCtx=null;
   /* на странице по умолчанию силовые: растяжка и кардио — по чипу «все» */
   /* Прежнее «сила по умолчанию» не должно подменять уже выбранный станок/группу при возврате. */
-  if(!catType && катЧисто())catType='strength';
+  if(catType==='strength' && !catGroup) catType='';
   var b=document.getElementById('pcatbody');
   if(CAT){ renderCatalog(); return; }
   if(b) b.innerHTML='<p class="empt">Загружаю каталог…</p>';
@@ -15461,6 +15592,21 @@ if(_pcf) _pcf.addEventListener('click', function(e){
   else if(f==='nope'){ catNope=v; if(v) catType=''; }   /* отмеченные ищем среди всех типов, а не только силовых */
   catShown=40; renderCatalog();
 });
+var _pch=document.getElementById('pcatchips');
+if(_pch) _pch.addEventListener('click', function(e){
+  var c=e.target.closest('[data-catchip]'); if(!c||!CAT) return;
+  var v=c.dataset.catchip;
+  if(v==='grp'){ catGroup=''; catMuscle=''; catPanel=''; }
+  else if(v==='reset'){ catGroup='';catMuscle='';catMachine='';catNope='';catEquip='';catLevel='';catType='';catQuery='';catPanel='';
+    var ps=document.getElementById('pcatsearch'); if(ps) ps.value=''; }
+  else if(v==='nope'){ catNope=catNope?'':'no'; catPanel=''; }
+  else catPanel = catPanel===v ? '' : v;
+  catShown=40; renderCatalog(); haptic('light');
+});
+document.addEventListener('click',function(e){
+  var l=e.target.closest&&e.target.closest('#pcatfilters [data-catlvl]'); if(!l) return;
+  catLevel=l.dataset.catlvl; catPanel=''; catShown=40; renderCatalog(); haptic('light');
+});
 var _pcb=document.getElementById('pcatbody');
 if(_pcb) _pcb.addEventListener('click', function(e){
   if(e.target.closest('#catmore')){ catShown+=40; renderCatalog(); return; }
@@ -15479,8 +15625,11 @@ if(_pcb) _pcb.addEventListener('click', function(e){
     renderCatalog(); haptic('ok'); return;
   }
   var g=e.target.closest('[data-grp]');
-  if(g){catGroup='';catMachine='';catMuscle=g.dataset.grp; catShown=40; renderCatalog(); haptic('light');
-    var sc=document.getElementById('p-ref'); if(sc) sc.scrollIntoView({block:'start'}); }
+  if(g){catGroup=g.dataset.grp;catMuscle='';catType='';catPanel='';catShown=40; renderCatalog(); haptic('light');
+    var sc=document.getElementById('p-ref'); if(sc) sc.scrollIntoView({block:'start'}); return; }
+  /* 01.11: нажатие на строку — карточка упражнения */
+  var it=e.target.closest('.catitem');
+  if(it && !e.target.closest('a,button')){ openCatCard(CAT.ex[+it.dataset.i]); haptic('light'); }
 });
 /* фильтры свёрнуты по умолчанию: до первого упражнения на телефоне было
    больше половины экрана чипов */

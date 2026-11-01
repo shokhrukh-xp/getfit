@@ -1,32 +1,37 @@
 'use strict';
 /* 27.10: вся группа ног (включая дополнительные мышцы), фото-оборудование
-   в каталоге и выборе, пересечение фильтров, полный список и сброс. */
+   в каталоге и выборе, пересечение фильтров, полный список и сброс.
+   01.11: новый каталог — «Что тренируем» плитками (ягодицы отдельно от ног),
+   снаряд и тренажёр чипами с панелью плиток, место «Зал» по умолчанию. */
 const {chromium}=require('playwright'),M=require('./mock'),assert=require('node:assert/strict'),C=require('../catalog.json');
-const legs=['quadriceps','hamstrings','glutes','calves','abductors','adductors','tibialis'];
-const leg=C.ex.filter(x=>[x.m,x.m2,...(x.sm||[])].some(m=>legs.includes(m)));
+const legs=['quadriceps','hamstrings','calves','abductors','adductors','tibialis'];
+const kind=x=>x.c||'strength';
+const leg=C.ex.filter(x=>String(x.pl||'g').includes('g')&&!['stretching','cardio'].includes(kind(x))&&[x.m,x.m2,...(x.sm||[])].some(m=>legs.includes(m)));
 (async()=>{const br=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390]){
  const p=await br.newPage({viewport:{width,height:844}}),errors=await M.поднять(p,{theme,page:'gym'});
- await p.click('.l1 button[data-page="gym"]');await p.click('#p-gym [data-zseg="ref"]');await p.waitForSelector('#pcatbody .catitem');
- await p.click('#pcatfbtn');await p.click('#pcatfilters [data-pickgroup="legs"]');
- assert.match(await p.locator('#pcatfbtn').innerText(),/Ноги/);
- assert.match(await p.locator('#pcatbody>.catcount').innerText(),new RegExp('^'+leg.length+' '));
+ await p.click('.l1 button[data-page="gym"]');await p.click('#p-gym [data-zseg="ref"]');await p.waitForSelector('#pcatbody [data-grp="legs"]');
+ assert.match(await p.locator('#pcatbody [data-grp="legs"]').innerText(),new RegExp('Ноги\\s+'+leg.length+'$'));
+ await p.click('#pcatbody [data-grp="legs"]');
+ assert.match(await p.locator('#pcatchips [data-catchip="grp"]').innerText(),/Ноги/);
+ assert.match(await p.locator('#pcatbody .catcount').innerText(),new RegExp('^'+leg.length+' '));
  await p.click('#pcatbody [data-catall]');assert.equal(await p.locator('#pcatbody .catitem').count(),leg.length);
- const reverse=C.ex.findIndex(x=>x.i==='Crossover_Reverse_Lunge');assert.equal(await p.locator('#pcatbody .catitem[data-i="'+reverse+'"]').count(),1);
+ const reverse=C.ex.findIndex(x=>leg.includes(x)&&![x.m,x.m2].some(m=>legs.includes(m)));   /* 01.11: обратный выпад ушёл в «Растяжку» — берём любое, где ноги только помогают */
+ assert.equal(await p.locator('#pcatbody .catitem[data-i="'+reverse+'"]').count(),1);
  assert.match(await p.locator('#pcatbody .catitem[data-i="'+reverse+'"]').innerText(),/дополнительные мышцы/);
  // Основные движения идут выше тех, где ноги только помогают.
  assert.ok(await p.locator('#pcatbody .catitem').first().evaluate(e=>!e.textContent.includes('дополнительные мышцы')));
- await p.click('#pcatfilters details.catgear summary');await p.click('#pcatfilters [data-geartab="machines"]');
+ await p.click('#pcatchips [data-catchip="m"]');
  const tile=p.locator('#pcatfilters [data-gear="m:legpress"]');assert.ok(await tile.isVisible());assert.ok(await tile.locator('img').count());
  assert.ok(await p.locator('#pcatfilters .catgeartile').evaluateAll(bs=>bs.every(b=>{const r=b.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.right<=innerWidth+1})));
- await tile.click();assert.equal(await p.locator('#pcatfilters').isVisible(),false);assert.match(await p.locator('#pcatfbtn').innerText(),/Жим ногами/);
+ await tile.click();assert.equal(await p.locator('#pcatfilters').isVisible(),false);assert.match(await p.locator('#pcatchips [data-catchip="m"]').innerText(),/Жим ногами/);
  if(await p.locator('#pcatbody [data-catall]').count())await p.click('#pcatbody [data-catall]');
  const ids=await p.locator('#pcatbody .catitem').evaluateAll(rs=>rs.map(r=>+r.dataset.i));
  assert.ok(ids.length>0);assert.ok(ids.every(i=>C.ex[i].q==='machine'&&/leg.press/i.test(C.ex[i].i+' '+C.ex[i].e)&&!/smith/i.test(C.ex[i].i)));
- await p.click('#pcatreset');assert.ok(await p.locator('#pcatbody .catgrp').count());assert.doesNotMatch(await p.locator('#pcatfbtn').innerText(),/Ноги|Жим ногами/);
- await p.click('#pcatfbtn');await p.click('#pcatfilters details.catgear summary');await p.click('#pcatfilters [data-geartab="machines"]');
+ await p.click('#pcatchips [data-catchip="reset"]');assert.ok(await p.locator('#pcatbody [data-grp]').count());assert.equal(await p.locator('#pcatchips [data-catchip="grp"]').count(),0);assert.doesNotMatch(await p.locator('#pcatchips').innerText(),/Жим ногами/);
+ await p.click('#pcatchips [data-catchip="m"]');
  await p.click('#pcatfilters [data-gear="m:bike"]');assert.equal(await p.locator('#pcatbody .catitem').count(),1,'велотренажёр должен оставаться в выдаче');
- await p.click('#p-ref [data-zseg="gym"]');await p.click('#p-gym [data-zseg="ref"]');assert.equal(await p.locator('#pcatbody .catitem').count(),1,'велотренажёр должен оставаться в выдаче');await p.click('#pcatreset');
+ await p.click('#p-ref [data-zseg="gym"]');await p.click('#p-gym [data-zseg="ref"]');assert.equal(await p.locator('#pcatbody .catitem').count(),1,'велотренажёр должен оставаться в выдаче');await p.click('#pcatchips [data-catchip="reset"]');
  // Тот же визуальный фильтр при добавлении упражнения в день.
  await p.click('#p-ref [data-zseg="gym"]');await p.click('#addex');await p.waitForSelector('#catalog .catitem');
  await p.click('#catalog [data-pickgroup="legs"]');await p.click('#catalog [data-catall]');assert.equal(await p.locator('#catalog .catitem').count(),leg.length);

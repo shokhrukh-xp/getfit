@@ -23,71 +23,66 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   await page.locator('button', { hasText: 'каталог' }).first().click();
   await page.waitForTimeout(1500);
 
-  /* 1. фильтры свёрнуты, и первое упражнение близко к верху */
-  дано(!(await page.isVisible('#pcatfilters').catch(() => false)), 'ряды чипов свёрнуты');
-  const верх = await page.$eval('#pcatbody .catitem', e => e.getBoundingClientRect().top);
-  дано(верх < 520, 'первое упражнение видно без прокрутки: ' + Math.round(верх) + ' px от верха');
+  /* 01.11, его слова «переделай каталог и сделай его более удобным и понятным» (макет,
+     выбор 2A + «добавь ещё фильтр по тренажёру»): место сегментом, «Что тренируем»
+     сеткой из девяти плиток, «Популярное», чипы «Снаряд / Тренажёр / Уровень». */
+  /* 1. стартовый экран: место, плитки, популярное */
+  дано(await page.$$eval('#pcatwhere [data-where]', bs => bs.map(b => b.textContent.trim()).join(' · ')) === 'Зал · Дом · Улица',
+    'место — три кнопки: Зал · Дом · Улица');
+  дано(await page.$eval('#pcatwhere [aria-pressed="true"]', b => b.dataset.where) === 'g', 'по умолчанию — зал (место из профиля)');
+  const плитки = await page.$$eval('#pcatbody .catgrid button b', bs => bs.map(b => b.textContent));
+  дано(плитки.join(' · ') === 'Ноги · Ягодицы · Спина · Грудь · Плечи · Руки · Пресс · Растяжка · Кардио',
+    '«Что тренируем» — девять плиток: ' + плитки.join(' · '));
+  const верх = await page.$eval('#pcatbody .catgrid', e => e.getBoundingClientRect().top);
+  дано(верх < 420, 'плитки видны без прокрутки: ' + Math.round(верх) + ' px от верха');
+  const поп = await page.$$eval('#pcatbody .catlist .catitem', n => n.length);
+  дано(поп >= 4 && поп <= 6, 'ниже — популярное: ' + поп);
+  дано(await page.$$eval('#pcatchips [data-catchip]', bs => bs.map(b => b.dataset.catchip).join(',')) === 'q,m,l',
+    'чипы: снаряд, тренажёр, уровень');
+  дано(!(await page.isVisible('#pcatfilters')), 'панель фильтров закрыта');
 
-  /* 2. подборки по мышцам, а не простыня */
-  const группы = await page.$$eval('#pcatbody .catgrp h4 span',
-    ns => ns.map(e => e.textContent.trim()));
-  дано(группы.length >= 4, 'групп несколько: ' + группы.slice(0, 4).join(' · '));
-  const вГруппе = await page.$$eval('#pcatbody .catgrp:first-child .catitem', n => n.length);
-  дано(вГруппе === 4, 'в группе по четыре упражнения: ' + вГруппе);
-  дано(/Грудь/.test(группы[0] || ''), 'первая группа — грудь: ' + группы[0]);
-  const фото = await page.$$eval('#pcatbody .catgrp .catitem img', ns => ns.length);
-  дано(фото >= 8, 'у каждой строки подборки есть фото: ' + фото);
+  /* 2. плитка открывает список группы, чип с крестиком её снимает */
+  await page.click('#pcatbody .catgrid [data-grp="chest"]'); await page.waitForTimeout(600);
+  дано(!(await page.$('#pcatbody .catgrid')), 'после плитки — список, а не плитки');
+  дано(/Грудь ✕/.test(await page.textContent('#pcatchips')), 'выбранная группа — чипом с крестиком');
+  дано(/сначала популярные/.test(await page.textContent('#pcatbody .catcount')), 'список: сначала популярные');
+  const перваяГр = await page.textContent('#pcatbody .catitem .cattx b');
+  дано(/^Жим/.test(перваяГр), 'первым в груди — жим, а не экзотика: ' + перваяГр);
+  дано(await page.$$eval('#pcatbody .catitem .catlv', n => n.length) > 3, 'уровень — точками');
+  await page.click('#pcatchips [data-catchip="grp"]'); await page.waitForTimeout(500);
+  дано(!!(await page.$('#pcatbody .catgrid')), 'крестик вернул плитки');
 
-  /* 3. кнопка фильтров говорит, что выбрано */
-  дано(/сила/i.test(await page.textContent('#pcatfbtn')),
-    'на кнопке — что выбрано, включая фильтр по умолчанию: ' + (await page.textContent('#pcatfbtn')).trim());
-  await page.click('#pcatfbtn');
-  await page.waitForTimeout(400);
-  дано(await page.isVisible('#pcatfilters'), 'по нажатию чипы раскрылись');
-  дано(await page.isVisible('#pcatfilters .mchips[data-f="m"]'), 'мышца на месте');
-  дано(await page.isVisible('#pcatfilters .mchips[data-f="q"]'), 'снаряд на месте');
+  /* 3. тренажёр: чип → плитки тренажёров → список; «сбросить» */
+  await page.click('#pcatchips [data-catchip="m"]'); await page.waitForTimeout(500);
+  дано(await page.isVisible('#pcatfilters [data-gear="m:smith"]'), 'чип «Тренажёр» открыл плитки тренажёров');
+  await page.click('#pcatfilters [data-gear="m:smith"]'); await page.waitForTimeout(600);
+  дано(!(await page.isVisible('#pcatfilters')) && /Смит/.test(await page.textContent('#pcatchips [data-catchip="m"]')),
+    'выбран Смит — панель закрылась, чип подписан');
+  const смит = await page.$$eval('#pcatbody .catitem .catsub', n => n.map(e => e.textContent));
+  дано(смит.length > 3 && смит.every(t => /Смит/i.test(t)), 'в списке только Смит: ' + смит.length);
+  await page.click('#pcatchips [data-catchip="reset"]'); await page.waitForTimeout(500);
+  дано(!!(await page.$('#pcatbody .catgrid')), '«сбросить» вернул стартовый экран');
 
-  /* 4. выбрал мышцу — подборки уступают место списку */
-  await page.click('#pcatfilters .mchips[data-f="m"] .mchip:not([data-v=""])');
-  await page.waitForTimeout(600);
-  дано((await page.$$('#pcatbody .catgrp')).length === 0, 'подборок больше нет — идёт список');
-  дано(/фильтры/.test(await page.textContent('#pcatfbtn')) &&
-       !/ничего не выбрано/.test(await page.textContent('#pcatfbtn')),
-    'кнопка показывает выбранное: ' + (await page.textContent('#pcatfbtn')).trim());
-  дано(await page.isVisible('#pcatreset'), 'появилась кнопка «сбросить»');
-  await page.click('#pcatreset');
-  await page.waitForTimeout(600);
-  дано((await page.$$('#pcatbody .catgrp')).length >= 4, 'сброс вернул подборки');
-
-  /* 5. «все N →» из заголовка группы — это тот же фильтр */
-  await page.click('#pcatbody .catgrp:first-child h4 button');
-  await page.waitForTimeout(600);
-  дано((await page.$$('#pcatbody .catgrp')).length === 0, '«все →» открыло список группы');
-  дано(/Грудь/.test(await page.textContent('#pcatfbtn')),
-    'и это именно та мышца: ' + (await page.textContent('#pcatfbtn')).trim());
-
-  /* 6. поиск работает поверх всего */
-  await page.click('#pcatreset'); await page.waitForTimeout(400);
+  /* 4. поиск работает поверх всего; нажатие на строку — карточка */
   await page.fill('#pcatsearch', 'присед');
   await page.waitForTimeout(700);
-  дано((await page.$$('#pcatbody .catgrp')).length === 0, 'при запросе подборок нет');
   const первый = await page.textContent('#pcatbody .catitem .cattx b');
   дано(/присед/i.test(первый), 'первое найденное отвечает запросу: ' + первый);
+  await page.click('#pcatbody .catitem'); await page.waitForTimeout(900);
+  дано(await page.isVisible('#techm.show'), 'нажатие на строку открыло карточку');
+  дано(/Работает/.test(await page.textContent('#techbody')) && /Где/.test(await page.textContent('#techbody')), 'в карточке — что работает и где');
+  await page.click('#techbody [data-techclose]'); await page.waitForTimeout(400);
 
-  /* 7. снаряд не написан дважды в одной строке */
-  await page.click('#pcatreset'); await page.waitForTimeout(400);
+  /* 5. снаряд не написан дважды: в имени и в серой подписи */
   await page.fill('#pcatsearch', 'штанга');
   await page.waitForTimeout(800);
   const строки = await page.$$eval('#pcatbody .catitem', ns => ns.slice(0, 12).map(e => ({
     имя: e.querySelector('.cattx b').textContent,
-    подпись: e.querySelector('.cattag').textContent })));
-  const двойные = строки.filter(r => /штанга/i.test(r.имя) && /штанга/i.test(r.подпись));
+    подпись: e.querySelector('.catsub').textContent })));
   дано(строки.length > 0, 'нашлись строки со штангой: ' + строки.length);
-  дано(двойные.length === 0, 'снаряд не повторяется в подписи' +
-    (двойные[0] ? ': ' + двойные[0].имя + ' / ' + двойные[0].подпись : ''));
-  const есть = строки.find(r => !/штанга/i.test(r.имя));
-  if (есть) дано(есть.подпись.split('·').length >= 2,
-    'а где снаряда в имени нет — он остаётся в подписи: ' + есть.имя + ' / ' + есть.подпись);
+  дано(строки.every(r => !/\(/.test(r.имя)), 'имена короткие, без скобок: ' + (строки[0] || {}).имя);
+  дано(строки.filter(r => /штанга/i.test(r.имя) && /штанга/i.test(r.подпись)).length === 0, 'снаряд не повторяется в подписи');
+  await page.fill('#pcatsearch', ''); await page.waitForTimeout(400);
 
   /* 8. одинаковых имён в каталоге не осталось */
   /* весь скрипт приложения в IIFE — CAT изнутри page.evaluate не виден,
@@ -104,22 +99,11 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(имена.всего === 1001, 'в каталоге все 1001 упражнение: ' + имена.всего);
   дано(имена.повторов === 0, 'одинаковых имён не осталось: ' + имена.повторов);
 
-  /* 9. экран не молчит о том, что сам фильтрует.
-     «сила» стоит по умолчанию — поиск «растяжка» давал 0 при кнопке
-     «ничего не выбрано»: фильтровал и не признавался. */
-  await page.click('#pcatreset'); await page.waitForTimeout(400);
-  дано(/сила/i.test(await page.textContent('#pcatfbtn')),
-    'кнопка признаёт фильтр по умолчанию: ' + (await page.textContent('#pcatfbtn')).trim());
+  /* 9. 01.11: «силы по умолчанию» больше нет — растяжка находится поиском сразу */
   await page.fill('#pcatsearch', 'растяжка');
   await page.waitForTimeout(800);
-  const пусто = await page.textContent('#pcatbody');
-  дано(/Ничего не нашлось/.test(пусто), 'пустой результат подписан, а не пустой экран');
-  дано(/Ищем среди/.test(пусто), 'и сказано, что сузило поиск: ' + пусто.replace(/\s+/g,' ').slice(0,90));
-  дано(await page.isVisible('#catwide'), 'есть выход из тупика одной кнопкой');
-  await page.click('#catwide');
-  await page.waitForTimeout(700);
   const нашлось = await page.$$('#pcatbody .catitem');
-  дано(нашлось.length > 10, 'после «искать среди всех» растяжки нашлись: ' + нашлось.length);
+  дано(нашлось.length > 10, 'растяжки находятся поиском без фильтров: ' + нашлось.length);
 
   /* ── ПРОДВИНУТЫЕ ДВИЖЕНИЯ (12.09) ──
      Он спросил, почему их так мало. Часть пришла из починки разметки, часть
@@ -132,7 +116,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   const пенд = await page.$$eval('#pcatbody .catitem', rs => rs.map(r => ({
     имя: (r.querySelector('.cattx b') || {}).textContent || '',
     вариант: [...r.querySelectorAll('.cathard')].map(u => u.textContent).join(' ; ') })));
-  дано(пенд.length === 1 && /Тяга \(в наклоне/.test(пенд[0].имя),
+  дано(пенд.length === 1 && /^Тяга$/.test(пенд[0].имя),
     'тяжёлый вариант ищется по имени и ведёт к своей базе: ' + (пенд[0] || {}).имя);
   дано(/с пола/.test((пенд[0] || {}).вариант || ''),
     'и рядом сказано, чем он отличается: ' + ((пенд[0] || {}).вариант || '—').slice(0, 70));
@@ -151,19 +135,17 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(!флаг.some(f => f.схема), 'рисованных схем вместо фото в выдаче нет');
 
   /* 01.11, его слова «я не вижу в каталоге категорий в зале, дома, на улице»:
-     ряд «Все · Зал · Дом · Улица» над фильтрами */
+     сегмент «Зал · Дом · Улица» над поиском (01.11 — без «Все», по умолчанию зал) */
   const имена2 = () => page.$$eval('#pcatbody .catitem .cattx b', bs => bs.map(b => b.textContent));
-  дано(await page.$$eval('#pcatwhere [data-where]', bs => bs.map(b => b.textContent.replace(/\s*\d+$/, '').trim()).join(' · ')) === 'Все · Зал · Дом · Улица',
-    'над фильтрами ряд «Все · Зал · Дом · Улица»');
   await page.click('#pcatwhere [data-where="s"]'); await page.fill('#pcatsearch', 'вис'); await page.waitForTimeout(700);
   дано((await имена2()).includes('Вис на турнике'), '«Улица»: вис на турнике есть');
   await page.fill('#pcatsearch', 'штанг'); await page.waitForTimeout(700);
   дано(!(await имена2()).length, '«Улица»: упражнений со штангой нет');
   await page.click('#pcatwhere [data-where="h"]'); await page.fill('#pcatsearch', 'подтягивания'); await page.waitForTimeout(700);
-  дано(!(await имена2()).some(n => /^Подтягивания \(обычные\)/.test(n)), '«Дом»: турника нет — подтягиваний нет');
+  дано(!(await имена2()).some(n => /^Подтягивания/.test(n)), '«Дом»: турника нет — подтягиваний нет');
   await page.fill('#pcatsearch', 'отжимания'); await page.waitForTimeout(700);
   дано((await имена2()).some(n => /^Отжимания с колен/.test(n)), '«Дом»: отжимания с колен есть');
-  await page.click('#pcatwhere [data-where=""]'); await page.fill('#pcatsearch', ''); await page.waitForTimeout(500);
+  await page.click('#pcatwhere [data-where="g"]'); await page.fill('#pcatsearch', ''); await page.waitForTimeout(500);
 
   /* ── ЛИСТ СБОРКИ (12.09) ──
      «Почему при нажатии на собрать заново не спрашиваются дни, минуты, упор,
