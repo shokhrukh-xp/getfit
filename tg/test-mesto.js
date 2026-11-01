@@ -20,6 +20,14 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   await p.click('#sb-place [data-v="home"]');assert.equal(await p.textContent('#sb-eqlab'),'Что есть дома');
   await p.click('#sb-eq [data-v="db"]');await p.click('#sb-place [data-v="street"]');
   assert.equal(await p.getAttribute('#sb-eq [data-v="rings"]','aria-pressed'),'true','отметки улицы не теряются при переключении '+tag);
+  /* 01.11, его «кнопка собрать не работает»: без двух дней кнопка не молчит, а говорит, чего не хватает */
+  const дни=await p.locator('#sb-wd button[aria-pressed="true"]').evaluateAll(bs=>bs.map(x=>x.dataset.v));
+  for(const v of дни.slice(1))await p.click('#sb-wd [data-v="'+v+'"]');
+  await p.click('#sb-go');
+  assert.match(await p.textContent('#sbstate'),/хотя бы два дня/,'без двух дней — понятное сообщение '+tag);
+  assert.ok(await p.locator('#sborm.show').count(),'лист не закрылся молча');
+  for(const v of дни.slice(1))await p.click('#sb-wd [data-v="'+v+'"]');
+  assert.equal(await p.isVisible('#sbstate'),false,'дни отмечены — сообщение ушло');
   await p.click('#sb-go');
   await until(()=>f.me().place==='street','место сохранилось');
   const me=f.me();

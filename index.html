@@ -1749,6 +1749,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catcard .tfacts b{font-size:13.5px}
 .catcard .catsubbig{color:var(--muted);font-size:13.5px;margin:-2px 0 6px}
 .catcard .btn.wide{margin-top:12px}
+#sb-go.off{opacity:.55}
+#sb-wd.need{outline:2px solid var(--warn,#E0A030);outline-offset:4px;border-radius:12px}
 /* 01.11, макет «Место и тренер (C + D)»: «Сегодня не в зале?», лист замен, день дома */
 .tdrow{display:flex;align-items:center;gap:10px;width:100%;padding:6px 0;text-align:left}
 .tdrow .fig2,.tdrow .fig{flex:0 0 52px;width:52px;max-width:52px;border-radius:12px}
@@ -16339,7 +16341,11 @@ function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
   var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выберите хотя бы два дня';
   var m=document.getElementById('sb-minh'); if(m) m.textContent = п+' '+plural(п,['подход','подхода','подходов'])+' за занятие · ~'+(п*д)+' в неделю';
-  var g=document.getElementById('sb-go'); if(g) g.disabled = д<2;
+  /* 01.11, его «кнопка собрать не работает»: выключенная кнопка молчала — в тестовой копии
+     своё расписание пустое, дней не отмечено, и нажатие просто ничего не делало. Теперь
+     кнопка нажимается всегда, а без двух дней — говорит, чего не хватает (sb-go ниже). */
+  var g=document.getElementById('sb-go'); if(g){ g.disabled=false; g.classList.toggle('off', д<2); }
+  var st=document.getElementById('sbstate'); if(st && д>=2 && st.dataset.days){ st.hidden=true; delete st.dataset.days; }
   sbЦиклUI();
 }
 function openSbor(){
@@ -16413,7 +16419,12 @@ document.getElementById('sb-go').addEventListener('click', function(){
   var me=myData()||{};
   var дни={}; Array.prototype.forEach.call(document.querySelectorAll('#sb-wd button'), function(b){
     if(b.getAttribute('aria-pressed')==='true') дни[+b.dataset.v]=1; });
-  if(Object.keys(дни).length<2) return;
+  if(Object.keys(дни).length<2){
+    var st=document.getElementById('sbstate'), wd=document.getElementById('sb-wd');
+    if(st){ st.hidden=false; st.dataset.days='1'; st.textContent='Отметьте хотя бы два дня тренировок — вверху листа, «В какие дни».'; }
+    if(wd){ wd.scrollIntoView({block:'center', behavior:'smooth'}); wd.classList.add('need'); setTimeout(function(){ wd.classList.remove('need'); }, 1600); }
+    haptic('error'); return;
+  }
   GYM_DAYS=schedNorm(дни); set('sched', GYM_DAYS); gset('sched_any', GYM_DAYS); saveSched();
   me.when=sbPick('sb-when')||me.when||'auto';
   me.min=+sbPick('sb-min')||45;
