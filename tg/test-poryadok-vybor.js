@@ -23,16 +23,22 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   const row=p.locator('#list .exrow,#list .card').first();await row.scrollIntoViewIfNeeded();await p.waitForTimeout(250);await row.dispatchEvent('pointerdown',{pointerId:1,clientX:50,clientY:200});
   await p.waitForFunction(()=>document.body.classList.contains('ordmode'));await row.dispatchEvent('pointerup');await snap(p,'order-mode',theme,width);await p.click('#orddone');
  }else if(name==='picker'){
-  await p.click('#addex');await p.locator('#catalog [data-pickgroup="legs"]').waitFor();
-  assert.deepEqual(await p.locator('#catalog [data-pickgroup]').allTextContents(),['Все','Ноги','Ягодицы','Спина','Грудь','Плечи','Руки','Пресс','Растяжка','Кардио']);
-  assert((await p.locator('#catsearch').boundingBox()).y<(await p.locator('.pickgroups').boundingBox()).y,'Поиск сверху');
-  assert.equal(await p.locator('#catalog [data-pick]').count(),40);const first=await p.locator('#catalog [data-pick]').evaluateAll(a=>a.map(x=>+x.dataset.pick));assert.deepEqual(first,Array.from({length:40},(_,i)=>i),'Без ранжирования');
+  /* 01.11 (макет «Каталог: доработка»): окно «Добавить» — как каталог. Открывается на мышцах дня
+     (чип группы с ✕), без группы — плитки «Что тренируем»; сначала популярное и то, чего в дне ещё нет. */
+  await p.click('#addex');await p.locator('#catalog .catchips [data-catchip="grp"]').waitFor();
+  assert((await p.locator('#catsearch').boundingBox()).y<(await p.locator('#catalog .catchips').boundingBox()).y,'Поиск сверху');
+  assert.equal(await p.locator('#catalog [data-pick]').count(),40);
+  const вДне=await p.locator('#list [data-pickex]').allTextContents();
+  const first=await p.locator('#catalog [data-pick]').evaluateAll(a=>a.map(x=>+x.dataset.pick));
+  assert(!вДне.some(t=>t.trim()&&t.includes(cat.ex[first[0]].n)),'Первым — то, чего в дне ещё нет');
   await snap(p,'picker',theme,width);await p.click('#catalog #catmore');assert.equal(await p.locator('#catalog [data-pick]').count(),80);
-  await p.click('[data-pickgroup="cardio"]');const ids=await p.locator('#catalog [data-pick]').evaluateAll(a=>a.map(x=>+x.dataset.pick));assert(ids.length>0&&ids.every(i=>cat.ex[i].c==='cardio'));
-  await p.click('[data-pickgroup="legs"]');await p.fill('#catsearch','невозможныйпоиск');assert(await p.locator('.catempt').isVisible());assert(await p.locator('[data-pickgroup="arms"]').isVisible(),'Группы доступны и при пустом поиске');await snap(p,'picker-empty',theme,width);
-  await p.fill('#catsearch','');await p.click('[data-pickgroup="arms"]');await p.fill('#catsearch','бицепс');assert(await p.locator('#catalog [data-pick]').count()>0);
+  await p.click('#catalog .catchips [data-catchip="grp"]');
+  assert.deepEqual(await p.locator('#catalog [data-grp] b').allTextContents(),['Ноги','Ягодицы','Спина','Грудь','Плечи','Руки','Пресс','Растяжка','Кардио']);
+  await p.click('#catalog [data-grp="cardio"]');const ids=await p.locator('#catalog [data-pick]').evaluateAll(a=>a.map(x=>+x.dataset.pick));assert(ids.length>0&&ids.every(i=>cat.ex[i].c==='cardio'));
+  await p.click('#catalog .catchips [data-catchip="grp"]');await p.click('#catalog [data-grp="legs"]');await p.fill('#catsearch','невозможныйпоиск');assert(await p.locator('.catempt').isVisible());assert(await p.locator('#catalog .catchips [data-catchip="grp"]').isVisible(),'Группу видно и при пустом поиске — её можно снять');await snap(p,'picker-empty',theme,width);
+  await p.fill('#catsearch','');await p.click('#catalog .catchips [data-catchip="grp"]');await p.click('#catalog [data-grp="arms"]');await p.fill('#catsearch','бицепс');assert(await p.locator('#catalog [data-pick]').count()>0);
   const num=await p.locator('#list [data-pickex]').count();await p.locator('#catalog [data-pick]').first().click();assert(!(await p.locator('#catalog').isVisible()));assert.equal(await p.locator('#list [data-pickex]').count(),num+1);
-  await p.locator('#list [data-pickex]').first().click();await p.locator('[data-nope]').first().click();await p.locator('[data-noped]').first().click();await p.locator('[data-selfpick]').first().click();await p.locator('.pickgroups').waitFor();assert.equal(await p.locator('#catsearch').inputValue(),'');await p.click('[data-pickgroup="chest"]');assert(await p.locator('#catalog [data-pick]').count()>0);await snap(p,'picker-replace',theme,width);
+  await p.locator('#list [data-pickex]').first().click();await p.locator('[data-nope]').first().click();await p.locator('[data-noped]').first().click();await p.locator('[data-selfpick]').first().click();await p.locator('#catalog.show .catchips').waitFor();assert.equal(await p.locator('#catsearch').inputValue(),'');if(await p.locator('#catalog .catchips [data-catchip="grp"]').count())await p.click('#catalog .catchips [data-catchip="grp"]');await p.click('#catalog [data-grp="chest"]');assert(await p.locator('#catalog [data-pick]').count()>0);await snap(p,'picker-replace',theme,width);
  }else{
   await p.click('[data-mid="meal"] .ft');await p.click('#mv-del');await p.click('.undo-row button');
   await p.waitForFunction(()=>document.querySelector('.undo-row span')?.textContent!=='Возвращаю…');assert.equal(restored,name==='503'?3:1);

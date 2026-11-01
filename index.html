@@ -1732,7 +1732,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catchips::-webkit-scrollbar{display:none}
 .catchips button{flex:0 0 auto;white-space:nowrap;min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);
   background:var(--card);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
-.catchips button[aria-pressed="true"],.catchips button.set{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+/* выбранное — тёмным по светлому и светлым по тёмному: белое на бирюзе в тёмной теме читалось плохо (2,6:1) */
+.catchips button[aria-pressed="true"],.catchips button.set{background:var(--accent-txt);border-color:var(--accent-txt);color:var(--bg)}
 .catchips button.fx{border-color:transparent;background:none;color:var(--accent-txt)}
 #pcatfilters{margin-bottom:10px}
 #pcatfilters .mchips{flex-wrap:wrap}
@@ -1748,6 +1749,27 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catcard .tfacts b{font-size:13.5px}
 .catcard .catsubbig{color:var(--muted);font-size:13.5px;margin:-2px 0 6px}
 .catcard .btn.wide{margin-top:12px}
+/* 01.11, макет «Каталог: доработка (A + B)» */
+.catinv{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 12px;margin:0 0 10px}
+.catinv p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.catinv div{display:flex;flex-wrap:wrap;gap:6px}
+.catinv button{min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:13.5px;cursor:pointer}
+.catinv button[aria-pressed="true"]{background:var(--accent-ghost);border-color:var(--accent-txt);color:var(--accent-txt);font-weight:700}
+.catvar{display:inline-block;margin:4px 0 0 8px;font-size:12px;font-weight:700;color:var(--accent-txt);background:var(--accent-ghost);border-radius:8px;padding:1px 7px;vertical-align:middle}
+.cathint{background:var(--card2);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--muted);margin:8px 0}
+.catempt .btn{margin-top:10px}
+.catdays{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.catdays button{min-height:44px;padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--text);font:inherit;font-size:13.5px;cursor:pointer}
+.catdays button[aria-pressed="true"]{background:var(--accent-txt);border-color:var(--accent-txt);color:var(--bg);font-weight:700}
+.catnote{font-size:12.5px;color:var(--muted);margin:0 0 4px}
+.cattoast{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--text);color:var(--bg);border-radius:14px;padding:4px 6px 4px 14px;margin:12px 0 0;font-size:14px}
+.cattoast button{min-height:44px;border:0;background:none;color:inherit;font:inherit;font-weight:700;text-decoration:underline;padding:0 10px;cursor:pointer}
+.catitem .catpick.catplus{flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;border-radius:50%;padding:0;font-size:24px;line-height:1;font-weight:600;
+  background:var(--accent-txt)!important;color:var(--bg)!important;border:0!important}
+.catcard .tvars{margin:0 0 6px;padding-left:18px;font-size:13.5px}
+.catcard .tvars li{margin-bottom:4px}
+#catalog .catchips{margin:0 0 8px;padding:0 0 2px}
+#catalog .catpanel{margin-bottom:10px}
 .catf{display:flex;gap:8px;align-items:stretch;margin:10px 0 2px}
 .catf button{border:1px solid var(--line);background:var(--card);color:var(--text);font:inherit;
   font-size:13px;font-weight:600;border-radius:12px;padding:11px 13px}
@@ -4825,6 +4847,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
              место (Зал / Дом / Улица) → «Что тренируем» сеткой → список; снаряд, тренажёр
              и уровень — чипами над списком, панель под ними -->
         <div class="catseg catwhere" id="pcatwhere" role="group" aria-label="Где тренируетесь"></div>
+        <div class="catinv" id="pcatinv" hidden></div>
         <div class="catchips" id="pcatchips" hidden></div>
         <div id="pcatfilters" hidden></div>
         <p class="lede" id="catn"></p>
@@ -6277,7 +6300,7 @@ function loadCatalog(){
   /* 21.10: в зале сеть рвётся — один тихий повтор через секунду, прежде
      чем говорить «не удалось»; ответ не 200 — тоже сбой, а не пустой каталог */
   /* 01.11: «-k3» — каталог пополнился (дом и улица, затем поле места pl) без смены метки сборки на тестовой копии */
-  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)+'-k3';
+  var url=BASEDIR+'catalog.json?v='+encodeURIComponent(BUILD)+'-k4';
   /* одна попытка = ответ + JSON + проверка состава: пустой каталог тоже повторяем (ревью Codex P3) */
   var раз=function(){ return fetch(url).then(function(r){ if(!r.ok) throw new Error('catalog '+r.status); return r.json(); })
     .then(function(j){ if(!j || !Array.isArray(j.ex) || !j.ex.length) throw new Error('catalog empty'); return j; }); };
@@ -6671,11 +6694,20 @@ function dropEx(di){
     }
   });
 }
+function addExTo(dk, item){
+  if(!item) return null;
+  var it={ n:item.n, e:item.e, i:item.i, m:item.m||'', p:item.p||'', sets:3, reps:'8–12', rest:90, cues:item.cues||[], id:Date.now().toString(36) };
+  var л=(EXTRA[dk]=EXTRA[dk]||[]);
+  /* 01.11: растяжка — в конце дня; силовое встаёт перед уже добавленной растяжкой */
+  var раст=function(z){ var c=catById(z.i); return !!c && catKind(c)==='stretching'; };
+  var куда=раст(it) ? -1 : л.findIndex(раст);
+  if(куда<0) л.push(it); else л.splice(куда, 0, it);
+  saveSubs(); rebuildSess(); renderList(); haptic('ok');
+  return it.id;
+}
 function addEx(item){
-  if(!item) return;
-  (EXTRA[day]=EXTRA[day]||[]).push({ n:item.n, e:item.e, i:item.i, m:item.m||'', p:item.p||'',
-                                     sets:3, reps:'8–12', rest:90, cues:item.cues||[], id:Date.now().toString(36) });
-  saveSubs(); rebuildSess(); renderList(); paintNote('Добавил «'+item.n+'» в этот день'); haptic('ok');
+  if(!addExTo(day, item)) return;
+  paintNote('Добавил «'+item.n+'» в этот день');
 }
 function resetDay(){
   ((DAYS[day]||{}).ex||[]).forEach(function(x,i){ delete SKIP[subKey(day,i)]; });
@@ -6691,6 +6723,9 @@ function openCatalog(ctx){
      формально та же мышца, но это не замена */
   catType = (ctx && ctx.c) ? catKind({c:ctx.c}) : '';
   catMuscle = (ctx && ctx.muscle) || '';
+  catPanel='';
+  /* 01.11 (доработка): «Добавить» в дне открывается на мышцах этого дня — её можно снять */
+  if(ctx && ctx.add && !ctx.pairWith && !ctx.draft) catGroup=деньГруппа(ctx.dk||day);
   catWhereDefault();
   var m=document.getElementById('catalog'); if(m){m.classList.toggle('aidraft',!!(ctx&&ctx.draft));m.classList.add('show');}
   var t=document.getElementById('cattitle');
@@ -6707,6 +6742,14 @@ function openCatalog(ctx){
     }
   }).catch(function(){ document.getElementById('catbody').innerHTML=
       '<p class="mtext">Не удалось загрузить каталог — похоже, пропала сеть.</p>'+повтор; });
+}
+function деньГруппа(dk){
+  var сч={};
+  (exList(dk)||[]).forEach(function(z){
+    var c=catById(z.cat||z.id)||{}, м=z.m||c.m; if(!м) return;
+    PICKGROUPS.forEach(function(g){ if(g[2].indexOf(м)>=0) сч[g[0]]=(сч[g[0]]||0)+1; });
+  });
+  return Object.keys(сч).sort(function(a,b){ return сч[b]-сч[a]; })[0]||'';
 }
 function closeCatalog(){
   var draftCtx=catCtx;
@@ -6728,6 +6771,43 @@ var CAT_WHERE=[['g','Зал','<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>']
 /* место по умолчанию — из профиля: занимается дома — каталог открывается на «Дом» */
 function catWhereDefault(){ if(catWhereSet) return; catWhereSet=true; var me=myData()||{}; catWhere=me.place==='home'?'h':'g'; }
 function catWhereOk(x){ return !catWhere || String(x.pl||'g').indexOf(catWhere)>=0; }
+/* 01.11, макет «Каталог: доработка (A + B)», его «Да, как в макете»: дома и на
+   улице вместо «Снаряд» и «Тренажёр» — что у человека есть. Дома — me.eq из
+   профиля (тот же список), на улице — me.eqs (пока не отмечено — турник и брусья).
+   У упражнения nd — что нужно (tools/katalog-nuzhno.py); пусто — ничего. */
+var КАТ_ЕСТЬ={h:[['db','Гантели'],['kb','Гиря'],['bar','Турник'],['bench','Скамья'],['band','Резинка'],['rings','Петли'],['ball','Мяч'],['roll','Ролл']],
+              s:[['bar','Турник'],['dips','Брусья'],['rings','Петли, кольца'],['band','Резинка']]};
+var КАТ_НУЖНО={db:'гантели',kb:'гиря',band:'резинка',bar:'турник',dips:'брусья',bench:'скамья или тумба',rings:'петли или кольца',ball:'мяч',roll:'ролл'};
+function катЕсть(){
+  var me=myData()||{};
+  if(catWhere==='s') return Array.isArray(me.eqs) ? me.eqs : ['bar','dips'];
+  if(catWhere==='h') return Array.isArray(me.eq) ? me.eq : [];
+  return null;
+}
+function катЕстьOk(x){
+  var есть=катЕсть(); if(!есть) return true;
+  return (x.nd||[]).every(function(k){ return k!=='gym' && есть.indexOf(k)>=0; });
+}
+function катЕстьHtml(){
+  if(catWhere!=='h' && catWhere!=='s') return '';
+  var есть=катЕсть();
+  return '<p>'+(catWhere==='h' ? 'Что есть дома — из профиля, меняется здесь же' : 'Что есть на площадке — меняется здесь же')+'</p><div>'+
+    '<button type="button" data-catinv="" aria-pressed="'+(!есть.length)+'">Ничего</button>'+
+    КАТ_ЕСТЬ[catWhere].map(function(o){ return '<button type="button" data-catinv="'+o[0]+'" aria-pressed="'+(есть.indexOf(o[0])>=0)+'">'+o[1]+'</button>'; }).join('')+'</div>';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-catinv]'); if(!b||!CAT) return;
+  var k=b.dataset.catinv, есть=(катЕсть()||[]).slice(), i=есть.indexOf(k);
+  if(!k) есть=[]; else if(i>=0) есть.splice(i,1); else есть.push(k);
+  var me=myData()||{}; if(catWhere==='s') me.eqs=есть; else me.eq=есть;
+  gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
+  catShown=40; renderCatalog(); haptic('light');
+});
+/* «Показать в зале» из пустой выдачи дома или на улице */
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-catgo]'); if(!b||!CAT) return;
+  catWhere=b.dataset.catgo; catWhereSet=true; catShown=40; renderCatalog(); haptic('light');
+});
 function catWhereHtml(){
   /* числа на чипах — сколько останется при остальных выбранных фильтрах */
   var был=catWhere; catWhere='';
@@ -6741,7 +6821,9 @@ function catWhereHtml(){
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest&&e.target.closest('.catwhere [data-where]'); if(!b||!CAT) return;
-  catWhere=b.dataset.where; catWhereSet=true; catShown=40; renderCatalog(); haptic('light');
+  catWhere=b.dataset.where; catWhereSet=true; catShown=40;
+  if(catWhere!=='g'){ catEquip=''; catMachine=''; catPanel=''; }   /* дома и на улице снаряд выбирает «Что есть» */
+  renderCatalog(); haptic('light');
 });
 /* 07.10 B3: короткие группы для выбора, без ранжирования «полезностью».
    Точные мышцы и остальные фильтры остаются на странице каталога. */
@@ -6819,8 +6901,8 @@ document.addEventListener('click',function(e){
   var tab=e.target.closest&&e.target.closest('[data-geartab]');if(tab){catGearTab=tab.dataset.geartab;catGearOpen=true;renderCatalog();var nextTab=document.querySelector((catCtx?'#catalog':'#pcatfilters')+' [data-geartab="'+catGearTab+'"]');if(nextTab)nextTab.focus({preventScroll:true});return;}
   var gear=e.target.closest&&e.target.closest('[data-gear]');if(gear&&!gear.disabled){
     var v=gear.dataset.gear;catEquip=v.indexOf('q:')===0?v.slice(2):'';catMachine=v.indexOf('m:')===0?v.slice(2):'';catGearOpen=false;catType='';catShown=40;
-    if(!catCtx) catPanel='';
-    renderCatalog();var back=document.querySelector(catCtx?'#catalog .catgear summary':'#pcatchips [data-catchip="'+(catMachine?'m':'q')+'"]');if(back)back.focus({preventScroll:true});haptic('light');return;
+    catPanel='';
+    renderCatalog();var back=document.querySelector((catCtx?'#catalog .catchips':'#pcatchips')+' [data-catchip="'+(catMachine?'m':'q')+'"]');if(back)back.focus({preventScroll:true});haptic('light');return;
   }
   if(e.target.closest&&e.target.closest('[data-catall]')){catShown=catFiltered().length;renderCatalog();}
 });
@@ -6842,6 +6924,7 @@ function catFiltered(ignoreEquipment,ignoreType){
   var words=q?q.split(/\s+/).filter(Boolean):[];
   return CAT.ex.filter(function(x){
     if(!catWhereOk(x)) return false;
+    if(!катЕстьOk(x)) return false;
     if(!pickGroupMatch(x))return false;
     if(catMuscle && x.m!==catMuscle && x.m2!==catMuscle) return false;   /* m2 — подгруппа: задние дельты, косые, голень */
     if(!ignoreEquipment && ((catEquip && x.q!==catEquip)||!catMachineMatch(x,catMachine))) return false;
@@ -6946,6 +7029,15 @@ function catTag(x){
 /* 01.11, новый каталог. «Жим лёжа (наклон вверх, штанга, скамья)» — крупно
    «Жим лёжа», серым «наклон вверх, штанга, скамья»; снаряд — если его нет в скобках. */
 function катИмя(x){
+  /* 01.11 (доработка): у каждого упражнения ns — имя с главным отличием («Присед
+     со штангой»), nsub — остальное. Словарь перевода знает имя целиком, поэтому
+     на узбекском и английском — полное имя (раньше «Присед» превращался в чужое). */
+  if(typeof ЯЗ!=='undefined' && ЯЗ!=='ru') return {имя:x.n||'', под:(x.lg==='s'?'держать, секунды':'')};
+  if(x.ns){
+    var пд=x.nsub||'';
+    if(x.lg==='s' && !/держ|удерж/i.test(x.ns+пд)) пд=(пд?пд+' · ':'')+'держать, секунды';
+    return {имя:x.ns, под:пд};
+  }
   var m=/^(.*?)\s*\((.*)\)\s*$/.exec(x.n||''), имя=m?m[1]:(x.n||''), под=m?m[2]:'';
   var сн=CAT.equip[x.q]||'';
   if(сн && x.q!=='other' && под.toLowerCase().indexOf(сн.toLowerCase())<0 && имя.toLowerCase().indexOf(сн.toLowerCase())<0) под=под?под+' · '+сн:сн;
@@ -6975,7 +7067,8 @@ function катЧипыHtml(){
   if(g) h+='<button type="button" class="set" data-catchip="grp" aria-label="Убрать: '+esc(g[1])+'">'+esc(g[1])+' ✕</button>';
   else if(catMuscle) h+='<button type="button" class="set" data-catchip="grp" aria-label="Убрать: '+esc(CAT.muscles[catMuscle]||catMuscle)+'">'+esc(CAT.muscles[catMuscle]||catMuscle)+' ✕</button>';
   var маш=catMachine?((CAT_MACHINES.find(function(x){ return x[0]===catMachine; })||[])[1]||catMachine):'';
-  h+='<button type="button" data-catchip="q" aria-expanded="'+(catPanel==='q')+'"'+(catEquip?' class="set"':'')+'>'+esc(catEquip?(CAT.equip[catEquip]||catEquip):'Снаряд')+' ▾</button>';
+  if(catWhere!=='h' && catWhere!=='s')
+    h+='<button type="button" data-catchip="q" aria-expanded="'+(catPanel==='q')+'"'+(catEquip?' class="set"':'')+'>'+esc(catEquip?(CAT.equip[catEquip]||catEquip):'Снаряд')+' ▾</button>';
   if(!catWhere || catWhere==='g')
     h+='<button type="button" data-catchip="m" aria-expanded="'+(catPanel==='m')+'"'+(catMachine?' class="set"':'')+'>'+esc(маш||'Тренажёр')+' ▾</button>';
   h+='<button type="button" data-catchip="l" aria-expanded="'+(catPanel==='l')+'"'+(catLevel?' class="set"':'')+'>'+esc(catLevel?(CAT.level[catLevel]||catLevel):'Уровень')+' ▾</button>';
@@ -7000,34 +7093,71 @@ function катПанельHtml(){
     }).join('')+'</div>';
 }
 /* 01.11: карточка упражнения из каталога — два кадра, что работает, где делать, шаги и «Добавить в день» */
+/* что нужно — словами: «гантели, скамья или тумба»; зал — по снаряду */
+function катНужно(x){
+  var ч=(x.nd||[]).filter(function(k){ return k!=='gym'; }).map(function(k){ return КАТ_НУЖНО[k]||k; });
+  if((x.nd||[]).indexOf('gym')>=0) ч.unshift(x.q && x.q!=='other' && x.q!=='body only' ? (CAT.equip[x.q]||'снаряд зала') : 'снаряд зала');
+  return ч.join(', ');
+}
+/* 01.11 (доработка): у растяжки — «Растягивает», уровень словом, «Нужно»,
+   варианты списком, «В тренировку: День N» с выбором дня и отменой */
+var КАТ_ДЕНЬ='';
+function катВДеньHtml(x){
+  if(!(DAYS && DAYS[day])) return '';
+  return '<div class="catadd"><button type="button" class="btn wide go" data-catday="'+CAT.ex.indexOf(x)+'">В тренировку: '+
+    esc(dayShort(day))+' · '+esc(whenLabel(day))+' ▾</button></div>';
+}
+function катДниHtml(x){
+  var fc=forecastMap(), раст=catKind(x)==='stretching';
+  return '<p class="tsub">В какой день?</p><div class="catdays">'+allDays().map(function(k){
+      return '<button type="button" data-catdk="'+escAttr(k)+'" aria-pressed="'+(k===КАТ_ДЕНЬ)+'">'+esc(dayShort(k))+' · '+esc(whenLabel(k, fc))+'</button>'; }).join('')+'</div>'+
+    (раст?'<p class="catnote">Растяжку ставлю в конец дня — после силовых.</p>':'')+
+    '<button type="button" class="btn wide go" data-catadd="'+CAT.ex.indexOf(x)+'">Добавить</button>';
+}
 function катКарточка(x){
-  var e={cat:x.i, n:x.n, en:x.e}, ки=катИмя(x), шаги=техШаги(e);
-  var где=String(x.pl||'g').split('').map(function(k){ return {g:'зал',h:'дом',s:'улица'}[k]; }).filter(Boolean).join(' · ');
+  var e={cat:x.i, n:x.n, en:x.e}, ки=катИмя(x), шаги=техШаги(e), раст=catKind(x)==='stretching';
   var пом=(x.sm||[]).filter(function(m){ return m!==x.m; }).map(function(m){ return (CAT.muscles[m]||m).toLowerCase(); }).slice(0,3).join(', ');
-  var есть=!!(DAYS && DAYS[day]);
-  return '<div class="catcard">'+(ки.под?'<p class="catsubbig">'+esc(ки.под)+'</p>':'')+техКадры(e)+
-    '<div class="tfacts"><span><small>Работает</small><b>'+esc(CAT.muscles[x.m]||x.m||'—')+'</b></span>'+
+  var нужно=катНужно(x);
+  var под=[ки.под, нужно?'':'ничего не нужно'].filter(Boolean).join(' · ');
+  return '<div class="catcard">'+(под?'<p class="catsubbig">'+esc(под)+'</p>':'')+техКадры(e)+
+    '<div class="tfacts"><span><small>'+(раст?'Растягивает':'Работает')+'</small><b>'+esc(CAT.muscles[x.m]||x.m||'—')+'</b></span>'+
     (пом?'<span><small>Помогают</small><b>'+esc(пом)+'</b></span>':'')+
-    '<span><small>Уровень</small><b>'+катУровень(x)+'</b></span><span><small>Где</small><b>'+esc(где)+'</b></span></div>'+
+    '<span><small>Уровень</small><b>'+esc(CAT.level[x.l]||'')+' '+катУровень(x)+'</b></span>'+
+    '<span><small>Нужно</small><b>'+esc(нужно||'ничего')+'</b></span></div>'+
     (шаги?'<p class="tsub">Как делать</p><ol class="tsteps">'+шаги.map(function(t){ return '<li'+(/^(Совет|Осторожно|Вариант):/.test(t)?' class="tip"':'')+'>'+esc(t)+'</li>'; }).join('')+'</ol>'
          :'<p class="tnone">Описания пока нет — посмотрите видео.</p>')+
-    (есть?'<button type="button" class="btn wide go" data-catadd="'+CAT.ex.indexOf(x)+'">Добавить в тренировку</button>':'')+
+    (x.hard && x.hard.length ? '<p class="tsub">Варианты</p><ul class="tvars">'+x.hard.map(function(v){ return '<li><b>'+esc(v.n)+'</b> — '+esc(v.t)+'</li>'; }).join('')+'</ul>' : '')+
+    катВДеньHtml(x)+
     '<div class="tbtns"><a class="ebtn" target="_blank" rel="noopener" href="'+ytHref(x.e||x.n)+'">'+ИК.play+'<span>Видео техники</span></a>'+
     '<button type="button" class="ebtn" data-techclose="1">Закрыть</button></div></div>';
 }
 function openCatCard(x){
   var m=document.getElementById('techm'), b=document.getElementById('techbody'), t=document.getElementById('techtitle');
   if(!m||!b||!x) return;
-  t.textContent=катИмя(x).имя;
+  t.textContent=катИмя(x).имя; КАТ_ДЕНЬ=day;
   b.innerHTML=TECH?катКарточка(x):'<p class="tnone">Загружаю…</p>';
   m.classList.add('show');
   if(!TECH) loadTech().then(function(){ if(m.classList.contains('show')) b.innerHTML=катКарточка(x); })
     .catch(function(){ if(m.classList.contains('show')) b.innerHTML=катКарточка(x); });
 }
 document.addEventListener('click',function(e){
-  var a=e.target.closest&&e.target.closest('[data-catadd]'); if(!a||!CAT) return;
-  var x=CAT.ex[+a.dataset.catadd]; if(!x) return;
-  addEx(x); a.disabled=true; a.textContent='Добавлено в тренировку дня';
+  if(!e.target.closest||!CAT) return;
+  var box=e.target.closest('.catadd'); if(!box) return;
+  var d=e.target.closest('[data-catday]'), k=e.target.closest('[data-catdk]'), a=e.target.closest('[data-catadd]'), u=e.target.closest('[data-catundo]');
+  if(d){ box.innerHTML=катДниHtml(CAT.ex[+d.dataset.catday]); haptic('light'); return; }
+  if(k){ КАТ_ДЕНЬ=k.dataset.catdk; box.querySelectorAll('[data-catdk]').forEach(function(b){ b.setAttribute('aria-pressed', String(b===k)); }); haptic('light'); return; }
+  if(a){
+    var x=CAT.ex[+a.dataset.catadd], dk=КАТ_ДЕНЬ||day; if(!x) return;
+    var id=addExTo(dk, x);
+    box.innerHTML='<div class="cattoast" role="status"><span>Добавлено в '+esc(dayShort(dk))+'</span>'+
+      '<button type="button" data-catundo="'+escAttr(dk+'|'+id)+'" data-i="'+CAT.ex.indexOf(x)+'">Отменить</button></div>';
+    return;
+  }
+  if(u){
+    var p=u.dataset.catundo.split('|'), л=EXTRA[p[0]]||[], j=л.findIndex(function(z){ return z.id===p[1]; });
+    if(j>=0){ л.splice(j,1); if(!л.length) delete EXTRA[p[0]]; saveSubs(); rebuildSess(); renderList(); }
+    var y=CAT.ex[+u.dataset.i]; box.outerHTML=y?катВДеньHtml(y):''; haptic('light');
+  }
 });
 /* одна строка каталога — и в списке, и в подборках */
 function catRow(x, выбор){
@@ -7039,10 +7169,13 @@ function catRow(x, выбор){
        присед Андерсона это тот же присед, то же фото и то же место в
        программе; разводить их в разные упражнения значило бы удвоить список
        и развести историю весов по двум именам. */
-    (x.hard ? x.hard.map(function(v){
-        return '<u class="cathard"><b>'+esc(v.n)+'</b> — '+esc(v.t)+'</u>'; }).join('') : '')+
+    /* 01.11 (доработка): серым текстом в строке варианты засоряли «Популярное» и
+       не нажимались — теперь метка «+2 варианта», сами варианты в карточке */
+    (x.hard && x.hard.length ? '<span class="catvar">+'+x.hard.length+' '+plural(x.hard.length,['вариант','варианта','вариантов'])+'</span>' : '')+
     '</div>'+
-    (выбор?'<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>'
+    (выбор ? (catCtx && catCtx.add && !catCtx.pairWith && !catCtx.draft
+                ? '<button class="catpick catplus" data-pick="'+CAT.ex.indexOf(x)+'" aria-label="'+escAttr('Добавить: '+катИмя(x).имя)+'">+</button>'
+                : '<button class="catpick" data-pick="'+CAT.ex.indexOf(x)+'">выбрать</button>')
           : (NOPE[x.i] ? '<button class="catpick undo" data-unnope="'+esc(x.i)+'">вернуть</button>'
           :'<span class="catgo" aria-hidden="true">›</span>'))+
     '</div>';
@@ -7075,6 +7208,7 @@ function renderCatalog(){
     /* 01.11: место сегментом, снаряд / тренажёр / уровень — чипами, панель под ними */
     catWhereDefault();
     var wr=document.getElementById('pcatwhere'); if(wr) wr.innerHTML=catWhereHtml();
+    var инв=document.getElementById('pcatinv'); if(инв){ var ih=катЕстьHtml(); инв.hidden=!ih; инв.innerHTML=ih; }
     var чипы=document.getElementById('pcatchips'); if(чипы){ чипы.hidden=false; чипы.innerHTML=катЧипыHtml(); }
     if(fbox){ var пан=катПанельHtml(); fbox.hidden=!пан; fbox.innerHTML=пан; }
   }
@@ -7105,10 +7239,15 @@ function renderCatalog(){
     list=list.slice().sort(function(a,b){ return пвес(a)-пвес(b); });
   }
   /* 01.11: сначала популярные и простые (раньше — по алфавиту: первыми шли «Броски набивного мяча») */
-  if(onPage) list=list.slice().sort(function(a,b){ return катПоп(a)-катПоп(b); });   /* в окне выбора порядок прежний — так решено раньше (test-poryadok-vybor) */
+  /* 01.11 (доработка): и в окне «Добавить» — сначала популярное и то, чего в дне ещё нет */
+  var добавить=!!(catCtx && catCtx.add && !catCtx.pairWith), вДне={};
+  if(добавить && !catCtx.draft) (exList(catCtx.dk||day)||[]).forEach(function(z){ var i=z.cat||z.id; if(i) вДне[i]=1; });
+  if(onPage || добавить) list=list.slice().sort(function(a,b){ return (вДне[a.i]?1:0)-(вДне[b.i]?1:0) || катПоп(a)-катПоп(b); });
   if(catGroup)list.sort(function(a,b){return Number(!catPrimaryGroup(a))-Number(!catPrimaryGroup(b));});
   var lim=catShown, shown=list.slice(0,lim);
-  var h = onPage ? '' : '<div class="catseg catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+pickGroupChips()+catGearHtml();
+  var пан = onPage ? '' : катПанельHtml(), инвH = onPage ? '' : катЕстьHtml();
+  var h = onPage ? '' : '<div class="catseg catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+
+    (инвH?'<div class="catinv">'+инвH+'</div>':'')+'<div class="catchips">'+катЧипыHtml()+'</div>'+(пан?'<div class="catpanel">'+пан+'</div>':'');
   if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
   if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
      ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';
@@ -7117,16 +7256,38 @@ function renderCatalog(){
     if(cur) h+='<button class="btn undo" id="catundo">Вернуть упражнение из программы</button>';
   }
   /* Без запроса и фильтров — подборки по мышцам вместо простыни из 633 строк */
-  if(onPage && катЧисто()){
+  if((onPage || (catCtx && !catCtx.draft && !catCtx.pairWith && !catCtx.quick)) && катЧисто()){
     var где=((CAT_WHERE.find(function(w){ return w[0]===catWhere; })||[])[1]||'').toLowerCase();
     var попул=catFiltered().slice().sort(function(a,b){ return катПоп(a)-катПоп(b); }).slice(0,6);
-    box.innerHTML='<p class="catlab">Что тренируем</p><div class="catgrid">'+PICKGROUPS.map(function(g){
-        var был=catGroup; catGroup=g[0]; var n=catFiltered().length; catGroup=был;
+    box.innerHTML=h+'<p class="catlab">Что тренируем</p><div class="catgrid">'+PICKGROUPS.map(function(g){
+        /* 01.11 (доработка): число — где мышца главная («Руки 59», а не 437) */
+        var был=catGroup; catGroup=g[0]; var n=catFiltered().filter(catPrimaryGroup).length; catGroup=был;
         return '<button type="button" data-grp="'+g[0]+'"'+(n?'':' disabled')+'><b>'+esc(g[1])+'</b><span>'+n+'</span></button>';
       }).join('')+'</div>'+
       (попул.length?'<p class="catlab">Популярное'+(где==='дом'?' дома':где==='улица'?' на улице':где==='зал'?' в зале':'')+'</p><div class="catlist">'+
-        попул.map(function(x){ return catRow(x,false); }).join('')+'</div>':'');
+        попул.map(function(x){ return catRow(x,!onPage); }).join('')+'</div>':'');
     return;
+  }
+  if(!list.length && (catWhere==='h'||catWhere==='s')){
+    /* 01.11 (доработка): дома или на улице пусто — не тупик: что есть в зале,
+       чего не хватает и что похожее можно сделать здесь */
+    var пМесто=catWhere; catWhere=''; var вЗале=catFiltered(); catWhere=пМесто;
+    if(вЗале.length){
+      var естьУ=катЕсть()||[], нехват={};
+      вЗале.filter(catWhereOk).forEach(function(x){ var нет=(x.nd||[]).filter(function(k){ return естьУ.indexOf(k)<0; }); if(нет.length===1 && нет[0]!=='gym') нехват[нет[0]]=(нехват[нет[0]]||0)+1; });
+      var ключ=Object.keys(нехват).sort(function(a,b){ return нехват[b]-нехват[a]; })[0];
+      var мыш={}; вЗале.forEach(function(x){ мыш[x.m]=(мыш[x.m]||0)+1; });
+      var гл=Object.keys(мыш).sort(function(a,b){ return мыш[b]-мыш[a]; })[0], вид=catKind(вЗале[0]);
+      var похож=CAT.ex.filter(function(x){ return x.m===гл && catKind(x)===вид && catWhereOk(x) && катЕстьOk(x) && !NOPE[x.i]; })
+        .sort(function(a,b){ return катПоп(a)-катПоп(b); }).slice(0,3);
+      var здесь=catWhere==='h'?'дома':'на улице';
+      box.innerHTML=h+'<div class="catempt"><b>'+(catWhere==='h'?'Дома':'На улице')+' такого нет</b>'+
+        '<p>В зале — '+вЗале.length+' '+plural(вЗале.length,['упражнение','упражнения','упражнений'])+'.</p>'+
+        '<button type="button" class="btn" data-catgo="g">Показать в зале</button></div>'+
+        (похож.length?'<p class="catlab">Похожее '+здесь+'</p><div class="catlist">'+похож.map(function(x){ return catRow(x,!onPage); }).join('')+'</div>':'')+
+        (ключ?'<p class="cathint">Есть '+esc(КАТ_НУЖНО[ключ]||ключ)+'? Отметьте выше — откроется ещё '+нехват[ключ]+'.</p>':'');
+      return;
+    }
   }
   if(!list.length){
     box.innerHTML=h+'<div class="catempt"><b>Ничего не нашлось</b>'+
@@ -7136,7 +7297,10 @@ function renderCatalog(){
       '</div>';
     return;
   }
-  h+='<p class="catcount">'+list.length+' '+plural(list.length,['упражнение','упражнения','упражнений'])+(onPage?' · сначала популярные':'')+
+  var грп=catGroup && PICKGROUPS.find(function(g){ return g[0]===catGroup; }), перв=грп ? list.filter(catPrimaryGroup).length : list.length, втор=list.length-перв;
+  var грИмя=грп ? грп[1].toLowerCase() : '', грМн=/[иы]$/.test(грИмя);
+  h+='<p class="catcount">'+перв+' '+plural(перв,['упражнение','упражнения','упражнений'])+
+     (втор?' · ещё '+втор+', где '+грИмя+' '+(грМн?'помогают':'помогает'):'')+((onPage||добавить)?' · сначала популярные':'')+
      (list.length>lim?' · показано '+lim+' <button type="button" class="linkbtn" data-catall>Показать все</button>':'')+'</p>';
   h+='<div class="catlist">';
   shown.forEach(function(x){ h+=catRow(x,!!catCtx); });
@@ -8884,7 +9048,7 @@ var LEVELS=[['new','новичок'],['mid','занимаюсь'],['exp','опы
 var PLACES=[['gym','зал'],['home','дом']];
 var LIMKEYS=[['knee','колени'],['back','спина'],['shoulder','плечи']];
 var PLATEKEYS=[['1.25','1,25 кг'],['2.5','2,5 кг'],['5','5 кг']];
-var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки']];
+var EQKEYS=[['db','гантели'],['kb','гиря'],['bar','турник'],['bench','скамья'],['band','резинки'],['rings','петли'],['ball','мяч'],['roll','ролл']];
 function goalName(id){ for(var i=0;i<GOALS.length;i++) if(GOALS[i][0]===id) return GOALS[i][1]; return ''; }
 function segHtml(id, list, val, multi){
   return list.map(function(x){
@@ -11925,12 +12089,25 @@ function техШаги(e){
 }
 /* два кадра крупно: берём их из той же миниатюры, что на карточке */
 function техКадры(e){
-  var d=document.createElement('div'); d.innerHTML=mediaFor(e, true);   /* крупно — полный кадр */
-  var im=[].slice.call(d.querySelectorAll('img')).map(function(x){ return x.getAttribute('src'); }).filter(Boolean);
+  /* 01.11 (доработка): полный кадр идёт с CDN — 1–2 с было пусто. Сначала
+     миниатюра (она уже на телефоне), чёткий кадр подменяет её, когда придёт. */
+  var d=document.createElement('div'); d.innerHTML=mediaFor(e);
+  var im=[].slice.call(d.querySelectorAll('img')).map(function(x){ return {s:x.getAttribute('src'), f:x.getAttribute('data-full')}; }).filter(function(o){ return o.s; });
   /* кадр не пришёл (CDN, сеть) — убираем его, а не показываем белую рамку */
-  if(im.length) return '<div class="tfr">'+im.slice(0,2).map(function(u){ return '<img src="'+u+'" alt="" loading="lazy" onerror="this.remove()">'; }).join('')+'</div>';
+  if(im.length) return '<div class="tfr">'+im.slice(0,2).map(function(o){
+      return '<img src="'+o.s+'"'+(o.f?' data-full="'+o.f+'" onload="техЧётко(this)"':'')+' alt="" onerror="техНет(this)">'; }).join('')+'</div>';
   return '<div class="tfr">'+mediaFor(e, true)+'</div>';
 }
+function техЧётко(im){
+  var f=im.getAttribute('data-full'); if(!f) return; im.removeAttribute('data-full');
+  var b=new Image(); b.onload=function(){ im.src=f; }; b.src=f;
+}
+function техНет(im){
+  var f=im.getAttribute('data-full');
+  if(f){ im.removeAttribute('data-full'); im.removeAttribute('onload'); im.src=f; } else im.remove();
+}
+/* обработчики в разметке (onload/onerror) ищут функции в window */
+window.техЧётко=техЧётко; window.техНет=техНет;
 function техHTML(e){
   var шаги=техШаги(e), свои=!шаги && e.cues && e.cues.length ? e.cues : null, список=шаги||свои;
   var h=техКадры(e);
@@ -15559,6 +15736,8 @@ document.getElementById('catalog').addEventListener('click', function(e){
   if(e.target.closest('[data-catretry]')){ openCatalog(catCtx); haptic('light'); return; }
   if(e.target.closest('#catmore')){catShown+=40;renderCatalog();return;}
   if(e.target.closest('#catwide')){catMuscle='';catGroup='';catMachine='';catGearOpen=false;catEquip='';catLevel='';catType='';catNope='';catShown=40;renderCatalog();return;}
+  var grp=e.target.closest('[data-grp]');
+  if(grp){catGroup=grp.dataset.grp;catMuscle='';catType='';catPanel='';catShown=40;renderCatalog();haptic('light');return;}
   var group=e.target.closest('[data-pickgroup]');
   if(group){catGroup=group.dataset.pickgroup;catMuscle='';catType='';catShown=40;renderCatalog();haptic('light');return;}
   var m=e.target.closest('button[data-m]');
@@ -15592,19 +15771,18 @@ if(_pcf) _pcf.addEventListener('click', function(e){
   else if(f==='nope'){ catNope=v; if(v) catType=''; }   /* отмеченные ищем среди всех типов, а не только силовых */
   catShown=40; renderCatalog();
 });
-var _pch=document.getElementById('pcatchips');
-if(_pch) _pch.addEventListener('click', function(e){
-  var c=e.target.closest('[data-catchip]'); if(!c||!CAT) return;
+document.addEventListener('click', function(e){
+  var c=e.target.closest&&e.target.closest('.catchips [data-catchip]'); if(!c||!CAT) return;
   var v=c.dataset.catchip;
   if(v==='grp'){ catGroup=''; catMuscle=''; catPanel=''; }
   else if(v==='reset'){ catGroup='';catMuscle='';catMachine='';catNope='';catEquip='';catLevel='';catType='';catQuery='';catPanel='';
-    var ps=document.getElementById('pcatsearch'); if(ps) ps.value=''; }
+    var ps=document.getElementById(catCtx?'catsearch':'pcatsearch'); if(ps) ps.value=''; }
   else if(v==='nope'){ catNope=catNope?'':'no'; catPanel=''; }
   else catPanel = catPanel===v ? '' : v;
   catShown=40; renderCatalog(); haptic('light');
 });
 document.addEventListener('click',function(e){
-  var l=e.target.closest&&e.target.closest('#pcatfilters [data-catlvl]'); if(!l) return;
+  var l=e.target.closest&&e.target.closest('[data-catlvl]'); if(!l) return;
   catLevel=l.dataset.catlvl; catPanel=''; catShown=40; renderCatalog(); haptic('light');
 });
 var _pcb=document.getElementById('pcatbody');

@@ -7,14 +7,16 @@ const {chromium}=require('playwright'),M=require('./mock'),assert=require('node:
 const legs=['quadriceps','hamstrings','calves','abductors','adductors','tibialis'];
 const kind=x=>x.c||'strength';
 const leg=C.ex.filter(x=>String(x.pl||'g').includes('g')&&!['stretching','cardio'].includes(kind(x))&&[x.m,x.m2,...(x.sm||[])].some(m=>legs.includes(m)));
+/* 01.11 (доработка): на плитке и в начале строки — только где ноги главные */
+const legMain=leg.filter(x=>legs.includes(x.m)||legs.includes(x.m2));
 (async()=>{const br=await chromium.launch();try{
 for(const theme of ['light','dark'])for(const width of [320,390]){
  const p=await br.newPage({viewport:{width,height:844}}),errors=await M.поднять(p,{theme,page:'gym'});
  await p.click('.l1 button[data-page="gym"]');await p.click('#p-gym [data-zseg="ref"]');await p.waitForSelector('#pcatbody [data-grp="legs"]');
- assert.match(await p.locator('#pcatbody [data-grp="legs"]').innerText(),new RegExp('Ноги\\s+'+leg.length+'$'));
+ assert.match(await p.locator('#pcatbody [data-grp="legs"]').innerText(),new RegExp('Ноги\\s+'+legMain.length+'$'));
  await p.click('#pcatbody [data-grp="legs"]');
  assert.match(await p.locator('#pcatchips [data-catchip="grp"]').innerText(),/Ноги/);
- assert.match(await p.locator('#pcatbody .catcount').innerText(),new RegExp('^'+leg.length+' '));
+ assert.match(await p.locator('#pcatbody .catcount').innerText(),new RegExp('^'+legMain.length+' '));
  await p.click('#pcatbody [data-catall]');assert.equal(await p.locator('#pcatbody .catitem').count(),leg.length);
  const reverse=C.ex.findIndex(x=>leg.includes(x)&&![x.m,x.m2].some(m=>legs.includes(m)));   /* 01.11: обратный выпад ушёл в «Растяжку» — берём любое, где ноги только помогают */
  assert.equal(await p.locator('#pcatbody .catitem[data-i="'+reverse+'"]').count(),1);
@@ -32,14 +34,15 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  await p.click('#pcatchips [data-catchip="m"]');
  await p.click('#pcatfilters [data-gear="m:bike"]');assert.equal(await p.locator('#pcatbody .catitem').count(),1,'велотренажёр должен оставаться в выдаче');
  await p.click('#p-ref [data-zseg="gym"]');await p.click('#p-gym [data-zseg="ref"]');assert.equal(await p.locator('#pcatbody .catitem').count(),1,'велотренажёр должен оставаться в выдаче');await p.click('#pcatchips [data-catchip="reset"]');
- // Тот же визуальный фильтр при добавлении упражнения в день.
+ // Тот же визуальный фильтр при добавлении упражнения в день (01.11: чипы и панель — как в каталоге).
  await p.click('#p-ref [data-zseg="gym"]');await p.click('#addex');await p.waitForSelector('#catalog .catitem');
- await p.click('#catalog [data-pickgroup="legs"]');await p.click('#catalog [data-catall]');assert.equal(await p.locator('#catalog .catitem').count(),leg.length);
- await p.click('#catalog details.catgear summary');await p.click('#catalog [data-geartab="machines"]');
+ if(await p.locator('#catalog .catchips [data-catchip="grp"]').count())await p.click('#catalog .catchips [data-catchip="grp"]');
+ await p.click('#catalog [data-grp="legs"]');await p.click('#catalog [data-catall]');assert.equal(await p.locator('#catalog .catitem').count(),leg.length);
+ await p.click('#catalog .catchips [data-catchip="m"]');
  await p.locator('#catalog [data-gear="m:legcurl"] img').first().scrollIntoViewIfNeeded();
  await p.waitForFunction(()=>[...document.querySelectorAll('#catalog [data-gear="m:legcurl"] img')].some(im=>im.complete&&im.naturalWidth));
  await p.locator('#catalog .modalbox').evaluate(e=>e.scrollTop=0);
- const colors=await p.locator('#catalog [data-geartab="machines"]').evaluate(b=>{const c=getComputedStyle(b);return [c.color,c.backgroundColor]});
+ const colors=await p.locator('#catalog .catchips [data-catchip="m"]').evaluate(b=>{const c=getComputedStyle(b);return [c.color,c.backgroundColor]});
  const lum=c=>{let [r,g,b]=c.match(/[\d.]+/g).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*b};const [a,b]=colors.map(lum);assert.ok((Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5,colors.join(' / '));
  await p.screenshot({path:'/tmp/catalog-equipment-'+theme+'-'+width+'.png'});
  await p.click('#catalog [data-gear="m:legcurl"]');

@@ -58,7 +58,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   await page.click('#pcatfilters [data-gear="m:smith"]'); await page.waitForTimeout(600);
   дано(!(await page.isVisible('#pcatfilters')) && /Смит/.test(await page.textContent('#pcatchips [data-catchip="m"]')),
     'выбран Смит — панель закрылась, чип подписан');
-  const смит = await page.$$eval('#pcatbody .catitem .catsub', n => n.map(e => e.textContent));
+  const смит = await page.$$eval('#pcatbody .catitem .cattx', n => n.map(e => e.textContent));   /* 01.11: «Присед в Смите» — Смит теперь в имени */
   дано(смит.length > 3 && смит.every(t => /Смит/i.test(t)), 'в списке только Смит: ' + смит.length);
   await page.click('#pcatchips [data-catchip="reset"]'); await page.waitForTimeout(500);
   дано(!!(await page.$('#pcatbody .catgrid')), '«сбросить» вернул стартовый экран');
@@ -70,7 +70,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(/присед/i.test(первый), 'первое найденное отвечает запросу: ' + первый);
   await page.click('#pcatbody .catitem'); await page.waitForTimeout(900);
   дано(await page.isVisible('#techm.show'), 'нажатие на строку открыло карточку');
-  дано(/Работает/.test(await page.textContent('#techbody')) && /Где/.test(await page.textContent('#techbody')), 'в карточке — что работает и где');
+  дано(/Работает|Растягивает/.test(await page.textContent('#techbody')) && /Нужно/.test(await page.textContent('#techbody')), 'в карточке — что работает и что нужно');
   await page.click('#techbody [data-techclose]'); await page.waitForTimeout(400);
 
   /* 5. снаряд не написан дважды: в имени и в серой подписи */
@@ -83,6 +83,34 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   дано(строки.every(r => !/\(/.test(r.имя)), 'имена короткие, без скобок: ' + (строки[0] || {}).имя);
   дано(строки.filter(r => /штанга/i.test(r.имя) && /штанга/i.test(r.подпись)).length === 0, 'снаряд не повторяется в подписи');
   await page.fill('#pcatsearch', ''); await page.waitForTimeout(400);
+
+  /* 7. 01.11, макет «Каталог: доработка (A + B)»: «Что есть», числа по основным мышцам,
+     пустая выдача дома — не тупик, карточка: день и отмена */
+  await page.click('#pcatwhere [data-where="h"]'); await page.waitForTimeout(500);
+  дано(await page.isVisible('#pcatinv [data-catinv="db"]'), 'дома — «Что есть» вместо снаряда');
+  дано(await page.$$eval('#pcatchips [data-catchip]', bs => bs.map(b => b.dataset.catchip).join(',')) === 'l', 'дома из чипов — только уровень');
+  const руки0 = await page.$eval('#pcatbody [data-grp="arms"] span', e => +e.textContent);
+  await page.click('#pcatinv [data-catinv="db"]'); await page.waitForTimeout(500);
+  const руки1 = await page.$eval('#pcatbody [data-grp="arms"] span', e => +e.textContent);
+  дано(руки1 > руки0 && руки1 < 120, 'гантели открывают упражнения на руки, число — только где руки главные: ' + руки0 + ' → ' + руки1);
+  await page.fill('#pcatsearch', 'жим лёжа штанга'); await page.waitForTimeout(700);
+  дано(/Дома такого нет/.test(await page.textContent('#pcatbody')) && !!(await page.$('#pcatbody [data-catgo="g"]')), 'пусто дома — «Показать в зале»');
+  await page.click('#pcatbody [data-catgo="g"]'); await page.waitForTimeout(600);
+  дано(await page.$eval('#pcatwhere [aria-pressed="true"]', b => b.dataset.where) === 'g' && (await page.$$('#pcatbody .catitem')).length > 0, '«Показать в зале» переключил место');
+  await page.click('#pcatwhere [data-where="h"]'); await page.click('#pcatinv [data-catinv=""]'); await page.click('#pcatwhere [data-where="g"]');
+  await page.fill('#pcatsearch', 'растяжка над головой'); await page.waitForTimeout(700);
+  await page.click('#pcatbody .catitem'); await page.waitForTimeout(800);
+  дано(/Растягивает/.test(await page.textContent('#techbody')), 'у растяжки — «Растягивает»');
+  if (await page.$('#techbody [data-catday]')) {
+    await page.click('#techbody [data-catday]'); await page.waitForTimeout(300);
+    дано((await page.$$('#techbody [data-catdk]')).length >= 2, 'можно выбрать день');
+    await page.click('#techbody [data-catadd]'); await page.waitForTimeout(500);
+    дано(/Добавлено в/.test(await page.textContent('#techbody .cattoast')), 'добавлено — и сказано куда');
+    await page.click('#techbody [data-catundo]'); await page.waitForTimeout(400);
+    дано(!!(await page.$('#techbody [data-catday]')), '«Отменить» вернул кнопку');
+  }
+  await page.click('#techbody [data-techclose]'); await page.waitForTimeout(300);
+  await page.fill('#pcatsearch', ''); await page.waitForTimeout(300);
 
   /* 8. одинаковых имён в каталоге не осталось */
   /* весь скрипт приложения в IIFE — CAT изнутри page.evaluate не виден,
@@ -113,13 +141,17 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
      это тот же подход и то же фото, они живут подписью у своей базы. */
   await page.fill('#pcatsearch', 'Пендлея');
   await page.waitForTimeout(800);
+  /* 01.11 (доработка): вариант в строке — меткой «+1 вариант», а чем отличается — в карточке */
   const пенд = await page.$$eval('#pcatbody .catitem', rs => rs.map(r => ({
     имя: (r.querySelector('.cattx b') || {}).textContent || '',
-    вариант: [...r.querySelectorAll('.cathard')].map(u => u.textContent).join(' ; ') })));
-  дано(пенд.length === 1 && /^Тяга$/.test(пенд[0].имя),
+    вариант: (r.querySelector('.catvar') || {}).textContent || '' })));
+  дано(пенд.length === 1 && /^Тяга/.test(пенд[0].имя),
     'тяжёлый вариант ищется по имени и ведёт к своей базе: ' + (пенд[0] || {}).имя);
-  дано(/с пола/.test((пенд[0] || {}).вариант || ''),
-    'и рядом сказано, чем он отличается: ' + ((пенд[0] || {}).вариант || '—').slice(0, 70));
+  дано(/\+\d вариант/.test((пенд[0] || {}).вариант || ''), 'в строке — метка вариантов: ' + ((пенд[0] || {}).вариант || '—'));
+  await page.click('#pcatbody .catitem'); await page.waitForTimeout(800);
+  дано(/Варианты/.test(await page.textContent('#techbody')) && /с пола/.test(await page.textContent('#techbody')),
+    'в карточке сказано, чем вариант отличается');
+  await page.click('#techbody [data-techclose]'); await page.waitForTimeout(300);
 
   await page.fill('#pcatsearch', 'флаг дракона');
   await page.waitForTimeout(800);
@@ -140,7 +172,7 @@ const кадр = fs.readFileSync(__dirname + '/fixtures/a.jpg');
   await page.click('#pcatwhere [data-where="s"]'); await page.fill('#pcatsearch', 'вис'); await page.waitForTimeout(700);
   дано((await имена2()).includes('Вис на турнике'), '«Улица»: вис на турнике есть');
   await page.fill('#pcatsearch', 'штанг'); await page.waitForTimeout(700);
-  дано(!(await имена2()).length, '«Улица»: упражнений со штангой нет');
+  дано(!(await имена2()).some(n => /штанг/i.test(n)) && /На улице такого нет/.test(await page.textContent('#pcatbody')), '«Улица»: упражнений со штангой нет — и сказано, где они есть');
   await page.click('#pcatwhere [data-where="h"]'); await page.fill('#pcatsearch', 'подтягивания'); await page.waitForTimeout(700);
   дано(!(await имена2()).some(n => /^Подтягивания/.test(n)), '«Дом»: турника нет — подтягиваний нет');
   await page.fill('#pcatsearch', 'отжимания'); await page.waitForTimeout(700);
