@@ -11219,7 +11219,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '02.11 11:04';
+var BUILD = '02.11 11:37';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -14159,8 +14159,12 @@ function adoptState(key, b){
     }
     if(key==='me'){
       if(!b.me || typeof b.me!=='object') return false;
+      var режБыл=JSON.stringify(режимСдвигиМе()||null);
       gset('me', b.me); fillMe(); applyOnly(); renderGoalCard(); renderNudge(); renderProfProg();
       if(!anyTouched()) renderList();
+      /* 02.11, живая проверка: режим поставил тренер в боте — дуга и дата дня пересчитываются сразу,
+         а не после перехода на другой экран */
+      if(JSON.stringify(режимСдвигиМе()||null)!==режБыл){ try{ refreshDay(); }catch(e){} try{ renderHome(); }catch(e){} }
       return true;
     }
     if(key==='deload_user'){return deloadTake(b,true);}
