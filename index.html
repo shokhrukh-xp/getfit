@@ -956,6 +956,9 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 #vhod.show{display:flex}
 #vhod .vbtns{display:flex;flex-direction:column;gap:10px}
 #vhod .vapple{background:var(--text);color:var(--bg);border-color:var(--text)}
+/* 02.11: вход через Google — светлая кнопка со знаком G (как просит Google: знак слева, «Войти через Google») */
+#vhod .vgoogle{background:#fff;color:#1f1f1f;border:1px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:10px}
+#vhod .vgoogle svg{width:18px;height:18px;flex:none}
 #vhod #vmail input{letter-spacing:normal}
 #vhod #vcodebox input{letter-spacing:.3em}
 #vhod .vnaz{background:none;border:0;color:var(--muted);font:inherit;font-size:15px;padding:12px;min-height:44px}
@@ -5023,6 +5026,7 @@ body:not([data-f~="gorod"]) .f-gorod{display:none!important}
     <p id="vtext">Еда по фото, тренер и программа зала — в одном дневнике.</p>
     <div class="vbtns" id="vmain">
       <button type="button" class="btn wide vapple" id="vapple" hidden>Войти через Apple</button>
+      <button type="button" class="btn wide vgoogle" id="vgoogle" hidden><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Войти через Google</button>
       <button type="button" class="btn prim wide" id="vtg">Войти через Telegram</button>
       <button type="button" class="btn wide" id="vmailbtn">Войти по почте</button>
     </div>
@@ -25340,6 +25344,8 @@ function входПоказать(msg){
   /* Sign in with Apple — на iPhone (на Android Apple входит только через сайт — позже) */
   var ios=false; try{ ios=window.Capacitor&&Capacitor.getPlatform&&Capacitor.getPlatform()==='ios'; }catch(e){}
   document.getElementById('vapple').hidden=!ios;
+  /* 02.11: Google — когда в сборке есть ID клиентов Google (window.WB_GOOGLE из scripts/www.sh) и плагин SocialLogin */
+  document.getElementById('vgoogle').hidden=!входGoogleМожно();
   входШаг('main'); v.classList.add('show');
   if(msg) входОшибка(msg==='Войдите заново.' ? 'Сессия закончилась — войдите заново.' : msg);
 }
@@ -25392,6 +25398,33 @@ function входТелеграм(){
     ВХОД.ждём=setTimeout(входТгЖдать, 2000);
   }).catch(function(){ входЗанят('vtg', false); входОшибка('Нет связи с сервером. Попробуйте ещё раз.'); });
 }
+/* 02.11: вход через Google — плагин SocialLogin (@capgo/capacitor-social-login). ID клиентов Google
+   (не секрет) кладёт в сборку scripts/www.sh: window.WB_GOOGLE={web, ios}. iPhone — iOS-клиент,
+   Android — веб-клиент (так требует Credential Manager). Сервер проверяет ID token (/app/google). */
+function входGoogleПлагин(){ try{ return (window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.SocialLogin)||null; }catch(e){ return null; } }
+function входGoogleМожно(){ var g=window.WB_GOOGLE||{}; return ПЛ.имя==='native' && !!входGoogleПлагин() && !!(ПЛ.андроид()?g.web:g.ios); }
+function входGoogle(){
+  var п=входGoogleПлагин(), g=window.WB_GOOGLE||{}, андр=ПЛ.андроид();
+  if(!п||!входGoogleМожно()){ входОшибка('Вход через Google пока недоступен в этой сборке.'); return; }
+  входЗанят('vgoogle', true);
+  var нач=андр?{webClientId:g.web, mode:'online'}:{iOSClientId:g.ios, iOSServerClientId:g.web||undefined, mode:'online'};
+  п.initialize({google:нач}).then(function(){
+    /* на Android с обычной BridgeActivity scopes передавать нельзя — email и профиль и так входят */
+    return п.login({provider:'google', options:андр?{}:{scopes:['email','profile']}});
+  }).then(function(r){
+    var o=(r&&r.result)||{}, имя=(o.profile&&(o.profile.name||[o.profile.givenName,o.profile.familyName].filter(Boolean).join(' ')))||'';
+    if(!o.idToken) throw new Error('нет idToken');
+    return входЗапрос('/app/google', {token:o.idToken, name:имя});
+  }).then(function(d){
+    входЗанят('vgoogle', false);
+    if(!d.ok){ входОшибка(d.error); return; }
+    входГотово(d);
+  }).catch(function(e){
+    входЗанят('vgoogle', false);
+    /* человек сам закрыл окно Google — без ошибки */
+    if(!/cancel|12501|-5\b|отмен/i.test(String((e&&(e.message||e.code))||e||''))) входОшибка('Google не подтвердил вход. Попробуйте ещё раз.');
+  });
+}
 /* Sign in with Apple — плагин SignInWithApple (@capacitor-community/apple-sign-in) */
 function входApple(){
   var п=null; try{ п=Capacitor.Plugins.SignInWithApple; }catch(e){}
@@ -25420,6 +25453,7 @@ function входApple(){
     else if(b.id==='vlogin') входПочтаВойти();
     else if(b.id==='vtg') входТелеграм();
     else if(b.id==='vapple') входApple();
+    else if(b.id==='vgoogle') входGoogle();
     else if(b.id==='vback'){ ВХОД.tg=null; clearTimeout(ВХОД.ждём); входШаг(ВХОД.шаг==='code'?'mail':'main'); }
   });
   v.addEventListener('keydown', function(e){
