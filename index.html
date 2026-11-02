@@ -3625,6 +3625,12 @@ body.ordmode #list .sstag{color:var(--text)}
 #subm .subprice{display:block;margin:2px 0 4px;font-size:15px;color:var(--muted)}
 #subm .subprice b{font-size:36px;font-weight:800;color:var(--text);letter-spacing:-.02em;margin-right:4px}
 #subm .subterms{display:block;font-size:13px;color:var(--muted)}
+/* 02.11: тарифы магазина — год и месяц */
+#subm .magvar{display:flex;flex-direction:column;gap:8px;margin:4px 0 10px}
+#subm .seg-opt{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:15px}
+#subm .seg-opt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+#subm .seg-opt small{color:var(--muted);font-size:12px;margin-left:4px}
+#subm .subterms a{color:inherit;text-decoration:underline}
 #subm .subin{list-style:none;padding:0;margin:14px 0;gap:0}
 #subm .subin li{display:block;position:relative;padding:10px 0 10px 26px;border-top:1px solid var(--line);font-size:14px;line-height:1.45}
 #subm .subin li:first-child{border-top:0}
@@ -5770,7 +5776,10 @@ var ПЛ=(function(){
       назадФ=f; назадВкл=!!on;
     },
     /* оплата Stars — только в Telegram; в приложении Pro продаётся покупкой магазина (этап 3) */
-    оплатаStars:function(){ return (ТГ&&ТГ.openInvoice)?ТГ:null; }
+    оплатаStars:function(){ return (ТГ&&ТГ.openInvoice)?ТГ:null; },
+    /* 02.11: покупка Pro в App Store / Google Play — плагин @capgo/native-purchases */
+    покупки:function(){ return плагин('NativePurchases'); },
+    андроид:function(){ try{ return !!(cap&&cap.getPlatform&&cap.getPlatform()==='android'); }catch(e){ return false; } }
   };
 })();
 /* 22.10, дизайн-аудит (его выбор «Глубокая полировка», пакет А): значки —
@@ -19860,7 +19869,9 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){} } return d; }).catch(function(){ return null; });
+    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){}
+      /* 02.11: приложение из магазина — один раз за запуск сверить покупки магазина с сервером (продления, покупка с другого телефона) */
+      if(ПЛ.имя==='native' && !МАГ.сверено && ПЛ.покупки()){ МАГ.сверено=true; магСверить(true); } } return d; }).catch(function(){ return null; });
 }
 function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока не знаем — не мешаем */
 /* 29.10, этап 0 ролей (его условие «нужно убедиться, что ничего не сломаем»):
@@ -21213,8 +21224,104 @@ document.getElementById('probox').addEventListener('click', function(e){
     ПЛ.открытьTelegram(u);
     haptic('light'); return; }
 });
+/* ── 02.11: Pro в приложении из магазина (его выбор «Напрямую в магазины», месяц + год,
+   $9.99 / $59.99, 7 дней бесплатно). Цены и проба — только из магазина (Apple 3.1.2: не
+   вписывать цены руками). Ни звёзд, ни промокодов, ни Telegram-оплаты в приложении из
+   магазина (Apple 3.1.1, Google Payments). Покупку проверяет сервер: Apple — JWS
+   транзакции, Google — purchaseToken; appAccountToken — UUID покупателя с сервера. ── */
+var МАГ={товары:null, грузится:false, выбор:'wellbol_pro_year', занят:false, ошибка:'', сверено:false};
+var МАГ_ТОВАРЫ=['wellbol_pro_month','wellbol_pro_year'], МАГ_ПЛАН={wellbol_pro_month:'month', wellbol_pro_year:'year'};
+var МАГ_УСЛОВИЯ='https://wellbol.com/terms', МАГ_ПОЛИТИКА='https://wellbol.com/privacy';
+function магВкл(){ return ПЛ.имя==='native' && !!ПЛ.покупки(); }
+function магЗагрузить(){
+  var np=ПЛ.покупки(); if(!np||МАГ.товары||МАГ.грузится) return;
+  МАГ.грузится=true;
+  np.getProducts({productIdentifiers:МАГ_ТОВАРЫ, productType:'subs'}).then(function(r){
+    var по={};
+    ((r&&r.products)||[]).forEach(function(p){
+      /* Android: identifier — базовый план, planIdentifier — товар; предложений может быть несколько */
+      var id=ПЛ.андроид()?(p.planIdentifier||p.identifier):p.identifier;
+      if(МАГ_ТОВАРЫ.indexOf(id)<0) return;
+      var проба = ПЛ.андроид() ? !!(p.offerId&&/trial/i.test(p.offerId))
+        : !!(p.introductoryPrice&&+p.introductoryPrice.price===0&&p.introEligibility!==1);
+      if(!по[id] || (проба && !по[id].проба)) по[id]={id:id, цена:p.priceString, проба:проба, offerToken:p.offerToken||null, p:p};
+    });
+    МАГ.товары=по; МАГ.грузится=false; МАГ.ошибка=Object.keys(по).length?'':'Магазин не отдал тарифы. Проверьте интернет и откройте ещё раз.'; renderSub();
+  }).catch(function(e){ МАГ.грузится=false; МАГ.ошибка='Магазин не ответил. Проверьте интернет и откройте ещё раз.'; renderSub(); });
+}
+/* покупка → серверу на проверку; true — Pro подключён */
+function магОтправить(t){
+  if(t&&t.jwsRepresentation) return fPost('/app/iap/apple', {uid:syncUid(), jws:t.jwsRepresentation});
+  if(t&&t.purchaseToken) return fPost('/app/iap/google', {uid:syncUid(), token:t.purchaseToken});
+  return Promise.resolve({ok:false, error:'Магазин не вернул покупку.'});
+}
+function магКупить(){
+  var np=ПЛ.покупки(), т=МАГ.товары&&МАГ.товары[МАГ.выбор]; if(!np||!т||МАГ.занят) return;
+  МАГ.занят=true; МАГ.ошибка=''; renderSub();
+  fGet('/app/iap/token').then(function(d){
+    var o={productIdentifier:т.id, productType:'subs', appAccountToken:d&&d.token||undefined};
+    if(ПЛ.андроид()){ o.planIdentifier=МАГ_ПЛАН[т.id]; if(т.offerToken) o.offerToken=т.offerToken; }
+    return np.purchaseProduct(o);
+  }).then(магОтправить).then(function(d){
+    МАГ.занят=false;
+    if(d&&d.ok){ haptic('ok'); subPull().then(function(){ closeSub(); say('Wellböl Pro подключён — тренер открыт.'); }); return; }
+    МАГ.ошибка=(d&&d.error)||'Не удалось проверить покупку. Нажмите «Восстановить покупки».'; haptic('err'); renderSub();
+  }).catch(function(e){
+    МАГ.занят=false;
+    var отмена=/cancel|отмен/i.test(String(e&&(e.message||e.code)||''));
+    if(!отмена){ МАГ.ошибка='Покупка не прошла: '+String((e&&e.message)||'ошибка магазина').slice(0,120); haptic('err'); }
+    renderSub();
+  });
+}
+/* «Восстановить покупки» и тихая сверка при запуске: всё, что магазин считает купленным, — серверу */
+function магСверить(тихо){
+  var np=ПЛ.покупки(); if(!np) return Promise.resolve(0);
+  var шаг=тихо?Promise.resolve():np.restorePurchases().catch(function(){});
+  return шаг.then(function(){ return np.getPurchases({productType:'subs'}); }).then(function(r){
+    var все=((r&&r.purchases)||[]).filter(function(t){ return t&&(t.jwsRepresentation||t.purchaseToken); });
+    return Promise.all(все.map(function(t){ return магОтправить(t).catch(function(){ return null; }); })).then(function(о){
+      var ок=о.filter(function(d){ return d&&d.ok; }).length;
+      return (ок?subPull():Promise.resolve()).then(function(){ return ок; });
+    });
+  }).catch(function(){ return 0; });
+}
+function renderSubМаг(w){
+  магРисовать(w);
+  var l=document.getElementById('sub-list');
+  if(l) l.innerHTML=['Разбор еды без ограничений — фото и словами: калории, белок, жиры, клетчатка',
+    'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
+    'Кафе и доставка: меню заведений и места рядом под вашу норму',
+    'Сборка программы под вас и правки по ходу',
+    'Недельный разбор: что получилось, что менять'].map(function(t){ return '<li>'+t+'</li>'; }).join('');
+  var пр=document.getElementById('sub-promo'); if(пр) пр.hidden=true;   /* промокоды — не в приложении из магазина (Apple 3.1.1) */
+  var т=МАГ.товары&&МАГ.товары[МАГ.выбор], b=document.getElementById('sub-buy');
+  if(b){ b.textContent=МАГ.занят?'Открываю магазин…':(т&&т.проба?'Попробовать 7 дней бесплатно':'Подключить'); b.disabled=!т||МАГ.занят; }
+  var n=document.getElementById('sub-note');
+  if(n) n.innerHTML=(МАГ.ошибка?'<i>'+esc(МАГ.ошибка)+'</i><br>':'')+'<button type="button" class="linkbtn" id="sub-restore">Восстановить покупки</button>';
+  var r=document.getElementById('subrow'), с=SUB.sub||{};
+  if(r){
+    if(с.kind==='grand'){ r.hidden=true; }
+    else if(с.ok){
+      r.hidden=false;
+      r.innerHTML='Wellböl Pro подключён'+(с.trial?' — пробный период':'')+(с.until?(с.kind==='store'&&!с.canceled?', продление '+датаРус(с.until):' до '+датаРус(с.until)):'')+'.'+
+        (с.kind==='store'?' <button type="button" id="sub-manage">Управлять</button>':'');
+    } else { r.hidden=false; r.innerHTML='Wellböl Pro — по подписке. <button type="button" id="sub-on">Подключить</button>'; }
+  }
+}
+function магРисовать(w){
+  var т=МАГ.товары, м=т&&т.wellbol_pro_month, г=т&&т.wellbol_pro_year;
+  if(!т){ w.innerHTML='<span class="subterms">'+(МАГ.ошибка?esc(МАГ.ошибка):'Загружаю цены из магазина…')+'</span>'; магЗагрузить(); return; }
+  if(!т[МАГ.выбор]) МАГ.выбор=г?'wellbol_pro_year':'wellbol_pro_month';
+  var в=т[МАГ.выбор], магазин=ПЛ.андроид()?'Google Play':'App Store';
+  function вар(x, имя, под){ return x?'<button type="button" class="seg-opt'+(МАГ.выбор===x.id?' on':'')+'" data-mag="'+x.id+'"><b>'+esc(имя)+'</b> · '+esc(x.цена)+(под?' <small>'+esc(под)+'</small>':'')+'</button>':''; }
+  w.innerHTML='<span class="magvar">'+вар(г,'Год',м&&г&&м.p&&г.p&&м.p.price>0?'≈ '+Math.round(100-г.p.price/(м.p.price*12)*100)+'% выгоднее':'')+вар(м,'Месяц','')+'</span>'+
+    '<span class="subterms">'+(в&&в.проба?'7 дней бесплатно, затем '+esc(в.цена)+(в.id==='wellbol_pro_year'?' в год':' в месяц')+'. ':'')+
+    'Подписка продлевается автоматически, пока вы не отмените её в настройках '+магазин+' — не позже чем за 24 часа до конца периода. '+
+    '<a href="#" data-mag-link="'+МАГ_УСЛОВИЯ+'">Условия</a> · <a href="#" data-mag-link="'+МАГ_ПОЛИТИКА+'">Конфиденциальность</a></span>';
+}
 function renderSub(){
   var w=document.getElementById('sub-what'); if(!w||!SUB) return;
+  if(ПЛ.имя==='native') return renderSubМаг(w);
   var ц=SUB.stars||500;
   /* 17.10, его выбор J: цена крупно, условия — сразу под ней */
   w.innerHTML='<span class="subprice"><b>'+ц+' ★</b> в месяц</span> <span class="subterms">Списывается раз в месяц, отменить можно в любой момент.</span>';
@@ -21229,7 +21336,9 @@ function renderSub(){
   var n=document.getElementById('sub-note');
   if(n) n.innerHTML = SUB.link ? '' : '<i>Оплата открывается из Telegram. Если кнопка не работает — напишите боту «подписка».</i>';
   var r=document.getElementById('subrow'), с=SUB.sub||{};
-  if(r){
+  if(r && с.kind==='store' && с.ok){   /* 02.11: оформлена в App Store / Google Play — управлять там */
+    r.hidden=false; r.innerHTML='Wellböl Pro подключён через '+(с.store==='google'?'Google Play':'App Store')+(с.until?(с.canceled?' до ':', продление ')+датаРус(с.until):'')+'. Управлять — в настройках телефона.';
+  } else if(r){
     if(с.kind==='grand'){ r.hidden=true; }                   /* свой — про цену молчим */
     else if(с.ok){
       r.hidden=false;
@@ -21277,6 +21386,19 @@ function стенаЕсли(e){
 }
 document.addEventListener('click', function(e){
   if(e.target.closest('#sub-on')){ openSub(); haptic('light'); return; }
+  /* 02.11: покупка в магазине */
+  var мв=e.target.closest('[data-mag]'); if(мв){ МАГ.выбор=мв.getAttribute('data-mag'); МАГ.ошибка=''; renderSub(); haptic('light'); return; }
+  var мс=e.target.closest('[data-mag-link]'); if(мс){ e.preventDefault(); ПЛ.открыть(мс.getAttribute('data-mag-link')); return; }
+  if(e.target.closest('#sub-restore')){
+    var rb=e.target.closest('#sub-restore'); rb.disabled=true; rb.textContent='Проверяю покупки…';
+    магСверить(false).then(function(ок){ if(ок){ closeSub(); say('Покупка восстановлена — Wellböl Pro подключён.'); } else { МАГ.ошибка='Покупок в магазине не нашлось.'; renderSub(); } });
+    return;
+  }
+  if(e.target.closest('#sub-manage')){
+    var np=ПЛ.покупки(); if(np) np.manageSubscriptions().catch(function(){});
+    else say('Подписка оформлена в App Store или Google Play — управлять ею можно в настройках телефона.');
+    return;
+  }
   if(e.target.closest('#sub-off')){
     var b=e.target.closest('#sub-off'); b.disabled=true; b.textContent='Отменяю…';
     fPost('/sub/cancel', {uid:syncUid()}).then(function(d){
@@ -21299,6 +21421,7 @@ document.addEventListener('click', function(e){
   var m=document.getElementById('subm');
   if(m && m.classList.contains('show') && e.target===m){ closeSub(); return; }
   if(e.target.closest('#sub-buy')){
+    if(ПЛ.имя==='native'){ магКупить(); return; }
     if(SUBBUSY || !SUB || !SUB.link) return;
     var tg=ПЛ.оплатаStars();
     if(!tg){ say('Оплата открывается только внутри Telegram.'); return; }
