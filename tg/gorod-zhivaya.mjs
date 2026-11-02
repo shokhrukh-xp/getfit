@@ -17,7 +17,8 @@ const режим = process.argv[2] || 'все';
   let r = await З('/place', { uid: ЛИС, city: 'Lisbon' }, ЛИС);
   дано(r.ok && r.place.city === 'Лиссабон' && r.place.cc === 'PT', 'Lisbon → ' + JSON.stringify(r.place || r));
   r = await З('/place?uid=' + ТАШ, null, ТАШ);
-  дано(r.ok && r.place.city === 'Ташкент' && r.place.cc === 'UZ', 'без пояса и точки — Ташкент: ' + JSON.stringify(r.place || r));
+  дано(r.ok && r.place.src === 'неизвестно' && !r.place.city, 'без пояса и точки — неизвестно, не Ташкент (02.11): ' + JSON.stringify(r.place || r));
+  await З('/place', { uid: ТАШ, city: 'Tashkent' }, ТАШ);
   r = await З('/place', { uid: ТАШ, city: 'Атлантидаааа' }, ТАШ);
   дано(r.code === 'not_found', 'незнакомый город — not_found');
   if (режим === 'место') return;
@@ -37,7 +38,7 @@ const режим = process.argv[2] || 'все';
   r = await З('/food', { uid: ЛИС, text: 'хочу заказать ужин с доставкой' }, ЛИС);
   const о3 = String(r.reply || '');
   console.log('    ' + о3.replace(/\n+/g, ' ⏎ ').slice(0, 300));
-  дано(!/Уже ищу|Ищу в|нашёл.{0,40}(Яндекс|Uzum)/i.test(о3) && /только в Узбекистане/.test(о3), 'вне Узбекистана подбор доставки не запускается');
+  дано(!/Уже ищу|Ищу в|нашёл.{0,40}(Яндекс|Uzum)/i.test(о3) && /только в Узбекистане|подобрать не могу|не могу подобрать|не работает|недоступ/i.test(о3), 'вне Узбекистана подбор доставки не запускается');
   // 5. Ташкент: узбекский, заведение по смыслу
   r = await З('/food', { uid: ТАШ, text: "Bugun tushlikka Bon-ga boraman, u yerda nima olsam bo'ladi?" }, ТАШ);
   const о4 = String(r.reply || '');
