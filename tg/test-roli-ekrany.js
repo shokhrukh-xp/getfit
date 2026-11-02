@@ -131,7 +131,7 @@ async function проверить(p, где, имя, sel){
     ok(!s.запросы.some(x => x.p.endsWith('/roli/end')), где + 'первое нажатие «Отключить» только спрашивает');
     await p.click('#rolmy [data-rol="end"]'); await p.waitForTimeout(400);
     ok(s.запросы.some(x => x.p.endsWith('/roli/end') && x.тело.link === 'l1'), где + 'второе — отключает');
-    ok(/Пока никого/.test(await p.$eval('#rolmy', e => e.textContent)), где + 'после отключения — пусто');
+    ok(/Есть живой тренер или нутрициолог/.test(await p.$eval('#rolmy', e => e.textContent)), где + 'после отключения — пусто, как подключить');
     ok(!err.length, где + 'клиент: без ошибок страницы ' + err.join(' | ').slice(0, 200));
     await p.close();
 
@@ -142,14 +142,22 @@ async function проверить(p, где, имя, sel){
     const err0 = await M.поднять(p0, o0); await p0.waitForTimeout(600);
     await p0.click('#profbtn'); await p0.waitForTimeout(300);
     const гр2 = await p0.$$eval('#pqmain .pqlab', ns => ns.filter(n => n.offsetParent).map(n => n.textContent.trim()));
-    ok(гр2.join('|') === 'О вас|ИИ-тренер|Зал|Друзья|Приложение', где + 'обычному пользователю — ни «Специалистов», ни «Компании»: ' + гр2.join(' · '));
-    ok(!(await виден(p0, '#pq-spec')) && !(await виден(p0, '#pq-pro')) && !(await виден(p0, '#pq-co')), где + 'строк ролей не видно');
+    /* 02.11, его «Включить специалистов всем»: «Мои специалисты · подключить» — всем; кабинета и компании нет */
+    ok(гр2.join('|') === 'О вас|ИИ-тренер|Зал|Друзья|Специалисты|Приложение', где + 'обычному пользователю — «Специалисты», без «Компании»: ' + гр2.join(' · '));
+    ok(await виден(p0, '#pq-spec') && /подключить/.test(await p0.$eval('#pv-spec', e => e.textContent)) && !(await виден(p0, '#pq-pro')) && !(await виден(p0, '#pq-co')), где + '«Мои специалисты · подключить», кабинета и компании нет');
+    await p0.click('#pq-spec'); await p0.waitForSelector('#rol-kod', { timeout: 3000 }).catch(() => {});
+    ok(/Есть живой тренер или нутрициолог\?/.test(await p0.$eval('#rolmy', e => e.textContent)), где + 'как подключить — сказано');
+    await p0.fill('#rol-kod', 'abc'); await p0.click('#rolmy [data-rol="kod"]'); await p0.waitForTimeout(200);
+    ok(/Не похоже на ссылку/.test(await p0.$eval('#rolmy', e => e.textContent)), где + 'не ссылка — объясняем');
+    await p0.fill('#rol-kod', 'https://t.me/WellbolBot?start=s_TSTRNR01'); await p0.click('#rolmy [data-rol="kod"]');
+    await p0.waitForSelector('#roljok', { timeout: 5000 }).catch(() => {});
+    ok(await виден(p0, '#roljm') && s0.запросы.some(x => x.p.endsWith('/roli/join') && /TSTRNR01/i.test(x.q.code || '')), где + 'вставил ссылку — лист подключения, как по ссылке из бота');
     ok(!err0.length, где + 'обычный пользователь: без ошибок страницы ' + err0.join(' | ').slice(0, 200));
     await p0.close();
     const sП = сервер({ pro: [{ kind: 'nutri', name: 'Нигора', status: 'pending', code: null }] }), pП = await b.newPage({ viewport: { width, height: 760 } });
     const oП = opts(theme); oП.features = ['roli']; oП.roli = sП.обработчик; await M.поднять(pП, oП); await pП.waitForTimeout(600);
     await pП.click('#profbtn'); await pП.waitForTimeout(300);
-    ok(!(await виден(pП, '#pq-pro')) && !(await виден(pП, '#pq-roli')), где + 'заявка на проверке — кабинета в приложении ещё нет');
+    ok(!(await виден(pП, '#pq-pro')), где + 'заявка на проверке — кабинета в приложении ещё нет');
     await pП.close();
     const s2 = сервер({ pro: [{ kind: 'trainer', name: 'Тимур Ахмедов', status: 'ok', code: 'TSTRNR01', link: 'https://t.me/WellbolTestBot?start=s_TSTRNR01' }],
       clients: [{ id: 'l1', kind: 'trainer', client: '777', name: 'Карина', cats: ['gym', 'body'] }] });
@@ -159,7 +167,7 @@ async function проверить(p, где, имя, sel){
     ok(await виден(p2, '#rolpro') && !/[?&]pp=/.test(await p2.evaluate(() => location.search)), где + 'из сообщения «Заявка принята» (?pp=rolpro) — сразу кабинет специалиста');
     await p2.click('#pqback'); await p2.waitForTimeout(300);
     ok(await виден(p2, '#pq-pro') && /Кабинет специалиста/.test(await p2.$eval('#pq-pro', e => e.textContent)), где + 'принятому — «Кабинет специалиста»');
-    ok(!(await виден(p2, '#pq-spec')) && !(await виден(p2, '#pq-co')), где + 'остальные строки — нет (он не клиент и не в компании)');
+    ok(!(await виден(p2, '#pq-co')), где + '«Компании» нет (он не в компании)');
     await p2.click('#pq-pro'); await p2.waitForSelector('#rolpro [data-rol="card"]', { timeout: 3000 }).catch(() => {});
     ok(await p2.$eval('#rolpro .invcode input', e => e.value) === 'https://t.me/WellbolTestBot?start=s_TSTRNR01', где + 'ссылка для клиентов — от сервера');
     ok(/1 клиент/.test(await p2.$eval('#pv-pro', e => e.textContent)), где + 'справа в строке — сколько клиентов');
