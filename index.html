@@ -2563,6 +2563,10 @@ body.onb #picker .modalbox::before{display:none}
 
 
 .hch{fill:var(--dim);font-size:10px;font-weight:700;font-family:inherit}
+.hcquiet{fill:none;stroke:var(--muted);stroke-opacity:.35;stroke-width:9;stroke-linecap:round}
+.hcqt{fill:var(--muted);font-size:9px;font-weight:700;font-family:inherit}
+.hdaycard .hcquiet{stroke:rgba(255,255,255,.4)}
+.hdaycard .hcqt{fill:rgba(255,255,255,.75)}
 .hcw{fill:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-family:inherit}
 .hb{cursor:pointer}
 .hb .hbcut{fill:var(--bg)}
@@ -3658,6 +3662,7 @@ body.ordmode #list .sstag{color:var(--text)}
 #rezm .rzlab{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--muted);margin-top:4px}
 #rezm .rzrow{display:flex;gap:10px}
 #rezm .rzrow label{flex:1 1 0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+#rezm select{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 16px inherit;font-family:inherit;padding:0 12px;width:100%}
 #rezm input{min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--text);font:600 16px inherit;font-family:inherit;padding:0 12px;box-sizing:border-box;width:100%}
 #rezm .rzday{border-radius:16px;background:var(--field);padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px}
 #rezm .rzbar{position:relative;height:14px;border-radius:7px;background:color-mix(in srgb,var(--accent) 20%,var(--line))}
@@ -9903,7 +9908,8 @@ function деньСегодня(){
 }
 function подписьДня(d){
   var ч=+new Date().toLocaleString('en-GB',{timeZone:'Asia/Tashkent', hour:'2-digit', hour12:false});
-  return [d.date, Math.round(+((d.targets||{}).kcal)||0), Math.round(+d.kcal||0), (d.meals||[]).length, меню_окно(ч%24), Math.round(+((d.targets||{}).prot)||0)].join('|'); /* 14.10: белок — как у сервера */
+  ч=Math.max(0,Math.min(23,Math.floor(hcV(ч%24))));   /* 02.11: как сервер (часТек) — у ночника час его дня */
+  return [d.date, Math.round(+((d.targets||{}).kcal)||0), Math.round(+d.kcal||0), (d.meals||[]).length, меню_окно(ч), Math.round(+((d.targets||{}).prot)||0)].join('|'); /* 14.10: белок — как у сервера */
 }
 function сегодняСвежее(){ return (MENU && MENU.today && MENU.today.date===TODAY) ? MENU.today : null; }
 /* фон=true — после записи еды или смены нормы: только если меню на сегодня
@@ -10825,6 +10831,19 @@ function режимСводка(me){
   if(в==='smeny') return 'смены';
   var см=режимСменаМест(me.rezhim); return см?'ночью '+рКоротко(см.s)+'–'+рКоротко(см.d):'ночью';
 }
+/* 02.11, шаг 2 (его «проверь… включай всем»): свои сутки. Как на сервере (режимСдвиги):
+   сдвиг — час, когда у него начинается новый день (den или середина сна), off — насколько
+   его подъём позже 7 утра. Дуга, круги и вид приёма считают «виртуальные» часы — как будто
+   он встал в 7, а подписи показывают настоящее время. Обычный день — без сдвига. */
+function режимСдвигиМе(me){
+  me=me||myData()||{}; if(режимВид(me)==='den') return null;
+  var r=me.rezhim, сон=режимСонМест(r, режимСменаМест(r)); if(!сон) return null;
+  var отбой=рМин(сон.s)/60, подъём=рМин(сон.d)/60, дл=(подъём-отбой+24)%24;
+  return {сдвиг: рВерно(r.den)?+r.den.slice(0,2):Math.floor((отбой+дл/2)%24), off: подъём-7};
+}
+/* настоящий час → час его дня (непрерывно от начала его суток) и обратно */
+function hcV(h){ var сд=режимСдвигиМе(); if(!сд||h==null) return h; return (h<сд.сдвиг?h+24:h)-сд.off; }
+function hcReal(v){ var сд=режимСдвигиМе(); if(!сд) return v; return ((v+сд.off)%24+24)%24; }
 function режимСнять(){
   var me=myData()||{}; if(!me.rezhim) return;
   delete me.rezhim; gset('me', me);
@@ -10837,7 +10856,7 @@ function openRez(вид){
   var см0=режимСменаМест(r);
   if(см0 && !с.tz) Object.keys(РЕЖ_ПРЕСЕТ).forEach(function(k){ if(РЕЖ_ПРЕСЕТ[k].s===см0.s && РЕЖ_ПРЕСЕТ[k].d===см0.d) preset=k; });
   РЖ={vid:вид||режимВид(me), preset:preset, s:см0?см0.s:'', d:см0?см0.d:'',
-      ss:(r.son&&r.son.s)||'', sd:(r.son&&r.son.d)||'', сонСвой:!!(r.son&&r.son.s), изАнкеты:!!вид, ош:''};
+      ss:(r.son&&r.son.s)||'', sd:(r.son&&r.son.d)||'', сонСвой:!!(r.son&&r.son.s), den:рВерно(r.den)?r.den:'', изАнкеты:!!вид, ош:''};
   renderRez();
   var m=document.getElementById('rezm'); if(m) m.classList.add('show'); haptic('light');
 }
@@ -10871,6 +10890,13 @@ function renderRez(){
     if(смМ||сон) h+='<div class="rzday"><div class="rzbar">'+(сон?рКуски(сон.s,сон.d,'son'):'')+(смМ?рКуски(смМ.s,смМ.d,'sm'):'')+'</div>'+
       '<div class="rzax"><span>0</span><span>6</span><span>12</span><span>18</span><span>24</span></div><div class="rzleg">'+
       (смМ?'<span><i class="sm"></i>смена <b>'+смМ.s+'–'+смМ.d+'</b></span>':'')+(сон?'<span><i class="son"></i>сон <b>'+сон.s+'–'+сон.d+'</b></span>':'')+'</div></div>';
+    /* 02.11, его выбор «Человек выбирает сам»: с какого часа у него новый день (по умолчанию — середина сна) */
+    if(сон){
+      var авто=Math.floor((рМин(сон.s)/60+((рМин(сон.d)-рМин(сон.s)+1440)%1440)/120)%24), оп='<option value="">'+pad2(авто)+':00 — середина сна</option>';
+      for(var hh=0; hh<24; hh++) оп+='<option value="'+pad2(hh)+':00"'+(РЖ.den===pad2(hh)+':00'?' selected':'')+'>'+pad2(hh)+':00</option>';
+      h+='<span class="rzlab">НОВЫЙ ДЕНЬ</span><select id="rz-den" aria-label="Новый день начинается в">'+оп+'</select>'+
+        '<p class="rznote">С этого часа — новая дата и новая норма. Еда на смене после полуночи остаётся в том же дне.</p>';
+    }
     if(РЖ.vid==='smeny') h+='<p class="rznote">О сменах просто скажите тренеру: «с четверга три ночи».</p>';
   }
   h+='<p class="rznote">'+(РЖ.vid==='den'?'Утро — в 9:00, вечер — в 20:00, как у всех.':'Тренер учтёт: пока вы спите — не пишет, «утро» — после подъёма, ночную еду не называет поздней.')+'</p>';
@@ -10886,12 +10912,15 @@ function rezСохранить(){
     if(РЖ.vid==='noch'){ var см=рСменаТек(); if(!см){ РЖ.ош='Укажите начало и конец смены.'; renderRez(); haptic('err'); return; } r.smena=см; }
     if(РЖ.сонСвой && рВерно(РЖ.ss) && рВерно(РЖ.sd) && РЖ.ss!==РЖ.sd) r.son={s:РЖ.ss,d:РЖ.sd};
     if(РЖ.vid==='smeny' && !r.son && (рВерно(РЖ.ss)&&рВерно(РЖ.sd))) r.son={s:РЖ.ss,d:РЖ.sd};
+    if(рВерно(РЖ.den)) r.den=РЖ.den;
     me.rezhim=r;
   }
   gset('me', me);
   if(DB) DB.doc('state/me').set({me:me, at:new Date().toISOString()}).catch(function(){});
   var изА=РЖ.изАнкеты; РЖ.изАнкеты=false; closeRez();
   try{ fillMe(); }catch(e){} if(изА) try{ renderWzOnly(); }catch(e){}
+  /* 02.11: сутки могли сдвинуться — дата дня пересчитывается сразу */
+  try{ if(refreshDay()) { if(typeof renderHome==='function') renderHome(); } }catch(e){}
   haptic('ok');
 }
 document.getElementById('rezm').addEventListener('click', function(e){
@@ -10906,6 +10935,7 @@ document.getElementById('rezm').addEventListener('click', function(e){
 document.getElementById('rezm').addEventListener('change', function(e){
   if(!РЖ) return; var id=e.target.id;
   if(id==='rz-s') РЖ.s=e.target.value; else if(id==='rz-d') РЖ.d=e.target.value;
+  else if(id==='rz-den') РЖ.den=e.target.value;
   else if(id==='rz-ss' || id==='rz-sd'){ var a=document.getElementById('rz-ss'), b=document.getElementById('rz-sd'); РЖ.ss=a?a.value:''; РЖ.sd=b?b.value:''; РЖ.сонСвой=true; }
   else return;
   РЖ.ош=''; renderRez();
@@ -11797,7 +11827,12 @@ function pad2(n){ return ('0'+n).slice(-2); }
 function ymd(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 function ruDate(x){ var a=(x||'').split('-'); return a.length===3 ? a[2]+'.'+a[1] : (x||''); }
 
-function dayNow(){ return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tashkent'}); }
+function dayNow(){
+  /* 02.11: у работающего ночью новый день — в его час (как сервер, today()) */
+  var сд=null; try{ сд=режимСдвигиМе(); }catch(e){}
+  if(сд && сд.сдвиг) return new Date(Date.now()-сд.сдвиг*3600e3).toLocaleDateString('sv-SE',{timeZone:поясТелефона()||'Asia/Tashkent'});
+  return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tashkent'});
+}
 var TODAY = dayNow();
 var LAST  = {};                      /* имя упражнения -> {w,r,s:[[w,r]...],d} */
 var DB=null, sess=null, ctimer=null;
@@ -16130,7 +16165,7 @@ function goPage(p){
   /* шапка без логотипа: слева — контекст страницы (на «Сегодня» дата),
      справа — аватар с инициалом; название приложения уже показывает Telegram */
   var hc=document.getElementById('hctx');
-  if(hc){ if(p==='home'){ var nd=new Date(), wd=WDFULL[nd.getDay()]; hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
+  if(hc){ if(p==='home'){ var nd=new Date(TODAY+'T12:00:00'), wd=WDFULL[nd.getDay()];   /* 02.11: дата его дня (у ночника в 02:00 — ещё вчера) */ hc.innerHTML='<span class="ds-eyebrow">'+wd.charAt(0).toUpperCase()+wd.slice(1)+', '+nd.getDate()+' '+MONTHS[nd.getMonth()]+'</span><b>Сегодня</b>'; }
           else { var бр=({gym:1,log:1,ref:1}[p]) ? тренСлово() : ({food:'Питание',eat:'Питание',circle:'Питание'}[p]||'');
             hc.innerHTML=(бр?'<span class="ds-eyebrow">'+бр+'</span>':'')+'<b>'+({gym:'Тренировка',log:'Тренировка',ref:'Тренировка',food:'Еда',circle:'Еда',eat:'Еда',admin:'Админ панель'}[p]||'')+'</b>'; } }
   /* 17.10, его слова: «на странице в админ панели нет кнопки назад». Админ
@@ -17578,7 +17613,7 @@ var ПЕРЕКУС_ЛЁГКИЙ=250, ПЕРЕКУС_GAP=2;
 function nextMealPlan(meals, nowH){
   var раньше=null, сделан=-1;      /* раньше — не раньше какого часа следующий приём */
   (meals||[]).forEach(function(m){
-    var h=hcH(m.t);
+    var h=hcV(hcH(m.t));   /* 02.11: у работающего ночью — часы его дня */
     var i=ГЛАВНЫЕ.indexOf(m.kind);
     if(i<0 && m.kind!=='перекус' && h!=null) i=ГЛАВНЫЕ.indexOf(mealName(h));
     if(i>сделан) сделан=i;
@@ -17586,6 +17621,8 @@ function nextMealPlan(meals, nowH){
     var шаг = m.kind==='перекус' ? ((+m.kcal||0)<=ПЕРЕКУС_ЛЁГКИЙ ? null : ПЕРЕКУС_GAP) : MEAL_GAP;
     if(шаг!=null && (раньше==null || h+шаг>раньше)) раньше=h+шаг;
   });
+  /* 02.11: у работающего ночью с тихим окном — после 01:00 приём не советуем (тихое окно 01–06) */
+  var ПОСЛЕДНИЙ=MEAL_LAST; try{ var me1=myData()||{}; if(режимСдвигиМе(me1) && режимВид(me1)==='noch' && !(me1.rezhim && me1.rezhim.tiho===false)) ПОСЛЕДНИЙ=Math.min(MEAL_LAST, hcV(1)); }catch(e){}
   var at = раньше==null ? Math.max(nowH, MEAL_FIRST) : Math.max(раньше, nowH);
   var i=Math.max(сделан+1, at<11 ? 0 : (at<16 ? 1 : 2));
   if(i>2) return {at:null, name:'еда', left:0};
@@ -17593,11 +17630,11 @@ function nextMealPlan(meals, nowH){
   /* позже 22:00 не советуем: раннее окно питания в сетевом мета-анализе 41 РКИ
      дало на 1,15 кг больше потери веса, чем позднее (Chen 2026). Съест позже —
      запишем по факту и раздвинем дугу, но советовать это незачем. */
-  if(at > MEAL_LAST) return {at:null, name:'еда', left:0};
+  if(at > ПОСЛЕДНИЙ) return {at:null, name:'еда', left:0};
   var after=null, afterName=null;
   if(i<2){
     after = at+MEAL_GAP; if(i===1) after=Math.max(after, УЖИН_С);
-    if(after > MEAL_LAST) after=null; else afterName=ГЛАВНЫЕ[i+1];
+    if(after > ПОСЛЕДНИЙ) after=null; else afterName=ГЛАВНЫЕ[i+1];
   }
   return {at:at, name:ГЛАВНЫЕ[i], after:after, afterName:afterName, left:3-i};
 }
@@ -17612,13 +17649,14 @@ function hcH(t){ var m=String(t||'').match(/^(\d{1,2}):(\d\d)/); return m ? (+m[
 function hcHM(h){ var hh=Math.floor(h), mm=Math.round((h-hh)*60); if(mm===60){ hh++; mm=0; } return pad2(hh%24)+':'+pad2(mm); }
 function hNum(n){ n=Math.round(n); return n>=1000 ? Math.floor(n/1000)+' '+('00'+(n%1000)).slice(-3) : String(n); }
 function hcEvents(){
-  var now=new Date(), nowH=now.getHours()+now.getMinutes()/60, d=HOME.day||{}, ev=[];
+  var now=new Date(), nowH=hcV(now.getHours()+now.getMinutes()/60), d=HOME.day||{}, ev=[];
+  /* 02.11: e.h — час его дня (hcV), подписи времени — настоящие */
   (d.meals||[]).forEach(function(m){
-    var h=hcH(m.t); if(h==null) return;
-    ev.push({h:h, time:hcHM(h), cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food',
+    var hr=hcH(m.t); if(hr==null) return; var h=hcV(hr);
+    ev.push({h:h, time:hcHM(hr), cls:'meal', img:m.img||null, lab:String(m.t).slice(0,5)+' · '+(m.kind||'еда'), go:'food',
       key:'m'+(m.id!=null?m.id:String(m.t)), src:m});
   });
-  (d.acts||[]).forEach(function(a){ var h=hcH(a.t); if(h==null) return; ev.push({h:h, time:hcHM(h), cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food',
+  (d.acts||[]).forEach(function(a){ var hr=hcH(a.t); if(hr==null) return; var h=hcV(hr); ev.push({h:h, time:hcHM(hr), cls:'act', lab:String(a.t).slice(0,5)+' · '+a.kind, go:'food',
     key:'a'+(a.id!=null?a.id:String(a.t)), src:a}); });
   /* зал: закрытая тренировка стоит на времени старта; идущая — тоже, если старт известен */
   var lw=foodOnly()?null:lastWorkout(), закрыт=!!(lw&&lw.date===TODAY), dk=homeDayKey(), pr=foodOnly()?{done:0,total:0}:homeSess(dk), t0=null, конец=false;
@@ -17635,9 +17673,9 @@ function hcEvents(){
     if(!t0 && закрыт && зап && зап.updated){ var u=new Date(зап.updated); if(!isNaN(u)){ t0=u; конец=true; } }
   }
   if(закрыт || pr.done>0){
-    var gh = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : nowH;
-    ev.push({h:gh, time:t0&&!isNaN(t0)?hcHM(gh):'', cls: закрыт?'gym':'gymon',
-      lab:((t0&&!isNaN(t0))?hcHM(gh)+' · ':'')+(конец?'зал · сохранено':(закрыт?'зал':'зал идёт')), go:'gym',
+    var ghr = (t0 && !isNaN(t0)) ? t0.getHours()+t0.getMinutes()/60 : null, gh = ghr!=null ? hcV(ghr) : nowH;
+    ev.push({h:gh, time:t0&&!isNaN(t0)?hcHM(ghr):'', cls: закрыт?'gym':'gymon',
+      lab:((t0&&!isNaN(t0))?hcHM(ghr)+' · ':'')+(конец?'зал · сохранено':(закрыт?'зал':'зал идёт')), go:'gym',
       key:'gym', src:{закрыт:закрыт, конец:конец, done:pr.done, total:pr.total}});
   }
   /* «+» стоит там, когда пора есть по рекомендации, а не когда сменилось окно.
@@ -17651,16 +17689,16 @@ function hcEvents(){
      приёма и рекомендованное время под ним (его вариант E). */
   HC.nowH=nowH;
   if(plan.at!=null){
-    ev.push({h:plan.at, time:'≈'+hcHM(plan.at), cls:'next', act:'eat', name:plan.name,
-      lab:'≈'+hcHM(plan.at)+' · '+plan.name});
-    if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(plan.after), cls:'todo', act:'eat', name:plan.afterName,
-      lab:'≈'+hcHM(plan.after)+' · '+plan.afterName});
+    ev.push({h:plan.at, time:'≈'+hcHM(hcReal(plan.at)), cls:'next', act:'eat', name:plan.name,
+      lab:'≈'+hcHM(hcReal(plan.at))+' · '+plan.name});
+    if(plan.after!=null) ev.push({h:plan.after, time:'≈'+hcHM(hcReal(plan.after)), cls:'todo', act:'eat', name:plan.afterName,
+      lab:'≈'+hcHM(hcReal(plan.after))+' · '+plan.afterName});
   }
   /* взвешивание стоит на той же дуге, что и всё остальное: второе кольцо
      внутри полукруга упиралось бы в число */
   var wt=(FOOD.meas||[]).filter(function(m){ return m.date===TODAY && m.w; })[0];
   if(wt){ var ct=wt.created?new Date(+wt.created):null;
-    ev.push({h:(ct&&!isNaN(ct))?ct.getHours()+ct.getMinutes()/60:7.5, cls:'w', txt:fmtKg(+wt.w), go:'food',
+    ev.push({h:(ct&&!isNaN(ct))?hcV(ct.getHours()+ct.getMinutes()/60):7.5, cls:'w',   /* без времени — через полчаса после подъёма (у ночника 7,5 — его час) */ txt:fmtKg(+wt.w), go:'food',
       key:'w', src:wt, at:(ct&&!isNaN(ct))?hcHM(ct.getHours()+ct.getMinutes()/60):''}); }
   ev.sort(function(a,b){ return a.h-b.h; });
   /* окно дуги: по умолчанию 06→22, раздвигается под то, что реально было */
@@ -17670,7 +17708,9 @@ function hcEvents(){
     н=Math.min(н, Math.floor(e.h)); к=Math.max(к, Math.ceil(e.h-0.001));
   });
   н=Math.min(н, Math.floor(nowH)); к=Math.max(к, Math.ceil(nowH+0.01));
-  HCW=[Math.max(0,н), Math.min(24,Math.max(к,н+6))];
+  /* у работающего ночью его день длится от начала его суток (сдвиг−off) до того же часа завтра */
+  var сд=режимСдвигиМе(), лев=сд?сд.сдвиг-сд.off:0, прав=лев+24;
+  HCW=[Math.max(лев,н), Math.min(прав,Math.max(к,н+6))];
   hcLayout(ev);
   return {ev:ev, nowH:nowH, plan:plan};
 }
@@ -17871,6 +17911,12 @@ function homeClock(){
   /* отметка «сейчас» — только у сегодняшнего дня */
   var nH=HC.nowH, сейч=(!d.date || d.date===TODAY) && nH>н && nH<к;
   s+='<path class="hcring" d="'+hcArc(HC.R,н,к)+'"/>';
+  /* 02.11, его «Включено сразу»: тихое окно 01–06 у работающего ночью — серой полосой на дуге */
+  { var me0=myData()||{}, сд0=режимСдвигиМе(me0);
+    if(сд0 && режимВид(me0)==='noch' && !(me0.rezhim && me0.rezhim.tiho===false)){
+      var q0=Math.max(н,hcV(1)), q1=Math.min(к,hcV(6));
+      if(q1-q0>0.2){ s+='<path class="hcquiet" d="'+hcArc(HC.R,q0,q1)+'"><title>01–06 · без еды, если можете</title></path>';
+        HC.qm=hcPt(HC.R-16,(q0+q1)/2); } } }
   /* 04.10, вечер: циферблат — деления каждые 3 часа (06, 09, 12, 15, 18, 21)
      и края окна. Подпись деления уходит дальше от дуги, если рядом фото или
      плашка, и не рисуется, если места нет и там. */
@@ -17890,8 +17936,11 @@ function homeClock(){
     var p=[HC.R+15,HC.R+32,HC.R+46,HC.R-20].map(function(r){ return hcPt(r,h); }).filter(годно)[0];
     if(!p){ if(h!==н && h!==к) return; p=hcPt(HC.R+15,h); }
     hcHL.push(p);
-    s+='<text class="hch" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" dy="3.5" text-anchor="middle">'+pad2(h%24)+'</text>';
+    s+='<text class="hch" x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" dy="3.5" text-anchor="middle">'+pad2(Math.round(hcReal(h))%24)+'</text>';
   });
+  /* подпись тихого окна — только если рядом нет фото, плашек и чисел часов */
+  if(HC.qm){ var qm=HC.qm; HC.qm=null; if(свободно(qm[0],qm[1]) && !hcHL.some(function(t){ return Math.abs(t[0]-qm[0])<34 && Math.abs(t[1]-qm[1])<12; }))
+    s+='<text class="hcqt" x="'+qm[0].toFixed(1)+'" y="'+qm[1].toFixed(1)+'" dy="3" text-anchor="middle">без еды</text>'; }
   /* два слова держат стороны света; больше подписей на дуге не нужно */
   s+='<text class="hcw" x="'+(HC.cx-HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">утро</text>';
   s+='<text class="hcw" x="'+(HC.cx+HC.R)+'" y="'+(HC.cy+26)+'" text-anchor="middle">вечер</text>';
@@ -21616,7 +21665,7 @@ document.getElementById('glv').addEventListener('keydown', function(e){ if(e.key
 /* Кому и когда приписать приём, добавленный одним нажатием: первое за день
    в своё время — это завтрак/обед/ужин, всё, что сверх, — перекус. */
 function kindNow(){
-  var h=new Date().getHours();
+  var h=hcV(new Date().getHours()+new Date().getMinutes()/60);   /* 02.11: у работающего ночью — час его дня */
   var осн = h<11 ? 'завтрак' : (h<16 ? 'обед' : (h<22 ? 'ужин' : 'перекус'));
   var есть=(FOOD.day&&FOOD.day.meals||[]).some(function(m){ return m.kind===осн; });
   return есть ? 'перекус' : осн;
@@ -23129,7 +23178,7 @@ function chatHint(){
   var d=HOME.day||{}, t=d.targets||{};
   var общее='Еда или вопрос';
   if(t.kcal && (t.kcal-(+d.kcal||0))<=0) return общее;
-  var n=new Date(), p=nextMealPlan(d.meals||[], n.getHours()+n.getMinutes()/60);
+  var n=new Date(), p=nextMealPlan(d.meals||[], hcV(n.getHours()+n.getMinutes()/60));
   return (p && p.at!=null && p.name) ? ('Еда: '+p.name) : общее;
 }
 /* 04.10: клавиатура может уменьшать visualViewport без resize окна.

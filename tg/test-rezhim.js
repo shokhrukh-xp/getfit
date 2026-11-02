@@ -86,6 +86,43 @@ const вбок = p => p.evaluate(() => document.documentElement.scrollWidth > in
     дано(!me.rezhim && (await p.locator('#pv-rez').innerText()).trim() === 'обычный', '«Сплю ночью» убирает режим, строка — «обычный»');
     дано(ош.length === 0, 'профиль: без ошибок JS ' + ош.slice(0, 2).join(' | '));
     await ctx.close();
+    /* 9. шаг 2 (02.11): свои сутки, дуга от его подъёма, тихое окно */
+    const НОЧ = Object.assign({}, ОН, { rezhim: { vid: 'noch', smena: { s: '19:00', d: '04:00' } } });
+    for (const [тема, кто, me] of [['dark', 'ночник', НОЧ], ['light', 'обычный', ОН]]) {
+      const c2 = await br.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Tashkent' });
+      const p2 = await c2.newPage();
+      await p2.addInitScript(() => { try { localStorage.setItem('shp_v1_trcard_off', '1'); } catch (e) {} });
+      const даты = []; p2.on('request', r => { const m = r.url().match(/\/day\?[^#]*date=(\d{4}-\d\d-\d\d)/); if (m) даты.push(m[1]); });
+      const ош2 = await M.поднять(p2, { page: 'home', theme: тема, time: '02:00', goal: ЦЕЛЬ, me, day: { meals: [{ id: 1, t: '13:10', kind: 'завтрак', kcal: 500, prot: 30 }, { id: 2, t: '20:30', kind: 'обед', kcal: 700, prot: 40 }] } });
+      await p2.waitForTimeout(500);
+      const v = await p2.evaluate(() => ({ next: (document.querySelector('.hb-next') || {}).textContent || '', тихо: !!document.querySelector('.hcquiet'),
+        часы: [...document.querySelectorAll('.hch')].map(e => e.textContent), w0: +document.querySelector('.hclk-svg').dataset.w0, w1: +document.querySelector('.hclk-svg').dataset.w1 })); v.today = даты[даты.length - 1];
+      if (кто === 'ночник') {
+        дано(v.today === M.Д(1), кто + ': в 02:00 на смене — ещё вчерашний день (' + v.today + ')');
+        дано(!v.next, кто + ': в 02:00 (тихое окно) следующий приём не советуем: «' + v.next + '»');
+        дано(v.тихо, кто + ': на дуге тихое окно 01–06');
+        дано(v.часы[0] === '11' && v.часы.includes('02') && v.w1 > 24, кто + ': дуга с 11:00 через полночь: ' + v.часы.join(' '));
+      } else {
+        дано(v.today === M.Д(0), кто + ': в 02:00 — новый день, как было');
+        дано(!v.тихо && v.w1 <= 24, кто + ': без тихого окна, дуга как была: ' + v.часы.join(' '));
+      }
+      await p2.screenshot({ path: '/tmp/gf-rezhim-duga-' + кто + '.png' });
+      дано(ош2.length === 0, кто + ': без ошибок JS ' + ош2.slice(0, 2).join(' | '));
+      await c2.close();
+    }
+    /* «Новый день» в листе: свой час сохраняется */
+    {
+      const c3 = await br.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Tashkent' });
+      const p3 = await c3.newPage();
+      await p3.addInitScript(() => { try { localStorage.setItem('shp_v1_trcard_off', '1'); } catch (e) {} });
+      await M.поднять(p3, { page: 'home', time: '15:00', goal: ЦЕЛЬ, me: НОЧ });
+      await p3.click('#profbtn'); await p3.waitForTimeout(400); await p3.click('#pq-rez'); await p3.waitForTimeout(300);
+      дано(/08:00 — середина сна/.test(await p3.locator('#rz-den').innerText()), 'новый день по умолчанию — 08:00, середина сна');
+      await p3.selectOption('#rz-den', '06:00'); await p3.dispatchEvent('#rz-den', 'change');
+      await p3.click('#rezm [data-rz="save"]'); await p3.waitForTimeout(200);
+      дано((await meИз(p3)).rezhim.den === '06:00', 'свой час начала дня сохранён');
+      await c3.close();
+    }
   } finally { await br.close(); }
   console.log(плохо ? 'ПРОВАЛОВ: ' + плохо : 'ВСЁ ОК');
   process.exit(плохо ? 1 : 0);
