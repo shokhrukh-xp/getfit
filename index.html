@@ -4666,7 +4666,16 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 /* 02.11: «Где вы» — город человека для меню заведений и доставки (за gorod, сначала ему) */
 body:not([data-f~="gorod"]) .f-gorod{display:none!important}
 body:not([data-f~="udalit"]) .f-udalit{display:none!important}   /* 02.11: удаление аккаунта (выключатель udalit) */
-body:not([data-f~="soglasie"]) .f-soglasie{display:none!important}   /* 02.11: согласие на ИИ и «не медицинское изделие» (выключатель soglasie) */
+body:not([data-f~="soglasie"]) .f-soglasie{display:none!important}
+body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: ручной ввод еды (выключатель ruchnoy) */
+#food-hand{margin-top:8px}
+#food-hand[hidden]{display:none}
+#handm .hlist{max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:10px 0}
+#handm .hitem{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,rgba(127,127,127,.25));background:transparent;color:inherit;font:inherit;cursor:pointer}
+#handm .hitem small{opacity:.7;white-space:nowrap}
+#handm .hsec{font-size:12px;opacity:.7;margin:8px 0 0}
+#handm .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#handm input{width:100%;box-sizing:border-box}   /* 02.11: согласие на ИИ и «не медицинское изделие» (выключатель soglasie) */
 #iim .iibtns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 #iim .iinote{opacity:.75;font-size:13px}
 #gorod-cur{margin:0 0 12px;font-size:15px}
@@ -4906,7 +4915,9 @@ body:not([data-f~="soglasie"]) .f-soglasie{display:none!important}   /* 02.11: �
         <div class="fday" id="fday"></div>
         <div class="group fmealgroup"><div class="factlist" id="facts"></div><h3 id="fmealhead">Приёмы</h3>
         <div class="fmeals" id="fmeals"></div>
-        <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов ИИ-тренеру</small></button></div>
+        <button type="button" class="btn prim wide food-add" id="food-add" data-wrcoach="1"><span>Добавить приём</span><small>Фото или пара слов ИИ-тренеру</small></button>
+        <!-- 02.11: ручной ввод — без ИИ и без лимита (выключатель ruchnoy) -->
+        <button type="button" class="btn wide f-ruchnoy" id="food-hand" hidden>Записать вручную — без ИИ</button></div>
         <!-- 24.09, его просьба: «+ Занятие вне зала», строку «Напиши, что съел»
              с камерой и кнопки повтора с «Еды» убрать совсем — он ими здесь ни
              разу не пользовался. Еда и занятия записываются в чате с тренером
@@ -5647,6 +5658,36 @@ body:not([data-f~="soglasie"]) .f-soglasie{display:none!important}   /* 02.11: �
     <button type="button" class="btn wide danger" id="udalgo" disabled>Удалить навсегда</button>
     <p class="mtext" id="udalstate" role="status" hidden></p>
     <button type="button" class="btn wide" id="udalclose">Отмена</button>
+  </div>
+</div>
+<div class="modal" id="handm" role="dialog" aria-modal="true" aria-labelledby="handtitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="handtitle">Записать вручную</h3><button class="xbtn" id="handclose" aria-label="Закрыть">✕</button></div>
+    <div id="hand-find">
+      <input id="handq" type="search" placeholder="Продукт или блюдо: творог, плов, банан" autocomplete="off" maxlength="60" aria-label="Поиск продукта или блюда">
+      <div class="hlist" id="handlist"></div>
+      <div class="btnrow"><button type="button" class="btn" id="handown">Своё блюдо</button><button type="button" class="btn" id="handscan">Штрихкод</button></div>
+    </div>
+    <div id="hand-g" hidden>
+      <p class="scanname" id="handname"></p>
+      <label class="mtext" for="handgr">Сколько грамм</label>
+      <input id="handgr" type="text" inputmode="numeric" maxlength="5" autocomplete="off">
+      <p class="mtext" id="handcalc" role="status"></p>
+      <div class="btnrow"><button type="button" class="btn prim" id="handsave">Записать</button><button type="button" class="btn" id="handback">Назад</button></div>
+    </div>
+    <div id="hand-own" hidden>
+      <label class="mtext" for="hon">Что съели</label>
+      <input id="hon" type="text" maxlength="80" placeholder="Например: салат с курицей" autocomplete="off">
+      <div class="hgrid">
+        <label class="mtext">Ккал<input id="hok" type="text" inputmode="decimal" maxlength="6" autocomplete="off"></label>
+        <label class="mtext">Белки, г<input id="hop" type="text" inputmode="decimal" maxlength="5" autocomplete="off"></label>
+        <label class="mtext">Жиры, г<input id="hof" type="text" inputmode="decimal" maxlength="5" autocomplete="off"></label>
+        <label class="mtext">Углеводы, г<input id="hou" type="text" inputmode="decimal" maxlength="5" autocomplete="off"></label>
+      </div>
+      <p class="mtext iinote">Числа — на всю порцию, как на упаковке или в меню.</p>
+      <div class="btnrow"><button type="button" class="btn prim" id="hownsave">Записать</button><button type="button" class="btn" id="hownback">Назад</button></div>
+    </div>
+    <p class="mtext" id="handstate" role="status" hidden></p>
   </div>
 </div>
 <div class="modal" id="iim" role="dialog" aria-modal="true" aria-labelledby="iititle">
@@ -11286,7 +11327,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '02.11 21:15';
+var BUILD = '02.11 21:50';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17518,6 +17559,79 @@ document.getElementById('iim').addEventListener('click', function(e){
   if(e.target.closest('#iioff')){ иисОтветить(false); return; }
   if(e.target.closest('#iiclose')){ closeIIS(); return; }
 });
+/* ── 02.11: ручной ввод еды (за ruchnoy) — его выбор «Ручной ввод + 3 ИИ» ──
+   Без Pro через ИИ — 3 записи в день; вручную — без ИИ и без лимита: продукт или блюдо из
+   базы + граммы, своё блюдо с КБЖУ, «повторить» из недавних, штрихкод. Сервер — /meal/add,
+   /meal/repeat, база — /hand/base (обычные продукты + 174 блюда). */
+var РУКА={база:null, недавние:[], выбор:null, занят:false};
+function рукаВидна(){ return ЕСТЬ('ruchnoy'); }
+function рукаЧисло(x){ var v=parseFloat(String(x==null?'':x).replace(',','.')); return isFinite(v)&&v>=0?v:NaN; }
+function рукаНорм(t){ return String(t||'').toLowerCase().replace(/ё/g,'е'); }
+function рукаState(t, плохо){ var e=document.getElementById('handstate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
+function рукаШаг(шаг){ ['find','g','own'].forEach(function(x){ var e=document.getElementById('hand-'+x); if(e) e.hidden=x!==шаг; }); рукаState(''); }
+function openHand(){
+  var m=document.getElementById('handm'); if(!m) return;
+  рукаШаг('find'); document.getElementById('handq').value=''; РУКА.выбор=null;
+  m.classList.add('show'); рукаСписок();
+  var u=encodeURIComponent(syncUid());
+  if(!РУКА.база) fGet('/hand/base?uid='+u).then(function(d){ if(d&&d.ok){ РУКА.база=d.items||[]; рукаСписок(); } }).catch(function(){});
+  fGet('/recent?uid='+u).then(function(d){ if(d&&d.ok){ РУКА.недавние=d.recent||[]; рукаСписок(); } }).catch(function(){});
+}
+function closeHand(){ if(РУКА.занят) return; var m=document.getElementById('handm'); if(m) m.classList.remove('show'); }
+function рукаСписок(){
+  var box=document.getElementById('handlist'); if(!box) return;
+  var q=рукаНорм(document.getElementById('handq').value).trim(), h='';
+  var нед=РУКА.недавние.map(function(m,i){ return {m:m,i:i}; }).filter(function(x){ return !q || рукаНорм(x.m.text).indexOf(q)>=0; }).slice(0,5);
+  if(нед.length) h+='<p class="hsec">Недавние — повторить</p>'+нед.map(function(x){ return '<button type="button" class="hitem" data-hrep="'+x.i+'"><span>'+esc(x.m.text)+'</span><small>'+Math.round(+x.m.kcal||0)+' ккал</small></button>'; }).join('');
+  if(q){
+    var баз=(РУКА.база||[]).map(function(x,i){ return {x:x,i:i}; }).filter(function(o){ return рукаНорм(o.x.n).indexOf(q)>=0; });
+    баз.sort(function(a,b){ return (рукаНорм(a.x.n).indexOf(q)===0?0:1)-(рукаНорм(b.x.n).indexOf(q)===0?0:1); });
+    h+= баз.length ? '<p class="hsec">База</p>'+баз.slice(0,30).map(function(o){ return '<button type="button" class="hitem" data-hb="'+o.i+'"><span>'+esc(o.x.n)+'</span><small>'+Math.round(+o.x.k||0)+' ккал в 100 г</small></button>'; }).join('')
+      : (РУКА.база ? '<p class="mtext">В базе такого нет. Запишите как своё блюдо — с числами с упаковки или из меню.</p>' : '<p class="mtext">Загружаю базу…</p>');
+  } else if(!нед.length) h+='<p class="mtext">Начните вводить название: творог, плов, банан…</p>';
+  box.innerHTML=h;
+}
+function рукаУгл(x){ return x.u!=null ? +x.u : Math.max(0,((+x.k||0)-4*(+x.p||0)-9*(+x.f||0))/4); }
+function рукаВыбрать(i){ var x=(РУКА.база||[])[i]; if(!x) return; РУКА.выбор=x; document.getElementById('handname').textContent=x.n; document.getElementById('handgr').value=String(x.g||100); рукаШаг('g'); рукаСчёт(); }
+function рукаСчёт(){
+  var x=РУКА.выбор, el=document.getElementById('handcalc'), кн=document.getElementById('handsave'); if(!x||!el) return null;
+  var g=рукаЧисло(document.getElementById('handgr').value);
+  if(!(g>0&&g<=3000)){ el.textContent='Укажите граммы — от 1 до 3000.'; кн.disabled=true; return null; }
+  var к=g/100, r1=function(v){ return Math.round(v*10)/10; };
+  var r={g:Math.round(g), kcal:Math.round((+x.k||0)*к), prot:r1((+x.p||0)*к), fat:r1((+x.f||0)*к), carb:r1(рукаУгл(x)*к), fib:r1((+x.c||0)*к)};
+  el.textContent='≈ '+r.kcal+' ккал · белки '+r.prot+' г · жиры '+r.fat+' г · углеводы '+r.carb+' г';
+  кн.disabled=false; return r;
+}
+function рукаЗаписать(путь, тело, что){
+  if(РУКА.занят) return; РУКА.занят=true; рукаState('Записываю…');
+  тело.uid=syncUid(); тело.date=fDate();
+  fPost(путь, тело).then(function(d){
+    РУКА.занят=false;
+    if(!d||!d.day) throw new Error((d&&d.error)||'Не получилось записать.');
+    try{ освежить(d.day); }catch(e){}
+    haptic('ok'); closeHand(); fReply('Записал: '+что+'.');
+  }).catch(function(e){ РУКА.занят=false; рукаState(humanErr(e), true); haptic('err'); });
+}
+document.getElementById('food-hand').addEventListener('click', function(){ openHand(); haptic('light'); });
+document.getElementById('handclose').addEventListener('click', closeHand);
+document.getElementById('handq').addEventListener('input', рукаСписок);
+document.getElementById('handgr').addEventListener('input', рукаСчёт);
+document.getElementById('handm').addEventListener('click', function(e){
+  if(e.target.id==='handm'){ closeHand(); return; }
+  var b=e.target.closest('[data-hb]'); if(b){ рукаВыбрать(+b.getAttribute('data-hb')); return; }
+  var r=e.target.closest('[data-hrep]'); if(r){ var m=РУКА.недавние[+r.getAttribute('data-hrep')]; if(m) рукаЗаписать('/meal/repeat', {id:m.id}, m.text); return; }
+  if(e.target.closest('#handown')){ рукаШаг('own'); ['hon','hok','hop','hof','hou'].forEach(function(id){ document.getElementById(id).value=''; }); var q=document.getElementById('handq').value.trim(); if(q) document.getElementById('hon').value=q; return; }
+  if(e.target.closest('#handscan')){ closeHand(); scanOpen(); return; }
+  if(e.target.closest('#handback') || e.target.closest('#hownback')){ рукаШаг('find'); рукаСписок(); return; }
+  if(e.target.closest('#handsave')){ var x=РУКА.выбор, c=рукаСчёт(); if(!x||!c) return;
+    var имя=x.n+', '+c.g+' г'; рукаЗаписать('/meal/add', {text:имя, kcal:c.kcal, prot:c.prot, fat:c.fat, carb:c.carb, fib:c.fib, kind:scanKind()}, имя); return; }
+  if(e.target.closest('#hownsave')){
+    var имя2=document.getElementById('hon').value.trim(), кк=рукаЧисло(document.getElementById('hok').value);
+    if(!имя2){ рукаState('Напишите, что съели.', true); return; }
+    if(!(кк>0&&кк<=5000)){ рукаState('Укажите калории — от 1 до 5000.', true); return; }
+    var чис=function(id){ var v=рукаЧисло(document.getElementById(id).value); return isFinite(v)?v:0; };
+    рукаЗаписать('/meal/add', {text:имя2, kcal:Math.round(кк), prot:чис('hop'), fat:чис('hof'), carb:чис('hou'), kind:scanKind()}, имя2); return; }
+});
 document.getElementById('resetclose').addEventListener('click', closeReset);
 document.getElementById('resetm').addEventListener('click', function(e){
   if(e.target.id==='resetm'){ closeReset(); return; }
@@ -22666,6 +22780,7 @@ function renderFoodDay(){
   var add=document.getElementById('food-add'); add.hidden=!d || !!(d.free && d.free.on);
   if(d) add.querySelector('span').textContent=(d.date||fDate())===TODAY?'Добавить '+kindNow():'Добавить приём';
   add.querySelector('small').textContent=едаБесплатноСлово();
+  var рук=document.getElementById('food-hand'); if(рук) рук.hidden=!d || !!(d.free && d.free.on) || !рукаВидна();   /* 02.11: ручной ввод */
   renderGaps(d);
   if(!d){ box.innerHTML=FOOD.err ? '<p class="fline" role="status">Не удалось загрузить день</p><button type="button" class="btn" data-day-retry>Повторить</button>' : (SYNCOK===false?'<p class="fline">Сервер не отвечает.</p>':скелет(3)); ml.innerHTML=''; return; }
   var t=d.targets||{}, pr=t.parts||null;
