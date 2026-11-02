@@ -4654,6 +4654,13 @@ html[lang=uz] #hmeas[data-mode="none"] .fld:has(#fwaist)::after{content:'sm'}
 input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date-and-time-value{text-align:left;min-width:0}
 /* 29.10, роли: второй замок — без функции roli новое не видно, даже если код ошибётся */
 body:not([data-f~="roli"]) .f-roli{display:none!important}
+/* 02.11: «Где вы» — город человека для меню заведений и доставки (за gorod, сначала ему) */
+body:not([data-f~="gorod"]) .f-gorod{display:none!important}
+#gorod-cur{margin:0 0 12px;font-size:15px}
+#gorod-cur b{font-weight:600}
+.gorodrow{display:flex;gap:8px;margin-bottom:10px}
+.gorodrow input{flex:1;min-width:0;padding:12px;border-radius:12px;border:.5px solid var(--line);background:var(--card-solid);color:var(--text);font:inherit;font-size:16px}
+#gorod-err{color:var(--bad,#c0392b);font-size:14px;min-height:18px;margin:4px 0 0}
 /* 30.10, этап 6г: строки ролей в профиле — только тем, кого касаются (.pqrow ниже по файлу задаёт display) */
 #pq-rolilab.hide,#pq-roli.hide,#pq-roli .pqrow.hide{display:none!important}
 .roldocs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
@@ -5463,6 +5470,7 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
         <button type="button" class="pqrow" data-pp="zd" id="zdtoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></span><span class="pqt"><b>Здоровье</b><small>учтёт норма и меню</small></span><span class="pqv" id="zdsum">не заполнено</span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="bt" id="bttoggle" aria-expanded="false"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10h16v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5v-5z"/><path d="M2 10h20M9 6c0-1 1-1 1-2M14 6c0-1 1-1 1-2"/></svg></span><span class="pqt"><b>Быт и еда</b><small>готовка, кафе, бюджет</small></span><span class="pqv" id="btsum">не заполнено</span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" id="pq-rez"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span><span class="pqt"><b>Режим дня</b><small>сон и работа</small></span><span class="pqv" id="pv-rez"></span><i class="pqch">›</i></button>
+        <button type="button" class="pqrow f-gorod" data-pp="gorod" id="pq-gorod"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span class="pqt"><b>Где вы</b><small>город для кафе и доставки</small></span><span class="pqv" id="pv-gorod"></span><i class="pqch">›</i></button>
       </div>
 
       <h4 class="pqlab">ИИ-тренер</h4>
@@ -5544,6 +5552,14 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
     </section>
     <!-- 17.09, его слова: «не понимаю секцию друзья, оставь там только ссылку
          поделиться». Круги — на вкладке «Рейтинг». -->
+    <section class="pqpage f-gorod" data-pp="gorod" data-title="Где вы" hidden>
+      <p class="pqlead">По городу тренер ищет меню кафе и ресторанов и не путает их с заведениями в других городах. Подбор доставки из Яндекс Еды и Uzum работает в Узбекистане.</p>
+      <p id="gorod-cur"></p>
+      <div class="gorodrow"><input id="gorod-city" type="text" autocomplete="address-level2" placeholder="Город, например Лиссабон" maxlength="80"><button type="button" class="btn small prim" id="gorod-save">Сохранить</button></div>
+      <button type="button" class="btn wide" id="gorod-geo">Определить по геолокации</button>
+      <button type="button" class="btn wide" id="gorod-reset" hidden>Определять самому (по часовому поясу)</button>
+      <p id="gorod-err" role="alert"></p>
+    </section>
     <section class="pqpage" data-pp="ref" data-title="Пригласить друга" hidden>
       <p class="pqlead" id="refwhat"></p>
       <div class="invcode"><input id="reflink" type="text" readonly aria-label="ваша ссылка"><button type="button" class="btn small prim" id="refshare">Отправить</button></div>
@@ -11219,7 +11235,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '02.11 14:41';
+var BUILD = '02.11 16:27';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19853,6 +19869,45 @@ function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока �
    ЕСТЬ() в коде, список лежит в body[data-f] — CSS прячет новое и вторым
    замком: body:not([data-f~="roli"]) .f-roli{display:none!important}. */
 function ЕСТЬ(имя){ return !!(SUB && SUB.features && SUB.features.indexOf(имя) >= 0); }
+/* ── 02.11: «Где вы» ── его слова: «будем определять местоположение или чтобы пользователь сам указал,
+   где он». Сервер (/place) приводит город к одному имени через OpenStreetMap и хранит страну:
+   меню заведений ищутся и берутся из базы только для этого города и страны. */
+var МЕСТО=null;
+var МЕСТО_ОТКУДА={'ручное':'указали сами','гео':'по геолокации','точка':'по точке доставки','пояс':'по часовому поясу телефона','по умолчанию':'по умолчанию'};
+function местоРисовать(){
+  var v=document.getElementById('pv-gorod'), c=document.getElementById('gorod-cur'), r=document.getElementById('gorod-reset');
+  var м=МЕСТО; if(v) v.textContent = м ? м.city : '';
+  if(c) c.innerHTML = м ? '<b>'+esc(м.city+(м.country?', '+м.country:''))+'</b> · '+esc(МЕСТО_ОТКУДА[м.src]||'') : 'Загружаю…';
+  if(r) r.hidden = !(м && (м.src==='ручное'||м.src==='гео'));
+}
+function местоЗагрузить(){
+  if(!ЕСТЬ('gorod')) return;
+  fGet('/place?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.ok){ МЕСТО=d.place; местоРисовать(); } }).catch(function(){});
+}
+function местоОтправить(тело, кнопка){
+  var e=document.getElementById('gorod-err'); if(e) e.textContent='';
+  var b=document.getElementById(кнопка); if(b) b.disabled=true;
+  return fPost('/place', Object.assign({uid:syncUid()}, тело)).then(function(d){
+    МЕСТО=d.place; местоРисовать(); haptic('ok');
+    var i=document.getElementById('gorod-city'); if(i) i.value='';
+  }).catch(function(x){ if(e) e.textContent=humanErr(x); haptic('err'); })
+    .then(function(){ if(b) b.disabled=false; });
+}
+(function(){
+  var p=document.getElementById('profm'); if(!p) return;
+  p.addEventListener('click', function(ev){
+    if(ev.target.closest('#pq-gorod')){ местоРисовать(); местоЗагрузить(); return; }
+    if(ev.target.closest('#gorod-save')){ var v=String((document.getElementById('gorod-city')||{}).value||'').trim();
+      if(v.length<2){ var e=document.getElementById('gorod-err'); if(e) e.textContent='Напишите город.'; return; }
+      местоОтправить({city:v}, 'gorod-save'); return; }
+    if(ev.target.closest('#gorod-geo')){ var e2=document.getElementById('gorod-err'); if(e2) e2.textContent='';
+      deliveryPosition().then(function(pt){ return местоОтправить({point:{latitude:pt.latitude, longitude:pt.longitude}}, 'gorod-geo'); })
+        .catch(function(x){ if(e2) e2.textContent=humanErr(x); }); return; }
+    if(ev.target.closest('#gorod-reset')){ местоОтправить({reset:true}, 'gorod-reset'); return; }
+  });
+  var inp=document.getElementById('gorod-city');
+  if(inp) inp.addEventListener('keydown', function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); var b=document.getElementById('gorod-save'); if(b) b.click(); } });
+})();
 function функцииПрименить(){
   var f = (SUB && SUB.features && SUB.features.length) ? SUB.features.join(' ') : '';
   if (f) document.body.setAttribute('data-f', f); else document.body.removeAttribute('data-f');
