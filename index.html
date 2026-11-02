@@ -17421,6 +17421,9 @@ document.getElementById('profreset').addEventListener('click', function(){ во�
    Сервер стирает всё тем же путём, что «Удалить» у владельца; подписку за звёзды отменяет сам.
    Подписку App Store / Google Play удаление не отменяет — предупреждаем и даём «Управлять». */
 var УДАЛ={занят:false};
+/* слово подтверждения — на языке экрана: подпись переводится, поэтому подходит любое из трёх (сервер принимает те же) */
+var УДАЛ_СЛОВА=['удалить','delete',"o'chirish",'ochirish'];
+function udalСлово(){ var w=document.getElementById('udalword'); return String((w&&w.value)||'').trim().toLowerCase().replace(/[ʻ‘’`]/g,"'"); }
 function udalState(t, плохо){ var e=document.getElementById('udalstate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
 function openUdal(){
   var m=document.getElementById('udalm'); if(!m) return;
@@ -17436,7 +17439,7 @@ function closeUdal(){ if(УДАЛ.занят) return; var m=document.getElementB
 function udalGo(){
   if(УДАЛ.занят) return;
   УДАЛ.занят=true; document.getElementById('udalgo').disabled=true; udalState('Удаляю аккаунт…'); haptic('medium');
-  fPost('/account/delete', {uid:syncUid(), confirm:'удалить'}).then(function(d){
+  fPost('/account/delete', {uid:syncUid(), confirm:udalСлово()}).then(function(d){
     if(!d||!d.ok) throw new Error((d&&d.error)||'Не удалось удалить аккаунт.');
     DATASESSION.blocked=true; try{ clearTimeout(ctimer); }catch(e){}
     try{ localStorage.clear(); }catch(e){} try{ sessionStorage.clear(); }catch(e){}
@@ -17448,7 +17451,7 @@ function udalGo(){
 }
 document.getElementById('profdel').addEventListener('click', function(){ closeProf(); openUdal(); haptic('light'); });
 document.getElementById('udalclose').addEventListener('click', closeUdal);
-document.getElementById('udalword').addEventListener('input', function(e){ document.getElementById('udalgo').disabled=УДАЛ.занят||String(e.target.value||'').trim().toLowerCase()!=='удалить'; });
+document.getElementById('udalword').addEventListener('input', function(){ document.getElementById('udalgo').disabled=УДАЛ.занят||УДАЛ_СЛОВА.indexOf(udalСлово())<0; });
 document.getElementById('udalm').addEventListener('click', function(e){
   if(e.target.id==='udalm'){ closeUdal(); return; }
   if(e.target.closest('#udalgo')){ udalGo(); return; }

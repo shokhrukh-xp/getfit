@@ -51,6 +51,7 @@ const открытьПрофиль=async p=>{ await p.click('#profbtn'); await p
    ok(/Подписка за звёзды отменится сама/.test(т),'звёзды — «отменится сама»');
    ok(await p.$eval('#udalgo',e=>e.disabled),'«Удалить навсегда» закрыта без слова');
    await p.fill('#udalword','удали');ok(await p.$eval('#udalgo',e=>e.disabled),'не то слово — закрыта');
+   for(const w of ['Delete','oʻchirish']){ await p.fill('#udalword',w); ok(!(await p.$eval('#udalgo',e=>e.disabled)),'«'+w+'» (язык экрана) — открыта'); }
    await p.fill('#udalword',' Удалить ');ok(!(await p.$eval('#udalgo',e=>e.disabled)),'«удалить» (любым регистром) — открыта');
    await p.evaluate(()=>{ localStorage.setItem('wb_test_mark','1'); });
    await p.click('#udalgo');await p.waitForTimeout(400);
