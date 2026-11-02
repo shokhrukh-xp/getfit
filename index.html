@@ -4665,6 +4665,7 @@ input[type="date"]::-webkit-date-and-time-value,input[type="time"]::-webkit-date
 body:not([data-f~="roli"]) .f-roli{display:none!important}
 /* 02.11: «Где вы» — город человека для меню заведений и доставки (за gorod, сначала ему) */
 body:not([data-f~="gorod"]) .f-gorod{display:none!important}
+body:not([data-f~="udalit"]) .f-udalit{display:none!important}   /* 02.11: удаление аккаунта (выключатель udalit) */
 #gorod-cur{margin:0 0 12px;font-size:15px}
 #gorod-cur b{font-weight:600}
 .gorodrow{display:flex;gap:8px;margin-bottom:10px}
@@ -5523,6 +5524,8 @@ body:not([data-f~="gorod"]) .f-gorod{display:none!important}
         <!-- 01.11: условие бесплатной лицензии RepDB — видимая ссылка в приложении -->
         <p class="foot howattr"><a href="https://repdb.co" target="_blank" rel="noopener nofollow">Exercise data by RepDB (repdb.co)</a></p>
         <button class="btn wide danger" id="profreset">Начать заново</button>
+        <!-- 02.11: удаление аккаунта внутри приложения (Apple 5.1.1(v), Google) -->
+        <button class="btn wide danger f-udalit" id="profdel">Удалить аккаунт</button>
         <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
       </div>
     </div>
@@ -5624,6 +5627,19 @@ body:not([data-f~="gorod"]) .f-gorod{display:none!important}
     <h3 id="rolct">Клиент</h3>
     <div id="rolcbody"></div>
     <button type="button" class="btn wide" id="rolcclose">Закрыть</button>
+  </div>
+</div>
+<!-- 02.11: удалить аккаунт — навсегда, со словом «удалить» и предупреждением про подписку магазина -->
+<div class="modal" id="udalm" role="dialog" aria-modal="true" aria-labelledby="udaltitle">
+  <div class="modalbox">
+    <h3 id="udaltitle">Удалить аккаунт</h3>
+    <p class="mtext">Удалятся навсегда: дневник еды и тренировок, профиль, замеры и фото, переписка с тренером, Wellböl Pro и баллы, ваши круги и место в чужих, входы через Telegram, Apple, Google и почту. Вернуть их будет нельзя — войти потом можно только с нуля.</p>
+    <p class="mtext" id="udalsub" hidden></p>
+    <label class="mtext" for="udalword">Чтобы подтвердить, напишите слово «удалить»</label>
+    <input id="udalword" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20">
+    <button type="button" class="btn wide danger" id="udalgo" disabled>Удалить навсегда</button>
+    <p class="mtext" id="udalstate" role="status" hidden></p>
+    <button type="button" class="btn wide" id="udalclose">Отмена</button>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -17401,6 +17417,43 @@ function doReset(scope){
     .catch(function(e){ resetBusy=false; resetState(humanErr(e), true); });
 }
 document.getElementById('profreset').addEventListener('click', function(){ возвратЗапомнить('resetm'); closeProf(); openReset(); haptic('light'); });
+/* ── 02.11: удалить аккаунт (пункт 2 к выпуску) ──
+   Сервер стирает всё тем же путём, что «Удалить» у владельца; подписку за звёзды отменяет сам.
+   Подписку App Store / Google Play удаление не отменяет — предупреждаем и даём «Управлять». */
+var УДАЛ={занят:false};
+function udalState(t, плохо){ var e=document.getElementById('udalstate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
+function openUdal(){
+  var m=document.getElementById('udalm'); if(!m) return;
+  var с=(SUB&&SUB.sub)||{}, п=document.getElementById('udalsub'), т='';
+  if(с.ok&&с.kind==='store'&&!с.canceled) т='Wellböl Pro оформлен через '+(с.store==='google'?'Google Play':'App Store')+'. Удаление аккаунта подписку не отменяет — сначала отмените её в настройках телефона, иначе списания продолжатся.'+(ПЛ.покупки()?' <button type="button" class="linkbtn" id="udalmanage">Управлять подпиской</button>':'');
+  else if(с.ok&&с.kind==='sub'&&с.paid&&!с.canceled) т='Подписка за звёзды отменится сама — новых списаний не будет.';
+  if(п){ п.innerHTML=т; п.hidden=!т; }
+  var w=document.getElementById('udalword'); if(w) w.value='';
+  document.getElementById('udalgo').disabled=true; udalState('');
+  m.classList.add('show');
+}
+function closeUdal(){ if(УДАЛ.занят) return; var m=document.getElementById('udalm'); if(m) m.classList.remove('show'); }
+function udalGo(){
+  if(УДАЛ.занят) return;
+  УДАЛ.занят=true; document.getElementById('udalgo').disabled=true; udalState('Удаляю аккаунт…'); haptic('medium');
+  fPost('/account/delete', {uid:syncUid(), confirm:'удалить'}).then(function(d){
+    if(!d||!d.ok) throw new Error((d&&d.error)||'Не удалось удалить аккаунт.');
+    DATASESSION.blocked=true; try{ clearTimeout(ctimer); }catch(e){}
+    try{ localStorage.clear(); }catch(e){} try{ sessionStorage.clear(); }catch(e){}
+    if(ПЛ.имя==='native') ПЛ.сессияЗапомнить(null);
+    udalState(d.магазин?'Аккаунт удалён. Не забудьте отменить подписку в настройках '+(d.магазин==='google'?'Google Play':'App Store')+'.':'Аккаунт удалён.');
+    haptic('ok');
+    setTimeout(function(){ location.reload(); }, d.магазин?4000:1500);
+  }).catch(function(e){ УДАЛ.занят=false; document.getElementById('udalgo').disabled=false; udalState(humanErr(e), true); haptic('err'); });
+}
+document.getElementById('profdel').addEventListener('click', function(){ closeProf(); openUdal(); haptic('light'); });
+document.getElementById('udalclose').addEventListener('click', closeUdal);
+document.getElementById('udalword').addEventListener('input', function(e){ document.getElementById('udalgo').disabled=УДАЛ.занят||String(e.target.value||'').trim().toLowerCase()!=='удалить'; });
+document.getElementById('udalm').addEventListener('click', function(e){
+  if(e.target.id==='udalm'){ closeUdal(); return; }
+  if(e.target.closest('#udalgo')){ udalGo(); return; }
+  if(e.target.closest('#udalmanage')){ var np=ПЛ.покупки(); if(np) np.manageSubscriptions().catch(function(){}); return; }
+});
 document.getElementById('resetclose').addEventListener('click', closeReset);
 document.getElementById('resetm').addEventListener('click', function(e){
   if(e.target.id==='resetm'){ closeReset(); return; }
