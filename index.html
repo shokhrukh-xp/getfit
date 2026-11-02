@@ -4666,6 +4666,9 @@ body:not([data-f~="roli"]) .f-roli{display:none!important}
 /* 02.11: «Где вы» — город человека для меню заведений и доставки (за gorod, сначала ему) */
 body:not([data-f~="gorod"]) .f-gorod{display:none!important}
 body:not([data-f~="udalit"]) .f-udalit{display:none!important}   /* 02.11: удаление аккаунта (выключатель udalit) */
+body:not([data-f~="soglasie"]) .f-soglasie{display:none!important}   /* 02.11: согласие на ИИ и «не медицинское изделие» (выключатель soglasie) */
+#iim .iibtns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#iim .iinote{opacity:.75;font-size:13px}
 #gorod-cur{margin:0 0 12px;font-size:15px}
 #gorod-cur b{font-weight:600}
 .gorodrow{display:flex;gap:8px;margin-bottom:10px}
@@ -5523,10 +5526,14 @@ body:not([data-f~="udalit"]) .f-udalit{display:none!important}   /* 02.11: уд�
         <p class="foot howattr">Анатомия на карте тела — body-muscles, Apache-2.0.</p>
         <!-- 01.11: условие бесплатной лицензии RepDB — видимая ссылка в приложении -->
         <p class="foot howattr"><a href="https://repdb.co" target="_blank" rel="noopener nofollow">Exercise data by RepDB (repdb.co)</a></p>
+        <!-- 02.11: согласие на ИИ — только приложение из магазина (Apple 5.1.2(i), Google), выключатель soglasie -->
+        <button class="btn wide f-soglasie" id="profii" hidden>ИИ-помощник</button>
         <button class="btn wide danger" id="profreset">Начать заново</button>
         <!-- 02.11: удаление аккаунта внутри приложения (Apple 5.1.1(v), Google) -->
         <button class="btn wide danger f-udalit" id="profdel">Удалить аккаунт</button>
         <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
+        <!-- 02.11: Apple 1.4.1, Google Health Content — не медицинское изделие -->
+        <p class="foot f-soglasie">Wellböl — не медицинское изделие: не ставит диагнозы и не лечит. Калории и советы — оценки, а не точные данные. По вопросам здоровья обращайтесь к врачу.</p>
       </div>
     </div>
 
@@ -5640,6 +5647,21 @@ body:not([data-f~="udalit"]) .f-udalit{display:none!important}   /* 02.11: уд�
     <button type="button" class="btn wide danger" id="udalgo" disabled>Удалить навсегда</button>
     <p class="mtext" id="udalstate" role="status" hidden></p>
     <button type="button" class="btn wide" id="udalclose">Отмена</button>
+  </div>
+</div>
+<div class="modal" id="iim" role="dialog" aria-modal="true" aria-labelledby="iititle">
+  <div class="modalbox">
+    <h3 id="iititle">ИИ-помощник</h3>
+    <p class="mtext">Чтобы отвечать и давать советы, Wellböl отправляет ваши сообщения, фото еды, голосовые и показатели — вес, замеры и сведения о здоровье, которые вы ввели, — сервисам ИИ: Anthropic (Claude), OpenAI и Google (Gemini). Они обрабатывают данные по нашему поручению и не используют их для рекламы. <a href="#" data-ii-link="https://wellbol.com/privacy">Политика конфиденциальности</a></p>
+    <p class="mtext iinote">Без согласия работают дневник, вес, замеры и зал; тренер, разбор фото еды и голос — нет. Решение можно изменить в профиле.</p>
+    <p class="mtext iinote">Wellböl — не медицинское изделие: не ставит диагнозы и не лечит. По вопросам здоровья обращайтесь к врачу.</p>
+    <p class="mtext" id="iistate" role="status" hidden></p>
+    <div class="iibtns">
+      <button type="button" class="btn wide" id="iiyes">Согласен</button>
+      <button type="button" class="btn wide" id="iino">Не сейчас</button>
+      <button type="button" class="btn wide danger" id="iioff" hidden>Выключить ИИ</button>
+      <button type="button" class="btn wide" id="iiclose" hidden>Закрыть</button>
+    </div>
   </div>
 </div>
 <div class="modal" id="resetm" role="dialog" aria-modal="true" aria-labelledby="resettitle">
@@ -11264,7 +11286,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '02.11 16:27';
+var BUILD = '02.11 21:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17457,6 +17479,45 @@ document.getElementById('udalm').addEventListener('click', function(e){
   if(e.target.closest('#udalgo')){ udalGo(); return; }
   if(e.target.closest('#udalmanage')){ var np=ПЛ.покупки(); if(np) np.manageSubscriptions().catch(function(){}); return; }
 });
+/* ── 02.11: согласие на ИИ (пункт 5 к выпуску; Apple 5.1.2(i), Google User Data) ──
+   Его выбор: окно только в приложении из магазина; «Не сейчас» — работает без ИИ, включить в профиле.
+   Сервер без согласия ИИ не зовёт (код ii_net) — тогда окно открывается снова. */
+var ИИС={загружено:false, ответ:false, yes:false, занят:false, спрошено:false};
+function иисВкл(){ return ПЛ.имя==='native' && ЕСТЬ('soglasie'); }
+function иисРисовать(){
+  var b=document.getElementById('profii'); if(b){ b.hidden=!иисВкл(); b.textContent='ИИ-помощник: '+(ИИС.yes?'включён':'выключен'); }
+  var да=document.getElementById('iiyes'), нет=document.getElementById('iino'), выкл=document.getElementById('iioff'), закр=document.getElementById('iiclose');
+  if(да) да.hidden=ИИС.yes; if(нет) нет.hidden=ИИС.yes; if(выкл) выкл.hidden=!ИИС.yes; if(закр) закр.hidden=!ИИС.yes;
+}
+function иисЗагрузить(){
+  if(!иисВкл()||ИИС.загружено) return;
+  ИИС.загружено=true;
+  fGet('/ii-soglasie?uid='+encodeURIComponent(syncUid())).then(function(d){
+    if(!d||!d.ok){ ИИС.загружено=false; return; }
+    ИИС.ответ=!!d.soglasie; ИИС.yes=!!d.yes; иисРисовать();
+    if(!ИИС.yes && (!ИИС.ответ || (d.soglasie && d.soglasie.yes===true)) && !ИИС.спрошено){ ИИС.спрошено=true; openIIS(); }   /* не отвечал или текст согласия обновился */
+  }).catch(function(){ ИИС.загружено=false; });
+}
+function iisState(t, плохо){ var e=document.getElementById('iistate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
+function openIIS(){ var m=document.getElementById('iim'); if(!m||!иисВкл()) return; iisState(''); иисРисовать(); m.classList.add('show'); }
+function closeIIS(){ if(ИИС.занят) return; var m=document.getElementById('iim'); if(m) m.classList.remove('show'); }
+function иисОтветить(да){
+  if(ИИС.занят) return; ИИС.занят=true; iisState('Сохраняю…');
+  fPost('/ii-soglasie', {uid:syncUid(), yes:!!да}).then(function(d){
+    ИИС.занят=false; ИИС.ответ=true; ИИС.yes=!!(d&&d.yes); иисРисовать(); haptic(да?'ok':'light');
+    iisState(''); closeIIS();
+    if(!да) say('ИИ-помощник выключен. Включить можно в профиле.');
+  }).catch(function(e){ ИИС.занят=false; iisState(humanErr(e), true); haptic('err'); });
+}
+document.getElementById('profii').addEventListener('click', function(){ closeProf(); openIIS(); haptic('light'); });
+document.getElementById('iim').addEventListener('click', function(e){
+  if(e.target.id==='iim'){ if(ИИС.ответ) closeIIS(); return; }   /* первый раз — только кнопкой: ответ нужен явный */
+  var л=e.target.closest('[data-ii-link]'); if(л){ e.preventDefault(); ПЛ.открыть(л.getAttribute('data-ii-link')); return; }
+  if(e.target.closest('#iiyes')){ иисОтветить(true); return; }
+  if(e.target.closest('#iino')){ иисОтветить(false); return; }
+  if(e.target.closest('#iioff')){ иисОтветить(false); return; }
+  if(e.target.closest('#iiclose')){ closeIIS(); return; }
+});
 document.getElementById('resetclose').addEventListener('click', closeReset);
 document.getElementById('resetm').addEventListener('click', function(e){
   if(e.target.id==='resetm'){ closeReset(); return; }
@@ -19736,10 +19797,13 @@ document.getElementById('fnav').addEventListener('click', function(e){
 function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.json(); }); }
 /* 28.10: как fPost, но фоном на сервере (fДолгий) — для запросов дольше минуты */
 function fPostДолгий(path, body){ return fДолгий(path, body).then(function(r){ return r.json().then(function(d){
-  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; throw e; }
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; if(e.code==='ii_net') иисНужно(); throw e; }
   return d; }); }); }
+/* 02.11: сервер не зовёт ИИ без согласия — показать окно ещё раз (не чаще раза в минуту) */
+var ИИС_ПОКАЗ=0;
+function иисНужно(){ if(Date.now()-ИИС_ПОКАЗ<60000) return; ИИС_ПОКАЗ=Date.now(); try{ ИИС.yes=false; ИИС.ответ=true; setTimeout(openIIS, 0); }catch(_){} }
 function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
-  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; e.dialog=d.dialog; throw e; }
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; e.dialog=d.dialog; if(e.code==='ii_net') иисНужно(); throw e; }
   return d; }); }); }
 /* 18.10, его слова: «найди решение чтобы даже не приходилось нажимать
    повторить. Нужно чтобы всё срабатывало с первого раза». Отправка в чат
@@ -19929,7 +19993,7 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){}
+    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ иисЗагрузить(); иисРисовать(); }catch(e){} try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){}
       /* 02.11: приложение из магазина — один раз за запуск сверить покупки магазина с сервером (продления, покупка с другого телефона) */
       if(ПЛ.имя==='native' && !МАГ.сверено && ПЛ.покупки()){ МАГ.сверено=true; магСверить(true); } } return d; }).catch(function(){ return null; });
 }
@@ -21720,6 +21784,7 @@ function humanErr(e){
   if(e && e.name==='AbortError') return 'Слишком долго — попробуйте ещё раз.';
   /* 18.10: кончились кредиты Gemini — «попробуй ещё раз» не поможет, говорим как есть */
   if((e&&e.code)==='ai_down') return 'Тренер сейчас недоступен — уже чиним. Дневник, вес и зал работают как обычно.';
+  if((e&&e.code)==='ii_net') return 'ИИ-помощник выключен. Включить можно в профиле — «ИИ-помощник».';
   if((e&&e.code)==='slow') return 'Тренер не успел ответить вовремя. Попробуйте ещё раз.';
   if((e&&e.code)==='busy' || /\b429\b|quota|rate.?limit/i.test(t)) return 'Тренер сейчас занят — слишком много запросов подряд. Подождите минуту.';
   if(/Failed to fetch|NetworkError|network|Load failed|timed out/i.test(t)) return 'Нет связи с сервером. Проверьте интернет.';   /* 28.10: «Load failed» — так iPhone называет оборванный запрос */
