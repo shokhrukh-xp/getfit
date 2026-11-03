@@ -4673,6 +4673,7 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 #handm .hlist{max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:6px;margin:10px 0}
 #handm .hitem{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line,rgba(127,127,127,.25));background:transparent;color:inherit;font:inherit;cursor:pointer}
 #handm .hitem small{opacity:.7;white-space:nowrap}
+#handm .hitem .hsub{display:block;font-size:12px;margin-top:2px}
 #handm .hsec{font-size:12px;opacity:.7;margin:8px 0 0}
 #handm .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #handm input{width:100%;box-sizing:border-box}   /* 02.11: согласие на ИИ и «не медицинское изделие» (выключатель soglasie) */
@@ -11327,7 +11328,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '02.11 21:50';
+var BUILD = '03.11 09:09';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17563,36 +17564,83 @@ document.getElementById('iim').addEventListener('click', function(e){
    Без Pro через ИИ — 3 записи в день; вручную — без ИИ и без лимита: продукт или блюдо из
    базы + граммы, своё блюдо с КБЖУ, «повторить» из недавних, штрихкод. Сервер — /meal/add,
    /meal/repeat, база — /hand/base (обычные продукты + 174 блюда). */
-var РУКА={база:null, недавние:[], выбор:null, занят:false};
+var РУКА={база:null, недавние:[], выбор:null, занят:false, грузится:false};
 function рукаВидна(){ return ЕСТЬ('ruchnoy'); }
 function рукаЧисло(x){ var v=parseFloat(String(x==null?'':x).replace(',','.')); return isFinite(v)&&v>=0?v:NaN; }
-function рукаНорм(t){ return String(t||'').toLowerCase().replace(/ё/g,'е'); }
+function рукаНорм(t){ return String(t||'').toLowerCase().replace(/ё/g,'е').replace(/[ʻʼ’‘`]/g,"'"); }
 function рукаState(t, плохо){ var e=document.getElementById('handstate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
 function рукаШаг(шаг){ ['find','g','own'].forEach(function(x){ var e=document.getElementById('hand-'+x); if(e) e.hidden=x!==шаг; }); рукаState(''); }
+/* 03.11: его просьба «загрузить базу блюд и продуктов заранее, чтобы по названию уже подсказывать
+   калорийность и БЖУ»; выбор «Большая, в приложении». food-base.json лежит рядом с index.html (в
+   приложении из магазина — внутри него): ~1100 продуктов USDA FoodData Central (общественное
+   достояние) + ~390 блюд (наши 174 и новые по составу), названия ru/uz/en, числа на 100 г.
+   Грузится тихо после запуска (при ruchnoy) и хранится в телефоне; нет файла — прежняя /hand/base. */
+var РУКА_V='03.11.1';
+function рукаИмя(x){ return (ЯЗ==='uz'&&x.uz) ? x.uz : (ЯЗ==='en'&&x.en) ? x.en : (x.ru||x.n||''); }
+function рукаБазаИз(o){
+  var f=o.f||[];
+  return (o.d||[]).map(function(r){ var x={}; for(var i=0;i<f.length;i++) x[f[i]]=r[i]; x.n=x.ru; x.ключ=' '+рукаНорм([x.ru,x.uz,x.en,x.syn].join(' ')); return x; });
+}
+function рукаПредзагрузка(){
+  if(РУКА.база||РУКА.грузится||!рукаВидна()) return;
+  try{ var с=JSON.parse(localStorage.getItem('wb_food_base')||'null'); if(с&&с.v===РУКА_V&&с.d){ РУКА.база=рукаБазаИз(с); return; } }catch(e){}
+  РУКА.грузится=true;
+  fetch('food-base.json?v='+РУКА_V).then(function(r){ return r.ok?r.json():null; }).then(function(o){
+    РУКА.грузится=false; if(!o||!o.d) throw new Error('нет базы');
+    РУКА.база=рукаБазаИз(o); try{ localStorage.setItem('wb_food_base', JSON.stringify(o)); }catch(e){}
+    рукаСписок();
+  }).catch(function(){
+    РУКА.грузится=false;
+    fGet('/hand/base?uid='+encodeURIComponent(syncUid())).then(function(d){
+      if(d&&d.ok&&!РУКА.база){ РУКА.база=(d.items||[]).map(function(x){ x.ru=x.n; x.pop=2; x.t=x.вид==='блюдо'?'d':'p'; x.ключ=' '+рукаНорм(x.n); return x; }); рукаСписок(); }
+    }).catch(function(){});
+  });
+}
 function openHand(){
   var m=document.getElementById('handm'); if(!m) return;
   рукаШаг('find'); document.getElementById('handq').value=''; РУКА.выбор=null;
-  m.classList.add('show'); рукаСписок();
-  var u=encodeURIComponent(syncUid());
-  if(!РУКА.база) fGet('/hand/base?uid='+u).then(function(d){ if(d&&d.ok){ РУКА.база=d.items||[]; рукаСписок(); } }).catch(function(){});
-  fGet('/recent?uid='+u).then(function(d){ if(d&&d.ok){ РУКА.недавние=d.recent||[]; рукаСписок(); } }).catch(function(){});
+  m.classList.add('show'); рукаПредзагрузка(); рукаСписок();
+  fGet('/recent?uid='+encodeURIComponent(syncUid())).then(function(d){ if(d&&d.ok){ РУКА.недавние=d.recent||[]; рукаСписок(); } }).catch(function(){});
+  setTimeout(function(){ try{ document.getElementById('handq').focus(); }catch(e){} }, 50);
 }
 function closeHand(){ if(РУКА.занят) return; var m=document.getElementById('handm'); if(m) m.classList.remove('show'); }
+/* поиск: каждое слово запроса — в названии на любом из трёх языков или в синонимах; выше —
+   совпадение с начала названия и с начала слова, частые продукты, потом короткие названия */
+function рукаИскать(q){
+  var слова=q.split(/[\s,.;:()]+/).filter(function(w){ return w.length>0; }); if(!слова.length) return [];
+  var res=[];
+  (РУКА.база||[]).forEach(function(x,i){
+    var к=x.ключ||'', наз=рукаНорм(рукаИмя(x)), s=0;
+    for(var j=0;j<слова.length;j++){
+      var p=к.indexOf(слова[j]); if(p<0) return;
+      if(/[\s(,|«"-]/.test(к.charAt(p-1))) s+=2;
+    }
+    if(наз.indexOf(слова[0])===0) s+=5;
+    s+=(+x.pop||1);
+    res.push({x:x,i:i,s:s,l:наз.length});
+  });
+  res.sort(function(a,b){ return b.s-a.s || a.l-b.l; });
+  return res.slice(0,30);
+}
+function рукаПорция(x){
+  var g=+x.g||100, к=g/100, r=function(v){ return Math.round((+v||0)*к); };
+  return {g:g, kcal:r(x.k), prot:r(x.p), fat:r(x.f), carb:Math.round(рукаУгл(x)*к)};
+}
 function рукаСписок(){
   var box=document.getElementById('handlist'); if(!box) return;
   var q=рукаНорм(document.getElementById('handq').value).trim(), h='';
   var нед=РУКА.недавние.map(function(m,i){ return {m:m,i:i}; }).filter(function(x){ return !q || рукаНорм(x.m.text).indexOf(q)>=0; }).slice(0,5);
   if(нед.length) h+='<p class="hsec">Недавние — повторить</p>'+нед.map(function(x){ return '<button type="button" class="hitem" data-hrep="'+x.i+'"><span>'+esc(x.m.text)+'</span><small>'+Math.round(+x.m.kcal||0)+' ккал</small></button>'; }).join('');
-  if(q){
-    var баз=(РУКА.база||[]).map(function(x,i){ return {x:x,i:i}; }).filter(function(o){ return рукаНорм(o.x.n).indexOf(q)>=0; });
-    баз.sort(function(a,b){ return (рукаНорм(a.x.n).indexOf(q)===0?0:1)-(рукаНорм(b.x.n).indexOf(q)===0?0:1); });
-    h+= баз.length ? '<p class="hsec">База</p>'+баз.slice(0,30).map(function(o){ return '<button type="button" class="hitem" data-hb="'+o.i+'"><span>'+esc(o.x.n)+'</span><small>'+Math.round(+o.x.k||0)+' ккал в 100 г</small></button>'; }).join('')
+  if(q.length>=2){
+    var баз=рукаИскать(q);
+    h+= баз.length ? '<p class="hsec">База — на обычную порцию</p>'+баз.map(function(o){ var п=рукаПорция(o.x);
+        return '<button type="button" class="hitem" data-hb="'+o.i+'"><span>'+esc(рукаИмя(o.x))+'<small class="hsub">'+п.g+' г · Б '+п.prot+' · Ж '+п.fat+' · У '+п.carb+'</small></span><small>≈ '+п.kcal+' ккал</small></button>'; }).join('')
       : (РУКА.база ? '<p class="mtext">В базе такого нет. Запишите как своё блюдо — с числами с упаковки или из меню.</p>' : '<p class="mtext">Загружаю базу…</p>');
   } else if(!нед.length) h+='<p class="mtext">Начните вводить название: творог, плов, банан…</p>';
   box.innerHTML=h;
 }
 function рукаУгл(x){ return x.u!=null ? +x.u : Math.max(0,((+x.k||0)-4*(+x.p||0)-9*(+x.f||0))/4); }
-function рукаВыбрать(i){ var x=(РУКА.база||[])[i]; if(!x) return; РУКА.выбор=x; document.getElementById('handname').textContent=x.n; document.getElementById('handgr').value=String(x.g||100); рукаШаг('g'); рукаСчёт(); }
+function рукаВыбрать(i){ var x=(РУКА.база||[])[i]; if(!x) return; РУКА.выбор=x; document.getElementById('handname').textContent=рукаИмя(x); document.getElementById('handgr').value=String(x.g||100); рукаШаг('g'); рукаСчёт(); }
 function рукаСчёт(){
   var x=РУКА.выбор, el=document.getElementById('handcalc'), кн=document.getElementById('handsave'); if(!x||!el) return null;
   var g=рукаЧисло(document.getElementById('handgr').value);
@@ -17624,7 +17672,7 @@ document.getElementById('handm').addEventListener('click', function(e){
   if(e.target.closest('#handscan')){ closeHand(); scanOpen(); return; }
   if(e.target.closest('#handback') || e.target.closest('#hownback')){ рукаШаг('find'); рукаСписок(); return; }
   if(e.target.closest('#handsave')){ var x=РУКА.выбор, c=рукаСчёт(); if(!x||!c) return;
-    var имя=x.n+', '+c.g+' г'; рукаЗаписать('/meal/add', {text:имя, kcal:c.kcal, prot:c.prot, fat:c.fat, carb:c.carb, fib:c.fib, kind:scanKind()}, имя); return; }
+    var имя=рукаИмя(x)+', '+c.g+' г'; рукаЗаписать('/meal/add', {text:имя, kcal:c.kcal, prot:c.prot, fat:c.fat, carb:c.carb, fib:c.fib, kind:scanKind()}, имя); return; }
   if(e.target.closest('#hownsave')){
     var имя2=document.getElementById('hon').value.trim(), кк=рукаЧисло(document.getElementById('hok').value);
     if(!имя2){ рукаState('Напишите, что съели.', true); return; }
@@ -20107,7 +20155,7 @@ function openSrez(дн){
 function closeSrez(){ var m=document.getElementById('srezm'); if(m) m.classList.remove('show'); }
 function subPull(){
   return fGet('/sub?uid='+encodeURIComponent(syncUid()))
-    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ иисЗагрузить(); иисРисовать(); }catch(e){} try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){}
+    .then(function(d){ if(d&&d.ok){ SUB=d; функцииПрименить(); renderSub(); admВкладка(); try{ иисЗагрузить(); иисРисовать(); }catch(e){} setTimeout(function(){ try{ рукаПредзагрузка(); }catch(e){} }, 2500); try{ renderFoodDay(); }catch(e){} try{ wzЯрлыкПро(); }catch(e){}
       /* 02.11: приложение из магазина — один раз за запуск сверить покупки магазина с сервером (продления, покупка с другого телефона) */
       if(ПЛ.имя==='native' && !МАГ.сверено && ПЛ.покупки()){ МАГ.сверено=true; магСверить(true); } } return d; }).catch(function(){ return null; });
 }

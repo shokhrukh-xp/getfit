@@ -55,6 +55,7 @@ const положить = (url, файл) => { try { ФАЙЛЫ.set(url, fs.readF
 for (const п of ['kabinet', 'business', 'experts']) положить('/' + п + '/index.html', path.join(ROOT, п, 'index.html'));
 положить('/catalog.json', path.join(ROOT, 'catalog.json'));
 положить('/tech.json', path.join(ROOT, 'tech.json'));          /* 24.09: техника упражнений */
+положить('/food-base.json', path.join(ROOT, 'food-base.json'));   /* 03.11: база продуктов и блюд для ручного ввода */
 const из = (папка, rx, куда) => { try { fs.readdirSync(папка).filter(f => rx.test(f)).forEach(f => положить(куда + f, path.join(папка, f))); } catch (e) {} };
 из(path.join(ROOT, 'fonts'), /\.woff2$/, '/fonts/');
 из(path.join(TG, 'fixtures'), /\.jpg$/, '/p/');
