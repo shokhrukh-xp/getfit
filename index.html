@@ -4845,6 +4845,26 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
   background:#EEE9FF;box-shadow:inset 0 0 0 1px #D2C8F7;color:#1b1430}
 :root[data-theme="dark"] .sv2p{background:#241f36;box-shadow:inset 0 0 0 1px #3d3358;color:var(--text)}
 .sv2p b{font-size:15px}.sv2p small{margin-left:auto;font-size:12.5px;color:#6a5f8e;white-space:nowrap}:root[data-theme="dark"] .sv2p small{color:#a99fca}
+
+/* ══ 04.11: НИЖНЯЯ ПАНЕЛЬ КАК В TELEGRAM (panel2) ══ его слова: «панель навигации сделать как у iOS
+   или Telegram — у них форма углов подстраивается под угол экрана; три кнопки слева сгруппировать,
+   кнопку чата — отдельно справа». Его выбор — вариант B: капсула трёх разделов (радиус = половина
+   высоты, концентрично углу экрана при отступе 22 px) и песочный круг ИИ-тренера справа. */
+.l1-grp{display:contents}
+body[data-f~="panel2"] .l1{left:16px;right:16px;bottom:var(--nav-gap);padding:0;background:none;border:0;border-radius:0;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-theme="dark"] body[data-f~="panel2"] .l1{box-shadow:none}
+body[data-f~="panel2"] .l1-in{display:flex;gap:10px;align-items:stretch;max-width:616px;margin:0 auto}
+body[data-f~="panel2"] .l1-grp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:1;height:64px;padding:4px;box-sizing:border-box;border-radius:32px;
+  background:var(--navbg);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),0 12px 30px rgba(0,0,0,.45);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+body[data-f~="panel2"] .l1-grp button{min-height:0;height:100%;border-radius:28px;font-size:11px;gap:2px;color:rgba(255,255,255,.7)}
+body[data-f~="panel2"] .l1-grp button[aria-selected="true"]{background:rgba(59,163,181,.30);color:#fff}
+body[data-f~="panel2"] .l1-grp button[aria-selected="true"] svg{color:#8fdbe6}
+body[data-f~="panel2"] #coachnav{flex:none;width:64px;height:64px;min-height:0;padding:0;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+  background:var(--sand);color:var(--sand-ink);box-shadow:0 10px 24px rgba(244,184,96,.35)}
+body[data-f~="panel2"] #coachnav svg{width:26px;height:26px;margin:0;padding:0;background:none;color:inherit}
+body[data-f~="panel2"] #coachnavt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+body[data-f~="panel2"] #coachnav .dgbadge{position:absolute;top:2px;right:2px}
 </style>
 </head>
 <body>
@@ -4863,9 +4883,11 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 
 <nav class="l1" id="l1" role="tablist" aria-label="Разделы">
   <div class="l1-in">
+    <div class="l1-grp">
     <button role="tab" data-page="home" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Сегодня</span></button>
     <button role="tab" data-page="gym" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/></svg><span>Тренировка</span></button>
     <button role="tab" data-page="food" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v18M5 3c0 4 4 4 4 8H5M19 3c-2 0-4 3-4 7 0 2 2 3 2 3v8"/></svg><span>Еда</span></button>
+    </div>
     <button type="button" id="coachnav" aria-label="Спросить ИИ-тренера" aria-haspopup="dialog" aria-controls="coachm"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.8 7.2L22 12l-7.2 2.8L12 22l-2.8-7.2L2 12l7.2-2.8Z"/></svg><span id="coachnavt">ИИ-тренер</span><i class="dgbadge" id="coachnavn" hidden></i></button>
   </div>
 </nav>

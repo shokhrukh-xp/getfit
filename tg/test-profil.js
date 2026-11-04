@@ -22,7 +22,8 @@ const ЧЕЛОВЕК = { sex: 'm', age: 38, ht: 178, bw: 88.1, goal: 'fat', wt: 
 
 const полоса = page => page.evaluate(() => {
   const nav = document.querySelector('.l1-in');
-  const bs = Array.from(nav.children).filter(b => b.tagName === 'BUTTON' && getComputedStyle(b).display !== 'none');
+  /* 04.11: три раздела — в .l1-grp (panel2; без него — display:contents, сетка прежняя) */
+  const bs = Array.from(nav.querySelectorAll(':scope > button, :scope > .l1-grp > button')).filter(b => getComputedStyle(b).display !== 'none');
   const r = nav.getBoundingClientRect();
   const пер = bs[0].getBoundingClientRect(), посл = bs[bs.length - 1].getBoundingClientRect();
   return { n: bs.length,
