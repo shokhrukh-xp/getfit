@@ -4858,6 +4858,7 @@ body[data-f~="chat2"].c2pro #chatlog :is(.msg.intro,[data-cq]){display:none}
 .cltop b{font-size:16px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cltop time{font-size:12.5px;color:var(--dim);flex:none}
 .cltag{font-size:11px;font-weight:700;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:1px 5px;flex:none}
+.clrole{font-size:13px;font-weight:700;color:var(--accent-txt,var(--text));line-height:1.2}
 .cllast{flex:1;min-width:0;font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clbadge{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--action);color:var(--on-accent);font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .clpin{flex:none;color:var(--dim);font-size:13px}
@@ -24878,19 +24879,23 @@ function чатСверить(text, сФото, с, date){
    Нет специалистов — кнопка сразу открывает чат с ИИ-тренером. Чат — на весь экран:
    шапка «‹ аватар имя», пузыри слева/справа со временем внутри, вся история прокруткой. */
 function чат2(){ try { return ЕСТЬ('chat2'); } catch (e) { return false; } }
+/* кто он: фитнес-тренер, нутрициолог… — его слова 04.11: «нужно писать кем являются контакты».
+   Своё звание специалиста (title с сервера, если он его указал) — главнее вида. */
+var ЧАТ2_РОЛИ = { trainer: 'Фитнес-тренер', nutri: 'Нутрициолог', dietolog: 'Диетолог', rehab: 'Реабилитолог', doctor: 'Врач' };
+function чат2Роль(l){ return String((l && (l.title || ЧАТ2_РОЛИ[l.kind])) || 'Специалист'); }
 function чат2Кратко(т){ return String(т || '').replace(/\*\*/g, '').replace(/\s*\[фото(?: ×\d+)?\]\s*$/, ' 📷').replace(/\s+/g, ' ').trim(); }
 function чат2Когда(ts){ if (!ts) return ''; var d = new Date(+ts); if (isNaN(d.getTime())) return ''; return ymd(d) === TODAY ? chatВремя(ts) : (chatДень(ts) === 'вчера' ? 'вчера' : d.getDate() + '.' + pad2(d.getMonth() + 1)); }
 function чат2Строки(){
   var вед = дгВедут(), строки = [], в = CHAT.items || [], п = в[в.length - 1];
   var новых = Math.max(0, в.length - (+gget('chat_seen', в.length) || 0));
   строки.push('<button type="button" class="clrow" data-chat=""><span class="clav">' + аватарHTML(аватарТренера()) + '</span><span class="clmid">' +
-    '<span class="cltop"><b>' + esc(имяТренера() || 'ИИ-тренер') + '</b><span class="cltag">ИИ</span><time>' + esc(п ? чат2Когда(п.ts) : '') + '</time></span>' +
+    '<span class="cltop"><b>' + esc(имяТренера() || 'ИИ-тренер') + '</b><time>' + esc(п ? чат2Когда(п.ts) : '') + '</time></span><span class="clrole">ИИ-тренер · отвечает сразу</span>' +
     '<span class="clbot"><span class="cllast">' + esc(п ? ((п.role === 'user' ? 'Вы: ' : '') + чат2Кратко(п.text)) : 'Еда, тренировки, вопросы — отвечает сразу') + '</span>' +
     (новых ? '<span class="clbadge">' + (новых > 9 ? '9+' : новых) + '</span>' : '<span class="clpin" aria-label="закреплён">📌</span>') + '</span></span></button>');
   вед.forEach(function(l){
     var ч = ДГ.чаты[l.id] || {}, мс = ч.msgs || [], х = мс[мс.length - 1];
     строки.push('<button type="button" class="clrow" data-chat="' + ролиА(l.id) + '"><span class="clav ' + (l.kind === 'nutri' ? 'nutri' : 'trainer') + '">' + esc(дгИнициалы(l.name)) + '</span><span class="clmid">' +
-      '<span class="cltop"><b>' + esc(l.name || 'Специалист') + '</b><span class="cltag">' + (l.kind === 'nutri' ? 'нутрициолог' : 'тренер') + '</span><time>' + esc(х ? чат2Когда(х.at) : '') + '</time></span>' +
+      '<span class="cltop"><b>' + esc(l.name || 'Специалист') + '</b><time>' + esc(х ? чат2Когда(х.at) : '') + '</time></span><span class="clrole">' + esc(чат2Роль(l)) + '</span>' +
       '<span class="clbot"><span class="cllast">' + esc(х ? ((х.me ? 'Вы: ' : '') + чат2Кратко(х.text)) : 'Напишите — ответит лично') + '</span>' +
       (l.unread ? '<span class="clbadge">' + (l.unread > 9 ? '9+' : l.unread) + '</span>' : '') + '</span></span></button>');
   });
@@ -24910,7 +24915,7 @@ function чат2Шапка(){
   document.body.classList.toggle('c2pro', !!л);
   if (av) { av.className = 'c2av' + (л ? ' ' + (л.kind === 'nutri' ? 'nutri' : 'trainer') : ''); av.innerHTML = л ? esc(дгИнициалы(л.name)) : аватарHTML(аватарТренера()); }
   if (t && !(typeof GOALTALK !== 'undefined' && GOALTALK.active)) t.textContent = л ? (л.name || 'Специалист') : (имяТренера() || 'ИИ-тренер');
-  if (s) s.textContent = л ? (л.kind === 'nutri' ? 'нутрициолог · ответит лично' : 'тренер · ответит лично') : 'ИИ-тренер · отвечает сразу';
+  if (s) s.textContent = л ? чат2Роль(л) + ' · ответит лично' : 'ИИ-тренер · отвечает сразу';
 }
 function чат2Открыть(id){ чат2СписокЗакрыть(); ДГ.кому = id || ''; CHATALL = true; openCoach(); чат2Шапка(); renderChat(); }
 function чат2Кнопка(){
