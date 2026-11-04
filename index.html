@@ -4801,6 +4801,67 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 .rolxlic{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--text);margin:10px 0}
 .rolxlic input{width:22px;height:22px;flex:none;margin:0}
 .rolnoted textarea{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
+
+/* ══ 04.11: ЧАТЫ КАК В TELEGRAM (chat2) ══ его слова: «чат внутри приложения неудобный и непонятный…
+   как интерфейс чатов в Телеграм… когда появятся живые тренеры, нутрициологи — выбирать чат».
+   Его выбор: список — ИИ-тренер сверху и специалисты; чат на весь экран; сначала макет. */
+.c2back,.c2av,#c2sub{display:none}
+.c2t{display:contents}
+body[data-f~="chat2"] :is(#coachm,#chatlist){padding:0;align-items:stretch}
+body[data-f~="chat2"] :is(#coachm,#chatlist) .modalbox{position:fixed;inset:0;width:100%;max-width:none;height:var(--sheet-h,100vh);max-height:var(--sheet-h,100vh);
+  margin:0;border-radius:0;border:0;padding:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+body[data-f~="chat2"] :is(#coachm,#chatlist) .modalbox::before{display:none}
+body[data-f~="chat2"] :is(#coachm,#chatlist) .cathead{flex:none;margin:0;display:flex;align-items:center;gap:10px;
+  padding:calc(6px + var(--pad-top)) 12px 8px 6px;background:var(--surface,var(--card));border-bottom:1px solid var(--line-soft)}
+body[data-f~="chat2"] #coachm .c2back{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;background:none;color:var(--accent-txt,var(--text));font-size:30px;line-height:1;padding:0 0 3px}
+body[data-f~="chat2"] #coachm .c2av{display:block;width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;background:var(--card-2);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--text)}
+body[data-f~="chat2"] #coachm .c2av img{width:100%;height:100%;object-fit:cover}
+body[data-f~="chat2"] #coachm .c2t{display:flex;flex-direction:column;min-width:0;flex:1}
+body[data-f~="chat2"] #coachm .c2t h3{font-size:17px;line-height:1.2;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-f~="chat2"] #coachm #c2sub{display:block;font-size:12.5px;color:var(--dim);margin-top:1px}
+body[data-f~="chat2"] #coachm #coachclose{display:none}
+body[data-f~="chat2"] #chatlist .cathead{padding-left:16px}
+body[data-f~="chat2"] #chatlist .cathead h3{font-size:22px;flex:1}
+body[data-f~="chat2"] #coachm :is(#coachpro,#ckomu){display:none!important}
+/* «Обсудить цель» — закреплённая полоска под шапкой, как закреп в Telegram */
+body[data-f~="chat2"] #coachm #goalchatopen{flex:none;margin:0;width:100%;min-height:40px;border-radius:0;border:0;border-bottom:1px solid var(--line-soft);
+  background:var(--card);color:var(--accent-txt,var(--text));font-size:13.5px;font-weight:700;text-align:left;padding:0 16px}
+body[data-f~="chat2"] #coachm .chatlog{display:flex;flex-direction:column;gap:6px;padding:12px 10px 14px}
+body[data-f~="chat2"] #coachm .chatask{padding:8px 10px calc(8px + var(--pad-bottom));background:var(--surface,var(--card));border-top:1px solid var(--line-soft)}
+body[data-f~="chat2"] .chatsep{align-self:center;margin:6px 0;padding:3px 10px;border-radius:11px;background:var(--card-2);color:var(--dim);font-size:12px;font-weight:600}
+body[data-f~="chat2"] .turn.c2{align-self:flex-start;max-width:86%;gap:4px}
+body[data-f~="chat2"] .turn.c2+.turn.c2{border-top:0;padding-top:0}
+body[data-f~="chat2"] .turn.c2 .say,body[data-f~="chat2"] .msg.pro{background:var(--card-2);border:0;color:var(--text);border-radius:18px 18px 18px 6px;
+  padding:8px 12px 7px;font-size:15px;line-height:1.45;white-space:pre-line}
+body[data-f~="chat2"] .msg.pro{align-self:flex-start;max-width:86%}
+body[data-f~="chat2"] .msg.me{border-radius:18px 18px 6px 18px;padding:8px 12px 7px;max-width:82%}
+body[data-f~="chat2"] .msg.me+.msg.me,body[data-f~="chat2"] .turn.c2+.turn.c2 .say{margin-top:-2px}
+body[data-f~="chat2"] .bt,body[data-f~="chat2"] .msg :is(.pro,.me) small,body[data-f~="chat2"] .msg.pro small,body[data-f~="chat2"] .msg.topro small{float:right;font-size:11px;line-height:1;margin:9px 0 -3px 10px;color:var(--muted);font-weight:500}
+body[data-f~="chat2"] .msg.me .bt,body[data-f~="chat2"] .msg.topro small{color:currentColor;opacity:.72}
+body[data-f~="chat2"] .msg :is(.dgto,.dgfrom){display:none!important}
+body[data-f~="chat2"] .msg.me{display:block}
+body[data-f~="chat2"] .msg.me .bt{float:none;display:block;text-align:right;margin:3px -2px -2px 12px}
+body[data-f~="chat2"] .bt .ok2{letter-spacing:-3px;margin-left:3px}
+body[data-f~="chat2"] .turn.c2 .srcs{margin:2px 0 0 4px}
+body[data-f~="chat2"].c2pro #chatlog :is(.msg.intro,[data-cq]){display:none}
+/* список чатов */
+.clrows{flex:1;overflow:auto;padding:4px 0 calc(12px + var(--pad-bottom))}
+.clrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;border:0;background:none;color:var(--text);text-align:left;font:inherit}
+.clrow+.clrow .clmid{border-top:1px solid var(--line-soft)}
+.clrow:active{background:var(--card)}
+.clav{width:54px;height:54px;border-radius:50%;overflow:hidden;flex:none;background:var(--card-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+.clav img{width:100%;height:100%;object-fit:cover}
+.clav.nutri{background:#3d5a2a;color:#e8f5d8}.clav.trainer{background:#5a3d2a;color:#f5e6d8}
+.clmid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:6px 0}
+.cltop,.clbot{display:flex;align-items:center;gap:8px}
+.cltop b{font-size:16px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cltop time{font-size:12.5px;color:var(--dim);flex:none}
+.cltag{font-size:11px;font-weight:700;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:1px 5px;flex:none}
+.cllast{flex:1;min-width:0;font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clbadge{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--action);color:var(--on-accent);font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.clpin{flex:none;color:var(--dim);font-size:13px}
+.clnote{margin:14px 16px 0;font-size:13px;line-height:1.45;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -5154,7 +5215,7 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
-    <div class="cathead"><h3 id="coachtitle">ИИ-тренер</h3><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><button type="button" class="c2back" id="c2back" aria-label="Назад">‹</button><span class="c2av" id="c2av" aria-hidden="true"></span><span class="c2t"><h3 id="coachtitle">ИИ-тренер</h3><small id="c2sub"></small></span><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
     <!-- 01.11, его выбор «A: Тренер — два голоса»: кто ведёт и что ИИ — помощник -->
     <div class="dgwho f-roli" id="coachpro" hidden></div>
     <p id="coachdate" class="mtext" style="flex:none;margin:0;padding:0 16px 8px" aria-live="polite"></p>
@@ -5172,6 +5233,13 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
       <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
     </div>
+  </div>
+</div>
+<!-- 04.11: список чатов (chat2) — ИИ-тренер и живые специалисты -->
+<div class="modal" id="chatlist" role="dialog" aria-modal="true" aria-labelledby="cltitle">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="cltitle">Чаты</h3><button class="xbtn" id="clclose" aria-label="Закрыть">✕</button></div>
+    <div class="clrows" id="clrows"></div>
   </div>
 </div>
 <!-- 25.10: штрихкод — продукт из своей базы или Open Food Facts, запись без модели (его выбор «своя база + OFF») -->
@@ -23931,7 +23999,7 @@ function renderChat(scroll){
   else {
     /* Лента не должна расти бесконечно: показываем последние шесть реплик,
        остальное — по кнопке. */
-    var все=дгЛента(CHAT.items), скрыто=(CHATALL||все.length<=6) ? 0 : все.length-6;
+    var все=дгЛента(CHAT.items), скрыто=(CHATALL||чат2()||все.length<=6) ? 0 : все.length-6;
     if(CHAT.intro && !скрыто) h+='<div class="msg intro">'+CHAT.intro+'</div>';
     if(скрыто) h+='<button type="button" class="chatmore" id="chatmore">Показать, что было раньше ('+скрыто+')</button>';
     var день='', живая=чатЖивая(все);
@@ -23942,7 +24010,7 @@ function renderChat(scroll){
       if(c.role==='pro') return шапка+дгПузырь(c);
       /* 30.10: сервер дописывает к тексту « [фото]» по-русски — в ленте вместо пометки значок камеры (на любом языке) */
       if(c.role==='user'){ var фм=String(c.text||'').match(/^([\s\S]*?)\s*\[фото(?: ×(\d+))?\]\s*$/);
-        return шапка+'<div class="msg me" data-noi18n>'+(фм?(фм[1]?esc(фм[1])+' ':'')+'<span class="mphoto" aria-label="photo">'+ИК.cam+(фм[2]?'×'+фм[2]:'')+'</span>':esc(c.text))+'</div>'; }
+        return шапка+'<div class="msg me" data-noi18n>'+(фм?(фм[1]?esc(фм[1])+' ':'')+'<span class="mphoto" aria-label="photo">'+ИК.cam+(фм[2]?'×'+фм[2]:'')+'</span>':esc(c.text))+(чат2()&&c.ts?'<span class="bt">'+esc(chatВремя(c.ts))+'</span>':'')+'</div>'; }
       return шапка+ответТренера(((c===живая && /^Записал/.test(c.text||''))?wbm('wb-drop'+(Date.now()-(c.ts||0)<6000 && wbOnce('зап'+c.ts)?'':' still'),'pre'):'')+жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery';})): '')+((все.slice(все.indexOf(c)+1).some(function(n){return (n.act||[]).some(function(a){return a.type==='delivery'&&(c.act||[]).some(function(b){return b.type==='delivery'&&b.id===a.id;});});}))?'':deliveryHTML(c.act)));
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
@@ -24805,7 +24873,78 @@ function чатСверить(text, сФото, с, date){
   }).catch(function(){ return false; });
 }
 /* 04.10: тренер — четвёртая кнопка панели; текущую страницу не меняем. */
-document.getElementById('coachnav').addEventListener('click', function(){ openCoach(); haptic('light'); });
+/* ══ 04.11: ЧАТЫ КАК В TELEGRAM (выключатель chat2) ══
+   Список: ИИ-тренер (закреплён) и живые специалисты — у каждого свой чат, без «Кому».
+   Нет специалистов — кнопка сразу открывает чат с ИИ-тренером. Чат — на весь экран:
+   шапка «‹ аватар имя», пузыри слева/справа со временем внутри, вся история прокруткой. */
+function чат2(){ try { return ЕСТЬ('chat2'); } catch (e) { return false; } }
+function чат2Кратко(т){ return String(т || '').replace(/\*\*/g, '').replace(/\s*\[фото(?: ×\d+)?\]\s*$/, ' 📷').replace(/\s+/g, ' ').trim(); }
+function чат2Когда(ts){ if (!ts) return ''; var d = new Date(+ts); if (isNaN(d.getTime())) return ''; return ymd(d) === TODAY ? chatВремя(ts) : (chatДень(ts) === 'вчера' ? 'вчера' : d.getDate() + '.' + pad2(d.getMonth() + 1)); }
+function чат2Строки(){
+  var вед = дгВедут(), строки = [], в = CHAT.items || [], п = в[в.length - 1];
+  var новых = Math.max(0, в.length - (+gget('chat_seen', в.length) || 0));
+  строки.push('<button type="button" class="clrow" data-chat=""><span class="clav">' + аватарHTML(аватарТренера()) + '</span><span class="clmid">' +
+    '<span class="cltop"><b>' + esc(имяТренера() || 'ИИ-тренер') + '</b><span class="cltag">ИИ</span><time>' + esc(п ? чат2Когда(п.ts) : '') + '</time></span>' +
+    '<span class="clbot"><span class="cllast">' + esc(п ? ((п.role === 'user' ? 'Вы: ' : '') + чат2Кратко(п.text)) : 'Еда, тренировки, вопросы — отвечает сразу') + '</span>' +
+    (новых ? '<span class="clbadge">' + (новых > 9 ? '9+' : новых) + '</span>' : '<span class="clpin" aria-label="закреплён">📌</span>') + '</span></span></button>');
+  вед.forEach(function(l){
+    var ч = ДГ.чаты[l.id] || {}, мс = ч.msgs || [], х = мс[мс.length - 1];
+    строки.push('<button type="button" class="clrow" data-chat="' + ролиА(l.id) + '"><span class="clav ' + (l.kind === 'nutri' ? 'nutri' : 'trainer') + '">' + esc(дгИнициалы(l.name)) + '</span><span class="clmid">' +
+      '<span class="cltop"><b>' + esc(l.name || 'Специалист') + '</b><span class="cltag">' + (l.kind === 'nutri' ? 'нутрициолог' : 'тренер') + '</span><time>' + esc(х ? чат2Когда(х.at) : '') + '</time></span>' +
+      '<span class="clbot"><span class="cllast">' + esc(х ? ((х.me ? 'Вы: ' : '') + чат2Кратко(х.text)) : 'Напишите — ответит лично') + '</span>' +
+      (l.unread ? '<span class="clbadge">' + (l.unread > 9 ? '9+' : l.unread) + '</span>' : '') + '</span></span></button>');
+  });
+  return строки.join('') + '<p class="clnote">ИИ-тренер помогает между встречами со специалистом. Переписку со специалистом ИИ не читает.</p>';
+}
+function чат2СписокРисовать(){ var b = document.getElementById('clrows'); if (b) b.innerHTML = чат2Строки(); }
+function чат2Список(){
+  var m = document.getElementById('chatlist'); if (!m) return;
+  sheetViewport(); чат2СписокРисовать(); m.classList.add('show'); document.body.classList.add('chatlist');
+  try { дгТянуть().then(чат2СписокРисовать); } catch (e) {}
+  try { if (!CHAT.items) fGet('/chat?uid=' + encodeURIComponent(syncUid())).then(function(d){ if (d && d.ok && !CHAT.items) { CHAT.items = d.chat || []; CHAT.intro = d.intro || ''; чат2СписокРисовать(); } }).catch(function(){}); } catch (e) {}
+}
+function чат2СписокЗакрыть(){ var m = document.getElementById('chatlist'); if (m) m.classList.remove('show'); document.body.classList.remove('chatlist'); }
+function чат2Шапка(){
+  if (!чат2()) return;
+  var л = дгЛинк(ДГ.кому), av = document.getElementById('c2av'), t = document.getElementById('coachtitle'), s = document.getElementById('c2sub');
+  document.body.classList.toggle('c2pro', !!л);
+  if (av) { av.className = 'c2av' + (л ? ' ' + (л.kind === 'nutri' ? 'nutri' : 'trainer') : ''); av.innerHTML = л ? esc(дгИнициалы(л.name)) : аватарHTML(аватарТренера()); }
+  if (t && !(typeof GOALTALK !== 'undefined' && GOALTALK.active)) t.textContent = л ? (л.name || 'Специалист') : (имяТренера() || 'ИИ-тренер');
+  if (s) s.textContent = л ? (л.kind === 'nutri' ? 'нутрициолог · ответит лично' : 'тренер · ответит лично') : 'ИИ-тренер · отвечает сразу';
+}
+function чат2Открыть(id){ чат2СписокЗакрыть(); ДГ.кому = id || ''; CHATALL = true; openCoach(); чат2Шапка(); renderChat(); }
+function чат2Кнопка(){
+  if (чат2() && !дгСпец() && дгВедут().length) { чат2Список(); return; }
+  if (чат2()) { ДГ.кому = ''; CHATALL = true; }
+  openCoach(); чат2Шапка();
+}
+(function(){
+  var лента = дгЛента;
+  дгЛента = function(items){
+    if (!чат2()) return лента(items);
+    var л = дгЛинк(ДГ.кому); if (!л) return items;
+    var ч = ДГ.чаты[л.id] || { msgs: [] };
+    return (ч.msgs || []).map(function(x){ return { role: 'pro', me: x.me, text: x.text, ts: x.at, name: ч.name || л.name, seen: x.seen }; });
+  };
+  var ответ = ответТренера;
+  ответТренера = function(текст, время, cls, src, menu, кнопки){
+    if (!чат2()) return ответ.apply(this, arguments);
+    return '<div class="turn c2"><div class="say' + (cls ? ' ' + cls : '') + '">' + текст + (время ? '<span class="bt">' + время + '</span>' : '') + '</div>' + источникиHTML(src) +
+      (ЧАТ_МЕНЮ[menu] ? '<button type="button" class="chatmenu" data-cmenu="' + menu + '">' + ЧАТ_МЕНЮ[menu] + '</button>' : '') + (кнопки || '') + '</div>';
+  };
+  var пузырь = дгПузырь;
+  дгПузырь = function(c){
+    if (!чат2()) return пузырь.apply(this, arguments);
+    var вр = (function(){ try { return chatВремя(c.ts); } catch (e) { return ''; } })();
+    return '<div class="msg ' + (c.me ? 'me topro' : 'pro') + '" data-noi18n>' + esc(c.text) + '<span class="bt">' + esc(вр) + (c.me ? '<span class="ok2" aria-label="' + (c.seen ? 'прочитано' : 'доставлено') + '">' + (c.seen ? '✓✓' : '✓') + '</span>' : '') + '</span></div>';
+  };
+  var рис = дгРисовать;
+  дгРисовать = function(){ рис.apply(this, arguments); try { чат2Шапка(); if (document.body.classList.contains('chatlist')) чат2СписокРисовать(); } catch (e) {} };
+})();
+document.getElementById('c2back').addEventListener('click', function(){ haptic('light'); var список = чат2() && !дгСпец() && дгВедут().length; closeCoach(); if (список) чат2Список(); });
+document.getElementById('clclose').addEventListener('click', function(){ haptic('light'); чат2СписокЗакрыть(); });
+document.getElementById('clrows').addEventListener('click', function(e){ var r = e.target.closest('[data-chat]'); if (!r) return; haptic('light'); чат2Открыть(r.getAttribute('data-chat')); });
+document.getElementById('coachnav').addEventListener('click', function(){ чат2Кнопка(); haptic('light'); });
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
 function cGo(){
