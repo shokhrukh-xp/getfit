@@ -4817,8 +4817,13 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 :root[data-theme="dark"] .zm-card.zm-warm small{color:#d9c39b}:root[data-theme="dark"] .zm-card.zm-warm .zm-go{background:#F4B860;color:#2a1c05}
 .zm-card.zm-done .zm-ic{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok);font-weight:900}
 .zm-card.zm-done .zm-go{background:var(--card-2);color:var(--text)}
-.vzhd .vzadd{margin-left:auto;flex:none;border:0;border-radius:12px;padding:7px 11px;font:800 13px/1 inherit;background:var(--action);color:var(--on-accent)}
-.vzhd .vzadd+.vzch{margin-left:8px}
+.vztop .vzhd:has(.vzadd){flex-wrap:wrap;align-items:center;row-gap:6px}
+.vzhd .vzadd{order:2;margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:14px;min-height:40px;padding:0 14px;
+  font:800 14px/1 inherit;background:#F4B860;color:#2a1c05;box-shadow:0 6px 16px rgba(244,184,96,.28)}
+.vzhd .vzadd i{font-style:normal;font-size:17px;font-weight:900;line-height:1}
+/* 04.11, его снимок: «+ Замер» в одной строке с вкладками ломал их (талия уезжала вниз) —
+   вкладки своей строкой под «Телом», во всю ширину */
+.vztop .vzhd:has(.vzadd) .vzch{order:3;flex-basis:100%;flex-wrap:nowrap;margin:0 -1px;justify-content:flex-start}
 #zamm .modalbox{overflow:auto}
 #zamm #hmeas{padding:0 2px 6px}
 /* ══ 04.11: СВОБОДНЫЙ ДЕНЬ ЗАМЕТНЕЕ (svob2) ══ его слова: «кнопка „Свободного дня“ слишком не
@@ -19435,7 +19440,7 @@ function renderHome(){
 /* ══ 04.11: НОВЫЙ ЗАМЕР В НУЖНЫЙ МОМЕНТ (zamer2) ══ */
 function замер2(){ try { return ЕСТЬ('zamer2'); } catch (e) { return false; } }
 function замерГнездо(){ return замер2() ? '' : '<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div>'; }
-function замерКнопка(){ return замер2() ? '<button type="button" class="vzadd" data-zam="open" aria-label="Новый замер">+ Замер</button>' : ''; }
+function замерКнопка(){ return замер2() ? '<button type="button" class="vzadd" data-zam="open"><i aria-hidden="true">+</i>Новый замер</button>' : ''; }
 function замерПоследний(){
   var ms = (FOOD.meas || []).filter(function(m){ return m && m.date && (m.w || m.waist); });
   return ms.reduce(function(a, m){ return (!a || m.date > a.date || (m.date === a.date && (m.created || 0) > (a.created || 0))) ? m : a; }, null);
@@ -19483,18 +19488,34 @@ document.addEventListener('click', function(e){ var b = e.target.closest && e.ta
 document.getElementById('zamclose').addEventListener('click', function(){ haptic('light'); замерЗакрыть(); });
 document.getElementById('zamm').addEventListener('click', function(e){ if (e.target.id === 'zamm') замерЗакрыть(); });
 /* ══ 04.11: СВОБОДНЫЙ ДЕНЬ ЗАМЕТНЕЕ (svob2) ══ */
+/* 04.11, его слова: «„сейчас вне окна“ не понятен. Почему нельзя писать просто дату, когда можно
+   в следующий раз? и проще описать при открытии» */
+function своб2Дата(iso){ var x = new Date(String(iso || TODAY) + 'T12:00:00'); return isNaN(x.getTime()) ? '' : x.getDate() + ' ' + MONTHS[x.getMonth()]; }
+function своб2Шторка(){
+  var d = FOOD.day; if (!d || !d.free) return;
+  var о = d.free.окно || {}, ц = о.цена || {}, iso = d.date || fDate(), сег = iso === TODAY;
+  var когда = о.открыто
+    ? '<b class="ok">' + (сег ? 'Сегодня можно' : 'Этот день можно') + '</b> — цель не сдвинется.'
+    : 'Следующий — <b>' + своб2Дата(о.след) + '</b>.' + (ц.дней ? '<small>Можно и ' + (сег ? 'сегодня' : 'в этот день') + ', но цель сдвинется примерно на ' + свобДней(ц.дней) + '.</small>' : '');
+  var b = document.getElementById('svbody'); if (!b) return;
+  b.innerHTML = '<p class="svp"><b>День без подсчёта:</b> еду не записываете, оценки нет, серия не рвётся.</p>' +
+    '<p class="svp">На следующий день — обычная норма, ничего отрабатывать не нужно.</p>' +
+    '<p class="svp">Утром вес может быть выше на 0,5–2 кг — это вода, уйдёт за 2–4 дня.</p>' +
+    '<div class="svwin">' + когда + '<small>Раз в ' + свобДней(о.шаг || 7) + ' — так часто можно при вашем темпе к цели.</small>' +
+      '<details class="svhow"><summary>Как считается</summary><p>Темп похудения на уровне плана — раз в 7 дней, 70–100 % плана — раз в 14, ниже — раз в 21. Три утра после свободного дня не идут в средний вес.</p></details></div>';
+}
 function своб2(){ try { return ЕСТЬ('svob2'); } catch (e) { return false; } }
 function своб2Html(св, d){
   if (!своб2() || !св || !св.окно || св.on) return '';
   var о = св.окно, ц = о.цена || {}, iso = (d && d.date) || fDate(), сег = iso === TODAY;
-  var когда = о.открыто ? (сег ? 'можно сегодня' : 'можно ' + свобДень(iso)) : (ц.дней ? 'сейчас вне окна — срок цели +' + свобДней(ц.дней) : 'окно с ' + ruDate(о.след));
+  var когда = о.открыто ? (сег ? 'можно сегодня' : 'можно ' + свобДень(iso)) : 'следующий — ' + своб2Дата(о.след);
   if (gget('svob_known', 0)) return '<button type="button" class="sv2p" data-svob="1"><span aria-hidden="true">🍕</span><b>Свободный день</b><small>' + esc(когда) + ' ›</small></button>';
   return '<div class="sv2"><span class="zm-ic" aria-hidden="true">🍕</span><span><b>Свободный день</b><p>День отдыха от подсчёта: еду не записываете, норма и оценка не ставятся, серия не рвётся. ' +
     'На следующий день — обычная норма, без «отработки». Как часто можно — приложение считает по вашему темпу к цели.</p>' +
     '<span class="sv2-act"><button type="button" data-svob="1">' + (сег ? 'Объявить сегодня' : 'Отметить ' + свобДень(iso)) + '</button><small>' + esc(когда) + '</small></span></span>' +
     '<button type="button" class="sv2-x" data-sv2x="1" aria-label="Понятно, свернуть">✕</button></div>';
 }
-(function(){ var старый = svОткрыть; svОткрыть = function(){ try { if (своб2()) gset('svob_known', 1); } catch (e) {} return старый.apply(this, arguments); }; })();
+(function(){ var старый = svОткрыть; svОткрыть = function(){ try { if (своб2()) gset('svob_known', 1); } catch (e) {} var r = старый.apply(this, arguments); try { if (своб2()) своб2Шторка(); } catch (e) {} return r; }; })();
 /* запись с главной идёт всегда в СЕГОДНЯ: «Еда» может быть открыта на
    прошлом дне, и молча записать ужин во вчера — худшее, что можно сделать */
 (function(){

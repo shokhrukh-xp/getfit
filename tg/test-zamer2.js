@@ -45,6 +45,15 @@ const me = { sex: 'm', age: 34, ht: 178, bw: 88.1, med: { at: 1 }, coach_at: 1 }
       ok(await p.evaluate(() => !!document.querySelector('.modal.show')), theme + ': строка открывает шторку «Свободный день»');
       ok(err.length === 0, theme + ': без ошибок ' + err.slice(0, 1).join(''));
       await p.close(); }
+    /* 04.11, его правка: вне окна — дата следующего, без «вне окна»; шторка — простыми словами */
+    { const { p } = await стр({ theme, page: 'food', time: '13:40', features: ['svob2'], окно: { '*': { открыто: false, след: M.Д(-13), шаг: 21, цена: { ккал: 2100, кг: 0.27, дней: 4 } } } });
+      await p.waitForSelector('#fday .sv2', { timeout: 6000 }).catch(() => {});
+      const т = await p.textContent('#fday .sv2').catch(() => '');
+      ok(/следующий — \d+ [а-я]+/.test(т) && !/вне окна/.test(т), theme + ': вне окна — «следующий — <дата>»');
+      await p.click('#fday .sv2 [data-svob]'); await p.waitForTimeout(300);
+      const ш = await p.textContent('#svbody').catch(() => '');
+      ok(/Следующий — \d+ [а-я]+/.test(ш) && /цель сдвинется примерно на 4 дня/.test(ш) && !/окно/i.test(ш.replace(/Как считается[\s\S]*$/, '')), theme + ': шторка — дата следующего и цена простыми словами');
+      await p.close(); }
   }
 } catch (e) { console.error('УПАЛО:', e.stack); bad++; }
 await b.close(); console.log(bad ? '\nПРОВАЛОВ: ' + bad : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ'); process.exit(bad ? 1 : 0); })();
