@@ -4801,6 +4801,45 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
 .rolxlic{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--text);margin:10px 0}
 .rolxlic input{width:22px;height:22px;flex:none;margin:0}
 .rolnoted textarea{font:inherit;font-size:16px;color:var(--text);background:var(--surface);border:1px solid var(--tab-line);border-radius:12px;padding:10px 12px}
+
+/* ══ 04.11: НОВЫЙ ЗАМЕР В НУЖНЫЙ МОМЕНТ (zamer2) ══ его слова: «не нравится, что секция про
+   „новый замер“ идёт как часть большого бокса». Его выбор — «C — в нужный момент»: утром, пока
+   не взвешивались (или давно не взвешивались), карточка сверху; после замера — «записано» до
+   полудня; в любое время — «+ Замер» в шапке «Тела». Ввод — в шторке, тот же узел #hmeas. */
+.zm-card{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;margin:-8px 0 14px;padding:12px 14px;border:0;border-radius:24px;
+  background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--text);text-align:left;font:inherit}
+.zm-ic{width:44px;height:44px;border-radius:14px;background:var(--card-2);display:flex;align-items:center;justify-content:center;font-size:21px}
+.zm-t b{display:block;font-size:15px;line-height:1.25}.zm-t small{display:block;font-size:12.5px;line-height:1.35;color:var(--dim);margin-top:2px}
+.zm-go{border-radius:14px;padding:10px 14px;font-weight:800;font-size:14px;background:var(--action);color:var(--on-accent);white-space:nowrap}
+.zm-card.zm-warm{background:linear-gradient(135deg,#FFF1DA,#FBE3BC);box-shadow:inset 0 0 0 1px #F0D2A0;color:#2a1c05}
+.zm-card.zm-warm small{color:#6b4c1c}.zm-card.zm-warm .zm-ic{background:#F4B860;color:#2a1c05}.zm-card.zm-warm .zm-go{background:#2a1c05;color:#FFE7C2}
+:root[data-theme="dark"] .zm-card.zm-warm{background:linear-gradient(135deg,#3A2C14,#2a2112);box-shadow:inset 0 0 0 1px #4a3818;color:var(--text)}
+:root[data-theme="dark"] .zm-card.zm-warm small{color:#d9c39b}:root[data-theme="dark"] .zm-card.zm-warm .zm-go{background:#F4B860;color:#2a1c05}
+.zm-card.zm-done .zm-ic{background:color-mix(in srgb,var(--ok) 22%,transparent);color:var(--ok);font-weight:900}
+.zm-card.zm-done .zm-go{background:var(--card-2);color:var(--text)}
+.vzhd .vzadd{margin-left:auto;flex:none;border:0;border-radius:12px;padding:7px 11px;font:800 13px/1 inherit;background:var(--action);color:var(--on-accent)}
+.vzhd .vzadd+.vzch{margin-left:8px}
+#zamm .modalbox{overflow:auto}
+#zamm #hmeas{padding:0 2px 6px}
+/* ══ 04.11: СВОБОДНЫЙ ДЕНЬ ЗАМЕТНЕЕ (svob2) ══ его слова: «кнопка „Свободного дня“ слишком не
+   заметна, меня уже несколько раз спрашивали, где это и что это значит». Его выбор — «1, потом
+   короче»: пока человек не знает — карточка с объяснением под «До нормы»; узнал (открыл шторку
+   или нажал «Понятно») — короткая строка там же. */
+.sv2{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;margin:0 0 14px;padding:14px;border-radius:24px;position:relative;
+  background:linear-gradient(135deg,#EEE9FF,#E2DBFF);box-shadow:inset 0 0 0 1px #D2C8F7;color:#1b1430}
+:root[data-theme="dark"] .sv2{background:linear-gradient(135deg,#2c2440,#1d1a2c);box-shadow:inset 0 0 0 1px #3d3358;color:var(--text)}
+.sv2 .zm-ic{background:#b9a4ff;color:#1b1430}
+.sv2 b{font-size:16px;display:block;padding-right:28px}.sv2 p{font-size:13.5px;line-height:1.45;margin:4px 0 10px;color:#4a3f6e}
+:root[data-theme="dark"] .sv2 p{color:#cfc6ea}
+.sv2-act{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.sv2-act button{border:0;border-radius:12px;padding:10px 14px;font:800 14px/1 inherit;background:#6c4ff0;color:#fff;white-space:nowrap}
+:root[data-theme="dark"] .sv2-act button{background:#b9a4ff;color:#1b1430}
+.sv2-act small{font-size:12.5px;color:#6a5f8e}:root[data-theme="dark"] .sv2-act small{color:#a99fca}
+.sv2-x{position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;border-radius:50%;background:none;color:inherit;opacity:.6;font-size:16px}
+.sv2p{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 14px;padding:12px 14px;border:0;border-radius:18px;font:inherit;text-align:left;
+  background:#EEE9FF;box-shadow:inset 0 0 0 1px #D2C8F7;color:#1b1430}
+:root[data-theme="dark"] .sv2p{background:#241f36;box-shadow:inset 0 0 0 1px #3d3358;color:var(--text)}
+.sv2p b{font-size:15px}.sv2p small{margin-left:auto;font-size:12.5px;color:#6a5f8e;white-space:nowrap}:root[data-theme="dark"] .sv2p small{color:#a99fca}
 </style>
 </head>
 <body>
@@ -5172,6 +5211,13 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
       <button type="button" class="csend" id="csend" aria-label="Отправить">→</button>
       <input id="cfile" type="file" accept="image/*" hidden>
     </div>
+  </div>
+</div>
+<!-- 04.11: новый замер — шторкой (zamer2); внутри тот же узел #hmeas -->
+<div class="modal" id="zamm" role="dialog" aria-modal="true" aria-labelledby="zamt">
+  <div class="modalbox">
+    <div class="cathead"><h3 id="zamt">Новый замер</h3><button class="xbtn" id="zamclose" aria-label="Закрыть">✕</button></div>
+    <div id="zamslot"></div>
   </div>
 </div>
 <!-- 25.10: штрихкод — продукт из своей базы или Open Food Facts, запись без модели (его выбор «своя база + OFF») -->
@@ -19133,8 +19179,8 @@ function homeBody(){
        зовём на весы за трендом, а не за самим весом. */
     var me0=myData()||{}, w0 = ms.length ? ms[0].w : (+me0.bw||0);
     var под0 = ms.length ? 'нужен второй замер, чтобы увидеть тренд' : (w0 ? 'с ваших слов · встаньте на весы — пойдёт тренд' : 'впишите вес ниже');
-    return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u></div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
-      '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+'<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
+    return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u>'+замерКнопка()+'</div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
+      '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+замерГнездо()+'</div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
   if(есть.some(function(v){ return v[0]==='mus'; })) есть=есть.filter(function(v){ return v[0]!=='prot'; });
@@ -19175,7 +19221,7 @@ function homeBody(){
   var свСтрока = (вид!=='waist' && свПосл) ? '<details class="vzsv"><summary>После свободного дня '+ruDate(свПосл)+' · влияние воды</summary><p>Скачок после свободного дня '+ruDate(свПосл)+' — это вода, гликоген и соль, а не жир: обычно +0,5–2 кг, уходит за 2–4 дня. '+
       'Три утра после него не идут в средний вес, «за неделю» и план.</p></details>' : '';
   return '<div class="vz"><div class="vztop">'+
-    '<div class="vzhd"><u>Тело</u><span class="vzch" role="tablist">'+есть.map(function(x){
+    '<div class="vzhd"><u>Тело</u>'+замерКнопка()+'<span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
     (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл) :
       '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
@@ -19189,7 +19235,7 @@ function homeBody(){
     /* Кнопки «Срез: сколько из этого — жир» под карточкой больше нет (30.09,
        его просьба «кнопку „срез…“ можно убрать»). Срез открывается ссылкой из
        недельного сообщения бота (?srez=1). */
-    '<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div></div></div>';
+    замерГнездо()+'</div></div>';
 }
 /* ── НЕДЕЛЯ ЗАЛА И ЗАНЯТИЙ ВМЕСТО «ЗАВТРА» ──
    24.09, его просьба: «вместо текста „завтра в зал“ показать красивую линию
@@ -19346,7 +19392,7 @@ function renderHome(){
   var тотЖе=!!(прежние && часы===HCLKHTML);
   box.innerHTML =
     homeBotStrip()+'<section class="hdaycard" aria-label="Сегодня">'+часы+homeRows()+'</section>'+
-    homeNextCard()+homeWeek()+homeBody()+homeWeekGym()+homeSport();
+    замерКарточка()+homeNextCard()+homeWeek()+homeBody()+homeWeekGym()+homeSport();
   /* 21.10, его слова: «секцию внизу убери совсем — огонёк и число серии можно
      показать у значка профиля, а всё остальное уже есть на странице
      рейтинга». Рейтинг — в «Рейтинге», серия — 🔥 на профиле, «Зал на
@@ -19386,6 +19432,69 @@ function renderHome(){
     Array.prototype.forEach.call(dots, function(el){ el.style.left=el.dataset.l+'%'; });
   });
 }
+/* ══ 04.11: НОВЫЙ ЗАМЕР В НУЖНЫЙ МОМЕНТ (zamer2) ══ */
+function замер2(){ try { return ЕСТЬ('zamer2'); } catch (e) { return false; } }
+function замерГнездо(){ return замер2() ? '' : '<p class="eyebrow">Новый замер</p><div id="hmeasslot"></div>'; }
+function замерКнопка(){ return замер2() ? '<button type="button" class="vzadd" data-zam="open" aria-label="Новый замер">+ Замер</button>' : ''; }
+function замерПоследний(){
+  var ms = (FOOD.meas || []).filter(function(m){ return m && m.date && (m.w || m.waist); });
+  return ms.reduce(function(a, m){ return (!a || m.date > a.date || (m.date === a.date && (m.created || 0) > (a.created || 0))) ? m : a; }, null);
+}
+function замерДней(iso){ var a = new Date(iso + 'T12:00:00'), b = new Date(TODAY + 'T12:00:00'); return Math.round((b - a) / 864e5); }
+function замерКарточка(){
+  if (!замер2()) return '';
+  var me = myData() || {}; if (!(me.bw || (FOOD.meas || []).length)) return '';
+  var п = замерПоследний(), час = new Date().getHours(), сег = !!(п && п.date === TODAY), дн = п ? замерДней(п.date) : 99;
+  if (сег) {
+    if (час >= 12 || !п.w) return '';
+    var до = (FOOD.meas || []).filter(function(m){ return m.w && m.date < TODAY; }).sort(function(a, b){ return a.date < b.date ? 1 : -1; })[0];
+    var разн = до ? +(п.w - до.w).toFixed(1) : null;
+    return '<button type="button" class="zm-card zm-done" data-zam="open"><span class="zm-ic" aria-hidden="true">✓</span><span class="zm-t"><b>' + fmtKg(п.w) + ' кг — записано</b><small>' +
+      (разн != null ? (разн === 0 ? 'как ' : vzЗн(разн) + ' кг с ') + (замерДней(до.date) === 1 ? 'вчера' : ruDate(до.date)) : 'первый замер — тренд появится со вторым') + '</small></span><span class="zm-go">Изменить</span></button>';
+  }
+  var утро = час >= 5 && час < 12, давно = дн >= 3;
+  if (!утро && !давно) return '';
+  var когда = !п ? '' : (дн === 1 ? 'вчера' : дн < 7 ? дн + ' ' + plural(дн, ['день', 'дня', 'дней']) + ' назад' : ruDate(п.date));
+  var под = утро ? 'натощак, до еды' + (п && п.w ? ' · ' + когда + ' было ' + fmtKg(п.w) : '') : 'последний замер — ' + когда + (п && п.w ? ', ' + fmtKg(п.w) + ' кг' : '');
+  return '<button type="button" class="zm-card zm-warm" data-zam="open"><span class="zm-ic" aria-hidden="true">⚖️</span><span class="zm-t"><b>' + (утро ? 'Утро — встаньте на весы' : 'Давно не взвешивались') +
+    '</b><small>' + esc(под) + '</small></span><span class="zm-go">Взвеситься</span></button>';
+}
+var ЗАМ = { было: '' };
+function замерКлюч(){ var п = замерПоследний(); return п ? п.date + '|' + (п.w || '') + '|' + (п.waist || '') + '|' + (п.created || '') : ''; }
+function замерОткрыть(){
+  var m = document.getElementById('zamm'), в = document.getElementById('hmeas'), сл = document.getElementById('zamslot'); if (!m || !в || !сл) return;
+  if (в.parentNode !== сл) сл.appendChild(в);
+  ЗАМ.было = замерКлюч(); sheetViewport(); m.classList.add('show'); document.body.classList.add('zamm');
+  try { measMode(); } catch (e) {}
+}
+function замерЗакрыть(){ var m = document.getElementById('zamm'); if (m) m.classList.remove('show'); document.body.classList.remove('zamm'); }
+(function(){
+  var старый = renderHome;
+  renderHome = function(){
+    var узел = document.getElementById('hmeas') || ЗАМ.узел; if (узел) ЗАМ.узел = узел;
+    var r = старый.apply(this, arguments);
+    /* без гнезда в «Теле» (zamer2) узел ввода не теряем: живёт в шторке */
+    try { if (ЗАМ.узел && !document.contains(ЗАМ.узел)) { var сл = document.getElementById(замер2() ? 'zamslot' : 'hmeashold'); if (сл) сл.appendChild(ЗАМ.узел); } } catch (e) {}
+    /* замер записан — шторка закрывается сама, ответ успевают прочесть */
+    try { if (document.body.classList.contains('zamm') && ЗАМ.было !== замерКлюч()) { ЗАМ.было = замерКлюч(); setTimeout(замерЗакрыть, 1600); } } catch (e) {}
+    return r; };
+})();
+document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-zam="open"]'); if (!b) return; e.preventDefault(); haptic('light'); замерОткрыть(); });
+document.getElementById('zamclose').addEventListener('click', function(){ haptic('light'); замерЗакрыть(); });
+document.getElementById('zamm').addEventListener('click', function(e){ if (e.target.id === 'zamm') замерЗакрыть(); });
+/* ══ 04.11: СВОБОДНЫЙ ДЕНЬ ЗАМЕТНЕЕ (svob2) ══ */
+function своб2(){ try { return ЕСТЬ('svob2'); } catch (e) { return false; } }
+function своб2Html(св, d){
+  if (!своб2() || !св || !св.окно || св.on) return '';
+  var о = св.окно, ц = о.цена || {}, iso = (d && d.date) || fDate(), сег = iso === TODAY;
+  var когда = о.открыто ? (сег ? 'можно сегодня' : 'можно ' + свобДень(iso)) : (ц.дней ? 'сейчас вне окна — срок цели +' + свобДней(ц.дней) : 'окно с ' + ruDate(о.след));
+  if (gget('svob_known', 0)) return '<button type="button" class="sv2p" data-svob="1"><span aria-hidden="true">🍕</span><b>Свободный день</b><small>' + esc(когда) + ' ›</small></button>';
+  return '<div class="sv2"><span class="zm-ic" aria-hidden="true">🍕</span><span><b>Свободный день</b><p>День отдыха от подсчёта: еду не записываете, норма и оценка не ставятся, серия не рвётся. ' +
+    'На следующий день — обычная норма, без «отработки». Как часто можно — приложение считает по вашему темпу к цели.</p>' +
+    '<span class="sv2-act"><button type="button" data-svob="1">' + (сег ? 'Объявить сегодня' : 'Отметить ' + свобДень(iso)) + '</button><small>' + esc(когда) + '</small></span></span>' +
+    '<button type="button" class="sv2-x" data-sv2x="1" aria-label="Понятно, свернуть">✕</button></div>';
+}
+(function(){ var старый = svОткрыть; svОткрыть = function(){ try { if (своб2()) gset('svob_known', 1); } catch (e) {} return старый.apply(this, arguments); }; })();
 /* запись с главной идёт всегда в СЕГОДНЯ: «Еда» может быть открыта на
    прошлом дне, и молча записать ужин во вчера — худшее, что можно сделать */
 (function(){
@@ -22917,13 +23026,13 @@ function renderFoodDay(){
   var строка=d.line.replace(/^За день:[^.]*\.\s*/,'');
   var hero=foodHeroHtml(d,строка);
   if(св && св.on) box.innerHTML = hero;
-  else box.innerHTML = hero+'<div class="group fnorm"><p class="fnorm-label">'+(t.kcal?'Съедено / норма дня':'Записано за день')+'</p>'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+  else box.innerHTML = hero+своб2Html(св, d)+'<div class="group fnorm"><p class="fnorm-label">'+(t.kcal?'Съедено / норма дня':'Записано за день')+'</p>'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
     (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
     (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + (t.kcal?'<p class="ds-zone">целевая зона</p>':'') + (состав?'<details class="norm-parts"><summary>Из чего сложилась норма</summary>'+состав+'</details>':'') +
     (hero?'':'<p class="fline">'+esc(строка)+(t.kcal?'':' Заполните профиль — вес, рост, возраст и цель, — и появится норма.')+'</p>')+
-    (hero?'':closeHtml()) + свобСтрокаHtml(св)+'</div>';
+    (hero?'':closeHtml()) + (своб2() ? '' : свобСтрокаHtml(св))+'</div>';
   /* 24.09: балл у каждого приёма приходит из /day/score только за сегодня:
      прошлый день судит полная формула, и делить её на приёмы нечестно */
   var оцП={};
@@ -23011,6 +23120,7 @@ document.getElementById('svgo').addEventListener('click', function(){
   }).catch(function(err){ кн.disabled=false; var нт=document.getElementById('svnote'); нт.hidden=false; нт.textContent=humanErr(err); });
 });
 document.getElementById('fday').addEventListener('click', function(e){
+  if(e.target.closest('[data-sv2x]')){ gset('svob_known', 1); haptic('light'); try{ renderFoodDay(); }catch(er){} return; }
   if(e.target.closest('[data-svob]')){ svОткрыть(); haptic('light'); return; }
   if(e.target.closest('.fbsplit')) return;              /* тап по самому списку не сворачивает его */
   var b=e.target.closest('.fbar[data-fk]'); if(!b) return;
