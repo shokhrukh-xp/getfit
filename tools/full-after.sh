@@ -27,8 +27,10 @@ cd "$ST/getfit" || exit 1
 S=$(date +%s)
 # потоков поменьше: прогон фоновый, и следующая правка не должна с ним толкаться
 export GETFIT_JOBS="${GETFIT_JOBS:-6}"
-if sh tg/run.sh > "$ST/log" 2>&1; then
-  echo "ok $SHA — полный прогон зелёный за $(( $(date +%s)-S )) с, $(date +%H:%M)" > "$ST/status"
+# 04.11: «--только-долгие» — перед push уже прошёл полный без ds1/ds5, после него только они
+ONLY=""; [ "$2" = "--только-долгие" ] && ONLY="ds1 ds5"
+if sh tg/run.sh $ONLY > "$ST/log" 2>&1; then
+  echo "ok $SHA — ${ONLY:+только ds1 и ds5, }прогон зелёный за $(( $(date +%s)-S )) с, $(date +%H:%M)" > "$ST/status"
 else
   echo "red $SHA — полный прогон КРАСНЫЙ, $(date +%H:%M). Лог: $ST/log" > "$ST/status"
   grep -E "✗|ПРОВАЛ|УПАЛО" "$ST/log" | head -20 >> "$ST/status"
