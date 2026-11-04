@@ -1757,7 +1757,8 @@ body{padding-bottom:calc(156px + var(--pad-bottom))}
 .catcard .btn.wide{margin-top:12px}
 #sb-go.off{opacity:.55}
 .sbnote{background:var(--warn-bg,#FBF3E2);color:var(--text);border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:13.5px;line-height:1.45}
-.sbnote button{display:inline-block;margin-top:8px;background:none;border:0;padding:0;color:var(--accent-txt);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+/* 04.11: ссылка-кнопка в заметке — высота нажатия 44 px (обходчик: «Выбрать цель» была 92×20) */
+.sbnote button{display:inline-flex;align-items:center;min-height:44px;margin:2px 0 -10px;background:none;border:0;padding:0 2px;color:var(--accent-txt);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
 #sb-wd.need{outline:2px solid var(--warn,#E0A030);outline-offset:4px;border-radius:12px}
 .dplgrid{display:flex;flex-direction:column;gap:6px}
 .dplrow{display:flex;align-items:center;gap:8px}
