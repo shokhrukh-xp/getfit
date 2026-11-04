@@ -116,6 +116,26 @@ const вызовы=p=>p.evaluate(()=>window.__кап.вызовы);
    ok(опрос>=2,'Telegram: приложение ждёт подтверждения в боте ('+опрос+' опроса)');
    ok(await p.evaluate(()=>JSON.parse(localStorage.getItem('wb_session')||'{}').token)==='ap_t','Telegram: подтвердил в боте — вошёл');
    await p.close();}
+
+  /* ── 5. 04.11, у него на iPhone: вернулся из Telegram — вход «ничего не сделал».
+     Причины: (а) метки сервера и сборки разошлись — автообновление могло перезагрузить
+     страницу посреди входа (в приложении из магазина оно теперь выключено); (б) visibilitychange и таймер спрашивали сервер разом: «ok»
+     выдаётся один раз, второй ответ «expired» приходил раньше и выбрасывал сессию. ── */
+  {let опрос=0, стр=null, параллельно=0, идёт=0;
+   const route=async r=>{const u=new URL(r.request().url());
+     if(u.pathname==='/build'){await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,build:'99.99 99:99'})});return true;}
+     if(u.pathname==='/app/tg'&&r.request().method()==='POST'){await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,id:'ABCDEFGHJKLM',secret:'s1',link:'https://t.me/WellbolTestBot?start=ap_abcdefghjklm',ttl:300})});return true;}
+     if(u.pathname==='/app/tg'){опрос++;идёт++;if(идёт>1)параллельно++;const n=опрос;
+       if(n===2&&стр){ await стр.evaluate(()=>document.dispatchEvent(new Event('visibilitychange'))).catch(()=>{}); await new Promise(z=>setTimeout(z,500)); }
+       const тело=n<2?{ok:true,state:'asked'}:n===2?{ok:true,state:'ok',token:'ap_r',how:'telegram',user:{id:'308687648',first_name:'Ш'}}:{ok:true,state:'expired'};
+       идёт--;await r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(тело)}).catch(()=>{});return true;}
+     return false;};
+   const {p}=await поднять(b,true,{сессия:false,route,ios:true});стр=p;
+   await Promise.all([p.waitForEvent('load',{timeout:15000}),p.click('#vtg')]).catch(()=>{});
+   await p.waitForTimeout(800);
+   ok(параллельно===0,'гонка: сервер спрашивают по одному ('+опрос+' опросов, параллельно '+параллельно+')');
+   ok(await p.evaluate(()=>JSON.parse(localStorage.getItem('wb_session')||'{}').token)==='ap_r','гонка: вернулся из Telegram посреди опроса — вход выполнен');
+   await p.close();}
 }catch(e){console.error('УПАЛО:',e.stack);bad++;}
 await b.close();
 console.log(bad?'\nПРОВАЛОВ: '+bad:'\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ');

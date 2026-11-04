@@ -22661,6 +22661,9 @@ document.getElementById('newver').addEventListener('click', updApp);
    «Вышла новая версия». */
 function автоОбновить(){
   if(!SRVBUILD || SRVBUILD===BUILD || document.hidden) return;
+  /* 04.11: в приложении из магазина страница лежит внутри сборки — перезагрузка её не обновит, а
+     посреди входа через Telegram она теряла выданную сессию (метки сервера и сборки разошлись) */
+  if(ПЛ.имя==='native') return;
   if(document.querySelector('.modal.show')) return;
   var a=document.activeElement; if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
   try{ if(CHAT.busy || FOOD.busy) return; }catch(e){}
@@ -25663,15 +25666,22 @@ function входПочтаВойти(){
   }).catch(function(){ входЗанят('vlogin', false); входОшибка('Нет связи с сервером. Попробуйте ещё раз.'); });
 }
 function входТгЖдать(){
+  /* 04.11: опрос — по одному. Вернулся из Telegram — visibilitychange и таймер спрашивали
+     сервер одновременно: первый ответ «ok» (вход выдан один раз), второй «expired» — и если
+     «expired» приходил раньше, он возвращал экран входа, а сессию из «ok» приложение выбрасывало.
+     Так 04.11 у него на iPhone вход через Telegram дважды «ничего не сделал». */
   clearTimeout(ВХОД.ждём);
   var т=ВХОД.tg; if(!т||ВХОД.шаг!=='tg') return;
+  if(т.идёт){ т.ещё=true; return; }
+  т.идёт=true;
+  var дальше=function(мс){ т.идёт=false; if(ВХОД.tg!==т||ВХОД.шаг!=='tg') return; if(т.ещё){ т.ещё=false; входТгЖдать(); return; } ВХОД.ждём=setTimeout(входТгЖдать, мс); };
   входЗапрос('/app/tg?id='+encodeURIComponent(т.id)+'&secret='+encodeURIComponent(т.secret)).then(function(d){
-    if(ВХОД.tg!==т||ВХОД.шаг!=='tg') return;
-    if(d.state==='ok'){ входГотово(d); return; }
-    if(d.state==='denied'){ входШаг('main'); входОшибка('Вход отклонён в Telegram.'); return; }
-    if(d.state==='expired'||d.code==='no_login'){ входШаг('main'); входОшибка('Время вышло — нажмите «Войти через Telegram» ещё раз.'); return; }
-    ВХОД.ждём=setTimeout(входТгЖдать, 2000);
-  }).catch(function(){ ВХОД.ждём=setTimeout(входТгЖдать, 4000); });
+    if(d.state==='ok' && ВХОД.tg===т){ т.идёт=false; входГотово(d); return; }   /* вход выдан — не теряем, даже если экран успел смениться */
+    if(ВХОД.tg!==т||ВХОД.шаг!=='tg'){ т.идёт=false; return; }
+    if(d.state==='denied'){ т.идёт=false; входШаг('main'); входОшибка('Вход отклонён в Telegram.'); return; }
+    if(d.state==='expired'||d.code==='no_login'){ т.идёт=false; входШаг('main'); входОшибка('Время вышло — нажмите «Войти через Telegram» ещё раз.'); return; }
+    дальше(2000);
+  }).catch(function(){ дальше(4000); });
 }
 function входТелеграм(){
   входЗанят('vtg', true);
