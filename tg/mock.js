@@ -801,6 +801,11 @@ async function поднять(page, o) {
     return route.fulfill({status:501,contentType:'application/json',body:JSON.stringify({error:'Unknown mock route: '+p})});
   };
   await page.route(/^https:\/\/(getfit-sync\.sh-pulatov\.workers\.dev|api\.wellbol\.com)\//, обработать);
+  /* 04.11: проба «страница новой версии уже на сайте?». o.pagesBuild — что отдаёт сайт
+     (как GitHub Pages после сборки); без него стенд отдаёт ту же старую страницу. */
+  await page.route(/[?&]probe=/, r => o.pagesBuild
+    ? r.fulfill({ status: 200, contentType: 'text/html', body: "<script>var BUILD = '" + o.pagesBuild + "';</script>" })
+    : r.continue());
 
   const ошибки = [];
   page.on('pageerror', e => ошибки.push(String(e)));

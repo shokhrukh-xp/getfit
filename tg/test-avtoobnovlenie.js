@@ -13,11 +13,22 @@ const ЕДА = [{ id: 11, t: '09:10', kind: 'завтрак', kcal: 602, prot: 3
 (async () => {
   const br = await chromium.launch();
 
-  /* 1. на сервере новее: при запуске — одна перезагрузка, дальше не крутится */
+  /* 0. 04.11: сервер уже назвал новую метку, а сайт ещё собирается (Pages отдаёт старую
+     страницу) — ни перезагрузки, ни полоски, которая «не нажимается» */
   let page = await br.newPage({ viewport: { width: 390, height: 900 } });
   let переходы = 0;
   page.on('framenavigated', f => { if (f === page.mainFrame()) переходы++; });
   await M.поднять(page, { theme: 'dark', page: 'home', srvBuild: '99.99 99:99', wait: 3000 });
+  await page.waitForTimeout(1500);
+  дано(!/[?&]v=/.test(page.url()) && переходы === 1, 'сайт ещё старый — не перезагружается: переходов ' + переходы);
+  дано(await page.evaluate(() => { const b = document.getElementById('newver'); return !b || b.hidden; }), 'и полоски «Вышла новая версия» нет');
+  await page.close();
+
+  /* 1. на сервере новее и сайт готов: при запуске — одна перезагрузка, дальше не крутится */
+  page = await br.newPage({ viewport: { width: 390, height: 900 } });
+  переходы = 0;
+  page.on('framenavigated', f => { if (f === page.mainFrame()) переходы++; });
+  await M.поднять(page, { theme: 'dark', page: 'home', srvBuild: '99.99 99:99', pagesBuild: '99.99 99:99', wait: 3000 });
   await page.waitForTimeout(2500);
   дано(/[?&]v=99\.99/.test(page.url()), 'при запуске сама перезагрузилась на новую версию: ' + page.url().replace(/^.*\//, '/'));
   дано(переходы === 2, 'ровно одна перезагрузка, а не по кругу (Pages ещё отдаёт старую): переходов ' + переходы);
@@ -31,7 +42,7 @@ const ЕДА = [{ id: 11, t: '09:10', kind: 'завтрак', kcal: 602, prot: 3
   await page.waitForTimeout(600);
   дано(!/[?&]v=/.test(page.url()), 'версия та же — никаких перезагрузок');
   await page.click('.fmeal[data-mid="11"] .ft'); await page.waitForTimeout(400);
-  опц.srvBuild = '99.99 99:99';                                  /* тем временем выложили новую */
+  опц.srvBuild = опц.pagesBuild = '99.99 99:99';                                  /* тем временем выложили новую */
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await page.waitForTimeout(1500);
   дано(!/[?&]v=/.test(page.url()) && await page.evaluate(() => document.getElementById('mealm').classList.contains('show')),

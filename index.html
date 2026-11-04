@@ -22788,14 +22788,49 @@ function takePlan(sp){
   planSave(sp.plan, sp.at); spПланРисуй();
 }
 var SRVBUILD=null;
+/* 04.11, его слова: «что за плашка вышла про обновление? она не нажимается». Сервер называет
+   новую метку сразу после выкладки, а GitHub Pages собирает страницу ещё несколько минут:
+   «обновить» перезагружал ту же старую страницу, и полоска возвращалась. Теперь полоску и
+   самообновление включает только проба: страница по новому адресу уже несёт новую метку.
+   В приложении из магазина страница внутри сборки — там полоски нет вовсе. */
+var ГОТОВА=null, ПРОБА={b:null};
+function натив(){ try{ return ПЛ.имя==='native'; }catch(e){ return false; } }
+function новаяГотова(){ return !!SRVBUILD && SRVBUILD!==BUILD && ГОТОВА===SRVBUILD && !натив(); }
 function renderBuild(){
   var el=document.getElementById('buildline');
-  var свежая = !SRVBUILD || SRVBUILD===BUILD;
-  if(el) el.innerHTML = 'версия '+esc(BUILD)+' · '+
-    (свежая ? '<b>последняя</b>' : 'на сервере уже '+esc(SRVBUILD)+' — <button type="button" id="bupd">обновить</button>');
+  var есть=новаяГотова();
+  if(el) el.innerHTML = 'версия '+esc(BUILD)+(натив() ? '' : ' · '+
+    (есть ? 'на сервере уже '+esc(SRVBUILD)+' — <button type="button" id="bupd">обновить</button>'
+      : (!SRVBUILD || SRVBUILD===BUILD ? '<b>последняя</b>' : 'готовится '+esc(SRVBUILD))));
   var b=document.getElementById('newver');
-  if(b){ b.hidden=свежая;
-    if(!свежая) b.innerHTML='Вышла новая версия приложения — <b>обновить →</b>'; }
+  if(b){ b.hidden=!есть;
+    if(есть) b.innerHTML='Вышла новая версия приложения — <b>обновить →</b>'; }
+}
+/* Сервер назвал метку: та же — ничего; новая — проверяем, готова ли страница */
+function серверСказал(b){
+  SRVBUILD=String(b); renderBuild();
+  if(SRVBUILD===BUILD || натив()) return;
+  if(ГОТОВА===SRVBUILD){ автоОбновить(); return; }
+  проверитьСтраницу();
+}
+/* Одна проба за раз, повтор через минуту, не больше 20 раз на метку. Ключ собран по частям,
+   чтобы правка метки при выкладке не задела эту строку. */
+function проверитьСтраницу(){
+  var b=SRVBUILD;
+  if(ПРОБА.b!==b) ПРОБА={b:b, n:0, t:null, идёт:false};
+  if(ПРОБА.идёт || ПРОБА.t || ПРОБА.n>=20) return;
+  ПРОБА.идёт=true; ПРОБА.n++;
+  var ключ='var BU'+'ILD = \''+b+'\'';
+  var позже=function(){ ПРОБА.идёт=false;
+    ПРОБА.t=setTimeout(function(){ ПРОБА.t=null; if(SRVBUILD===b) проверитьСтраницу(); }, 60000); };
+  fetch(location.pathname+'?v='+encodeURIComponent(b)+'&probe='+Date.now(), {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.text() : ''; })
+    .then(function(т){
+      if(ПРОБА.b!==b) return;
+      if(т.indexOf(ключ)<0) return позже();
+      ПРОБА.идёт=false; ГОТОВА=b;
+      if(SRVBUILD===b){ renderBuild(); автоОбновить(); }
+    }).catch(позже);
 }
 /* Кэш WebView живёт своей жизнью: перезагружаем с новым адресом, иначе
    Telegram отдаёт ту же страницу, что и была. */
@@ -22820,7 +22855,7 @@ document.getElementById('newver').addEventListener('click', updApp);
    версия всё ещё старая, второй раз пять минут не пробуем — только полоска
    «Вышла новая версия». */
 function автоОбновить(){
-  if(!SRVBUILD || SRVBUILD===BUILD || document.hidden) return;
+  if(!новаяГотова() || document.hidden) return;
   /* 04.11: в приложении из магазина страница лежит внутри сборки — перезагрузка её не обновит, а
      посреди входа через Telegram она теряла выданную сессию (метки сервера и сборки разошлись) */
   if(ПЛ.имя==='native') return;
@@ -22838,7 +22873,7 @@ function проверитьВерсию(){
   if(Date.now()-ВЕРСИЯ_СПРОШЕНА < 60000) return;
   ВЕРСИЯ_СПРОШЕНА=Date.now();
   fetch(SYNCURL+'/build', {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(d){
-    if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); автоОбновить(); }
+    if(d && d.build) серверСказал(d.build);
   }).catch(function(){});
 }
 document.getElementById('profm').addEventListener('click', function(e){ if(e.target.closest('#bupd')) updApp(); });
@@ -24719,7 +24754,7 @@ function recoPull(){
   return tgFetch(SYNCURL+'/reco?uid='+encodeURIComponent(syncUid())+'&b='+encodeURIComponent(BUILD))
     .then(function(r){ return r.json(); })
     .then(function(d){
-      if(d && d.build){ SRVBUILD=String(d.build); renderBuild(); автоОбновить(); }
+      if(d && d.build) серверСказал(d.build);
       if(d && d.plan) takePlan(d.plan);
       if(d && d.byt) takeByt(d.byt);
       TODAYPLAN=(d && d.today && d.today.plan)||[]; renderPlanBox();
