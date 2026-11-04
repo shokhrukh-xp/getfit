@@ -16,9 +16,13 @@
 - `getfit-sync/` — сервер: Cloudflare Worker, код в `src/index.js` (вход —
   `src/main.js`: он только отдаёт класс Durable Object `TgBurst`), база D1
   `getfit`. Проверки — `tests/*.cjs`. Выкладка — `sh deploy.sh`.
-- Рабочая копия — папка на Google Drive (`…/GetFit/code/`). Настоящее
-  хранилище — GitHub `shokhrukh-xp/getfit` и `shokhrukh-xp/getfit-sync`.
-  Других копий на маке нет (старые клоны `~/getfit*` убраны 24.09).
+- Рабочая копия — папка на Google Drive (`…/01 Work/01 Xplorence/05 Products/06 Wellbol/code/`,
+  до 04.11 — `…/GetFit/code/`; папки внутри по-прежнему `getfit` и `getfit-sync`). Настоящее
+  хранилище — GitHub `shokhrukh-xp/wellbol` (приложение) и `shokhrukh-xp/wellbol-server`
+  (сервер); до 04.11 они назывались `getfit` и `getfit-sync`, старые адреса GitHub
+  перенаправляет. Приложение на wellbol.app сервер забирает из `wellbol` (main) —
+  /opt/wellbol/bin/site-sync.sh. Перед работой — `git pull`: копия на Drive сама не обновляется
+  (04.11 другой чат проверял код трёхдневной давности).
 
 ## Перед началом
 
