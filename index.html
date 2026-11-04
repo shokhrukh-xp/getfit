@@ -1606,7 +1606,10 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
      Было: 10 px над безопасной зоной (на iPhone с полоской «домой» — 44 px от края). Стало как у
      плавающих панелей iOS: панель заходит в безопасную зону, но не на полоску «домой» —
      на 12 px меньше зоны, не ниже 8 px от края (iPhone: 22 px, без зоны: 8 px). */
-  --nav-gap: max(8px, calc(var(--pad-bottom) - 12px));
+  /* 04.11, вечер, его снимок из Telegram рядом с «Телефоном» iOS: «панель расположена симметрично, на равном
+     расстоянии от левой, нижней и правой границы экрана, а наша прилипла к низу». В полноэкранном Telegram
+     зона снизу приходит нулём — отступ от неё давал 8 px. Теперь как в iOS: 20 px снизу и по бокам, всегда. */
+  --nav-gap: 20px;
 }
 .top-in{padding-top:calc(12px + var(--pad-top))}
 .l1{padding-bottom:var(--pad-bottom)}
@@ -4014,7 +4017,7 @@ body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;he
 .hright > .profbtn.attn::before{background:var(--sand)}
 .profbtn .pstreak{background:var(--sand);color:var(--sand-ink);border:2px solid var(--bg);font-weight:800;bottom:-8px;left:auto;right:-8px;transform:none}
 /* плавающая панель */
-.l1{left:12px;right:12px;bottom:var(--nav-gap);padding-bottom:0;border-radius:26px;
+.l1{left:var(--nav-gap);right:var(--nav-gap);bottom:var(--nav-gap);padding-bottom:0;border-radius:26px;
   background:var(--navbg);border:0;box-shadow:0 14px 30px rgba(11,79,90,.30);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 :root[data-theme="dark"] .l1{box-shadow:0 0 0 1px #1C3437,0 14px 30px rgba(0,0,0,.6)}
 /* 29.10: пока открыта клавиатура, панель разделов не висит над ней и не закрывает поля (kbВидно) */
@@ -4851,7 +4854,7 @@ body:not([data-f~="ruchnoy"]) .f-ruchnoy{display:none!important}   /* 02.11: р�
    кнопку чата — отдельно справа». Его выбор — вариант B: капсула трёх разделов (радиус = половина
    высоты, концентрично углу экрана при отступе 22 px) и песочный круг ИИ-тренера справа. */
 .l1-grp{display:contents}
-body[data-f~="panel2"] .l1{left:16px;right:16px;bottom:var(--nav-gap);padding:0;background:none;border:0;border-radius:0;box-shadow:none;
+body[data-f~="panel2"] .l1{left:var(--nav-gap);right:var(--nav-gap);bottom:var(--nav-gap);padding:0;background:none;border:0;border-radius:0;box-shadow:none;
   -webkit-backdrop-filter:none;backdrop-filter:none}
 :root[data-theme="dark"] body[data-f~="panel2"] .l1{box-shadow:none}
 body[data-f~="panel2"] .l1-in{display:flex;gap:10px;align-items:stretch;max-width:616px;margin:0 auto}

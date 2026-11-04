@@ -1,7 +1,7 @@
 'use strict';
 /* 04.11, его слова: «панель навигации сделать как у iOS или Telegram — форма углов подстраивается под
    угол экрана; три кнопки слева сгруппировать, кнопку чата — отдельно справа». Выбор — вариант B
-   (выключатель panel2): капсула трёх разделов и круг ИИ-тренера, 22 px от края на iPhone. */
+   (выключатель panel2): капсула трёх разделов и круг ИИ-тренера; вечером — 20 px снизу и по бокам, как в iOS. */
 const { chromium } = require('playwright'), M = require('./mock');
 let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ  ') + t); if (!c) bad++; };
 (async () => { const b = await chromium.launch(); try {
@@ -10,12 +10,12 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
     await p.addInitScript(() => { document.addEventListener('DOMContentLoaded', () => document.documentElement.style.setProperty('--tg-safe-area-inset-bottom', '34px')); });
     const err = await M.поднять(p, { theme: 'dark', page: 'food', time: '14:10', features: ф }); await p.waitForTimeout(800);
     const r = await p.evaluate(() => { const g = document.querySelector('.l1-grp').getBoundingClientRect(), c = document.getElementById('coachnav').getBoundingClientRect(), s = getComputedStyle(document.querySelector('.l1-grp'));
-      return { низ: Math.round(innerHeight - g.bottom), гв: Math.round(g.height), рад: parseFloat(s.borderTopLeftRadius), кш: Math.round(c.width), кв: Math.round(c.height), справа: c.left > g.right, внутри: c.right <= innerWidth && g.left >= 0, разделов: document.querySelectorAll('.l1-grp button[data-page]').length }; });
+      return { низ: Math.round(innerHeight - g.bottom), гв: Math.round(g.height), рад: parseFloat(s.borderTopLeftRadius), кш: Math.round(c.width), кв: Math.round(c.height), справа: c.left > g.right, слева: Math.round(g.left), справаОт: Math.round(innerWidth - c.right), внутри: c.right <= innerWidth && g.left >= 0, разделов: document.querySelectorAll('.l1-grp button[data-page]').length }; });
     const т = w + ' ' + (ф.length ? 'panel2' : 'без флага');
     if (ф.length) {
       ok(r.разделов === 3 && r.гв === 64 && r.рад >= 32, т + ': три раздела в капсуле 64 px, радиус — половина высоты');
       ok(r.кш === 64 && r.кв === 64 && r.справа, т + ': ИИ-тренер — отдельный круг справа');
-      ok(r.низ === 22 && r.внутри, т + ': 22 px от нижнего края, в пределах экрана');
+      ok(r.низ === 20 && r.слева === 20 && r.справаОт === 20, т + ': 20 px от низа, слева и справа — симметрично (' + r.слева + '/' + r.низ + '/' + r.справаОт + ')');
       await p.click('.l1-grp [data-page="gym"]'); await p.waitForTimeout(300);
       ok(await p.evaluate(() => document.querySelector('.l1-grp [data-page="gym"]').getAttribute('aria-selected') === 'true'), т + ': разделы переключаются');
       await p.click('#coachnav'); await p.waitForTimeout(400);
