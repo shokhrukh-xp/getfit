@@ -24112,6 +24112,19 @@ function deliveryOwner(){return syncUid()+':'+localDataSession().epoch;}
 function deliveryKey(id){return deliveryOwner()+':'+id;}
 function deliverySafeURL(value,photo){try{var u=new URL(value);return u.protocol==='https:'&&(photo?['eda.yandex','avatars.mds.yandex.net'].indexOf(u.hostname)>=0:u.hostname==='eats.yandex.com'&&/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?r\//.test(u.pathname))?u.href:'';}catch(e){return '';}}
 function deliveryAttr(s){return esc(String(s||'')).replace(/"/g,'&quot;');}
+/* 05.11 (kartinki), его слова «а можно сделать так чтобы он показывал картинку блюд с меню по ссылке
+   если есть там»: сервер кладёт под реплику act {type:'kartinki', venue, items:[{name, price, img}]} —
+   блюда, которые тренер назвал из меню по ссылке (oddmenu, Delever). Показываем теми же карточками,
+   что подбор доставки (.delivery / .deliverydish); хосты картинок — тот же список, что КАРТИНКИ_ХОСТЫ
+   на сервере. Только за выключателем kartinki. */
+function картинкаМенюURL(value){try{var u=new URL(value);return u.protocol==='https:'&&['dyj6gt4964deb.cloudfront.net','cdn.delever.uz'].indexOf(u.hostname)>=0?u.href:'';}catch(e){return '';}}
+function картинкиHTML(acts){
+ if(!ЕСТЬ('kartinki'))return '';
+ var a=(acts||[]).find(function(x){return x&&x.type==='kartinki'&&Array.isArray(x.items)&&x.items.length;});if(!a)return '';
+ var items=a.items.map(function(d){return Object.assign({},d,{photo:картинкаМенюURL(d.img)});}).filter(function(d){return d.photo;}).slice(0,5);
+ if(!items.length)return '';
+ return '<div class="delivery kartinki">'+(a.venue?'<p>'+esc(a.venue)+' · из меню</p>':'')+items.map(function(d){return '<article class="deliverydish"><img loading="lazy" referrerpolicy="no-referrer" src="'+deliveryAttr(d.photo)+'" alt="'+deliveryAttr(d.name)+'"><div><b>'+esc(d.name)+'</b>'+(d.price?'<p>'+esc(d.price)+'</p>':'')+'</div></article>';}).join('')+'</div>';
+}
 /* 20.10, его слова «Я бы хотел видеть как хорошо каждый из вариантов
    соответствует моим нормам»: сервер пишет карточку строками — «Подходит к цели:
    N из 10», белок · жиры, углеводы · сахар, калории. Строки — строками, балл —
@@ -24235,7 +24248,7 @@ function renderChat(scroll){
       /* 30.10: сервер дописывает к тексту « [фото]» по-русски — в ленте вместо пометки значок камеры (на любом языке) */
       if(c.role==='user'){ var фм=String(c.text||'').match(/^([\s\S]*?)\s*\[фото(?: ×(\d+))?\]\s*$/);
         return шапка+'<div class="msg me" data-noi18n>'+(фм?(фм[1]?esc(фм[1])+' ':'')+'<span class="mphoto" aria-label="photo">'+ИК.cam+(фм[2]?'×'+фм[2]:'')+'</span>':esc(c.text))+'</div>'; }
-      return шапка+ответТренера(((c===живая && /^Записал/.test(c.text||''))?wbm('wb-drop'+(Date.now()-(c.ts||0)<6000 && wbOnce('зап'+c.ts)?'':' still'),'pre'):'')+жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery';})): '')+((все.slice(все.indexOf(c)+1).some(function(n){return (n.act||[]).some(function(a){return a.type==='delivery'&&(c.act||[]).some(function(b){return b.type==='delivery'&&b.id===a.id;});});}))?'':deliveryHTML(c.act)));
+      return шапка+ответТренера(((c===живая && /^Записал/.test(c.text||''))?wbm('wb-drop'+(Date.now()-(c.ts||0)<6000 && wbOnce('зап'+c.ts)?'':' still'),'pre'):'')+жирный(esc(c.text)), chatВремя(c.ts), '', c.src, c.menu, ((c===живая && !CHAT.pending)?кнопкиHTML((c.act||[]).filter(function(a){return a.type!=='delivery'&&a.type!=='kartinki';})): '')+картинкиHTML(c.act)+((все.slice(все.indexOf(c)+1).some(function(n){return (n.act||[]).some(function(a){return a.type==='delivery'&&(c.act||[]).some(function(b){return b.type==='delivery'&&b.id===a.id;});});}))?'':deliveryHTML(c.act)));
     }).join('');
     if(CHAT.prep) h+=ответТренера('Готовлю фото<span class="dots"><i></i><i></i><i></i></span>','','wait');
     else if(CHAT.pending || CHAT.pendingImg)
