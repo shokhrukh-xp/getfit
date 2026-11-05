@@ -314,6 +314,7 @@ async function поднять(page, o) {
       if(!o._goalFixture){
         const {fixture}=require('../../getfit-sync/tests/lib/goal-dialog.cjs');
         o._goalFixture=await fixture({...((o.me)||(o.newbie?{}:{sex:'m',age:34,ht:178,bw:88.1})),...(o._goalOnly?{only:o._goalOnly}:{})},o.newbie?null:(o.meas||замеры())[0]||null);
+        if(Array.isArray(o.features)&&o.features.length)o._goalFixture.env.FEATURES=o.features.map(f=>f+':*').join(';');   /* 05.11: выключатели стенда — и серверному расчёту цели (единицы) */
         if(o.goal)await o._goalFixture.c.stateSet(o._goalFixture.env,o._goalFixture.uid,'goal',o.goal);
       }
       const b=JSON.parse(route.request().postData()||'{}');delete b.uid;
@@ -327,6 +328,7 @@ async function поднять(page, o) {
       if(!o._goalFixture){
         const {fixture}=require('../../getfit-sync/tests/lib/goal-dialog.cjs');
         o._goalFixture=await fixture({...((o.me)||(o.newbie?{}:{sex:'m',age:34,ht:178,bw:88.1})),...(o._goalOnly?{only:o._goalOnly}:{})},o.newbie?null:(o.meas||замеры())[0]||null);
+        if(Array.isArray(o.features)&&o.features.length)o._goalFixture.env.FEATURES=o.features.map(f=>f+':*').join(';');   /* 05.11: выключатели стенда — и серверному расчёту цели (единицы) */
         if(o.goal)await o._goalFixture.c.stateSet(o._goalFixture.env,o._goalFixture.uid,'goal',o.goal);
       }
       const b=JSON.parse(route.request().postData()||'{}');delete b.uid;

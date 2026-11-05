@@ -97,6 +97,34 @@ const текст = (p, sel) => p.evaluate(s => { const e = document.querySelecto
     ok(/кг/.test(await текст(p, '#mesumt')) && (await p.getAttribute('#pq-units [data-units="metric"]', 'aria-pressed')) === 'true', 'сводка снова в кг, отмечено «кг, см»');
     ok(err.length === 0, 'imperial, замер и единицы: без ошибок ' + err.slice(0, 2).join(' | '));
     await p.close(); }
+  /* 7. знакомство: умолчание по региону телефона до ответа сервера — только с выключателем и пустой анкетой */
+  for (const [locale, ждём] of [['en-US', 'imperial'], ['ru-UZ', 'metric']]) {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 }, locale });
+    const o = { theme: 'dark', newbie: true, wait: 2500, features: ['edinicy'] };
+    const err = await M.поднять(p, o);
+    const me0 = await p.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
+    ok(me0.units === ждём && me0.unitsSrc === 'auto', locale + ': новичку единицы по региону телефона — ' + ждём + ' (' + JSON.stringify(me0) + ')');
+    await p.click('#wz-only button[data-only="all"]'); await p.click('#wz-only-go'); await M.цельШаги(p, { до: 'me' });
+    const имп = ждём === 'imperial', т = await текст(p, '#goalconversation');
+    ok(имп ? /Рост, ft′in″/.test(т) && /Вес, lb/.test(т) : /Рост, см/.test(т) && /Вес, кг/.test(т), locale + ': поля знакомства — ' + (имп ? 'ft′in″ и lb' : 'см и кг'));
+    if (имп) {
+      await p.click('#goalconversation [data-gs="sex"][data-v="m"]');
+      await p.fill('#gs-p-age', '34'); await p.fill('#gs-p-ht', "5'10"); await p.fill('#gs-p-bw', '190');
+      await p.click('#goalconversation [data-gs="calc"]'); await M.цельШаги(p, { до: 'goal' });
+      const ц = await текст(p, '#goalconversation');
+      ok(/Сейчас: 190(,0)? lb/.test(ц) && !/кг/.test(ц), 'рост «5\'10» и 190 lb → в анкету 178 см и 86,2 кг, экран цели в lb: ' + ц.slice(0, 60));
+      await M.цельШаги(p, {});
+      const me1 = await p.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
+      ok(me1.ht === 178 && Math.abs(me1.bw - 86.18) < 0.05 && me1.units === 'imperial', 'после сохранения в анкете — см и кг, единицы остались: ' + JSON.stringify({ ht: me1.ht, bw: me1.bw, units: me1.units }));
+    }
+    ok(err.length === 0, locale + ': без ошибок ' + err.slice(0, 2).join(' | '));
+    await p.close();
+  }
+  /* без выключателя новичку ничего не ставится */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
+    await M.поднять(p, { theme: 'dark', newbie: true, wait: 1500 });
+    const me0 = await p.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
+    ok(me0.units === undefined, 'без выключателя units не ставится: ' + JSON.stringify(me0)); await p.close(); }
 } finally { await b.close(); }
   console.log(bad ? 'ПРОВАЛОВ: ' + bad : 'PASS edinicy'); process.exit(bad ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

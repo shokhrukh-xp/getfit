@@ -8444,10 +8444,14 @@ function renderWzMe(){
   if(wo) segSet('wz-only', segHtml('only',ONLYKEYS,WIZ.only||me.only||'all'));
   segSet('wz-sex', segHtml('sex',SEXES,me.sex||'m'));
   if(document.getElementById('wz-voice')){ segSet('wz-voice', segHtml('voice',VOICEKEYS,WIZ.voice||me.voice||null)); голосПодсказка('wz-voice-hint', WIZ.voice||me.voice); }
+  /* 05.11, единицы: у imperial рост — текстом «5′10″», вес — в lb; в анкету уходят см и кг (readWzMe) */
+  var имп=едИмп(), wh=document.getElementById('wz-ht'), wb=document.getElementById('wz-bw');
+  if(wh){ if(имп){ if(wh.type!=='text'){ wh.type='text'; wh.inputMode='text'; wh.placeholder='5′10″'; } } else if(wh.type!=='number'){ wh.type='number'; wh.inputMode='numeric'; wh.placeholder='176'; } }
+  try{ var hl=wh&&wh.parentNode.firstChild, bl=wb&&wb.parentNode.firstChild; if(hl&&hl.nodeType===3) hl.nodeValue=имп?'рост, ft′in″':'рост, см'; if(bl&&bl.nodeType===3) bl.nodeValue=имп?'вес, lb':'вес, кг'; if(wb) wb.placeholder=имп?'196':'89'; }catch(e){}
   [['wz-age','age'],['wz-ht','ht'],['wz-bw','bw']].forEach(function(x){
     var el=document.getElementById(x[0]);
     /* 22.10, A1: дробь — запятой, как везде в приложении (было «88.1») */
-    if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=String(me[x[1]]).replace('.',',');
+    if(el && document.activeElement!==el && me[x[1]]!=null && el.value==='') el.value=x[1]==='ht'&&имп?ЕД.ростТекст(me.ht):String(x[1]==='bw'&&имп?ЕД.вес(me[x[1]]):me[x[1]]).replace('.',',');
   });
   var e=document.getElementById('wz-me-err');
   if(e){ e.hidden=!WIZ.meErr; e.textContent=WIZ.meErr||''; }
@@ -8469,8 +8473,10 @@ function readWzMe(){
   var sb=document.querySelector('#wz-sex button[aria-pressed="true"]');
   var ob={dataset:{v:WIZ.only||(myData()||{}).only||'all'}};
   var vb=document.querySelector('#wz-voice button[aria-pressed="true"]');
+  /* 05.11, единицы: поля могут быть в lb и «5′10″» — в анкету всегда см и кг */
+  var htEl=document.getElementById('wz-ht');
   return { sex:(sb?sb.dataset.v:'m'), only:(ob?ob.dataset.v:'all'), voice:(vb?vb.dataset.v:null),
-           age:num('wz-age'), ht:num('wz-ht'), bw:num('wz-bw') };
+           age:num('wz-age'), ht:htEl?ЕД.ростВСм(htEl.value):null, bw:num('wz-bw')!=null?ЕД.вКг(num('wz-bw')):null };
 }
 /* 16.09. Знакомство новичка — одна страница: профиль, цель и расписание
    разом, одна кнопка внизу. Четверо из первых семи ушли, не дойдя до
@@ -9518,7 +9524,9 @@ function goalScreenFetch(save){
   clearTimeout(GS.t);var uid=syncUid(),n=++GS.n;
   if(save){GS.saving=true;}else GS.busy=true;
   goalTalkRender();
-  return fPost('/goal/plan',{uid:uid,g:GS.g,w:GS.w,f:GS.f,date:GS.date||null,profile:GS.profile,health:GS.health,save:!!save}).then(function(r){
+  /* 05.11, единицы: новичку единицы поставило приложение по региону телефона — отдаём их вместе с анкетой, иначе сохранение цели их сотрёт */
+  var meU=myData()||{},профиль=GS.profile;if(ЕСТЬ('edinicy')&&(meU.units==='imperial'||meU.units==='metric'))профиль=Object.assign({},GS.profile||{},{units:meU.units,unitsSrc:meU.unitsSrc||'auto'});
+  return fPost('/goal/plan',{uid:uid,g:GS.g,w:GS.w,f:GS.f,date:GS.date||null,profile:профиль,health:GS.health,save:!!save}).then(function(r){
     if(n!==GS.n||uid!==syncUid())return;
     GS.data=r;GS.error='';if(r.w!=null)GS.w=r.w;if(GS.g==='loss'||GS.g==='keep')GS.f=null;
     if(save&&r.saved){GS.saved=true;if(r.me)gset('me',r.me);takeGoal(r.goal,null);
@@ -20398,6 +20406,15 @@ var ЕД={
 };
 /* регион телефона для умолчания единиц на сервере: «en-US» → «US» */
 function регионТелефона(){ try{ var l=[navigator.language].concat(navigator.languages||[]).concat([Intl.DateTimeFormat().resolvedOptions().locale]).filter(Boolean).join(' '); var m=/[-_]([A-Za-z]{2})(?![A-Za-z])/.exec(l); return m?m[1].toUpperCase():''; }catch(e){ return ''; } }
+/* 05.11, знакомство: до первого ответа сервера единицы ставит приложение — тем же правилом, что сервер
+   (регион телефона: US, LR, MM — imperial), только при выключателе и пока units не задан, и только новичку
+   (анкеты ещё нет): у того, кто уже пользуется, единицы поставит сервер при следующей записи анкеты. */
+function единицыУмолчаниеПриложения(){
+  if(!ЕСТЬ('edinicy')) return;
+  var me=myData()||{}; if(me.units==='imperial'||me.units==='metric'||me.sex||me.age||me.ht) return;   /* bw приходит и из замеров — не признак анкеты */
+  var рег=регионТелефона(); if(!рег) return;
+  gset('me', Object.assign({}, me, {units:/^(US|LR|MM)$/.test(рег)?'imperial':'metric', unitsSrc:'auto'}));
+}
 function единицыКнопки(){ var me=myData()||{}, v=me.units==='imperial'?'imperial':'metric'; document.querySelectorAll('#pq-units [data-units]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.units===v)); }); }
 function единицыЗадать(v){
   var me=Object.assign({},myData()||{},{units:v,unitsSrc:'user'}); gset('me',me);
@@ -20449,6 +20466,7 @@ function функцииПрименить(){
   var f = (SUB && SUB.features && SUB.features.length) ? SUB.features.join(' ') : '';
   if (f) document.body.setAttribute('data-f', f); else document.body.removeAttribute('data-f');
   try { ролиПоказ(); } catch (e) {}
+  try { единицыУмолчаниеПриложения(); } catch (e) {}
 }
 /* ══════════ РОЛИ, ЭТАП 2а (29.10): специалисты в профиле ══════════
    Его «дальше» после фундамента (этап 1) и правило «впредь всё только на
