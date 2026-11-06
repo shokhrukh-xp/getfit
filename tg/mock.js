@@ -357,6 +357,7 @@ async function поднять(page, o) {
     /* дата дня — из проверки, если она её задала (test-food-complete: прошлый день), иначе из запроса */
     const сДатой = (д, date) => { const д2 = (o.day && o.day.date) || date; return Object.assign({}, д, { date: д2, free: свобДня(д2) }); };
     if (p === '/day')        { const date = u.searchParams.get('date') || TODAY;
+      if (o.dayGate) await o.dayGate;   /* 06.11: день приходит позже — проверить, что видно, пока он грузится (test-ux4) */
       return дать(день_ ? { ok: true, day: сДатой(день_, date) } : { ok: true, day: сДатой(день({ meals: [], kcal: 0, prot: 0, fat: 0, fib: 0, sug: 0 }), date) }); }
     /* 14.10, GF-04: ответ про незаписанные приёмы. o.gaps копит запросы. */
     if (p === '/day/gaps') { const b = JSON.parse(route.request().postData() || '{}'); (o.gaps = o.gaps || []).push(b);
