@@ -8423,7 +8423,11 @@ function wizInit(){
   if(me.place && !WIZ.touched) WIZ.place=me.place;
   if(me.min && !WIZ.touched) WIZ.min=me.min;
   if(me.about && !WIZ.text) WIZ.text=me.about;
-  if(!WIZ.wdTouched && !firstRun && GYM_DAYS && Object.keys(GYM_DAYS).length){
+  /* 06.11, живой прогон новичка, его «Ставь 3 дня»: после экрана цели firstRun уже false, и анкета брала дни
+     ГОТОВОЙ программы по умолчанию (вт ср чт пт вс — 5 дней) — новичку, «в зале был давно». Расписание
+     человека — только то, что он сам сохранял (sched / sched_any); дни готовой программы — не его. */
+  var задавал = !!(get('sched', null) || gget('sched_any', null));
+  if(!WIZ.wdTouched && !firstRun && задавал && GYM_DAYS && Object.keys(GYM_DAYS).length){
     WIZ.wd={}; Object.keys(GYM_DAYS).forEach(function(d){ if(GYM_DAYS[d]) WIZ.wd[+d]=1; });
   }
   if(!WIZ.wd){
@@ -8431,7 +8435,7 @@ function wizInit(){
     /* свои дни подставляем только тому, кто их уже задавал; новому человеку —
        нейтральные пн/ср/пт, а не расписание чужой программы (applyProfile
        пишет ключ 'profile' даже при молчаливом старте, поэтому смотрим firstRun) */
-    var свои = !firstRun && GYM_DAYS && Object.keys(GYM_DAYS).length;
+    var свои = !firstRun && задавал && GYM_DAYS && Object.keys(GYM_DAYS).length;
     (свои ? Object.keys(GYM_DAYS).map(Number) : wizPattern(3)).forEach(function(d){ WIZ.wd[d]=1; });
   }
 }
@@ -11645,7 +11649,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 22:57';
+var BUILD = '06.11 23:15';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19671,7 +19675,8 @@ function залОтдыхСегодня(){ var d=HOME.day; return !!(d && d.date
 function залКнопка(отдых){
   var st=отдых?'':'skip';
   return ' <button type="button" class="lnk hskip" data-gymskip="'+st+'"'+(ЗАЛОТМ.busy?' disabled aria-busy="true"':'')+'>'+
-    (ЗАЛОТМ.busy===('s'+st)?'Отмечаю…':(отдых?'Вернуть':'Пропустил'))+'</button>'+
+    (ЗАЛОТМ.busy===('s'+st)?'Отмечаю…':(отдых?'Вернуть':'Пропущу'))+'</button>'+   /* 06.11: «Пропустил» — мужской род у женщин; «Пропущу» без рода */
+    ''+
     (ЗАЛОТМ.err?'<span class="mwarn hskiperr" role="status">'+esc(ЗАЛОТМ.err)+'</span>':'');
 }
 function залОтметить(st){

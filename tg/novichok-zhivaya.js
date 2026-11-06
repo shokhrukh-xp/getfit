@@ -65,9 +65,9 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
     await M.цельШаги(p, { sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss', до: 'goal' });
     await снять('cel-ekran');
     await M.цельШаги(p, { sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss' });
-    await снять('posle-celi');
+    await снять('posle-celi'); L('дни анкеты:', await текст('#wz-wd [aria-pressed="true"]') , '·', (await p.locator('#wz-wd [aria-pressed="true"]').allInnerTexts()).join(' '));
     L('после цели:', await текст('#picktitle'));
-    if (await p.locator('#wz-go').isVisible()) { const t1 = Date.now(); await p.click('#wz-go');
+    if (process.env.STOP3) throw new Error('STOP3'); if (await p.locator('#wz-go').isVisible()) { const t1 = Date.now(); await p.click('#wz-go');
       await p.waitForSelector('.aiprev,#wzapply', { timeout: 240000 }).catch(() => {}); L('программа собралась за', ((Date.now() - t1) / 1000).toFixed(0), 'с');
       await снять('programma');
       await p.waitForTimeout(4000); await p.evaluate(() => { const e = document.querySelector('#wzapply'); if (e) e.scrollIntoView({ block: 'start' }); }); await снять('programma-voprosy'); L('под программой:', (await текст('.wzdone,.wzq,.wzai,.wznote')).slice(0, 300));

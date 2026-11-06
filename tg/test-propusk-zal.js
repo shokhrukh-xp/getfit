@@ -40,7 +40,7 @@ const ждать = async (page, fn, арг) => { for (let i = 0; i < 300; i++) {
     let { page, ош } = await главная(br, о);
     дано(ош.length === 0, 'главная поднялась без ошибок ' + (ош[0] || ''));
     let с = await строка(page);
-    дано(/^Сегодня/.test(с) && /Пропустил$/.test(с), 'день зала без тренировки — «Сегодня: …» и «Пропустил»: ' + с);
+    дано(/^Сегодня/.test(с) && /Пропущу$/.test(с), 'день зала без тренировки — «Сегодня: …» и «Пропустил»: ' + с);
     const к = await кнопка(page);
     const размер = к ? await к.evaluate(e => e.getBoundingClientRect().height) : 0;
     дано(размер >= 44, 'кнопка — не меньше 44 px в высоту: ' + размер);
@@ -52,7 +52,7 @@ const ждать = async (page, fn, арг) => { for (let i = 0; i < 300; i++) {
     const круг = await page.evaluate(t => { const e = document.querySelector('#homebody [data-hday="' + t + '"] .hwd-gym'); return e ? e.className : ''; }, T);
     дано(!/plan/.test(круг), 'кружок сегодня — без «зал по плану»: ' + круг);
     await page.click('#homebody [data-gymskip=""]');
-    дано(await ждать(page, () => /Пропустил$/.test(((document.querySelector('#homebody .hwg-sub') || {}).textContent || '').trim())), '«Вернуть» — снова «Пропустил»');
+    дано(await ждать(page, () => /Пропущу$/.test(((document.querySelector('#homebody .hwg-sub') || {}).textContent || '').trim())), '«Вернуть» — снова «Пропустил»');
     дано(о.залОтм.length === 2 && о.залОтм[1].st === '', '«Вернуть» — отметка снята на сервере');
     await page.close();
 
@@ -70,7 +70,7 @@ const ждать = async (page, fn, арг) => { for (let i = 0; i < 300; i++) {
     дано(await ждать(page, () => !!document.querySelector('#homebody .hskiperr')), 'отказ — текст под кнопкой');
     const ош5 = await page.textContent('#homebody .hskiperr');
     дано(/уже записана/.test(ош5) && о5.залОтм.length === 1, 'отказ по делу — без повтора, текст сервера: ' + ош5);
-    дано(/Пропустил/.test(await строка(page)), 'после отказа кнопка на месте');
+    дано(/Пропущу/.test(await строка(page)), 'после отказа кнопка на месте');
     await page.close();
 
     /* ── 5. тренировка сегодня уже есть — кнопки нет ── */
