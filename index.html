@@ -3816,7 +3816,8 @@ body.ordmode #list .sstag{color:var(--text)}
 .zkrow s strong{color:var(--text);font-weight:700}
 .zkbar{position:relative;height:8px;border-radius:8px;background:var(--field)}
 .zkbar i{position:absolute;left:0;top:0;bottom:0;max-width:100%;border-radius:8px;background:var(--accent)}
-.zkbar1{height:6px;margin-top:8px}   /* 06.11: одна полоса подходов недели под числом (ui3) */
+.zkbar1{height:6px;margin-top:8px}
+.aiph{margin:-2px 0 8px;font-size:13px;line-height:1.35;color:var(--muted)}   /* 06.11: фаза «Вход» в превью программы */   /* 06.11: одна полоса подходов недели под числом (ui3) */
 .zkbar u{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px var(--bg)}
 .zkres{display:grid;gap:10px;margin-top:8px}
 .zkr{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;font-size:14px}
@@ -8611,6 +8612,9 @@ function aiДниHtml(p, view, weekdays){
       var дн=weekdays ? (weekdays.length ? WD[weekdays[i % weekdays.length]] : '') : aiДеньНедели(i);
       return '<button type="button" role="tab" data-aitab="'+i+'" aria-selected="'+(i===t)+'"><b>День '+(i+1)+'</b>'+(дн?'<i>'+дн+'</i>':'')+'</button>'; }).join('')+'</div>'+
     '<div class="aidh"><b>'+esc(aiЗаголовок(d))+'</b><i>'+d.ex.length+' '+plural(d.ex.length,['упражнение','упражнения','упражнений'])+'</i></div>'+
+    /* 06.11, живой прогон новичка: в программе «3 × 6–8», а в зале в те же дни «2 × 6–8» — фаза «Вход» (AI_PHASES f1,
+       ds −1, недели 1–4). Цифры программы оставляем полными, а то, что первые недели подходов меньше, говорим здесь. */
+    (view===WIZ && AI_PHASES[0] && AI_PHASES[0].ds<0 ? '<p class="aiph">Первые '+AI_PHASES[0].w[1]+' недели — на подход меньше, чтобы выучить движения</p>' : '')+
     '<div class="aiexs">'+d.ex.map(function(x,i){return aiСтрока(x,i,view===WIZ&&WIZ.busy ? 0 : d.ex.length,view);}).join('')+'</div>'+
     '<button type="button" class="btn wide" data-aiedit="add"'+(view===WIZ&&WIZ.busy?' disabled':'')+'>+ Добавить упражнение</button>'+
     (view.undo ? '<button type="button" class="btn wide" data-aiedit="undo">Отменить последнюю правку</button>' : '');
@@ -9360,6 +9364,12 @@ function showPicker(first){
   wzЧисла=''; clearTimeout(wzЖдун);
   /* вернулся на середине — продолжаем с того места, а не с чистого листа */
   if(firstRun) чернВзять();
+  /* 06.11, живой прогон новичка на английском и узбекском: анкета была на языке Telegram, а после экрана
+     цели всё стало русским — экран цели сохраняет пол, возраст, рост и вес сервером, мимо wzMeSave, где
+     пишется me.lang, а «анкета есть, языка нет» значит «по-русски, как было» (языкИз, персона сервера).
+     Новому человеку язык фиксируем сразу, до первого шага. */
+  if(firstRun){ try{ var me1=myData()||{}; if(!me1.lang && ЯЗЫКИ.indexOf(ЯЗ)>=0 && !(me1.sex||me1.age||me1.bw)){ me1.lang=ЯЗ; gset('me', me1);
+    if(DB) DB.doc('state/me').set({me:me1, at:new Date().toISOString()}).catch(function(){}); } }catch(e){} }
   renderPicker();
   var el=document.getElementById('picker'); if(el) el.classList.add('show');
   if(firstRun) document.body.classList.add('onb');
@@ -11649,7 +11659,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 23:15';
+var BUILD = '06.11 23:44';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11747,7 +11757,10 @@ function языкТок(s){
   return {key:key, toks:toks};
 }
 function языкТокТекст(t){
-  if(t.n!=null) return ЯЗ==='en' ? t.n.replace(/^(\d+),(\d+)$/, '$1.$2') : t.n;
+  /* 06.11, живой прогон новичка на английском: «Today 385 of 1.450 kcal» — «1,450» (уже английская запись тысяч
+     с сервера) принималось за десятичную запятую. Десятичная — 1–2 знака после запятой; ровно три — это тысячи.
+     Русские «1 450» по-английски — «1,450». */
+  if(t.n!=null) return ЯЗ==='en' ? t.n.replace(/^(\d+),(\d{1,2})$/, '$1.$2').replace(/(\d)[\u0020\u00a0\u202f](?=\d{3}(?!\d))/g, '$1,') : t.n;
   var L=ЯЗ_МЕС_T[ЯЗ]?ЯЗ:'en';
   if(t.m!=null) return L==='en' ? ЯЗ_МЕС_T.en[t.m]+' '+t.d : t.d+'-'+ЯЗ_МЕС_T.uz[t.m];
   var w=ЯЗ_ДН_T[L][t.w]; return (t.cap||L==='en') ? w.charAt(0).toUpperCase()+w.slice(1) : w;
@@ -18794,6 +18807,9 @@ function homeNextLine(E){
   var d=HOME.day||{}, t=d.targets||{};
   if(homeСвоб()) return 'ешьте как решили — записывать не нужно';
   if(!t.kcal) return '';
+  /* 06.11, живой прогон новичка: зарегистрировался в 23:00, съедено 0 — под «1 450 ккал до нормы» стояло
+     «на сегодня всё». Приёмов на сегодня по плану уже нет, но и записей нет: значит, день просто не записан. */
+  if((!E.plan || E.plan.at==null) && !((d.meals||[]).length) && !(+d.kcal>0)) return 'запишите, что уже ели сегодня';
   if(!E.plan || E.plan.at==null) return 'на сегодня всё · дальше только если голодны';
   var rem=Math.round(t.kcal-(+d.kcal||0)), rp=Math.round((t.prot||0)-(+d.prot||0));
   /* время следующего приёма стоит бейджем на пузыре — здесь

@@ -8,7 +8,11 @@
 const fs = require('fs'), os = require('os'), path = require('path'), http = require('http');
 const { chromium } = require('playwright');
 const M = require('./mock');
-const API = 'https://api.wellbol.com', U = 'svc_nov';
+const API = 'https://api.wellbol.com';
+/* 06.11: язык и страна новичка — TG_LANG=en|uz|ru, STRANA=US|UZ… (заголовок x-svc-strana: сервер ставит страну и единицы как по телефону) */
+const ЯЗ = process.env.TG_LANG || 'ru', СТРАНА = process.env.STRANA || '', U = 'svc_nov' + (ЯЗ === 'ru' ? '' : '_' + ЯЗ);
+const ЕДА = { ru: 'На завтрак овсянка на молоке и банан', en: 'Oatmeal with milk and a banana for breakfast', uz: 'Nonushtaga sutli suli bo‘tqasi va banan' }[ЯЗ];
+const ИМЯ = { ru: 'Алия', en: 'Emily', uz: 'Dilnoza' }[ЯЗ];
 const КЛЮЧ = fs.readFileSync(os.homedir() + '/.getfit-svc', 'utf8').trim();
 const out = process.argv[2] || path.join(__dirname, '..', '..', 'shots-zhiv'); fs.mkdirSync(out, { recursive: true });
 const лог = []; const L = (...a) => { const s = a.join(' '); лог.push(s); console.log(s); };
@@ -25,14 +29,14 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
 (async () => {
   await стереть();
   await new Promise(r => сайт.listen(0, '127.0.0.1', r)); const порт = сайт.address().port;
-  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ru-RU', timezoneId: 'Asia/Tashkent' });
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: { ru: 'ru-RU', en: 'en-US', uz: 'uz-UZ' }[ЯЗ], timezoneId: 'Asia/Tashkent' });
   const p = await ctx.newPage();
   const ошибки = []; p.on('pageerror', e => ошибки.push(e.message)); p.on('console', m => { if (m.type() === 'error') ошибки.push(m.text().slice(0, 200)); });
   const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PUT,DELETE,OPTIONS' };
   const времена = [];
   await p.route(/^https:\/\/(api\.wellbol\.com|getfit-sync\.sh-pulatov\.workers\.dev)\//, async route => {
     const q = route.request(); if (q.method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
-    const h = Object.assign({}, q.headers(), { 'x-svc': КЛЮЧ }); delete h['x-tg-init'];
+    const h = Object.assign({}, q.headers(), { 'x-svc': КЛЮЧ }, СТРАНА ? { 'x-svc-strana': СТРАНА } : {}); delete h['x-tg-init'];
     const t0 = Date.now();
     try { const r = await route.fetch({ url: q.url().replace('getfit-sync.sh-pulatov.workers.dev', 'api.wellbol.com'), headers: h, timeout: 240000 });
       времена.push([new URL(q.url()).pathname, Date.now() - t0, r.status()]);
@@ -40,9 +44,9 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
     catch (e) { времена.push([new URL(q.url()).pathname, Date.now() - t0, 'ошибка']); return route.abort(); }
   });
   await p.route('**://telegram.org/**', r => r.abort().catch(() => {}));
-  await p.addInitScript(uid => {
+  await p.addInitScript(a => { const uid = a.uid;
     const мем = {};
-    window.Telegram = { WebApp: { initData: 'svc', initDataUnsafe: { user: { id: uid, first_name: 'Алия', language_code: 'ru' } },
+    window.Telegram = { WebApp: { initData: 'svc', initDataUnsafe: { user: { id: uid, first_name: a.имя, language_code: a.яз } },
       colorScheme: 'dark', themeParams: {}, version: '7.0', platform: 'ios',
       expand(){}, ready(){}, close(){}, disableVerticalSwipes(){}, enableVerticalSwipes(){}, enableClosingConfirmation(){}, disableClosingConfirmation(){}, requestFullscreen(){},
       setHeaderColor(){}, setBackgroundColor(){}, onEvent(){}, offEvent(){}, openLink(){}, openTelegramLink(){},
@@ -52,7 +56,7 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
       BackButton: { isVisible: false, show(){}, hide(){}, onClick(){}, offClick(){} },
       CloudStorage: { getItem(k, cb){ cb(null, мем[k] || ''); }, setItem(k, v, cb){ мем[k] = v; cb && cb(null, true); },
         getItems(ks, cb){ const o = {}; ks.forEach(k => { o[k] = мем[k] || ''; }); cb(null, o); }, getKeys(cb){ cb(null, Object.keys(мем)); }, removeItem(k, cb){ delete мем[k]; cb && cb(null, true); }, removeItems(ks, cb){ ks.forEach(k => delete мем[k]); cb && cb(null, true); } } } };
-  }, U);
+  }, { uid: U, имя: ИМЯ, яз: ЯЗ });
   let n = 0; const снять = async имя => { await p.waitForTimeout(800); await p.screenshot({ path: path.join(out, String(++n).padStart(2, '0') + '-' + имя + '.png') }); L('снимок', n, имя); };
   const текст = async sel => (await p.locator(sel).first().innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
   const t0 = Date.now();
@@ -77,12 +81,12 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
   await p.evaluate(() => window.scrollTo(0, 900)); await снять('segodnya-2'); await p.evaluate(() => window.scrollTo(0, 0));
   /* первая еда — словами, как написал бы человек */
   try {
-    await p.mouse.click(338, 792); await p.waitForTimeout(1500); await снять('chat-spisok'); await p.click('.clrow[data-chat=""]'); await p.waitForTimeout(1500);
+    await p.mouse.click(338, 792); await p.waitForTimeout(1500); if (await p.locator('.clrow[data-chat=""]').isVisible().catch(() => false)) { L('ВНИМАНИЕ: открылся список чатов, а не тренер'); await снять('chat-spisok'); await p.click('.clrow[data-chat=""]'); await p.waitForTimeout(1500); }
     await снять('chat-pustoy');
-    const поле = p.locator('#ctext'); await поле.fill('На завтрак овсянка на молоке и банан');
+    const поле = p.locator('#ctext'); await поле.fill(ЕДА);
     const t2 = Date.now(); await поле.press('Enter'); await p.waitForTimeout(1000);
-    await p.waitForFunction(() => /ккал/.test(document.body.innerText.split('овсянка на молоке').pop() || ''), null, { timeout: 120000 }).catch(() => {});
-    L('ответ тренера за', ((Date.now() - t2) / 1000).toFixed(0), 'с:', (await p.evaluate(() => document.body.innerText.split('овсянка на молоке').pop() || '')).replace(/\s+/g, ' ').slice(0, 400)); await снять('chat-otvet');
+    await p.waitForFunction(е => /ккал|kcal|kkal/.test(document.body.innerText.split(е).pop() || ''), ЕДА, { timeout: 120000 }).catch(() => {});
+    L('ответ тренера за', ((Date.now() - t2) / 1000).toFixed(0), 'с:', (await p.evaluate(е => document.body.innerText.split(е).pop() || '', ЕДА)).replace(/\s+/g, ' ').slice(0, 400)); await снять('chat-otvet');
   } catch (e) { L('чат:', e.message.slice(0, 200)); await снять('chat-oshibka'); }
   for (const [sel, имя] of [['[data-page="food"],[data-tab="food"]', 'eda'], ['[data-page="home"],[data-tab="home"]', 'segodnya-posle-edy'], ['[data-page="gym"],[data-tab="gym"]', 'trenirovka']]) {
     try { await p.keyboard.press('Escape'); await p.click(sel, { timeout: 4000 }); } catch (e) { L(имя + ':', e.message.slice(0, 120)); }

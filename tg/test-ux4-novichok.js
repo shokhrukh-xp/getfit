@@ -75,5 +75,12 @@ const день = (o, kcal, extra) => Object.assign({}, o.day, { запас: { z:
     const к = await текст(p, '.zm-card');
     ok(/Первое взвешивание/.test(к) && !/Давно не/.test(к) && !/последний замер — ,|последний замер — $/.test(к), 'новичок без замеров — «Первое взвешивание» (' + к.replace(/\s+/g, ' ') + ')');
     await p.close(); }
+  /* 7 (живой прогон новичка): поздний вечер, записей нет — не «на сегодня всё», а «запишите, что уже ели сегодня» */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } }), o = opts('dark');
+    o.features = Ф; o.page = 'home'; o.time = '23:10'; o.score = null; o.day = день(o, 0, { meals: [], prot: 0, fat: 0, sug: 0, fib: 0 });
+    await M.поднять(p, o); await p.waitForTimeout(1500);
+    const т = await текст(p, '.hdaycard .hnext, .hdaycard .day-status');
+    ok(/запишите, что уже ели сегодня/.test(т) && !/на сегодня всё/.test(т), 'вечер без записей — «запишите, что уже ели сегодня» (' + т.replace(/\s+/g, ' ') + ')');
+    await p.close(); }
 } finally { await b.close(); }
 console.log(bad ? '\nПРОВАЛОВ: ' + bad : '\nВсё прошло'); process.exit(bad ? 1 : 0); })();
