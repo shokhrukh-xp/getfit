@@ -63,6 +63,11 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
   await p.goto('http://127.0.0.1:' + порт + '/index.html');
   await p.waitForTimeout(3000); L('открылось за', ((Date.now() - t0) / 1000).toFixed(1), 'с; заголовок:', await текст('#picktitle'));
   await снять('start');
+  /* 07.11, soglasie2 у всех: новичок сначала видит «Сведения о здоровье», потом «ИИ-помощник» */
+  for (const [окно, да] of [['#zdm', '#zdyes'], ['#iim', '#iiyes']]) {
+    try { await p.waitForSelector(окно + '.show,' + окно + '.on,' + окно + '[open]', { timeout: 5000 }); } catch (e) {}
+    if (await p.locator(да).isVisible().catch(() => false)) { await снять('soglasie-' + окно.slice(1)); await p.click(да); await p.waitForTimeout(800); L('согласие', окно, 'принято'); }
+  }
   try {
     if (await p.locator('#wz-only-go').isVisible()) await p.click('#wz-only-go');
     await снять('cel-vvod');

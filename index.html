@@ -8291,9 +8291,16 @@ function подсказкаУбрать(k){ gset('hint_'+k,1); cmDone(k==='gym'?
    экране), и не раньше чем через полминуты после предыдущей. Только тем, кто
    прошёл знакомство после выпуска (cm_on): старожилам тур ни к чему. */
 var CM_GAP=30000;
+/* 07.11, прогон американца: подсказки про Evos и Яндекс Еду видел человек из США. Доставка через Яндекс Еду и
+   Uzum — только в Узбекистане: страна из «Где вы» (/place), пока её нет — по часовому поясу телефона. */
+function вУзб(){
+  if(МЕСТО && МЕСТО.cc) return МЕСТО.cc==='UZ';
+  if(!МЕСТО && ЕСТЬ('gorod') && !вУзб.грузил){ вУзб.грузил=1; try{ местоЗагрузить(); }catch(e){} }
+  try{ return /^Asia\/(Tashkent|Samarkand)$/.test(Intl.DateTimeFormat().resolvedOptions().timeZone); }catch(e){ return true; }
+}
 var CM=[
   {k:'coach', where:'home', sel:'#coachnav',
-   t:function(){ return '<b>ИИ-тренер</b> — фото еды, вопрос или «что заказать в Evos с доставкой». Нажмите и попробуйте.'; }},
+   t:function(){ return вУзб() ? '<b>ИИ-тренер</b> — фото еды, вопрос или «что заказать в Evos с доставкой». Нажмите и попробуйте.' : '<b>ИИ-тренер</b> — фото еды, вопрос или «что взять в кафе рядом». Нажмите и попробуйте.'; }},
   {k:'meas', where:'home', after:'coach', sel:'#fw', on:'focus',
    t:function(){ return 'Вес — сюда, утром натощак. По нему тренер подстраивает норму.'; }},
   {k:'foodadd', where:'food', sel:'#food-add',
@@ -8310,7 +8317,7 @@ var CM=[
   {k:'finish', where:'gym', after:'set', sel:'#finish', need:function(){ try{ return countDone()>0; }catch(e){ return false; } },
    t:function(){ return 'В конце — сюда: день сохранится и отметится ✓.'; }},
   {k:'chat', where:'coachm', sel:'#ctext', on:'input',
-   t:function(){ return 'Можно и про кафе: «что взять в Evos с доставкой» — найду его в Яндекс Еде рядом и подберу блюда под вашу норму'+(безПро()?' (в Wellböl Pro).':'.'); }},
+   t:function(){ return (вУзб() ? 'Можно и про кафе: «что взять в Evos с доставкой» — найду его в Яндекс Еде рядом и подберу блюда под вашу норму' : 'Можно и про кафе: «что взять в кафе рядом» — найду места поблизости и подберу блюда под вашу норму')+(безПро()?' (в Wellböl Pro).':'.'); }},
   {k:'bot', where:'coachm', after:'chat', sel:'#ctext', on:'input',
    t:function(){ return 'Всё то же можно писать боту в Telegram — это один дневник.'; }}
 ];
@@ -9741,7 +9748,10 @@ document.getElementById('goalconversation').addEventListener('submit',function(e
 var GS={g:'recomp',w:null,f:null,date:'',profile:null,health:null,data:null,busy:false,saving:false,saved:false,error:'',n:0,t:null};
 var GS_ВИДЫ=[['loss','Похудеть','вес вниз, обычный темп'],['recomp','Жир ↓, мышцы ↑','медленнее по весу, нужны силовые'],['gain','Набрать мышцы','чуть больше калорий'],['keep','Питаться правильнее','вес не меняем']];
 function gsЧ(x,d){d=d==null?1:d;var k=Math.pow(10,d);return String(Math.round(x*k)/k).replace('.',',');}
-function gsДата(iso,к){var a=String(iso||'').split('-');if(a.length!==3)return '';return к?('к '+['январю','февралю','марту','апрелю','маю','июню','июлю','августу','сентябрю','октябрю','ноябрю','декабрю'][+a[1]-1]+' '+a[0]):(+a[2])+' '+ЯЗ_МЕС[+a[1]-1]+' '+a[0];}
+function gsДата(iso,к){var a=String(iso||'').split('-');if(a.length!==3)return '';
+  /* 07.11: «к февралю 2027» на английском и узбекском — сразу на языке человека (месяц в дательном не переводится словарём) */
+  if(к&&ЯЗ!=='ru'&&ЯЗ_МЕС_T[ЯЗ])return ЯЗ==='uz'?a[0]+'-yil '+ЯЗ_МЕС_T.uz[+a[1]-1]+'gacha':'by '+ЯЗ_МЕС_T.en[+a[1]-1]+' '+a[0];
+  return к?('к '+['январю','февралю','марту','апрелю','маю','июню','июлю','августу','сентябрю','октябрю','ноябрю','декабрю'][+a[1]-1]+' '+a[0]):(+a[2])+' '+ЯЗ_МЕС[+a[1]-1]+' '+a[0];}
 function goalScreenStart(text){
   var t=document.getElementById('coachtitle');if(t){if(!t.dataset.was)t.dataset.was=t.textContent;t.textContent='Цель';}
   var g=goalObj()||{},b=g.body||{},me=myData()||{};
@@ -9905,7 +9915,7 @@ document.getElementById('g-muscle').addEventListener('change',renderWzGoal);
    замерам — полоса), срок (флажок), «раньше нельзя» (штриховка), и одна отметка: успеваете / впритык / отстаёте. */
 var МЕС_КОР=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 function путьДн(iso){ return Math.round((dLocal(iso)-dLocal(TODAY))/864e5); }
-function путьКор(iso){ var d=dLocal(iso); return d.getDate()+' '+МЕС_КОР[d.getMonth()]; }
+function путьКор(iso){ var d=dLocal(iso); return d.getDate()+' '+(ЯЗ!=='ru'?ЯЗ_МЕС[d.getMonth()]:МЕС_КОР[d.getMonth()]); }   /* 07.11: не по-русски — полная дата, её переводит словарь («16 февраля» → «February 16»); «фев» он не знает */
 function путьНед(дн){ var н=Math.max(1,Math.round(дн/7)); return н+' '+plural(н,['неделя','недели','недель']); }
 function путьИсо(x){ return x&&/^\d{4}-\d{2}-\d{2}$/.test(x)?x:null; }
 /* o: {lo, hi — полоса «по вашему темпу»; date — срок; earliest — раньше нельзя; eta — «придёте» без срока; late — срок раньше возможного} */
@@ -11676,7 +11686,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 01:00';
+var BUILD = '07.11 01:55';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -11858,6 +11868,12 @@ function языкУзел(n, глянуть){
      переводил строку по кускам, а когда перевод целиком приходил с сервера,
      второй проход искал уже наполовину английскую строку. Берём исходник. */
   var s=n.nodeValue, ru=(n.__ru!=null && n.__tr===s) ? n.__ru : s;
+  /* 07.11, прогон американца: «152,1 lb», «−0,75», «1 450 kcal» — числа сами по себе по-английски пишутся
+     «152.1», «1,450». Только узлы из одних чисел (вес, диапазон, калории); текст человека — в data-noi18n. */
+  if(ru && ЯЗ==='en' && !ЯЗ_КИР.test(ru) && /^[\s−+\-–≈~]*\d[\d\s  .,−–\-%]*$/.test(ru) && /\d[,   ]\d/.test(ru)){
+    var чс=ru.replace(/(\d),(\d{1,2})(?!\d)/g,'$1.$2').replace(/(\d)[   ](?=\d{3}(?!\d))/g,'$1,');
+    if(чс!==s){ n.__ru=ru; n.__tr=чс; ЯЗ_NV.call(n, чс); } return;
+  }
   if(!ru || !ЯЗ_КИР.test(ru)) return;
   var t=тр(ru); if(t!==s){ n.__ru=ru; n.__tr=t; ЯЗ_NV.call(n, t); }
 }
@@ -19570,7 +19586,7 @@ function homeBody(){
        зовём на весы за трендом, а не за самим весом. */
     var me0=myData()||{}, w0 = ms.length ? ms[0].w : (+me0.bw||0);
     var под0 = ms.length ? 'нужен второй замер, чтобы увидеть тренд' : (w0 ? 'с ваших слов · встаньте на весы — пойдёт тренд' : 'впишите вес ниже');
-    return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u>'+замерКнопка()+'</div><div class="vznum"><b>'+(w0?fmtKg(w0)+'<s>кг</s>':'—')+'</b></div>'+
+    return '<div class="vz"><div class="vztop"><div class="vzhd"><u>Тело</u>'+замерКнопка()+'</div><div class="vznum"><b>'+(w0?fmtKg(ЕД.вес(w0))+'<s>'+ЕД.едВес()+'</s>':'—')+'</b></div>'+
       '<p class="vzsub">'+под0+'</p></div><div class="vzbottom">'+vzПланСтрока()+замерГнездо()+'</div></div>';
   }
   var есть=VZ_ВИДЫ.filter(function(v){ var s=vzСерия(v[0]); return ms.some(function(m){ return s.f(m)!=null; }); });
@@ -22253,7 +22269,7 @@ function renderSub(){
   var l=document.getElementById('sub-list');
   if(l) l.innerHTML=['Разбор еды без ограничений — фото и словами: калории, белок, жиры, клетчатка',
     'Разговор с тренером: что съесть, чем закрыть норму, как идти к цели',
-    'Кафе и доставка: найду заведение в Яндекс Еде рядом и подберу блюда под вашу норму',
+    вУзб() ? 'Кафе и доставка: найду заведение в Яндекс Еде рядом и подберу блюда под вашу норму' : 'Кафе рядом: найду места поблизости и подберу блюда под вашу норму',
     'Сборка программы под вас и правки по ходу',
     'Недельный разбор: что получилось, что менять'].map(function(t){ return '<li>'+t+'</li>'; }).join('');
   var b=document.getElementById('sub-buy');
