@@ -4885,7 +4885,9 @@ body[data-f~="ui3"] #dbnote:empty{display:none}
 /* 3. «вкладки дней центровать и симметрично показывать»: дни делят ряд поровну, сколько бы их ни было */
 body[data-f~="ui3"] .dayseg{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}   /* !important: число колонок ставит JS в style (repeat(N,110px)) — его снимок: два дня всё ещё прижаты влево */
 /* 5. «Шаги и сон» — сначала интеграция с телефоном, потом показ */
-body[data-f~="ui3"] .wear-surface{display:none!important}
+body[data-f~="ui3"]:not(.zdok) .wear-surface{display:none!important}
+body.zdok #wrh [data-wrcoach]{display:none}
+.zdfine{font-size:12px!important;margin-top:10px!important}
 /* 8. низ профиля короче: без слогана, лицензии одной строкой, одно предупреждение */
 body[data-f~="ui3"] .pqfoot .wbfoot span,body[data-f~="ui3"] .pqfoot p.foot:not(.f-soglasie):not(.howattr){display:none}
 body[data-f~="ui3"] .pqfoot .howattr{display:inline;margin:0 4px}
@@ -6122,6 +6124,8 @@ var ПЛ=(function(){
     оплатаStars:function(){ return (ТГ&&ТГ.openInvoice)?ТГ:null; },
     /* 02.11: покупка Pro в App Store / Google Play — плагин @capgo/native-purchases */
     покупки:function(){ return плагин('NativePurchases'); },
+    /* 06.11: шаги и сон — «Здоровье» Apple / Health Connect (@capgo/capacitor-health) */
+    здоровье:function(){ return плагин('Health'); },
     андроид:function(){ try{ return !!(cap&&cap.getPlatform&&cap.getPlatform()==='android'); }catch(e){ return false; } }
   };
 })();
@@ -11618,7 +11622,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 18:25';
+var BUILD = '06.11 19:05';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20668,6 +20672,7 @@ function функцииПрименить(){
     if (DB) DB.doc('state/me').set({ me: me, at: new Date().toISOString() }).catch(function () {}); applyOnly(); } } } catch (e) {}
   try { renderTplace(); } catch (e) {}
   try { paintNote(''); } catch (e) {}
+  try { здПроверить(); } catch (e) {}
 }
 /* ══════════ РОЛИ, ЭТАП 2а (29.10): специалисты в профиле ══════════
    Его «дальше» после фундамента (этап 1) и правило «впредь всё только на
@@ -23627,6 +23632,19 @@ function renderWear(){
   if(!w || !Array.isArray(w.days)){ hd.hidden=true; b.hidden=true; b.innerHTML=''; return; }
   hd.hidden=false; b.hidden=false;
   var н=w.шагиСон;
+  /* 06.11, пункт 5: в приложении с «Здоровьем» — подключение вместо скриншотов */
+  var зИмя=ПЛ.андроид()?'Health Connect':'«Здоровья» Apple';
+  if(ЗД.можно && !здВкл()){
+    b.innerHTML='<p class="wrnone">Шаги и сон могут приходить сюда сами — из '+зИмя+'. Тренер увидит активность и восстановление и учтёт их в советах.</p>'+
+      (ЗД.err?'<p class="rolerr">'+esc(ЗД.err)+'</p>':'')+
+      '<button type="button" class="btn small prim" data-zdon'+(ЗД.busy?' disabled':'')+'>'+(ЗД.busy?'Подключаю…':'Подключить '+(ПЛ.андроид()?'Health Connect':'«Здоровье»'))+'</button>'+
+      '<p class="wrnone zdfine">Читаем только шаги и сон, ничего не записываем. Отключить можно в настройках телефона.</p>';
+    return;
+  }
+  if(ЗД.можно && (!н || (!н.днейШаги && !н.ночей))){
+    b.innerHTML='<p class="wrnone">'+(ЗД.busy?'Читаю '+зИмя+'…':'В '+(ПЛ.андроид()?'Health Connect':'«Здоровье»')+' пока нет шагов и сна за эту неделю. Как появятся — придут сюда сами.')+'</p>'+(ЗД.err?'<p class="rolerr">'+esc(ЗД.err)+'</p>':'');
+    return;
+  }
   if(!н || (!н.днейШаги && !н.ночей)){
     /* 17.10, его выбор D: одна строка вместо абзаца; подробности — по нажатию */
     b.innerHTML='<p class="wrnone">Пришлите скриншот шагов и сна — числа появятся здесь.</p>'+
@@ -23645,12 +23663,78 @@ function renderWear(){
     ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
     '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — ориентир '+тыс(цельШ)+' и больше':'',
       н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':'')+' — нужно от 7 часов':''].filter(Boolean).join(' · ')+
-    '. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>';
+    (ЗД.можно?'. Числа приходят сами из '+зИмя+'; к норме еды шаги не прибавляются.</p>':'. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>');
 }
 document.addEventListener('click', function(e){
   if(e.target.closest('[data-day-retry]')){ loadDay(); return; }
   if(e.target.closest('[data-wrcoach]')){ openCoach(fDate()); haptic('light'); }
+  if(e.target.closest('[data-zdon]')){ haptic('light'); здПодключить(); }
 });
+/* ══ 06.11, его пункт 5: ШАГИ И СОН ИЗ «ЗДОРОВЬЯ» ТЕЛЕФОНА (выключатель zdorovye) ══
+   Его слова: «Про Шаги и Сон нужно сначала сделать интеграцию с телефоном и другими приложениями чтобы их можно
+   было автоматически брать, потом уже показать в нашем приложении». Блок «Шаги и сон» виден только в приложении,
+   где телефон отдаёт числа сам (Apple «Здоровье»; Health Connect — тем же плагином в сборке Android).
+   Читаем только шаги и сон и только после «Подключить»; в «Здоровье» не пишем ничего.
+   Шаги — суммой по дням (телефон сам убирает двойной счёт iPhone + часы). Сон — отрезки «сплю» без «в кровати»
+   и «проснулся», наложения склеены; ночь относится к дню пробуждения. */
+var ЗД = { можно: false, busy: false, err: '', at: 0 };
+var ЗД_СОН = { asleep: 1, rem: 1, deep: 1, light: 1 };
+function здПлагин(){ try { return ЕСТЬ('zdorovye') ? ПЛ.здоровье() : null; } catch (e) { return null; } }
+function здВкл(){ return !!gget('zd_on', 0); }
+function здПроверить(){
+  var h = здПлагин();
+  if (!h) { ЗД.можно = false; document.body.classList.remove('zdok'); return Promise.resolve(false); }
+  return Promise.resolve(h.isAvailable ? h.isAvailable() : { available: true }).then(function(r){
+    ЗД.можно = !!(r && r.available !== false); document.body.classList.toggle('zdok', ЗД.можно);
+    try { renderWear(); } catch (e) {}
+    if (ЗД.можно && здВкл()) здСинк(false);
+    return ЗД.можно;
+  }).catch(function(){ ЗД.можно = false; document.body.classList.remove('zdok'); return false; });
+}
+function здСон(samples){
+  var отр = (samples || []).filter(function(s){ return !s.sleepState || ЗД_СОН[s.sleepState]; })
+    .map(function(s){ return [Date.parse(s.startDate), Date.parse(s.endDate)]; })
+    .filter(function(x){ return x[0] < x[1] && x[1] - x[0] < 16 * 36e5; }).sort(function(a, b){ return a[0] - b[0]; });
+  var слито = [];
+  отр.forEach(function(x){ var п = слито[слито.length - 1]; if (п && x[0] <= п[1]) п[1] = Math.max(п[1], x[1]); else слито.push([x[0], x[1]]); });
+  var по = {};
+  /* +6 ч: отрезок, кончившийся в 23:30, — часть следующей ночи; кончившийся в 07:00 — этого утра */
+  слито.forEach(function(x){ var д = ymd(new Date(x[1] + 6 * 36e5)); по[д] = (по[д] || 0) + (x[1] - x[0]) / 6e4; });
+  return по;
+}
+function здСинк(сразу){
+  var h = здПлагин(); if (!h || !здВкл() || ЗД.busy) return Promise.resolve(false);
+  if (!сразу && Date.now() - ЗД.at < 15 * 6e4) return Promise.resolve(false);
+  ЗД.busy = true; ЗД.err = '';
+  var конец = new Date(), нач = new Date(конец.getFullYear(), конец.getMonth(), конец.getDate() - 13);
+  var снач = new Date(нач.getTime() - 12 * 36e5);
+  return Promise.all([
+    h.queryAggregated({ dataType: 'steps', startDate: нач.toISOString(), endDate: конец.toISOString(), bucket: 'day', aggregation: 'sum' }).catch(function(){ return { samples: [] }; }),
+    h.readSamples({ dataType: 'sleep', startDate: снач.toISOString(), endDate: конец.toISOString(), limit: 3000 }).catch(function(){ return { samples: [] }; })
+  ]).then(function(r){
+    var шаги = {}, сон = здСон(r[1] && r[1].samples), дни = {};
+    ((r[0] && r[0].samples) || []).forEach(function(s){ var v = Math.round(+((s.values && s.values.sum) != null ? s.values.sum : s.value) || 0); if (v > 0) шаги[ymd(new Date(s.startDate))] = v; });
+    Object.keys(шаги).concat(Object.keys(сон)).forEach(function(д){ дни[д] = 1; });
+    var rows = Object.keys(дни).filter(function(д){ return д >= ymd(нач) && д <= ymd(конец); }).sort().map(function(д){
+      return { date: д, steps: шаги[д] != null ? шаги[д] : null, sleep_min: сон[д] != null ? Math.round(сон[д]) : null };
+    });
+    ЗД.at = Date.now();
+    if (!rows.length) return false;
+    return fPost('/wear', { uid: syncUid(), src: ПЛ.андроид() ? 'hc' : 'apple', rows: rows }).then(function(){
+      return fGet('/week?uid=' + encodeURIComponent(syncUid())).then(function(d){ if (d && d.week) { FOOD.week = d.week; try { renderFoodWeek(); } catch (e) {} try { renderWear(); } catch (e) {} homeDirty(); } return true; });
+    });
+  }).catch(function(e){ ЗД.err = humanErr(e); try { renderWear(); } catch (e2) {} return false; }).then(function(x){ ЗД.busy = false; return x; });
+}
+function здПодключить(){
+  var h = здПлагин(); if (!h) return;
+  ЗД.busy = true; ЗД.err = ''; try { renderWear(); } catch (e) {}
+  Promise.resolve(h.requestAuthorization({ read: ['steps', 'sleep'], write: [] })).then(function(){
+    /* iOS не говорит, разрешил ли человек чтение (так задумано Apple) — включаем и читаем что дадут */
+    gset('zd_on', 1); ЗД.busy = false; haptic('ok'); return здСинк(true);
+  }).catch(function(e){ ЗД.busy = false; ЗД.err = humanErr(e); try { renderWear(); } catch (e2) {} });
+}
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible' && ЗД.можно) здСинк(false); });
+
 /* строка над меню недели: что закрывает само меню */
 function грМенюHTML(g){
   if(!g || !(g.дней>=5)) return '';
