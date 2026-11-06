@@ -5332,7 +5332,7 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
       <p class="seghint pfvh" id="wz-voice-hint" hidden></p>
       <div class="pf"><span class="pfl">пол</span><div class="seg" id="wz-sex"></div></div>
       <div class="mnums">
-        <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="14" max="90" placeholder="34"></label>
+        <label>возраст<input id="wz-age" type="number" inputmode="numeric" min="18" max="90" placeholder="34"></label>
         <label>рост, см<input id="wz-ht" type="number" inputmode="numeric" min="120" max="230" placeholder="176"></label>
         <label>вес, кг<input id="wz-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6" placeholder="89"></label>
       </div>
@@ -5761,7 +5761,7 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
       </div>
       <div class="me" id="mefields" hidden>
         <label>пол<select id="me-sex"><option value="">не указан</option><option value="m">муж</option><option value="f">жен</option></select></label>
-        <label>возраст<input id="me-age" type="number" inputmode="numeric" min="14" max="90" step="1"></label>
+        <label>возраст<input id="me-age" type="number" inputmode="numeric" min="18" max="90" step="1"></label>
         <label>рост, см<input id="me-ht" type="number" inputmode="numeric" min="120" max="230" step="1"></label>
         <label id="me-bwl">вес, кг<input id="me-bw" type="text" inputmode="decimal" autocomplete="off" maxlength="6"></label>
       </div>
@@ -5822,6 +5822,8 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
         <p class="foot howattr"><a href="https://repdb.co" target="_blank" rel="noopener nofollow">Exercise data by RepDB (repdb.co)</a></p>
         <!-- 02.11: согласие на ИИ — только приложение из магазина (Apple 5.1.2(i), Google), выключатель soglasie -->
         <button class="btn wide f-soglasie" id="profii" hidden>ИИ-помощник</button>
+        <!-- 07.11: согласие на сведения о здоровье (выключатель soglasie2) -->
+        <button class="btn wide" id="profzd" hidden>Сведения о здоровье</button>
         <button class="btn wide danger" id="profreset">Начать заново</button>
         <!-- 02.11: удаление аккаунта внутри приложения (Apple 5.1.1(v), Google) -->
         <button class="btn wide danger f-udalit" id="profdel">Удалить аккаунт</button>
@@ -5976,7 +5978,7 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
 <div class="modal" id="iim" role="dialog" aria-modal="true" aria-labelledby="iititle">
   <div class="modalbox">
     <h3 id="iititle">ИИ-помощник</h3>
-    <p class="mtext">Чтобы отвечать и давать советы, Wellböl отправляет ваши сообщения, фото еды, голосовые и показатели — вес, замеры и сведения о здоровье, которые вы ввели, — сервисам ИИ: Anthropic (Claude), OpenAI и Google (Gemini). Они обрабатывают данные по нашему поручению и не используют их для рекламы. <a href="#" data-ii-link="https://wellbol.com/privacy">Политика конфиденциальности</a></p>
+    <p class="mtext">Чтобы отвечать и давать советы, Wellböl отправляет ваши сообщения, фото еды, голосовые и показатели — вес, замеры и сведения о здоровье, которые вы ввели, — сервисам ИИ: Anthropic (Claude), OpenAI и Google (Gemini) — они находятся за пределами вашей страны, в основном в США. Они обрабатывают данные по нашему поручению и не используют их для рекламы. <a href="#" data-ii-link="https://wellbol.com/privacy">Политика конфиденциальности</a></p>
     <p class="mtext iinote">Без согласия работают дневник, вес, замеры и зал; тренер, разбор фото еды и голос — нет. Решение можно изменить в профиле.</p>
     <p class="mtext iinote">Wellböl — не медицинское изделие: не ставит диагнозы и не лечит. По вопросам здоровья обращайтесь к врачу.</p>
     <p class="mtext" id="iistate" role="status" hidden></p>
@@ -5985,6 +5987,21 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
       <button type="button" class="btn wide" id="iino">Не сейчас</button>
       <button type="button" class="btn wide danger" id="iioff" hidden>Выключить ИИ</button>
       <button type="button" class="btn wide" id="iiclose" hidden>Закрыть</button>
+    </div>
+  </div>
+</div>
+<!-- 07.11: согласие на сведения о здоровье (soglasie2): штат Вашингтон (My Health My Data), Невада, LGPD ст. 11, ЗРУ-547 ст. 25 -->
+<div class="modal" id="zdm" role="dialog" aria-modal="true" aria-labelledby="zdtitle">
+  <div class="modalbox">
+    <h3 id="zdtitle">Сведения о здоровье</h3>
+    <p class="mtext">Wellböl хранит то, что вы вводите и присылаете: вес, замеры, еду и фото еды, тренировки, шаги и сон, анкету здоровья (давление, сахар, беременность) и цикл. Это нужно, чтобы считать вашу норму и давать советы.</p>
+    <p class="mtext iinote">Храним на сервере в Узбекистане, не продаём и не используем для рекламы. Отозвать согласие и удалить данные можно в профиле. <a href="#" data-ii-link="https://wellbol.com/health-data">О данных здоровья</a> · <a href="#" data-ii-link="https://wellbol.com/privacy">Политика конфиденциальности</a></p>
+    <p class="mtext" id="zdstate" role="status" hidden></p>
+    <div class="iibtns">
+      <button type="button" class="btn wide" id="zdyes">Согласен</button>
+      <button type="button" class="btn wide" id="zdno">Не согласен</button>
+      <button type="button" class="btn wide danger" id="zdoff" hidden>Отозвать согласие</button>
+      <button type="button" class="btn wide" id="zdclose" hidden>Закрыть</button>
     </div>
   </div>
 </div>
@@ -8673,7 +8690,7 @@ function renderWzMe(){
 document.addEventListener('input', function(e){
   if(!WIZ.meErr || !e.target.closest('#wzme .mnums')) return;
   var v=readWzMe(), нет=[];
-  if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
+  if(!v.age || v.age<18 || v.age>90) нет.push(v.age>0 && v.age<18 ? 'возраст (Wellböl — только для взрослых, 18+)' : 'возраст');   /* 07.11: 18+ (было 14) */
   if(!v.ht || v.ht<120 || v.ht>230) нет.push('рост');
   if(!v.bw || v.bw<35 || v.bw>250) нет.push('вес');
   WIZ.meErr=нет.length ? 'Заполните '+нет.join(', ')+' — без этого не подскажу ни стартовые веса, ни норму еды.' : '';
@@ -8747,7 +8764,7 @@ function wzГотовые(){
 }
 function wzMeSave(тихо){
   var v=readWzMe(), нет=[];
-  if(!v.age || v.age<14 || v.age>90) нет.push('возраст');
+  if(!v.age || v.age<18 || v.age>90) нет.push(v.age>0 && v.age<18 ? 'возраст (Wellböl — только для взрослых, 18+)' : 'возраст');   /* 07.11: 18+ (было 14) */
   if(!v.ht || v.ht<120 || v.ht>230) нет.push('рост');
   if(!v.bw || v.bw<35 || v.bw>250) нет.push('вес');
   if(нет.length){
@@ -9767,7 +9784,7 @@ function goalTalkRender(){
     var m=d.missing||[],p=GS.profile||{},имп=едИмп(),поле=function(k,label,attrs,текст){var v=p[k]!=null?(k==='ht'&&имп?ЕД.ростТекст(p[k]):k==='bw'?ЕД.вес(p[k]):p[k]):'';return '<label class="gs-row gs-in"><span class="gs-name"><b>'+label+'</b></span><input id="gs-p-'+k+'" type="'+(текст?'text':'number')+'" inputmode="'+(текст?'text':'decimal')+'" '+attrs+' value="'+esc(v)+'"></label>';};
     h='<p class="gs-now">'+esc(d.message||'')+'</p><div class="gs-fields" style="margin-top:12px">';
     if(m.indexOf('sex')>=0)h+='<div class="gs-row"><span class="gs-name"><b>Пол</b><small>для расчёта нормы</small></span><div class="gs-chips"><button type="button" class="gs-chip" data-gs="sex" data-v="m" aria-pressed="'+(p.sex==='m')+'">Мужской</button><button type="button" class="gs-chip" data-gs="sex" data-v="f" aria-pressed="'+(p.sex==='f')+'">Женский</button></div></div>';
-    if(m.indexOf('age')>=0)h+=поле('age','Возраст','min="14" max="100" step="1"');
+    if(m.indexOf('age')>=0)h+=поле('age','Возраст','min="18" max="100" step="1"');
     if(m.indexOf('ht')>=0)h+=имп?поле('ht','Рост, ft′in″','placeholder="5′10″"',true):поле('ht','Рост, см','min="120" max="230" step="1"');
     if(m.indexOf('bw')>=0)h+=имп?поле('bw','Вес, lb','min="77" max="550" step="0.1"'):поле('bw','Вес, кг','min="35" max="250" step="0.1"');
     h+='</div>'+(GS.error?'<div class="gs-warn">'+esc(GS.error)+'</div>':'')+'<button type="button" class="btn prim wide gs-save" data-gs="calc">Посчитать цель</button>';
@@ -11659,7 +11676,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 23:44';
+var BUILD = '07.11 01:00';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17870,7 +17887,9 @@ document.getElementById('udalm').addEventListener('click', function(e){
    Его выбор: окно только в приложении из магазина; «Не сейчас» — работает без ИИ, включить в профиле.
    Сервер без согласия ИИ не зовёт (код ii_net) — тогда окно открывается снова. */
 var ИИС={загружено:false, ответ:false, yes:false, занят:false, спрошено:false};
-function иисВкл(){ return ПЛ.имя==='native' && ЕСТЬ('soglasie'); }
+/* 07.11 (soglasie2): оба согласия — в любом канале, не только в приложении из магазина */
+function иисВкл(){ return (ПЛ.имя==='native' && ЕСТЬ('soglasie')) || ЕСТЬ('soglasie2'); }
+var ЗДС={загружено:false, s2:false, ответ:false, yes:false, занят:false};
 function иисРисовать(){
   var b=document.getElementById('profii'); if(b){ b.hidden=!иисВкл(); b.textContent='ИИ-помощник: '+(ИИС.yes?'включён':'выключен'); }
   var да=document.getElementById('iiyes'), нет=document.getElementById('iino'), выкл=document.getElementById('iioff'), закр=document.getElementById('iiclose');
@@ -17882,6 +17901,9 @@ function иисЗагрузить(){
   fGet('/ii-soglasie?uid='+encodeURIComponent(syncUid())).then(function(d){
     if(!d||!d.ok){ ИИС.загружено=false; return; }
     ИИС.ответ=!!d.soglasie; ИИС.yes=!!d.yes; иисРисовать();
+    /* 07.11 (soglasie2): сначала — сведения о здоровье (без них дневник не ведём), потом — ИИ */
+    ЗДС.s2=!!d.s2; ЗДС.ответ=!!d.zd; ЗДС.yes=!!d.zdYes; здРисовать();
+    if(ЗДС.s2 && !ЗДС.yes){ openZD(); return; }
     if(!ИИС.yes && (!ИИС.ответ || (d.soglasie && d.soglasie.yes===true)) && !ИИС.спрошено){ ИИС.спрошено=true; openIIS(); }   /* не отвечал или текст согласия обновился */
   }).catch(function(){ ИИС.загружено=false; });
 }
@@ -17897,6 +17919,31 @@ function иисОтветить(да){
   }).catch(function(e){ ИИС.занят=false; iisState(humanErr(e), true); haptic('err'); });
 }
 document.getElementById('profii').addEventListener('click', function(){ closeProf(); openIIS(); haptic('light'); });
+function здРисовать(){
+  var b=document.getElementById('profzd'); if(b){ b.hidden=!ЗДС.s2; b.textContent='Сведения о здоровье: '+(ЗДС.yes?'согласие дано':'нет согласия'); }
+  var да=document.getElementById('zdyes'), нет=document.getElementById('zdno'), выкл=document.getElementById('zdoff'), закр=document.getElementById('zdclose');
+  if(да) да.hidden=ЗДС.yes; if(нет) нет.hidden=ЗДС.yes; if(выкл) выкл.hidden=!ЗДС.yes; if(закр) закр.hidden=!ЗДС.yes && !ЗДС.ответ;
+}
+function zdState(t, плохо){ var e=document.getElementById('zdstate'); if(!e) return; e.hidden=!t; e.textContent=t||''; e.classList.toggle('bad', !!плохо); }
+function openZD(){ var m=document.getElementById('zdm'); if(!m||!ЗДС.s2) return; zdState(ЗДС.ответ&&!ЗДС.yes?'Без этого согласия Wellböl не может вести дневник: еда, вес и замеры не записываются. Удалить аккаунт и данные можно в профиле.':''); здРисовать(); m.classList.add('show'); }
+function closeZD(){ if(ЗДС.занят) return; var m=document.getElementById('zdm'); if(m) m.classList.remove('show'); }
+function здОтветить(да){
+  if(ЗДС.занят) return; ЗДС.занят=true; zdState('Сохраняю…');
+  fPost('/ii-soglasie', {uid:syncUid(), kind:'zd', yes:!!да}).then(function(d){
+    ЗДС.занят=false; ЗДС.ответ=true; ЗДС.yes=!!(d&&d.yes); здРисовать(); haptic(да?'ok':'light');
+    if(да){ zdState(''); closeZD(); if(!ИИС.yes && !ИИС.спрошено){ ИИС.спрошено=true; setTimeout(openIIS, 250); } }   /* следом — согласие на ИИ */
+    else zdState('Без этого согласия Wellböl не может вести дневник: еда, вес и замеры не записываются. Удалить аккаунт и данные можно в профиле.');
+  }).catch(function(e){ ЗДС.занят=false; zdState(humanErr(e), true); haptic('err'); });
+}
+document.getElementById('profzd').addEventListener('click', function(){ closeProf(); openZD(); haptic('light'); });
+document.getElementById('zdm').addEventListener('click', function(e){
+  if(e.target.id==='zdm'){ if(ЗДС.ответ) closeZD(); return; }   /* первый раз — только кнопкой */
+  var л=e.target.closest('[data-ii-link]'); if(л){ e.preventDefault(); ПЛ.открыть(л.getAttribute('data-ii-link')); return; }
+  if(e.target.closest('#zdyes')){ здОтветить(true); return; }
+  if(e.target.closest('#zdno')||e.target.closest('#zdoff')){ здОтветить(false); return; }
+  if(e.target.closest('#zdclose')){ closeZD(); return; }
+});
+function здНужно(){ try{ ЗДС.s2=true; ЗДС.yes=false; ЗДС.ответ=true; setTimeout(openZD, 0); }catch(_){} }
 document.getElementById('iim').addEventListener('click', function(e){
   if(e.target.id==='iim'){ if(ИИС.ответ) closeIIS(); return; }   /* первый раз — только кнопкой: ответ нужен явный */
   var л=e.target.closest('[data-ii-link]'); if(л){ e.preventDefault(); ПЛ.открыть(л.getAttribute('data-ii-link')); return; }
@@ -20443,13 +20490,13 @@ document.getElementById('fnav').addEventListener('click', function(e){
 function fGet(path){ return tgFetch(SYNCURL+path).then(function(r){ return r.json(); }); }
 /* 28.10: как fPost, но фоном на сервере (fДолгий) — для запросов дольше минуты */
 function fPostДолгий(path, body){ return fДолгий(path, body).then(function(r){ return r.json().then(function(d){
-  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; if(e.code==='ii_net') иисНужно(); throw e; }
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; if(e.code==='ii_net') иисНужно(); if(e.code==='zd_net') здНужно(); throw e; }
   return d; }); }); }
 /* 02.11: сервер не зовёт ИИ без согласия — показать окно ещё раз (не чаще раза в минуту) */
 var ИИС_ПОКАЗ=0;
 function иисНужно(){ if(Date.now()-ИИС_ПОКАЗ<60000) return; ИИС_ПОКАЗ=Date.now(); try{ ИИС.yes=false; ИИС.ответ=true; setTimeout(openIIS, 0); }catch(_){} }
 function fPost(path, body){ return tgFetch(SYNCURL+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(d){
-  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; e.dialog=d.dialog; if(e.code==='ii_net') иисНужно(); throw e; }
+  if(!r.ok||d.error){ var e=new Error(d.error||('HTTP '+r.status)); e.code=d.code||''; e.detail=d.detail||''; e.status=r.status; e.dialog=d.dialog; if(e.code==='ii_net') иисНужно(); if(e.code==='zd_net') здНужно(); throw e; }
   return d; }); }); }
 /* 18.10, его слова: «найди решение чтобы даже не приходилось нажимать
    повторить. Нужно чтобы всё срабатывало с первого раза». Отправка в чат
@@ -22539,6 +22586,7 @@ function humanErr(e){
   /* 18.10: кончились кредиты Gemini — «попробуй ещё раз» не поможет, говорим как есть */
   if((e&&e.code)==='ai_down') return 'Тренер сейчас недоступен — уже чиним. Дневник, вес и зал работают как обычно.';
   if((e&&e.code)==='ii_net') return 'ИИ-помощник выключен. Включить можно в профиле — «ИИ-помощник».';
+  if((e&&e.code)==='zd_net') return 'Нужно согласие на сведения о здоровье — дать его можно в профиле.';
   if((e&&e.code)==='slow') return 'Тренер не успел ответить вовремя. Попробуйте ещё раз.';
   if((e&&e.code)==='busy' || /\b429\b|quota|rate.?limit/i.test(t)) return 'Тренер сейчас занят — слишком много запросов подряд. Подождите минуту.';
   if(/Failed to fetch|NetworkError|network|Load failed|timed out/i.test(t)) return 'Нет связи с сервером. Проверьте интернет.';   /* 28.10: «Load failed» — так iPhone называет оборванный запрос */
