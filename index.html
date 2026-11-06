@@ -26109,7 +26109,28 @@ if(/[?&]srez=1(&|$)/.test(location.search||'')) setTimeout(function(){ openSrez(
 </script>
 <script>
 /* 24.10: файл разобран, первый экран нарисован — заставку убираем */
-(function(){var s=document.getElementById('wbsplash');if(!s)return;requestAnimationFrame(function(){s.classList.add('off');setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},300);});})();
+(function(){var s=document.getElementById('wbsplash');
+/* 06.11, его слова про приложение из магазина: «при открытии приложение несколько раз вспыхивает
+   гаснет быстро перед тем как показать главный экран». Было: заставка iOS → пустой WebView → своя
+   заставка страницы (появлялась и гасла) → «Загружаю ваши данные…» → главная. Теперь в приложении
+   из магазина своей заставки нет: держим заставку iOS (тот же знак Ö на цвете фона), пока страница
+   не готова — нет «Загружаю…» или он сменился на «Нет связи · Повторить», — и гасим её один раз.
+   Плагин сам уберёт её через 8 с, если сюда не дойдём. */
+if(document.documentElement.getAttribute('data-platforma')==='native'){
+  if(s&&s.parentNode)s.parentNode.removeChild(s);
+  var п=null;try{п=window.Capacitor.Plugins.SplashScreen;}catch(e){}
+  if(!п)return;
+  var t0=Date.now();
+  (function ждать(){
+    var w=document.getElementById('cloudwait'),r=document.getElementById('cwretry');
+    if(w&&!w.hidden&&!(r&&!r.hidden)&&Date.now()-t0<7000)return setTimeout(ждать,150);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      try{var x=п.hide({fadeOutDuration:250});if(x&&x.catch)x.catch(function(){});}catch(e){}
+    });});
+  })();
+  return;
+}
+if(!s)return;requestAnimationFrame(function(){s.classList.add('off');setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},300);});})();
 </script>
 </body>
 </html>

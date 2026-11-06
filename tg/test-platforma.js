@@ -26,7 +26,7 @@ async function поднять(b, родное, доп){
         return Promise.resolve({remove(){}}); };
     }});
     window.Capacitor={isNativePlatform:()=>true,getPlatform:()=>ios?'ios':'android',
-      Plugins:{Haptics:плагин('Haptics'),App:плагин('App'),Browser:плагин('Browser'),StatusBar:плагин('StatusBar')}};
+      Plugins:{Haptics:плагин('Haptics'),App:плагин('App'),Browser:плагин('Browser'),StatusBar:плагин('StatusBar'),SplashScreen:плагин('SplashScreen')}};
     /* стенд кладёт свой Telegram — в приложении из магазина он без initData */
     let исх;Object.defineProperty(window,'Telegram',{configurable:true,get(){return исх;},
       set(v){ if(v&&v.WebApp){ v.WebApp.initData=''; v.WebApp.initDataUnsafe={}; } исх=v; }});
@@ -63,6 +63,10 @@ const вызовы=p=>p.evaluate(()=>window.__кап.вызовы);
    ok(await p.evaluate(()=>!window.__headerColor),'приложение: шапку Telegram не трогаем');
    let в=await вызовы(p);
    ok(в.some(x=>x[0]==='StatusBar'&&x[1]==='setStyle'),'приложение: цвет системной строки — плагином StatusBar');
+   /* 06.11, его слова: «при открытии приложение несколько раз вспыхивает гаснет» — своей заставки
+      страницы в приложении нет, заставку iOS гасим один раз, когда главная готова */
+   ok(в.filter(x=>x[0]==='SplashScreen'&&x[1]==='hide').length===1,'приложение: заставку iOS убрали один раз, когда страница готова');
+   ok(await p.evaluate(()=>!document.getElementById('wbsplash')),'приложение: своей заставки страницы нет — ничего не мелькает');
    ok(await p.evaluate(()=>typeof window.__кап.назад==='function'),'приложение: «назад» Android слушаем');
    await p.click('#hbot');await p.waitForTimeout(300);
    в=await вызовы(p);
@@ -88,6 +92,7 @@ const вызовы=p=>p.evaluate(()=>window.__кап.вызовы);
    const {p,err,запросы}=await поднять(b,true,{сессия:false,route});
    ok(err.length===0,'вход: страница без ошибок '+(err[0]||''));
    ok(await p.$eval('#vhod',e=>e.classList.contains('show')),'вход: без сессии — экран входа');
+   ok((await вызовы(p)).some(x=>x[0]==='SplashScreen'&&x[1]==='hide'),'вход: заставка iOS убрана — экран входа виден');
    ok(await p.isHidden('#vapple'),'вход: на Android кнопки Apple нет');
    ok(!запросы.some(h=>h['x-tg-init']),'вход: подпись Telegram не уходит');
    await p.click('#vmailbtn');await p.fill('#vemail','Anna@Example.com');await p.click('#vsend');await p.waitForTimeout(300);
