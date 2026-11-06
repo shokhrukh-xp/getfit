@@ -4869,6 +4869,28 @@ body[data-f~="panel2"] #coachnav{flex:none;width:64px;height:64px;min-height:0;p
 body[data-f~="panel2"] #coachnav svg{width:26px;height:26px;margin:0;padding:0;background:none;color:inherit}
 body[data-f~="panel2"] #coachnavt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 body[data-f~="panel2"] #coachnav .dgbadge{position:absolute;top:2px;right:2px}
+
+/* ══ 06.11: ui3 — его список правок по снимкам (сначала ему и svc_*) ══ */
+/* 1. «В панель навигации нужно добавить эффект стекла как у iOS»: полупрозрачная, под ней видно
+   содержимое, светлая кромка сверху — как у панелей iOS 26 */
+body[data-f~="ui3"] .l1-grp{background:rgba(11,79,90,.56);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 0 0 1px rgba(255,255,255,.14),0 10px 30px rgba(6,40,46,.28)}
+:root[data-theme="dark"] body[data-f~="ui3"] .l1-grp{background:rgba(16,34,37,.52);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.08),0 10px 30px rgba(0,0,0,.45)}
+body[data-f~="ui3"] .l1-grp button[aria-selected="true"]{background:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+body[data-f~="ui3"] #coachnav{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 6px rgba(160,100,20,.18),0 10px 24px rgba(244,184,96,.35)}
+/* 2. «внизу слишком много пустого пространства»: запас ровно на панель (64) + её отступ + воздух */
+body[data-f~="ui3"]{padding-bottom:calc(64px + var(--nav-gap) + 28px + var(--tmr-h,0px))}
+body[data-f~="ui3"] .sptoday{display:none}
+body[data-f~="ui3"] #dbnote:empty{display:none}
+/* 3. «вкладки дней центровать и симметрично показывать»: дни делят ряд поровну, сколько бы их ни было */
+body[data-f~="ui3"] .dayseg{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+/* 5. «Шаги и сон» — сначала интеграция с телефоном, потом показ */
+body[data-f~="ui3"] .wear-surface{display:none!important}
+/* 8. низ профиля короче: без слогана, лицензии одной строкой, одно предупреждение */
+body[data-f~="ui3"] .pqfoot .wbfoot span,body[data-f~="ui3"] .pqfoot p.foot:not(.f-soglasie):not(.howattr){display:none}
+body[data-f~="ui3"] .pqfoot .howattr{display:inline;margin:0 4px}
+/* 9. «не будем давать выбор, что вести — у всех сразу еда и тренировки» */
+body[data-f~="ui3"] #wz-only,body[data-f~="ui3"] #pq-only{display:none!important}
 </style>
 </head>
 <body>
@@ -7069,6 +7091,9 @@ function renderTplace0(){
         '<button type="button" class="fx" data-tplback="1">Вернуть '+имяБазы+'</button>';
     return;
   }
+  /* 06.11 (ui3), его слова: «Если я отметил, в какие 2 дня буду ходить в зал, зачем он меня спрашивает
+     "сегодня не в зале?"» — вопрос только в день зала по расписанию (или если расписания нет вовсе) */
+  if(ЕСТЬ('ui3') && Object.keys(GYM_DAYS).some(function(d){ return GYM_DAYS[d]; }) && !GYM_DAYS[new Date().getDay()]){ box.hidden=true; return; }
   var куда=['h','s'].filter(function(p){ return p!==база; });
   box.hidden=false;
   box.innerHTML='<span>Сегодня не '+({g:'в зале',h:'дома',s:'на улице'}[база])+'?</span>'+
@@ -7283,6 +7308,8 @@ function savedNear(anchor, promise, retry){
     if(err && err.code==='settings_storage'){node.textContent=err.message;node.className='save-notice bad';return;}
     if(err && err.settingsKey)node.dataset.settings=err.settingsKey;
     if(err && err.code==='settings_conflict'){
+      /* 06.11 (ui3): человек только что сохранил — его выбор и остаётся, без вопроса */
+      if(ЕСТЬ('ui3') && !node._авто){ node._авто=1; savedNear(anchor, settingsResolve(err.settingsKey, true), retry); return; }
       node.textContent='Изменено на другом устройстве. Какой выбор оставить?';node.className='save-notice bad';
       [['С другого устройства',false],['Мой выбор',true]].forEach(function(v){var b=document.createElement('button');b.type='button';b.className='btn small';b.textContent=v[0];b.onclick=function(){savedNear(anchor,settingsResolve(err.settingsKey,v[1]),retry);};node.appendChild(b);});settingsPaint();return;
     }
@@ -10906,7 +10933,7 @@ document.getElementById('pq-lang').addEventListener('click', function(e){
   языкКнопки(); haptic('light');
 });
 /* то, что строится из данных, а не из DOM, — перерисовать на новом языке */
-function языкПослеСмены(){ try{ языкКнопки(); }catch(e){} try{ fillMe(); }catch(e){} TECH=null; }
+function языкПослеСмены(){ try{ языкКнопки(); }catch(e){} try{ fillMe(); }catch(e){} try{ единицыКнопки(); }catch(e){} TECH=null; }
 /* ══ ЖЕНСКОЕ ЗДОРОВЬЕ (24.10, этап 5) ══
    Его решения: цикл, беременность, кормление, менопауза и своё поле «Что ещё
    учесть» («не хочу жёстко ограничиться этими четырьмя… тренер должен это
@@ -14144,6 +14171,7 @@ function settingsMigrate(key){
   });
 }
 function settingsResume(){var uid=syncUid(),q=settingsQueue(uid);Object.keys(q).forEach(function(k){SETTINGSRETRY[uid+':'+k]=0;settingsDrain(uid,k).catch(function(){});});}
+var КОНФЛИКТ_АВТО={};   /* 06.11 (ui3): одна автопопытка на правку — без круга при упорном отказе сервера */
 function settingsPaint(){
   aiDraftPaint();
   var parent=document.querySelector('#profm .pqhead');if(!parent)return;
@@ -14151,7 +14179,13 @@ function settingsPaint(){
   var q=settingsQueue(syncUid()),keys=Object.keys(q).filter(function(k){return q[k]&&q[k].length;});
   var near=Array.from(document.querySelectorAll('#profm .save-notice[data-settings]')).some(function(e){return e.offsetParent&&e.textContent;});
   n.hidden=!keys.length||near;if(n.hidden)return;
-  var key=keys[0],job=q[key][0];n.textContent=job.conflict?'Изменено на другом устройстве. Какой выбор оставить?':'Настройки на телефоне. Ожидают отправки.';
+  var key=keys[0],job=q[key][0];
+  /* 06.11 (ui3), его слова: «в профиле у меня висит красный текст "Изменено на другом устройстве. Какой
+     выбрать?"». Не спрашиваем: правка с этого телефона за последнюю неделю — его последнее намерение, она
+     и остаётся (несовпадающие поля с другого устройства сохраняются); старше недели — берём облако. */
+  if(job.conflict && ЕСТЬ('ui3') && !(КОНФЛИКТ_АВТО=КОНФЛИКТ_АВТО||{})[key+':'+job.id]){ КОНФЛИКТ_АВТО[key+':'+job.id]=1; n.hidden=true;
+    settingsResolve(key, Date.now()-(job.at||0) < 7*864e5).catch(function(){}).then(settingsPaint); return; }
+  n.textContent=job.conflict?'Изменено на другом устройстве. Какой выбор оставить?':'Настройки на телефоне. Ожидают отправки.';
   var choices=job.conflict?[['С другого устройства',false],['Мой выбор',true]]:[['Повторить',null]];
   choices.forEach(function(v){var b=document.createElement('button');b.type='button';b.className='btn small';b.textContent=v[0];b.onclick=function(){b.disabled=true;(v[1]===null?settingsDrain(syncUid(),key):settingsResolve(key,v[1])).catch(function(){}).then(settingsPaint);};n.appendChild(b);});
 }
@@ -14710,6 +14744,8 @@ function paintNote(k){
     'Сохранено: правки в облаке'+(n?(state==='saving'?' · подходы отправляются':' · подходы на телефоне'):'');
   else if(DAYEDIT_SAVE==='local' && state!=='err')tail='сохранено на телефоне';
   el.textContent=head+(tail?' · '+tail:'');
+  /* 06.11 (ui3), его слова: «слишком много текста» — пустой день без ошибок строкой не подписываем */
+  if(ЕСТЬ('ui3') && !n && !err && (state==='local'||state==='empty') && DAYEDIT_SAVE!=='retry' && DAYEDIT_SAVE!=='saving') el.textContent='';
   if(err||state==='retry'||DAYEDIT_SAVE==='retry'){
     var повтор=document.createElement('button'); повтор.type='button'; повтор.className='dbretry';
     повтор.textContent=err?'Повторить':'Отправить сейчас'; повтор.onclick=повторитьОтправку;
@@ -20415,7 +20451,9 @@ function единицыУмолчаниеПриложения(){
   var рег=регионТелефона(); if(!рег) return;
   gset('me', Object.assign({}, me, {units:/^(US|LR|MM)$/.test(рег)?'imperial':'metric', unitsSrc:'auto'}));
 }
-function единицыКнопки(){ var me=myData()||{}, v=me.units==='imperial'?'imperial':'metric'; document.querySelectorAll('#pq-units [data-units]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.units===v)); }); }
+function единицыКнопки(){ var me=myData()||{}, v=me.units==='imperial'?'imperial':'metric'; document.querySelectorAll('#pq-units [data-units]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.units===v));
+  /* 06.11, его слова: «при смене языка единицы измерения не меняются — стоит кг, см»: подпись кнопки на языке приложения */
+  if(b.dataset.units==='metric') b.textContent={uz:'kg, sm',en:'kg, cm'}[ЯЗ]||'кг, см'; }); }
 function единицыЗадать(v){
   var me=Object.assign({},myData()||{},{units:v,unitsSrc:'user'}); gset('me',me);
   var p=DB?сохранитьСостояние('state/me',{me:me, at:new Date().toISOString()}):Promise.resolve(); if(p&&p.catch) p.catch(function(){});
@@ -20467,6 +20505,13 @@ function функцииПрименить(){
   if (f) document.body.setAttribute('data-f', f); else document.body.removeAttribute('data-f');
   try { ролиПоказ(); } catch (e) {}
   try { единицыУмолчаниеПриложения(); } catch (e) {}
+  try { единицыКнопки(); } catch (e) {}
+  /* 06.11 (ui3), его слова: «не будем давать выбор, что вести — у всех сразу будет еда и тренировки»:
+     кто выбирал «только еду», получает и зал; выбор из анкеты и профиля убран (CSS) */
+  try { if (ЕСТЬ('ui3')) { var me = myData() || {}; if (me.only === 'food') { me.only = 'all'; gset('me', me);
+    if (DB) DB.doc('state/me').set({ me: me, at: new Date().toISOString() }).catch(function () {}); applyOnly(); } } } catch (e) {}
+  try { renderTplace(); } catch (e) {}
+  try { paintNote(''); } catch (e) {}
 }
 /* ══════════ РОЛИ, ЭТАП 2а (29.10): специалисты в профиле ══════════
    Его «дальше» после фундамента (этап 1) и правило «впредь всё только на
@@ -23339,7 +23384,8 @@ function renderGroups(){
       '<div class="gbar">'+зона+'<i class="'+esc(r.st||'')+'" style="width:'+w+'%"></i>'+(м!=null?'<s style="left:'+м+'%"></s>':'')+'</div>'+раскрыто+'</div>';
   }).join('')+
   '<p class="gnote">'+(гр.полных<5 ? 'Полных дней в дневнике '+гр.полных+' из 7 — судить о разнообразии рано. ' : 'По дневнику за 7 дней, полных '+гр.полных+'. ')+
-    'Всё — в порциях за неделю; черта — ориентир, зелёное — где хорошо. Нажмите на строку — покажу, что такое порция и из чего набралось.</p>'+источникиHTML(гр.src, true)+'</div>';
+    /* 06.11 (ui3): «слишком много текста» — пояснение одной фразой */
+    (ЕСТЬ('ui3') ? 'Порции за неделю · нажмите строку — подробности.' : 'Всё — в порциях за неделю; черта — ориентир, зелёное — где хорошо. Нажмите на строку — покажу, что такое порция и из чего набралось.')+'</p>'+источникиHTML(гр.src, true)+'</div>';
   h+=(гр.флаги||[]).map(function(f){
     return '<div class="gflag" data-flag="'+esc(f.k)+'"><h4>'+esc(f.h)+'</h4><p>'+esc(f.t)+'</p>'+(f.врач?'<p class="doc">'+esc(f.врач)+'</p>':'')+источникиHTML(f.src, true)+'</div>';
   }).join('');
