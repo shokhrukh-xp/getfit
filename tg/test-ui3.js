@@ -77,5 +77,25 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
     await M.поднять(p, { theme: 'light', page: 'food', features: ['panel2'], time: '16:40', wait: 1800 }); await p.waitForTimeout(500);
     ok(await p.evaluate(() => !document.querySelector('.fh3') && !!document.querySelector('.food-hero .food-hero-copy')), 'без ui3: «До нормы» прежний');
     await p.close(); }
+
+  /* 06.11, его снимок: два дня всё ещё прижаты влево — JS ставит style="grid-template-columns:repeat(N,110px)" */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await M.поднять(p, { theme: 'dark', page: 'gym', features: ['panel2', 'ui3'], wait: 1800 }); await p.waitForTimeout(400);
+    const r = await p.evaluate(() => { const seg = document.getElementById('dayseg'); const кн = [...seg.querySelectorAll('button')]; кн.slice(2).forEach(x => x.remove());
+      seg.style.gridTemplateColumns = 'repeat(2,minmax(0,110px))'; const ряд = seg.getBoundingClientRect(), a = кн[0].getBoundingClientRect(), b2 = кн[1].getBoundingClientRect();
+      return { ш: [Math.round(a.width), Math.round(b2.width)], слева: Math.round(a.left - ряд.left), справа: Math.round(ряд.right - b2.right) }; });
+    ok(Math.abs(r.ш[0] - r.ш[1]) <= 1 && r.слева <= 1 && r.справа <= 1, 'ui3: два дня — на всю ширину поровну, не прижаты влево (' + r.ш.join('/') + ', ' + r.слева + '/' + r.справа + ')');
+    await p.close(); }
+  /* 06.11: выключатели с прошлого запуска — сразу, до ответа сервера (панель не «слитная», «+ Новый замер» на месте) */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await p.addInitScript(() => { try { localStorage.setItem('wb_f', 'panel2 zamer2 ui3'); } catch (e) {}
+      document.addEventListener('DOMContentLoaded', () => { window.__f0 = document.body.getAttribute('data-f') || ''; }); });
+    await M.поднять(p, { theme: 'light', page: 'home', features: ['panel2', 'zamer2', 'ui3'], time: '08:10', wait: 1800 }); await p.waitForTimeout(400);
+    ok(await p.evaluate(() => /panel2/.test(window.__f0 || '')), 'ui3: выключатели с прошлого запуска стоят до первой отрисовки');
+    await p.close(); }
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await M.поднять(p, { theme: 'light', page: 'home', features: ['panel2', 'zamer2', 'ui3'], time: '19:10', wait: 1800 }); await p.waitForTimeout(400);
+    ok(await p.evaluate(() => !!document.querySelector('.vzadd') && document.querySelector('.vzadd').offsetParent !== null), 'zamer2: «+ Новый замер» в «Теле» сразу при открытии, без нажатия на вкладку');
+    await p.close(); }
 } catch (e) { console.error('УПАЛО:', e.stack); bad++; }
 await b.close(); console.log(bad ? '\nПРОВАЛОВ: ' + bad : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ'); process.exit(bad ? 1 : 0); })();

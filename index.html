@@ -4883,7 +4883,7 @@ body[data-f~="ui3"]{padding-bottom:calc(64px + var(--nav-gap) + 28px + var(--tmr
 body[data-f~="ui3"] .sptoday{display:none}
 body[data-f~="ui3"] #dbnote:empty{display:none}
 /* 3. «вкладки дней центровать и симметрично показывать»: дни делят ряд поровну, сколько бы их ни было */
-body[data-f~="ui3"] .dayseg{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+body[data-f~="ui3"] .dayseg{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}   /* !important: число колонок ставит JS в style (repeat(N,110px)) — его снимок: два дня всё ещё прижаты влево */
 /* 5. «Шаги и сон» — сначала интеграция с телефоном, потом показ */
 body[data-f~="ui3"] .wear-surface{display:none!important}
 /* 8. низ профиля короче: без слогана, лицензии одной строкой, одно предупреждение */
@@ -4911,6 +4911,10 @@ body[data-f~="ui3"] #wz-only,body[data-f~="ui3"] #pq-only{display:none!important
 </style>
 </head>
 <body>
+<script>/* 06.11, его слова: «при открытии панель навигации была всё ещё старой (слитной), через пару секунд стала новой»
+   и «в секции Тело нет кнопки "+Новый замер", только после нажатия на вкладку». Выключатели приходили с сервера
+   через пару секунд. Теперь последние известные ставим сразу, до первой отрисовки; сервер потом уточнит. */
+try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('data-f',wbF);window.__WB_F=wbF.split(' ');}}catch(e){}</script>
 <div id="wbsplash" aria-hidden="true"><span class="wbm wb-meet"><i></i><i></i><i></i></span><b>Wellböl</b></div>
 <div class="filenote" id="filenote" hidden>Это скачанная копия файла. Фотографии упражнений
 и каталог лежат рядом с приложением на сервере, поэтому здесь не работают —
@@ -20421,7 +20425,7 @@ function subЕсть(){ return !SUB || !SUB.sub || SUB.sub.ok; }   /* пока �
    (SUB.features из env.FEATURES). Пока не знаем — выключено. Кроме проверки
    ЕСТЬ() в коде, список лежит в body[data-f] — CSS прячет новое и вторым
    замком: body:not([data-f~="roli"]) .f-roli{display:none!important}. */
-function ЕСТЬ(имя){ return !!(SUB && SUB.features && SUB.features.indexOf(имя) >= 0); }
+function ЕСТЬ(имя){ var f=(SUB && SUB.features) || window.__WB_F || []; return f.indexOf(имя) >= 0; }   /* 06.11: до ответа сервера — последние известные (wb_f) */
 /* ── 05.11: ЕДИНИЦЫ ПО СТРАНЕ (выключатель edinicy) ──
    Его решения кнопками: «Тренер + вес и рост», «По стране телефона + в профиле». Хранится всё
    по-прежнему в кг и см; пересчёт — только при показе и вводе, и только через этот помощник
@@ -20519,7 +20523,11 @@ function местоОтправить(тело, кнопка){
 })();
 function функцииПрименить(){
   var f = (SUB && SUB.features && SUB.features.length) ? SUB.features.join(' ') : '';
+  var былоF = document.body.getAttribute('data-f') || '';
   if (f) document.body.setAttribute('data-f', f); else document.body.removeAttribute('data-f');
+  try { localStorage.setItem('wb_f', f); window.__WB_F = f ? f.split(' ') : []; } catch (e) {}
+  /* выключатели поменялись (первый запуск, сервер включил новое) — перерисовать то, что их читает в JS */
+  if (былоF !== f) { try { renderHome(); } catch (e) {} try { renderDayHead(); renderList(); } catch (e) {} try { if (FOOD && FOOD.day) renderFoodDay(); } catch (e) {} }
   try { ролиПоказ(); } catch (e) {}
   try { единицыУмолчаниеПриложения(); } catch (e) {}
   try { единицыКнопки(); } catch (e) {}
