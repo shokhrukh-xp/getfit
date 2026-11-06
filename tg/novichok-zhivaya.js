@@ -66,9 +66,9 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
   try {
     if (await p.locator('#wz-only-go').isVisible()) await p.click('#wz-only-go');
     await снять('cel-vvod');
-    await M.цельШаги(p, { sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss', до: 'goal' });
+    await M.цельШаги(p, Object.assign({ sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss', до: 'goal' }, СТРАНА === 'US' ? { ht: "5'5\"", bw: 163 } : {}));
     await снять('cel-ekran');
-    await M.цельШаги(p, { sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss' });
+    await M.цельШаги(p, Object.assign({ sex: 'f', age: 31, ht: 165, bw: 74, intent: 'loss' }, СТРАНА === 'US' ? { ht: "5'5\"", bw: 163 } : {}));
     await снять('posle-celi'); L('дни анкеты:', await текст('#wz-wd [aria-pressed="true"]') , '·', (await p.locator('#wz-wd [aria-pressed="true"]').allInnerTexts()).join(' '));
     L('после цели:', await текст('#picktitle'));
     if (process.env.STOP3) throw new Error('STOP3'); if (await p.locator('#wz-go').isVisible()) { const t1 = Date.now(); await p.click('#wz-go');
