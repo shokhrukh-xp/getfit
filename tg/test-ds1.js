@@ -59,7 +59,8 @@ const layers=await p.evaluate(()=>{
  const l1=document.querySelector('.l1'),n=getComputedStyle(l1);
  return {navr:[n.backgroundColor,n.borderTopLeftRadius,n.left],nav:css(l1),sheet:css(document.querySelector('.modalbox')),field:getComputedStyle(document.documentElement).getPropertyValue('--field').trim()};
 });
-дано(layers.navr[0]==='rgba(16, 34, 37, 0.92)'&&layers.navr[1]==='26px'&&layers.navr[2]==='12px','навигация — плавающая панель со скруглением, отступ от краёв');
+/* 06.11: с 04.11 (80fcb0b, его «на равном расстоянии от левой, нижней и правой границы») отступ панели — 20 px; набор ждал прежние 12 */
+дано(layers.navr[0]==='rgba(16, 34, 37, 0.92)'&&layers.navr[1]==='26px'&&layers.navr[2]==='20px','навигация — плавающая панель со скруглением, отступ от краёв '+JSON.stringify(layers.navr));
 дано(layers.sheet[0]==='rgb(13, 25, 27)'&&layers.sheet[1]==='1px'&&layers.sheet[2]==='rgb(23, 41, 44)'&&layers.sheet[3]==='none','модальный лист отделён поверхностью и линией, без тени');
 дано(layers.field==='#122326','поля имеют отдельный тёмный фон');
 // Системная тема должна давать те же токены без data-theme Telegram.
