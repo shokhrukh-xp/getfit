@@ -4888,6 +4888,18 @@ body[data-f~="ui3"] .dayseg{grid-template-columns:none!important;grid-auto-flow:
 body[data-f~="ui3"]:not(.zdok) .wear-surface{display:none!important}
 body.zdok #wrh [data-wrcoach]{display:none}
 .zdfine{font-size:12px!important;margin-top:10px!important}
+/* 06.11 (ui3), его слова «уменьши количество текста, убрать всё, что не ключевое» и выбор
+   «Сегодня: карточка дня; шаги и сон, тело; Еда»: легенды «целевая зона», подписи графика тела, повторы */
+body[data-f~="ui3"] .ds-zone,body[data-f~="ui3"] .week-key,body[data-f~="ui3"] .vzlab-ln,body[data-f~="ui3"] .vzlab-cor{display:none!important}
+.hsc{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;flex:none;margin-right:8px;vertical-align:middle;
+  background:conic-gradient(var(--sand,#F2B65A) var(--p,0%),rgba(255,255,255,.16) 0);position:relative;font-size:12px;font-weight:800;color:#fff}
+.hsc::before{content:"";position:absolute;inset:3px;border-radius:50%;background:rgba(6,40,46,.92)}
+.hdaycard .hsc b{position:relative;color:#fff!important;font-size:12px}
+.hnext.hn3{display:flex;align-items:center;justify-content:center;gap:0}
+.food-add small:empty{display:none}
+body[data-f~="ui3"] .hdaycard .hrows{grid-template-columns:1fr}
+.hzap2{margin-left:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.hzap2 em{font-style:normal;color:var(--accent-txt,var(--text));font-weight:700}
 #homebody .wear-surface.zdhome{background:var(--surface);border-radius:24px;padding:16px;margin:0 0 22px}
 /* 8. низ профиля короче: без слогана, лицензии одной строкой, одно предупреждение */
 body[data-f~="ui3"] .pqfoot .wbfoot span,body[data-f~="ui3"] .pqfoot p.foot:not(.f-soglasie):not(.howattr){display:none}
@@ -11623,7 +11635,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 20:12';
+var BUILD = '06.11 21:03';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -18173,6 +18185,12 @@ function homeRows(){
   var своб=homeСвоб();
   var d=HOME.day||{}, t=своб?{}:(d.targets||{}), kc=Math.round(+d.kcal||0), pt=Math.round(+d.prot||0), sc=HOME.sc;
   var pr=homeSess(homeDayKey());
+  /* 06.11 (ui3): «Калории» и «Белок» повторяли «N до нормы» и «белка ещё N г» над ними; оценка — кольцом у совета */
+  if(ЕСТЬ('ui3')){
+    var h3='';
+    if(pr.total && !foodOnly() && homeGymToday() && !своб) h3='<div class="hrow"><u>Зал</u>'+htrack(pr.done,pr.total,'sets')+'<b>'+pr.done+' <s>из '+pr.total+' '+plural(pr.total,['подход','подхода','подходов'])+'</s></b></div>';
+    return h3 ? '<div class="hrows">'+h3+'</div>' : '';
+  }
   var h='<div class="hrows">'+
     '<div class="hrow"><u>Калории</u>'+htrack(kc,t.kcal,'range',(t.parts&&t.parts.floor)?t.kcal:null)+'<b>'+kc+(t.kcal?' <s>норма '+t.kcal+'</s>':' <s>ккал</s>')+'</b></div>'+
     '<div class="hrow"><u>Белок</u>'+htrack(pt,t.prot,'min',null,t.protMax,!!t.protCap)+'<b>'+pt+(t.prot?' <s>норма '+t.prot+' г</s>':' <s>г</s>')+'</b></div>';
@@ -18599,7 +18617,7 @@ function homeClock(){
        факту, а на сколько она вырастет после зала и спорта по плану — здесь */
     var вп=(d.date===TODAY && Array.isArray(d.впереди)) ? d.впереди.filter(function(x){ return x && +x.kcal>0 && !(x.what==='зал' && foodOnly()); }).slice(0,2) : [];
     if(вп.length) c+='<i class="hcl hcup">'+вп.map(function(x){ return '+~'+hNum(Math.round(+x.kcal))+' за '+esc(впередиСлово(x.what)); }).join(' · ')+'</i>';
-    if(зап>0){
+    if(зап>0 && !ЕСТЬ('ui3')){   /* 06.11 (ui3): запас недели — в блоке «Неделя» */
       if(rem>=0) c+='<i class="hcl hzap">запас недели <em>+'+hNum(зап)+'</em></i>';
       else c+='<i class="hcl hzap">'+(покрыт ? 'из запаса недели · осталось <em>'+hNum(зап+rem)+'</em>' : 'запас недели исчерпан')+'</i>';
     }
@@ -18627,6 +18645,10 @@ function homeClock(){
   }
   var line = (!sc||sc.r==null) ? 'оценка — с первой записью'+(next?' · '+esc(next):'')
     : (sc.closed?'итог дня':'день идёт')+' · <em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+esc(tip)+'</em>';
+  /* 06.11 (ui3): без «день идёт ·» — оценка кольцом, рядом только совет */
+  if(ЕСТЬ('ui3') && sc && sc.r!=null)
+    return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div>'+bx+'</div><p class="day-status hnext hn3"><span class="hsc" style="--p:'+Math.round(sc.r*10)+'%" aria-label="оценка дня '+fmtR(sc.r)+' из 10"><b>'+fmtR(sc.r)+'</b></span>'+
+      (sc.closed?'итог дня · ':'')+'<em'+(!гw?' class="hgood"':(перебор(гw)?' class="hbad"':''))+'>'+esc(tip)+'</em></p>';
   return '<div class="hclk">'+s+'<div class="hctr">'+c+'</div>'+bx+'</div><p class="day-status hnext">'+line+'</p>';
 }
 /* 06.10, его слова: «при нажатии раскрывать кружочек с его данными».
@@ -18793,7 +18815,7 @@ function homeNextCard(){
 function homeWeek(){
   var проп=пропускиЗала();
   var w=FOOD.week, by={}, freeWeek=false; if(w) (w.days||[]).forEach(function(d){ by[d.date]=d; });
-  var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<section class="hweek-block"><h3>Неделя</h3><div class="hweek">';
+  var tg=(w&&w.targets)||{}, nd=new Date(TODAY+'T12:00:00'), dow=(nd.getDay()+6)%7, h='<section class="hweek-block"><h3>Неделя'+homeЗапас()+'</h3><div class="hweek">';
   for(var i=0;i<7;i++){
     var dt=new Date(nd.getTime()+(i-dow)*864e5), iso=ymd(dt), d=by[iso], fut=iso>TODAY, cls='';
     if(!fut && d && d.free){ cls='free'; freeWeek=true; }               /* 02.10: свободный день — пунктиром, не красным */
@@ -18808,6 +18830,11 @@ function homeWeek(){
      еды и значок зала, цвет — смысл (зелёный в норме, красный мимо, бледный
      зал — по плану). Строка «● еда в норме ○ вне нормы ■ зал · □ план» ушла. */
   return h+'</div></section>';
+}
+function homeЗапас(){
+  if(!ЕСТЬ('ui3')) return '';
+  var d=HOME.day||{}, з=(d.date===TODAY && d.запас && +d.запас.z>0) ? Math.round(+d.запас.z) : 0;
+  return з ? '<small class="hzap2">запас <em>+'+hNum(з)+'</em></small>' : '';
 }
 /* панель действия: записать еду — главное действие дня, поэтому кнопка
    всегда на месте и называет следующий приём; текст — по второй кнопке */
@@ -19370,7 +19397,12 @@ function залНеделиHtml(){
   h+='</div>';
   /* 2. подходы по группам — одна шкала на все строки */
   var гр=ГРУППЫ5.map(function(g){ return [g[0], н.факт[g[0]]||0, н.планГр[g[0]]||0]; }).filter(function(g){ return g[1]>0 || g[2]>0; });
-  if(гр.length){
+  if(гр.length && ЕСТЬ('ui3')){
+    /* 06.11 (ui3): пять строк по группам — на «Тренировке»; здесь одна строка */
+    var всего=гр.reduce(function(a,g){ return a+g[1]; },0), плн=гр.reduce(function(a,g){ return a+g[2]; },0);
+    h+='<div class="zksec"><div class="zklab">Подходы на неделе<em>'+String(Math.round(всего*2)/2).replace('.',',')+(плн>=0.5?' из '+Math.round(плн):'')+'</em></div></div>';
+  }
+  else if(гр.length){
     var мх=Math.max.apply(null, гр.map(function(g){ return Math.max(g[1],g[2]); }))*1.1||1;
     var ч=function(v){ return String(Math.round(v*2)/2).replace('.',','); };
     h+='<div class="zksec"><div class="zklab">Подходы на неделе</div><div class="zkrows">'+гр.map(function(g){
@@ -19431,6 +19463,8 @@ function vzПланСтрока(){
     var чип={'план':['в темпе плана','ok'],'быстрее':['быстрее плана','ok'],'медленнее':['медленнее плана','edge'],'стоит':['без '+куда,'warn'],'плато':['две недели без '+куда,'warn']}[v.state];
     плитка='<div class="vzweek"><div><span>За неделю</span><b>'+зн(v.d0)+'\u00a0кг</b></div>'+(чип?'<em class="'+чип[1]+'">'+(чип[1]==='ok'?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':'')+чип[0]+'</em>':'')+'</div>';
   } else if(т) плитка='<div class="vzplan vztemp"><p class="'+т[1]+'">'+т[0]+'</p></div>';
+  /* 06.11 (ui3): темп, шкала до цели и «Отстаёте» повторяли карточку «Цель» в профиле — на «Сегодня» их нет */
+  if(ЕСТЬ('ui3')) return залНеделиHtml();
   var html=плитка+(путь?путь+путьСтатусHtml(lo,hi,дата):(срок&&!f?'<div class="vzplan vztemp"><p class="vzeta">'+срок+'</p></div>':''));
   return html+залНеделиHtml();
 }
@@ -19772,7 +19806,7 @@ function своб2Html(св, d){
   if (!своб2() || !св || !св.окно || св.on) return '';
   var о = св.окно, ц = о.цена || {}, iso = (d && d.date) || fDate(), сег = iso === TODAY;
   var когда = о.открыто ? (сег ? 'можно сегодня' : 'можно ' + свобДень(iso)) : 'следующий — ' + своб2Дата(о.след);
-  if (gget('svob_known', 0)) return '<button type="button" class="sv2p" data-svob="1"><span aria-hidden="true">🍕</span><b>Свободный день</b><small>' + esc(когда) + ' ›</small></button>';
+  if (gget('svob_known', 0) || ЕСТЬ('ui3')) return '<button type="button" class="sv2p" data-svob="1"><span aria-hidden="true">🍕</span><b>Свободный день</b><small>' + esc(когда) + ' ›</small></button>';
   return '<div class="sv2"><span class="zm-ic" aria-hidden="true">🍕</span><span><b>Свободный день</b><p>День отдыха от подсчёта: еду не записываете, норма и оценка не ставятся, серия не рвётся. ' +
     'На следующий день — обычная норма, без «отработки». Как часто можно — приложение считает по вашему темпу к цели.</p>' +
     '<span class="sv2-act"><button type="button" data-svob="1">' + (сег ? 'Объявить сегодня' : 'Отметить ' + свобДень(iso)) + '</button><small>' + esc(когда) + '</small></span></span>' +
@@ -23362,7 +23396,7 @@ function foodHeroB(d, line){
    осталось, видно на самой кнопке, а не после отправки. */
 function едаБесплатноСлово(){
   var с=SUB&&SUB.sub, б=SUB&&SUB.бесплатно;
-  if(!с || с.ok || !б) return 'Фото или пара слов ИИ-тренеру';
+  if(!с || с.ok || !б) return ЕСТЬ('ui3') ? '' : 'Фото или пара слов ИИ-тренеру';
   return б.left>0 ? 'Фото или пара слов · бесплатно ещё '+б.left+' из '+б.of : 'Бесплатные записи на сегодня кончились';
 }
 /* 14.10, GF-04: незаписанный приём — не значит «пропущен». Его выбор:
@@ -23476,8 +23510,10 @@ function renderFoodDay(){
   var строка=d.line.replace(/^За день:[^.]*\.\s*/,'');
   var hero=foodHeroHtml(d,строка);
   if(св && св.on) box.innerHTML = hero;
-  else box.innerHTML = hero+своб2Html(св, d)+'<div class="group fnorm"><p class="fnorm-label">'+(t.kcal?'Съедено / норма дня':'Записано за день')+'</p>'+fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
-    (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх)) +
+  /* 06.11 (ui3): калории и белок уже в верхней карточке — в блоке нормы их не повторяем */
+  else box.innerHTML = hero+своб2Html(св, d)+'<div class="group fnorm"><p class="fnorm-label">'+(t.kcal?(hero&&ЕСТЬ('ui3')?'Состав дня':'Съедено / норма дня'):'Записано за день')+'</p>'+
+    (hero && ЕСТЬ('ui3') ? '' : fbar('Калории', d.kcal, t.kcal, 'ккал', null, 'kcal', калНиз) +
+    (белКрай ? fband('Белок', d.prot, t.prot, t.protMax, 'г', 'prot') : fbar('Белок', d.prot, t.prot, 'г', 'min', 'prot', null, белВерх))) +
     (t.fat ? fband('Жир', d.fat||0, t.fat.min, t.fat.max, 'г', 'fat') : '') +
     fbar('Клетчатка', d.fib||0, t.fib, 'г', 'min', 'fib', null, клВерх) +
     (t.sug ? fbar('Сахар в еде', d.sug||0, t.sug, 'г', 'max', 'sug', сахОр) : '') + (t.kcal?'<p class="ds-zone">целевая зона</p>':'') + (состав?'<details class="norm-parts"><summary>Из чего сложилась норма</summary>'+состав+'</details>':'') +
@@ -23503,6 +23539,8 @@ function renderFoodDay(){
               стирался приём; удалить — «Удалить» в листе приёма */
   }).join('');
   if((d.meals||[]).length && !(св && св.on)) (box.querySelector('.fnorm')||box).innerHTML += '<p class="fline">'+((d.date||fDate()) < TODAY ? 'День завершён. Питание учитывается автоматически; записи можно дополнять.' : 'Закроется сам в 00:00 по Ташкенту.')+'</p>';
+  /* 06.11 (ui3): «Закроется сам в 00:00…» — не ключевое */
+  if(ЕСТЬ('ui3')) Array.prototype.forEach.call(box.querySelectorAll('.fnorm .fline'), function(x){ if(/^Закроется сам/.test(x.textContent)) x.remove(); });
   if(св && св.on && !ml.innerHTML){ ml.innerHTML='<p class="empt">Записей нет — и не нужно.</p>'; return; }
   /* пустой день — это не пустое место: человеку надо сказать, что делать.
      Норма и оценка выше уже нарисованы, здесь не хватало только списка */
@@ -23641,10 +23679,10 @@ function renderWear(){
   /* 06.11, пункт 5: в приложении с «Здоровьем» — подключение вместо скриншотов */
   var зИмя=ПЛ.андроид()?'Health Connect':'«Здоровья» Apple';
   if(ЗД.можно && !здВкл()){
-    b.innerHTML='<p class="wrnone">Шаги и сон могут приходить сюда сами — из '+зИмя+'. Шаги сверх 5 000 за день прибавятся к норме еды, тренер увидит и сон.</p>'+
+    b.innerHTML='<p class="wrnone">Шаги и сон — сами из '+зИмя+'. Шаги сверх 5\u00a0000 прибавятся к норме еды.</p>'+
       (ЗД.err?'<p class="rolerr">'+esc(ЗД.err)+'</p>':'')+
       '<button type="button" class="btn small prim" data-zdon'+(ЗД.busy?' disabled':'')+'>'+(ЗД.busy?'Подключаю…':'Подключить '+(ПЛ.андроид()?'Health Connect':'«Здоровье»'))+'</button>'+
-      '<p class="wrnone zdfine">Читаем только шаги и сон, ничего не записываем. Отключить можно в настройках телефона.</p>';
+      '<p class="wrnone zdfine">Только чтение. Отключить — в настройках телефона.</p>';
     return;
   }
   if(ЗД.можно && (!н || (!н.днейШаги && !н.ночей))){
@@ -23664,6 +23702,23 @@ function renderWear(){
       var v=f(d), кл=v==null?'':(ок(v)?' ok':' lo');
       return '<span class="wrc'+кл+'">'+(имя==='шаги'?кшаг(v):ксон(v))+'</span>'; }).join('')+'</div>'; };
   var тыс=function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); };
+  /* 06.11 (ui3), его снимок: строка «сон» из одних точек, сегодня красным при идущем дне, абзац под таблицей.
+     Сна нет — строки нет и заголовок «Шаги»; сегодня не красим; внизу одна строка: сегодня, среднее, прибавка к норме. */
+  var ш3=ЗД.можно && ЕСТЬ('ui3');
+  try{ if(hd.firstChild && hd.firstChild.nodeType===3) hd.firstChild.nodeValue=(ш3 && !н.ночей) ? 'Шаги ' : 'Шаги и сон '; }catch(e){}
+  if(ш3){
+    var сег=(н.дни||[]).filter(function(d){ return d.date===TODAY; })[0]||{}, пр=((HOME.day||{}).targets||{}).parts||{};
+    var ряд3=function(имя, f, ок){ return '<div class="wrrow"><span class="wrl">'+имя+'</span>'+н.дни.map(function(d){
+        var v=f(d), кл=v==null?'':(ок(v)?' ok':(d.date===TODAY?'':' lo'));
+        return '<span class="wrc'+кл+'">'+(имя==='шаги'?кшаг(v):ксон(v))+'</span>'; }).join('')+'</div>'; };
+    b.innerHTML='<div class="wrrow wrd"><span class="wrl"></span>'+н.дни.map(function(d){ return '<span class="wrc">'+ruDate(d.date).slice(0,5)+'</span>'; }).join('')+'</div>'+
+      ряд3('шаги', function(d){ return d.steps; }, function(v){ return v>=цельШ; })+
+      (н.ночей ? ряд3('сон', function(d){ return d.sleep; }, function(v){ return v>=420; }) : '')+
+      '<p class="wrsum">'+[сег.steps!=null?'сегодня '+тыс(сег.steps):'', н.днейШаги?'в среднем '+тыс(н.шагов):'',
+        н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':''):'',
+        пр.steps>0?'+'+пр.steps+' ккал к норме':''].filter(Boolean).join(' · ').replace(/ (\d)/g,'\u00a0$1')+'</p>';
+    return;
+  }
   b.innerHTML='<div class="wrrow wrd"><span class="wrl"></span>'+н.дни.map(function(d){ return '<span class="wrc">'+ruDate(d.date).slice(0,5)+'</span>'; }).join('')+'</div>'+
     ряд('шаги', function(d){ return d.steps; }, function(v){ return v>=цельШ; })+
     ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
