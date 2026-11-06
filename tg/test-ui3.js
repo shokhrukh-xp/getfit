@@ -65,5 +65,17 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
       очередь: ((JSON.parse(localStorage.getItem('shp_v1_settings_queue_308687648') || '{}').me) || []).filter(j => j.conflict).length }; });
     ok(!/Изменено на другом устройстве/.test(к.текст) && !к.кнопок && к.очередь === 0, 'ui3: конфликт настроек решён без вопроса (' + (к.текст || 'строки нет') + ', в очереди ' + к.очередь + ')');
     await p.close(); }
+
+  /* 6: блок «До нормы» — полоски (его выбор B) */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await M.поднять(p, { theme: 'light', page: 'food', features: ['panel2', 'ui3'], time: '16:40', wait: 1800 }); await p.waitForTimeout(500);
+    const h = await p.evaluate(() => { const x = document.querySelector('.food-hero.fh3'); return x ? { полос: x.querySelectorAll('.fh3-b').length, число: (x.querySelector('.fh3-n') || {}).textContent || '', оценка: !!x.querySelector('.fh3-sc'),
+      подробнее: !!x.querySelector('details.fh3-more .food-hero-copy') } : null; });
+    ok(h && h.полос === 3 && /\d/.test(h.число) && h.оценка && h.подробнее, 'ui3: «До нормы» — число, оценка кольцом, три полоски, строка сервера под «Подробнее» (' + JSON.stringify(h) + ')');
+    await p.close(); }
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    await M.поднять(p, { theme: 'light', page: 'food', features: ['panel2'], time: '16:40', wait: 1800 }); await p.waitForTimeout(500);
+    ok(await p.evaluate(() => !document.querySelector('.fh3') && !!document.querySelector('.food-hero .food-hero-copy')), 'без ui3: «До нормы» прежний');
+    await p.close(); }
 } catch (e) { console.error('УПАЛО:', e.stack); bad++; }
 await b.close(); console.log(bad ? '\nПРОВАЛОВ: ' + bad : '\nВСЕ ПРОВЕРКИ ПРОЙДЕНЫ'); process.exit(bad ? 1 : 0); })();

@@ -4891,6 +4891,23 @@ body[data-f~="ui3"] .pqfoot .wbfoot span,body[data-f~="ui3"] .pqfoot p.foot:not(
 body[data-f~="ui3"] .pqfoot .howattr{display:inline;margin:0 4px}
 /* 9. «не будем давать выбор, что вести — у всех сразу еда и тренировки» */
 body[data-f~="ui3"] #wz-only,body[data-f~="ui3"] #pq-only{display:none!important}
+/* 6. блок «До нормы» — вариант B «полоски» (foodHeroB) */
+.food-hero.fh3{display:block}
+.fh3 .fh3-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.fh3 .fh3-l{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.78}
+.fh3 .fh3-n{display:block;font-size:56px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:6px}
+.fh3 .fh3-n small{font-size:18px;font-weight:700;letter-spacing:0;opacity:.85}
+.fh3 .fh3-sc{flex:none;width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--sand) 0 var(--p),rgba(255,255,255,.18) 0)}
+.fh3 .fh3-sc>div{width:60px;height:60px;border-radius:50%;background:#0D5762;display:grid;place-items:center;align-content:center;text-align:center;line-height:1}
+.fh3 .fh3-sc b{font-size:20px;font-weight:800}.fh3 .fh3-sc small{display:block;font-size:9.5px;font-weight:700;opacity:.75;margin-top:3px}
+.fh3 .fh3-bars{display:grid;gap:12px;margin-top:16px}
+.fh3 .fh3-bh{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:6px}.fh3 .fh3-bh b{font-weight:800}.fh3 .fh3-bh span{opacity:.82}
+.fh3 .fh3-bt{height:8px;border-radius:9px;background:rgba(255,255,255,.16);overflow:hidden}
+.fh3 .fh3-bt i{display:block;height:100%;border-radius:9px;background:var(--sand)}
+.fh3 .p .fh3-bt i{background:#8FDBE6}.fh3 .f .fh3-bt i{background:#7FD39B}
+.fh3 .fh3-tip{display:flex;gap:8px;margin:14px 0 0;padding:10px 12px;border-radius:14px;background:rgba(244,184,96,.16);font-size:13.5px;line-height:1.35}
+.fh3 .fh3-tip i{font-style:normal;font-weight:800;color:var(--sand)}
+.fh3 .fh3-more{margin-top:10px}.fh3 .fh3-more summary{font-size:12.5px;opacity:.75}
 </style>
 </head>
 <body>
@@ -23130,7 +23147,30 @@ function foodHeroHtml(d, line){
       '<b class="fh-big">'+String(Math.round(d.kcal||0))+'</b><span class="fh-u"> / '+String(Math.round(d.targets.kcal))+' ккал</span></div>'+кр+
       '<details class="fhwhy"><summary>'+(бал?'Почему '+бал:'Как прошёл день')+'</summary><p class="food-hero-copy">'+text+'</p>'+(почему?'<p class="fhwhy-r">'+почему+'</p>':'')+'</details></section>';
   }
+  if(ЕСТЬ('ui3')) return foodHeroB(d, line);
   return '<section class="food-hero"><p class="food-hero-copy">'+text+'</p>'+closeHtml(true)+'</section>';
+}
+/* 06.11 (ui3), его слова: «на странице Еда в блоке про норму слишком кашей показан текст. Нужно показать более
+   структурировано и с визуальной симметрией». Его выбор по макету — B «полоски»: крупно сколько осталось,
+   оценка кольцом справа, три полоски (калории, белок, клетчатка), одна подсказка — за что минус к оценке.
+   Строка сервера целиком — под «Подробнее». */
+function foodHeroB(d, line){
+  var t=d.targets, ост=Math.round(t.kcal-(d.kcal||0));
+  var m=/(До нормы(?: ещё|:)?|Сверх нормы) ([\d \u00a0]+) ккал/.exec(line||'');
+  if(m){ var n=+m[2].replace(/[^\d]/g,''); ост=/Сверх/.test(m[1])?-n:n; }
+  var сверх=ост<0, r=(DAYSC && DAYSC.date===fDate() && DAYSC.r!=null) ? DAYSC.r : null;
+  var бар=function(имя, v, н, ед, хвост, кл){ var w=н ? Math.min(100, Math.round((v||0)/н*100)) : 0;
+    return '<div class="fh3-b'+(кл?' '+кл:'')+'"><div class="fh3-bh"><b>'+имя+'</b><span>'+Math.round(v||0)+' / '+Math.round(н)+(ед?' '+ед:'')+(хвост||'')+'</span></div><div class="fh3-bt"><i style="width:'+w+'%"></i></div></div>'; };
+  var белЕщё=t.prot ? Math.max(0, Math.round(t.prot-(d.prot||0))) : 0;
+  var w=(DAYSC && DAYSC.date===fDate() && DAYSC.why && DAYSC.why[0]) || null;
+  var совет=w ? (String(w.t||'').replace(/^./, function(c){ return c.toUpperCase(); })+(w.v!=null ? ' (−'+fmtR(w.v)+')' : '')) : '';
+  return '<section class="food-hero fh3"><div class="fh3-top"><div><span class="fh3-l">'+(сверх?'Сверх нормы':'До нормы')+'</span>'+
+    '<b class="fh3-n'+(сверх?' fh-over':'')+'">'+Math.abs(ост)+'<small> ккал</small></b></div>'+
+    '<div class="fh3-sc" style="--p:'+(r!=null ? Math.round(r*10) : 0)+'%"><div><b>'+(r!=null ? fmtR(r) : '—')+'</b><small>оценка</small></div></div></div>'+
+    '<div class="fh3-bars">'+бар('Калории', d.kcal, t.kcal, '')+(t.prot ? бар('Белок', d.prot, t.prot, 'г', белЕщё ? ' · ещё '+белЕщё : '', 'p') : '')+
+      (t.fib ? бар('Клетчатка', d.fib, t.fib, 'г', '', 'f') : '')+'</div>'+
+    (совет ? '<p class="fh3-tip"><i aria-hidden="true">→</i><span>'+esc(совет)+'</span></p>' : '')+
+    '<details class="fhwhy fh3-more"><summary>Подробнее</summary><p class="food-hero-copy">'+esc(line)+'</p></details></section>';
 }
 /* 14.10, GF-02: без подписки — 3 записи еды через ИИ в день. Сколько
    осталось, видно на самой кнопке, а не после отправки. */
