@@ -4888,6 +4888,7 @@ body[data-f~="ui3"] .dayseg{grid-template-columns:none!important;grid-auto-flow:
 body[data-f~="ui3"]:not(.zdok) .wear-surface{display:none!important}
 body.zdok #wrh [data-wrcoach]{display:none}
 .zdfine{font-size:12px!important;margin-top:10px!important}
+#homebody .wear-surface.zdhome{background:var(--surface);border-radius:24px;padding:16px;margin:0 0 22px}
 /* 8. низ профиля короче: без слогана, лицензии одной строкой, одно предупреждение */
 body[data-f~="ui3"] .pqfoot .wbfoot span,body[data-f~="ui3"] .pqfoot p.foot:not(.f-soglasie):not(.howattr){display:none}
 body[data-f~="ui3"] .pqfoot .howattr{display:inline;margin:0 4px}
@@ -11622,7 +11623,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '06.11 19:05';
+var BUILD = '06.11 19:56';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -19683,6 +19684,9 @@ function renderHome(){
   if(тотЖе){ var новые=box.querySelector('.hclk'); if(новые && новые.parentNode) новые.parentNode.replaceChild(прежние, новые); }
   HCLKHTML=часы; hcBadgeSize();
   Array.prototype.forEach.call(box.querySelectorAll('details'),function(e){if(opened.indexOf(e.className)>=0)e.open=true;});
+  /* 06.11, его вопрос «почему шаги и сон вообще на странице Еда?» и выбор перенести: в приложении со «Здоровьем»
+     блок живёт на «Сегодня», сразу под карточкой дня. Узел один (как поля замера): сюда — после каждой пересборки. */
+  try { здНаГлавную(box); } catch (e) {}
   var гнездо=box.querySelector('#hmeasslot');
   if(гнездо && весы){ гнездо.parentNode.replaceChild(весы, гнездо); if(вФокусе) try{ вФокусе.focus(); }catch(e){} try{ measMode(); }catch(e){} }
   var поле2=document.getElementById('htext'); if(поле2){ if(текст) поле2.value=текст; if(фокус) try{ поле2.focus(); }catch(e){} }
@@ -23410,16 +23414,18 @@ function renderFoodDay(){
      подрастёт в середине дня и человек снова спросит почему. */
   if(pr && !pr.gym && d.gymPlan){
     состав='<p class="fparts">норма '+t.kcal+' = база '+Math.round(pr.base)+
-      (pr.acts?' + спорт '+pr.acts:'')+(pr.plan?' + спорт по плану '+pr.plan:'')+
+      (pr.acts?' + спорт '+pr.acts:'')+(pr.plan?' + спорт по плану '+pr.plan:'')+(pr.steps?' + шаги '+pr.steps:'')+
       (pr.delta?' '+(pr.delta>0?'+ ':'− ')+Math.abs(pr.delta)+(pr.floor?' · нижняя граница плана':' по цели'):'')+
       '<br>сегодня день зала — он войдёт в норму после тренировки, по её минутам и темпу'+
       (планСлово?'<br>'+планСлово:'')+'</p>';
   }
-  else if(pr && (pr.gym||pr.acts||pr.plan)){
+  else if(pr && (pr.gym||pr.acts||pr.plan||pr.steps)){
     var части=['база '+Math.round(pr.base)];
     if(pr.gym) части.push('зал '+pr.gym);
     if(pr.acts) части.push((d.acts||[]).length===1 ? d.acts[0].kind+' '+pr.acts : 'спорт '+pr.acts);
     if(pr.plan) части.push(((d.plan||[]).length===1 ? d.plan[0].kind : 'спорт')+' по плану '+pr.plan);
+    /* 06.11, его выбор: шаги сверх 7 000 — в норму (zdorovye); сервер прислал уже посчитанное */
+    if(pr.steps) части.push('шаги '+pr.steps);
     /* Откуда взялось число зала. Он спросил 15.09: «учитываешь интенсивность,
        подходы, веса?» — и был прав, что число нужно объяснять. Веса не
        участвуют (подъём железа за всю тренировку — меньше 50 ккал), а минуты
@@ -23635,7 +23641,7 @@ function renderWear(){
   /* 06.11, пункт 5: в приложении с «Здоровьем» — подключение вместо скриншотов */
   var зИмя=ПЛ.андроид()?'Health Connect':'«Здоровья» Apple';
   if(ЗД.можно && !здВкл()){
-    b.innerHTML='<p class="wrnone">Шаги и сон могут приходить сюда сами — из '+зИмя+'. Тренер увидит активность и восстановление и учтёт их в советах.</p>'+
+    b.innerHTML='<p class="wrnone">Шаги и сон могут приходить сюда сами — из '+зИмя+'. Шаги сверх 7 000 за день прибавятся к норме еды, тренер увидит и сон.</p>'+
       (ЗД.err?'<p class="rolerr">'+esc(ЗД.err)+'</p>':'')+
       '<button type="button" class="btn small prim" data-zdon'+(ЗД.busy?' disabled':'')+'>'+(ЗД.busy?'Подключаю…':'Подключить '+(ПЛ.андроид()?'Health Connect':'«Здоровье»'))+'</button>'+
       '<p class="wrnone zdfine">Читаем только шаги и сон, ничего не записываем. Отключить можно в настройках телефона.</p>';
@@ -23663,7 +23669,7 @@ function renderWear(){
     ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
     '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — ориентир '+тыс(цельШ)+' и больше':'',
       н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':'')+' — нужно от 7 часов':''].filter(Boolean).join(' · ')+
-    (ЗД.можно?'. Числа приходят сами из '+зИмя+'; к норме еды шаги не прибавляются.</p>':'. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>');
+    (ЗД.можно?'. Числа приходят сами из '+зИмя+'; шаги сверх 7 000 за день прибавляются к норме еды этого дня.</p>':'. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>');
 }
 document.addEventListener('click', function(e){
   if(e.target.closest('[data-day-retry]')){ loadDay(); return; }
@@ -23681,11 +23687,20 @@ var ЗД = { можно: false, busy: false, err: '', at: 0 };
 var ЗД_СОН = { asleep: 1, rem: 1, deep: 1, light: 1 };
 function здПлагин(){ try { return ЕСТЬ('zdorovye') ? ПЛ.здоровье() : null; } catch (e) { return null; } }
 function здВкл(){ return !!gget('zd_on', 0); }
+var ЗД_УЗЕЛ = null, ЗД_ДОМ = null;
+function здНаГлавную(box){
+  if (!ЗД_УЗЕЛ) { ЗД_УЗЕЛ = document.querySelector('.wear-surface'); ЗД_ДОМ = ЗД_УЗЕЛ && ЗД_УЗЕЛ.parentNode; }
+  if (!ЗД_УЗЕЛ) return;
+  var дк = box && box.querySelector('.hdaycard');
+  if (ЗД.можно && дк) { ЗД_УЗЕЛ.classList.add('zdhome'); дк.parentNode.insertBefore(ЗД_УЗЕЛ, дк.nextSibling); try { renderWear(); } catch (e) {} }
+  else if (ЗД_ДОМ && ЗД_УЗЕЛ.parentNode !== ЗД_ДОМ) { ЗД_УЗЕЛ.classList.remove('zdhome'); ЗД_ДОМ.appendChild(ЗД_УЗЕЛ); }
+}
 function здПроверить(){
   var h = здПлагин();
   if (!h) { ЗД.можно = false; document.body.classList.remove('zdok'); return Promise.resolve(false); }
   return Promise.resolve(h.isAvailable ? h.isAvailable() : { available: true }).then(function(r){
     ЗД.можно = !!(r && r.available !== false); document.body.classList.toggle('zdok', ЗД.можно);
+    try { здНаГлавную(document.getElementById('homebody')); } catch (e) {}
     try { renderWear(); } catch (e) {}
     if (ЗД.можно && здВкл()) здСинк(false);
     return ЗД.можно;
@@ -23721,6 +23736,8 @@ function здСинк(сразу){
     ЗД.at = Date.now();
     if (!rows.length) return false;
     return fPost('/wear', { uid: syncUid(), src: ПЛ.андроид() ? 'hc' : 'apple', rows: rows }).then(function(){
+      /* 06.11: шаги сверх 7 000 — в норме дня; после новых чисел норму берём заново */
+      try { loadDay(); } catch (e) {}
       return fGet('/week?uid=' + encodeURIComponent(syncUid())).then(function(d){ if (d && d.week) { FOOD.week = d.week; try { renderFoodWeek(); } catch (e) {} try { renderWear(); } catch (e) {} homeDirty(); } return true; });
     });
   }).catch(function(e){ ЗД.err = humanErr(e); try { renderWear(); } catch (e2) {} return false; }).then(function(x){ ЗД.busy = false; return x; });
