@@ -29,7 +29,7 @@ const СЛУЧАИ=[
   if(с.todo){const t=await p.locator('.hclk-svg .hb-todo text').textContent();ok(t===с.todo,'второй кружок подписан «'+с.todo+'», а не «−» '+tag+' '+t);
    ok(await p.locator('.hclk-svg .hb-todo path').count()===0,'знака «−» больше нет '+tag);}
   const строка=await p.locator('.day-status').innerText();
-  if(с.left===0)ok(/на сегодня всё|дальше только если голоден|хватит/.test(строка),'после ужина — только если голоден '+tag+' '+строка);
+  if(с.left===0)ok(/на сегодня всё|дальше только если голодны|хватит/.test(строка),'после ужина — только если голодны '+tag+' '+строка);
   /* 22.10, редизайн: «чем закрыть остаток» — в песочной карточке следующего
      приёма под витриной, в строке под дугой его больше нет (не дублируем). */
   if(с.left>1){const rp=160-prot,мясо=Math.round(rp/с.left/0.22/10)*10,карточка=await p.locator('.hnextm').innerText();

@@ -68,5 +68,12 @@ const день = (o, kcal, extra) => Object.assign({}, o.day, { запас: { z:
     if (/Подходы на неделе\s*[1-9]/.test(лаб)) ok(полоса, 'подходы есть — под числом полоса (' + лаб + ')');
     else ok(true, 'в журнале стенда нет подходов этой недели — полосу проверит набор, где они есть (' + лаб + ')');
     await p.close(); }
+  /* 6 (живой прогон новичка): замеров ещё нет — «Первое взвешивание», а не «Давно не взвешивались · последний замер — » */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } }), o = opts('dark');
+    o.features = Ф.concat('zamer2'); o.page = 'home'; o.meas = []; o.time = '21:00'; o.day = день(o, 0);
+    await M.поднять(p, o); await p.waitForTimeout(1500);
+    const к = await текст(p, '.zm-card');
+    ok(/Первое взвешивание/.test(к) && !/Давно не/.test(к) && !/последний замер — ,|последний замер — $/.test(к), 'новичок без замеров — «Первое взвешивание» (' + к.replace(/\s+/g, ' ') + ')');
+    await p.close(); }
 } finally { await b.close(); }
 console.log(bad ? '\nПРОВАЛОВ: ' + bad : '\nВсё прошло'); process.exit(bad ? 1 : 0); })();

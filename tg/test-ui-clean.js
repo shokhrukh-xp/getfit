@@ -6,7 +6,7 @@ let bad=0;function ok(c,t){console.log((c?'  ok  ':'  ПРОВАЛ  ')+t);if(!c)
  const p=await b.newPage({viewport:{width,height:844}}),o=opts(theme);const errs=await M.поднять(p,o);
  async function check(name,root='body'){const bb=await bounds(p),cc=await contrast(p,root);ok(!bb.length,`${name} ${theme}/${width} границы: ${JSON.stringify(bb)}`);ok(cc.checked>0&&!cc.failures.length,`${name} контраст: ${JSON.stringify(cc.failures)}`)}
  ok(await p.locator('.hdaycard .day-status,.hdaycard .hnext').count()===1,'под дугой одна подсказка');
- ok(await p.locator('.day-status').innerText().then(t=>t.includes('день идёт')&&t.includes('дальше порция поменьше')&&t.includes('только если голоден')&&!t.includes('на сегодня всё')),'статус, совет и условие голода без повтора');
+ ok(await p.locator('.day-status').innerText().then(t=>t.includes('день идёт')&&t.includes('дальше порция поменьше')&&t.includes('только если голодны')&&!t.includes('на сегодня всё')),'статус, совет и условие голода без повтора');
  ok(await p.locator('.hrow').last().innerText().then(t=>t.includes('5,6')),'оценка дня сохранена');
  ok(await p.locator('.hclk .hbl').count()===0,'время не нагромождается над дугой');
  ok(await p.locator('.hb-meal').count()===5,'все пять фото остались на дуге');
