@@ -51,7 +51,7 @@ const виден = (p, sel) => p.evaluate(s => { const e = document.querySelecto
   { const { p, err, сервер } = await поднять(b, 'ios', ['panel2', 'ui3', 'zdorovye']);
     ok(await виден(p, '#homebody .wear-surface') && await виден(p, '[data-zdon]'), 'приложение с «Здоровьем»: блок «Шаги и сон» на «Сегодня» с кнопкой «Подключить»');
     ok(await p.evaluate(() => { const w = document.querySelector('#homebody .wear-surface'); return !!w && w.previousElementSibling && w.previousElementSibling.classList.contains('hdaycard'); }), 'блок — сразу под карточкой дня');
-    ok(/сверх 7 000/.test(await p.$eval('.wear-surface', e => e.textContent)), 'сказано, что шаги сверх 7 000 прибавятся к норме');
+    ok(/сверх 5 000/.test(await p.$eval('.wear-surface', e => e.textContent)), 'сказано, что шаги сверх 5 000 прибавятся к норме');
     ok(!(await виден(p, '#wrh [data-wrcoach]')), 'кнопки «Прислать» (скриншот) нет');
     if (process.env.SHOT) { await p.$eval('.wear-surface', e => e.scrollIntoView({ block: 'center' })); await p.screenshot({ path: '/tmp/wbf/zd-1.png' }); }
     ok(сервер.wear.length === 0 && !(await p.evaluate(() => window.__зд.length)), 'до «Подключить» — ни запроса к «Здоровью», ни к серверу');
@@ -68,7 +68,7 @@ const виден = (p, sel) => p.evaluate(s => { const e = document.querySelecto
       'в /wear: вчера 8 412 шагов; сегодня 3 100 и сон 7 ч 40 мин (наложения iPhone и часов склеены, «в кровати» и «проснулся» не в счёт): ' + JSON.stringify(т));
     const блок = await p.$eval('.wear-surface', e => e.textContent);
     if (process.env.SHOT) { await p.$eval('.wear-surface', e => e.scrollIntoView({ block: 'center' })); await p.screenshot({ path: '/tmp/wbf/zd-2.png' }); }
-    ok(/сами из «Здоровья»/.test(блок) && !/скриншот/i.test(блок) && /сверх 7 000 за день прибавляются к норме/.test(блок), 'после подключения числа видны, про скриншоты ни слова, про норму — да: ' + блок.slice(0, 160));
+    ok(/сами из «Здоровья»/.test(блок) && !/скриншот/i.test(блок) && /сверх 5 000 за день прибавляются к норме/.test(блок), 'после подключения числа видны, про скриншоты ни слова, про норму — да: ' + блок.slice(0, 160));
     ok(await p.evaluate(() => !document.querySelector('#p-food .wear-surface')), 'на «Еде» блока больше нет');
     ok(!err.length, 'без ошибок ' + err.join(' | ').slice(0, 200));
     await p.close(); }
