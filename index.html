@@ -4969,6 +4969,55 @@ body[data-f~="chat2"].c2pro #chatlog :is(.msg.intro,[data-cq]){display:none}
 .clbadge{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--action);color:var(--on-accent);font-size:12.5px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .clpin{flex:none;color:var(--dim);font-size:13px}
 .clnote{margin:14px 16px 0;font-size:13px;line-height:1.45;color:var(--dim)}
+.clav.diet{background:#2a4f5a;color:#d8f0f5}
+.clsec{margin:16px 16px 2px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.clav.clplus{background:none;border:1.5px dashed var(--line);color:var(--accent-txt,var(--text));font-size:26px;font-weight:500}
+.clfind .clbot .pqch{flex:none;color:var(--dim);font-style:normal;font-size:20px}
+/* каталог специалистов — на весь экран, как список чатов */
+body[data-f~="chat2"] #katm{padding:0;align-items:stretch}
+body[data-f~="chat2"] #katm .modalbox{position:fixed;inset:0;width:100%;max-width:none;height:var(--sheet-h,100vh);max-height:var(--sheet-h,100vh);margin:0;border-radius:0;border:0;padding:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+body[data-f~="chat2"] #katm .modalbox::before{display:none}
+body[data-f~="chat2"] #katm .cathead{flex:none;margin:0;display:flex;align-items:center;gap:6px;padding:calc(6px + var(--pad-top)) 12px 8px 6px;background:var(--surface,var(--card));border-bottom:1px solid var(--line-soft)}
+#katm .cathead h3{font-size:20px;flex:1;margin:0}
+#katm .c2back{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;background:none;color:var(--accent-txt,var(--text));font-size:30px;line-height:1;padding:0 0 3px}
+.katbar{flex:none;padding:10px 16px 8px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line-soft)}
+#katq{font:inherit;font-size:16px;color:var(--text);background:var(--card);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px;width:100%;box-sizing:border-box}
+.katchips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.katchips::-webkit-scrollbar{display:none}
+.katchip{flex:none;padding:7px 12px;border-radius:16px;border:1px solid var(--line);background:none;color:var(--text);font:inherit;font-size:14px;font-weight:600;white-space:nowrap}
+.katchip[aria-pressed="true"]{background:var(--action);border-color:transparent;color:var(--on-accent)}
+.katctl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.katfbtn{border:0;background:none;color:var(--accent-txt,var(--text));font:inherit;font-size:14px;font-weight:700;padding:4px 0}
+.katfbtn span{margin-left:6px;display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:var(--action);color:var(--on-accent);font-size:11px;text-align:center}
+.katfbtn span:empty{display:none}
+.katsort{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim)}
+.katsort select{font:inherit;font-size:14px;font-weight:600;color:var(--text);background:none;border:0;padding:4px 0}
+.katf{display:flex;flex-direction:column;gap:10px;padding:2px 0 4px}
+.katf[hidden]{display:none}
+.katfrow{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--muted)}
+.katfrow .katchips{flex-wrap:wrap;margin:0;padding:0;overflow:visible}
+.katfrow input{font:inherit;font-size:16px;color:var(--text);background:var(--card);border:1px solid var(--line-soft);border-radius:12px;padding:9px 12px;width:100%;box-sizing:border-box}
+.katreset{align-self:flex-start;border:0;background:none;color:var(--dim);font:inherit;font-size:13.5px;text-decoration:underline;padding:2px 0}
+.katlist{flex:1;overflow:auto;padding:12px 16px calc(16px + var(--pad-bottom))}
+.katcard{background:var(--surface,var(--card));border-radius:16px;padding:14px;margin:0 0 12px}
+.kathd{display:flex;gap:12px;align-items:center}
+.kathd .clav{width:48px;height:48px;font-size:16px}
+.katwho{display:flex;flex-direction:column;gap:2px;min-width:0}
+.katwho b{font-size:16px}
+.katwho small{font-size:12.5px;color:var(--dim)}
+.katabout{margin:10px 0 0;font-size:14px;line-height:1.45;color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.kattags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.kattags span{font-size:12px;font-weight:600;color:var(--dim);background:var(--card-2);border-radius:8px;padding:3px 8px}
+.katfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.katprice{font-size:14px;font-weight:700;color:var(--text)}
+.katprice small{font-weight:500;color:var(--dim)}
+.katme{font-size:13px;color:var(--dim)}
+.katempty{text-align:center;padding:28px 8px 8px;font-size:14.5px;line-height:1.5;color:var(--dim)}
+.katempty b{display:block;font-size:17px;color:var(--text);margin-bottom:6px}
+.katpro{margin:18px 0 0;padding:14px;border-radius:16px;border:1px dashed var(--line);text-align:center;font-size:13.5px;line-height:1.45;color:var(--dim)}
+.katpro .btn{margin-top:10px}
+.rolkat .seg{flex-wrap:wrap}
+.rolkat .seg button{flex:0 1 auto;padding:8px 12px}
 </style>
 </head>
 <body>
@@ -5360,6 +5409,20 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
   <div class="modalbox">
     <div class="cathead"><h3 id="cltitle">Чаты</h3><button class="xbtn" id="clclose" aria-label="Закрыть">✕</button></div>
     <div class="clrows" id="clrows"></div>
+  </div>
+</div>
+<!-- 06.11, его пункт 11: каталог живых специалистов (chat2) — фильтры и сортировка; только одобренные и сами включившие карточку -->
+<div class="modal" id="katm" role="dialog" aria-modal="true" aria-labelledby="kattitle">
+  <div class="modalbox">
+    <div class="cathead"><button type="button" class="c2back" id="katback" aria-label="Назад">‹</button><h3 id="kattitle">Специалисты</h3></div>
+    <div class="katbar">
+      <input type="search" id="katq" placeholder="Имя, город, запрос: похудение, спина…" autocomplete="off" enterkeyhint="search">
+      <div class="katchips" id="katkinds" role="group" aria-label="Кто нужен"></div>
+      <div class="katctl"><button type="button" class="katfbtn" id="katfbtn" aria-expanded="false">Фильтры<span id="katfn"></span></button>
+        <label class="katsort"><span>Сортировка</span><select id="katsort"><option value="rec">Рекомендуем</option><option value="cheap">Дешевле</option><option value="exp">Больше опыт</option><option value="clients">Больше клиентов</option></select></label></div>
+      <div class="katf" id="katf" hidden></div>
+    </div>
+    <div class="katlist" id="katlist"></div>
   </div>
 </div>
 <!-- 25.10: штрихкод — продукт из своей базы или Open Food Facts, запись без модели (его выбор «своя база + OFF») -->
@@ -11555,7 +11618,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '05.11 23:43';
+var BUILD = '06.11 18:25';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -20616,7 +20679,7 @@ function функцииПрименить(){
    карточка клиента. Владельцу: заявки в Админ панели. По ссылке из бота
    (?pro=КОД) — лист «Подключить» с текстом согласия от сервера. */
 var ROLI = { me: null, log: null, err: '', busy: false, form: { kind: 'trainer' }, adm: null, admErr: '', join: null, card: null, отключить: '' };
-var РОЛИ_ВИД = { trainer: 'Тренер', nutri: 'Нутрициолог' };
+var РОЛИ_ВИД = { trainer: 'Тренер', nutri: 'Нутрициолог', diet: 'Диетолог' };
 var РОЛИ_ЗНАЧ = { pending: 'на проверке', ok: 'принимаю клиентов', off: 'не принята' };
 /* esc() не трогает кавычки — для значений атрибутов отдельно */
 function ролиА(t){ return esc(t).replace(/"/g, '&quot;'); }
@@ -20732,8 +20795,43 @@ function ролиПроHtml(m){
       (!свои.length ? '<p class="empt">Пока никого.</p>' : '<div class="pqgroup">' + свои.map(function(x){
         var пч = почему(x.client);
         return '<button type="button" class="pqrow" data-rol="card" data-who="' + ролиА(x.client) + '"><span class="pqt"><b>' + esc(x.name || 'Клиент') + '</b><small' + (пч ? ' class="rolwarn"' : '') + '>' + (пч ? пч.map(function(w){ return esc(w.t); }).join(' · ') : x.cats.map(ролиИмя).map(esc).join(', ')) + '</small></span>' + (x.unread ? '<span class="pqv pqac">' + x.unread + ' ' + plural(x.unread, ['новое', 'новых', 'новых']) + '</span>' : '') + '<i class="pqch">›</i></button>';
-      }).join('') + '</div>') + упр + '</div>';
+      }).join('') + '</div>') + упр + ролиКатФормаHtml(p) + '</div>';
   }).join('');
+}
+/* 06.11, пункт 11: своя карточка в каталоге — видна клиентам, только когда включена. Контакты и документы туда не идут. */
+/* data-kv, не data-v: общий обработчик профиля ловит .seg button[data-v] как свой выбор и сохраняет профиль */
+function ролиКатФормаHtml(p){
+  var к = p.katalog || {}, id = function(x){ return 'rk-' + x + '-' + p.kind; };
+  var кнопки = function(грп, словарь, выбр){ return '<div class="seg">' + Object.keys(словарь).map(function(v){ return '<button type="button" data-rol="kattog" data-grp="' + грп + '" data-kv="' + v + '" aria-pressed="' + ((выбр || []).indexOf(v) >= 0) + '">' + esc(словарь[v]) + '</button>'; }).join('') + '</div>'; };
+  return '<div class="rolkat" data-kind="' + p.kind + '"><h4 class="pqlab">Карточка в каталоге</h4>' +
+    '<p class="rolnote">Клиенты находят специалистов в чатах → «Живые специалисты». Видны имя, «о себе» и эта карточка; контакты и документы — нет.</p>' +
+    '<div class="rolsws"><button type="button" class="rolsw" role="switch" aria-checked="' + (к.show === true) + '" data-rol="katshow"><span>Показывать в каталоге</span><i aria-hidden="true"></i></button></div>' +
+    '<label class="rolfld">Как вас подписать<input type="text" id="' + id('title') + '" maxlength="60" value="' + ролиА(к.title || '') + '" placeholder="' + ролиА((ЧАТ2_РОЛИ[p.kind] || 'Специалист') + ', мастер спорта') + '"></label>' +
+    '<div class="rolfld">Языки' + кнопки('langs', КАТ_ЯЗ, к.langs) + '</div>' +
+    '<div class="rolfld">Формат' + кнопки('format', КАТ_ФМТ, к.format) + '</div>' +
+    '<div class="kotwo"><label class="rolfld">Город<input type="text" id="' + id('city') + '" maxlength="40" value="' + ролиА(к.city || '') + '" placeholder="Ташкент"></label>' +
+    '<label class="rolfld">Стаж, лет<input type="number" inputmode="numeric" min="0" max="60" id="' + id('exp') + '" value="' + (к.exp == null ? '' : к.exp) + '"></label></div>' +
+    '<label class="rolfld">Цена в месяц, сум<input type="number" inputmode="numeric" min="0" step="10000" id="' + id('price') + '" value="' + (к.price == null ? '' : к.price) + '" placeholder="пусто — «при знакомстве»"></label>' +
+    '<label class="rolfld">С чем работаете, через запятую<input type="text" id="' + id('topics') + '" maxlength="300" value="' + ролиА((к.topics || []).join(', ')) + '" placeholder="похудение, набор массы, спина"></label>' +
+    (ROLI.катОк === p.kind ? '<p class="rolnote">Сохранено.' + (к.show ? ' Карточка видна в каталоге.' : ' Карточка скрыта — включите «Показывать в каталоге».') + '</p>' : '') +
+    '<div class="rolbtns"><button type="button" class="btn small prim" data-rol="katsave">Сохранить карточку</button></div></div>';
+}
+function ролиКатСохранить(b){
+  var w = b.closest('.rolkat'); if (!w) return; var kind = w.dataset.kind;
+  var зн = function(x){ var n = document.getElementById('rk-' + x + '-' + kind); return n ? n.value.trim() : ''; };
+  var выбр = function(грп){ return [].slice.call(w.querySelectorAll('[data-grp="' + грп + '"][aria-pressed="true"]')).map(function(n){ return n.dataset.kv; }); };
+  var тело = { uid: syncUid(), kind: kind, show: w.querySelector('[data-rol="katshow"]').getAttribute('aria-checked') === 'true', title: зн('title'), city: зн('city'),
+    langs: выбр('langs'), format: выбр('format'), exp: зн('exp') === '' ? null : +зн('exp'), price: зн('price') === '' ? null : +зн('price'), cur: 'UZS',
+    topics: зн('topics').split(',').map(function(t){ return t.trim(); }).filter(Boolean) };
+  b.disabled = true; ROLI.катОк = '';
+  return fPost('/roli/katalog/me', тело).then(function(r){
+    var p = ((ROLI.me && ROLI.me.pro) || []).filter(function(x){ return x.kind === kind; })[0]; if (p) p.katalog = r.katalog;
+    ROLI.катОк = kind; haptic('ok'); ролиРисовать();
+  }).catch(function(er){
+    /* ошибку — на месте, без перерисовки: набранное не теряется */
+    var e0 = w.querySelector('.rolerr'); if (!e0) { e0 = document.createElement('p'); e0.className = 'rolerr'; w.querySelector('.rolbtns').before(e0); }
+    e0.textContent = er.message || humanErr(er); b.disabled = false; haptic('err');
+  });
 }
 function ролиКлик(e){
   var b = e.target.closest('[data-rol]'); if (!b) return;
@@ -20756,6 +20854,9 @@ function ролиКлик(e){
       .catch(function(er){ ROLI.жалобаОш = er.message || humanErr(er); ролиРисовать(); var t = document.getElementById('rol-comp'); if (t) t.value = тх; });
   }
   if (д === 'take') return ролиПрогВзять(b);
+  if (д === 'kattog') { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); haptic('light'); return; }
+  if (д === 'katshow') { b.setAttribute('aria-checked', String(b.getAttribute('aria-checked') !== 'true')); haptic('light'); return; }
+  if (д === 'katsave') return ролиКатСохранить(b);
   if (д === 'exnew') return ролиУпрФорма(null);
   if (д === 'exedit') return ролиУпрФорма(b.dataset.id);
   if (д === 'normtake') return ролиНормаРешить(b, true);
@@ -25274,12 +25375,13 @@ function чатСверить(text, сФото, с, date){
 /* 04.10: тренер — четвёртая кнопка панели; текущую страницу не меняем. */
 /* ══ 04.11: ЧАТЫ КАК В TELEGRAM (выключатель chat2) ══
    Список: ИИ-тренер (закреплён) и живые специалисты — у каждого свой чат, без «Кому».
-   Нет специалистов — кнопка сразу открывает чат с ИИ-тренером. Чат — на весь экран:
+   06.11: список открывается всегда — в нём и «найти специалиста» из каталога. Чат — на весь экран:
    шапка «‹ аватар имя», пузыри слева/справа со временем внутри, вся история прокруткой. */
 function чат2(){ try { return ЕСТЬ('chat2'); } catch (e) { return false; } }
 /* кто он: фитнес-тренер, нутрициолог… — его слова 04.11: «нужно писать кем являются контакты».
    Своё звание специалиста (title с сервера, если он его указал) — главнее вида. */
-var ЧАТ2_РОЛИ = { trainer: 'Фитнес-тренер', nutri: 'Нутрициолог', dietolog: 'Диетолог', rehab: 'Реабилитолог', doctor: 'Врач' };
+var ЧАТ2_РОЛИ = { trainer: 'Фитнес-тренер', nutri: 'Нутрициолог', diet: 'Диетолог', dietolog: 'Диетолог', rehab: 'Реабилитолог', doctor: 'Врач' };
+function чат2Цвет(k){ return k === 'nutri' || k === 'diet' ? k : 'trainer'; }
 function чат2Роль(l){ return String((l && (l.title || ЧАТ2_РОЛИ[l.kind])) || 'Специалист'); }
 function чат2Кратко(т){ return String(т || '').replace(/\*\*/g, '').replace(/\s*\[фото(?: ×\d+)?\]\s*$/, ' 📷').replace(/\s+/g, ' ').trim(); }
 function чат2Когда(ts){ if (!ts) return ''; var d = new Date(+ts); if (isNaN(d.getTime())) return ''; return ymd(d) === TODAY ? chatВремя(ts) : (chatДень(ts) === 'вчера' ? 'вчера' : d.getDate() + '.' + pad2(d.getMonth() + 1)); }
@@ -25292,11 +25394,18 @@ function чат2Строки(){
     (новых ? '<span class="clbadge">' + (новых > 9 ? '9+' : новых) + '</span>' : '<span class="clpin" aria-label="закреплён">📌</span>') + '</span></span></button>');
   вед.forEach(function(l){
     var ч = ДГ.чаты[l.id] || {}, мс = ч.msgs || [], х = мс[мс.length - 1];
-    строки.push('<button type="button" class="clrow" data-chat="' + ролиА(l.id) + '"><span class="clav ' + (l.kind === 'nutri' ? 'nutri' : 'trainer') + '">' + esc(дгИнициалы(l.name)) + '</span><span class="clmid">' +
+    строки.push('<button type="button" class="clrow" data-chat="' + ролиА(l.id) + '"><span class="clav ' + чат2Цвет(l.kind) + '">' + esc(дгИнициалы(l.name)) + '</span><span class="clmid">' +
       '<span class="cltop"><b>' + esc(l.name || 'Специалист') + '</b><time>' + esc(х ? чат2Когда(х.at) : '') + '</time></span><span class="clrole">' + esc(чат2Роль(l)) + '</span>' +
       '<span class="clbot"><span class="cllast">' + esc(х ? ((х.me ? 'Вы: ' : '') + чат2Кратко(х.text)) : 'Напишите — ответит лично') + '</span>' +
       (l.unread ? '<span class="clbadge">' + (l.unread > 9 ? '9+' : l.unread) + '</span>' : '') + '</span></span></button>');
   });
+  /* 06.11, его пункт 11: вкладки живых специалистов, которых ещё нет — «предложить выбрать из каталога» */
+  var есть = {}; вед.forEach(function(l){ есть[l.kind] = 1; });
+  var найти = ЕСТЬ('roli') ? КАТ_ВИДЫ.filter(function(k){ return !есть[k]; }) : [];
+  if (найти.length) строки.push('<p class="clsec">Живые специалисты</p>' + найти.map(function(k){
+    return '<button type="button" class="clrow clfind" data-kat="' + k + '"><span class="clav clplus" aria-hidden="true">+</span><span class="clmid">' +
+      '<span class="cltop"><b>' + esc(ЧАТ2_РОЛИ[k]) + '</b></span><span class="clbot"><span class="cllast">' + esc(КАТ_ЗАЧЕМ[k]) + '</span><i class="pqch" aria-hidden="true">›</i></span></span></button>';
+  }).join(''));
   return строки.join('') + '<p class="clnote">ИИ-тренер помогает между встречами со специалистом. Переписку со специалистом ИИ не читает.</p>';
 }
 function чат2СписокРисовать(){ var b = document.getElementById('clrows'); if (b) b.innerHTML = чат2Строки(); }
@@ -25311,16 +25420,129 @@ function чат2Шапка(){
   if (!чат2()) return;
   var л = дгЛинк(ДГ.кому), av = document.getElementById('c2av'), t = document.getElementById('coachtitle'), s = document.getElementById('c2sub');
   document.body.classList.toggle('c2pro', !!л);
-  if (av) { av.className = 'c2av' + (л ? ' ' + (л.kind === 'nutri' ? 'nutri' : 'trainer') : ''); av.innerHTML = л ? esc(дгИнициалы(л.name)) : аватарHTML(аватарТренера()); }
+  if (av) { av.className = 'c2av' + (л ? ' ' + чат2Цвет(л.kind) : ''); av.innerHTML = л ? esc(дгИнициалы(л.name)) : аватарHTML(аватарТренера()); }
   if (t && !(typeof GOALTALK !== 'undefined' && GOALTALK.active)) t.textContent = л ? (л.name || 'Специалист') : (имяТренера() || 'ИИ-тренер');
   if (s) s.textContent = л ? чат2Роль(л) + ' · ответит лично' : 'ИИ-тренер · отвечает сразу';
 }
 function чат2Открыть(id){ чат2СписокЗакрыть(); ДГ.кому = id || ''; CHATALL = true; openCoach(); чат2Шапка(); renderChat(); }
 function чат2Кнопка(){
-  if (чат2() && !дгСпец() && дгВедут().length) { чат2Список(); return; }
+  if (чат2() && !дгСпец()) { чат2Список(); return; }
   if (чат2()) { ДГ.кому = ''; CHATALL = true; }
   openCoach(); чат2Шапка();
 }
+/* ══ 06.11, его пункт 11: КАТАЛОГ ЖИВЫХ СПЕЦИАЛИСТОВ (за chat2) ══
+   Его слова: «если пока никого нет, предложить выбрать из каталога. Нужен каталог с фильтрами и сортировками
+   по разным признакам». Его выбор: только настоящие (одобренные и сами включившие карточку) + «Стать специалистом».
+   Подключение — тем же листом, что и по ссылке специалиста: что ему будет видно и «да» клиента.
+   Отзывов и рейтинга пока нет — сортировку по ним не показываем, чтобы не обещать пустое. */
+var КАТ_ВИДЫ = ['trainer', 'nutri', 'diet'];
+var КАТ_ЗАЧЕМ = { trainer: 'Программа и техника — лично с вами', nutri: 'Питание под вашу цель и режим', diet: 'Питание при диагнозах и ограничениях' };
+var КАТ_МН = { '': 'Специалистов', trainer: 'Фитнес-тренеров', nutri: 'Нутрициологов', diet: 'Диетологов' };
+var КАТ_ЯЗ = { ru: 'Русский', uz: 'Oʻzbekcha', en: 'English' };
+var КАТ_ФМТ = { online: 'Онлайн', gym: 'В зале', home: 'На дому' };
+var КАТ = { list: null, err: '', kind: '', q: '', sort: 'rec', f: { format: [], langs: [], max: '', city: false }, open: false };
+function катГород(){ try { return (МЕСТО && МЕСТО.city && МЕСТО.src !== 'неизвестно') ? String(МЕСТО.city) : ''; } catch (e) { return ''; } }
+function катЦена(x){
+  if (x.price == null) return '<span class="katprice"><small>цена — при знакомстве</small></span>';
+  var cur = { UZS: 'сум', USD: '$', RUB: '₽', KZT: '₸', EUR: '€' }[x.cur] || x.cur || '';
+  return '<span class="katprice">' + (x.price ? esc(Number(x.price).toLocaleString('ru-RU')) + ' ' + esc(cur) : 'бесплатно') + (x.price ? ' <small>/ мес</small>' : '') + '</span>';
+}
+function катЛет(n){ return n + ' ' + plural(n, ['год', 'года', 'лет']); }
+function катФильтрN(){ var f = КАТ.f; return f.format.length + f.langs.length + (f.max ? 1 : 0) + (f.city ? 1 : 0); }
+function катОтбор(){
+  var f = КАТ.f, q = КАТ.q.toLowerCase().trim(), г = катГород().toLowerCase(), max = +f.max || 0;
+  var r = (КАТ.list || []).filter(function(x){
+    if (КАТ.kind && x.kind !== КАТ.kind) return false;
+    if (f.format.length && !f.format.some(function(v){ return (x.format || []).indexOf(v) >= 0; })) return false;
+    if (f.langs.length && !f.langs.some(function(v){ return (x.langs || []).indexOf(v) >= 0; })) return false;
+    if (max && !(x.price != null && x.price <= max)) return false;
+    if (f.city && г && String(x.city || '').toLowerCase() !== г && (x.format || []).indexOf('online') < 0) return false;
+    if (q && [x.name, x.title, x.about, x.city, (x.topics || []).join(' '), ЧАТ2_РОЛИ[x.kind]].join(' ').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  var ключ = { rec: function(a, b){ return (b.clients - a.clients) || ((b.exp || 0) - (a.exp || 0)); },
+    cheap: function(a, b){ return (a.price == null ? 1e12 : a.price) - (b.price == null ? 1e12 : b.price); },
+    exp: function(a, b){ return (b.exp || 0) - (a.exp || 0); }, clients: function(a, b){ return b.clients - a.clients; } }[КАТ.sort] || function(){ return 0; };
+  return r.sort(function(a, b){ return ключ(a, b) || String(a.name).localeCompare(String(b.name)); });
+}
+function катКарта(x){
+  var мета = [x.city, x.exp ? 'стаж ' + катЛет(x.exp) : '', x.clients ? x.clients + ' ' + plural(x.clients, ['клиент', 'клиента', 'клиентов']) : ''].filter(Boolean).join(' · ');
+  var теги = (x.format || []).map(function(v){ return КАТ_ФМТ[v]; }).concat((x.langs || []).map(function(v){ return КАТ_ЯЗ[v]; })).concat(x.topics || []).filter(Boolean);
+  return '<div class="katcard"><div class="kathd"><span class="clav ' + чат2Цвет(x.kind) + '">' + esc(дгИнициалы(x.name)) + '</span><div class="katwho"><b>' + esc(x.name || 'Специалист') + '</b>' +
+    '<span class="clrole">' + esc(x.title || ЧАТ2_РОЛИ[x.kind] || 'Специалист') + '</span>' + (мета ? '<small>' + esc(мета) + '</small>' : '') + '</div></div>' +
+    (x.about ? '<p class="katabout">' + esc(x.about) + '</p>' : '') +
+    (теги.length ? '<div class="kattags">' + теги.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+    '<div class="katfoot">' + катЦена(x) + (x.me ? '<span class="katme">Это ваша карточка</span>' : '<button type="button" class="btn small prim" data-katgo="' + ролиА(x.code) + '">Подключить</button>') + '</div></div>';
+}
+function катРисовать(){
+  var кн = document.getElementById('katkinds'), сп = document.getElementById('katlist'), фн = document.getElementById('katfn'), фп = document.getElementById('katf');
+  if (!сп) return;
+  if (кн) кн.innerHTML = [''].concat(КАТ_ВИДЫ).map(function(k){ return '<button type="button" class="katchip" data-katk="' + k + '" aria-pressed="' + (КАТ.kind === k) + '">' + esc(k ? ЧАТ2_РОЛИ[k] : 'Все') + '</button>'; }).join('');
+  if (фн) фн.textContent = катФильтрN() || '';
+  if (фп && !фп.hidden) {
+    var f = КАТ.f, г = катГород(), группа = function(имя, словарь, выбр){ return '<div class="katchips">' + Object.keys(словарь).map(function(v){ return '<button type="button" class="katchip" data-katf="' + имя + '" data-v="' + v + '" aria-pressed="' + (выбр.indexOf(v) >= 0) + '">' + esc(словарь[v]) + '</button>'; }).join('') + '</div>'; };
+    фп.innerHTML = '<div class="katfrow">Формат' + группа('format', КАТ_ФМТ, f.format) + '</div>' +
+      '<div class="katfrow">Язык' + группа('langs', КАТ_ЯЗ, f.langs) + '</div>' +
+      (г ? '<div class="katfrow">Город<div class="katchips"><button type="button" class="katchip" data-katf="city" aria-pressed="' + !!f.city + '">' + esc(г) + ' или онлайн</button></div></div>' : '') +
+      '<label class="katfrow">Цена до, в месяц<input type="number" inputmode="numeric" min="0" step="50000" id="katmax" value="' + esc(f.max) + '" placeholder="не важно"></label>' +
+      '<button type="button" class="katreset" data-katreset' + (катФильтрN() ? '' : ' hidden') + '>Сбросить фильтры</button>';
+  }
+  var про = '<div class="katpro">Вы фитнес-тренер, нутрициолог или диетолог? Ведите клиентов в Wellböl: их еда, тренировки и замеры — у вас перед глазами.<br><button type="button" class="btn small" data-katpro>Стать специалистом</button></div>';
+  if (КАТ.err && !КАТ.list) { сп.innerHTML = '<p class="katempty"><b>Не загрузилось</b>' + esc(КАТ.err) + '</p><div class="rolbtns" style="justify-content:center"><button type="button" class="btn small" data-katreload>Повторить</button></div>' + про; return; }
+  if (!КАТ.list) { сп.innerHTML = '<p class="katempty">Загружаю…</p>'; return; }
+  var r = катОтбор(), всего = (КАТ.list || []).filter(function(x){ return !КАТ.kind || x.kind === КАТ.kind; }).length;
+  сп.innerHTML = (r.length ? r.map(катКарта).join('') :
+    !всего ? '<p class="katempty"><b>' + esc(КАТ_МН[КАТ.kind]) + ' в каталоге пока нет</b>Мы проверяем каждого специалиста вручную: образование, опыт, отзывы. Первые скоро появятся — а пока с вами ИИ-тренер.</p>' :
+    '<p class="katempty"><b>Никого не нашлось</b>Попробуйте убрать часть фильтров или изменить поиск.</p>') + про;
+}
+function катЗагрузить(){
+  КАТ.err = ''; катРисовать();
+  return fGet('/roli/katalog?uid=' + encodeURIComponent(syncUid())).then(function(d){
+    if (!d || !d.ok) throw new Error((d && d.error) || 'Нет ответа.');
+    КАТ.list = d.list || []; катРисовать();
+  }).catch(function(e){ КАТ.err = humanErr(e); катРисовать(); });
+}
+function катОткрыть(kind){
+  var m = document.getElementById('katm'); if (!m) return;
+  КАТ.kind = КАТ_ВИДЫ.indexOf(kind) >= 0 ? kind : ''; КАТ.open = true;
+  sheetViewport(); m.classList.add('show'); катРисовать(); катЗагрузить();
+}
+function катЗакрыть(){ var m = document.getElementById('katm'); if (m) m.classList.remove('show'); КАТ.open = false; }
+function катПодключить(код){
+  /* тот же путь, что ввод ссылки специалиста в профиле: код в адрес → лист «что ему будет видно» → «да» клиента */
+  if (!/^[A-Za-z0-9]{6,12}$/.test(код)) return;
+  катЗакрыть(); чат2СписокЗакрыть(); ROLI.join = null;
+  try { var u = new URL(location.href); u.searchParams.set('pro', код.toUpperCase()); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  ролиПоСсылке();
+}
+document.getElementById('katback').addEventListener('click', function(){ haptic('light'); катЗакрыть(); });
+document.getElementById('katq').addEventListener('input', function(e){ КАТ.q = e.target.value; катРисовать(); });
+document.getElementById('katsort').addEventListener('change', function(e){ КАТ.sort = e.target.value; катРисовать(); });
+document.getElementById('katfbtn').addEventListener('click', function(e){
+  var фп = document.getElementById('katf'); фп.hidden = !фп.hidden; e.currentTarget.setAttribute('aria-expanded', String(!фп.hidden)); haptic('light'); катРисовать();
+});
+document.getElementById('katm').addEventListener('input', function(e){
+  /* цена: список и счётчик — сразу, поле не перерисовываем, чтобы не терять ввод */
+  if (e.target.id !== 'katmax') return;
+  КАТ.f.max = e.target.value.replace(/\D/g, '');
+  var фн = document.getElementById('katfn'), сб = document.querySelector('#katf [data-katreset]'), сп = document.getElementById('katlist');
+  if (фн) фн.textContent = катФильтрN() || ''; if (сб) сб.hidden = !катФильтрN();
+  if (сп && КАТ.list) { var r = катОтбор(); сп.querySelectorAll('.katcard,.katempty').forEach(function(n){ n.remove(); });
+    сп.insertAdjacentHTML('afterbegin', r.length ? r.map(катКарта).join('') : '<p class="katempty"><b>Никого не нашлось</b>Попробуйте убрать часть фильтров или изменить поиск.</p>'); }
+});
+document.getElementById('katm').addEventListener('click', function(e){
+  var t;
+  if ((t = e.target.closest('[data-katk]'))) { КАТ.kind = t.getAttribute('data-katk'); haptic('light'); return катРисовать(); }
+  if ((t = e.target.closest('[data-katf]'))) {
+    var имя = t.getAttribute('data-katf'), v = t.getAttribute('data-v');
+    if (имя === 'city') КАТ.f.city = !КАТ.f.city; else { var a = КАТ.f[имя], i = a.indexOf(v); if (i >= 0) a.splice(i, 1); else a.push(v); }
+    haptic('light'); return катРисовать();
+  }
+  if (e.target.closest('[data-katreset]')) { КАТ.f = { format: [], langs: [], max: '', city: false }; return катРисовать(); }
+  if (e.target.closest('[data-katreload]')) return катЗагрузить();
+  if (e.target.closest('[data-katpro]')) { haptic('light'); return ПЛ.открыть('https://wellbol.app/experts/'); }
+  if ((t = e.target.closest('[data-katgo]'))) { haptic('light'); return катПодключить(t.getAttribute('data-katgo')); }
+});
 (function(){
   var лента = дгЛента;
   дгЛента = function(items){
@@ -25344,9 +25566,9 @@ function чат2Кнопка(){
   var рис = дгРисовать;
   дгРисовать = function(){ рис.apply(this, arguments); try { чат2Шапка(); if (document.body.classList.contains('chatlist')) чат2СписокРисовать(); } catch (e) {} };
 })();
-document.getElementById('c2back').addEventListener('click', function(){ haptic('light'); var список = чат2() && !дгСпец() && дгВедут().length; closeCoach(); if (список) чат2Список(); });
+document.getElementById('c2back').addEventListener('click', function(){ haptic('light'); var список = чат2() && !дгСпец(); closeCoach(); if (список) чат2Список(); });
 document.getElementById('clclose').addEventListener('click', function(){ haptic('light'); чат2СписокЗакрыть(); });
-document.getElementById('clrows').addEventListener('click', function(e){ var r = e.target.closest('[data-chat]'); if (!r) return; haptic('light'); чат2Открыть(r.getAttribute('data-chat')); });
+document.getElementById('clrows').addEventListener('click', function(e){ var к = e.target.closest('[data-kat]'); if (к) { haptic('light'); return катОткрыть(к.getAttribute('data-kat')); } var r = e.target.closest('[data-chat]'); if (!r) return; haptic('light'); чат2Открыть(r.getAttribute('data-chat')); });
 document.getElementById('coachnav').addEventListener('click', function(){ чат2Кнопка(); haptic('light'); });
 document.getElementById('coachclose').addEventListener('click', closeCoach);
 document.getElementById('coachm').addEventListener('click', function(e){ if(e.target.id==='coachm') closeCoach(); });
