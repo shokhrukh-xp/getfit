@@ -70,19 +70,19 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
     if (await p.locator('#wz-go').isVisible()) { const t1 = Date.now(); await p.click('#wz-go');
       await p.waitForSelector('.aiprev,#wzapply', { timeout: 240000 }).catch(() => {}); L('программа собралась за', ((Date.now() - t1) / 1000).toFixed(0), 'с');
       await снять('programma');
-      await p.waitForTimeout(4000); await снять('programma-voprosy');
+      await p.waitForTimeout(4000); await p.evaluate(() => { const e = document.querySelector('#wzapply'); if (e) e.scrollIntoView({ block: 'start' }); }); await снять('programma-voprosy'); L('под программой:', (await текст('.wzdone,.wzq,.wzai,.wznote')).slice(0, 300));
       if (await p.locator('#wzapply').isVisible()) { await p.click('#wzapply'); await p.waitForTimeout(3000); } }
   } catch (e) { L('анкета:', e.message.slice(0, 300)); await снять('anketa-oshibka'); }
   await снять('segodnya-1');
   await p.evaluate(() => window.scrollTo(0, 900)); await снять('segodnya-2'); await p.evaluate(() => window.scrollTo(0, 0));
   /* первая еда — словами, как написал бы человек */
   try {
-    await p.evaluate(() => openCoach()); await p.waitForTimeout(1500);
+    await p.mouse.click(338, 792); await p.waitForTimeout(1500); await снять('chat-spisok'); await p.click('.clrow[data-chat=""]'); await p.waitForTimeout(1500);
     await снять('chat-pustoy');
     const поле = p.locator('#ctext'); await поле.fill('На завтрак овсянка на молоке и банан');
-    const t2 = Date.now(); await p.evaluate(() => coachSend(document.getElementById('ctext').value)); await p.waitForTimeout(1000);
-    await p.waitForFunction(() => /Записал|ккал/.test(document.body.innerText.split('овсянка на молоке').pop() || ''), null, { timeout: 120000 }).catch(() => {});
-    L('ответ тренера за', ((Date.now() - t2) / 1000).toFixed(0), 'с'); await снять('chat-otvet');
+    const t2 = Date.now(); await поле.press('Enter'); await p.waitForTimeout(1000);
+    await p.waitForFunction(() => /ккал/.test(document.body.innerText.split('овсянка на молоке').pop() || ''), null, { timeout: 120000 }).catch(() => {});
+    L('ответ тренера за', ((Date.now() - t2) / 1000).toFixed(0), 'с:', (await p.evaluate(() => document.body.innerText.split('овсянка на молоке').pop() || '')).replace(/\s+/g, ' ').slice(0, 400)); await снять('chat-otvet');
   } catch (e) { L('чат:', e.message.slice(0, 200)); await снять('chat-oshibka'); }
   for (const [sel, имя] of [['[data-page="food"],[data-tab="food"]', 'eda'], ['[data-page="home"],[data-tab="home"]', 'segodnya-posle-edy'], ['[data-page="gym"],[data-tab="gym"]', 'trenirovka']]) {
     try { await p.keyboard.press('Escape'); await p.click(sel, { timeout: 4000 }); } catch (e) { L(имя + ':', e.message.slice(0, 120)); }
