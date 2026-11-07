@@ -8161,7 +8161,7 @@ function renderCatalog(){
   }
   var list=catFiltered();
   /* пара к базовому: базовые не показываем вовсе, чтобы не было холостых нажатий */
-  if(catCtx && catCtx.pairWith && catCtx.pairM) list=list.filter(function(x){ return !параНельзяК({m:catCtx.pairM, c:!!catCtx.pairBase}, {m:x.m, c:x.mc==='c'}); });
+  if(catCtx && catCtx.pairWith && catCtx.pairM) list=list.filter(function(x){ return !параНельзяК({m:catCtx.pairM, c:!!catCtx.pairBase, m2:catCtx.pairM2}, {m:x.m, c:x.mc==='c', m2:x.m2}); });
   var безМышцы = catCtx && catCtx.pairM && !catCtx.pairAll && !catMuscle && !catQuery.trim();
   if(безМышцы) list=list.filter(function(x){ return x.m!==catCtx.pairM && x.m2!==catCtx.pairM; });
   /* в пару чаще берут простое: сначала свои упражнения с фото, потом
@@ -13544,12 +13544,14 @@ function ssMakeOpen(btn){
    верх + низ, Zhang 2025), общие — нет (объём падает); цель «Сила» — без двух базовых (Iversen 2024).
    Базовое грузит всю цепь: жим — грудь, дельты, трицепс; тяга — спину и бицепс; ноги — бедро и ягодицы. */
 var ЖИМ_МК=['chest','shoulders','triceps'], ТЯГА_МК=['lats','middle back','biceps','traps'], НОГИ_МК=['quadriceps','hamstrings','glutes','adductors','abductors'];
-function мышцыНагрК(m,баз){ if(!m) return []; if(!баз) return [m]; return ЖИМ_МК.indexOf(m)>=0?ЖИМ_МК:ТЯГА_МК.indexOf(m)>=0?ТЯГА_МК:НОГИ_МК.indexOf(m)>=0?НОГИ_МК:[m]; }
+/* задняя дельта (каталог m2) — тянущая, как на сервере */
+function мышцыНагрК(m,баз,m2){ if(!m) return []; if(m2==='rear delts') return баз?['rear delts','middle back','traps']:['rear delts']; if(!баз) return [m]; return ЖИМ_МК.indexOf(m)>=0?ЖИМ_МК:ТЯГА_МК.indexOf(m)>=0?ТЯГА_МК.concat('rear delts'):НОГИ_МК.indexOf(m)>=0?НОГИ_МК:[m]; }
+function мышца2Кат(e){ var c=CAT && CAT.ex && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0]; return (c && c.m2) || e.m2 || ''; }
 function мышцаКат(e){ var c=CAT && CAT.ex && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0]; return (c && c.m) || e.m || ''; }
 function целеСила(){ try{ return goalPair(myData()||{}).gym==='strength'; }catch(_){ return false; } }
 /* a, b — {m, c: базовое?}; ответ: '' — можно, иначе причина */
 function параНельзяК(a,b){
-  var A=мышцыНагрК(a.m,a.c), B=мышцыНагрК(b.m,b.c);
+  var A=мышцыНагрК(a.m,a.c,a.m2), B=мышцыНагрК(b.m,b.c,b.m2);
   if(A.some(function(m){ return B.indexOf(m)>=0; })) return 'те же мышцы';
   if(a.c && b.c && целеСила()) return 'цель — сила';
   return '';
@@ -13559,7 +13561,7 @@ function ssMakeList(di){
   var сп=exList(day), e=сп[di]; if(!e) return;
   var база=базовое(e), нельзя=0;
   function кн(x,i,метка){
-    var почему = параНельзяК({m:мышцаКат(e), c:база}, {m:мышцаКат(x), c:базовое(x)}), обе = !!почему; if(обе) нельзя++;
+    var почему = параНельзяК({m:мышцаКат(e), c:база, m2:мышца2Кат(e)}, {m:мышцаКат(x), c:базовое(x), m2:мышца2Кат(x)}), обе = !!почему; if(обе) нельзя++;
     return '<button type="button" class="ebtn sspart'+(метка?' near':'')+'" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
            '<span class="ssnm">'+esc(x.n)+'<small>'+esc(мышцаГлавная(x)||x.p||'')+'</small></span>'+
            (обе?'<i>'+почему+'</i>':(метка?'<em>'+метка+'</em>':''))+
@@ -13583,10 +13585,10 @@ function ssFromCatalog(di){
      бицепса без отдыха просто доделывает тот же подход */
   var свой=CAT && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0];
   var м=(свой && свой.m) || e.m || '';
-  openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e), c:'strength', pairM:м});
+  openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e), c:'strength', pairM:м, pairM2:(свой && свой.m2) || ''});
 }
 function ssCatalogPicked(ctx, item){
-  var почему=параНельзяК({m:ctx.pairM, c:!!ctx.pairBase}, {m:item.m, c:item.mc==='c'});
+  var почему=параНельзяК({m:ctx.pairM, c:!!ctx.pairBase, m2:ctx.pairM2}, {m:item.m, c:item.mc==='c', m2:item.m2});
   if(почему){
     paintNote(почему==='те же мышцы'?'В пару — на другие мышцы: на те же объём падает':'При цели «сила» две базовые в пару не ставим'); haptic('medium'); return false;
   }
