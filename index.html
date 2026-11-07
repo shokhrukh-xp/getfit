@@ -1418,6 +1418,8 @@ tr.setrow.done .cell{background:rgba(var(--done-rgb),.12);border-color:transpare
 .wrd .wrc{font-size:12px}
 .wrc.ok{color:var(--done-txt)} .wrc.lo{color:var(--warn-txt)}
 .wrsum{font-size:13px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+.wrgoal{margin-top:6px;font-size:13px}.wrgoalpick{margin-top:8px;display:grid;gap:8px}.wrgoalpick .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.wrgoalown{display:flex;gap:8px}.wrgoalown input{flex:1;min-width:0;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text);font:inherit}
 .wrnone{font-size:13px;color:var(--muted);margin:0 0 10px;line-height:1.5}
 .gmenu b{color:var(--done-txt);font-weight:600}
 .msg.ai{align-self:flex-start;background:var(--card-2);border:.5px solid var(--line-soft);color:var(--text);border-bottom-left-radius:5px}
@@ -11754,7 +11756,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 14:40';
+var BUILD = '07.11 16:10';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -18322,6 +18324,16 @@ function hasSched(){ for(var k in GYM_DAYS) return true; return false; }
 function homeSess(dk){
   var x = (dk===day && sess && sess.ex) ? sess : get('sess_'+TODAY+'_'+dk, null);
   var r={done:0,total:0,ex:0,exdone:0};
+  /* 07.11, его снимки: в Telegram «Зал 26 из 26», в приложении для iOS «23 из 26» — тренировка сохранена целиком,
+     а главная считала только черновик сессии на ЭТОМ устройстве (на телефоне он остался с середины тренировки).
+     Сохранённая сегодня запись — правда для всех устройств: её подходы засчитаны; черновик берём, только если в нём больше. */
+  var зап=записьНедели(dk);
+  if(зап && зап.date===TODAY && Array.isArray(зап.ex)){
+    var з={done:0,total:0,ex:зап.ex.length,exdone:0};
+    зап.ex.forEach(function(e){ var rows=e.sets||[], d=0; rows.forEach(function(v){ з.total++; if(v && (v.done || v.r!=null)){ з.done++; d++; } }); if(rows.length && d===rows.length) з.exdone++; });
+    var м=null; if(x && x.ex){ м={done:0,total:0}; x.ex.forEach(function(e){ (e.sets||[]).forEach(function(v){ м.total++; if(v&&v.done) м.done++; }); }); }
+    if(!м || м.done<=з.done) return з;
+  }
   if(!x || !x.ex) return r;
   r.ex=x.ex.length;
   x.ex.forEach(function(e){
@@ -23952,7 +23964,10 @@ function renderWear(){
       '<details class="wrmore"><summary>Откуда и зачем</summary><p>Подойдёт снимок из «Здоровья», Samsung Health или Mi Fitness. К норме еды шаги не прибавляются: обычная ходьба в ней уже учтена.</p></details>';
     return;
   }
-  var возр=+((myData()||{}).age)||0, цельШ=возр>=60?6000:8000;
+  /* 07.11, его вопрос: «почему некоторые числа шагов красные, а другие зелёные? А если человек ставит свои цели по шагам?»
+     Зелёный — от цели. Своя цель — me.stepsGoal (выбор по нажатию «цель …» под таблицей); без неё — ориентир
+     8 000 в день, после 60 лет 6 000 (мета-анализ Paluch 2022: польза растёт примерно до этих чисел). */
+  var возр=+((myData()||{}).age)||0, своя=+((myData()||{}).stepsGoal)||0, цельШ=своя>0?своя:(возр>=60?6000:8000);
   var кшаг=function(v){ return v==null?'·':(v>=10000?Math.round(v/1000):String(Math.round(v/100)/10).replace('.',','))+'к'; };
   var ксон=function(v){ return v==null?'·':Math.floor(v/60)+':'+pad2(Math.round(v%60)); };
   var ряд=function(имя, f, ок){ return '<div class="wrrow"><span class="wrl">'+имя+'</span>'+н.дни.map(function(d){
@@ -23973,17 +23988,41 @@ function renderWear(){
       (н.ночей ? ряд3('сон', function(d){ return d.sleep; }, function(v){ return v>=420; }) : '')+
       '<p class="wrsum">'+[сег.steps!=null?'сегодня '+тыс(сег.steps):'', н.днейШаги?'в среднем '+тыс(н.шагов):'',
         н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':''):'',
-        пр.steps>0?'+'+пр.steps+' ккал к норме':''].filter(Boolean).join(' · ').replace(/ (\d)/g,'\u00a0$1')+'</p>';
+        пр.steps>0?'+'+пр.steps+' ккал к норме':''].filter(Boolean).join(' · ').replace(/ (\d)/g,'\u00a0$1')+'</p>'+
+      шагиЦельHtml(цельШ, своя>0);
     return;
   }
   b.innerHTML='<div class="wrrow wrd"><span class="wrl"></span>'+н.дни.map(function(d){ return '<span class="wrc">'+ruDate(d.date).slice(0,5)+'</span>'; }).join('')+'</div>'+
     ряд('шаги', function(d){ return d.steps; }, function(v){ return v>=цельШ; })+
     ряд('сон', function(d){ return d.sleep; }, function(v){ return v>=420; })+
-    '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — ориентир '+тыс(цельШ)+' и больше':'',
+    '<p class="wrsum">'+[н.днейШаги?'Шаги в среднем '+тыс(н.шагов)+' в день — '+(своя>0?'ваша цель ':'ориентир ')+тыс(цельШ)+' и больше':'',
       н.ночей?'сон '+Math.floor(н.сна/60)+' ч'+(н.сна%60?' '+Math.round(н.сна%60)+' мин':'')+' — нужно от 7 часов':''].filter(Boolean).join(' · ')+
-    (ЗД.можно?'. Числа приходят сами из '+зИмя+'; шаги сверх 5 000 за день прибавляются к норме еды этого дня.</p>':'. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>');
+    (ЗД.можно?'. Числа приходят сами из '+зИмя+'; шаги сверх 5 000 за день прибавляются к норме еды этого дня.</p>':'. Новые числа — скриншотом ИИ-тренеру; к норме еды шаги не прибавляются.</p>')+
+    шагиЦельHtml(цельШ, своя>0);
+}
+/* строка цели шагов под таблицей и выбор по нажатию */
+var ШАГИ_ВЫБОР=false;
+function шагиЦельHtml(цель, своя){
+  var т=String(цель).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');
+  var h='<button type="button" class="linkbtn wrgoal" data-wrgoal>'+(своя?'Ваша цель '+т+' шагов':'Ориентир '+т+' шагов, зелёным — от него')+' ›</button>';
+  if(ШАГИ_ВЫБОР) h+='<div class="wrgoalpick"><div class="seg">'+[6000,8000,10000,12000].map(function(v){
+      return '<button type="button" data-wrgset="'+v+'" aria-pressed="'+(своя&&цель===v)+'">'+String(v).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0')+'</button>'; }).join('')+'</div>'+
+    '<div class="wrgoalown"><input type="number" inputmode="numeric" min="1000" max="40000" step="500" id="wrgown" placeholder="Своё число"><button type="button" class="btn small" data-wrgset="own">Сохранить</button></div>'+
+    (своя?'<button type="button" class="linkbtn" data-wrgset="0">Вернуть ориентир</button>':'')+'</div>';
+  return h;
+}
+function шагиЦельСохранить(v){
+  var me=myData()||{};
+  if(v>0) me.stepsGoal=Math.max(1000, Math.min(40000, Math.round(v/100)*100)); else delete me.stepsGoal;
+  gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
+  ШАГИ_ВЫБОР=false; renderWear(); haptic('light');
 }
 document.addEventListener('click', function(e){
+  if(e.target.closest('[data-wrgoal]')){ ШАГИ_ВЫБОР=!ШАГИ_ВЫБОР; renderWear(); haptic('light'); return; }
+  var wg=e.target.closest('[data-wrgset]');
+  if(wg){ var v=wg.dataset.wrgset==='own' ? +((document.getElementById('wrgown')||{}).value||0) : +wg.dataset.wrgset;
+    if(wg.dataset.wrgset==='own' && !(v>=1000)){ var inp=document.getElementById('wrgown'); if(inp) inp.focus(); return; }
+    шагиЦельСохранить(v); return; }
   if(e.target.closest('[data-day-retry]')){ loadDay(); return; }
   if(e.target.closest('[data-wrcoach]')){ openCoach(fDate()); haptic('light'); }
   if(e.target.closest('[data-zdon]')){ haptic('light'); здПодключить(); }
