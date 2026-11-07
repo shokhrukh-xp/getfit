@@ -7338,6 +7338,9 @@ function renderTplace0(){
   /* 06.11 (ui3), его слова: «Если я отметил, в какие 2 дня буду ходить в зал, зачем он меня спрашивает
      "сегодня не в зале?"» — вопрос только в день зала по расписанию (или если расписания нет вовсе) */
   if(ЕСТЬ('ui3') && Object.keys(GYM_DAYS).some(function(d){ return GYM_DAYS[d]; }) && !GYM_DAYS[new Date().getDay()]){ box.hidden=true; return; }
+  /* 07.11, его снимок: «плашка висит, хотя я уже сходил в зал и сохранил тренировку сегодня» — после тренировки
+     сегодня вопрос «не попадёте?» уже не про сегодня */
+  var lwT=lastWorkout(); if(lwT && lwT.date===TODAY){ box.hidden=true; return; }
   var куда=['h','s'].filter(function(p){ return p!==база; });
   box.hidden=false;
   /* 07.11, его слова: «висит "сегодня не в зале", у меня сегодня будет зал, я просто ещё не успел сходить» — вопрос
@@ -8496,7 +8499,7 @@ function wizPattern(n){ return {1:[3],2:[1,4],3:[1,3,5],4:[1,2,4,5],5:[1,2,3,4,5
    applyProfile уже поставил дни готовой программы, и анкета бы их подхватила. */
 function wizDays(){ var o=WIZ.wd||{}; return WEEK.filter(function(d){ return o[d]; }); }
 function wizInit(){
-  var me=myData()||{};
+  var me=myData()||{}; WIZ.inited=true;
   if(me.place && !WIZ.touched) WIZ.place=me.place;
   if(me.min && !WIZ.touched) WIZ.min=me.min;
   if(me.about && !WIZ.text) WIZ.text=me.about;
@@ -9375,6 +9378,10 @@ function wzAnswer(a){
   wzSend();
 }
 function wzSaveMe(){
+  /* 07.11, его аккаунт: пересобрал в листе на 90 минут, нажал «Начать по ней» — choose() звал wzSaveMe, а анкета
+     в этот раз не открывалась: WIZ.min — умолчание 45, дней нет, и профиль переписывался на 45 минут без мест по
+     дням. Пишем из анкеты, только если анкета и правда была (wizInit). */
+  if(!WIZ.inited) return;
   var me=myData()||{}, ch=false;
   if(WIZ.place){ var мз=wizМеста(), осн=местоИзДней(мз, WIZ.place);
     if(me.place!==осн){ me.place=осн; ch=true; }
@@ -11746,7 +11753,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 12:40';
+var BUILD = '07.11 13:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль

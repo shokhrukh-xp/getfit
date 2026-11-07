@@ -44,6 +44,15 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
     ok(сегодня ? виден : !виден, 'ui3: ' + (сегодня ? 'сегодня день зала — вопрос «Сегодня не в зале?» есть' : 'сегодня не день зала — вопроса нет'));
     await p.close();
   }
+  /* 07.11, его снимок: тренировка сегодня уже сохранена — вопроса «Не попадёте в зал?» нет, даже в день зала */
+  { const p = await b.newPage({ viewport: { width: 390, height: 844 } }), дни = {}; дни[new Date().getDay()] = 1;
+    await p.addInitScript(s2 => { try { localStorage.setItem('shp_v1_shp_sched', s2); } catch (e) {} }, JSON.stringify(дни));
+    const сделан = { id: M.TODAY + '_D1', date: M.TODAY, day: 'D1', name: 'День 1', week: 1, updated: new Date().toISOString(),
+      ex: [{ n: 'Приседания со штангой', sets: [{ w: 80, r: 6, done: true }] }] };
+    await M.поднять(p, { theme: 'light', page: 'gym', features: ['panel2', 'ui3'], hist: [сделан], wait: 1800 }); await p.waitForTimeout(500);
+    const виден = await p.evaluate(() => { const t = document.getElementById('tplace'); return !!t && !t.hidden && /Не попадёте в зал/.test(t.textContent); });
+    ok(!виден, 'ui3: тренировка сегодня сохранена — вопроса «Не попадёте в зал?» нет');
+    await p.close(); }
   /* 9 и 8: «только еда» становится «еда и зал»; «кг, см» по языку */
   { const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     await M.поднять(p, { theme: 'light', page: 'home', features: ['panel2', 'ui3', 'edinicy'], me: { sex: 'm', age: 34, ht: 178, bw: 88.1, only: 'food' }, wait: 1800 }); await p.waitForTimeout(500);
