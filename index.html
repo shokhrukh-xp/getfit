@@ -24004,11 +24004,11 @@ function renderWear(){
 var ШАГИ_ВЫБОР=false;
 function шагиЦельHtml(цель, своя){
   var т=String(цель).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');
-  var h='<button type="button" class="linkbtn wrgoal" data-wrgoal>'+(своя?'Ваша цель '+т+' шагов':'Ориентир '+т+' шагов, зелёным — от него')+' ›</button>';
+  var h='<button type="button" class="linkbtn wrgoal" data-wrgoal>'+(своя?'Ваша цель '+т+' шагов':'Зелёный — от '+т+' шагов')+' ›</button>';
   if(ШАГИ_ВЫБОР) h+='<div class="wrgoalpick"><div class="seg">'+[6000,8000,10000,12000].map(function(v){
       return '<button type="button" data-wrgset="'+v+'" aria-pressed="'+(своя&&цель===v)+'">'+String(v).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0')+'</button>'; }).join('')+'</div>'+
     '<div class="wrgoalown"><input type="number" inputmode="numeric" min="1000" max="40000" step="500" id="wrgown" placeholder="Своё число"><button type="button" class="btn small" data-wrgset="own">Сохранить</button></div>'+
-    (своя?'<button type="button" class="linkbtn" data-wrgset="0">Вернуть ориентир</button>':'')+'</div>';
+    (своя?'<button type="button" class="linkbtn" data-wrgset="0">Как было: '+(+((myData()||{}).age)>=60?'6':'8')+'\u00a0000</button>':'')+'</div>';
   return h;
 }
 function шагиЦельСохранить(v){

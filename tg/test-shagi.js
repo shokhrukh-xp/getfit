@@ -26,7 +26,7 @@ const СС = { дни, шагов: 8600, днейШаги: 3, сна: 395, но�
   дано(/Шаги в среднем 8 600 в день — ориентир 8 000/.test(итог) && /сон 6 ч 35 мин — нужно от 7 часов/.test(итог), 'средние с ориентирами: ' + итог.slice(0, 90));
   дано(/к норме еды шаги не прибавляются/.test(итог), 'и что к норме они не прибавляются');
   /* 07.11, его вопрос «а если человек ставит свои цели по шагам?»: по нажатию — своя цель, цвета от неё */
-  дано(/Ориентир 8\u00a0000 шагов, зелёным — от него/.test(await page.$eval('#wrg [data-wrgoal]', n => n.textContent)), 'под таблицей подписан ориентир');
+  дано(/Зелёный — от 8\u00a0000 шагов/.test(await page.$eval('#wrg [data-wrgoal]', n => n.textContent)), 'под таблицей подписан ориентир');
   await page.click('#wrg [data-wrgoal]'); await page.waitForTimeout(300);
   await page.click('#wrg [data-wrgset="10000"]'); await page.waitForTimeout(400);
   const ш2 = await page.$$eval('#wrg .wrrow:nth-child(2) .wrc', ns => ns.map(n => n.textContent + (n.classList.contains('ok') ? '+' : n.classList.contains('lo') ? '-' : '')));
@@ -38,7 +38,7 @@ const СС = { дни, шагов: 8600, днейШаги: 3, сна: 395, но�
   дано(await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}').stepsGoal === 7300), 'своё число — 7 300');
   await page.click('#wrg [data-wrgoal]'); await page.waitForTimeout(300);
   await page.click('#wrg [data-wrgset="0"]'); await page.waitForTimeout(400);
-  дано(await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}').stepsGoal === undefined), '«Вернуть ориентир» — своей цели нет');
+  дано(await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}').stepsGoal === undefined), '«Как было» — своей цели нет');
   await page.close();
   page = await br.newPage({ viewport: { width: 390, height: 1400 } });
   await page.route('**://cdn.jsdelivr.net/**', r => r.abort().catch(() => {}));
