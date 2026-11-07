@@ -94,16 +94,16 @@ const СЛОЙ = { extra: { D1: [
     дано(пара.some(t => /Сгибания/.test(t) && t.indexOf(имя.split(' (')[0]) >= 0 && /Суперсет 3|суперсет 3/.test(t)), 'сгибания и «' + имя + '» — третьей рамкой');
   }
 
-  /* 4. к базовому из каталога — только изолирующие */
+  /* 4. к базовому из каталога — только на другие мышцы (07.11, по исследованиям: одна мышца в паре срезает объём) */
   await page.click('#list .exrow:has-text("Приседания")').catch(() => {}); await page.waitForTimeout(500);
   await page.click('.card.exact .ssmk'); await page.waitForTimeout(900);
   await page.click('.card.exact [data-sscat]'); await page.waitForTimeout(1200);
   const баз = await page.evaluate(async () => { const кат = (await (await fetch('catalog.json')).json()).ex;
     return { note: (document.querySelector('#catbody .ssnote') || {}).textContent || '',
-    базовых: [...document.querySelectorAll('#catbody button[data-pick]')].filter(x => (кат[+x.dataset.pick] || {}).mc === 'c').length,
+    базовых: [...document.querySelectorAll('#catbody button[data-pick]')].filter(x => { const k = кат[+x.dataset.pick] || {}; return k.mc === 'c' && ['quadriceps', 'hamstrings', 'glutes', 'adductors', 'abductors'].includes(k.m); }).length,
     всего: document.querySelectorAll('#catbody button[data-pick]').length }; });
-  дано(/жим с тягой/.test(баз.note), 'сказано, почему только изолирующие');
-  дано(баз.всего > 0 && баз.базовых === 0, 'базовых в списке нет: ' + JSON.stringify(баз));
+  дано(/только на другие мышцы/.test(баз.note), 'сказано, почему только на другие мышцы');
+  дано(баз.всего > 0 && баз.базовых === 0, 'базовых на ноги (те же мышцы, что присед) в списке нет: ' + JSON.stringify(баз));
   await page.click('#catclose').catch(() => page.keyboard.press('Escape')); await page.waitForTimeout(300);
 
   /* 5. «Еда»: занятие — строкой над приёмами, а не приёмом */
