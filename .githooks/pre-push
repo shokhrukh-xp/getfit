@@ -29,10 +29,10 @@ if [ -f ../getfit-sync/src/index.js ]; then
   fi
 fi
 # 07.11, его выбор «Не гонять дважды»: дерево уже прошло полный прогон (tools/prover.sh) — заново не гоняем
-МЕТКА="$(git rev-parse --git-dir)/getfit-proveren"
-if [ -f "$МЕТКА" ] && [ -s "$REFILE" ]; then
-  ВСЕ=1; while IFS="$(printf '\t')" read r l; do [ "$(git rev-parse "$l^{tree}" 2>/dev/null)" = "$(cat "$МЕТКА")" ] || ВСЕ=0; done < "$REFILE"
-  if [ $ВСЕ = 1 ]; then echo "pre-push: метка $APPB сверена; этот код уже прошёл полный прогон (tools/prover.sh) — заново не гоняю."
+MARK="$(git rev-parse --git-dir)/getfit-proveren"
+if [ -f "$MARK" ] && [ -s "$REFILE" ]; then
+  ALLOK=1; while IFS="$(printf '\t')" read r l; do [ "$(git rev-parse "$l^{tree}" 2>/dev/null)" = "$(cat "$MARK")" ] || ALLOK=0; done < "$REFILE"
+  if [ $ALLOK = 1 ]; then echo "pre-push: метка $APPB сверена; этот код уже прошёл полный прогон (tools/prover.sh) — заново не гоняю."
     SHA=$(tail -1 "$REFILE" | cut -f2); [ "${GETFIT_NO_AFTER:-0}" = 1 ] || nohup sh tools/full-after.sh "$SHA" --только-долгие >/dev/null 2>&1 &
     exit 0; fi
 fi

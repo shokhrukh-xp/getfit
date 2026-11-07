@@ -6,15 +6,15 @@
 #   sh tools/shatkie.sh <лог прогона>   → 0 — все упавшие прошли отдельно; 1 — нет
 LOG="$1"; [ -f "$LOG" ] || exit 1
 cd "$(git rev-parse --show-toplevel)" || exit 1
-УПАЛИ=$(sed -n 's/^УПАЛО: [0-9]* — //p' "$LOG" | tr ',' ' ')
-[ -n "$УПАЛИ" ] || exit 1
-N=$(echo $УПАЛИ | wc -w | tr -d ' ')
+FAILED=$(sed -n 's/^УПАЛО: [0-9]* — //p' "$LOG" | tr ',' ' ')
+[ -n "$FAILED" ] || exit 1
+N=$(echo $FAILED | wc -w | tr -d ' ')
 # больше трёх сразу — это не шаткость, а поломка
 [ "$N" -le 3 ] || { echo "повтор: упало $N наборов — не шаткость, не повторяю"; exit 1; }
-for t in $УПАЛИ; do
-  имя=${t#test-}
+for t in $FAILED; do
+  NAME=${t#test-}
   echo "повтор: $t — отдельно"
-  if GETFIT_JOBS=1 sh tg/run.sh "$имя" > "${TMPDIR:-/tmp}/getfit-povtor.log" 2>&1; then
+  if GETFIT_JOBS=1 sh tg/run.sh "$NAME" > "${TMPDIR:-/tmp}/getfit-povtor.log" 2>&1; then
     echo "$(date '+%d.%m %H:%M') $t — упал в общем прогоне, отдельно прошёл" >> tg/shatkie.txt
     echo "повтор: $t прошёл отдельно — шаткий, записан в tg/shatkie.txt"
   else

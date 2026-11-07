@@ -6,17 +6,17 @@
 #   sh tools/prover.sh --status   — что проверено
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
-МЕТКА="$(git rev-parse --git-dir)/getfit-proveren"
+MARK="$(git rev-parse --git-dir)/getfit-proveren"
 if [ "$1" = "--status" ]; then
-  if [ -f "$МЕТКА" ] && [ "$(cat "$МЕТКА")" = "$(git rev-parse HEAD^{tree})" ]; then echo "проверено: HEAD $(git rev-parse --short HEAD)"; else echo "HEAD не проверен полным прогоном"; fi; exit 0; fi
+  if [ -f "$MARK" ] && [ "$(cat "$MARK")" = "$(git rev-parse HEAD^{tree})" ]; then echo "проверено: HEAD $(git rev-parse --short HEAD)"; else echo "HEAD не проверен полным прогоном"; fi; exit 0; fi
 # проверяем ровно то, что уйдёт: без незакоммиченных правок в отслеживаемых файлах
 [ -z "$(git status --porcelain --untracked-files=no)" ] || { echo "prover: есть незакоммиченные правки — сначала commit"; exit 1; }
-ДЕРЕВО=$(git rev-parse HEAD^{tree}); rm -f "$МЕТКА"
+TREE=$(git rev-parse HEAD^{tree}); rm -f "$MARK"
 # 07.11, его выбор «Mac не засыпает»: мак не засыпает, пока идёт прогон
 command -v caffeinate >/dev/null && caffeinate -i -w $$ &
 LOG="${TMPDIR:-/tmp}/getfit-prover.log"
 if sh tg/run.sh --без-долгих > "$LOG" 2>&1 || sh tools/shatkie.sh "$LOG"; then
-  echo "$ДЕРЕВО" > "$МЕТКА"
+  echo "$TREE" > "$MARK"
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ|УПАЛО" "$LOG"
   echo "prover: зелёный — HEAD $(git rev-parse --short HEAD) отмечен, push не будет гонять всё заново"; exit 0
 fi
