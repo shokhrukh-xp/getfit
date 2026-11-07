@@ -8158,7 +8158,7 @@ function renderCatalog(){
   }
   var list=catFiltered();
   /* пара к базовому: базовые не показываем вовсе, чтобы не было холостых нажатий */
-  if(catCtx && catCtx.pairBase) list=list.filter(function(x){ return x.mc!=='c' || жимТягаМ(catCtx.pairM, x.m); });
+  if(catCtx && catCtx.pairWith && catCtx.pairM) list=list.filter(function(x){ return !параНельзяК({m:catCtx.pairM, c:!!catCtx.pairBase}, {m:x.m, c:x.mc==='c'}); });
   var безМышцы = catCtx && catCtx.pairM && !catCtx.pairAll && !catMuscle && !catQuery.trim();
   if(безМышцы) list=list.filter(function(x){ return x.m!==catCtx.pairM && x.m2!==catCtx.pairM; });
   /* в пару чаще берут простое: сначала свои упражнения с фото, потом
@@ -8177,7 +8177,7 @@ function renderCatalog(){
   var пан = onPage ? '' : катПанельHtml(), инвH = onPage ? '' : катЕстьHtml();
   var h = onPage ? '' : '<div class="catseg catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+
     (инвH?'<div class="catinv">'+инвH+'</div>':'')+'<div class="catchips">'+катЧипыHtml()+'</div>'+(пан?'<div class="catpanel">'+пан+'</div>':'');
-  if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь изолирующие и базовые на противоположные мышцы (жим с тягой).</p>';
+  if(catCtx && catCtx.pairWith) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — в пару только на другие мышцы: на те же объём падает.</p>';
   if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
      ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';
   if(catCtx && !catCtx.add && !catCtx.draft){
@@ -11746,7 +11746,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 12:07';
+var BUILD = '07.11 12:40';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13533,20 +13533,29 @@ function ssMakeOpen(btn){
    уже есть в этом дне. А если из каталога — то с картинками». Поэтому
    сначала «Рядом» (перед / после), потом остальные в дне, потом каталог.
    Каждая строка — с той же миниатюрой, что в списке дня. */
-/* 07.11, его «Да» на суперсеты базовых на противоположные мышцы: жим + тяга верха можно (как на сервере, антагонистыБаза) */
-var ЖИМ_МК=['chest','shoulders','triceps'], ТЯГА_МК=['lats','middle back','biceps','traps'];
-function схемаМ(m){ return ЖИМ_МК.indexOf(m)>=0?'push':ТЯГА_МК.indexOf(m)>=0?'pull':''; }
+/* 07.11, его «Нет исключений, по-научному» — пары как на сервере (параДопустима): мышцы разные — можно (антагонисты,
+   верх + низ, Zhang 2025), общие — нет (объём падает); цель «Сила» — без двух базовых (Iversen 2024).
+   Базовое грузит всю цепь: жим — грудь, дельты, трицепс; тяга — спину и бицепс; ноги — бедро и ягодицы. */
+var ЖИМ_МК=['chest','shoulders','triceps'], ТЯГА_МК=['lats','middle back','biceps','traps'], НОГИ_МК=['quadriceps','hamstrings','glutes','adductors','abductors'];
+function мышцыНагрК(m,баз){ if(!m) return []; if(!баз) return [m]; return ЖИМ_МК.indexOf(m)>=0?ЖИМ_МК:ТЯГА_МК.indexOf(m)>=0?ТЯГА_МК:НОГИ_МК.indexOf(m)>=0?НОГИ_МК:[m]; }
 function мышцаКат(e){ var c=CAT && CAT.ex && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0]; return (c && c.m) || e.m || ''; }
-function жимТягаМ(a,b){ var x=схемаМ(a), y=схемаМ(b); return !!x && !!y && x!==y; }
+function целеСила(){ try{ return goalPair(myData()||{}).gym==='strength'; }catch(_){ return false; } }
+/* a, b — {m, c: базовое?}; ответ: '' — можно, иначе причина */
+function параНельзяК(a,b){
+  var A=мышцыНагрК(a.m,a.c), B=мышцыНагрК(b.m,b.c);
+  if(A.some(function(m){ return B.indexOf(m)>=0; })) return 'те же мышцы';
+  if(a.c && b.c && целеСила()) return 'цель — сила';
+  return '';
+}
 function ssMakeList(di){
   var box=document.getElementById('ssmake'+di); if(!box) return;
   var сп=exList(day), e=сп[di]; if(!e) return;
   var база=базовое(e), нельзя=0;
   function кн(x,i,метка){
-    var обе = база && базовое(x) && !жимТягаМ(мышцаКат(e), мышцаКат(x)); if(обе) нельзя++;
+    var почему = параНельзяК({m:мышцаКат(e), c:база}, {m:мышцаКат(x), c:базовое(x)}), обе = !!почему; if(обе) нельзя++;
     return '<button type="button" class="ebtn sspart'+(метка?' near':'')+'" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
            '<span class="ssnm">'+esc(x.n)+'<small>'+esc(мышцаГлавная(x)||x.p||'')+'</small></span>'+
-           (обе?'<i>тоже базовое</i>':(метка?'<em>'+метка+'</em>':''))+
+           (обе?'<i>'+почему+'</i>':(метка?'<em>'+метка+'</em>':''))+
            '<span class="exthumb sm" aria-hidden="true">'+mediaFor(x)+'</span></button>';
   }
   var можно=function(i){ return i>=0 && i<сп.length && i!==di && !сп[i].ss; };
@@ -13557,7 +13566,7 @@ function ssMakeList(di){
   box.innerHTML='<p class="ssq">С чем делать по кругу — без отдыха между ними?</p>'+
     (рядом.length?'<div class="ssgrp">Рядом</div><div class="sslist">'+рядом.join('')+'</div>':'')+
     (ещё.length?'<div class="ssgrp">Ещё в этом дне</div><div class="sslist">'+ещё.join('')+'</div>':'')+
-    (нельзя?'<p class="ssnote">Две базовые в пару — только жим с тягой: на одну сторону или на ноги сила в такой паре растёт хуже.</p>':'')+
+    (нельзя?'<p class="ssnote">'+(целеСила()?'В пару без отдыха — только на разные мышцы: жим с тягой, верх с ногами. При цели «сила» — и не две базовые.':'В пару без отдыха — только на разные мышцы: жим с тягой, верх с ногами. На те же мышцы объём падает.')+'</p>':'')+
     '<button type="button" class="ebtn sscat" data-sscat="'+di+'">+ Из каталога — с картинками</button>';
 }
 /* новое упражнение из каталога сразу в пару к открытому */
@@ -13570,8 +13579,9 @@ function ssFromCatalog(di){
   openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e), c:'strength', pairM:м});
 }
 function ssCatalogPicked(ctx, item){
-  if(ctx.pairBase && item.mc==='c' && !жимТягаМ(ctx.pairM, item.m)){
-    paintNote('Две базовые в пару — только жим с тягой. Выберите что-то полегче'); haptic('medium'); return false;
+  var почему=параНельзяК({m:ctx.pairM, c:!!ctx.pairBase}, {m:item.m, c:item.mc==='c'});
+  if(почему){
+    paintNote(почему==='те же мышцы'?'В пару — на другие мышцы: на те же объём падает':'При цели «сила» две базовые в пару не ставим'); haptic('medium'); return false;
   }
   var было=(EXTRA[day]||[]).length;
   addEx(item);
