@@ -3510,7 +3510,7 @@ body.ordmode #list .sstag{color:var(--text)}
 .pqnote{margin:8px 4px 0;font-size:12px;line-height:1.4;color:var(--muted)}
 .pqfoot{text-align:center;margin-top:20px}
 #profm .pqfoot .bline{margin:0 0 4px!important;color:var(--muted)}
-#profm .pqfoot #profreset{margin:4px auto 0;width:auto;min-height:44px;padding:0 16px;font-weight:700;font-size:15px}
+#profm .akkdz #profreset,#profm .akkdz #profdel{width:100%;min-height:48px;font-weight:700;font-size:15px}
 #profm .pqfoot .foot{margin:6px 0 0}
 .pqlead{margin:0 4px 14px;font-size:14px;line-height:1.5;color:var(--muted)}
 #profm .pqpage .invbody{padding:6px 16px 16px;border-radius:20px;background:var(--surface)}
@@ -4424,6 +4424,15 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 html.i18nwait body{opacity:0}
 .pqlang{cursor:default}
 .langseg{display:flex;gap:4px;margin-left:auto;padding:3px;border-radius:12px;background:var(--field)}
+.langsel{margin-left:auto;position:relative;flex:none}
+/* 07.11: «Данные и аккаунт» — опасное отдельно, с отступом */
+.akkdanger{color:var(--warn,#B4632B)}
+.akkdz{display:flex;flex-direction:column;gap:10px;padding:0 2px 24px}
+.akkdz .pqlead{margin:0 0 4px}
+#profm .akkdz .btn.danger{border:1px solid currentColor;border-radius:14px;background:transparent}
+.langsel select{appearance:none;-webkit-appearance:none;min-height:44px;padding:0 34px 0 14px;border:0;border-radius:12px;background:var(--field);color:var(--text);
+  font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.langsel::after{content:"";position:absolute;right:14px;top:50%;width:7px;height:7px;margin-top:-6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
 .langseg button{min-width:44px;min-height:44px;padding:0 8px;border:0;border-radius:9px;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:700;letter-spacing:.02em}
 .langseg button[aria-pressed="true"]{background:var(--card);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.18)}
 html[lang=en] .catitem.nope .cattx b::after{content:" · replaced"}
@@ -5170,7 +5179,8 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
              сохранить», чтобы не путать с «+ Добавить упражнение».
              Наполняет renderList (в режиме порядка — пусто). -->
         <div class="sportlow" id="sportlow"></div>
-        <p class="resetline"><button type="button" class="linkbtn" id="reset">Очистить день</button><button type="button" class="linkbtn" id="againtoday">Сделать этот день ещё раз сегодня</button></p>
+        <!-- 07.11, его слова: «нужно кнопка сборки программы на этой странице тоже (где компактно и лаконично) а не только в профиле» -->
+        <p class="resetline"><button type="button" class="linkbtn" id="gymrebuild">Пересобрать программу</button><button type="button" class="linkbtn" id="reset">Очистить день</button><button type="button" class="linkbtn" id="againtoday">Сделать этот день ещё раз сегодня</button></p>
       </div>
       </section>
     <section class="page hide" id="p-log">
@@ -5812,7 +5822,7 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
         <button type="button" class="pqrow" data-pp="only" id="pq-only"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span><span class="pqt"><b>Что веду</b><small id="pq-onlysub"></small></span><span class="pqv" id="pv-only"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" data-pp="voice" id="pq-voice"><span class="pqic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 4.8 2.2 7.4 8 8.4v1.2c-5.8 1-7.4 3.6-8 8.4h-.1c-.6-4.8-2.2-7.4-8-8.4v-1.2c5.8-1 7.4-3.6 8-8.4z"/></svg></span><span class="pqt"><b>Характер</b><small>тон ответов</small></span><span class="pqv" id="pv-voice"></span><i class="pqch">›</i></button>
         <button type="button" class="pqrow" id="pq-tren"><span class="pqic" id="pqi-tren"><img src="img/wb-mark-128.png" alt="" style="width:20px;height:20px"></span><span class="pqt"><b>Имя, образ, обращение</b><small>как ИИ-тренер говорит с вами</small></span><span class="pqv" id="pv-tren"></span><i class="pqch">›</i></button>
-        <div class="pqrow pqlang" id="pq-lang"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></span><span class="pqt"><b>Язык</b><small>приложения, бота и тренера</small></span><span class="langseg" role="group" aria-label="Язык" data-noi18n><button type="button" data-lang="ru">RU</button><button type="button" data-lang="uz">UZ</button><button type="button" data-lang="en">EN</button></span></div>
+        <div class="pqrow pqlang" id="pq-lang"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z"/></svg></span><span class="pqt"><b>Язык</b><small>приложения, бота и тренера</small></span><span class="langsel" data-noi18n><select id="langsel" aria-label="Язык"><option value="ru">Русский</option><option value="uz">Oʻzbekcha</option><option value="en">English</option></select></span></div>
         <button type="button" class="pqrow" id="pq-fem" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/></svg></span><span class="pqt"><b>Женское здоровье</b><small>цикл, беременность, кормление</small></span><span class="pqv" id="pv-fem"></span><i class="pqch">›</i></button>
       </div>
 
@@ -5838,6 +5848,9 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
       <div class="pqgroup">
         <!-- 05.11: единицы (выключатель edinicy) — вес, рост и талия в кг/см или lb/ft; сервер ставит по стране телефона, здесь — свой выбор -->
         <div class="pqrow pqlang f-edinicy" id="pq-units"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18v6H3zM7 9v3M11 9v4M15 9v3M19 9v4"/></svg></span><span class="pqt"><b>Единицы</b><small>вес, рост, талия</small></span><span class="langseg" role="group" aria-label="Единицы" data-noi18n><button type="button" data-units="metric">кг, см</button><button type="button" data-units="imperial">lb, ft</button></span></div>
+        <!-- 07.11, его слова: «в самом низу этой страницы много пустого пространства с текстовыми кнопками … легко случайно
+             нажать удалить аккаунт или начать заново». Согласия и опасное — строкой «Данные и аккаунт», внутри отдельно -->
+        <button type="button" class="pqrow" data-pp="akk" id="pq-akk"><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="pqt"><b>Данные и аккаунт</b><small>согласия, начать заново, удалить аккаунт</small></span><i class="pqch" aria-hidden="true">›</i></button>
         <button type="button" class="pqrow" id="profboss" hidden><span class="pqic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></svg></span><span class="pqt"><b>Админ панель</b><small>деньги, люди, Pro-ссылки</small></span><i class="pqch">›</i></button>
       </div>
 
@@ -5849,12 +5862,6 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
         <!-- 01.11: условие бесплатной лицензии RepDB — видимая ссылка в приложении -->
         <p class="foot howattr"><a href="https://repdb.co" target="_blank" rel="noopener nofollow">Exercise data by RepDB (repdb.co)</a></p>
         <!-- 02.11: согласие на ИИ — только приложение из магазина (Apple 5.1.2(i), Google), выключатель soglasie -->
-        <button class="btn wide f-soglasie" id="profii" hidden>ИИ-помощник</button>
-        <!-- 07.11: согласие на сведения о здоровье (выключатель soglasie2) -->
-        <button class="btn wide" id="profzd" hidden>Сведения о здоровье</button>
-        <button class="btn wide danger" id="profreset">Начать заново</button>
-        <!-- 02.11: удаление аккаунта внутри приложения (Apple 5.1.1(v), Google) -->
-        <button class="btn wide danger f-udalit" id="profdel">Удалить аккаунт</button>
         <p class="foot">При болях в спине, шее или после травм — сначала к врачу.</p>
         <!-- 02.11: Apple 1.4.1, Google Health Content — не медицинское изделие -->
         <p class="foot f-soglasie">Wellböl — не медицинское изделие: не ставит диагнозы и не лечит. Калории и советы — оценки, а не точные данные. По вопросам здоровья обращайтесь к врачу.</p>
@@ -5862,6 +5869,20 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
     </div>
 
     <!-- ── листы внутри профиля ── -->
+    <section class="pqpage" data-pp="akk" data-title="Данные и аккаунт" hidden>
+      <p class="pqlead">Что можно Wellböl с вашими данными и как начать с чистого листа.</p>
+      <div class="pqgroup">
+        <button type="button" class="pqrow f-soglasie" id="profii" hidden><span class="pqt"><b>ИИ-помощник</b><small>согласие на передачу данных сервисам ИИ</small></span><i class="pqch" aria-hidden="true">›</i></button>
+        <button type="button" class="pqrow" id="profzd" hidden><span class="pqt"><b>Сведения о здоровье</b><small>согласие на хранение и обработку</small></span><i class="pqch" aria-hidden="true">›</i></button>
+      </div>
+      <h4 class="pqlab akkdanger">Осторожно</h4>
+      <div class="akkdz">
+        <p class="pqlead">«Начать заново» стирает дневник и программу, аккаунт остаётся. «Удалить аккаунт» стирает всё без возврата. Оба спросят ещё раз.</p>
+        <button class="btn wide danger" id="profreset">Начать заново</button>
+        <!-- 02.11: удаление аккаунта внутри приложения (Apple 5.1.1(v), Google) -->
+        <button class="btn wide danger f-udalit" id="profdel">Удалить аккаунт</button>
+      </div>
+    </section>
     <section class="pqpage zdbox" data-pp="zd" id="zdbox" data-title="Здоровье" hidden>
       <div class="invbody" id="zdbody" hidden></div>
     </section>
@@ -7318,7 +7339,9 @@ function renderTplace0(){
   if(ЕСТЬ('ui3') && Object.keys(GYM_DAYS).some(function(d){ return GYM_DAYS[d]; }) && !GYM_DAYS[new Date().getDay()]){ box.hidden=true; return; }
   var куда=['h','s'].filter(function(p){ return p!==база; });
   box.hidden=false;
-  box.innerHTML='<span>Сегодня не '+({g:'в зале',h:'дома',s:'на улице'}[база])+'?</span>'+
+  /* 07.11, его слова: «висит "сегодня не в зале", у меня сегодня будет зал, я просто ещё не успел сходить» — вопрос
+     читался как отметка. Теперь ясно, что это запасной вариант, а не статус дня. */
+  box.innerHTML='<span>'+({g:'Не попадёте в зал? Заменю упражнения:',h:'Тренируетесь не дома? Заменю упражнения:',s:'Не выйдет на улице? Заменю упражнения:'}[база])+'</span>'+
     куда.map(function(p){ return '<button type="button" data-tplgo="'+p+'">'+(p==='h'?'Дома':'На улице')+'</button>'; }).join('');
 }
 document.getElementById('tplace').addEventListener('click', function(e){
@@ -9946,7 +9969,7 @@ document.getElementById('g-muscle').addEventListener('change',renderWzGoal);
    замерам — полоса), срок (флажок), «раньше нельзя» (штриховка), и одна отметка: успеваете / впритык / отстаёте. */
 var МЕС_КОР=['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 function путьДн(iso){ return Math.round((dLocal(iso)-dLocal(TODAY))/864e5); }
-function путьКор(iso){ var d=dLocal(iso); return d.getDate()+' '+(ЯЗ!=='ru'?ЯЗ_МЕС[d.getMonth()]:МЕС_КОР[d.getMonth()]); }   /* 07.11: не по-русски — полная дата, её переводит словарь («16 февраля» → «February 16»); «фев» он не знает */
+function путьКор(iso){ var d=dLocal(iso), г=d.getFullYear()!==dLocal(TODAY).getFullYear() ? ' '+d.getFullYear() : ''; return d.getDate()+' '+(ЯЗ!=='ru'?ЯЗ_МЕС[d.getMonth()]:МЕС_КОР[d.getMonth()])+г; }   /* 07.11, его слова: «не понятно в какой год» — другой год пишем числом */   /* 07.11: не по-русски — полная дата, её переводит словарь («16 февраля» → «February 16»); «фев» он не знает */
 function путьНед(дн){ var н=Math.max(1,Math.round(дн/7)); return н+' '+plural(н,['неделя','недели','недель']); }
 function путьИсо(x){ return x&&/^\d{4}-\d{2}-\d{2}$/.test(x)?x:null; }
 /* o: {lo, hi — полоса «по вашему темпу»; date — срок; earliest — раньше нельзя; eta — «придёте» без срока; late — срок раньше возможного} */
@@ -9979,7 +10002,8 @@ function путьHtml(o){
   });
   /* месяцы — по первым числам; больше семи — через один (тесноту добирает путьУложить) */
   var м=[], t0=dLocal(TODAY), шаг=new Date(t0.getFullYear(),t0.getMonth()+1,1);
-  while(true){ var x=Math.round((шаг-t0)/864e5); if(x>конец-4) break; м.push({x:p(x),t:МЕС_КОР[шаг.getMonth()]}); шаг=new Date(шаг.getFullYear(),шаг.getMonth()+1,1); }
+  /* 07.11: январь — с годом («янв 2027»): по шкале видно, в какой год приходите */
+  while(true){ var x=Math.round((шаг-t0)/864e5); if(x>конец-4) break; м.push({x:p(x),t:МЕС_КОР[шаг.getMonth()]+(шаг.getMonth()===0?' '+шаг.getFullYear():'')}); шаг=new Date(шаг.getFullYear(),шаг.getMonth()+1,1); }
   if(!м.length||м[0].x>9) м.unshift({x:0,t:МЕС_КОР[t0.getMonth()],first:1});
   var через=м.length>7?2:1;
   м.forEach(function(z,i){ if(i%через) return; h+='<span class="pth-m'+(z.first?' first':'')+'" data-x="'+чис(z.x)+'" style="left:'+f1(Math.min(z.x,96))+'">'+z.t+'</span>'; });
@@ -11176,10 +11200,14 @@ document.getElementById('trcard').addEventListener('click', function(e){
 });
 document.getElementById('pq-tren').addEventListener('click', function(){ openTren(false); });
 /* 24.10, этап 7: язык — RU / UZ / EN; пишется в профиль, сервер берёт его для тренера и бота */
-function языкКнопки(){ document.querySelectorAll('#pq-lang [data-lang]').forEach(function(b){ b.setAttribute('aria-pressed', String(b.dataset.lang===ЯЗ)); b.title=ЯЗ_ИМЯ[b.dataset.lang]; }); }
-document.getElementById('pq-lang').addEventListener('click', function(e){
-  var b=e.target.closest('[data-lang]'); if(!b || b.dataset.lang===ЯЗ) return;
-  var me=myData()||{}, сейчас=new Date().toISOString(); me.lang=b.dataset.lang;
+/* 07.11, его слова: «раз мы собираемся включить больше 3 языков, кнопку выбора языка нужно сделать дроп-даун
+   списком» — список с названиями языков на них самих; новый язык — одна строка в ЯЗЫКИ и ЯЗ_ИМЯ */
+function языкКнопки(){ var s=document.getElementById('langsel'); if(!s) return;
+  if(s.options.length!==ЯЗЫКИ.length) s.innerHTML=ЯЗЫКИ.map(function(l){ return '<option value="'+l+'">'+esc(ЯЗ_ИМЯ[l]||l)+'</option>'; }).join('');
+  s.value=ЯЗ; }
+document.getElementById('langsel').addEventListener('change', function(e){
+  var v=e.target.value; if(!v || v===ЯЗ || ЯЗЫКИ.indexOf(v)<0) return;
+  var me=myData()||{}, сейчас=new Date().toISOString(); me.lang=v;
   gset('me', me); if(DB) DB.doc('state/me').set({me:me, at:сейчас}).catch(function(){});
   языкКнопки(); haptic('light');
 });
@@ -11717,7 +11745,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 09:08';
+var BUILD = '07.11 09:39';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17411,7 +17439,7 @@ function sbЦиклUI(){
   var opt=function(v,имя,что,рек){ return '<button type="button" role="radio" data-cyc="'+v+'" aria-checked="'+(SBCYC===v)+'">'+(рек?'<em>РЕКОМЕНДУЕМ</em>':'')+'<b>'+имя+'</b><span>'+что+'</span></button>'; };
   document.getElementById('sb-cyc').innerHTML=
     opt('on','По фазам', недель+' недель растёт одна часть тела, остальное держим. Потом меняем.', true)+
-    opt('off','Всё понемногу','Каждой мышце поровну. Растёт медленнее.', false);
+    opt('off','Всё понемногу','Каждой мышце — минимум для роста, от 4 подходов в неделю. Растёт медленнее.', false);   /* 07.11: сервер держит этот минимум (оп.низ) */
 }
 function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
@@ -17424,6 +17452,7 @@ function sbСчёт(){
   var st=document.getElementById('sbstate'); if(st && д>=2 && st.dataset.days){ st.hidden=true; delete st.dataset.days; }
   sbЦиклUI();
 }
+document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('#gymrebuild')){ haptic('light'); openSbor(); } });
 function openSbor(){
   var me=myData()||{};
   var wd=document.getElementById('sb-wd');
@@ -17938,7 +17967,7 @@ var ИИС={загружено:false, ответ:false, yes:false, занят:fa
 function иисВкл(){ return (ПЛ.имя==='native' && ЕСТЬ('soglasie')) || ЕСТЬ('soglasie2'); }
 var ЗДС={загружено:false, s2:false, ответ:false, yes:false, занят:false};
 function иисРисовать(){
-  var b=document.getElementById('profii'); if(b){ b.hidden=!иисВкл(); b.textContent='ИИ-помощник: '+(ИИС.yes?'включён':'выключен'); }
+  var b=document.getElementById('profii'); if(b){ b.hidden=!иисВкл(); var bs=b.querySelector('small'); if(bs) bs.textContent=ИИС.yes?'включён':'выключен'; }   /* 07.11: строка в «Данные и аккаунт» */
   var да=document.getElementById('iiyes'), нет=document.getElementById('iino'), выкл=document.getElementById('iioff'), закр=document.getElementById('iiclose');
   if(да) да.hidden=ИИС.yes; if(нет) нет.hidden=ИИС.yes; if(выкл) выкл.hidden=!ИИС.yes; if(закр) закр.hidden=!ИИС.yes;
 }
@@ -17967,7 +17996,7 @@ function иисОтветить(да){
 }
 document.getElementById('profii').addEventListener('click', function(){ closeProf(); openIIS(); haptic('light'); });
 function здРисовать(){
-  var b=document.getElementById('profzd'); if(b){ b.hidden=!ЗДС.s2; b.textContent='Сведения о здоровье: '+(ЗДС.yes?'согласие дано':'нет согласия'); }
+  var b=document.getElementById('profzd'); if(b){ b.hidden=!ЗДС.s2; var bs=b.querySelector('small'); if(bs) bs.textContent=ЗДС.yes?'согласие дано':'нет согласия'; }
   var да=document.getElementById('zdyes'), нет=document.getElementById('zdno'), выкл=document.getElementById('zdoff'), закр=document.getElementById('zdclose');
   if(да) да.hidden=ЗДС.yes; if(нет) нет.hidden=ЗДС.yes; if(выкл) выкл.hidden=!ЗДС.yes; if(закр) закр.hidden=!ЗДС.yes && !ЗДС.ответ;
 }
@@ -19199,16 +19228,20 @@ function vzРабочиеВеса(){
    путь от старта (слева) к цели (справа), точка — где он сейчас. Под ними
    одна строка: сколько осталось и неделя. */
 function vzЧ(ц, x){ return ц.ед==='см' || Math.abs(x-Math.round(x))<0.05 ? String(Math.round(x)) : vzF1(x); }
-function vzГоловаЦели(ц, главное, ед, нед, sr, откл){
+function vzГоловаЦели(ц, главное, ед, нед, sr, откл, доп){
   /* 21.10, его второе слово: «поменяй их местами» — сейчас слева, цель справа:
      путь читается слева направо, от того, где он, к тому, куда идёт */
   var п='<div class="vzg-c vzg-goal vzg-r"><span>'+(ц.держать?'держать':'цель')+(ц.доп?' · '+ц.доп:'')+'</span><b>'+vzЧ(ц, ц.v)+'<s>'+ед+'</s></b></div>';
-  var л='<div class="vzg-c vzg-now vzg-l"><span>сейчас</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
+  /* 07.11, его слова: «на главной пишет 86.1кг записан, а ниже сейчас 86.3кг … может быть не понятно, почему два разных
+     веса». Крупно — средний за 7 дней (так ведём план), значит и подпись такая; сегодняшний замер — строкой ниже. */
+  доп=доп||{};
+  var л='<div class="vzg-c vzg-now vzg-l"><span>'+(доп.сред?'в среднем за неделю':'сейчас')+'</span><b>'+(ед==='см' && sr.k==='waist' ? vzЧ(ц, главное) : vzF1(главное))+'<s>'+ед+'</s></b></div>';
   var путь='';
   if(ц.доля!=null){ var x=(ц.доля*100).toFixed(1);
     путь='<div class="vzg-tr" role="img" aria-label="пройдено '+Math.round(ц.доля*100)+' % пути к цели"><i style="width:'+x+'%"></i><u style="left:'+x+'%"></u></div>'; }
   else путь='<div class="vzg-tr vzg-eq" aria-hidden="true"></div>';
   var стр=[];
+  if(доп.сегодня!=null) стр.push('сегодня '+доп.сегодня+'\u00a0'+ед);
   if(!ц.держать) стр.push(ц.ост<=0.05 ? wbm('wb-joy'+(wbOnce('цель'+sr.k)?'':' still'),'pre')+'цель достигнута' : 'осталось '+vzЧ(ц, ц.ост)+'\u00a0'+ед);
   else { var раз=ц.сейчас-ц.v; стр.push(Math.abs(раз)<0.1 ? 'на уровне цели' : vzЗн(раз)+' к цели'); }
   /* у веса вместо недели — отклонение от плана (17.10: «выше плана на 1,7»);
@@ -19664,7 +19697,7 @@ function homeBody(){
   return '<div class="vz"><div class="vztop">'+
     '<div class="vzhd"><u>Тело</u>'+замерКнопка()+'<span class="vzch" role="tablist">'+есть.map(function(x){
       return '<button type="button" role="tab" aria-selected="'+(x[0]===вид)+'" class="'+(x[0]===вид?'on':'')+'" data-vzv="'+x[0]+'"><span>'+x[1]+'</span></button>'; }).join('')+'</span></div>'+
-    (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл) :
+    (цель ? vzГоловаЦели(цель, главное, ед, нед, sr, откл, {сред:поСред, сегодня:(поСред && пос.date===TODAY) ? vzF1(sr.f(пос)) : null}) :
       '<div class="vznum"><b>'+vzF1(главное)+'<s>'+ед+'</s></b>'+(нед?'<em class="'+vzХор(sr,нед.d,нед.dПрош)+'">'+vzЗн(нед.d)+' за неделю</em>':'')+'</div>'+
       '<p class="vzsub">'+под+'</p>'+сег+
       (откл ? '<p class="vzgapline">'+(откл.по ? 'Идёте по плану' : откл.слова.charAt(0).toUpperCase()+откл.слова.slice(1))+'</p>' : ''))+

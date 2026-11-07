@@ -47,8 +47,8 @@ const окно=(p,id)=>p.evaluate(i=>document.getElementById(i).classList.contai
    await p.click('#iiyes');await p.waitForTimeout(500);
    ok(сервер.зап[1]&&!сервер.зап[1].kind&&сервер.зап[1].yes===true,'ИИ «Согласен» → {yes:true} без kind');
    await p.click('#profbtn');await p.waitForTimeout(400);
-   ok(/Сведения о здоровье: согласие дано/.test(await p.textContent('#profzd')),'в профиле «Сведения о здоровье: согласие дано»');
-   ok(/ИИ-помощник: включён/.test(await p.textContent('#profii')),'и «ИИ-помощник: включён» — теперь и в Telegram');
+   ok(/Сведения о здоровье\s*согласие дано/.test(await p.textContent('#profzd')),'в профиле «Сведения о здоровье: согласие дано»');
+   ok(/ИИ-помощник\s*включён/.test(await p.textContent('#profii')),'и «ИИ-помощник: включён» — теперь и в Telegram');
    await p.close();}
   /* 3. «Не согласен» — объяснение, окно остаётся */
   {const {p,сервер}=await поднять(b,{features:['soglasie','soglasie2']});

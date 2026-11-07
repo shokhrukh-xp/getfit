@@ -43,10 +43,10 @@ const лист=p=>p.evaluate(()=>{const m=document.getElementById('profm');retur
   ok(await лист(p)==='Программа',где+'закрыл сборку — снова «Программа» в профиле: '+await лист(p));
   await p.click('#progedit');await p.waitForTimeout(300);await назад(p);await p.waitForTimeout(300);
   ok(await лист(p)==='Программа',где+'то же «назад» Telegram');
-  await p.click('#pqback');await p.click('#profreset');await p.waitForTimeout(300);
+  await p.click('#pqback');await p.click('#pq-akk');await p.waitForTimeout(250);await p.click('#profreset');await p.waitForTimeout(300);
   ok(await открыт(p,'resetm'),где+'«Начать заново» открыл выбор');
   await p.click('#resetclose');await p.waitForTimeout(300);
-  ok(await лист(p)==='список',где+'«Отмена» — снова список профиля');
+  ok(await лист(p)==='Данные и аккаунт',где+'«Отмена» — снова «Данные и аккаунт», откуда пришли: '+await лист(p));await p.click('#pqback');await p.waitForTimeout(250);
   await p.click('#goalcard [data-bodygoal]');await p.waitForTimeout(400);   /* 28.10: «Изменить цель» — экран цели */
   ok(await открыт(p,'coachm'),где+'«Обсудить цель» открыл тренера');
   await p.click('#coachclose');await p.waitForTimeout(400);

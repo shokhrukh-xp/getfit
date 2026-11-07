@@ -61,7 +61,7 @@ const URLP='https://getfit-sync.sh-pulatov.workers.dev/photo?key='+KEY;
  запросы=[];p=await ctx.newPage();await M.поднять(p,{time:'19:40',day:день,handleRoute:сброс,preserveReload:true});await виден(p);await p.waitForTimeout(400);
  const было=await p.evaluate(()=>new Promise(res=>{const r=indexedDB.open('gf-photos',1);r.onsuccess=()=>{const q=r.result.transaction('p').objectStore('p').count();q.onsuccess=()=>res(q.result);};}));
  дано(было===1,'до сброса миниатюра в кэше ('+было+')');
- await p.click('#profbtn');await p.click('#profreset');await p.click('[data-reset="all"]');await p.waitForTimeout(2500);
+ await p.click('#profbtn');await p.click('#pq-akk');await p.waitForTimeout(250);await p.click('#profreset');await p.click('[data-reset="all"]');await p.waitForTimeout(2500);
  const стёрто=await p.evaluate(()=>new Promise(res=>{const r=indexedDB.open('gf-photos',1);r.onsuccess=()=>{const q=r.result.transaction('p').objectStore('p').count();q.onsuccess=()=>res(q.result);};}));
  дано(стёрто===0,'сброс дневника стирает миниатюры ('+стёрто+')');
  await p.close();

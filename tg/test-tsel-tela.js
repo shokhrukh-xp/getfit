@@ -29,10 +29,10 @@ const голова = p => p.evaluate(() => { const h = document.querySelector('#
     дано(чипы.join(',') === 'вес,жир,мышцы,талия', где + 'вкладки — вес, жир, мышцы, талия: ' + чипы);
     await page.click('[data-vzv="w"]'); await page.waitForTimeout(200);
     let г = await голова(page);
-    дано(/^цель 75 ?кг$/.test(г.л) && /^сейчас \d+,\d ?кг$/.test(г.п), где + 'вес: слева сейчас, справа цель: ' + г.л + ' | ' + г.п);
+    дано(/^цель 75 ?кг$/.test(г.л) && /^(сейчас|в среднем за неделю) \d+,\d ?кг$/.test(г.п), где + 'вес: слева сейчас, справа цель: ' + г.л + ' | ' + г.п);
     дано(await page.evaluate(() => { const a = document.querySelector('#homebody .vzg-now').getBoundingClientRect(), b = document.querySelector('#homebody .vzg-goal').getBoundingClientRect(); return a.right < b.left; }),
       где + '«сейчас» слева, «цель» справа (его «поменяй их местами»)');
-    дано(г.путь && /^осталось \d+(,\d)? кг( · (выше|ниже) плана на \d|( · по плану)|$)/.test(г.строка), где + 'между ними путь, под ними одна строка: ' + г.строка);
+    дано(г.путь && /^(сегодня \d+(,\d)? кг · )?осталось \d+(,\d)? кг( · (выше|ниже) плана на \d|( · по плану)|$)/.test(г.строка), где + 'между ними путь, под ними одна строка: ' + г.строка);
     дано(await page.locator('#homebody .vzsub, #homebody .vztd, #homebody p.vzgapline').count() === 0, где + 'лишних строк под головой нет');
     await page.click('[data-vzv="fat"]'); await page.waitForTimeout(200);
     г = await голова(page);

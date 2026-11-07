@@ -23,7 +23,7 @@ const history=[{id:'2026-09-18_D1',date:'2026-09-18',day:'D1',name:'RESET_SENTIN
     };
     const first=await browser.newPage({viewport:{width:390,height:900}});
     const errors=await M.поднять(first,{hist:history,me:{name:'RESET_SENTINEL'},preserveReload:true,handleRoute,wait:1800});
-    await first.click('#profbtn');await first.click('#profreset');await first.click('[data-reset="all"]');
+    await first.click('#profbtn');await first.click('#pq-akk');await first.waitForTimeout(250);await first.click('#profreset');await first.click('[data-reset="all"]');
     await first.waitForFunction(()=>document.getElementById('resetstate').textContent.includes('не подтвердил'));
     assert.ok(await first.evaluate(()=>localStorage.getItem('tgcs_workouts_2026-09-18_D1')),'failed server reset preserves local diary');
     failReset=false;await first.click('[data-reset="all"]');

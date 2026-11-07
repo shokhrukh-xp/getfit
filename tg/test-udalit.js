@@ -31,7 +31,7 @@ async function поднять(b, доп){
   return {p,err,сервер};
 }
 const видна=(p,sel)=>p.evaluate(s=>{const e=document.querySelector(s);return !!e&&!e.hidden&&getComputedStyle(e).display!=='none';},sel);
-const открытьПрофиль=async p=>{ await p.click('#profbtn'); await p.waitForTimeout(400); };
+const открытьПрофиль=async p=>{ await p.click('#profbtn'); await p.waitForTimeout(400); await p.click('#pq-akk'); await p.waitForTimeout(300); };   /* 07.11: согласия и удаление — в «Данные и аккаунт» */
 
 (async()=>{const b=await chromium.launch();try{
   /* 1. без udalit — кнопки нет */

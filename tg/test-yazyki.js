@@ -61,16 +61,16 @@ const навигация = p => p.evaluate(() => document.getElementById('l1').i
       /* (3) профиль → UZ → EN → RU */
       await page.click('#profbtn'); await page.waitForTimeout(400);
       дано(await page.locator('#pq-lang').isVisible(), 'в профиле строка «Язык»');
-      дано((await page.getAttribute('#pq-lang [data-lang="ru"]', 'aria-pressed')) === 'true', 'отмечен RU');
+      дано((await page.inputValue('#langsel')) === 'ru', 'выбран русский');
       for (const яз of ['uz', 'en']) {
-        await page.click('#pq-lang [data-lang="' + яз + '"]'); await page.waitForTimeout(900);
+        await page.selectOption('#langsel', яз); await page.waitForTimeout(900);
         const me = await page.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}'));
         дано(me.lang === яз, яз + ': me.lang записан');
-        дано((await page.getAttribute('#pq-lang [data-lang="' + яз + '"]', 'aria-pressed')) === 'true', яз + ': отмечена кнопка');
+        дано((await page.inputValue('#langsel')) === яз, яз + ': выбран в списке');
         дано(!/[А-Яа-яЁё]/.test(await навигация(page)), яз + ': навигация без кириллицы: ' + (await навигация(page)));
         await page.screenshot({ path: '/tmp/gf-yazyki-prof-' + яз + '.png' });
       }
-      await page.click('#pq-lang [data-lang="ru"]'); await page.waitForTimeout(500);
+      await page.selectOption('#langsel', 'ru'); await page.waitForTimeout(500);
       дано(/Сегодня/.test(await навигация(page)) && (await page.evaluate(() => document.documentElement.lang)) === 'ru', 'RU вернул русский');
       await page.close();
     }

@@ -36,7 +36,7 @@ async function поднять(b, доп){
 }
 const видна=(p,sel)=>p.evaluate(s=>{const e=document.querySelector(s);return !!e&&!e.hidden&&getComputedStyle(e).display!=='none';},sel);
 const окно=p=>p.evaluate(()=>document.getElementById('iim').classList.contains('show'));
-const открытьПрофиль=async p=>{ await p.click('#profbtn'); await p.waitForTimeout(400); };
+const открытьПрофиль=async p=>{ await p.click('#profbtn'); await p.waitForTimeout(400); await p.click('#pq-akk'); await p.waitForTimeout(300); };   /* 07.11: согласия и удаление — в «Данные и аккаунт» */
 const строкаМед=p=>p.evaluate(()=>[...document.querySelectorAll('.pqfoot .f-soglasie')].some(e=>/не медицинское изделие/.test(e.textContent)&&getComputedStyle(e).display!=='none'));
 
 (async()=>{const b=await chromium.launch();try{
@@ -67,11 +67,11 @@ const строкаМед=p=>p.evaluate(()=>[...document.querySelectorAll('.pqfoo
    ok(сервер.ii.length===1&&сервер.ii[0].yes===false,'«Не сейчас» → сервер {yes:false}');
    ok(!(await окно(p)),'окно закрылось');
    await открытьПрофиль(p);
-   ok(/ИИ-помощник: выключен/.test(await p.textContent('#profii')),'в профиле «ИИ-помощник: выключен»');
+   ok(/ИИ-помощник\s*выключен/.test(await p.textContent('#profii')),'в профиле «ИИ-помощник: выключен»');
    await p.click('#profii');await p.waitForTimeout(300);ok(await окно(p),'строка открывает окно');
    await p.click('#iiyes');await p.waitForTimeout(400);
    ok(сервер.ii.length===2&&сервер.ii[1].yes===true,'«Согласен» → сервер {yes:true}');
-   ok(/ИИ-помощник: включён/.test(await p.textContent('#profii')),'строка — «включён»');
+   ok(/ИИ-помощник\s*включён/.test(await p.textContent('#profii')),'строка — «включён»');
    await открытьПрофиль(p);await p.click('#profii');await p.waitForTimeout(300);
    ok(await видна(p,'#iioff')&&!(await видна(p,'#iiyes')),'включено — в окне «Выключить ИИ»');
    await p.click('#iioff');await p.waitForTimeout(400);ok(сервер.ii[2]&&сервер.ii[2].yes===false,'«Выключить ИИ» → {yes:false}');

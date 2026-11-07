@@ -51,7 +51,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
  /* 2. «Сегодня дома» на дне */
  {const p=await b.newPage({viewport:{width,height:844}});const errs=await M.поднять(p,{theme,page:'gym'});
   await p.click('.l1 button[data-page="gym"]');await p.waitForSelector('#tplace:not([hidden])');
-  assert.match(await p.textContent('#tplace'),/Сегодня не в зале\?/);
+  assert.match(await p.textContent('#tplace'),/Не попадёте в зал\?/);
   const imena0=await p.locator('#list .exrn b').allTextContents();
   await p.click('#tplace [data-tplgo="h"]');await p.waitForSelector('#tplm.show');
   await p.click('#tplm [data-catinv=""]');
@@ -101,7 +101,7 @@ for(const theme of ['light','dark'])for(const width of [320,390]){
   assert.ok(await p.locator('#list .exwas').count()>0,'штанга/тренажёры заменены на домашнее '+tag);
   await p.click('#tplace [data-tplback]');await p.waitForTimeout(300);
   assert.equal(await p.locator('#list .exwas').count(),0,'«Вернуть зал» — день как в программе');
-  assert.match(await p.textContent('#tplace'),/Сегодня не в зале\?/,'и замены не возвращаются сами '+tag);
+  assert.match(await p.textContent('#tplace'),/Не попадёте в зал\?/,'и замены не возвращаются сами '+tag);
   assert.deepEqual(errs,[]);await p.close();}
  /* 5. 01.11, разбор пути: «Мои дни» — у дня отдых / зал / дома / улица; кнопки дней и шапка — по месту */
  {const p=await b.newPage({viewport:{width,height:844}});const errs=await M.поднять(p,{theme,page:'gym'});

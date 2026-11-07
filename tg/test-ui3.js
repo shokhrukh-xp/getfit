@@ -40,7 +40,7 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
     дни[(д + 1) % 7] = 1; дни[(д + 3) % 7] = 1; if (сегодня) дни[д] = 1;
     await p.addInitScript(s2 => { try { localStorage.setItem('shp_v1_shp_sched', s2); } catch (e) {} }, JSON.stringify(дни));
     await M.поднять(p, { theme: 'light', page: 'gym', features: ['panel2', 'ui3'], wait: 1800 }); await p.waitForTimeout(500);
-    const виден = await p.evaluate(() => { const t = document.getElementById('tplace'); return !!t && !t.hidden && /не в зале/.test(t.textContent); });
+    const виден = await p.evaluate(() => { const t = document.getElementById('tplace'); return !!t && !t.hidden && /Не попадёте в зал/.test(t.textContent); });
     ok(сегодня ? виден : !виден, 'ui3: ' + (сегодня ? 'сегодня день зала — вопрос «Сегодня не в зале?» есть' : 'сегодня не день зала — вопроса нет'));
     await p.close();
   }
@@ -50,9 +50,9 @@ let bad = 0; const ok = (c, t) => { console.log((c ? '  ok  ' : '  ПРОВАЛ 
     ok(await p.evaluate(() => JSON.parse(localStorage.getItem('shp_v1_me') || '{}').only === 'all'), 'ui3: «только еда» → еда и зал');
     await p.click('#profbtn'); await p.waitForTimeout(500);
     ok(await p.evaluate(() => getComputedStyle(document.getElementById('pq-only')).display === 'none'), 'ui3: строки «Что веду» в профиле нет');
-    await p.click('#pq-lang [data-lang="en"]'); await p.waitForTimeout(1500);
+    await p.selectOption('#langsel', 'en'); await p.waitForTimeout(1500);
     ok(await p.evaluate(() => document.querySelector('#pq-units [data-units="metric"]').textContent === 'kg, cm'), 'ui3: английский — «kg, cm»');
-    await p.click('#pq-lang [data-lang="ru"]'); await p.waitForTimeout(800);
+    await p.selectOption('#langsel', 'ru'); await p.waitForTimeout(800);
     ok(await p.evaluate(() => document.querySelector('#pq-units [data-units="metric"]').textContent === 'кг, см'), 'ui3: русский — «кг, см»');
     await p.close(); }
   /* 7: висящий конфликт настроек решается сам — без красной строки и кнопок выбора */
