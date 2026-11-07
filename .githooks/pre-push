@@ -5,6 +5,8 @@
 # прогона, неизвестные файлы. GETFIT_FULL=1 — полный руками.
 cd "$(git rev-parse --show-toplevel)" || exit 1
 export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+# 07.11, его выбор «Mac не засыпает»: пока идёт проверка
+command -v caffeinate >/dev/null && caffeinate -i -w $$ &
 node tools/check-plan.test.cjs || exit 1
 REFILE=$(mktemp "${TMPDIR:-/tmp}/getfit-refs.XXXXXX") || exit 1
 PLANFILE=$(mktemp "${TMPDIR:-/tmp}/getfit-plan.XXXXXX") || exit 1
@@ -26,6 +28,14 @@ if [ -f ../getfit-sync/src/index.js ]; then
     echo "pre-push: МЕТКИ СБОРКИ РАЗНЫЕ: приложение «$APPB», сервер «$SRVB»."; exit 1
   fi
 fi
+# 07.11, его выбор «Не гонять дважды»: дерево уже прошло полный прогон (tools/prover.sh) — заново не гоняем
+МЕТКА="$(git rev-parse --git-dir)/getfit-proveren"
+if [ -f "$МЕТКА" ] && [ -s "$REFILE" ]; then
+  ВСЕ=1; while IFS="$(printf '\t')" read r l; do [ "$(git rev-parse "$l^{tree}" 2>/dev/null)" = "$(cat "$МЕТКА")" ] || ВСЕ=0; done < "$REFILE"
+  if [ $ВСЕ = 1 ]; then echo "pre-push: метка $APPB сверена; этот код уже прошёл полный прогон (tools/prover.sh) — заново не гоняю."
+    SHA=$(tail -1 "$REFILE" | cut -f2); [ "${GETFIT_NO_AFTER:-0}" = 1 ] || nohup sh tools/full-after.sh "$SHA" --только-долгие >/dev/null 2>&1 &
+    exit 0; fi
+fi
 node tools/check-plan.cjs "$REFILE" > "$PLANFILE" || exit 1
 MODE=$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).mode)' "$PLANFILE") || exit 1
 [ "$FULL" = 0 ] || MODE=full
@@ -42,7 +52,8 @@ case "$MODE" in
   full) echo "pre-push: полный прогон приложения (ds1 и ds5 — в фоне после push)"; set -- --без-долгих ;;
   *) echo "pre-push: неизвестный план — остановка"; exit 1 ;;
 esac
-if sh tg/run.sh "$@" > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1; then
+# 07.11, его выбор «Повтор шатких тестов»: упавшие (до трёх) — ещё раз по одному (tools/shatkie.sh)
+if sh tg/run.sh "$@" > "${TMPDIR:-/tmp}/getfit-pre-push.log" 2>&1 || sh tools/shatkie.sh "${TMPDIR:-/tmp}/getfit-pre-push.log"; then
   grep -E "^Метка|^Известные|^За |ВСЕ НАБОРЫ" "${TMPDIR:-/tmp}/getfit-pre-push.log"
   # 28.10: адресно перед выпуском — полный сразу после, в фоне (tools/full-after.sh)
   if [ "$MODE" != meta ] && [ "${GETFIT_NO_AFTER:-0}" != 1 ]; then
