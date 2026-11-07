@@ -29,7 +29,7 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
 (async () => {
   await стереть();
   await new Promise(r => сайт.listen(0, '127.0.0.1', r)); const порт = сайт.address().port;
-  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: { ru: 'ru-RU', en: 'en-US', uz: 'uz-UZ' }[ЯЗ], timezoneId: 'Asia/Tashkent' });
+  const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale: { ru: 'ru-RU', en: 'en-US', uz: 'uz-UZ' }[ЯЗ], timezoneId: СТРАНА === 'US' ? 'America/New_York' : 'Asia/Tashkent' });
   const p = await ctx.newPage();
   const ошибки = []; p.on('pageerror', e => ошибки.push(e.message)); p.on('console', m => { if (m.type() === 'error') ошибки.push(m.text().slice(0, 200)); });
   const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PUT,DELETE,OPTIONS' };
@@ -40,7 +40,9 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
     const t0 = Date.now();
     try { const r = await route.fetch({ url: q.url().replace('getfit-sync.sh-pulatov.workers.dev', 'api.wellbol.com'), headers: h, timeout: 240000 });
       времена.push([new URL(q.url()).pathname, Date.now() - t0, r.status()]);
-      return route.fulfill({ status: r.status(), headers: Object.assign({}, r.headers(), CORS), body: await r.body() }); }
+      const тело = await r.body();
+      if (r.status() >= 400) L('ответ сервера', new URL(q.url()).pathname, r.status(), String(q.postData() || '').slice(0, 160), '→', тело.toString().slice(0, 200));
+      return route.fulfill({ status: r.status(), headers: Object.assign({}, r.headers(), CORS), body: тело }); }
     catch (e) { времена.push([new URL(q.url()).pathname, Date.now() - t0, 'ошибка']); return route.abort(); }
   });
   await p.route('**://telegram.org/**', r => r.abort().catch(() => {}));
@@ -65,8 +67,11 @@ const сайт = http.createServer((q, a) => { const f = path.join(__dirname, '.
   await снять('start');
   /* 07.11, soglasie2 у всех: новичок сначала видит «Сведения о здоровье», потом «ИИ-помощник» */
   for (const [окно, да] of [['#zdm', '#zdyes'], ['#iim', '#iiyes']]) {
-    try { await p.waitForSelector(окно + '.show,' + окно + '.on,' + окно + '[open]', { timeout: 5000 }); } catch (e) {}
-    if (await p.locator(да).isVisible().catch(() => false)) { await снять('soglasie-' + окно.slice(1)); await p.click(да); await p.waitForTimeout(800); L('согласие', окно, 'принято'); }
+    /* 07.11: окно ИИ открывается после ответа сервера на первое «Согласен» — ждём кнопку, а не класс окна;
+       после нажатия ждём, пока окно уйдёт, иначе «Далее» анкеты попадает в затемнение (прогон 07.11 с поясом Нью-Йорка) */
+    await p.locator(да).waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    if (await p.locator(да).isVisible().catch(() => false)) { await снять('soglasie-' + окно.slice(1)); await p.click(да);
+      await p.locator(да).waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {}); await p.waitForTimeout(500); L('согласие', окно, 'принято'); }
   }
   try {
     if (await p.locator('#wz-only-go').isVisible()) await p.click('#wz-only-go');
