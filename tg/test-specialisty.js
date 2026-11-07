@@ -52,11 +52,17 @@ async function проверить(p, где, имя, sel){
     const где = theme + ' ' + width + ': ', p = await b.newPage({ viewport: { width, height: 760 } }), s = сервер(), o = opts(theme);
     o.features = ['roli', 'chat2', 'panel2', 'ui3']; o.roli = s.обработчик;
     const err = await M.поднять(p, o); await p.waitForTimeout(500);
-    /* 2. список чатов — всегда, с вкладками живых специалистов */
+    /* 2. 07.11, его выбор «Чат одним нажатием»: кнопка — сразу ИИ-тренер; список и живые специалисты — «Специалисты» в шапке */
     await p.click('#coachnav'); await p.waitForTimeout(600);
-    ok(await виден(p, '#chatlist'), где + 'кнопка чата открывает список чатов, даже без специалистов');
+    ok(await виден(p, '#coachm') && !(await виден(p, '#chatlist')), где + 'кнопка чата сразу открывает ИИ-тренера');
+    ok(await виден(p, '#c2spec'), где + 'в шапке чата — «Специалисты»');
+    await p.click('#c2spec'); await p.waitForTimeout(600);
+    ok(await виден(p, '#chatlist'), где + '«Специалисты» открывает список чатов, даже без специалистов');
     const строки = await p.$$eval('#clrows .clrow', ns => ns.map(n => (n.dataset.kat || n.dataset.chat || 'ии') + ':' + n.querySelector('b').textContent));
     ok(строки.length === 4 && /^ии:/.test(строки[0]) && строки.slice(1).join('|') === 'trainer:Фитнес-тренер|nutri:Нутрициолог|diet:Диетолог', где + 'ИИ-тренер и «Фитнес-тренер / Нутрициолог / Диетолог»: ' + строки.join(' · '));
+    /* 07.11: «Свой специалист — прямо здесь» — зачем и кнопки «Пригласить …» */
+    const блок = await p.$eval('#clrows .pinv', e => e.textContent).catch(() => '');
+    ok(/Свой специалист/.test(блок) && /Вам:/.test(блок) && /Ему:/.test(блок) && (await p.$$('#clrows [data-pinv]')).length === 3, где + 'блок приглашения: зачем вам, зачем ему, три кнопки');
     await проверить(p, где, 'список чатов', '#chatlist'); await СНИМОК(p, где, '1-chaty');
     /* 3. «Фитнес-тренер» → каталог на вкладке тренеров */
     await p.click('#clrows [data-kat="trainer"]'); await p.waitForTimeout(500);

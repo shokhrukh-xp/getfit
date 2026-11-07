@@ -3934,6 +3934,12 @@ body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;he
 .hwd b,.hwd-gym{display:inline-flex!important;width:auto!important;height:auto!important;background:none!important;border:0!important;border-radius:0!important;color:var(--track)}
 .hwd b.good{color:var(--done)} .hwd b.bad{color:var(--warn)} .hwd b.going{color:var(--accent-txt)}
 .hwd b.free{color:var(--muted)}
+/* 07.11: пояснение значков под неделей — пока человек не откроет день */
+.hweek-leg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:10px 0 0;font-size:12px;color:var(--muted)}
+.hweek-leg .hwd-dots{min-height:0}
+.hweek-leg b,.hweek-leg .hwd-gym{display:inline-flex;color:var(--track)}
+.hweek-leg b.good{color:var(--done)} .hweek-leg b.bad{color:var(--warn)} .hweek-leg .hwd-gym.done{color:var(--accent-txt)}
+.hweek-leg svg{width:13px;height:13px}
 .hwd-gym{color:transparent}
 .hwd-gym:not(.done):not(.plan){display:none!important}
 .hwd-gym.done{color:var(--accent-txt)} .hwd-gym.plan{color:var(--dim);opacity:.55}
@@ -4950,6 +4956,25 @@ body[data-f~="chat2"] #coachm .c2t{display:flex;flex-direction:column;min-width:
 body[data-f~="chat2"] #coachm .c2t h3{font-size:17px;line-height:1.2;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body[data-f~="chat2"] #coachm #c2sub{display:block;font-size:12.5px;color:var(--dim);margin-top:1px}
 body[data-f~="chat2"] #coachm #coachclose{display:none}
+/* 07.11, ревью «глазами новичка» (его выбор «Чат одним нажатием»): кнопка сразу открывает ИИ-тренера,
+   живые специалисты и каталог — кнопкой «Специалисты» в шапке */
+.c2spec{display:none}
+/* 07.11: блок «Свой специалист — прямо здесь» в списке чатов и в пустом каталоге */
+.pinv{margin:12px 12px 4px;padding:14px;border-radius:16px;background:var(--card-2,var(--card));border:1px solid var(--line-soft)}
+.pinv-h{display:block;font-size:15px;margin-bottom:4px}
+.pinv p{margin:0 0 8px;font-size:13.5px;line-height:1.4;color:var(--dim)}
+.pinv-l{margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.4;color:var(--dim)}
+.pinv-l li{margin-bottom:4px} .pinv-l b{color:var(--text)}
+.pinv-b{display:flex;flex-wrap:wrap;gap:8px}
+.pinv-b .btn{flex:1 1 auto;min-width:0;width:auto}
+.pinv-st{margin:10px 0 0!important;color:var(--accent-txt,var(--text))!important}
+.rolunv{color:var(--warn,#B4632B)}
+body[data-f~="chat2"][data-f~="roli"] #coachm .c2spec{display:inline-flex;align-items:center;gap:6px;position:relative;flex:none;height:36px;padding:0 12px;border-radius:18px;
+  border:1px solid var(--line-soft);background:var(--card-2,var(--card));color:var(--text);font:inherit;font-size:13px;font-weight:700}
+body[data-f~="chat2"] #coachm .c2spec svg{width:18px;height:18px}
+body[data-f~="chat2"] #coachm #c2sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.c2pro #coachm .c2spec{display:none!important}
+body[data-f~="chat2"] #coachm .c2spec .dgbadge{top:-4px;left:auto;right:-4px}
 body[data-f~="chat2"] #chatlist .cathead{padding-left:16px}
 body[data-f~="chat2"] #chatlist .cathead h3{font-size:22px;flex:1}
 body[data-f~="chat2"] #coachm :is(#coachpro,#ckomu){display:none!important}
@@ -5047,7 +5072,10 @@ body[data-f~="chat2"] #katm .cathead{flex:none;margin:0;display:flex;align-items
 <script>/* 06.11, его слова: «при открытии панель навигации была всё ещё старой (слитной), через пару секунд стала новой»
    и «в секции Тело нет кнопки "+Новый замер", только после нажатия на вкладку». Выключатели приходили с сервера
    через пару секунд. Теперь последние известные ставим сразу, до первой отрисовки; сервер потом уточнит. */
-try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('data-f',wbF);window.__WB_F=wbF.split(' ');}}catch(e){}</script>
+/* 07.11, ревью «глазами новичка»: у новичка запомненных ещё нет — до ответа сервера берём те, что включены всем (WB_F_ВСЕМ,
+   держать в ладу с FEATURES на сервере), иначе первый экран рисовался старым и через пару секунд перескакивал. */
+var WB_F_ВСЕМ='soglasie2 roli gorod yazyk udalit strana soglasie ruchnoy v3 v3z menu2 edinicy ui3 chat2 panel2 zamer2 svob2 zdorovye';
+try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body.setAttribute('data-f',wbF);window.__WB_F=wbF.split(' ');}catch(e){}</script>
 <div id="wbsplash" aria-hidden="true"><span class="wbm wb-meet"><i></i><i></i><i></i></span><b>Wellböl</b></div>
 <div class="filenote" id="filenote" hidden>Это скачанная копия файла. Фотографии упражнений
 и каталог лежат рядом с приложением на сервере, поэтому здесь не работают —
@@ -5400,7 +5428,7 @@ try{var wbF=localStorage.getItem('wb_f');if(wbF){document.body.setAttribute('dat
 
 <div class="modal" id="coachm" role="dialog" aria-modal="true" aria-labelledby="coachtitle">
   <div class="modalbox">
-    <div class="cathead"><button type="button" class="c2back" id="c2back" aria-label="Назад">‹</button><span class="c2av" id="c2av" aria-hidden="true"></span><span class="c2t"><h3 id="coachtitle">ИИ-тренер</h3><small id="c2sub"></small></span><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
+    <div class="cathead"><button type="button" class="c2back" id="c2back" aria-label="Назад">‹</button><span class="c2av" id="c2av" aria-hidden="true"></span><span class="c2t"><h3 id="coachtitle">ИИ-тренер</h3><small id="c2sub"></small></span><button type="button" class="c2spec f-roli" id="c2spec" aria-label="Специалисты"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.8 14.2c2.2.2 3.9 1.8 4.4 4.3"/></svg><span>Специалисты</span><i class="dgbadge" id="c2specn" hidden></i></button><button class="xbtn" id="coachclose" aria-label="Закрыть">✕</button></div>
     <!-- 01.11, его выбор «A: Тренер — два голоса»: кто ведёт и что ИИ — помощник -->
     <div class="dgwho f-roli" id="coachpro" hidden></div>
     <p id="coachdate" class="mtext" style="flex:none;margin:0;padding:0 16px 8px" aria-live="polite"></p>
@@ -11689,7 +11717,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 08:29';
+var BUILD = '07.11 09:08';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -18931,8 +18959,11 @@ function homeWeek(){
   }
   /* 22.10, Р3 (его выбор «Легенды → пометки на графике»): под днём — значок
      еды и значок зала, цвет — смысл (зелёный в норме, красный мимо, бледный
-     зал — по плану). Строка «● еда в норме ○ вне нормы ■ зал · □ план» ушла. */
-  return h+'</div></section>';
+     зал — по плану). Строка «● еда в норме ○ вне нормы ■ зал · □ план» ушла.
+     07.11, ревью «глазами новичка» (его выбор «Подпись к 🍴»): новичку значки непонятны до нажатия —
+     одна строка-пояснение теми же значками, пока человек сам не откроет день из недели. */
+  var лег=gget('wkleg_off',0)?'':'<p class="hweek-leg"><span class="hwd-dots"><b class="good">'+ИК.fork+'</b></span>еда в норме <span class="hwd-dots"><b class="bad">'+ИК.fork+'</b></span>мимо нормы'+(!foodOnly()?' <span class="hwd-dots"><i class="hwd-gym done">'+ИК.gym+'</i></span>тренировка':'')+'</p>';
+  return h+'</div>'+лег+'</section>';
 }
 function homeЗапас(){
   if(!ЕСТЬ('ui3')) return '';
@@ -19952,7 +19983,7 @@ function своб2Html(св, d){
       if(бл.hasAttribute('data-hx')){ hbxOpen(бл.getAttribute('data-hx'), бл); haptic('light'); return; }
       if(бл.hasAttribute('data-hact')){ openCoach(); haptic('light'); return; } }
     var hd=e.target.closest('[data-hday]');
-    if(hd){ if(hd.disabled) return; var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
+    if(hd){ if(hd.disabled) return; if(!gget('wkleg_off',0)){ gset('wkleg_off',1); } var iso=hd.dataset.hday; FOOD.date = iso===TODAY ? null : iso; FOOD.day=null; goPage('food'); haptic('light'); return; }
     /* 17.09, его слова: «плюсик на дуге перестал работать, я хотел добавить
        перекус». Пузырь со знаком плюса отвечал на нажатие с 11.09 и умер
        12.09 вместе с кнопкой фото на главной: атрибут на пузыре остался, а
@@ -21749,6 +21780,8 @@ function ролиПодключениеРисовать(){
   var всё = (!нужна || j.parq.every(function(x){ return x !== null; })) && (!зд || j.zd.every(function(x){ return x !== null; })), есть = нужна && j.parq.some(function(x){ return x === true; });
   b.innerHTML = '<div class="rolhd"><b>' + esc(r.pro.name) + '</b><span>' + esc(РОЛИ_ВИД[r.pro.kind] || '') + '</span></div>' +
     (r.pro.about ? '<p class="rolnote">' + esc(r.pro.about) + '</p>' : '') +
+    /* 07.11: приглашённый клиентом без проверки документов — честно говорим (его выбор «Без проверки для своих») */
+    (r.pro.unverified ? '<p class="rolnote rolunv">' + (r.pro.invitedByMe ? 'Вы пригласили этого специалиста. ' : '') + 'Квалификация не проверена Wellböl — документы мы ещё не смотрели.</p>' : '') +
     '<p class="mtext">' + esc(r.text) + '</p>' +
     (нужна ? '<h4 class="pqlab">Готовность к нагрузке</h4><div class="rolparq">' + j.parq.map(function(v, i){
       return '<div class="rolq"><span>' + esc(РОЛИ_АНКЕТА[i]) + '</span><div class="seg">' +
@@ -25675,6 +25708,32 @@ function чат2Цвет(k){ return k === 'nutri' || k === 'diet' ? k : 'trainer
 function чат2Роль(l){ return String((l && (l.title || ЧАТ2_РОЛИ[l.kind])) || 'Специалист'); }
 function чат2Кратко(т){ return String(т || '').replace(/\*\*/g, '').replace(/\s*\[фото(?: ×\d+)?\]\s*$/, ' 📷').replace(/\s+/g, ' ').trim(); }
 function чат2Когда(ts){ if (!ts) return ''; var d = new Date(+ts); if (isNaN(d.getTime())) return ''; return ymd(d) === TODAY ? chatВремя(ts) : (chatДень(ts) === 'вчера' ? 'вчера' : d.getDate() + '.' + pad2(d.getMonth() + 1)); }
+/* ══ 07.11, ревью «глазами новичка»: «Живые специалисты» без людей — тупик. Его слова: «нужно описать что там будет и
+   дать возможность самим пользователям приглашать своих специалистов. Нужно показать почему это удобнее и ценно для
+   обоих». Блок: что это, чем удобнее вам и ему, кнопки «Пригласить …» → ссылка t.me/бот?start=pi_КОД (сервер
+   /roli/invite) → пересылаете специалисту; когда он примет, бот пришлёт вам «Посмотреть и подключить». ══ */
+var ПРИГЛ_КОГО = { trainer: 'тренера', nutri: 'нутрициолога', diet: 'диетолога' };
+var ПРИГЛ = { busy: '', msg: '' };
+function приглБлок(вид){
+  return '<div class="pinv"><b class="pinv-h">Свой специалист — прямо здесь</b>' +
+    '<p>Уже занимаетесь с тренером или нутрициологом? Пригласите его — это бесплатно.</p>' +
+    '<ul class="pinv-l"><li><b>Вам:</b> не нужно пересылать скриншоты — он сам видит еду, вес и тренировки, но только то, что вы откроете. Программа и норма приходят прямо сюда, между встречами помогает ИИ.</li>' +
+    '<li><b>Ему:</b> все клиенты в одном кабинете и видно, кому нужно внимание; не нужно выпрашивать отчёты; ИИ-помощник помогает с черновиками.</li></ul>' +
+    '<div class="pinv-b">' + (вид ? [вид] : КАТ_ВИДЫ).map(function(k){ return '<button type="button" class="btn prim small" data-pinv="' + k + '"' + (ПРИГЛ.busy ? ' disabled' : '') + '>Пригласить ' + ПРИГЛ_КОГО[k] + '</button>'; }).join('') + '</div>' +
+    (ПРИГЛ.msg ? '<p class="pinv-st" role="status">' + esc(ПРИГЛ.msg) + '</p>' : '') + '</div>';
+}
+function приглОтправить(kind){
+  if (ПРИГЛ.busy) return; ПРИГЛ.busy = kind; ПРИГЛ.msg = ''; приглПерерисовать();
+  fPost('/roli/invite', { uid: syncUid(), kind: kind }).then(function(d){
+    ПРИГЛ.busy = '';
+    if (!d || !d.ok || !d.link) throw new Error((d && d.error) || 'Не получилось сделать ссылку.');
+    ПРИГЛ.msg = 'Ссылка готова — отправьте её своему специалисту. Когда он примет приглашение, бот пришлёт вам предложение подключить его.';
+    приглПерерисовать(); haptic('ok');
+    ПЛ.открытьTelegram('https://t.me/share/url?url=' + encodeURIComponent(d.link) + '&text=' + encodeURIComponent(d.text || ''));
+  }).catch(function(er){ ПРИГЛ.busy = ''; ПРИГЛ.msg = er.message || humanErr(er); приглПерерисовать(); haptic('err'); });
+}
+function приглПерерисовать(){ try { чат2СписокРисовать(); } catch (e) {} try { if (typeof катРисовать === 'function' && document.getElementById('katm') && document.getElementById('katm').classList.contains('show')) катРисовать(); } catch (e) {} }
+document.addEventListener('click', function(e){ var b = e.target.closest && e.target.closest('[data-pinv]'); if (!b || b.disabled) return; haptic('light'); приглОтправить(b.getAttribute('data-pinv')); });
 function чат2Строки(){
   var вед = дгВедут(), строки = [], в = CHAT.items || [], п = в[в.length - 1];
   var новых = Math.max(0, в.length - (+gget('chat_seen', в.length) || 0));
@@ -25695,7 +25754,7 @@ function чат2Строки(){
   if (найти.length) строки.push('<p class="clsec">Живые специалисты</p>' + найти.map(function(k){
     return '<button type="button" class="clrow clfind" data-kat="' + k + '"><span class="clav clplus" aria-hidden="true">+</span><span class="clmid">' +
       '<span class="cltop"><b>' + esc(ЧАТ2_РОЛИ[k]) + '</b></span><span class="clbot"><span class="cllast">' + esc(КАТ_ЗАЧЕМ[k]) + '</span><i class="pqch" aria-hidden="true">›</i></span></span></button>';
-  }).join(''));
+  }).join('') + приглБлок());
   return строки.join('') + '<p class="clnote">ИИ-тренер помогает между встречами со специалистом. Переписку со специалистом ИИ не читает.</p>';
 }
 function чат2СписокРисовать(){ var b = document.getElementById('clrows'); if (b) b.innerHTML = чат2Строки(); }
@@ -25713,10 +25772,13 @@ function чат2Шапка(){
   if (av) { av.className = 'c2av' + (л ? ' ' + чат2Цвет(л.kind) : ''); av.innerHTML = л ? esc(дгИнициалы(л.name)) : аватарHTML(аватарТренера()); }
   if (t && !(typeof GOALTALK !== 'undefined' && GOALTALK.active)) t.textContent = л ? (л.name || 'Специалист') : (имяТренера() || 'ИИ-тренер');
   if (s) s.textContent = л ? чат2Роль(л) + ' · ответит лично' : 'ИИ-тренер · отвечает сразу';
+  /* непрочитанное у живых специалистов — числом на кнопке «Специалисты» */
+  var бн = document.getElementById('c2specn'); if (бн) { var н = 0; дгВедут().forEach(function(x){ н += +x.unread || 0; }); бн.hidden = !н; бн.textContent = н > 9 ? '9+' : String(н || ''); }
 }
 function чат2Открыть(id){ чат2СписокЗакрыть(); ДГ.кому = id || ''; CHATALL = true; openCoach(); чат2Шапка(); renderChat(); }
 function чат2Кнопка(){
-  if (чат2() && !дгСпец()) { чат2Список(); return; }
+  /* 07.11, его выбор «Чат одним нажатием»: раньше кнопка открывала список чатов, и новичок упирался в него,
+     а не в тренера. Теперь — сразу ИИ-тренер; список, специалисты и каталог — кнопкой «Специалисты» в шапке. */
   if (чат2()) { ДГ.кому = ''; CHATALL = true; }
   openCoach(); чат2Шапка();
 }
@@ -25782,7 +25844,7 @@ function катРисовать(){
   if (!КАТ.list) { сп.innerHTML = '<p class="katempty">Загружаю…</p>'; return; }
   var r = катОтбор(), всего = (КАТ.list || []).filter(function(x){ return !КАТ.kind || x.kind === КАТ.kind; }).length;
   сп.innerHTML = (r.length ? r.map(катКарта).join('') :
-    !всего ? '<p class="katempty"><b>' + esc(КАТ_МН[КАТ.kind]) + ' в каталоге пока нет</b>Мы проверяем каждого специалиста вручную: образование, опыт, отзывы. Первые скоро появятся — а пока с вами ИИ-тренер.</p>' :
+    !всего ? '<p class="katempty"><b>' + esc(КАТ_МН[КАТ.kind]) + ' в каталоге пока нет</b>Здесь будут специалисты, которых мы проверили: образование и опыт смотрим вручную. Первые скоро появятся — а своего специалиста можно пригласить уже сейчас.</p>' + приглБлок(КАТ.kind || '') :
     '<p class="katempty"><b>Никого не нашлось</b>Попробуйте убрать часть фильтров или изменить поиск.</p>') + про;
 }
 function катЗагрузить(){
@@ -25856,7 +25918,8 @@ document.getElementById('katm').addEventListener('click', function(e){
   var рис = дгРисовать;
   дгРисовать = function(){ рис.apply(this, arguments); try { чат2Шапка(); if (document.body.classList.contains('chatlist')) чат2СписокРисовать(); } catch (e) {} };
 })();
-document.getElementById('c2back').addEventListener('click', function(){ haptic('light'); var список = чат2() && !дгСпец(); closeCoach(); if (список) чат2Список(); });
+document.getElementById('c2back').addEventListener('click', function(){ haptic('light'); var список = чат2() && !!ДГ.кому; closeCoach(); if (список) чат2Список(); });   /* 07.11: из чата специалиста — к списку, из ИИ-тренера — назад в приложение */
+document.getElementById('c2spec').addEventListener('click', function(){ haptic('light'); closeCoach(); чат2Список(); });
 document.getElementById('clclose').addEventListener('click', function(){ haptic('light'); чат2СписокЗакрыть(); });
 document.getElementById('clrows').addEventListener('click', function(e){ var к = e.target.closest('[data-kat]'); if (к) { haptic('light'); return катОткрыть(к.getAttribute('data-kat')); } var r = e.target.closest('[data-chat]'); if (!r) return; haptic('light'); чат2Открыть(r.getAttribute('data-chat')); });
 document.getElementById('coachnav').addEventListener('click', function(){ чат2Кнопка(); haptic('light'); });
