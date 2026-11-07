@@ -2171,6 +2171,10 @@ body.ordmode #list .ordg.drag .ordgrip{animation:none}
 .sslead-t{flex:1;min-width:0}
 .sslead-t b{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:600;color:var(--text);line-height:1.25}
 .sslead-t i{font-style:normal;font-size:12px;color:var(--dim)}
+.aissn{font-size:13px;color:var(--muted);margin:4px 0 8px}
+.aissg{border:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:14px;padding:4px 8px 2px;margin:6px 0}
+.aissh{font-size:12px;font-weight:700;color:var(--accent-txt,var(--accent));text-transform:uppercase;letter-spacing:.04em;padding:4px 2px 0;display:flex;gap:8px;align-items:baseline}
+.aissh i{font-style:normal;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
 .sstag{display:inline-flex;align-items:center;justify-content:center;
   width:22px;height:22px;border-radius:12px;flex:0 0 22px;
   background:rgba(var(--done-rgb),.14);color:var(--done-txt);
@@ -5768,6 +5772,8 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
     <div class="sbrow" id="sb-cycrow" hidden><span class="sblab">Как растить</span>
       <div class="cycmath" id="sb-cycmath"></div>
       <div class="cycopts" id="sb-cyc" role="radiogroup" aria-label="Как растить"></div></div>
+    <div class="sbrow"><span class="sblab">Суперсеты</span><div class="seg" id="sb-ss"></div>
+      <p class="sbhint" id="sb-ssh"></p></div>
     <div class="sbrow" id="sb-platerow"><span class="sblab">Самый маленький блин</span><div class="seg" id="sb-plate"></div>
       <p class="sbhint">От него зависит, каким шагом растут веса</p></div>
     <div class="sbrow"><span class="sblab">Что беречь</span><div class="seg multi" id="sb-lim"></div></div>
@@ -8532,7 +8538,7 @@ function aiСтрока(x, index, editable, view){
   var first=index,last=index,rows=view&&view._вкладкаПрог&&view._вкладкаПрог.days[view.dayTab||0].ex;
   if(rows&&x.ss){while(first>0&&rows[first-1].ss===x.ss)first--;while(last<rows.length-1&&rows[last+1].ss===x.ss)last++;}
   return '<div class="aiex"><span class="exph">'+mediaFor(e)+'</span><span class="aien"><b>'+
-    (x.ss?'<span class="sstag">'+esc(x.ss)+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button><button type="button" class="btn" data-aiedit="params" data-aiindex="'+index+'" aria-label="'+escAttr('Подходы и повторения: '+x.n)+'">Подходы</button><span class="aimoves"><button type="button" class="btn" data-aiedit="up" data-aiindex="'+index+'" aria-label="'+escAttr('Поднять: '+x.n)+'"'+(first===0?' disabled':'')+'>↑</button><button type="button" class="btn" data-aiedit="down" data-aiindex="'+index+'" aria-label="'+escAttr('Опустить: '+x.n)+'"'+(last===editable-1?' disabled':'')+'>↓</button></span></div>'+ (view.params===index ? '<form class="aiparams" data-aiindex="'+index+'"><label>Подходы<input name="sets" type="number" min="1" max="20" step="1" required value="'+x.sets+'"></label><label>Повторы / время<input name="reps" type="text" maxlength="40" required value="'+escAttr(x.reps)+'"></label><button type="submit" class="btn">Готово</button></form>' : '') : '')+'</div>';
+    (x.ss?'<span class="sstag">'+(index===first?'А':'Б')+'</span>':'')+esc(x.n)+'</b><i>'+(м?esc(м)+' · ':'')+x.sets+' × '+esc(x.reps)+'</i></span>'+ (editable ? '<div class="aiedit"><button type="button" class="btn" data-aiedit="swap" data-aiindex="'+index+'" aria-label="'+escAttr('Заменить '+x.n)+'">Заменить</button><button type="button" class="btn" data-aiedit="remove" data-aiindex="'+index+'" aria-label="'+escAttr('Убрать '+x.n)+'"'+(editable===1?' disabled':'')+'>Убрать</button><button type="button" class="btn" data-aiedit="params" data-aiindex="'+index+'" aria-label="'+escAttr('Подходы и повторения: '+x.n)+'">Подходы</button><span class="aimoves"><button type="button" class="btn" data-aiedit="up" data-aiindex="'+index+'" aria-label="'+escAttr('Поднять: '+x.n)+'"'+(first===0?' disabled':'')+'>↑</button><button type="button" class="btn" data-aiedit="down" data-aiindex="'+index+'" aria-label="'+escAttr('Опустить: '+x.n)+'"'+(last===editable-1?' disabled':'')+'>↓</button></span></div>'+ (view.params===index ? '<form class="aiparams" data-aiindex="'+index+'"><label>Подходы<input name="sets" type="number" min="1" max="20" step="1" required value="'+x.sets+'"></label><label>Повторы / время<input name="reps" type="text" maxlength="40" required value="'+escAttr(x.reps)+'"></label><button type="submit" class="btn">Готово</button></form>' : '') : '')+'</div>';
 }
 /* 27.10: предложение можно править до принятия. Каталог меняет только
    захваченный черновик: ни SUBS/EXTRA, ни установленная программа не пишутся. */
@@ -8697,7 +8703,14 @@ function aiДниHtml(p, view, weekdays){
     /* 06.11, живой прогон новичка: в программе «3 × 6–8», а в зале в те же дни «2 × 6–8» — фаза «Вход» (AI_PHASES f1,
        ds −1, недели 1–4). Цифры программы оставляем полными, а то, что первые недели подходов меньше, говорим здесь. */
     (view===WIZ && AI_PHASES[0] && AI_PHASES[0].ds<0 ? '<p class="aiph">Первые '+AI_PHASES[0].w[1]+' недели — на подход меньше, чтобы выучить движения</p>' : '')+
-    '<div class="aiexs">'+d.ex.map(function(x,i){return aiСтрока(x,i,view===WIZ&&WIZ.busy ? 0 : d.ex.length,view);}).join('')+'</div>'+
+    /* 07.11, его «там нет ни одного суперсета»: пары были, но отмечены одной цифрой — теперь рамкой «Суперсет N» и строкой над днём */
+    (function(){ var н=Object.keys(d.ex.reduce(function(o,x){ if(x.ss) o[x.ss]=(o[x.ss]||0)+1; return o; },{})).length;
+      return н ? '<p class="aissn">'+н+' '+plural(н,['суперсет','суперсета','суперсетов'])+' — пары без отдыха между упражнениями</p>' : ''; })()+
+    '<div class="aiexs">'+(function(){ var out='', i=0, n=view===WIZ&&WIZ.busy ? 0 : d.ex.length, номер=0;
+      while(i<d.ex.length){ var x=d.ex[i];
+        if(x.ss && d.ex[i+1] && d.ex[i+1].ss===x.ss){ номер++; out+='<div class="aissg"><div class="aissh">Суперсет '+номер+'<i>без отдыха между ними</i></div>'+aiСтрока(x,i,n,view)+aiСтрока(d.ex[i+1],i+1,n,view)+'</div>'; i+=2; }
+        else { out+=aiСтрока(x,i,n,view); i++; } }
+      return out; })()+'</div>'+
     '<button type="button" class="btn wide" data-aiedit="add"'+(view===WIZ&&WIZ.busy?' disabled':'')+'>+ Добавить упражнение</button>'+
     (view.undo ? '<button type="button" class="btn wide" data-aiedit="undo">Отменить последнюю правку</button>' : '');
 }
@@ -11756,7 +11769,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 16:10';
+var BUILD = '07.11 19:30';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17430,6 +17443,10 @@ function focusMus(list){
   return out;
 }
 var MINKEYS=[['30','30'],['45','45'],['60','60'],['90','90']];
+/* 07.11, его выбор «выбор в листе сборки»: суперсеты по необходимости (не влезает в минуты — пары изоляции на разные
+   мышцы), побольше (короче занятие), без них. Тот же объём и рост мышц, занятие короче (Zhang 2025), но тяжелее по ощущениям. */
+var SSKEYS=[['auto','когда нужно'],['more','побольше'],['none','без них']];
+var SSHINT={auto:'Пары без отдыха — только если иначе не влезает в ваши минуты',more:'Больше пар — занятие короче, объём тот же, но тяжелее по ощущениям',none:'Отдых после каждого подхода; если не влезает — меньше подходов'};
 var PLACEKEYS2=[['gym','в зале'],['home','дома'],['street','на улице']];
 /* 01.11 (макет C+D): на улице — свой список «Что есть» и сколько подтягиваний подряд */
 var EQKEYS_S=[['bar','турник'],['dips','брусья'],['rings','петли, кольца'],['band','резинка']];
@@ -17502,6 +17519,7 @@ function sbНужноUI(){
 function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
   try{ sbНужноUI(); }catch(e){}
+  try{ var ssh=document.getElementById('sb-ssh'); if(ssh) ssh.textContent=SSHINT[sbPick('sb-ss')||'auto']; }catch(e){}
   var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выберите хотя бы два дня';
   var m=document.getElementById('sb-minh'); if(m) m.textContent = п+' '+plural(п,['подход','подхода','подходов'])+' за занятие · ~'+(п*д)+' в неделю';
   /* 01.11, его «кнопка собрать не работает»: выключенная кнопка молчала — в тестовой копии
@@ -17531,6 +17549,7 @@ function openSbor(){
   set('sb-lim', LIMKEYS, me.lim||[], true);
   SBCYC=me.phases||null; AI_ДАЛЬШЕ=0;   /* пересборка из листа — не смена фазы */
   segSet('sb-level', segHtml('level',LEVELS,me.level));
+  set('sb-ss', SSKEYS, me.ss||'auto');
   var d=document.getElementById('sb-dis'); if(d) d.value=(me.dislikes||[]).join(', ');
   var g=document.getElementById('sborgoal');
   if(g){ var gt=goalObj();
@@ -17637,6 +17656,7 @@ document.getElementById('sb-go').addEventListener('click', function(){
   me.lim=sbMulti('sb-lim');
   me.dislikes=csv((document.getElementById('sb-dis')||{}).value);
   me.level=sbPick('sb-level')||me.level||null;
+  me.ss=sbPick('sb-ss')||'auto';   /* 07.11: суперсеты — по необходимости / побольше / без них */
   var цр=document.getElementById('sb-cycrow'); if(цр && !цр.hidden && SBCYC) me.phases=SBCYC;   /* 29.10: фазы */
   gset('me', me); syncPush('state/me', {me:me, at:new Date().toISOString()});
   /* без цели — условия сохранены, дальше цель; без Pro — готовые программы, места по дням работают и с ними */
