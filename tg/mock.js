@@ -578,7 +578,7 @@ async function поднять(page, o) {
     if (p === '/build') return дать({ ok: true, build: o.srvBuild || null });
     /* 29.10: бюджет подходов для листа сборки (фазы); o.budget — свой ответ, иначе формула */
     if (p === '/budget') { const м = +u.searchParams.get('min') || 45; (o.budgetAsked = o.budgetAsked || []).push(м);
-      return дать(o.budget || { ok: true, вДень: м >= 90 ? 30 : м >= 60 ? 24 : м >= 45 ? 19 : м >= 30 ? 14 : 10, нужно: 80, недель: 6 }); }
+      return дать(o.budget || { ok: true, вДень: м >= 90 ? 30 : м >= 60 ? 24 : м >= 45 ? 19 : м >= 30 ? 14 : 10, нужно: 72, недель: 6 }); }   /* 07.11: как НУЖНО_ВСЁ на сервере */
     if (p === '/ai') {
       (o.aiBodies = o.aiBodies || []).push(JSON.parse(route.request().postData() || '{}'));   /* 29.10: что ушло в сборку */
       const отдать = () => дать(o.onAi ? o.onAi(route) : { ok: true, prog: o.prog || null });

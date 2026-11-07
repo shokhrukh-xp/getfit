@@ -35,7 +35,7 @@ const видно = (p, sel) => p.locator(sel).evaluate(e => !e.hidden && e.getBo
     await жми(p, '#sb-min button[data-v="30"]');
     дано(await видно(p, '#sb-cycrow'), т + '1) 30 мин, всё тело — выбор фаз виден');
     const мат = (await p.locator('#sb-cycmath').innerText()).replace(/\s+/g, ' ');
-    дано(/~\d+/.test(мат) && /~80/.test(мат), т + '1) влезает против нужного: ' + мат);
+    дано(/~\d+/.test(мат) && /~72/.test(мат), т + '1) влезает против нужного: ' + мат);
     дано(await p.locator('#sb-cyc button[data-cyc="on"]').getAttribute('aria-checked') === 'true', т + '1) по умолчанию «По фазам»');
     await жми(p, '#sb-focus button[data-v="chest"]');
     дано(!(await видно(p, '#sb-cycrow')), т + '1) упор на грудь — выбора нет');

@@ -4256,6 +4256,7 @@ tr.setrow.now .cell{border-color:var(--sand);box-shadow:inset 0 0 0 1px var(--sa
 #schedwhen>*,#sb-when>*{grid-column:span 2;min-width:0}
 #schedwhen>:nth-child(n+4),#sb-when>:nth-child(n+4){grid-column:span 3}
 #sb-focus{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px}
+#sb-minn{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline}#sb-minn>small{flex-basis:100%;opacity:.75;display:flex;flex-wrap:wrap;gap:2px 12px}#sb-minn.warn .sbneedwarn{color:var(--warn,#c0392b);font-weight:600}
 #sb-focus>*{grid-column:span 4;min-width:0}
 #sb-focus>:first-child{grid-column:span 12}   /* ревью Codex: «всё тело ровно» своей строкой, шесть групп — 3×2 */
 :is(#sp-kind,#schedwhen,#sb-when,#sb-focus)>*{margin:0;justify-content:center;text-align:center}
@@ -5741,7 +5742,7 @@ try{var wbF=localStorage.getItem('wb_f');if(!wbF)wbF=WB_F_ВСЕМ;document.body
     <div class="sbrow"><span class="sblab">Обычно хожу</span><div class="seg when" id="sb-when"></div>
 </div>
     <div class="sbrow"><span class="sblab">Сколько минут</span><div class="seg" id="sb-min"></div>
-      <p class="sbhint" id="sb-minh"></p></div>
+      <p class="sbhint" id="sb-minh"></p><p class="sbhint sbneed" id="sb-minn" hidden></p></div>
     </section>
     <section class="sbgroup" aria-labelledby="sb-prefs-title">
       <h4 id="sb-prefs-title">Условия и предпочтения</h4>
@@ -11753,7 +11754,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 13:30';
+var BUILD = '07.11 14:40';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -17470,8 +17471,35 @@ function sbЦиклUI(){
     opt('on','По фазам', недель+' недель растёт одна часть тела, остальное держим. Потом меняем.', true)+
     opt('off','Всё понемногу','Каждой мышце — минимум для роста, от 4 подходов в неделю. Растёт медленнее.', false);   /* 07.11: сервер держит этот минимум (оп.низ) */
 }
+/* 07.11, его просьба: «если выбрать 30 минут и всё тело ровно, нужно подсказать, сколько минимум тренировок в неделю
+   нужно, чтобы уложиться; при 45, 60 и 90 — соответственно; если выбрал руки и плечи или другую мышцу — считать для неё».
+   Нужно в неделю: всё тело — НУЖНО_ВСЁ с сервера (~72, рост всех групп с дробным счётом); упор — его группам рост
+   (~10 подходов, прессу 6), остальным удержание 3 (его выбор «упор рост + остальные держать»). Тренировок минимум —
+   нужное делить на подходы за занятие при этих минутах (тот же /budget, что у сборки: его темп или формула). */
+var ГЛАВНЫЕ_К=['chest','lats','middle back','shoulders','quadriceps','hamstrings','glutes','biceps','triceps','abdominals','calves'];
+function sbНужно(){
+  var м=+sbPick('sb-min')||45, б=SBBUD[м]||{}, фок=sbMulti('sb-focus').filter(function(k){ return k!=='even'; });
+  if(!фок.length) return {нужно:б.нужно||72, всё:true};
+  var мыш=focusMus(фок), н=0;
+  ГЛАВНЫЕ_К.forEach(function(m){ н += мыш.indexOf(m)>=0 ? (m==='abdominals'||m==='calves'?6:10) : 3; });
+  return {нужно:н, всё:false};
+}
+function sbПодходовПри(м){ var б=sbБюджет(м); return (б && б.вДень>0) ? б.вДень : (м>=90?30:м>=60?24:м>=45?19:м>=30?14:10); }
+function sbМинТрен(нужно, м){ return Math.max(1, Math.ceil(нужно/sbПодходовПри(м))); }
+function sbНужноUI(){
+  var el=document.getElementById('sb-minn'); if(!el) return;
+  var н=sbНужно(), м=+sbPick('sb-min')||45, мин=sbМинТрен(н.нужно, м), д=sbДней();
+  el.hidden=false;
+  el.classList.toggle('warn', д>=2 && д<мин);
+  el.innerHTML='<span>'+(н.всё?'Рост всего тела':'Рост выбранного, остальное держим')+'</span> '+
+    '<b>'+'~'+н.нужно+' '+plural(н.нужно,['подход','подхода','подходов'])+' в неделю'+'</b>'+
+    '<span>'+(мин>7?'Столько не уложить даже за 7 тренировок по '+м+' минут':'Минимум '+мин+' '+plural(мин,['тренировка','тренировки','тренировок'])+' в неделю по '+м+' минут')+'</span>'+
+    (д>=2 && д<мин && мин<=7?'<span class="sbneedwarn">Сейчас отмечено '+д+'</span>':'')+
+    '<small>'+MINKEYS.map(function(k){ var x=sbМинТрен(н.нужно, +k[0]); return '<span>'+(x>7?k[0]+' мин — больше 7':k[0]+' мин — '+x)+'</span>'; }).join('')+'</small>';
+}
 function sbСчёт(){
   var д=sbДней(), п=sbПодходов();
+  try{ sbНужноUI(); }catch(e){}
   var w=document.getElementById('sb-wdh'); if(w) w.textContent = д ? (д+' '+plural(д,['тренировка','тренировки','тренировок'])+' в неделю') : 'выберите хотя бы два дня';
   var m=document.getElementById('sb-minh'); if(m) m.textContent = п+' '+plural(п,['подход','подхода','подходов'])+' за занятие · ~'+(п*д)+' в неделю';
   /* 01.11, его «кнопка собрать не работает»: выключенная кнопка молчала — в тестовой копии
