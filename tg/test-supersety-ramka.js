@@ -102,7 +102,7 @@ const СЛОЙ = { extra: { D1: [
     return { note: (document.querySelector('#catbody .ssnote') || {}).textContent || '',
     базовых: [...document.querySelectorAll('#catbody button[data-pick]')].filter(x => (кат[+x.dataset.pick] || {}).mc === 'c').length,
     всего: document.querySelectorAll('#catbody button[data-pick]').length }; });
-  дано(/две базовые/.test(баз.note), 'сказано, почему только изолирующие');
+  дано(/жим с тягой/.test(баз.note), 'сказано, почему только изолирующие');
   дано(баз.всего > 0 && баз.базовых === 0, 'базовых в списке нет: ' + JSON.stringify(баз));
   await page.click('#catclose').catch(() => page.keyboard.press('Escape')); await page.waitForTimeout(300);
 

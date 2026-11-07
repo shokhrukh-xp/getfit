@@ -8157,7 +8157,7 @@ function renderCatalog(){
   }
   var list=catFiltered();
   /* пара к базовому: базовые не показываем вовсе, чтобы не было холостых нажатий */
-  if(catCtx && catCtx.pairBase) list=list.filter(function(x){ return x.mc!=='c'; });
+  if(catCtx && catCtx.pairBase) list=list.filter(function(x){ return x.mc!=='c' || жимТягаМ(catCtx.pairM, x.m); });
   var безМышцы = catCtx && catCtx.pairM && !catCtx.pairAll && !catMuscle && !catQuery.trim();
   if(безМышцы) list=list.filter(function(x){ return x.m!==catCtx.pairM && x.m2!==catCtx.pairM; });
   /* в пару чаще берут простое: сначала свои упражнения с фото, потом
@@ -8176,7 +8176,7 @@ function renderCatalog(){
   var пан = onPage ? '' : катПанельHtml(), инвH = onPage ? '' : катЕстьHtml();
   var h = onPage ? '' : '<div class="catseg catwhere" role="group" aria-label="Где тренируетесь">'+catWhereHtml()+'</div>'+
     (инвH?'<div class="catinv">'+инвH+'</div>':'')+'<div class="catchips">'+катЧипыHtml()+'</div>'+(пан?'<div class="catpanel">'+пан+'</div>':'');
-  if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь только изолирующие: две базовые в пару не ставим.</p>';
+  if(catCtx && catCtx.pairBase) h+='<p class="ssnote">«'+esc(catCtx.pairName)+'» — базовое, поэтому здесь изолирующие и базовые на противоположные мышцы (жим с тягой).</p>';
   if(безМышцы) h+='<p class="ssnote catpairm">Без упражнений на '+esc(((CAT.muscles||{})[catCtx.pairM]||'ту же мышцу').toLowerCase())+
      ': та же мышца без отдыха просто доделывает подход. <button type="button" class="linkbtn" data-pairall>Показать и их</button></p>';
   if(catCtx && !catCtx.add && !catCtx.draft){
@@ -11745,7 +11745,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 10:31';
+var BUILD = '07.11 11:19';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13531,12 +13531,17 @@ function ssMakeOpen(btn){
    уже есть в этом дне. А если из каталога — то с картинками». Поэтому
    сначала «Рядом» (перед / после), потом остальные в дне, потом каталог.
    Каждая строка — с той же миниатюрой, что в списке дня. */
+/* 07.11, его «Да» на суперсеты базовых на противоположные мышцы: жим + тяга верха можно (как на сервере, антагонистыБаза) */
+var ЖИМ_МК=['chest','shoulders','triceps'], ТЯГА_МК=['lats','middle back','biceps','traps'];
+function схемаМ(m){ return ЖИМ_МК.indexOf(m)>=0?'push':ТЯГА_МК.indexOf(m)>=0?'pull':''; }
+function мышцаКат(e){ var c=CAT && CAT.ex && CAT.ex.filter(function(x){ return x.i===катId(e) || x.i===e.i; })[0]; return (c && c.m) || e.m || ''; }
+function жимТягаМ(a,b){ var x=схемаМ(a), y=схемаМ(b); return !!x && !!y && x!==y; }
 function ssMakeList(di){
   var box=document.getElementById('ssmake'+di); if(!box) return;
   var сп=exList(day), e=сп[di]; if(!e) return;
   var база=базовое(e), нельзя=0;
   function кн(x,i,метка){
-    var обе = база && базовое(x); if(обе) нельзя++;
+    var обе = база && базовое(x) && !жимТягаМ(мышцаКат(e), мышцаКат(x)); if(обе) нельзя++;
     return '<button type="button" class="ebtn sspart'+(метка?' near':'')+'" data-sspart="'+i+'" data-ssof="'+di+'"'+(обе?' disabled':'')+'>'+
            '<span class="ssnm">'+esc(x.n)+'<small>'+esc(мышцаГлавная(x)||x.p||'')+'</small></span>'+
            (обе?'<i>тоже базовое</i>':(метка?'<em>'+метка+'</em>':''))+
@@ -13550,7 +13555,7 @@ function ssMakeList(di){
   box.innerHTML='<p class="ssq">С чем делать по кругу — без отдыха между ними?</p>'+
     (рядом.length?'<div class="ssgrp">Рядом</div><div class="sslist">'+рядом.join('')+'</div>':'')+
     (ещё.length?'<div class="ssgrp">Ещё в этом дне</div><div class="sslist">'+ещё.join('')+'</div>':'')+
-    (нельзя?'<p class="ssnote">Две базовые в пару не ставим — как у тренера: сила на таком суперсете растёт хуже.</p>':'')+
+    (нельзя?'<p class="ssnote">Две базовые в пару — только жим с тягой: на одну сторону или на ноги сила в такой паре растёт хуже.</p>':'')+
     '<button type="button" class="ebtn sscat" data-sscat="'+di+'">+ Из каталога — с картинками</button>';
 }
 /* новое упражнение из каталога сразу в пару к открытому */
@@ -13563,8 +13568,8 @@ function ssFromCatalog(di){
   openCatalog({dk:day, add:true, pairWith:e.k, pairName:e.n, pairBase:базовое(e), c:'strength', pairM:м});
 }
 function ssCatalogPicked(ctx, item){
-  if(ctx.pairBase && item.mc==='c'){
-    paintNote('Две базовые в пару не ставим — выберите что-то полегче'); haptic('medium'); return false;
+  if(ctx.pairBase && item.mc==='c' && !жимТягаМ(ctx.pairM, item.m)){
+    paintNote('Две базовые в пару — только жим с тягой. Выберите что-то полегче'); haptic('medium'); return false;
   }
   var было=(EXTRA[day]||[]).length;
   addEx(item);
