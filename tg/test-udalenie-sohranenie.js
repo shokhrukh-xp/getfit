@@ -69,7 +69,7 @@ for(const theme of ['light','dark'])for(const width of [320,390])for(const name 
   const input=p.locator('#me-age');await input.fill('35');await input.blur();
   await p.waitForFunction(()=>[...document.querySelectorAll('#profm .save-notice')].some(e=>e.textContent==='Сохранено'));await snap(p,'profile-saved',theme,width);
   await p.click('#profclose');await p.click('.l1 [data-page="gym"]');
-  await p.click('#schedbtn');await p.locator('[data-wd]').first().click();
+  await p.click('#schedbtn');await p.locator('#schedm button[data-wd]').first().click();   /* 07.11: первый [data-wd] в странице — скрытый день анкеты, а не расписание */
   await p.waitForFunction(()=>document.querySelector('#schedm .save-notice')?.textContent==='Сохранено');await snap(p,'schedule-saved',theme,width);
  }
  assert.deepEqual(errors,[]);console.log('ok',name,theme,width);
