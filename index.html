@@ -3934,6 +3934,7 @@ body.onb :is(#wzonly,#wzme,#wzhealth,#wzgoal)::after{content:"";display:block;he
 .hwd b,.hwd-gym{display:inline-flex!important;width:auto!important;height:auto!important;background:none!important;border:0!important;border-radius:0!important;color:var(--track)}
 .hwd b.good{color:var(--done)} .hwd b.bad{color:var(--warn)} .hwd b.going{color:var(--accent-txt)}
 .hwd b.free{color:var(--muted)}
+.tmron{margin-left:6px;padding:2px 10px;min-height:28px;border:1px solid var(--line-soft);border-radius:14px;background:transparent;color:var(--accent-txt,var(--text));font:inherit;font-size:12.5px;font-weight:700}
 /* 07.11: пояснение значков под неделей — пока человек не откроет день */
 .hweek-leg{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin:10px 0 0;font-size:12px;color:var(--muted)}
 .hweek-leg .hwd-dots{min-height:0}
@@ -11745,7 +11746,7 @@ function renderDayseg(){
    свежее ли то, что перед ним: «я не знаю, что это за версия сейчас».
    Штамп виден в профиле, а воркер знает, какая версия выложена последней, —
    если они разошлись (обычно из-за кэша WebView), приложение это скажет. */
-var BUILD = '07.11 11:19';
+var BUILD = '07.11 12:07';
 /* 14.10, GF-01: у браузера одно хранилище на всех, а в Telegram Web и в
    одном Telegram бывает несколько аккаунтов. Ключи были общими — второй
    аккаунт видел чужой вес и цель, а любое сохранение увезло бы чужой профиль
@@ -13497,6 +13498,7 @@ function шапка(e, di, метка){
       '<span class="eyebrow">'+(метка?'<span class="sstag">'+метка+'</span> ':'')+esc(мышцаГлавная(e)||e.p||'')+'</span>'+
       '<span class="exname">'+e.n+'</span>'+
       '<span class="spec">'+setsFor(e,di)+' × '+repsOf(e)+(isMin(e)?'':' <span>·</span> отдых '+rest)+'</span>'+
+      (!isMin(e) && tmrMode()==='off' ? '<button type="button" class="tmron" data-tmron>включить таймер</button>' : '')+
       '<span class="exchev" aria-hidden="true"></span>'+
     '</button></div>'+
     /* вспомогательные — своей строкой во всю ширину, строчными: в капители
@@ -16646,23 +16648,26 @@ function watchStop(save){
    сегодня: завтрашняя тренировка снова начинает с вопроса. Отдых в шапке
    карточки («отдых 2:30») и секундомер для планки — как были. */
 function tmrKey(){ return 'tmrmode_'+TODAY+'_'+day; }
-function tmrMode(){ return get(tmrKey(), null); }            /* null — ещё не спрашивали, 'on', 'off' */
+document.addEventListener('click', function(e){ if(!(e.target.closest && e.target.closest('[data-tmron]'))) return; set(tmrKey(), 'on'); haptic('light'); try{ renderList(); }catch(er){} paintNote('Таймер отдыха включён'); });
+/* 07.11, его слова: «почему здесь пишет „Включить таймер“? Он и так включен, мне нужно наоборот выключить, если я не хочу
+   отслеживать передышки по таймеру». Было (24.09): показ после первого подхода и «включить на всю тренировку» —
+   таймер шёл, а кнопка звала его включить. Теперь таймер после каждого подхода по умолчанию, кнопка его выключает до конца
+   тренировки; вернуть — «включить таймер» у упражнения. */
+function tmrMode(){ return get(tmrKey(), null) || 'on'; }            /* 'on' (и не трогали), 'off' — выключил до конца тренировки */
 var tModeB=document.getElementById('tmode');
 function tmodePaint(){
   var m=tmrMode();
   tModeB.hidden = TMODE!=='rest';
-  tModeB.textContent = m==='on' ? 'Не показывать таймер до конца тренировки' : 'Включить таймер на всю тренировку';
+  tModeB.textContent = 'Выключить таймер до конца тренировки';
 }
 tModeB.addEventListener('click', function(){
-  var on = tmrMode()==='on';
-  set(tmrKey(), on ? 'off' : 'on');
-  haptic('light');
-  if(on) stopTimer(); else tmodePaint();
+  set(tmrKey(), 'off'); haptic('light'); stopTimer();
+  try{ renderList(); }catch(e){}
+  paintNote('Таймер выключен до конца тренировки — включить можно у упражнения');
 });
 function startTimer(sec){
   var m=tmrMode();
-  if(m==='off') return;                    /* уже показали и не включил — не мешаем */
-  if(m===null) set(tmrKey(), 'off');       /* первый подход: показываем один раз, дальше — по кнопке */
+  if(m==='off') return;                    /* выключил до конца тренировки — не мешаем */
   WATCH=null; TMODE='rest'; tSkipB.textContent='Пропустить'; tPlusB.textContent='+30с'; watchBtns();
   left = sec; tEl.classList.add('show'); paint(); tmodePaint();
   try{ document.documentElement.style.setProperty('--tmr-h', (tEl.offsetHeight||70)+'px'); document.body.classList.add('tmr'); }catch(e){}
